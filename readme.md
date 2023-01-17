@@ -23,6 +23,21 @@ Just run `docker-compose up`
 
 ## Project outline 
 
+### Domain model
+
+```mermaid
+flowchart
+  HistoricalData --- Transactions
+  Currencies --- Transactions
+  Transactions --- Investments
+  Transactions --- Expenses
+  Expenses --- Statistics
+  Investments --- Statistics
+  
+  User --- Transactions
+  User --- Statistics
+```
+
 ### Minimum viable product:
 1. User can create an account
 1. User can enter income and or expenses and see history
