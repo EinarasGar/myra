@@ -5,44 +5,55 @@ erDiagram
         string username
         string password
         string salt
-        string default_currency
+        int default_currency FK
     }
     transaction {
         int id PK
-        int user_id
+        int user_id FK
         date date
-        int amount
-        string currency
-        string category
+        numeric amount
+        string description
+        int currency FK
+        int category FK
+    }
+    transaction_category {
+        int id PK
+        string name
     }
     portfolio_entry {
-        int id pk
-        int user_id
-        date date
-        int asset_id
-        int amount
-        int price
-        string currency
+        int id PK
+        int user_id FK
+        int asset_id FK
+        numeric quantity
+        int transaction_id FK
     }
     transaction_files {
-        int transaction_id pk
-        string type
+        int transaction_id PK
+        int type FK
         string description
         file file
     }
+    transaction_file_types {
+        int id PK
+        string name
+    }
     assets {
         int id PK
-        enum type
+        int type FK
         string ticker
         string currency
         string description
-        string exchange
+        int exchange FK
+    }
+    asset_type {
+        int id PK
+        string name
     }
     asset_history {
-        int id pk
-        int asset_id
+        int id PK
+        int asset_id FK
         date date
-        int price
+        numeric price
     }
     currencies {
         int id PK
@@ -54,18 +65,32 @@ erDiagram
         int id PK
         int pair1
         int pair2
-        string exchange
+        int exchange FK
     }
     currency_pairs_history {
-        int id pk
-        int pair_id
-        int rate
+        int id PK
+        int pair_id FK
+        numeric rate
         date date
     }
+    exchanges {
+        int id PK
+        string name
+    }
     transaction_files }o--|| transaction : ""
-    portfolio_entry }o--|| users : ""
     transaction }o--|| users : ""
     asset_history }|--|| assets : ""
     currency_pairs_history }|--|| currency_pairs : ""
     currency_pairs }|--|| currencies : ""
+    currencies ||--|| users : ""
+    transaction ||--|| currencies : ""
+    portfolio_entry ||--|| transaction : ""
+    portfolio_entry ||--|| assets : ""
+    assets ||--|| asset_type : ""
+    assets ||--|| exchanges : ""
+    currency_pairs ||--|| exchanges : ""
+    transaction_files ||--|| transaction_file_types : ""
+    transaction ||--|| transaction_category : ""
+    portfolio_entry }o--|| users : ""
+
 ```

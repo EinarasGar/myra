@@ -27,15 +27,16 @@ Just run `docker-compose up`
 
 ```mermaid
 flowchart
-  HistoricalData --- Transactions
-  Currencies --- Transactions
-  Transactions --- Investments
-  Transactions --- Expenses
-  Expenses --- Statistics
-  Investments --- Statistics
-  
-  User --- Transactions
   User --- Statistics
+  User --- Transactions
+  Transactions --- Currencies
+  Transactions --- Files
+  Currencies --- Assets
+  Assets --- Transactions
+  Transactions --- Statistics
+  HistoricalData --- Assets
+  HistoricalData --- Currencies
+  HistoricalData --- Exchanges
 ```
 
 ### Minimum viable product:
