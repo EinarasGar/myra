@@ -26,7 +26,7 @@ erDiagram
         date date
         int user_id FK
         int asset_id FK
-        int reference_asset FK
+        int reference_asset_id FK
         numeric sum
     }
 

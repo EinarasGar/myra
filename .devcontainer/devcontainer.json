@@ -1,0 +1,57 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.245.2/containers/javascript-node-mongo
+// Update the VARIANT arg in docker-compose.yml to pick a Node.js version
+{
+	"name": "myra Development container",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "devenv",
+	"workspaceFolder": "/workspace",
+	// Configure tool-specific properties.
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			// Add the IDs of extensions you want installed when the container is created.
+			"extensions": [
+				"vadimcn.vscode-lldb",
+				"rust-lang.rust-analyzer",
+				"serayuzgur.crates",
+				"ms-azuretools.vscode-docker",
+				"dbaeumer.vscode-eslint",
+				"mtxr.sqltools",
+				"mtxr.sqltools-driver-pg",
+				"bierner.markdown-mermaid"
+			],
+			"settings": {
+				"sqltools.connections": [
+					{
+						"previewLimit": 50,
+						"server": "${containerEnv:POSTGRES_HOSTNAME}",
+						"port": "${containerEnv:POSTGRES_PORT}",
+						"driver": "PostgreSQL",
+						"name": "${containerEnv:POSTGRES_DB}",
+						"database": "${containerEnv:POSTGRES_DB}",
+						"username": "${containerEnv:POSTGRES_USER}",
+						"password": "${containerEnv:POSTGRES_PASSWORD}"
+					}
+				]
+			}
+		}
+	},
+	"features": {
+		"ghcr.io/devcontainers/features/docker-in-docker:1": {
+			"version": "latest"
+		}
+	},
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	"forwardPorts": [
+		27017
+	],
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": "yarn install",
+	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+	"containerEnv": {
+		"PODMAN_USERNS": "keep-id"
+	},
+	"remoteUser": "vscode",
+	"containerUser": "vscode"
+}

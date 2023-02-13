@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  devenv:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ..:/workspace:cached
+    env_file:
+        - .env
+
+    # Overrides default command so things don't shut down after the process ends.
+    command: sleep infinity
+
+    # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
+    network_mode: service:database
+
+  database:
+      image: postgres:latest
+      restart: unless-stopped
+      volumes:
+        - postgres-data:/var/lib/postgresql/data
+      env_file:
+        - .env
+  flyway:
+    image: flyway/flyway:latest
+    environment:
+      - FLYWAY_URL=jdbc:postgresql://database/myra
+      - FLYWAY_SCHEMAS=public
+      - FLYWAY_USER=${POSTGRES_USER}
+      - FLYWAY_PASSWORD=${POSTGRES_PASSWORD}
+      - FLYWAY_CONNECT_RETRIES=5
+    command: migrate
+    volumes:
+      - ../database:/flyway/sql
+    depends_on:
+      - database
+    env_file:
+        - .env
+
+volumes:
+  postgres-data:
