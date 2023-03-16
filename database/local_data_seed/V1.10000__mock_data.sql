@@ -1,11 +1,13 @@
-INSERT INTO asset_types (id, name)
-VALUES (1, 'Currencies');
-INSERT INTO assets (id, asset_type, name, ticker)
-VALUES (1, 1, 'EUR', 'EUR');
-INSERT INTO user_roles (id, name)
-VALUES (1, 'User');
-INSERT INTO user_roles (id, name)
-VALUES (2, 'Admin');
+INSERT INTO asset_types (name)
+VALUES ('Currencies');
+INSERT INTO assets (asset_type, name, ticker)
+VALUES (1, 'EUR', 'EUR');
+INSERT INTO user_roles (name)
+VALUES ('User');
+INSERT INTO user_roles (name)
+VALUES ('Admin');
+INSERT INTO transaction_categories (category)
+VALUES ('Income');
 INSERT INTO users (id, username, password, default_asset, role)
 VALUES (
         '2396480f-0052-4cf0-81dc-8cedbde5ce13',

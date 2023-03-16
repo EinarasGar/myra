@@ -1,22 +1,28 @@
 use sqlx::postgres::PgPoolOptions;
 
-use crate::db_sets::users::UsersDbSet;
+use crate::db_sets::{transactions::TransactionDbSet, users::UsersDbSet};
 
 #[derive(Clone)]
 pub struct MyraDb {
     pub users_db_set: UsersDbSet,
+    pub transactions_db_set: TransactionDbSet,
 }
 
 impl MyraDb {
     pub async fn new() -> anyhow::Result<Self> {
+        let connection_string = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
         let pool = PgPoolOptions::new()
             .max_connections(5)
-            .connect("postgres://myradev:6gb26udXkMKunEMm@localhost/myra")
+            .connect(&connection_string)
             .await
             .expect("can't connect to database");
 
         let users_db_set: UsersDbSet = UsersDbSet::new(pool.clone());
+        let transactions_db_set: TransactionDbSet = TransactionDbSet::new(pool.clone());
 
-        Ok(Self { users_db_set })
+        Ok(Self {
+            users_db_set,
+            transactions_db_set,
+        })
     }
 }

@@ -8,7 +8,7 @@ services:
     volumes:
       - ..:/workspace:cached
     env_file:
-        - .env
+      - .env
 
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
@@ -17,12 +17,12 @@ services:
     network_mode: service:database
 
   database:
-      image: postgres:latest
-      restart: unless-stopped
-      volumes:
-        - postgres-data:/var/lib/postgresql/data
-      env_file:
-        - .env
+    image: postgres:latest
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    env_file:
+      - .env
   flyway:
     image: flyway/flyway:latest
     environment:
@@ -37,7 +37,20 @@ services:
     depends_on:
       - database
     env_file:
-        - .env
+      - .env
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@pgadmin.com
+      PGADMIN_DEFAULT_PASSWORD: password
+      PGADMIN_LISTEN_PORT: 80
+    ports:
+      - 15432:80
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    depends_on:
+      - database
 
 volumes:
+  pgadmin:
   postgres-data:
