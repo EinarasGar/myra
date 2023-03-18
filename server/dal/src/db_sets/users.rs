@@ -2,7 +2,10 @@ use sea_query::*;
 use sea_query_binder::SqlxBinder;
 use sqlx::{Pool, Postgres, Row};
 
-use crate::models::user::{User, UserAuth, UserRoles, Users};
+use crate::{
+    idens::users::{UserRolesIden, UsersIden},
+    models::user::{UserAuthModel, UserModel},
+};
 
 #[derive(Clone)]
 pub struct UsersDbSet {
@@ -14,14 +17,14 @@ impl UsersDbSet {
         Self { pool }
     }
 
-    pub async fn inset_user(&self, user: User) {
+    pub async fn inset_user(&self, user: UserModel) -> anyhow::Result<()> {
         let (sql, values) = Query::insert()
-            .into_table(Users::Table)
+            .into_table(UsersIden::Table)
             .columns([
-                Users::Id,
-                Users::Username,
-                Users::Password,
-                Users::DefaultAssset,
+                UsersIden::Id,
+                UsersIden::Username,
+                UsersIden::Password,
+                UsersIden::DefaultAssset,
             ])
             .values_panic([
                 user.id.into(),
@@ -31,28 +34,27 @@ impl UsersDbSet {
             ])
             .build_sqlx(PostgresQueryBuilder);
 
-        let _ = sqlx::query_with(&sql, values)
-            .execute(&self.pool)
-            .await
-            .unwrap();
+        sqlx::query_with(&sql, values).execute(&self.pool).await?;
+        Ok(())
     }
 
-    pub async fn get_user_auth_info(&self, username: String) -> anyhow::Result<UserAuth> {
+    pub async fn get_user_auth_info(&self, username: String) -> anyhow::Result<UserAuthModel> {
         let (sql, values) = Query::select()
-            .column((Users::Table, Users::Id))
-            .column((Users::Table, Users::Password))
-            .column((UserRoles::Table, UserRoles::Name))
-            .from(Users::Table)
+            .column((UsersIden::Table, UsersIden::Id))
+            .column((UsersIden::Table, UsersIden::Password))
+            .column((UserRolesIden::Table, UserRolesIden::Name))
+            .from(UsersIden::Table)
             .inner_join(
-                UserRoles::Table,
-                Expr::col((Users::Table, Users::Role)).equals((UserRoles::Table, UserRoles::Id)),
+                UserRolesIden::Table,
+                Expr::col((UsersIden::Table, UsersIden::Role))
+                    .equals((UserRolesIden::Table, UserRolesIden::Id)),
             )
-            .and_where(Expr::col(Users::Username).eq(username))
+            .and_where(Expr::col(UsersIden::Username).eq(username))
             .build_sqlx(PostgresQueryBuilder);
 
         let row = sqlx::query_with(&sql, values).fetch_one(&self.pool).await?;
 
-        Ok(UserAuth {
+        Ok(UserAuthModel {
             id: row.try_get(0)?,
             password: row.try_get(1)?,
             role: row.try_get(2)?,

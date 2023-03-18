@@ -19,7 +19,8 @@
 				"dbaeumer.vscode-eslint",
 				"mtxr.sqltools",
 				"mtxr.sqltools-driver-pg",
-				"bierner.markdown-mermaid"
+				"bierner.markdown-mermaid",
+				"rangav.vscode-thunder-client"
 			],
 			"settings": {
 				"sqltools.connections": [

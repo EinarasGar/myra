@@ -1,0 +1,21 @@
+[
+  {
+    "_id": "3edaccdd-c192-4e9f-ab1c-2aafff34efef",
+    "colId": "d3d27665-c04c-4cb1-8316-9ed20cd689aa",
+    "containerId": "",
+    "name": "/users",
+    "url": "http://localhost:5000/users",
+    "method": "POST",
+    "sortNum": 10000,
+    "created": "2023-03-18T00:20:48.893Z",
+    "modified": "2023-03-18T12:34:33.043Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"username\":\"testttt\",\n  \"password\":\"test\",\n  \"default_asset\":1\n}",
+      "form": []
+    },
+    "tests": []
+  }
+]

@@ -1,7 +1,7 @@
 use dal::{db_sets::transactions::TransactionDbSet, models::transaction::TransactionModel};
 use uuid::Uuid;
 
-use crate::models::transactions::AddTransactionGroup;
+use crate::models::transactions::AddTransactionGroupDto;
 
 #[derive(Clone)]
 pub struct TransactionService {
@@ -15,7 +15,11 @@ impl TransactionService {
         }
     }
 
-    pub async fn add_transaction_group(&self, user_id: Uuid, group: AddTransactionGroup) {
+    pub async fn add_transaction_group(
+        &self,
+        user_id: Uuid,
+        group: AddTransactionGroupDto,
+    ) -> anyhow::Result<Vec<i32>> {
         let group_id = Uuid::new_v4();
         let mut dal_transactions: Vec<TransactionModel> = Vec::new();
 
@@ -35,8 +39,8 @@ impl TransactionService {
         let return_ids = self
             .transactions_db_set
             .insert_transactions(dal_transactions)
-            .await
-            .unwrap();
+            .await?;
+        Ok(return_ids)
     }
 }
 
@@ -44,7 +48,7 @@ impl TransactionService {
 mod tests {
     use super::TransactionService;
     use crate::{
-        models::transactions::{AddTransactionGroup, Transaction},
+        models::transactions::{AddTransactionGroupDto, TransactonDto},
         service_collection::Services,
     };
 

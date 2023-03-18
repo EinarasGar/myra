@@ -61,8 +61,7 @@ impl AuthService {
 
         let my_claims = Claims {
             sub: user_auth_info.id,
-            // exp: jsonwebtoken::get_current_timestamp(),
-            exp: u64::MAX,
+            exp: jsonwebtoken::get_current_timestamp() + 6000,
             role: AuthRoles::from_str(&user_auth_info.role).unwrap(),
         };
 

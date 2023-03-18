@@ -1,33 +1,35 @@
 {
-    "eslint.workingDirectories": [
-      "client"
-    ],
-    "eslint.format.enable": true,
-    "files.exclude": {
-      "**/build": true,
-      "**/bin": true,
-      "**/obj": true,
-      "**/node_modules": true,
-      "server/target": true,
-    },
-    "search.exclude": {
-      "**/build": true,
-      "**/bin": true,
-      "**/obj": true,
-      "**/node_modules": true,
-      "server/target": true,
-    },
-    "explorer.fileNesting.enabled": true,
-    "explorer.fileNesting.patterns": {
-      "Cargo.toml": "Cargo.lock",
-      "*.tsx": "${capture}.test.tsx, ${capture}.css"
-    },
-    "typescript.referencesCodeLens.showOnAllFunctions": true,
-    "typescript.referencesCodeLens.enabled": true,
-    "typescript.implementationsCodeLens.enabled": true,
-    "telemetry.enableCrashReporter": false,
-    "editor.codeActionsOnSave": {
-      "source.fixAll.eslint": true
-    },
-    "editor.formatOnSave": true
-  }
+  "eslint.workingDirectories": [
+    "client"
+  ],
+  "eslint.format.enable": true,
+  "files.exclude": {
+    "**/build": true,
+    "**/bin": true,
+    "**/obj": true,
+    "**/node_modules": true,
+    "server/target": true,
+  },
+  "search.exclude": {
+    "**/build": true,
+    "**/bin": true,
+    "**/obj": true,
+    "**/node_modules": true,
+    "server/target": true,
+  },
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "Cargo.toml": "Cargo.lock",
+    "*.tsx": "${capture}.test.tsx, ${capture}.css"
+  },
+  "typescript.referencesCodeLens.showOnAllFunctions": true,
+  "typescript.referencesCodeLens.enabled": true,
+  "typescript.implementationsCodeLens.enabled": true,
+  "telemetry.enableCrashReporter": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "editor.formatOnSave": true,
+  "thunder-client.saveToWorkspace": true,
+  "thunder-client.workspaceRelativePath": ".vscode"
+}

@@ -1,14 +1,10 @@
-use anyhow::anyhow;
-use sea_query::{Alias, Expr, Func, OnConflict, PostgresQueryBuilder, Query};
+use sea_query::{Expr, OnConflict, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
-use sqlx::{
-    types::{Decimal, Uuid},
-    Pool, Postgres,
-};
+use sqlx::{Pool, Postgres};
 
-use crate::models::{
-    portfolio::{Portfolio, SqlCols},
-    transaction::{Transaction, TransactionModel},
+use crate::{
+    idens::{portfolio::PortfolioIden, transaction::TransactionIden, CommonsIden},
+    models::transaction::TransactionModel,
 };
 
 #[derive(Clone)]
@@ -26,15 +22,19 @@ impl TransactionDbSet {
         models: Vec<TransactionModel>,
     ) -> anyhow::Result<Vec<i32>> {
         let mut builder = Query::insert()
-            .into_table(Portfolio::Table)
-            .columns([Portfolio::UserId, Portfolio::AssetId, Portfolio::Sum])
+            .into_table(PortfolioIden::Table)
+            .columns([
+                PortfolioIden::UserId,
+                PortfolioIden::AssetId,
+                PortfolioIden::Sum,
+            ])
             .on_conflict(
-                OnConflict::columns([Portfolio::UserId, Portfolio::AssetId])
+                OnConflict::columns([PortfolioIden::UserId, PortfolioIden::AssetId])
                     .value(
-                        Portfolio::Sum,
+                        PortfolioIden::Sum,
                         //I dont like this what so ever, but sea-query doesnt have a better way to do it
-                        Expr::col((Portfolio::Table, Portfolio::Sum))
-                            .add(Expr::col((SqlCols::Exclude, Portfolio::Sum))),
+                        Expr::col((PortfolioIden::Table, PortfolioIden::Sum))
+                            .add(Expr::col((CommonsIden::Excluded, PortfolioIden::Sum))),
                     )
                     .to_owned(),
             )
@@ -52,16 +52,16 @@ impl TransactionDbSet {
         let (sql, values) = builder.build_sqlx(PostgresQueryBuilder);
 
         let mut builder2 = Query::insert()
-            .into_table(Transaction::Table)
+            .into_table(TransactionIden::Table)
             .columns([
-                Transaction::UserId,
-                Transaction::GroupId,
-                Transaction::AssetId,
-                Transaction::CategoryId,
-                Transaction::Quantity,
-                Transaction::Date,
+                TransactionIden::UserId,
+                TransactionIden::GroupId,
+                TransactionIden::AssetId,
+                TransactionIden::CategoryId,
+                TransactionIden::Quantity,
+                TransactionIden::Date,
             ])
-            .returning_col(Transaction::Id)
+            .returning_col(TransactionIden::Id)
             .to_owned();
 
         for model in models.clone().into_iter() {

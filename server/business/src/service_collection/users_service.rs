@@ -1,8 +1,8 @@
 use anyhow::Ok;
-use dal::{db_sets::users::UsersDbSet, models::user::User};
+use dal::{db_sets::users::UsersDbSet, models::user::UserModel};
 use uuid::Uuid;
 
-use crate::models::user::RegisterUser;
+use crate::models::user::AddUserDto;
 
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
@@ -19,15 +19,17 @@ impl UsersService {
         Self { users_db_set }
     }
 
-    pub async fn register_user(&self, user: RegisterUser) {
-        let db_user: User = User {
-            id: Uuid::new_v4(),
+    pub async fn register_user(&self, user: AddUserDto) -> anyhow::Result<Uuid> {
+        let new_user_id: Uuid = Uuid::new_v4();
+        let db_user: UserModel = UserModel {
+            id: new_user_id,
             username: user.username,
             password: self.hash_password(user.password),
-            default_asset: 1,
+            default_asset: user.default_asset,
         };
 
-        self.users_db_set.inset_user(db_user).await;
+        self.users_db_set.inset_user(db_user).await?;
+        Ok(new_user_id)
     }
 
     fn hash_password(&self, password: String) -> String {

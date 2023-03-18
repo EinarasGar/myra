@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug Server (LLDB)",
+            "program": "${workspaceFolder}/server/target/debug/api",
+            "args": [],
+            "cwd": "${workspaceFolder}/server",
+            "preLaunchTask": "rust: cargo build api",
+            "env": {
+                "RUST_LOG": "api=trace,tower_http=trace"
+            }
+        }
+    ]
+}

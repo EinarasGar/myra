@@ -44,10 +44,10 @@ CREATE TABLE IF NOT EXISTS public.user_roles (
 );
 CREATE TABLE IF NOT EXISTS public.users (
     id UUID CONSTRAINT users_pk PRIMARY KEY DEFAULT uuid_generate_v4(),
-    username TEXT NOT NULL,
+    username TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
     default_asset INT NOT NULL CONSTRAINT users_default_asset_fkey REFERENCES public.assets (id),
-    role INT NOT NULL CONSTRAINT user_roles_fkey REFERENCES public.user_roles (id)
+    role INT NOT NULL CONSTRAINT user_roles_fkey REFERENCES public.user_roles (id) DEFAULT 1
 );
 CREATE TABLE IF NOT EXISTS public.portfolio (
     user_id UUID NOT NULL CONSTRAINT portfolio_user_id_fkey REFERENCES public.users (id),
