@@ -1,5 +1,6 @@
 use sea_query::Iden;
 
+pub mod assets;
 pub(crate) mod portfolio;
 pub(crate) mod transaction;
 pub(crate) mod users;

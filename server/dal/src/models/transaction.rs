@@ -1,5 +1,5 @@
 use sqlx::types::{Decimal, Uuid};
-use time::PrimitiveDateTime;
+use time::OffsetDateTime;
 
 #[derive(Clone)]
 pub struct TransactionModel {
@@ -9,5 +9,5 @@ pub struct TransactionModel {
     pub asset_id: i32,
     pub category_id: i32,
     pub quantity: Decimal,
-    pub date: PrimitiveDateTime,
+    pub date: OffsetDateTime,
 }

@@ -1,16 +1,1 @@
-[
-  {
-    "_id": "a1f2f036-5385-44e1-8f45-61bd65dcb47b",
-    "colId": "history",
-    "containerId": "",
-    "name": "http://localhost:5000/users",
-    "url": "http://localhost:5000/users",
-    "method": "POST",
-    "sortNum": 0,
-    "created": "2023-03-18T00:20:20.787Z",
-    "modified": "2023-03-18T00:20:20.787Z",
-    "headers": [],
-    "params": [],
-    "tests": []
-  }
-]
+[]

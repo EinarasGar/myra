@@ -19,7 +19,7 @@ impl TransactionService {
         &self,
         user_id: Uuid,
         group: AddTransactionGroupDto,
-    ) -> anyhow::Result<Vec<i32>> {
+    ) -> anyhow::Result<(Uuid, Vec<i32>)> {
         let group_id = Uuid::new_v4();
         let mut dal_transactions: Vec<TransactionModel> = Vec::new();
 
@@ -40,39 +40,39 @@ impl TransactionService {
             .transactions_db_set
             .insert_transactions(dal_transactions)
             .await?;
-        Ok(return_ids)
+        Ok((group_id, return_ids))
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::TransactionService;
-    use crate::{
-        models::transactions::{AddTransactionGroupDto, TransactonDto},
-        service_collection::Services,
-    };
+// #[cfg(test)]
+// mod tests {
+//     use super::TransactionService;
+//     use crate::{
+//         models::transactions::{AddTransactionGroupDto, TransactonDto},
+//         service_collection::Services,
+//     };
 
-    async fn get_transaction_service() -> TransactionService {
-        return Services::new().await.unwrap().transaction_service;
-    }
+//     async fn get_transaction_service() -> TransactionService {
+//         return Services::new().await.unwrap().transaction_service;
+//     }
 
-    // #[tokio::test]
-    // async fn verify_invalid_auth_token() {
-    //     //arrange
-    //     let service = get_transaction_service().await;
+//     // #[tokio::test]
+//     // async fn verify_invalid_auth_token() {
+//     //     //arrange
+//     //     let service = get_transaction_service().await;
 
-    //     let trans1 = Transaction {
-    //         asset_id: 1,
-    //         quantity: 2000.0,
-    //         category: 1,
-    //         date: 1678747609,
-    //         description: Some("Add initial money".to_string()),
-    //     };
+//     //     let trans1 = Transaction {
+//     //         asset_id: 1,
+//     //         quantity: 2000.0,
+//     //         category: 1,
+//     //         date: 1678747609,
+//     //         description: Some("Add initial money".to_string()),
+//     //     };
 
-    //     let group = AddTransactionGroup {
-    //         transactions: vec![trans1],
-    //     };
+//     //     let group = AddTransactionGroup {
+//     //         transactions: vec![trans1],
+//     //     };
 
-    //     service.add_transaction_group(group);
-    // }
-}
+//     //     service.add_transaction_group(group);
+//     // }
+// }

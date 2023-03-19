@@ -4,6 +4,35 @@
     "colName": "users",
     "created": "2023-03-18T00:20:48.889Z",
     "sortNum": 10000,
-    "folders": []
+    "folders": [],
+    "settings": {
+      "headers": [],
+      "tests": [],
+      "envId": "03dc0ee1-421e-4cec-a2c2-d4814ab3245e"
+    }
+  },
+  {
+    "_id": "4d3fd37e-ac89-47d4-b0ed-72363483cc67",
+    "colName": "transactions",
+    "created": "2023-03-18T23:50:56.875Z",
+    "sortNum": 20000,
+    "folders": [],
+    "settings": {
+      "headers": [],
+      "tests": [],
+      "envId": "03dc0ee1-421e-4cec-a2c2-d4814ab3245e"
+    }
+  },
+  {
+    "_id": "bf23f183-010c-4776-8f26-49bfe4183215",
+    "colName": "portfolio",
+    "created": "2023-03-19T11:06:31.250Z",
+    "sortNum": 30000,
+    "folders": [],
+    "settings": {
+      "headers": [],
+      "tests": [],
+      "envId": "03dc0ee1-421e-4cec-a2c2-d4814ab3245e"
+    }
   }
 ]

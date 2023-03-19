@@ -115,7 +115,7 @@ mod tests {
             asset_id: 1,
             category_id: 1,
             quantity: dec!(-1000),
-            date: datetime!(2020-01-01 0:00),
+            date: datetime!(2020-01-01 0:00 UTC),
         };
 
         let model2 = TransactionModel {
@@ -125,7 +125,7 @@ mod tests {
             asset_id: 2,
             category_id: 1,
             quantity: dec!(1123788787785.12154234123),
-            date: datetime!(2020-01-01 0:00),
+            date: datetime!(2020-01-01 0:00 UTC),
         };
 
         //act

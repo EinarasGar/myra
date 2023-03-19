@@ -1,11 +1,14 @@
 use sqlx::postgres::PgPoolOptions;
 
-use crate::db_sets::{transactions::TransactionDbSet, users::UsersDbSet};
+use crate::db_sets::{
+    portfolio::PortfolioDbSet, transactions::TransactionDbSet, users::UsersDbSet,
+};
 
 #[derive(Clone)]
 pub struct MyraDb {
     pub users_db_set: UsersDbSet,
     pub transactions_db_set: TransactionDbSet,
+    pub portfolio_db_set: PortfolioDbSet,
 }
 
 impl MyraDb {
@@ -19,10 +22,12 @@ impl MyraDb {
 
         let users_db_set: UsersDbSet = UsersDbSet::new(pool.clone());
         let transactions_db_set: TransactionDbSet = TransactionDbSet::new(pool.clone());
+        let portfolio_db_set: PortfolioDbSet = PortfolioDbSet::new(pool.clone());
 
         Ok(Self {
             users_db_set,
             transactions_db_set,
+            portfolio_db_set,
         })
     }
 }

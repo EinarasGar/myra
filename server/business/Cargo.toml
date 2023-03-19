@@ -13,6 +13,6 @@ argon2 = { version = "0.5.0", features = ["std"] }
 uuid = { version = "1.3.0", features = ["v4", "serde"] }
 jsonwebtoken = "8.2.0"
 serde = "1.0.155"
-time = { version = "0.3.20", features = ["macros", "formatting"] }
+time = { version = "0.3.20", features = ["macros", "formatting", "serde"] }
 rust_decimal = "1.29.0"
 rust_decimal_macros = "1.29.0"

@@ -1,1 +1,30 @@
-[]
+[
+  {
+    "_id": "03dc0ee1-421e-4cec-a2c2-d4814ab3245e",
+    "name": "myradev-common",
+    "default": false,
+    "sortNum": 10000,
+    "created": "2023-03-18T23:47:24.271Z",
+    "modified": "2023-03-18T23:47:24.271Z",
+    "data": [
+      {
+        "name": "base",
+        "value": "http://localhost:5000"
+      }
+    ]
+  },
+  {
+    "_id": "019d7cee-e952-4822-9913-bf0717bedb8e",
+    "name": "myradev-test1",
+    "default": true,
+    "sortNum": 20000,
+    "created": "2023-03-19T10:57:10.227Z",
+    "modified": "2023-03-19T10:57:10.227Z",
+    "data": [
+      {
+        "name": "my-uuid",
+        "value": "2396480f-0052-4cf0-81dc-8cedbde5ce13"
+      }
+    ]
+  }
+]
