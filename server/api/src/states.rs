@@ -5,7 +5,7 @@ use axum::{
 };
 
 use business::service_collection::{
-    auth_service::AuthService, portfolio_service::PortfolioService,
+    assets_service::AssetsService, auth_service::AuthService, portfolio_service::PortfolioService,
     transaction_service::TransactionService, users_service::UsersService,
 };
 
@@ -18,6 +18,7 @@ pub struct UsersServiceState(pub UsersService);
 pub struct AuthServiceState(pub AuthService);
 pub struct TransactionServiceState(pub TransactionService);
 pub struct PortfolioServiceState(pub PortfolioService);
+pub struct AssetsServiceState(pub AssetsService);
 
 impl FromRef<AppState> for UsersService {
     fn from_ref(state: &AppState) -> Self {
@@ -40,6 +41,12 @@ impl FromRef<AppState> for TransactionService {
 impl FromRef<AppState> for PortfolioService {
     fn from_ref(state: &AppState) -> Self {
         return state.serivces_collection.portfolio_service.clone();
+    }
+}
+
+impl FromRef<AppState> for AssetsService {
+    fn from_ref(state: &AppState) -> Self {
+        return state.serivces_collection.assets_service.clone();
     }
 }
 
@@ -95,6 +102,20 @@ where
 
     async fn from_request_parts(_parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let conn = PortfolioService::from_ref(state);
+        Ok(Self(conn))
+    }
+}
+
+#[async_trait]
+impl<S> FromRequestParts<S> for AssetsServiceState
+where
+    AssetsService: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = (StatusCode, String);
+
+    async fn from_request_parts(_parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let conn = AssetsService::from_ref(state);
         Ok(Self(conn))
     }
 }

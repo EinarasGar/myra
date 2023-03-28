@@ -27,12 +27,12 @@
     "method": "POST",
     "sortNum": 10000,
     "created": "2023-03-18T23:50:56.876Z",
-    "modified": "2023-03-19T01:39:54.235Z",
+    "modified": "2023-03-19T21:51:11.899Z",
     "headers": [],
     "params": [],
     "body": {
       "type": "json",
-      "raw": "{\n  \"transactions\": [\n    {\n      \"asset_id\": 1,\n      \"quantity\": 100.123,\n      \"category\": 1,\n      \"date\": \"2012-04-23T18:25:43.511Z\",\n      \"description\": \"payday\"\n    },\n    {\n      \"asset_id\": 2,\n      \"quantity\": 20.123,\n      \"category\": 1,\n      \"date\": \"2013-04-23T18:25:43.511Z\",\n      \"description\": \"payday2\"\n    }\n  ]\n}",
+      "raw": "{\n  \"transactions\": [\n    {\n      \"asset_id\":78,\n      \"quantity\": 6,\n      \"category\": 10,\n      \"date\": \"2023-01-09T16:38:00.511Z\"\n    }\n  ]\n}",
       "form": []
     },
     "tests": []
@@ -47,6 +47,46 @@
     "sortNum": 10000,
     "created": "2023-03-19T11:06:45.424Z",
     "modified": "2023-03-19T17:13:32.651Z",
+    "headers": [],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "17794186-3494-495e-90ee-6754f9d77a38",
+    "colId": "04b31698-f112-422f-8088-b67336a9b979",
+    "containerId": "",
+    "name": "/assets",
+    "url": "{{base}}/assets?search=ford",
+    "method": "GET",
+    "sortNum": 10000,
+    "created": "2023-03-19T22:51:52.640Z",
+    "modified": "2023-03-28T23:22:47.053Z",
+    "headers": [],
+    "params": [
+      {
+        "name": "p",
+        "value": "3",
+        "isDisabled": true,
+        "isPath": false
+      },
+      {
+        "name": "search",
+        "value": "ford",
+        "isPath": false
+      }
+    ],
+    "tests": []
+  },
+  {
+    "_id": "0b11ea2c-30e2-4c35-8f75-1716649c0f83",
+    "colId": "04b31698-f112-422f-8088-b67336a9b979",
+    "containerId": "",
+    "name": "/assets Copy",
+    "url": "{{base}}/assets/327",
+    "method": "GET",
+    "sortNum": 20000,
+    "created": "2023-03-28T23:46:06.419Z",
+    "modified": "2023-03-28T23:46:29.633Z",
     "headers": [],
     "params": [],
     "tests": []

@@ -90,7 +90,8 @@ VALUES (1, 'US Dollar', 'USD'),
     (5, 'iShares Russell 2000 ETF', 'IWM'),
     (5, 'Vanguard Total Bond Market ETF', 'BND'),
     (5, 'iShares Core S&P Mid-Cap ETF', 'IJH'),
-    (5, 'Invesco S&P 500 Equal Weight ETF', 'RSP');
+    (5, 'Invesco S&P 500 Equal Weight ETF', 'RSP'),
+    (2, 'British American Tobacco PLC', 'BTI');
 INSERT INTO user_roles (name)
 VALUES ('User'),
     ('Admin');

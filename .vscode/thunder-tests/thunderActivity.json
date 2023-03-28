@@ -1,1 +1,122 @@
-[]
+[
+  {
+    "_id": "a871e4a7-4468-4ba5-9ce8-d6846146c0f9",
+    "colId": "history",
+    "containerId": "",
+    "name": "https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=25&download=true",
+    "url": "https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=25&download=true",
+    "method": "GET",
+    "sortNum": 0,
+    "created": "2023-03-20T23:07:00.252Z",
+    "modified": "2023-03-20T23:09:20.036Z",
+    "headers": [
+      {
+        "name": "User-Agent",
+        "value": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/110.0"
+      },
+      {
+        "name": "Accept",
+        "value": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
+      },
+      {
+        "name": "Accept-Language",
+        "value": "en-US,en;q=0.5"
+      },
+      {
+        "name": "Accept-Encoding",
+        "value": "gzip, deflate, br"
+      },
+      {
+        "name": "Connection",
+        "value": "keep-alive"
+      },
+      {
+        "name": "Cookie",
+        "value": "ak_bmsc=6C6D36D0B76DE5796C9E52D8B04D4A8F~000000000000000000000000000000~YAAQt+f2SDaYIeSGAQAArJIZAROIJG5J5Ycu9hUzYKimXrzdyun7is0g5u4RlM02sLHrhbtzxdSRvL/rVclCnsn1O/QRiLTycMzl5L3O5lfYsG4T7LCUlzAHvDoRgWrSBrq40mvZjuIq1m+3YkccaEmXxnLNr/4v+YIbQVB8/ExI0b/xakThVxbnVTbsBEejJy4FM6AxXi6aCsUB3bDq2Bj0qcIPdf/os8Zhwncl05E5Jf8hdk4IP8r91NIYoqpFvO6Cl6kcGbZy6CxN9pObkey1GZCy2cQ3g5i7FKTLITbYiEVANOSrLtAZWEONcvhXGDN4qbHPTX36g3uPyg7cF0LKRZzZ1Vf//Cuvt4H5ug05kXMmCNGNXf1p0lequCcztyYyJLl8UhY4OFfUV3qlfacuP6aT6wlB5q0bYdZADrGN; entryUrl=https://www.nasdaq.com/market-activity/stocks/screener; entryReferringURL=https://duckduckgo.com/; volatileMarket=true; AKA_A2=A; bm_mi=E8E7CE68FCC0169D58E78847152EB8D8~YAAQt+f2SG2VIeSGAQAAj0EZARNZMGN1Ec7Yhi6S3eWRcc/mwqXbu1x2V6gxSWBdYR20tYPOoZFXRXB4GLhDk0utOnPjFAjoWagvlYcxQ1Vs9zzj3+gmVeGn1dPl9N8TQPFiLZQarcECjGUlNkFg0IiBnrH7nkOG93gnXpPsQOkjARFQ5aUEtSG2Y+umQEa7gnFIVJCTCs73mr4IOi5DLq1rP2fru/1YbP3LlEv5fVCr52v5Eu0aL8axGTAPLWXm6b/Gt99fEpipT1GZvTZdOjCf1gvsJ0W5b6ossY2F/lmkaAswK0wIpkjbeM7xEQ4fndog~1; bm_sv=415A5B48AD675FFE5D89455D29E4FD4C~YAAQt+f2SF+XIeSGAQAAQXgZARM89cF17B1DbMPwsohr39OPcLqM1fruol+T0JPXe8DKgbZ9IuK2H50S/HKuARNQVdSoqrBfHOKVPvUXHlsBHMcUPFBS6gNfcsBqQRNRk4CkatkPyU+eeZZKuzeRIz0RtxHvns6Haof5K4s8bsLEM2BjI9mCUyBBz3znOms5iCKBpuL8qFydV9Wop7RUaaoqp8PewhF+pivWny8QAUroy7ImyCiJ4ZlYj8yeJ/yn6g==~1; secondUrl=https://www.nasdaq.com/market-activity/stocks/screener; recentlyViewedList=BTAFF|Stocks; todaysViewedSymbol=BTAFF|Stocks; visid_incap_2170999=NH2dk1ORSR+JayhM79Kib5fbGGQAAAAAQUIPAAAAAADL5G5+ly4oo1CYTomF36Y3; nlbi_2170999=OwrhV5Ly3ALSK5RsKj7S7QAAAAAHA6T0KFrEtyIZZNe1O/nh; incap_ses_1541_2170999=XEeGU6DX2DLuqfJlp7tiFZfbGGQAAAAAg4jCj7PWG1YmtEUK8PNsuA=="
+      },
+      {
+        "name": "Upgrade-Insecure-Requests",
+        "value": "1"
+      },
+      {
+        "name": "Sec-Fetch-Dest",
+        "value": "document"
+      },
+      {
+        "name": "Sec-Fetch-Mode",
+        "value": "navigate"
+      },
+      {
+        "name": "Sec-Fetch-Site",
+        "value": "none"
+      },
+      {
+        "name": "Sec-Fetch-User",
+        "value": "?1"
+      },
+      {
+        "name": "Sec-GPC",
+        "value": "1"
+      },
+      {
+        "name": "TE",
+        "value": "trailers"
+      }
+    ],
+    "params": [
+      {
+        "name": "tableonly",
+        "value": "true",
+        "isPath": false
+      },
+      {
+        "name": "limit",
+        "value": "25",
+        "isPath": false
+      },
+      {
+        "name": "download",
+        "value": "true",
+        "isPath": false
+      }
+    ],
+    "tests": []
+  },
+  {
+    "_id": "1c703b86-cdaf-4aaa-8fbf-f2e81ac67493",
+    "colId": "history",
+    "containerId": "",
+    "name": "https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=25&offset=0&download=true",
+    "url": "https://api.nasdaq.com/api/screener/stocks?download=true",
+    "method": "GET",
+    "sortNum": 0,
+    "created": "2023-03-20T23:10:44.345Z",
+    "modified": "2023-03-20T23:23:52.827Z",
+    "headers": [
+      {
+        "name": "User-Agent",
+        "value": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/110.0"
+      },
+      {
+        "name": "Accept",
+        "value": "application/json, text/plain, */*"
+      },
+      {
+        "name": "Accept-Language",
+        "value": "en-US,en;q=0.5"
+      },
+      {
+        "name": "Accept-Encoding",
+        "value": "deflate"
+      }
+    ],
+    "params": [
+      {
+        "name": "download",
+        "value": "true",
+        "isPath": false
+      }
+    ],
+    "tests": []
+  }
+]

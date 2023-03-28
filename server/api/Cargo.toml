@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 business = {path="../business"}
-axum = "0.6.11"
+axum = { version = "0.6.11", features = ["query"] }
 serde = "1.0.156"
 tokio = { version = "1.26.0", features = ["full"] }
 tracing-subscriber = { version = "0.3.16", features = ["std", "env-filter"] }

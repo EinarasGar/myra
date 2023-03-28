@@ -18,6 +18,8 @@ pub(crate) fn create_router(state: AppState) -> Router {
             "/users/:id/portfolio",
             get(handlers::portfolio::get_portfolio),
         )
+        .route("/assets", get(handlers::assets::get_assets))
+        .route("/assets/:id", get(handlers::assets::get_asset_by_id))
         .layer(TraceLayer::new_for_http())
         .with_state(state);
     app

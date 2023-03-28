@@ -34,5 +34,17 @@
       "tests": [],
       "envId": "03dc0ee1-421e-4cec-a2c2-d4814ab3245e"
     }
+  },
+  {
+    "_id": "04b31698-f112-422f-8088-b67336a9b979",
+    "colName": "assets",
+    "created": "2023-03-19T22:51:37.381Z",
+    "sortNum": 40000,
+    "folders": [],
+    "settings": {
+      "headers": [],
+      "tests": [],
+      "envId": "03dc0ee1-421e-4cec-a2c2-d4814ab3245e"
+    }
   }
 ]
