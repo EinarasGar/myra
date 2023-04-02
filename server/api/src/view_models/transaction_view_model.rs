@@ -38,10 +38,11 @@ impl From<TransactonDto> for TransactionRespData {
 pub struct TransactionGroupRespData {
     pub transactions: Vec<TransactionRespData>,
     pub group_description: Option<String>,
+    pub group_id: Uuid,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TransactionGroupListRespData {
-    pub groups: HashMap<Uuid, TransactionGroupRespData>,
+    pub groups: Vec<TransactionGroupRespData>,
     pub assets_lookup_table: Vec<AssetRespData>,
 }

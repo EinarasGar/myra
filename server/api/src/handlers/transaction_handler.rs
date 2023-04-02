@@ -41,16 +41,14 @@ pub async fn post_transactions(
             description: transaction.description,
         })
     }
-    let mut resp_hash_map: HashMap<Uuid, TransactionGroupRespData> = HashMap::new();
-    resp_hash_map.insert(
-        insert_result.0,
-        TransactionGroupRespData {
-            transactions: resp_transactions,
-            group_description: None,
-        },
-    );
+    let mut resp_group_vec: Vec<TransactionGroupRespData> = Vec::new();
+    resp_group_vec.push(TransactionGroupRespData {
+        transactions: resp_transactions,
+        group_description: None,
+        group_id: insert_result.0,
+    });
     let response = TransactionGroupListRespData {
-        groups: resp_hash_map,
+        groups: resp_group_vec,
         assets_lookup_table: Vec::new(),
     };
     Ok(response.into())
@@ -66,7 +64,7 @@ pub async fn get_transactions(
     let transactions = transaction_service.get_transaction_groups(id).await?;
 
     let mut unique_asset_ids: HashSet<i32> = HashSet::new();
-    let mut resp_hash_map: HashMap<Uuid, TransactionGroupRespData> = HashMap::new();
+    let mut resp_group_vec: Vec<TransactionGroupRespData> = Vec::new();
     for (key, val) in transactions.iter() {
         let mut transaction_vec: Vec<TransactionRespData> = Vec::new();
         let owned_trans = val.to_owned();
@@ -75,13 +73,11 @@ pub async fn get_transactions(
             unique_asset_ids.insert(dto.asset_id);
         }
 
-        resp_hash_map.insert(
-            key.to_owned(),
-            TransactionGroupRespData {
-                transactions: transaction_vec,
-                group_description: owned_trans.description,
-            },
-        );
+        resp_group_vec.push(TransactionGroupRespData {
+            transactions: transaction_vec,
+            group_description: owned_trans.description,
+            group_id: key.to_owned(),
+        });
     }
 
     let mut assets_lookup_vec: Vec<AssetRespData> = Vec::new();
@@ -91,7 +87,7 @@ pub async fn get_transactions(
     }
 
     let response = TransactionGroupListRespData {
-        groups: resp_hash_map,
+        groups: resp_group_vec,
         assets_lookup_table: assets_lookup_vec,
     };
     Ok(response.into())
