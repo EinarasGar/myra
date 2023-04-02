@@ -5,10 +5,10 @@ use uuid::Uuid;
 
 use crate::{
     idens::{
-        assets::{AssetTypesIden, AssetsIden},
-        portfolio::PortfolioIden,
+        asset_idens::{AssetTypesIden, AssetsIden},
+        portfolio_idens::PortfolioIden,
     },
-    models::portfolio::PortfolioCombined,
+    models::portfolio_models::PortfolioCombined,
 };
 
 #[derive(Clone)]

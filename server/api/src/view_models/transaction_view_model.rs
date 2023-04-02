@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
-use business::models::transactions::TransactonDto;
+use business::dtos::transaction_dto::TransactonDto;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use time::{serde::iso8601, OffsetDateTime};
 use uuid::Uuid;
 
-use super::assets::AssetRespData;
+use super::asset_view_model::AssetRespData;
 
-pub type TranscationGroupReqData = business::models::transactions::AddTransactionGroupDto;
+pub type TranscationGroupReqData = business::dtos::transaction_dto::AddTransactionGroupDto;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TransactionRespData {

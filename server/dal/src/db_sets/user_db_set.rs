@@ -3,8 +3,8 @@ use sea_query_binder::SqlxBinder;
 use sqlx::{Pool, Postgres, Row};
 
 use crate::{
-    idens::users::{UserRolesIden, UsersIden},
-    models::user::{UserAuthModel, UserModel},
+    idens::user_idens::{UserRolesIden, UsersIden},
+    models::user_models::{UserAuthModel, UserModel},
 };
 
 #[derive(Clone)]

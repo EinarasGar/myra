@@ -5,8 +5,8 @@ use axum::{
 };
 
 use business::service_collection::{
-    assets_service::AssetsService, auth_service::AuthService, portfolio_service::PortfolioService,
-    transaction_service::TransactionService, users_service::UsersService,
+    asset_service::AssetsService, auth_service::AuthService, portfolio_service::PortfolioService,
+    transaction_service::TransactionService, user_service::UsersService,
 };
 
 #[derive(Clone)]

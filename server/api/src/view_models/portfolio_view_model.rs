@@ -1,8 +1,8 @@
-use business::models::portfolio::PortfolioDto;
+use business::dtos::portfolio_dto::PortfolioDto;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
-use super::assets::AssetRespData;
+use super::asset_view_model::AssetRespData;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PortfolioRespData {

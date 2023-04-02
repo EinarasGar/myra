@@ -1,8 +1,8 @@
 use sqlx::postgres::PgPoolOptions;
 
 use crate::db_sets::{
-    assets::AssetsDbSet, portfolio::PortfolioDbSet, transactions::TransactionDbSet,
-    users::UsersDbSet,
+    asset_db_set::AssetsDbSet, portfolio_db_set::PortfolioDbSet,
+    transaction_db_set::TransactionDbSet, user_db_set::UsersDbSet,
 };
 
 #[derive(Clone)]

@@ -1,14 +1,14 @@
-use self::assets_service::AssetsService;
+use self::asset_service::AssetsService;
 use self::auth_service::AuthService;
 use self::portfolio_service::PortfolioService;
 use self::transaction_service::TransactionService;
-use self::users_service::UsersService;
+use self::user_service::UsersService;
 
-pub mod assets_service;
+pub mod asset_service;
 pub mod auth_service;
 pub mod portfolio_service;
 pub mod transaction_service;
-pub mod users_service;
+pub mod user_service;
 
 #[derive(Clone)]
 pub struct Services {

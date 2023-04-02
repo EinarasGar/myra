@@ -1,4 +1,4 @@
-use dal::models::assets::Asset;
+use dal::models::asset_models::Asset;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

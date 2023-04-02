@@ -5,8 +5,8 @@ use uuid::Uuid;
 
 use crate::{
     app_error::AppError,
-    models::users::{AddUserReqData, UserRespData},
     states::UsersServiceState,
+    view_models::user_view_model::{AddUserReqData, UserRespData},
 };
 
 pub async fn post_user(

@@ -3,8 +3,8 @@ use sea_query_binder::SqlxBinder;
 use sqlx::{Pool, Postgres};
 
 use crate::{
-    idens::assets::{AssetTypesIden, AssetsIden},
-    models::assets::{Asset, AssetRaw},
+    idens::asset_idens::{AssetTypesIden, AssetsIden},
+    models::asset_models::{Asset, AssetRaw},
 };
 
 #[derive(Clone)]
@@ -109,7 +109,7 @@ impl AssetsDbSet {
 
 #[cfg(test)]
 mod tests {
-    use crate::{database_context, models::assets::AssetRaw};
+    use crate::{database_context, models::asset_models::AssetRaw};
 
     use reqwest::header::{ACCEPT, ACCEPT_ENCODING, ACCEPT_LANGUAGE, USER_AGENT};
     use serde::Deserialize;

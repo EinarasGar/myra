@@ -1,4 +1,4 @@
-use dal::models::transaction::TransactionModel;
+use dal::models::transaction_models::TransactionModel;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use time::{serde::iso8601, OffsetDateTime};

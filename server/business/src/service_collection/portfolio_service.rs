@@ -1,7 +1,7 @@
-use dal::db_sets::portfolio::PortfolioDbSet;
+use dal::db_sets::portfolio_db_set::PortfolioDbSet;
 use uuid::Uuid;
 
-use crate::models::portfolio::PortfolioDto;
+use crate::dtos::portfolio_dto::PortfolioDto;
 
 #[derive(Clone)]
 pub struct PortfolioService {

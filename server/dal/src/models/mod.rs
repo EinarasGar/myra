@@ -1,4 +1,4 @@
-pub mod assets;
-pub mod portfolio;
-pub mod transaction;
-pub mod user;
+pub mod asset_models;
+pub mod portfolio_models;
+pub mod transaction_models;
+pub mod user_models;

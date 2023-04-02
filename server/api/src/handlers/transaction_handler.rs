@@ -7,14 +7,14 @@ use uuid::Uuid;
 
 use crate::{
     app_error::AppError,
-    models::{
-        assets::AssetRespData,
-        transaction::{
+    states::{AssetsServiceState, TransactionServiceState},
+    view_models::{
+        asset_view_model::AssetRespData,
+        transaction_view_model::{
             TransactionGroupListRespData, TransactionGroupRespData, TransactionRespData,
             TranscationGroupReqData,
         },
     },
-    states::{AssetsServiceState, TransactionServiceState},
 };
 
 pub async fn post_transactions(

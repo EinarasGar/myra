@@ -1,9 +1,9 @@
 use sea_query::Iden;
 
-pub mod assets;
-pub(crate) mod portfolio;
-pub(crate) mod transaction;
-pub(crate) mod users;
+pub mod asset_idens;
+pub(crate) mod portfolio_idens;
+pub(crate) mod transaction_idens;
+pub(crate) mod user_idens;
 
 pub enum CommonsIden {
     Excluded,

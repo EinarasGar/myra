@@ -10,9 +10,9 @@ use crate::states::AppState;
 pub(crate) mod app_error;
 mod fallback;
 pub(crate) mod handlers;
-pub(crate) mod models;
 pub(crate) mod routes;
 pub(crate) mod states;
+pub(crate) mod view_models;
 
 #[tokio::main]
 async fn main() {

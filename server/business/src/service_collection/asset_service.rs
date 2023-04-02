@@ -1,6 +1,6 @@
-use dal::db_sets::assets::AssetsDbSet;
+use dal::db_sets::asset_db_set::AssetsDbSet;
 
-use crate::models::assets::AssetDto;
+use crate::dtos::asset_dto::AssetDto;
 
 #[derive(Clone)]
 pub struct AssetsService {

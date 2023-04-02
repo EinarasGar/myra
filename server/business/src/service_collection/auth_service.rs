@@ -1,12 +1,12 @@
 use std::str::FromStr;
 
 use anyhow::Ok;
-use dal::{db_sets::users::UsersDbSet, models::user::AuthRoles};
+use dal::{db_sets::user_db_set::UsersDbSet, models::user_models::AuthRoles};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::service_collection::users_service::UsersService;
+use crate::service_collection::user_service::UsersService;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
@@ -78,7 +78,7 @@ impl AuthService {
 
 #[cfg(test)]
 mod tests {
-    use dal::models::user::AuthRoles;
+    use dal::models::user_models::AuthRoles;
 
     use super::AuthService;
     use crate::service_collection::Services;

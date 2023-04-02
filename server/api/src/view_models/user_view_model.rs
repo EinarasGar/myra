@@ -8,4 +8,4 @@ pub struct UserRespData {
     pub default_asset: i32,
 }
 
-pub type AddUserReqData = business::models::user::AddUserDto;
+pub type AddUserReqData = business::dtos::user_dto::AddUserDto;

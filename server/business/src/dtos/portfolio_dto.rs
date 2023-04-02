@@ -1,8 +1,8 @@
-use dal::models::portfolio::PortfolioCombined;
+use dal::models::portfolio_models::PortfolioCombined;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
-use super::assets::AssetDto;
+use super::asset_dto::AssetDto;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PortfolioDto {

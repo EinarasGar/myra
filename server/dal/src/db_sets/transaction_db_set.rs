@@ -5,13 +5,13 @@ use uuid::Uuid;
 
 use crate::{
     idens::{
-        portfolio::PortfolioIden,
-        transaction::{
+        portfolio_idens::PortfolioIden,
+        transaction_idens::{
             TransactionDescriptionsIden, TransactionGroupDescriptionsIden, TransactionIden,
         },
         CommonsIden,
     },
-    models::transaction::TransactionModel,
+    models::transaction_models::TransactionModel,
 };
 
 #[derive(Clone)]
@@ -149,7 +149,7 @@ mod tests {
     use time::macros::datetime;
     use uuid::Uuid;
 
-    use crate::{database_context, models::transaction::TransactionModel};
+    use crate::{database_context, models::transaction_models::TransactionModel};
     use rust_decimal_macros::dec;
 
     #[tokio::test]

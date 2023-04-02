@@ -5,7 +5,9 @@ use axum::{
 use log::trace;
 use serde::Deserialize;
 
-use crate::{app_error::AppError, models::assets::AssetRespData, states::AssetsServiceState};
+use crate::{
+    app_error::AppError, states::AssetsServiceState, view_models::asset_view_model::AssetRespData,
+};
 
 #[derive(Deserialize)]
 pub struct Pagination {

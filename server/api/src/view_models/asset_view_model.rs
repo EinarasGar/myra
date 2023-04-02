@@ -1,4 +1,4 @@
-use business::models::assets::AssetDto;
+use business::dtos::asset_dto::AssetDto;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

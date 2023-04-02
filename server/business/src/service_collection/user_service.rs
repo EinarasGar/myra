@@ -1,8 +1,8 @@
 use anyhow::Ok;
-use dal::{db_sets::users::UsersDbSet, models::user::UserModel};
+use dal::{db_sets::user_db_set::UsersDbSet, models::user_models::UserModel};
 use uuid::Uuid;
 
-use crate::models::user::AddUserDto;
+use crate::dtos::user_dto::AddUserDto;
 
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
@@ -57,11 +57,11 @@ impl UsersService {
 mod tests {
     use dal::database_context;
 
-    use crate::service_collection::users_service;
+    use crate::service_collection::user_service;
 
-    async fn get_users_service() -> users_service::UsersService {
+    async fn get_users_service() -> user_service::UsersService {
         let context = database_context::MyraDb::new().await.unwrap();
-        let users_service = users_service::UsersService::new(context.users_db_set);
+        let users_service = user_service::UsersService::new(context.users_db_set);
         return users_service;
     }
 

@@ -4,8 +4,8 @@ use uuid::Uuid;
 
 use crate::{
     app_error::AppError,
-    models::portfolio::{AllPortfolioRespdata, PortfolioRespData},
     states::PortfolioServiceState,
+    view_models::portfolio_view_model::{AllPortfolioRespdata, PortfolioRespData},
 };
 
 pub async fn get_portfolio(

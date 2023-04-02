@@ -1,9 +1,11 @@
 use std::{collections::HashMap, vec};
 
-use dal::{db_sets::transactions::TransactionDbSet, models::transaction::TransactionModel};
+use dal::{
+    db_sets::transaction_db_set::TransactionDbSet, models::transaction_models::TransactionModel,
+};
 use uuid::Uuid;
 
-use crate::models::transactions::{AddTransactionGroupDto, TransactionGroupDto};
+use crate::dtos::transaction_dto::{AddTransactionGroupDto, TransactionGroupDto};
 
 #[derive(Clone)]
 pub struct TransactionService {
