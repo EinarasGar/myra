@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 use axum::{extract::Path, Json};
 
@@ -44,7 +44,9 @@ pub async fn post_transactions(
     let mut resp_group_vec: Vec<TransactionGroupRespData> = Vec::new();
     resp_group_vec.push(TransactionGroupRespData {
         transactions: resp_transactions,
-        group_description: None,
+        group_description: params.description,
+        group_date: params.date,
+        group_category: params.category,
         group_id: insert_result.0,
     });
     let response = TransactionGroupListRespData {
@@ -65,18 +67,20 @@ pub async fn get_transactions(
 
     let mut unique_asset_ids: HashSet<i32> = HashSet::new();
     let mut resp_group_vec: Vec<TransactionGroupRespData> = Vec::new();
-    for (key, val) in transactions.iter() {
+    for val in transactions.iter() {
         let mut transaction_vec: Vec<TransactionRespData> = Vec::new();
-        let owned_trans = val.to_owned();
-        for dto in owned_trans.transactions {
+        let owned_group = val.to_owned();
+        for dto in owned_group.transactions {
             transaction_vec.push(dto.clone().into());
             unique_asset_ids.insert(dto.asset_id);
         }
 
         resp_group_vec.push(TransactionGroupRespData {
             transactions: transaction_vec,
-            group_description: owned_trans.description,
-            group_id: key.to_owned(),
+            group_description: owned_group.description,
+            group_id: owned_group.group_id,
+            group_date: owned_group.date,
+            group_category: owned_group.category,
         });
     }
 

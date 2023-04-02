@@ -1,3 +1,5 @@
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS public.transaction_categories (
     id SERIAL CONSTRAINT transaction_categories_pk PRIMARY KEY,
@@ -7,9 +9,11 @@ CREATE TABLE IF NOT EXISTS public.transaction_descriptions (
     transaction_id INT CONSTRAINT transaction_descriptions_pk PRIMARY KEY,
     description TEXT NOT NULL
 );
-CREATE TABLE IF NOT EXISTS public.transaction_group_descriptions (
+CREATE TABLE IF NOT EXISTS public.transaction_group (
     transaction_group_id UUID CONSTRAINT transaction_group_descriptions_pk PRIMARY KEY,
-    description TEXT NOT NULL
+    category_id INT NOT NULL CONSTRAINT transaction_group_category_id_fkey REFERENCES public.transaction_categories (id),
+    description TEXT NOT NULL,
+    date_added TIMESTAMPTZ NOT NULL
 );
 CREATE TABLE IF NOT EXISTS public.transaction_file_types (
     id SERIAL CONSTRAINT transaction_file_types_pk PRIMARY KEY,
@@ -30,7 +34,7 @@ CREATE TABLE IF NOT EXISTS public.asset_history (
     id SERIAL CONSTRAINT asset_history_pk PRIMARY KEY,
     pair_id INT NOT NULL CONSTRAINT asset_history_pair_id_fkey REFERENCES public.asset_pairs (id),
     rate numeric NOT NULL,
-    date TIMESTAMP NOT NULL
+    date TIMESTAMPTZ NOT NULL
 );
 CREATE TABLE IF NOT EXISTS public.asset_types (
     id SERIAL CONSTRAINT asset_types_pk PRIMARY KEY,
@@ -66,12 +70,12 @@ CREATE TABLE IF NOT EXISTS public.transaction (
     asset_id INT NOT NULL CONSTRAINT transaction_asset_id_fkey REFERENCES public.assets (id),
     category_id INT NOT NULL CONSTRAINT transaction_category_id_fkey REFERENCES public.transaction_categories (id),
     quantity NUMERIC NOT NULL,
-    date TIMESTAMP NOT NULL,
+    date TIMESTAMPTZ NOT NULL,
     CONSTRAINT transaction_user_id_asset_id_fkey FOREIGN KEY(user_id, asset_id) REFERENCES public.portfolio(user_id, asset_id)
 );
 CREATE TABLE IF NOT EXISTS public.portfolio_history (
     id SERIAL CONSTRAINT portfolio_history_pk PRIMARY KEY,
-    date TIMESTAMP NOT NULL,
+    date TIMESTAMPTZ NOT NULL,
     user_id UUID NOT NULL CONSTRAINT portfolio_history_user_id_fkey REFERENCES public.users (id),
     asset_id INT NOT NULL CONSTRAINT portfolio_history_asset_id_fkey REFERENCES public.assets (id),
     reference_asset_id INT NOT NULL CONSTRAINT portfolio_history_reference_asset_id_fkey REFERENCES public.assets (id),

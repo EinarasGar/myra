@@ -26,10 +26,12 @@ pub enum TransactionDescriptionsIden {
 }
 
 #[allow(dead_code)]
-pub enum TransactionGroupDescriptionsIden {
+pub enum TransactionGroupIden {
     Table,
     TransactionGroupId,
+    CategoryId,
     Description,
+    DateAdded,
 }
 
 impl Iden for TransactionIden {
@@ -82,15 +84,17 @@ impl Iden for TransactionDescriptionsIden {
     }
 }
 
-impl Iden for TransactionGroupDescriptionsIden {
+impl Iden for TransactionGroupIden {
     fn unquoted(&self, s: &mut dyn std::fmt::Write) {
         write!(
             s,
             "{}",
             match self {
-                Self::Table => "transaction_group_descriptions",
+                Self::Table => "transaction_group",
+                Self::CategoryId => "category_id",
                 Self::TransactionGroupId => "transaction_group_id",
                 Self::Description => "description",
+                Self::DateAdded => "date_added",
             }
         )
         .unwrap();

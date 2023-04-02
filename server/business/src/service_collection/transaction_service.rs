@@ -1,7 +1,8 @@
 use std::{collections::HashMap, vec};
 
 use dal::{
-    db_sets::transaction_db_set::TransactionDbSet, models::transaction_models::TransactionModel,
+    db_sets::transaction_db_set::TransactionDbSet,
+    models::transaction_models::{AddTransactionGroupModel, AddTransactionModel},
 };
 use uuid::Uuid;
 
@@ -25,11 +26,16 @@ impl TransactionService {
         group: AddTransactionGroupDto,
     ) -> anyhow::Result<(Uuid, Vec<i32>)> {
         let group_id = Uuid::new_v4();
-        let mut dal_transactions: Vec<TransactionModel> = Vec::new();
+        let mut dal_transactions: Vec<AddTransactionModel> = Vec::new();
+        let dal_group = AddTransactionGroupModel {
+            group_id,
+            category_id: group.category,
+            description: group.description,
+            date: group.date,
+        };
 
         for trans in group.transactions.iter() {
-            let dal_model = TransactionModel {
-                id: 0, //Id is not neccesary for insertion as it is auto generated
+            let dal_model = AddTransactionModel {
                 user_id: user_id,
                 group_id: group_id,
                 asset_id: trans.asset_id,
@@ -37,14 +43,13 @@ impl TransactionService {
                 quantity: trans.quantity,
                 date: trans.date,
                 description: trans.description.clone(),
-                group_description: None,
             };
             dal_transactions.push(dal_model);
         }
 
         let return_ids = self
             .transactions_db_set
-            .insert_transactions(dal_transactions)
+            .insert_transactions_and_group(dal_transactions, dal_group)
             .await?;
         Ok((group_id, return_ids))
     }
@@ -52,7 +57,7 @@ impl TransactionService {
     pub async fn get_transaction_groups(
         &self,
         user_id: Uuid,
-    ) -> anyhow::Result<HashMap<Uuid, TransactionGroupDto>> {
+    ) -> anyhow::Result<Vec<TransactionGroupDto>> {
         let transaction_vec = self.transactions_db_set.get_transactions(user_id).await?;
 
         let mut result: HashMap<Uuid, TransactionGroupDto> = HashMap::new();
@@ -64,43 +69,20 @@ impl TransactionService {
                 })
                 .or_insert(TransactionGroupDto {
                     transactions: vec![transaction.clone().into()],
-                    description: transaction.group_description.clone(),
+
+                    //This only runs once, so therefore it picks up the values
+                    //from first transaction. All the values in a transaction group
+                    //are identical, so it doesnt matter that it picks valeus from
+                    //the first one.
+
+                    //I am unsure if its more efficient to join and return same fields
+                    //or rather to do multiple queries but avoid returning identical fields
+                    group_id: transaction.group_id,
+                    description: transaction.group_description,
+                    category: transaction.group_category_id,
+                    date: transaction.date_added,
                 });
         }
-
-        Ok(result)
+        Ok(result.into_values().collect())
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::TransactionService;
-//     use crate::{
-//         models::transactions::{AddTransactionGroupDto, TransactonDto},
-//         service_collection::Services,
-//     };
-
-//     async fn get_transaction_service() -> TransactionService {
-//         return Services::new().await.unwrap().transaction_service;
-//     }
-
-//     // #[tokio::test]
-//     // async fn verify_invalid_auth_token() {
-//     //     //arrange
-//     //     let service = get_transaction_service().await;
-
-//     //     let trans1 = Transaction {
-//     //         asset_id: 1,
-//     //         quantity: 2000.0,
-//     //         category: 1,
-//     //         date: 1678747609,
-//     //         description: Some("Add initial money".to_string()),
-//     //     };
-
-//     //     let group = AddTransactionGroup {
-//     //         transactions: vec![trans1],
-//     //     };
-
-//     //     service.add_transaction_group(group);
-//     // }
-// }

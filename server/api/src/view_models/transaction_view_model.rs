@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use business::dtos::transaction_dto::TransactonDto;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -37,7 +35,10 @@ impl From<TransactonDto> for TransactionRespData {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TransactionGroupRespData {
     pub transactions: Vec<TransactionRespData>,
-    pub group_description: Option<String>,
+    pub group_description: String,
+    #[serde(with = "iso8601")]
+    pub group_date: OffsetDateTime,
+    pub group_category: i32,
     pub group_id: Uuid,
 }
 
