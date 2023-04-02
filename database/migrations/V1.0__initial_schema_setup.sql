@@ -7,6 +7,10 @@ CREATE TABLE IF NOT EXISTS public.transaction_descriptions (
     transaction_id INT CONSTRAINT transaction_descriptions_pk PRIMARY KEY,
     description TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS public.transaction_group_descriptions (
+    transaction_group_id UUID CONSTRAINT transaction_group_descriptions_pk PRIMARY KEY,
+    description TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS public.transaction_file_types (
     id SERIAL CONSTRAINT transaction_file_types_pk PRIMARY KEY,
     name TEXT NOT NULL

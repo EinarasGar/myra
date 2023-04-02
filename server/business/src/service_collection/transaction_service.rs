@@ -1,7 +1,9 @@
+use std::{collections::HashMap, vec};
+
 use dal::{db_sets::transactions::TransactionDbSet, models::transaction::TransactionModel};
 use uuid::Uuid;
 
-use crate::models::transactions::AddTransactionGroupDto;
+use crate::models::transactions::{AddTransactionGroupDto, TransactionGroupDto};
 
 #[derive(Clone)]
 pub struct TransactionService {
@@ -32,6 +34,8 @@ impl TransactionService {
                 category_id: trans.category,
                 quantity: trans.quantity,
                 date: trans.date,
+                description: trans.description.clone(),
+                group_description: None,
             };
             dal_transactions.push(dal_model);
         }
@@ -41,6 +45,28 @@ impl TransactionService {
             .insert_transactions(dal_transactions)
             .await?;
         Ok((group_id, return_ids))
+    }
+
+    pub async fn get_transaction_groups(
+        &self,
+        user_id: Uuid,
+    ) -> anyhow::Result<HashMap<Uuid, TransactionGroupDto>> {
+        let transaction_vec = self.transactions_db_set.get_transactions(user_id).await?;
+
+        let mut result: HashMap<Uuid, TransactionGroupDto> = HashMap::new();
+        for transaction in transaction_vec {
+            result
+                .entry(transaction.group_id)
+                .and_modify(|result_group| {
+                    result_group.transactions.push(transaction.clone().into())
+                })
+                .or_insert(TransactionGroupDto {
+                    transactions: vec![transaction.clone().into()],
+                    description: transaction.group_description.clone(),
+                });
+        }
+
+        Ok(result)
     }
 }
 

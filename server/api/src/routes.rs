@@ -15,6 +15,10 @@ pub(crate) fn create_router(state: AppState) -> Router {
             post(handlers::transactions::post_transactions),
         )
         .route(
+            "/users/:id/transactions",
+            get(handlers::transactions::get_transactions),
+        )
+        .route(
             "/users/:id/portfolio",
             get(handlers::portfolio::get_portfolio),
         )

@@ -1,9 +1,16 @@
-use sea_query::{Expr, OnConflict, PostgresQueryBuilder, Query};
+use sea_query::{Alias, Expr, OnConflict, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
 use sqlx::{Pool, Postgres};
+use uuid::Uuid;
 
 use crate::{
-    idens::{portfolio::PortfolioIden, transaction::TransactionIden, CommonsIden},
+    idens::{
+        portfolio::PortfolioIden,
+        transaction::{
+            TransactionDescriptionsIden, TransactionGroupDescriptionsIden, TransactionIden,
+        },
+        CommonsIden,
+    },
     models::transaction::TransactionModel,
 };
 
@@ -89,6 +96,50 @@ impl TransactionDbSet {
 
         anyhow::Ok(rows)
     }
+
+    pub async fn get_transactions(&self, user_id: Uuid) -> anyhow::Result<Vec<TransactionModel>> {
+        let (sql, values) = Query::select()
+            .column((TransactionIden::Table, TransactionIden::Id))
+            .column((TransactionIden::Table, TransactionIden::UserId))
+            .column((TransactionIden::Table, TransactionIden::GroupId))
+            .column((TransactionIden::Table, TransactionIden::AssetId))
+            .column((TransactionIden::Table, TransactionIden::CategoryId))
+            .column((TransactionIden::Table, TransactionIden::Quantity))
+            .column((TransactionIden::Table, TransactionIden::Date))
+            .column((
+                TransactionDescriptionsIden::Table,
+                TransactionDescriptionsIden::Description,
+            ))
+            .expr_as(
+                Expr::col((
+                    TransactionGroupDescriptionsIden::Table,
+                    TransactionGroupDescriptionsIden::Description,
+                )),
+                Alias::new("group_description"),
+            )
+            .from(TransactionIden::Table)
+            .left_join(
+                TransactionDescriptionsIden::Table,
+                Expr::col((TransactionIden::Table, TransactionIden::Id)).equals((
+                    TransactionDescriptionsIden::Table,
+                    TransactionDescriptionsIden::TransactionId,
+                )),
+            )
+            .left_join(
+                TransactionGroupDescriptionsIden::Table,
+                Expr::col((TransactionIden::Table, TransactionIden::GroupId)).equals((
+                    TransactionGroupDescriptionsIden::Table,
+                    TransactionGroupDescriptionsIden::TransactionGroupId,
+                )),
+            )
+            .and_where(Expr::col((TransactionIden::Table, TransactionIden::UserId)).eq(user_id))
+            .build_sqlx(PostgresQueryBuilder);
+
+        let rows = sqlx::query_as_with::<_, TransactionModel, _>(&sql, values)
+            .fetch_all(&self.pool)
+            .await?;
+        Ok(rows)
+    }
 }
 
 #[cfg(test)]
@@ -116,6 +167,8 @@ mod tests {
             category_id: 1,
             quantity: dec!(-1000),
             date: datetime!(2020-01-01 0:00 UTC),
+            description: None,
+            group_description: None,
         };
 
         let model2 = TransactionModel {
@@ -126,6 +179,8 @@ mod tests {
             category_id: 1,
             quantity: dec!(1123788787785.12154234123),
             date: datetime!(2020-01-01 0:00 UTC),
+            description: None,
+            group_description: None,
         };
 
         //act

@@ -27,12 +27,12 @@
     "method": "POST",
     "sortNum": 10000,
     "created": "2023-03-18T23:50:56.876Z",
-    "modified": "2023-03-19T21:51:11.899Z",
+    "modified": "2023-04-01T01:17:43.655Z",
     "headers": [],
     "params": [],
     "body": {
       "type": "json",
-      "raw": "{\n  \"transactions\": [\n    {\n      \"asset_id\":78,\n      \"quantity\": 6,\n      \"category\": 10,\n      \"date\": \"2023-01-09T16:38:00.511Z\"\n    }\n  ]\n}",
+      "raw": "{\n  \"transactions\": [\n    {\n      \"asset_id\":78,\n      \"quantity\": 6.123,\n      \"category\": 10,\n      \"date\": \"2023-01-09T16:38:00.511Z\",\n      \"description\": \"hello\"\n    }\n  ]\n}",
       "form": []
     },
     "tests": []
@@ -87,6 +87,20 @@
     "sortNum": 20000,
     "created": "2023-03-28T23:46:06.419Z",
     "modified": "2023-03-28T23:46:29.633Z",
+    "headers": [],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "266cbbf2-4b0f-4f93-bbc3-8ea0f1f3c5c5",
+    "colId": "4d3fd37e-ac89-47d4-b0ed-72363483cc67",
+    "containerId": "",
+    "name": "/users/:uuid/transactions",
+    "url": "{{base}}/users/{{my-uuid}}/transactions",
+    "method": "GET",
+    "sortNum": 20000,
+    "created": "2023-04-01T00:46:51.023Z",
+    "modified": "2023-04-01T00:47:01.157Z",
     "headers": [],
     "params": [],
     "tests": []
