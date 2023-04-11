@@ -1,10 +1,19 @@
-use std::{collections::HashMap, vec};
+use std::{
+    collections::{BTreeMap, HashMap},
+    vec,
+};
 
 use dal::{
     database_context::MyraDb,
     db_sets::{portfolio_db_set::PortfolioDbSet, transaction_db_set::TransactionDbSet},
-    models::transaction_models::{AddTransactionGroupModel, AddTransactionModel},
+    models::{
+        portfolio_models::PortfolioUpdateModel,
+        transaction_models::{
+            AddTransactionDescriptionModel, AddTransactionGroupModel, AddTransactionModel,
+        },
+    },
 };
+use rust_decimal::Decimal;
 use uuid::Uuid;
 
 use crate::dtos::transaction_dto::{AddTransactionGroupDto, TransactionGroupDto};
@@ -48,15 +57,64 @@ impl TransactionService {
             dal_transactions.push(dal_model);
         }
 
+        //Start SQL transaction. If anything following fails, no changes will be made to the database
         let mut trans = self.db.get_transaction().await?;
 
-        trans.update_portfolio(&dal_transactions).await?;
-        let rows = trans.insert_transactions(&dal_transactions).await?;
+        //Maybe theres a better way to do the following, but ehh, cba
+        //Create 2d hashmap of user_id and asset_id to sum the quantity
+        let mut map: HashMap<Uuid, HashMap<i32, Decimal>> = std::collections::HashMap::new();
+        for model in dal_transactions.clone().iter() {
+            let user_map = map.entry(model.user_id).or_insert(HashMap::new());
+            let sum = user_map.entry(model.asset_id).or_insert(Decimal::new(0, 0));
+            *sum += model.quantity;
+        }
+
+        //Iterate over the hashmap and create a list of portfolio updates
+        let mut portfolio_updates: Vec<PortfolioUpdateModel> = Vec::new();
+        for (user_id, user_map) in map.iter() {
+            for (asset_id, sum) in user_map.iter() {
+                portfolio_updates.push(PortfolioUpdateModel {
+                    user_id: *user_id,
+                    asset_id: *asset_id,
+                    sum: *sum,
+                })
+            }
+        }
+
+        trans.update_portfolio(portfolio_updates).await?;
+
+        //Insert new transcations and get their auto-generated ids back
+        let new_transaction_ids = trans.insert_transactions(dal_transactions.clone()).await?;
+
+        //Insert group
         trans.insert_transaction_group(dal_group).await?;
-        trans.insert_descriptions(&rows, dal_transactions).await?;
+
+        //Create a list of required description updates. If the list is empty, we don't need to update
+        let mut transaction_decription_models: Vec<AddTransactionDescriptionModel> = Vec::new();
+        let mut new_transaction_ids_for_description = new_transaction_ids.clone();
+        for model in dal_transactions.clone().into_iter() {
+            let trans_id = new_transaction_ids_for_description
+                .pop()
+                .expect("Rows returned from insertion are less than what we passed");
+
+            if model.description.is_some() {
+                transaction_decription_models.push(AddTransactionDescriptionModel {
+                    transaction_id: trans_id,
+                    description: model.description.unwrap(),
+                })
+            }
+        }
+
+        if transaction_decription_models.len() > 0 {
+            trans
+                .insert_descriptions(transaction_decription_models)
+                .await?;
+        }
+
+        //Save changes
         trans.commit().await?;
 
-        Ok((group_id, rows))
+        Ok((group_id, new_transaction_ids))
     }
 
     pub async fn get_transaction_groups(
@@ -70,7 +128,7 @@ impl TransactionService {
             .get_transactions(user_id)
             .await?;
 
-        let mut result: HashMap<Uuid, TransactionGroupDto> = HashMap::new();
+        let mut result: BTreeMap<Uuid, TransactionGroupDto> = BTreeMap::new();
         for transaction in transaction_vec {
             result
                 .entry(transaction.group_id)
@@ -93,6 +151,11 @@ impl TransactionService {
                     date: transaction.date_added,
                 });
         }
-        Ok(result.into_values().collect())
+        //sort the vec by group date
+        //TODO: revisit this as this is not efficient. The db returns in order, hashmap is not ordered and then we order agian.
+        let mut result_dto_vec: Vec<TransactionGroupDto> = result.into_values().collect();
+        result_dto_vec.sort_by(|a, b| b.date.cmp(&a.date));
+
+        Ok(result_dto_vec)
     }
 }

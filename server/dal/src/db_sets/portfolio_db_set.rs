@@ -10,7 +10,7 @@ use crate::{
         portfolio_idens::PortfolioIden,
         CommonsIden,
     },
-    models::{portfolio_models::PortfolioCombined, transaction_models::AddTransactionModel},
+    models::portfolio_models::{PortfolioCombined, PortfolioUpdateModel},
 };
 
 #[async_trait]
@@ -21,7 +21,7 @@ pub trait PortfolioDbSet {
     ) -> anyhow::Result<Vec<PortfolioCombined>>;
     async fn update_portfolio(
         &mut self,
-        models: &Vec<AddTransactionModel>,
+        models: Vec<PortfolioUpdateModel>,
     ) -> Result<(), anyhow::Error>;
 }
 
@@ -62,7 +62,7 @@ impl PortfolioDbSet for PgConnection {
 
     async fn update_portfolio(
         &mut self,
-        models: &Vec<AddTransactionModel>,
+        models: Vec<PortfolioUpdateModel>,
     ) -> Result<(), anyhow::Error> {
         let mut builder = Query::insert()
             .into_table(PortfolioIden::Table)
@@ -82,14 +82,15 @@ impl PortfolioDbSet for PgConnection {
                     .to_owned(),
             )
             .to_owned();
-        for model in models.clone().into_iter() {
-            // where items is a vec of row's values
+
+        for model in models.iter() {
             builder.values_panic(vec![
-                model.user_id.into(),
-                model.asset_id.into(),
-                model.quantity.into(),
+                model.user_id.to_owned().into(),
+                model.asset_id.to_owned().into(),
+                model.sum.to_owned().into(),
             ]);
         }
+
         let (sql, values) = builder.build_sqlx(PostgresQueryBuilder);
         sqlx::query_with(&sql, values).execute(&mut *self).await?;
         Ok(())

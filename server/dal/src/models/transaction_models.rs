@@ -29,6 +29,12 @@ pub struct AddTransactionModel {
     pub description: Option<String>,
 }
 
+#[derive(Clone, Debug)]
+pub struct AddTransactionDescriptionModel {
+    pub transaction_id: i32,
+    pub description: String,
+}
+
 //Used in a method to insert new transaction groups
 #[derive(Clone, Debug)]
 pub struct AddTransactionGroupModel {

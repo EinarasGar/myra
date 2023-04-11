@@ -9,7 +9,8 @@ use crate::{
         TransactionDescriptionsIden, TransactionGroupIden, TransactionIden,
     },
     models::transaction_models::{
-        AddTransactionGroupModel, AddTransactionModel, TransactionWithGroupModel,
+        AddTransactionDescriptionModel, AddTransactionGroupModel, AddTransactionModel,
+        TransactionWithGroupModel,
     },
 };
 
@@ -42,8 +43,7 @@ pub trait TransactionDbSet {
     ) -> anyhow::Result<Vec<TransactionWithGroupModel>>;
     async fn insert_descriptions(
         &mut self,
-        rows: &Vec<i32>,
-        models: Vec<AddTransactionModel>,
+        models: Vec<AddTransactionDescriptionModel>,
     ) -> Result<(), anyhow::Error>;
     async fn insert_transaction_group(
         &mut self,
@@ -51,7 +51,7 @@ pub trait TransactionDbSet {
     ) -> Result<(), anyhow::Error>;
     async fn insert_transactions(
         &mut self,
-        models: &Vec<AddTransactionModel>,
+        models: Vec<AddTransactionModel>,
     ) -> Result<Vec<i32>, anyhow::Error>;
 }
 
@@ -109,16 +109,14 @@ impl TransactionDbSet for PgConnection {
         let rows = sqlx::query_as_with::<_, TransactionWithGroupModel, _>(&sql, values)
             .fetch_all(&mut *self)
             .await?;
+
         Ok(rows)
     }
 
     async fn insert_descriptions(
         &mut self,
-        rows: &Vec<i32>,
-        models: Vec<AddTransactionModel>,
+        models: Vec<AddTransactionDescriptionModel>,
     ) -> Result<(), anyhow::Error> {
-        let mut some_description_exists = false;
-        let mut new_transcation_ids = rows.clone();
         let mut description_builder = Query::insert()
             .into_table(TransactionDescriptionsIden::Table)
             .columns([
@@ -126,23 +124,15 @@ impl TransactionDbSet for PgConnection {
                 TransactionDescriptionsIden::Description,
             ])
             .to_owned();
-        for model in models.clone().into_iter() {
-            let trans_id = new_transcation_ids
-                .pop()
-                .expect("Rows returned from insertion are less than what we passed");
 
-            if model.description.is_some() {
-                description_builder.values_panic(vec![trans_id.into(), model.description.into()]);
-                some_description_exists = true;
-            }
+        for model in models.into_iter() {
+            description_builder
+                .values_panic(vec![model.transaction_id.into(), model.description.into()]);
         }
-        Ok(if some_description_exists {
-            let (description_sql, description_values) =
-                description_builder.build_sqlx(PostgresQueryBuilder);
-            sqlx::query_with(&description_sql, description_values)
-                .execute(&mut *self)
-                .await?;
-        })
+
+        let (sql, values) = description_builder.build_sqlx(PostgresQueryBuilder);
+        sqlx::query_with(&sql, values).execute(&mut *self).await?;
+        Ok({})
     }
 
     async fn insert_transaction_group(
@@ -170,7 +160,7 @@ impl TransactionDbSet for PgConnection {
 
     async fn insert_transactions(
         &mut self,
-        models: &Vec<AddTransactionModel>,
+        models: Vec<AddTransactionModel>,
     ) -> Result<Vec<i32>, anyhow::Error> {
         let mut builder2 = Query::insert()
             .into_table(TransactionIden::Table)
@@ -184,7 +174,7 @@ impl TransactionDbSet for PgConnection {
             ])
             .returning_col(TransactionIden::Id)
             .to_owned();
-        for model in models.clone().into_iter() {
+        for model in models.into_iter() {
             // where items is a vec of row's values
             builder2.values_panic(vec![
                 model.user_id.into(),
