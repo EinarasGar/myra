@@ -23,11 +23,11 @@ impl Services {
     pub async fn new() -> anyhow::Result<Self> {
         let context = dal::database_context::MyraDb::new().await.unwrap();
 
-        let users_service = UsersService::new(context.users_db_set.clone());
-        let auth_service = AuthService::new(context.users_db_set, users_service.clone());
-        let transaction_service = TransactionService::new(context.transactions_db_set.clone());
-        let portfolio_service = PortfolioService::new(context.portfolio_db_set.clone());
-        let assets_service = AssetsService::new(context.assets_db_set.clone());
+        let users_service = UsersService::new(context.clone());
+        let auth_service = AuthService::new(context.clone(), users_service.clone());
+        let transaction_service = TransactionService::new(context.clone());
+        let portfolio_service = PortfolioService::new(context.clone());
+        let assets_service = AssetsService::new(context.clone());
 
         let serices = Services {
             users_service,

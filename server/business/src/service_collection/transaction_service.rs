@@ -1,7 +1,8 @@
 use std::{collections::HashMap, vec};
 
 use dal::{
-    db_sets::transaction_db_set::TransactionDbSet,
+    database_context::MyraDb,
+    db_sets::{portfolio_db_set::PortfolioDbSet, transaction_db_set::TransactionDbSet},
     models::transaction_models::{AddTransactionGroupModel, AddTransactionModel},
 };
 use uuid::Uuid;
@@ -10,13 +11,13 @@ use crate::dtos::transaction_dto::{AddTransactionGroupDto, TransactionGroupDto};
 
 #[derive(Clone)]
 pub struct TransactionService {
-    transactions_db_set: TransactionDbSet,
+    db: MyraDb,
 }
 
 impl TransactionService {
-    pub fn new(transactions_db_set: TransactionDbSet) -> Self {
+    pub fn new(transactions_db_set: MyraDb) -> Self {
         Self {
-            transactions_db_set,
+            db: transactions_db_set,
         }
     }
 
@@ -47,18 +48,27 @@ impl TransactionService {
             dal_transactions.push(dal_model);
         }
 
-        let return_ids = self
-            .transactions_db_set
-            .insert_transactions_and_group(dal_transactions, dal_group)
-            .await?;
-        Ok((group_id, return_ids))
+        let mut trans = self.db.get_transaction().await?;
+
+        trans.update_portfolio(&dal_transactions).await?;
+        let rows = trans.insert_transactions(&dal_transactions).await?;
+        trans.insert_transaction_group(dal_group).await?;
+        trans.insert_descriptions(&rows, dal_transactions).await?;
+        trans.commit().await?;
+
+        Ok((group_id, rows))
     }
 
     pub async fn get_transaction_groups(
         &self,
         user_id: Uuid,
     ) -> anyhow::Result<Vec<TransactionGroupDto>> {
-        let transaction_vec = self.transactions_db_set.get_transactions(user_id).await?;
+        let transaction_vec = self
+            .db
+            .get_connection()
+            .await?
+            .get_transactions(user_id)
+            .await?;
 
         let mut result: HashMap<Uuid, TransactionGroupDto> = HashMap::new();
         for transaction in transaction_vec {

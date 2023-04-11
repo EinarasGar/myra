@@ -1,15 +1,15 @@
-use dal::db_sets::asset_db_set::AssetsDbSet;
+use dal::{database_context::MyraDb, db_sets::asset_db_set::AssetDbSet};
 
 use crate::dtos::asset_dto::AssetDto;
 
 #[derive(Clone)]
 pub struct AssetsService {
-    assets_db_set: AssetsDbSet,
+    db: MyraDb,
 }
 
 impl AssetsService {
-    pub fn new(assets_db_set: AssetsDbSet) -> Self {
-        Self { assets_db_set }
+    pub fn new(db_context: MyraDb) -> Self {
+        Self { db: db_context }
     }
 
     pub async fn get_assets(
@@ -19,7 +19,9 @@ impl AssetsService {
     ) -> anyhow::Result<Vec<AssetDto>> {
         let page_size = 20;
         let models = self
-            .assets_db_set
+            .db
+            .get_connection()
+            .await?
             .get_assets(page_size, page, search)
             .await?;
 
@@ -32,7 +34,7 @@ impl AssetsService {
     }
 
     pub async fn get_asset(&self, id: i32) -> anyhow::Result<AssetDto> {
-        let model = self.assets_db_set.get_asset(id).await?;
+        let model = self.db.get_connection().await?.get_asset(id).await?;
 
         Ok(model.into())
     }
