@@ -5,7 +5,8 @@ FROM mcr.microsoft.com/vscode/devcontainers/base:0-${VARIANT}
 ARG MONGO_TOOLS_VERSION=6.0
 RUN . /etc/os-release \
     && apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get install -y build-essential nodejs npm\
+    && curl -fsSL https://deb.nodesource.com/setup_19.x | sudo -E bash -\
+    && apt-get install -y build-essential nodejs\
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 USER vscode

@@ -20,7 +20,8 @@
 				"mtxr.sqltools",
 				"mtxr.sqltools-driver-pg",
 				"bierner.markdown-mermaid",
-				"rangav.vscode-thunder-client"
+				"rangav.vscode-thunder-client",
+				"bradlc.vscode-tailwindcss"
 			],
 			"settings": {
 				"sqltools.connections": [

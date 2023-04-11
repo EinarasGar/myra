@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+    .myra-form {
+        @apply bg-light-700 dark:bg-dark-700
+        border-0 border-b-2 border-light-600 dark:border-dark-600
+        focus:ring-0 focus:border-light-500 focus:dark:border-dark-500
+        caret-light-500 dark:caret-dark-500 text-light-text dark:text-dark-text;
+    }
+}
