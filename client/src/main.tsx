@@ -5,9 +5,9 @@ import App from "./App";
 import "./index.css";
 import { store } from "./app/store";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import Overview from "./components/overview";
 import TransactionList from "./components/transaction_list";
 import AddTranscation from "./components/add_transaction";
+import DisplayTransaction from "./components/DisplayTransaction";
 
 const router = createBrowserRouter([
   {
@@ -21,6 +21,10 @@ const router = createBrowserRouter([
       {
         path: "/addtranscation",
         element: <AddTranscation />,
+      },
+      {
+        path: "/transaction/:transactionId",
+        element: <DisplayTransaction />,
       },
     ],
   },

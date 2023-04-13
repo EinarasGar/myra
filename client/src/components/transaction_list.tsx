@@ -5,26 +5,32 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { insertNew } from "../features/asset/assetSlice";
+import { insertNewTransactions } from "../features/transaction/transactionSlice";
 import { TransactionGroupListRespData } from "../models/transaction_view_model";
-import AddTranscation from "./transactions/add_transaction";
 import TransactionRow from "./transactions/transaction_row";
 
 const TransactionList = () => {
-  const [data, setData] = useState<TransactionGroupListRespData | null>(null);
+  const [assetData, setAssetData] =
+    useState<TransactionGroupListRespData | null>(null);
+
   const [errorr, setError] = useState(null);
   const navigate = useNavigate();
   const assets = useAppSelector((state) => state.asset.assets);
+  const transactions = useAppSelector(
+    (state) => state.transaction.transactionGroups
+  );
   const dispatch = useAppDispatch();
 
   useEffect(() => {
     axios
       .get("users/2396480f-0052-4cf0-81dc-8cedbde5ce13/transactions")
       .then((response) => {
-        setData(response.data);
+        setAssetData(response.data);
         const kazkas = response.data as TransactionGroupListRespData;
         if (kazkas !== null) {
           console.log("dispacinu");
           dispatch(insertNew(kazkas.assets_lookup_table));
+          dispatch(insertNewTransactions(kazkas.groups));
         }
       })
       .catch((error) => setError(error));
@@ -34,7 +40,7 @@ const TransactionList = () => {
     return <div>Error: {errorr}</div>;
   }
 
-  if (!data) {
+  if (!assetData) {
     return <div>Loading...</div>;
   }
 
@@ -65,7 +71,7 @@ const TransactionList = () => {
             <div className="inline-block min-w-full py-2 sm:px-6 lg:px-8">
               <div className="overflow-hidden">
                 <div className="min-w-full text-left text-sm font-light">
-                  {data.groups.map((group) => (
+                  {assetData.groups.map((group) => (
                     <TransactionRow
                       key={group.group_id}
                       {...group}

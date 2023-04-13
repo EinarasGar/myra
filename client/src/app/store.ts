@@ -1,9 +1,11 @@
 import { configureStore } from "@reduxjs/toolkit";
 import assetSlice from "../features/asset/assetSlice";
+import transactionSlice from "../features/transaction/transactionSlice";
 
 export const store = configureStore({
   reducer: {
     asset: assetSlice,
+    transaction: transactionSlice,
   },
 });
 

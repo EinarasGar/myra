@@ -4,6 +4,7 @@ import {
   TransactionGroupRespData,
   TransactionRespData,
 } from "../../models/transaction_view_model";
+import { useNavigate } from "react-router-dom";
 
 const CalculateSum = (transactions: Array<TransactionRespData>) => {
   let sum = 0;
@@ -17,6 +18,7 @@ const CalculateSum = (transactions: Array<TransactionRespData>) => {
 const TransactionRow = (group: TransactionGroupRespData) => {
   // const count = useAppSelector((state) => state.asset.value);
   // const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   return (
     // <div className="flex items-center p-4 dark:bg-dark-500 shadow rounded-md">
@@ -37,7 +39,10 @@ const TransactionRow = (group: TransactionGroupRespData) => {
     //   </div>
     // </div>
 
-    <div className="flex items-center py-4 px-6 rounded-lg hover:dark:bg-dark-600 ">
+    <div
+      className="flex items-center py-4 px-6 rounded-lg hover:dark:bg-dark-600"
+      onClick={() => navigate("/transaction/" + group.group_id)}
+    >
       <div className="flex items-center justify-center flex-shrink-0 h-10 w-10 rounded-full bg-light-lavender text-white"></div>
       <div className="flex flex-col flex-grow ml-4">
         <div className="text-lg font-medium text-light-text dark:text-dark-text">

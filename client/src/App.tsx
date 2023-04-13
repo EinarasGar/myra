@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import "./App.css";
 import Navbar from "./components/navbar";
-import Overview from "./components/overview";
+import Overview from "./components/DisplayTransaction";
 import Portfolio from "./components/portfolio";
 import TransactionList from "./components/transaction_list";
 

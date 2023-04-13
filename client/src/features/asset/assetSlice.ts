@@ -1,9 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
-import { AssetsLookupTable } from "../../models/transaction_view_model";
+import { AssetRespData } from "../../models/transaction_view_model";
 
 export interface AssetState {
-  assets: AssetsLookupTable[];
+  assets: AssetRespData[];
 }
 
 const initialState: AssetState = {
@@ -14,7 +14,7 @@ export const counterSlice = createSlice({
   name: "asset",
   initialState,
   reducers: {
-    insertNew: (state, action: PayloadAction<AssetsLookupTable[]>) => {
+    insertNew: (state, action: PayloadAction<AssetRespData[]>) => {
       state.assets = action.payload;
     },
   },
