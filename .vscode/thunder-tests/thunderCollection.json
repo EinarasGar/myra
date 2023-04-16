@@ -1,46 +1,39 @@
 [
   {
     "_id": "d3d27665-c04c-4cb1-8316-9ed20cd689aa",
-    "colName": "users",
+    "colName": "myra",
     "created": "2023-03-18T00:20:48.889Z",
     "sortNum": 10000,
-    "folders": [],
-    "settings": {
-      "headers": [],
-      "tests": [],
-      "envId": "03dc0ee1-421e-4cec-a2c2-d4814ab3245e"
-    }
-  },
-  {
-    "_id": "4d3fd37e-ac89-47d4-b0ed-72363483cc67",
-    "colName": "transactions",
-    "created": "2023-03-18T23:50:56.875Z",
-    "sortNum": 20000,
-    "folders": [],
-    "settings": {
-      "headers": [],
-      "tests": [],
-      "envId": "03dc0ee1-421e-4cec-a2c2-d4814ab3245e"
-    }
-  },
-  {
-    "_id": "bf23f183-010c-4776-8f26-49bfe4183215",
-    "colName": "portfolio",
-    "created": "2023-03-19T11:06:31.250Z",
-    "sortNum": 30000,
-    "folders": [],
-    "settings": {
-      "headers": [],
-      "tests": [],
-      "envId": "03dc0ee1-421e-4cec-a2c2-d4814ab3245e"
-    }
-  },
-  {
-    "_id": "04b31698-f112-422f-8088-b67336a9b979",
-    "colName": "assets",
-    "created": "2023-03-19T22:51:37.381Z",
-    "sortNum": 40000,
-    "folders": [],
+    "folders": [
+      {
+        "_id": "25ae6f65-5ca2-4055-8155-17d476a6fecd",
+        "name": "portfolio",
+        "containerId": "",
+        "created": "2023-04-15T22:51:47.311Z",
+        "sortNum": 10000
+      },
+      {
+        "_id": "2ef1b529-852a-4bca-915c-1ee73ba0da8c",
+        "name": "transactions",
+        "containerId": "",
+        "created": "2023-04-15T22:54:11.614Z",
+        "sortNum": 20000
+      },
+      {
+        "_id": "bcea4106-08cc-4430-845d-a0277a4f8e30",
+        "name": "users",
+        "containerId": "",
+        "created": "2023-04-15T22:54:58.032Z",
+        "sortNum": 30000
+      },
+      {
+        "_id": "8205d353-a482-47b3-b8d9-1d6c58d76cf1",
+        "name": "assets",
+        "containerId": "",
+        "created": "2023-04-15T22:55:03.673Z",
+        "sortNum": 40000
+      }
+    ],
     "settings": {
       "headers": [],
       "tests": [],

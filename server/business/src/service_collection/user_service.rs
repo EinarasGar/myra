@@ -1,6 +1,8 @@
 use anyhow::Ok;
 use dal::{
-    database_context::MyraDb, db_sets::user_db_set::UsersDbSet, models::user_models::UserModel,
+    database_context::MyraDb,
+    db_sets::{portfolio_db_set::PortfolioDbSet, user_db_set::UsersDbSet},
+    models::{portfolio_models::PortfolioAccountModel, user_models::UserModel},
 };
 use uuid::Uuid;
 
@@ -30,8 +32,15 @@ impl UsersService {
             default_asset: user.default_asset,
         };
 
-        let mut conn = self.db.get_connection().await?;
-        conn.inset_user(db_user).await?;
+        let mut trans = self.db.get_transaction().await?;
+        trans.inset_user(db_user).await?;
+        trans
+            .insert_or_update_portfolio_account(PortfolioAccountModel {
+                id: new_user_id,
+                user_id: new_user_id,
+                name: "Default".to_string(),
+            })
+            .await?;
         Ok(new_user_id)
     }
 

@@ -57,21 +57,28 @@ CREATE TABLE IF NOT EXISTS public.users (
     default_asset INT NOT NULL CONSTRAINT users_default_asset_fkey REFERENCES public.assets (id),
     role INT NOT NULL CONSTRAINT user_roles_fkey REFERENCES public.user_roles (id) DEFAULT 1
 );
+CREATE TABLE IF NOT EXISTS public.portfolio_account (
+    id UUID CONSTRAINT portfolio_account_pk PRIMARY KEY,
+    user_id UUID NOT NULL CONSTRAINT portfolio_user_id_fkey REFERENCES public.users (id),
+    name TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS public.portfolio (
     user_id UUID NOT NULL CONSTRAINT portfolio_user_id_fkey REFERENCES public.users (id),
     asset_id INT NOT NULL CONSTRAINT portfolio_asset_id_fkey REFERENCES public.assets (id),
+    account_id UUID NOT NULL CONSTRAINT portfolio_account_id_fkey REFERENCES public.portfolio_account (id),
     sum NUMERIC NOT NULL,
-    CONSTRAINT portfolio_user_id_asset_id_pk PRIMARY KEY(user_id, asset_id)
+    CONSTRAINT portfolio_user_id_asset_id_pk PRIMARY KEY(user_id, asset_id, account_id)
 );
 CREATE TABLE IF NOT EXISTS public.transaction (
     id SERIAL CONSTRAINT transaction_pk PRIMARY KEY,
     user_id UUID NOT NULL CONSTRAINT transaction_user_id_fkey REFERENCES public.users (id),
     group_id UUID NOT NULL,
     asset_id INT NOT NULL CONSTRAINT transaction_asset_id_fkey REFERENCES public.assets (id),
+    account_id UUID NOT NULL CONSTRAINT transaction_account_id_fkey REFERENCES public.portfolio_account (id),
     category_id INT NOT NULL CONSTRAINT transaction_category_id_fkey REFERENCES public.transaction_categories (id),
     quantity NUMERIC NOT NULL,
     date TIMESTAMPTZ NOT NULL,
-    CONSTRAINT transaction_user_id_asset_id_fkey FOREIGN KEY(user_id, asset_id) REFERENCES public.portfolio(user_id, asset_id)
+    CONSTRAINT transaction_user_id_asset_id_fkey FOREIGN KEY(user_id, asset_id, account_id) REFERENCES public.portfolio(user_id, asset_id, account_id)
 );
 CREATE TABLE IF NOT EXISTS public.portfolio_history (
     id SERIAL CONSTRAINT portfolio_history_pk PRIMARY KEY,

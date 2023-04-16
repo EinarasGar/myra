@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 dal = {path="../dal"}
-anyhow = "1.0.69"
+anyhow = { version = "1.0.69", features = ["backtrace"] }
 tokio = { version = "1.26.0", features = ["full"] }
 argon2 = { version = "0.5.0", features = ["std"] }
 uuid = { version = "1.3.0", features = ["v4", "serde"] }

@@ -2,45 +2,45 @@
   {
     "_id": "3edaccdd-c192-4e9f-ab1c-2aafff34efef",
     "colId": "d3d27665-c04c-4cb1-8316-9ed20cd689aa",
-    "containerId": "",
+    "containerId": "bcea4106-08cc-4430-845d-a0277a4f8e30",
     "name": "/users",
     "url": "{{base}}/users",
     "method": "POST",
     "sortNum": 10000,
     "created": "2023-03-18T00:20:48.893Z",
-    "modified": "2023-03-18T23:55:46.267Z",
+    "modified": "2023-04-16T21:32:17.479Z",
     "headers": [],
     "params": [],
     "body": {
       "type": "json",
-      "raw": "{\n  \"username\":\"testtttt\",\n  \"password\":\"test\",\n  \"default_asset\":1\n}",
+      "raw": "{\n  \"username\":\"user\",\n  \"password\":\"pass\",\n  \"default_asset_id\":1\n}",
       "form": []
     },
     "tests": []
   },
   {
     "_id": "dc034ec8-fb14-4be8-93c9-71ff12f1c4d7",
-    "colId": "4d3fd37e-ac89-47d4-b0ed-72363483cc67",
-    "containerId": "",
+    "colId": "d3d27665-c04c-4cb1-8316-9ed20cd689aa",
+    "containerId": "2ef1b529-852a-4bca-915c-1ee73ba0da8c",
     "name": "/users/:uuid/transactions",
     "url": "{{base}}/users/{{my-uuid}}/transactions",
     "method": "POST",
     "sortNum": 10000,
     "created": "2023-03-18T23:50:56.876Z",
-    "modified": "2023-04-11T22:49:30.187Z",
+    "modified": "2023-04-16T21:28:35.815Z",
     "headers": [],
     "params": [],
     "body": {
       "type": "json",
-      "raw": "{\n  \"transactions\": [\n    {\n      \"asset_id\": 2,\n      \"quantity\": 2,\n      \"category\": 1,\n      \"date\": \"2022-12-12T23:10:00.511Z\",\n      \"description\": \"knyga\"\n    },\n    {\n      \"asset_id\": 2,\n      \"quantity\": 2,\n      \"category\": 1,\n      \"date\": \"2022-12-12T23:10:00.511Z\",\n      \"description\": \"knyga2\"\n    }\n  ],\n  \"description\": \"knyga\",\n  \"date\": \"2022-12-12T23:10:00.511Z\",\n  \"category\": 1\n}",
+      "raw": "{\n  \"transactions\": [\n    {\n      \"asset_id\": 3,\n      \"quantity\": 2.123,\n      \"category_id\": 1,\n      \"date\": \"2022-12-12T23:10:00.511Z\",\n      \"account_id\": \"a4f3bc38-f0ae-46fc-9759-45b9e6ffdb77\",\n      \"description\": \"knyga\"\n    },\n    {\n      \"asset_id\": 4,\n      \"quantity\": 2,\n      \"category_id\": 1,\n      \"date\": \"2022-12-12T23:10:00.511Z\"\n    }\n  ],\n  \"description\": \"knyga\",\n  \"date\": \"2022-12-12T23:10:00.511Z\",\n  \"category_id\": 1\n}",
       "form": []
     },
     "tests": []
   },
   {
     "_id": "8d9fc23c-7ed9-4ea4-9d7d-475a35c07327",
-    "colId": "bf23f183-010c-4776-8f26-49bfe4183215",
-    "containerId": "",
+    "colId": "d3d27665-c04c-4cb1-8316-9ed20cd689aa",
+    "containerId": "25ae6f65-5ca2-4055-8155-17d476a6fecd",
     "name": "/users/:uuid/portfolio",
     "url": "{{base}}/users/{{my-uuid}}/portfolio",
     "method": "GET",
@@ -53,18 +53,18 @@
   },
   {
     "_id": "17794186-3494-495e-90ee-6754f9d77a38",
-    "colId": "04b31698-f112-422f-8088-b67336a9b979",
-    "containerId": "",
+    "colId": "d3d27665-c04c-4cb1-8316-9ed20cd689aa",
+    "containerId": "8205d353-a482-47b3-b8d9-1d6c58d76cf1",
     "name": "/assets",
-    "url": "{{base}}/assets?search=ford",
+    "url": "{{base}}/assets",
     "method": "GET",
     "sortNum": 10000,
     "created": "2023-03-19T22:51:52.640Z",
-    "modified": "2023-03-28T23:22:47.053Z",
+    "modified": "2023-04-16T21:33:05.533Z",
     "headers": [],
     "params": [
       {
-        "name": "p",
+        "name": "page",
         "value": "3",
         "isDisabled": true,
         "isPath": false
@@ -72,6 +72,7 @@
       {
         "name": "search",
         "value": "ford",
+        "isDisabled": true,
         "isPath": false
       }
     ],
@@ -79,22 +80,22 @@
   },
   {
     "_id": "0b11ea2c-30e2-4c35-8f75-1716649c0f83",
-    "colId": "04b31698-f112-422f-8088-b67336a9b979",
-    "containerId": "",
-    "name": "/assets Copy",
-    "url": "{{base}}/assets/327",
+    "colId": "d3d27665-c04c-4cb1-8316-9ed20cd689aa",
+    "containerId": "8205d353-a482-47b3-b8d9-1d6c58d76cf1",
+    "name": "/assets/:id",
+    "url": "{{base}}/assets/1",
     "method": "GET",
     "sortNum": 20000,
     "created": "2023-03-28T23:46:06.419Z",
-    "modified": "2023-03-28T23:46:29.633Z",
+    "modified": "2023-04-16T21:33:24.328Z",
     "headers": [],
     "params": [],
     "tests": []
   },
   {
     "_id": "266cbbf2-4b0f-4f93-bbc3-8ea0f1f3c5c5",
-    "colId": "4d3fd37e-ac89-47d4-b0ed-72363483cc67",
-    "containerId": "",
+    "colId": "d3d27665-c04c-4cb1-8316-9ed20cd689aa",
+    "containerId": "2ef1b529-852a-4bca-915c-1ee73ba0da8c",
     "name": "/users/:uuid/transactions",
     "url": "{{base}}/users/{{my-uuid}}/transactions",
     "method": "GET",
@@ -103,6 +104,25 @@
     "modified": "2023-04-01T00:47:01.157Z",
     "headers": [],
     "params": [],
+    "tests": []
+  },
+  {
+    "_id": "93f99657-73f3-4d98-9f8a-71ba1f82d6fe",
+    "colId": "d3d27665-c04c-4cb1-8316-9ed20cd689aa",
+    "containerId": "25ae6f65-5ca2-4055-8155-17d476a6fecd",
+    "name": "/users/:uuid/portfolio/accounts",
+    "url": "{{base}}/users/2396480f-0052-4cf0-81dc-8cedbde5ce13/portfolio/accounts",
+    "method": "POST",
+    "sortNum": 20000,
+    "created": "2023-04-15T18:43:40.934Z",
+    "modified": "2023-04-16T20:46:32.047Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"id\": \"a4f3bc38-f0ae-46fc-9759-45b9e6ffdb77\",\n  \"name\": \"Onionas\"\n}",
+      "form": []
+    },
     "tests": []
   }
 ]

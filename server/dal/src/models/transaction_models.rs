@@ -11,6 +11,8 @@ pub struct TransactionWithGroupModel {
     pub category_id: i32,
     pub quantity: Decimal,
     pub date: OffsetDateTime,
+    pub account_id: Uuid,
+    pub account_name: String,
     pub description: Option<String>,
     pub group_description: String,
     pub group_category_id: i32,
@@ -26,6 +28,7 @@ pub struct AddTransactionModel {
     pub category_id: i32,
     pub quantity: Decimal,
     pub date: OffsetDateTime,
+    pub account_id: Uuid,
     pub description: Option<String>,
 }
 

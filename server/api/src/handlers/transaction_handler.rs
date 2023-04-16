@@ -9,10 +9,10 @@ use crate::{
     app_error::AppError,
     states::{AssetsServiceState, TransactionServiceState},
     view_models::{
-        asset_view_model::AssetRespData,
+        asset_view_model::AssetViewModel,
         transaction_view_model::{
-            TransactionGroupListRespData, TransactionGroupRespData, TransactionRespData,
-            TranscationGroupReqData,
+            add_transaction_view_model::AddTransactionGroupViewModel,
+            get_tramscaton_view_model::TransactionGroupListRespData,
         },
     },
 };
@@ -20,37 +20,16 @@ use crate::{
 pub async fn post_transactions(
     Path(id): Path<Uuid>,
     TransactionServiceState(transaction_service): TransactionServiceState,
-    Json(params): Json<TranscationGroupReqData>,
+    Json(params): Json<AddTransactionGroupViewModel>,
 ) -> Result<Json<TransactionGroupListRespData>, AppError> {
     trace!("POST /users/{}/transactions was called - {:?}", id, params);
 
-    let mut insert_result = transaction_service
-        .add_transaction_group(id, params.clone())
+    let insert_result = transaction_service
+        .add_transaction_group(id, params.clone().into())
         .await?;
 
-    let mut transactions = params.transactions.clone();
-    let mut resp_transactions: Vec<TransactionRespData> = Vec::new();
-    while let Some(transaction) = transactions.pop() {
-        let id = insert_result.1.pop();
-        resp_transactions.push(TransactionRespData {
-            transaction_id: id.unwrap(),
-            asset_id: transaction.asset_id,
-            quantity: transaction.quantity,
-            category: transaction.category,
-            date: transaction.date,
-            description: transaction.description,
-        })
-    }
-    let mut resp_group_vec: Vec<TransactionGroupRespData> = Vec::new();
-    resp_group_vec.push(TransactionGroupRespData {
-        transactions: resp_transactions,
-        group_description: params.description,
-        group_date: params.date,
-        group_category: params.category,
-        group_id: insert_result.0,
-    });
     let response = TransactionGroupListRespData {
-        groups: resp_group_vec,
+        groups: vec![insert_result.into()],
         assets_lookup_table: Vec::new(),
     };
     Ok(response.into())
@@ -66,32 +45,20 @@ pub async fn get_transactions(
     let transactions = transaction_service.get_transaction_groups(id).await?;
 
     let mut unique_asset_ids: HashSet<i32> = HashSet::new();
-    let mut resp_group_vec: Vec<TransactionGroupRespData> = Vec::new();
-    for val in transactions.iter() {
-        let mut transaction_vec: Vec<TransactionRespData> = Vec::new();
-        let owned_group = val.to_owned();
-        for dto in owned_group.transactions {
-            transaction_vec.push(dto.clone().into());
+    transactions.iter().for_each(|val| {
+        val.transactions.iter().for_each(|dto| {
             unique_asset_ids.insert(dto.asset_id);
-        }
-
-        resp_group_vec.push(TransactionGroupRespData {
-            transactions: transaction_vec,
-            group_description: owned_group.description,
-            group_id: owned_group.group_id,
-            group_date: owned_group.date,
-            group_category: owned_group.category,
         });
-    }
+    });
 
-    let mut assets_lookup_vec: Vec<AssetRespData> = Vec::new();
+    let mut assets_lookup_vec: Vec<AssetViewModel> = Vec::new();
     for asset_id in unique_asset_ids.drain() {
         let dto = assets_service.get_asset(asset_id).await?;
         assets_lookup_vec.push(dto.into());
     }
 
     let response = TransactionGroupListRespData {
-        groups: resp_group_vec,
+        groups: transactions.iter().map(|val| val.clone().into()).collect(),
         assets_lookup_table: assets_lookup_vec,
     };
     Ok(response.into())

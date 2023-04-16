@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::{BTreeMap, HashSet},
     vec,
 };
 
@@ -16,7 +16,13 @@ use dal::{
 use rust_decimal::Decimal;
 use uuid::Uuid;
 
-use crate::dtos::transaction_dto::{AddTransactionGroupDto, TransactionGroupDto};
+use crate::dtos::{
+    portfolio_dto::PortfolioAccountDto,
+    transaction_dto::{
+        add_transaction_dtos::AddTransactionGroupDto,
+        get_transaction_dtos::{TransactionGroupDto, TransactonDto},
+    },
+};
 
 #[derive(Clone)]
 pub struct TransactionService {
@@ -34,7 +40,7 @@ impl TransactionService {
         &self,
         user_id: Uuid,
         group: AddTransactionGroupDto,
-    ) -> anyhow::Result<(Uuid, Vec<i32>)> {
+    ) -> anyhow::Result<TransactionGroupDto> {
         let group_id = Uuid::new_v4();
         let mut dal_transactions: Vec<AddTransactionModel> = Vec::new();
         let dal_group = AddTransactionGroupModel {
@@ -53,6 +59,10 @@ impl TransactionService {
                 quantity: trans.quantity,
                 date: trans.date,
                 description: trans.description.clone(),
+                account_id: match trans.account_id {
+                    Some(acc) => acc,
+                    None => user_id,
+                },
             };
             dal_transactions.push(dal_model);
         }
@@ -60,34 +70,33 @@ impl TransactionService {
         //Start SQL transaction. If anything following fails, no changes will be made to the database
         let mut trans = self.db.get_transaction().await?;
 
-        //Maybe theres a better way to do the following, but ehh, cba
-        //Create 2d hashmap of user_id and asset_id to sum the quantity
-        let mut map: HashMap<Uuid, HashMap<i32, Decimal>> = std::collections::HashMap::new();
+        let mut map = std::collections::HashMap::new();
         for model in dal_transactions.clone().iter() {
-            let user_map = map.entry(model.user_id).or_insert(HashMap::new());
-            let sum = user_map.entry(model.asset_id).or_insert(Decimal::new(0, 0));
+            let sum = map
+                .entry((model.user_id, model.asset_id, model.account_id))
+                .or_insert(Decimal::new(0, 0));
             *sum += model.quantity;
         }
 
         //Iterate over the hashmap and create a list of portfolio updates
         let mut portfolio_updates: Vec<PortfolioUpdateModel> = Vec::new();
-        for (user_id, user_map) in map.iter() {
-            for (asset_id, sum) in user_map.iter() {
-                portfolio_updates.push(PortfolioUpdateModel {
-                    user_id: *user_id,
-                    asset_id: *asset_id,
-                    sum: *sum,
-                })
-            }
+        for ((user_id, asset_id, account_id), sum) in map {
+            portfolio_updates.push(PortfolioUpdateModel {
+                user_id: user_id,
+                asset_id: asset_id,
+                account_id: account_id,
+                sum: sum,
+            })
         }
 
+        //Update portfolio
         trans.update_portfolio(portfolio_updates).await?;
 
         //Insert new transcations and get their auto-generated ids back
-        let new_transaction_ids = trans.insert_transactions(dal_transactions.clone()).await?;
+        let mut new_transaction_ids = trans.insert_transactions(dal_transactions.clone()).await?;
 
         //Insert group
-        trans.insert_transaction_group(dal_group).await?;
+        trans.insert_transaction_group(dal_group.clone()).await?;
 
         //Create a list of required description updates. If the list is empty, we don't need to update
         let mut transaction_decription_models: Vec<AddTransactionDescriptionModel> = Vec::new();
@@ -112,15 +121,52 @@ impl TransactionService {
         }
 
         //Save changes
+        //create hashset of account ids from dal_transactions
+        let mut account_ids_hash_set: HashSet<Uuid> = HashSet::new();
+        for model in dal_transactions.clone() {
+            account_ids_hash_set.insert(model.account_id);
+        }
+        let account_ids_vec: Vec<Uuid> = account_ids_hash_set.into_iter().collect();
+        let portfolio_account_vec = trans.get_portfolio_accounts_by_ids(account_ids_vec).await?;
+
         trans.commit().await?;
 
-        Ok((group_id, new_transaction_ids))
+        //Create return object
+        let result: TransactionGroupDto = TransactionGroupDto {
+            transactions: dal_transactions
+                .into_iter()
+                .map(|model| TransactonDto {
+                    transaction_id: new_transaction_ids.pop().unwrap(),
+                    asset_id: model.asset_id,
+                    quantity: model.quantity,
+                    category: model.category_id,
+                    date: model.date,
+                    account: PortfolioAccountDto {
+                        account_id: model.account_id,
+                        account_name: portfolio_account_vec
+                            .iter()
+                            .find(|acc| acc.id == model.account_id)
+                            .unwrap()
+                            .name
+                            .clone(),
+                    },
+                    description: model.description,
+                })
+                .collect(),
+            group_id: dal_group.group_id,
+            description: dal_group.description,
+            category: dal_group.category_id,
+            date: dal_group.date,
+        };
+
+        Ok(result)
     }
 
     pub async fn get_transaction_groups(
         &self,
         user_id: Uuid,
     ) -> anyhow::Result<Vec<TransactionGroupDto>> {
+        //Get list of unformatted transactions from database
         let transaction_vec = self
             .db
             .get_connection()
@@ -128,6 +174,7 @@ impl TransactionService {
             .get_transactions(user_id)
             .await?;
 
+        //Asign the transactions to groups
         let mut result: BTreeMap<Uuid, TransactionGroupDto> = BTreeMap::new();
         for transaction in transaction_vec {
             result

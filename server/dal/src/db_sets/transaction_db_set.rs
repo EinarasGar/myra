@@ -5,8 +5,9 @@ use sqlx::PgConnection;
 use uuid::Uuid;
 
 use crate::{
-    idens::transaction_idens::{
-        TransactionDescriptionsIden, TransactionGroupIden, TransactionIden,
+    idens::{
+        portfolio_idens::PortfolioAccountIden,
+        transaction_idens::{TransactionDescriptionsIden, TransactionGroupIden, TransactionIden},
     },
     models::transaction_models::{
         AddTransactionDescriptionModel, AddTransactionGroupModel, AddTransactionModel,
@@ -66,6 +67,7 @@ impl TransactionDbSet for PgConnection {
             .column((TransactionIden::Table, TransactionIden::UserId))
             .column((TransactionIden::Table, TransactionIden::GroupId))
             .column((TransactionIden::Table, TransactionIden::AssetId))
+            .column((TransactionIden::Table, TransactionIden::AccountId))
             .column((TransactionIden::Table, TransactionIden::CategoryId))
             .column((TransactionIden::Table, TransactionIden::Quantity))
             .column((TransactionIden::Table, TransactionIden::Date))
@@ -87,6 +89,10 @@ impl TransactionDbSet for PgConnection {
                 )),
                 Alias::new("group_category_id"),
             )
+            .expr_as(
+                Expr::col((PortfolioAccountIden::Table, PortfolioAccountIden::Name)),
+                Alias::new("account_name"),
+            )
             .column((TransactionGroupIden::Table, TransactionGroupIden::DateAdded))
             .from(TransactionIden::Table)
             .left_join(
@@ -102,6 +108,11 @@ impl TransactionDbSet for PgConnection {
                     TransactionGroupIden::Table,
                     TransactionGroupIden::TransactionGroupId,
                 )),
+            )
+            .left_join(
+                PortfolioAccountIden::Table,
+                Expr::col((TransactionIden::Table, TransactionIden::AccountId))
+                    .equals((PortfolioAccountIden::Table, PortfolioAccountIden::Id)),
             )
             .and_where(Expr::col((TransactionIden::Table, TransactionIden::UserId)).eq(user_id))
             .build_sqlx(PostgresQueryBuilder);
@@ -168,6 +179,7 @@ impl TransactionDbSet for PgConnection {
                 TransactionIden::UserId,
                 TransactionIden::GroupId,
                 TransactionIden::AssetId,
+                TransactionIden::AccountId,
                 TransactionIden::CategoryId,
                 TransactionIden::Quantity,
                 TransactionIden::Date,
@@ -180,6 +192,7 @@ impl TransactionDbSet for PgConnection {
                 model.user_id.into(),
                 model.group_id.into(),
                 model.asset_id.into(),
+                model.account_id.into(),
                 model.category_id.into(),
                 model.quantity.into(),
                 model.date.into(),

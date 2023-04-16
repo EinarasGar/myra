@@ -25,10 +25,7 @@ impl AssetsService {
             .get_assets(page_size, page, search)
             .await?;
 
-        let mut ret_vec: Vec<AssetDto> = Vec::new();
-        for model in models {
-            ret_vec.push(model.into());
-        }
+        let ret_vec: Vec<AssetDto> = models.iter().map(|val| val.clone().into()).collect();
 
         Ok(ret_vec)
     }
