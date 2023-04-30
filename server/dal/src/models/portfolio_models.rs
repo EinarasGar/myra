@@ -1,6 +1,5 @@
-use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+use sqlx::types::{Decimal, Uuid};
 
 #[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct PortfolioCombined {

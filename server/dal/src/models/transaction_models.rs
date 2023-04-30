@@ -1,5 +1,4 @@
-use sqlx::types::{Decimal, Uuid};
-use time::OffsetDateTime;
+use sqlx::types::{time::OffsetDateTime, Decimal, Uuid};
 
 //Used to retrieve transactions joined with group info and descriptions
 #[derive(Clone, Debug, sqlx::FromRow)]

@@ -1,6 +1,6 @@
 use axum::Json;
 
-use log::trace;
+use tracing::log::trace;
 use uuid::Uuid;
 
 use crate::{

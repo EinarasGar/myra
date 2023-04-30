@@ -1,5 +1,5 @@
 use axum::{extract::Path, Json};
-use log::trace;
+use tracing::log::trace;
 use uuid::Uuid;
 
 use crate::{
@@ -10,6 +10,7 @@ use crate::{
     },
 };
 
+#[tracing::instrument(level = "info", skip(portfolio_service))]
 pub async fn get_portfolio(
     Path(id): Path<Uuid>,
     PortfolioServiceState(portfolio_service): PortfolioServiceState,

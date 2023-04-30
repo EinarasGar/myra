@@ -2,8 +2,8 @@ use axum::{
     extract::{Path, Query},
     Json,
 };
-use log::trace;
 use serde::Deserialize;
+use tracing::log::trace;
 
 use crate::{
     app_error::AppError, states::AssetsServiceState, view_models::asset_view_model::AssetViewModel,

@@ -1,34 +1,29 @@
 use std::net::SocketAddr;
 
-use log::info;
 use tokio;
-
-use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
+use tracing::info;
 
 use crate::states::AppState;
 
 pub(crate) mod app_error;
 mod fallback;
 pub(crate) mod handlers;
+mod observability;
 pub(crate) mod routes;
 pub(crate) mod states;
 pub(crate) mod view_models;
 
 #[tokio::main]
 async fn main() {
-    // Enable trace logging
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "api=debug,tower_http=info".into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    //Initialize logging and opentelemetry
+    observability::initialize_tracing_subscriber();
 
+    //Create shared services instance, which contaisn a connectiopn to a database
     let shared_state = AppState {
         serivces_collection: business::service_collection::Services::new().await.unwrap(),
     };
 
+    //Initize a router for the API
     let app = routes::create_router(shared_state).fallback(fallback::handler_404);
 
     // Run the webserver

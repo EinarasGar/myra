@@ -1,8 +1,7 @@
 use async_trait::async_trait;
 use sea_query::{Alias, Expr, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
-use sqlx::PgConnection;
-use uuid::Uuid;
+use sqlx::{types::Uuid, PgConnection};
 
 use crate::{
     idens::{
@@ -14,27 +13,6 @@ use crate::{
         TransactionWithGroupModel,
     },
 };
-
-// async fn insert_transactions_and_group(
-//     &self,
-//     models: Vec<AddTransactionModel>,
-//     group: AddTransactionGroupModel,
-// ) -> anyhow::Result<Vec<i32>> {
-//     //Start transaction
-//     let mut sql_transaction = self.pool.begin().await?;
-
-//     update_portfolio(&mut sql_transaction, &models).await?;
-
-//     let rows = insert_transactions(&mut sql_transaction, &models).await?;
-
-//     insert_transaction_group(&mut sql_transaction, group).await?;
-
-//     insert_descriptions(&mut sql_transaction, &rows, models).await?;
-
-//     sql_transaction.commit().await?;
-
-//     anyhow::Ok(rows)
-// }
 
 #[async_trait]
 pub trait TransactionDbSet {

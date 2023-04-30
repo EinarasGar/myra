@@ -50,6 +50,14 @@ services:
       - pgadmin:/var/lib/pgadmin
     depends_on:
       - database
+  jaeger:
+    image: jaegertracing/all-in-one
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - 16686:16686
+      - 4317:4317
+      - 4318:4318
 
 volumes:
   pgadmin:

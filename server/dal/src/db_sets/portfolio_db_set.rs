@@ -2,8 +2,7 @@ use anyhow::bail;
 use async_trait::async_trait;
 use sea_query::{Alias, Expr, OnConflict, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
-use sqlx::PgConnection;
-use uuid::Uuid;
+use sqlx::{types::Uuid, PgConnection};
 
 use crate::{
     idens::{

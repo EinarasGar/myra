@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use axum::{extract::Path, Json};
 
-use log::trace;
+use tracing::log::trace;
 use uuid::Uuid;
 
 use crate::{
