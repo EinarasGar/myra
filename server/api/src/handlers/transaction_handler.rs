@@ -1,8 +1,5 @@
-use std::collections::HashSet;
-
 use axum::{extract::Path, Json};
-
-use tracing::log::trace;
+use std::collections::HashSet;
 use uuid::Uuid;
 
 use crate::{
@@ -17,13 +14,12 @@ use crate::{
     },
 };
 
+#[tracing::instrument(skip(transaction_service), ret, err)]
 pub async fn post_transactions(
     Path(id): Path<Uuid>,
     TransactionServiceState(transaction_service): TransactionServiceState,
     Json(params): Json<AddTransactionGroupViewModel>,
 ) -> Result<Json<TransactionGroupListRespData>, AppError> {
-    trace!("POST /users/{}/transactions was called - {:?}", id, params);
-
     let insert_result = transaction_service
         .add_transaction_group(id, params.clone().into())
         .await?;
@@ -35,13 +31,12 @@ pub async fn post_transactions(
     Ok(response.into())
 }
 
+#[tracing::instrument(skip(transaction_service, assets_service), ret, err)]
 pub async fn get_transactions(
     Path(id): Path<Uuid>,
     AssetsServiceState(assets_service): AssetsServiceState,
     TransactionServiceState(transaction_service): TransactionServiceState,
 ) -> Result<Json<TransactionGroupListRespData>, AppError> {
-    trace!("GET /users/{}/transactions was called", id);
-
     let transactions = transaction_service.get_transaction_groups(id).await?;
 
     let mut unique_asset_ids: HashSet<i32> = HashSet::new();

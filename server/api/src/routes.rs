@@ -1,14 +1,11 @@
-use crate::{handlers, AppState};
+use crate::{handlers, observability, AppState};
 use axum::{
     routing::{get, post},
     Router,
 };
-use tower_http::trace::TraceLayer;
 
 pub(crate) fn create_router(state: AppState) -> Router {
     let app = Router::new()
-        // .route("/api", get(index))
-        // .route("/api/hello", get(hello))
         .route("/users", post(handlers::user_handler::post_user))
         .route(
             "/users/:id/transactions",
@@ -28,7 +25,7 @@ pub(crate) fn create_router(state: AppState) -> Router {
         )
         .route("/assets", get(handlers::asset_handler::get_assets))
         .route("/assets/:id", get(handlers::asset_handler::get_asset_by_id))
-        .layer(TraceLayer::new_for_http())
+        .layer(observability::create_tower_http_tracing_layer())
         .with_state(state);
     app
 }

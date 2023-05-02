@@ -1,5 +1,11 @@
-use opentelemetry::sdk::trace::Tracer;
+use opentelemetry::sdk::trace::{self, Tracer};
+use opentelemetry::sdk::Resource;
+use opentelemetry::KeyValue;
 use opentelemetry_otlp::WithExportConfig;
+use tower_http::classify::{ServerErrorsAsFailures, SharedClassifier};
+use tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer};
+use tower_http::LatencyUnit;
+use tracing::Level;
 use tracing_opentelemetry::OpenTelemetryLayer;
 use tracing_subscriber::layer::Layered;
 use tracing_subscriber::{prelude::*, EnvFilter};
@@ -29,6 +35,9 @@ fn create_opentelemetry_layer() -> Option<
                         .tonic()
                         .with_endpoint(endpoint),
                 )
+                .with_trace_config(trace::config().with_resource(Resource::new(vec![
+                    KeyValue::new("service.name", "myra_api"),
+                ])))
                 .install_simple()
             {
                 Ok(tracer) => {
@@ -55,7 +64,7 @@ fn create_opentelemetry_layer() -> Option<
 }
 
 fn create_print_layer() -> Box<dyn Layer<Registry> + Send + Sync> {
-    tracing_subscriber::fmt::layer().boxed()
+    tracing_subscriber::fmt::layer().compact().boxed()
 }
 
 //Creates an env filter from RUST_LOG. If its invalid - panics. If its empty or unset - defaults to erros only
@@ -74,4 +83,19 @@ fn create_env_filter_layer() -> Option<EnvFilter> {
             None
         }
     }
+}
+
+pub fn create_tower_http_tracing_layer() -> TraceLayer<SharedClassifier<ServerErrorsAsFailures>> {
+    TraceLayer::new_for_http()
+        .make_span_with(
+            DefaultMakeSpan::new()
+                .include_headers(true)
+                .level(Level::INFO),
+        )
+        .on_request(DefaultOnRequest::new().level(Level::INFO))
+        .on_response(
+            DefaultOnResponse::new()
+                .level(Level::INFO)
+                .latency_unit(LatencyUnit::Micros),
+        )
 }

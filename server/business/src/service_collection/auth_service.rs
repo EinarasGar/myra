@@ -1,6 +1,5 @@
 use std::str::FromStr;
 
-use anyhow::Ok;
 use dal::{
     database_context::MyraDb, db_sets::user_db_set::UsersDbSet, models::user_models::AuthRoles,
 };
@@ -51,6 +50,7 @@ impl AuthService {
         }
     }
 
+    #[tracing::instrument(skip(self, password), ret, err)]
     pub async fn get_auth_token(
         &self,
         username: String,
@@ -72,6 +72,7 @@ impl AuthService {
         Ok(token.to_string())
     }
 
+    #[tracing::instrument(skip(self), ret, err)]
     pub fn verify_auth_token(&self, token: String) -> anyhow::Result<Claims> {
         let token_message =
             decode::<Claims>(&token, &self.jwt_keys.decoding, &Validation::default())?;

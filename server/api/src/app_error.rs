@@ -1,3 +1,5 @@
+use std::fmt::{Debug, Display};
+
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
@@ -14,6 +16,18 @@ impl IntoResponse for AppError {
             format!("Something went wrong: {:?}", self.0),
         )
             .into_response()
+    }
+}
+
+impl Display for AppError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Something went wrong: {}", self.0)
+    }
+}
+
+impl Debug for AppError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("AppError").field(&self.0).finish()
     }
 }
 

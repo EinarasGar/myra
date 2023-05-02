@@ -9,9 +9,6 @@
             "args": [],
             "cwd": "${workspaceFolder}/server",
             "preLaunchTask": "rust: cargo build api",
-            "env": {
-                "RUST_LOG": "api=trace,tower_http=trace"
-            }
         }
     ]
 }

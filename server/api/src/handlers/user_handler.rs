@@ -1,6 +1,4 @@
 use axum::Json;
-
-use tracing::log::trace;
 use uuid::Uuid;
 
 use crate::{
@@ -9,12 +7,11 @@ use crate::{
     view_models::user_view_model::{AddUserViewModel, UserViewModel},
 };
 
+#[tracing::instrument(skip(users_service, params), ret, err)]
 pub async fn post_user(
     UsersServiceState(users_service): UsersServiceState,
     Json(params): Json<AddUserViewModel>,
 ) -> Result<Json<UserViewModel>, AppError> {
-    trace!("POST /users was called - {:?}", params);
-
     let user_id: Uuid = users_service.register_user(params.clone().into()).await?;
 
     let resp = UserViewModel {

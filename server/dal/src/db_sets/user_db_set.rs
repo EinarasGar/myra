@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use sea_query::*;
 use sea_query_binder::SqlxBinder;
 use sqlx::{PgConnection, Row};
+use tracing::{debug_span, Instrument};
 
 use crate::{
     idens::user_idens::{UserRolesIden, UsersIden},
@@ -16,6 +17,7 @@ pub trait UsersDbSet {
 
 #[async_trait]
 impl UsersDbSet for PgConnection {
+    #[tracing::instrument(skip(self), ret, err)]
     async fn inset_user(&mut self, user: UserModel) -> anyhow::Result<()> {
         let (sql, values) = Query::insert()
             .into_table(UsersIden::Table)
@@ -33,10 +35,14 @@ impl UsersDbSet for PgConnection {
             ])
             .build_sqlx(PostgresQueryBuilder);
 
-        sqlx::query_with(&sql, values).execute(&mut *self).await?;
+        sqlx::query_with(&sql, values.clone())
+            .execute(&mut *self)
+            .instrument(debug_span!("query", sql, ?values))
+            .await?;
         Ok(())
     }
 
+    #[tracing::instrument(skip(self), ret, err)]
     async fn get_user_auth_info(&mut self, username: String) -> anyhow::Result<UserAuthModel> {
         let (sql, values) = Query::select()
             .column((UsersIden::Table, UsersIden::Id))
@@ -51,7 +57,10 @@ impl UsersDbSet for PgConnection {
             .and_where(Expr::col(UsersIden::Username).eq(username))
             .build_sqlx(PostgresQueryBuilder);
 
-        let row = sqlx::query_with(&sql, values).fetch_one(&mut *self).await?;
+        let row = sqlx::query_with(&sql, values.clone())
+            .fetch_one(&mut *self)
+            .instrument(debug_span!("query", sql, ?values))
+            .await?;
 
         Ok(UserAuthModel {
             id: row.try_get(0)?,

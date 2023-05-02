@@ -12,6 +12,7 @@ impl AssetsService {
         Self { db: db_context }
     }
 
+    #[tracing::instrument(skip(self), ret, err)]
     pub async fn get_assets(
         &self,
         page: u64,
@@ -30,6 +31,7 @@ impl AssetsService {
         Ok(ret_vec)
     }
 
+    #[tracing::instrument(skip(self), ret, err)]
     pub async fn get_asset(&self, id: i32) -> anyhow::Result<AssetDto> {
         let model = self.db.get_connection().await?.get_asset(id).await?;
 

@@ -3,6 +3,7 @@ use async_trait::async_trait;
 use sea_query::{Alias, Expr, OnConflict, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
 use sqlx::{types::Uuid, PgConnection};
+use tracing::{debug_span, Instrument};
 
 use crate::{
     idens::{
@@ -37,6 +38,7 @@ pub trait PortfolioDbSet {
 
 #[async_trait]
 impl PortfolioDbSet for PgConnection {
+    #[tracing::instrument(skip(self), ret, err)]
     async fn get_portfolio_with_asset_account_info(
         &mut self,
         user_id: Uuid,
@@ -74,12 +76,14 @@ impl PortfolioDbSet for PgConnection {
             .and_where(Expr::col((PortfolioIden::Table, PortfolioIden::UserId)).eq(user_id))
             .build_sqlx(PostgresQueryBuilder);
 
-        let rows = sqlx::query_as_with::<_, PortfolioCombined, _>(&sql, values)
+        let rows = sqlx::query_as_with::<_, PortfolioCombined, _>(&sql, values.clone())
             .fetch_all(&mut *self)
+            .instrument(debug_span!("query", sql, ?values))
             .await?;
         Ok(rows)
     }
 
+    #[tracing::instrument(skip(self), ret, err)]
     async fn update_portfolio(
         &mut self,
         models: Vec<PortfolioUpdateModel>,
@@ -118,10 +122,15 @@ impl PortfolioDbSet for PgConnection {
         }
 
         let (sql, values) = builder.build_sqlx(PostgresQueryBuilder);
-        sqlx::query_with(&sql, values).execute(&mut *self).await?;
+
+        sqlx::query_with(&sql, values.clone())
+            .execute(&mut *self)
+            .instrument(debug_span!("query", sql, ?values))
+            .await?;
         Ok(())
     }
 
+    #[tracing::instrument(skip(self), ret, err)]
     async fn insert_or_update_portfolio_account(
         &mut self,
         models: PortfolioAccountModel,
@@ -149,7 +158,11 @@ impl PortfolioDbSet for PgConnection {
                     .to_owned(),
             )
             .build_sqlx(PostgresQueryBuilder);
-        let execution_result = sqlx::query_with(&sql, values).execute(&mut *self).await?;
+
+        let execution_result = sqlx::query_with(&sql, values.clone())
+            .execute(&mut *self)
+            .instrument(debug_span!("query", sql, ?values))
+            .await?;
         if execution_result.rows_affected() == 0 {
             bail!("Failed to insert or update portfolio account");
         }
@@ -157,6 +170,7 @@ impl PortfolioDbSet for PgConnection {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self), ret, err)]
     async fn get_portfolio_accounts_by_ids(
         &mut self,
         uuids: Vec<Uuid>,
@@ -168,8 +182,9 @@ impl PortfolioDbSet for PgConnection {
             .and_where(Expr::col(PortfolioAccountIden::Id).is_in(uuids))
             .build_sqlx(PostgresQueryBuilder);
 
-        let rows = sqlx::query_as_with::<_, PortfolioAccountIdNameModel, _>(&sql, values)
+        let rows = sqlx::query_as_with::<_, PortfolioAccountIdNameModel, _>(&sql, values.clone())
             .fetch_all(&mut *self)
+            .instrument(debug_span!("query", sql, ?values))
             .await?;
         Ok(rows)
     }

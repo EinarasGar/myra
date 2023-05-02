@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use sea_query::{Alias, Expr, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
 use sqlx::{types::Uuid, PgConnection};
+use tracing::{debug_span, Instrument};
 
 use crate::{
     idens::{
@@ -36,6 +37,7 @@ pub trait TransactionDbSet {
 
 #[async_trait]
 impl TransactionDbSet for PgConnection {
+    #[tracing::instrument(skip(self), ret, err)]
     async fn get_transactions(
         &mut self,
         user_id: Uuid,
@@ -95,13 +97,15 @@ impl TransactionDbSet for PgConnection {
             .and_where(Expr::col((TransactionIden::Table, TransactionIden::UserId)).eq(user_id))
             .build_sqlx(PostgresQueryBuilder);
 
-        let rows = sqlx::query_as_with::<_, TransactionWithGroupModel, _>(&sql, values)
+        let rows = sqlx::query_as_with::<_, TransactionWithGroupModel, _>(&sql, values.clone())
             .fetch_all(&mut *self)
+            .instrument(debug_span!("query", sql, ?values))
             .await?;
 
         Ok(rows)
     }
 
+    #[tracing::instrument(skip(self), ret, err)]
     async fn insert_descriptions(
         &mut self,
         models: Vec<AddTransactionDescriptionModel>,
@@ -120,15 +124,20 @@ impl TransactionDbSet for PgConnection {
         }
 
         let (sql, values) = description_builder.build_sqlx(PostgresQueryBuilder);
-        sqlx::query_with(&sql, values).execute(&mut *self).await?;
+
+        sqlx::query_with(&sql, values.clone())
+            .execute(&mut *self)
+            .instrument(debug_span!("query", sql, ?values))
+            .await?;
         Ok({})
     }
 
+    #[tracing::instrument(skip(self), ret, err)]
     async fn insert_transaction_group(
         &mut self,
         group: AddTransactionGroupModel,
     ) -> Result<(), anyhow::Error> {
-        let (sql3, values3) = Query::insert()
+        let (sql, values) = Query::insert()
             .into_table(TransactionGroupIden::Table)
             .columns([
                 TransactionGroupIden::TransactionGroupId,
@@ -143,10 +152,15 @@ impl TransactionDbSet for PgConnection {
                 group.date.into(),
             ])
             .build_sqlx(PostgresQueryBuilder);
-        sqlx::query_with(&sql3, values3).execute(&mut *self).await?;
+
+        sqlx::query_with(&sql, values.clone())
+            .execute(&mut *self)
+            .instrument(debug_span!("query", sql, ?values))
+            .await?;
         Ok(())
     }
 
+    #[tracing::instrument(skip(self), ret, err)]
     async fn insert_transactions(
         &mut self,
         models: Vec<AddTransactionModel>,
@@ -176,9 +190,11 @@ impl TransactionDbSet for PgConnection {
                 model.date.into(),
             ]);
         }
-        let (sql2, values2) = builder2.build_sqlx(PostgresQueryBuilder);
-        let rows: Vec<i32> = sqlx::query_scalar_with(&sql2, values2)
+        let (sql, values) = builder2.build_sqlx(PostgresQueryBuilder);
+
+        let rows: Vec<i32> = sqlx::query_scalar_with(&sql, values.clone())
             .fetch_all(&mut *self)
+            .instrument(debug_span!("query", sql, ?values))
             .await?;
         Ok(rows)
     }

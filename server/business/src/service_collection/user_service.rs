@@ -1,9 +1,9 @@
-use anyhow::Ok;
 use dal::{
     database_context::MyraDb,
     db_sets::{portfolio_db_set::PortfolioDbSet, user_db_set::UsersDbSet},
     models::{portfolio_models::PortfolioAccountModel, user_models::UserModel},
 };
+use tracing::{info_span, Instrument};
 use uuid::Uuid;
 
 use crate::dtos::user_dto::AddUserDto;
@@ -23,6 +23,7 @@ impl UsersService {
         Self { db: db_context }
     }
 
+    #[tracing::instrument(skip(self, user), ret, err)]
     pub async fn register_user(&self, user: AddUserDto) -> anyhow::Result<Uuid> {
         let new_user_id: Uuid = Uuid::new_v4();
         let db_user: UserModel = UserModel {
@@ -41,9 +42,14 @@ impl UsersService {
                 name: "Default".to_string(),
             })
             .await?;
+        trans
+            .commit()
+            .instrument(info_span!("commit_sql_transaction"))
+            .await?;
         Ok(new_user_id)
     }
 
+    #[tracing::instrument(skip_all, ret)]
     fn hash_password(&self, password: String) -> String {
         let salt = SaltString::generate(&mut OsRng);
         let argon2 = Argon2::default();
@@ -54,6 +60,7 @@ impl UsersService {
         return password_hash;
     }
 
+    #[tracing::instrument(skip(self, password), err)]
     pub fn verify_user_password(
         &self,
         password: String,

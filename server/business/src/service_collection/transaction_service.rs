@@ -14,6 +14,7 @@ use dal::{
     },
 };
 use rust_decimal::Decimal;
+use tracing::{info_span, Instrument};
 use uuid::Uuid;
 
 use crate::dtos::{
@@ -36,6 +37,7 @@ impl TransactionService {
         }
     }
 
+    #[tracing::instrument(skip(self), ret, err)]
     pub async fn add_transaction_group(
         &self,
         user_id: Uuid,
@@ -120,7 +122,6 @@ impl TransactionService {
                 .await?;
         }
 
-        //Save changes
         //create hashset of account ids from dal_transactions
         let mut account_ids_hash_set: HashSet<Uuid> = HashSet::new();
         for model in dal_transactions.clone() {
@@ -129,7 +130,11 @@ impl TransactionService {
         let account_ids_vec: Vec<Uuid> = account_ids_hash_set.into_iter().collect();
         let portfolio_account_vec = trans.get_portfolio_accounts_by_ids(account_ids_vec).await?;
 
-        trans.commit().await?;
+        //Save changes
+        trans
+            .commit()
+            .instrument(info_span!("commit_sql_transaction"))
+            .await?;
 
         //Create return object
         let result: TransactionGroupDto = TransactionGroupDto {
@@ -162,6 +167,7 @@ impl TransactionService {
         Ok(result)
     }
 
+    #[tracing::instrument(skip(self), ret, err)]
     pub async fn get_transaction_groups(
         &self,
         user_id: Uuid,
