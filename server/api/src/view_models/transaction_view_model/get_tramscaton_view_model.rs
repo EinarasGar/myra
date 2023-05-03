@@ -8,12 +8,14 @@ use crate::view_models::{
     asset_view_model::AssetViewModel, portfolio_view_model::PortfolioAccountViewModel,
 };
 
+#[typeshare::typeshare]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TransactionGroupListRespData {
     pub groups: Vec<TransactionGroupRespData>,
     pub assets_lookup_table: Vec<AssetViewModel>,
 }
 
+#[typeshare::typeshare]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TransactionGroupRespData {
     pub transactions: Vec<TransactionRespData>,
@@ -24,6 +26,7 @@ pub struct TransactionGroupRespData {
     pub id: Uuid,
 }
 
+#[typeshare::typeshare]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TransactionRespData {
     pub id: i32,

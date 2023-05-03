@@ -6,7 +6,7 @@ ARG MONGO_TOOLS_VERSION=6.0
 RUN . /etc/os-release \
     && apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && curl -fsSL https://deb.nodesource.com/setup_19.x | sudo -E bash -\
-    && apt-get install -y build-essential nodejs protobuf-compiler\
+    && apt-get install -y build-essential nodejs protobuf-compiler pkg-config\
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 USER vscode
@@ -17,7 +17,8 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 # Install useful cargo tools
 RUN . "$HOME/.cargo/env" &&\
     cargo install \
-    cargo-add
+    cargo-edit \
+    typeshare-cli 
 
 # [Optional] Uncomment this section to install additional OS packages.
 # RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \

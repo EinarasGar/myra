@@ -2,6 +2,7 @@ use business::dtos::user_dto::AddUserDto;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+#[typeshare::typeshare]
 #[derive(Debug, Serialize)]
 pub struct UserViewModel {
     pub id: Uuid,
@@ -9,6 +10,7 @@ pub struct UserViewModel {
     pub default_asset_id: i32,
 }
 
+#[typeshare::typeshare]
 #[derive(Clone, Debug, Deserialize)]
 pub struct AddUserViewModel {
     pub username: String,

@@ -5,11 +5,13 @@ use uuid::Uuid;
 
 use super::asset_view_model::AssetViewModel;
 
+#[typeshare::typeshare]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PortfolioViewModel {
     pub portfolio_entries: Vec<PortfolioEntryViewModel>,
 }
 
+#[typeshare::typeshare]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PortfolioEntryViewModel {
     pub asset: AssetViewModel,
@@ -19,6 +21,7 @@ pub struct PortfolioEntryViewModel {
     pub sum: Decimal,
 }
 
+#[typeshare::typeshare]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PortfolioAccountViewModel {
     pub id: Uuid,

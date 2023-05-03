@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use time::{serde::iso8601, OffsetDateTime};
 use uuid::Uuid;
 
+#[typeshare::typeshare]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AddTransactionGroupViewModel {
     pub transactions: Vec<AddTransactonViewModel>,
@@ -15,6 +16,7 @@ pub struct AddTransactionGroupViewModel {
     pub date: OffsetDateTime,
 }
 
+#[typeshare::typeshare]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AddTransactonViewModel {
     pub asset_id: i32,

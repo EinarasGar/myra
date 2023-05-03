@@ -1,6 +1,7 @@
 use business::dtos::asset_dto::AssetDto;
 use serde::{Deserialize, Serialize};
 
+#[typeshare::typeshare]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AssetViewModel {
     pub ticker: String,
