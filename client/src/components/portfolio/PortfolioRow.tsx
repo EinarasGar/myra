@@ -1,21 +1,10 @@
 import React from "react";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
+
 import { useNavigate } from "react-router-dom";
-import {
-  TransactionGroupViewModel,
-  TransactionViewModel,
-} from "../../models/transaction_view_model/get_tramscaton_view_model";
+import { TransactionGroupViewModel } from "../../models/transaction_view_model/get_tramscaton_view_model";
 
-const CalculateSum = (transactions: Array<TransactionViewModel>) => {
-  let sum = 0;
-  transactions.forEach((t) => {
-    sum += Number(t.quantity);
-  });
-  console.log(sum);
-  return sum;
-};
-
-const TransactionRow = (group: TransactionGroupViewModel) => {
+const PortfolioRow = (group: TransactionGroupViewModel) => {
   // const count = useAppSelector((state) => state.asset.value);
   // const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -49,11 +38,11 @@ const TransactionRow = (group: TransactionGroupViewModel) => {
           {group.description}
         </div>
         <div className="text-sm text-light-subtext1 dark:text-dark-subtext1">
-          Purchased on April 1, 2023
+          Purchased on April 2, 2023
         </div>
       </div>
       <div className="text-lg font-medium text-light-text dark:text-dark-text">
-        ${CalculateSum(group.transactions)}
+        1
       </div>
     </div>
 
@@ -66,4 +55,4 @@ const TransactionRow = (group: TransactionGroupViewModel) => {
   );
 };
 
-export default TransactionRow;
+export default PortfolioRow;

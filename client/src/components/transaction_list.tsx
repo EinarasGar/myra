@@ -6,12 +6,12 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { insertNew } from "../features/asset/assetSlice";
 import { insertNewTransactions } from "../features/transaction/transactionSlice";
-import { TransactionGroupListRespData } from "../models/transaction_view_model";
 import TransactionRow from "./transactions/transaction_row";
+import { TransactionGroupListViewModel } from "../models/transaction_view_model/get_tramscaton_view_model";
 
 const TransactionList = () => {
   const [assetData, setAssetData] =
-    useState<TransactionGroupListRespData | null>(null);
+    useState<TransactionGroupListViewModel | null>(null);
 
   const [errorr, setError] = useState(null);
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ const TransactionList = () => {
       .get("users/2396480f-0052-4cf0-81dc-8cedbde5ce13/transactions")
       .then((response) => {
         setAssetData(response.data);
-        const kazkas = response.data as TransactionGroupListRespData;
+        const kazkas = response.data as TransactionGroupListViewModel;
         if (kazkas !== null) {
           console.log("dispacinu");
           dispatch(insertNew(kazkas.assets_lookup_table));
@@ -72,10 +72,7 @@ const TransactionList = () => {
               <div className="overflow-hidden">
                 <div className="min-w-full text-left text-sm font-light">
                   {assetData.groups.map((group) => (
-                    <TransactionRow
-                      key={group.group_id}
-                      {...group}
-                    ></TransactionRow>
+                    <TransactionRow key={group.id} {...group}></TransactionRow>
                   ))}
                 </div>
               </div>

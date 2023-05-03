@@ -1,12 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
-import {
-  AssetRespData,
-  TransactionGroupRespData,
-} from "../../models/transaction_view_model";
+import { TransactionGroupViewModel } from "../../models/transaction_view_model/get_tramscaton_view_model";
 
 export interface TransactionState {
-  transactionGroups: Array<TransactionGroupRespData>;
+  transactionGroups: Array<TransactionGroupViewModel>;
 }
 
 const initialState: TransactionState = {
@@ -19,7 +16,7 @@ export const counterSlice = createSlice({
   reducers: {
     insertNewTransactions: (
       state,
-      action: PayloadAction<TransactionGroupRespData[]>
+      action: PayloadAction<TransactionGroupViewModel[]>
     ) => {
       state.transactionGroups = action.payload;
     },

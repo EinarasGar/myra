@@ -10,15 +10,15 @@ use crate::view_models::{
 
 #[typeshare::typeshare]
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct TransactionGroupListRespData {
-    pub groups: Vec<TransactionGroupRespData>,
+pub struct TransactionGroupListViewModel {
+    pub groups: Vec<TransactionGroupViewModel>,
     pub assets_lookup_table: Vec<AssetViewModel>,
 }
 
 #[typeshare::typeshare]
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct TransactionGroupRespData {
-    pub transactions: Vec<TransactionRespData>,
+pub struct TransactionGroupViewModel {
+    pub transactions: Vec<TransactionViewModel>,
     pub description: String,
     #[serde(with = "iso8601")]
     pub date: OffsetDateTime,
@@ -28,7 +28,7 @@ pub struct TransactionGroupRespData {
 
 #[typeshare::typeshare]
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct TransactionRespData {
+pub struct TransactionViewModel {
     pub id: i32,
     pub asset_id: i32,
 
@@ -42,7 +42,7 @@ pub struct TransactionRespData {
     pub description: Option<String>,
 }
 
-impl From<TransactonDto> for TransactionRespData {
+impl From<TransactonDto> for TransactionViewModel {
     fn from(p: TransactonDto) -> Self {
         Self {
             id: p.transaction_id,
@@ -59,13 +59,13 @@ impl From<TransactonDto> for TransactionRespData {
     }
 }
 
-impl From<TransactionGroupDto> for TransactionGroupRespData {
+impl From<TransactionGroupDto> for TransactionGroupViewModel {
     fn from(p: TransactionGroupDto) -> Self {
         Self {
             transactions: p
                 .transactions
                 .into_iter()
-                .map(|t| TransactionRespData::from(t))
+                .map(|t| TransactionViewModel::from(t))
                 .collect(),
             description: p.description,
             date: p.date,

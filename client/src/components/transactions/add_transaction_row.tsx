@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Select from "react-select";
-import { AddTransactionReqData } from "../../models/transaction_view_model";
+import { AddTransactonViewModel } from "../../models/transaction_view_model/add_transaction_view_model";
 
 const options = [
   { value: 1, label: "Chocolate" },
@@ -11,7 +11,7 @@ const options = [
 interface FuncProps {
   index: number;
   onTransactionChanged: (
-    transaction: AddTransactionReqData,
+    transaction: AddTransactonViewModel,
     index: number
   ) => void;
 }
@@ -41,15 +41,15 @@ const AddTransactionRow = (props: FuncProps) => {
     }
   }
 
-  function sendUpdate(transation: AddTransactionReqData) {
+  function sendUpdate(transation: AddTransactonViewModel) {
     props.onTransactionChanged(transation, props.index);
   }
 
   useEffect(() => {
-    const reqTrans: AddTransactionReqData = {
+    const reqTrans: AddTransactonViewModel = {
       asset_id: asset,
       quantity: parseFloat(amount),
-      category: category,
+      category_id: category,
       date: date,
       description: description,
     };

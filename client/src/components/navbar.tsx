@@ -28,11 +28,14 @@ const Navbar = (props: IProps) => {
           to={"/overview"}
           className="block px-4 py-2 font-medium text-light-text dark:text-dark-text hover:bg-light-600 dark:hover:bg-dark-600 rounded-md border-b-2 border-transparent hover:border-indigo-500"
         >
-          Overview
+          Transaction List
         </Link>
-        <a className="block px-4 py-2 font-medium text-light-text dark:text-dark-text hover:bg-light-600 dark:hover:bg-dark-600 rounded-md border-b-2 border-transparent hover:border-indigo-500">
-          About
-        </a>
+        <Link
+          to={"/portfolio"}
+          className="block px-4 py-2 font-medium text-light-text dark:text-dark-text hover:bg-light-600 dark:hover:bg-dark-600 rounded-md border-b-2 border-transparent hover:border-indigo-500"
+        >
+          Portfolio
+        </Link>
         <a className="block px-4 py-2 font-medium text-light-text dark:text-dark-text hover:bg-light-600 dark:hover:bg-dark-600 rounded-md border-b-2 border-transparent hover:border-indigo-500">
           Contact
         </a>

@@ -8,6 +8,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import TransactionList from "./components/transaction_list";
 import AddTranscation from "./components/add_transaction";
 import DisplayTransaction from "./components/DisplayTransaction";
+import Portfolio from "./components/portfolio";
 
 const router = createBrowserRouter([
   {
@@ -17,6 +18,10 @@ const router = createBrowserRouter([
       {
         path: "/overview",
         element: <TransactionList />,
+      },
+      {
+        path: "/portfolio",
+        element: <Portfolio />,
       },
       {
         path: "/addtranscation",

@@ -6,40 +6,40 @@ import {
   ChevronUpIcon,
 } from "@radix-ui/react-icons";
 import React, { useEffect, useState } from "react";
-import {
-  AddTransactionGroupReqData,
-  AddTransactionReqData,
-} from "../models/transaction_view_model";
 import axios from "axios";
 import AddTransactionRow from "./transactions/add_transaction_row";
+import {
+  AddTransactionGroupViewModel,
+  AddTransactonViewModel,
+} from "../models/transaction_view_model/add_transaction_view_model";
 
 const AddTranscation = () => {
   const [groupDescription, setGroupDescription] = useState("");
   const [groupCategory, setGroupCategory] = useState(0);
   const [groupDate, setGroupDate] = useState("2022-01-01T00:00");
 
-  const defaultTrans: AddTransactionReqData = {
+  const defaultTrans: AddTransactonViewModel = {
     asset_id: 0,
     quantity: 0,
-    category: 0,
+    category_id: 0,
     date: "",
     description: "description",
   };
 
-  const defaultObj: AddTransactionGroupReqData = {
+  const defaultObj: AddTransactionGroupViewModel = {
     transactions: [defaultTrans],
     description: "",
     date: "",
-    category: 0,
+    category_id: 0,
   };
 
   const [transGroup, setTransGroup] = useState(defaultObj);
 
   function handleMultiTranscationButton() {
-    const newTrans: AddTransactionReqData = {
+    const newTrans: AddTransactonViewModel = {
       asset_id: 0,
       quantity: 0,
-      category: 0,
+      category_id: 0,
       date: "",
       description: "description",
     };
@@ -54,12 +54,12 @@ const AddTranscation = () => {
       ...transGroup,
       description: groupDescription,
       date: groupDate,
-      category: groupCategory,
+      category_id: groupCategory,
     });
   }, [groupCategory, groupDate, groupDescription]);
 
   function onTransactionChange(
-    transaction: AddTransactionReqData,
+    transaction: AddTransactonViewModel,
     index: number
   ) {
     const newTrans = transGroup.transactions;

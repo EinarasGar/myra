@@ -9,7 +9,7 @@ use crate::{
         asset_view_model::AssetViewModel,
         transaction_view_model::{
             add_transaction_view_model::AddTransactionGroupViewModel,
-            get_tramscaton_view_model::TransactionGroupListRespData,
+            get_tramscaton_view_model::TransactionGroupListViewModel,
         },
     },
 };
@@ -19,12 +19,12 @@ pub async fn post_transactions(
     Path(id): Path<Uuid>,
     TransactionServiceState(transaction_service): TransactionServiceState,
     Json(params): Json<AddTransactionGroupViewModel>,
-) -> Result<Json<TransactionGroupListRespData>, AppError> {
+) -> Result<Json<TransactionGroupListViewModel>, AppError> {
     let insert_result = transaction_service
         .add_transaction_group(id, params.clone().into())
         .await?;
 
-    let response = TransactionGroupListRespData {
+    let response = TransactionGroupListViewModel {
         groups: vec![insert_result.into()],
         assets_lookup_table: Vec::new(),
     };
@@ -36,7 +36,7 @@ pub async fn get_transactions(
     Path(id): Path<Uuid>,
     AssetsServiceState(assets_service): AssetsServiceState,
     TransactionServiceState(transaction_service): TransactionServiceState,
-) -> Result<Json<TransactionGroupListRespData>, AppError> {
+) -> Result<Json<TransactionGroupListViewModel>, AppError> {
     let transactions = transaction_service.get_transaction_groups(id).await?;
 
     let mut unique_asset_ids: HashSet<i32> = HashSet::new();
@@ -52,7 +52,7 @@ pub async fn get_transactions(
         assets_lookup_vec.push(dto.into());
     }
 
-    let response = TransactionGroupListRespData {
+    let response = TransactionGroupListViewModel {
         groups: transactions.iter().map(|val| val.clone().into()).collect(),
         assets_lookup_table: assets_lookup_vec,
     };

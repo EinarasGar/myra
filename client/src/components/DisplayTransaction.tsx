@@ -2,9 +2,9 @@ import React from "react";
 import { Form, useLoaderData, useParams } from "react-router-dom";
 import { useAppSelector } from "../app/hooks";
 import * as Separator from "@radix-ui/react-separator";
-import { TransactionRespData } from "../models/transaction_view_model";
+import { TransactionViewModel } from "../models/transaction_view_model/get_tramscaton_view_model";
 
-const CalculateSum = (transactions: Array<TransactionRespData>) => {
+const CalculateSum = (transactions: Array<TransactionViewModel>) => {
   let sum = 0;
   transactions.forEach((t) => {
     sum += Number(t.quantity);
@@ -20,7 +20,7 @@ const DisplayTransaction = () => {
     (state) => state.transaction.transactionGroups
   );
 
-  const group = transactions.find((t) => t.group_id === transactionId);
+  const group = transactions.find((t) => t.id === transactionId);
 
   if (group === undefined) {
     return <div>Transaction not found</div>;
@@ -53,7 +53,7 @@ const DisplayTransaction = () => {
                     <div className="flex items-center justify-center flex-shrink-0 h-10 w-10 rounded-full bg-light-lavender text-white"></div>
                     <div className="flex flex-col flex-grow ml-4">
                       <div className="text-lg font-medium text-light-text dark:text-dark-text">
-                        {group.group_description}
+                        {group.description}
                       </div>
                       <div className="text-sm text-light-subtext1 dark:text-dark-subtext1">
                         Purchased on April 1, 2023
@@ -67,7 +67,7 @@ const DisplayTransaction = () => {
                   {group.transactions.map((trans) => (
                     <div
                       className="flex items-center py-4 px-6 rounded-lg hover:dark:bg-dark-600"
-                      key={trans.transaction_id}
+                      key={trans.id}
                     >
                       <div className="flex items-center justify-center flex-shrink-0 h-10 w-10 rounded-full bg-light-lavender text-white"></div>
                       <div className="flex flex-col flex-grow ml-4">
