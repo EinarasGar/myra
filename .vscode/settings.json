@@ -1,21 +1,18 @@
 {
-  "eslint.workingDirectories": [
-    "client"
-  ],
-  "eslint.format.enable": true,
+  "eslint.workingDirectories": ["web"],
   "files.exclude": {
     "**/build": true,
     "**/bin": true,
     "**/obj": true,
     "**/node_modules": true,
-    "server/target": true,
+    "server/target": true
   },
   "search.exclude": {
     "**/build": true,
     "**/bin": true,
     "**/obj": true,
     "**/node_modules": true,
-    "server/target": true,
+    "server/target": true
   },
   "explorer.fileNesting.enabled": true,
   "explorer.fileNesting.patterns": {
@@ -26,10 +23,14 @@
   "typescript.referencesCodeLens.enabled": true,
   "typescript.implementationsCodeLens.enabled": true,
   "telemetry.enableCrashReporter": false,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": true
   },
-  "editor.formatOnSave": true,
   "thunder-client.saveToWorkspace": true,
-  "thunder-client.workspaceRelativePath": ".vscode"
+  "thunder-client.workspaceRelativePath": ".vscode",
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
 }
