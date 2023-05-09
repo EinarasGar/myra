@@ -24,6 +24,8 @@ module.exports = {
   rules: {
     "react-refresh/only-export-components": "warn",
     "react/react-in-jsx-scope": "off",
+    "no-param-reassign": "off",
+    "react/jsx-key": "error",
     "import/extensions": [
       "error",
       "ignorePackages",
