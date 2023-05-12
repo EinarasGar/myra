@@ -45,3 +45,10 @@ pub struct AddTransactionGroupModel {
     pub description: String,
     pub date: OffsetDateTime,
 }
+
+#[derive(Clone, Debug, sqlx::FromRow)]
+pub struct CategoryModel {
+    pub id: i32,
+    pub category: String,
+    pub icon: String,
+}

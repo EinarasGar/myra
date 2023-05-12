@@ -21,7 +21,7 @@ use crate::dtos::{
     portfolio_dto::PortfolioAccountDto,
     transaction_dto::{
         add_transaction_dtos::AddTransactionGroupDto,
-        get_transaction_dtos::{TransactionGroupDto, TransactonDto},
+        get_transaction_dtos::{TransactionGroupDto, TransactonDto}, CategoryDto,
     },
 };
 
@@ -210,5 +210,15 @@ impl TransactionService {
         result_dto_vec.sort_by(|a, b| b.date.cmp(&a.date));
 
         Ok(result_dto_vec)
+    }
+
+    #[tracing::instrument(skip(self), ret, err)]
+    pub async fn get_all_categories(
+        &self,
+    ) -> anyhow::Result<Vec<CategoryDto>> {
+        let mut conn = self.db.get_connection().await?;
+        let models = conn.get_categories().await?;
+        let ret_vec: Vec<CategoryDto> = models.iter().map(|val| val.clone().into()).collect();
+        Ok(ret_vec)
     }
 }

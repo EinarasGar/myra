@@ -10,7 +10,7 @@ module.exports = {
     "airbnb-typescript",
     "plugin:react-redux/recommended",
     "plugin:sonarjs/recommended",
-    "plugin:prettier/recommended",
+    "prettier",
   ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
@@ -33,6 +33,12 @@ module.exports = {
         "": "never",
         tsx: "never",
         ts: "never",
+      },
+    ],
+    "react/jsx-props-no-spreading": [
+      "error",
+      {
+        exceptions: ["TextField", "Box"],
       },
     ],
   },

@@ -3,7 +3,8 @@ CREATE SCHEMA public;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS public.transaction_categories (
     id SERIAL CONSTRAINT transaction_categories_pk PRIMARY KEY,
-    category TEXT NOT NULL
+    category TEXT NOT NULL,
+    icon TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS public.transaction_descriptions (
     transaction_id INT CONSTRAINT transaction_descriptions_pk PRIMARY KEY,

@@ -7,11 +7,11 @@ use tracing::{debug_span, Instrument};
 use crate::{
     idens::{
         portfolio_idens::PortfolioAccountIden,
-        transaction_idens::{TransactionDescriptionsIden, TransactionGroupIden, TransactionIden},
+        transaction_idens::{TransactionDescriptionsIden, TransactionGroupIden, TransactionIden, TransactionCategoriesIden},
     },
     models::transaction_models::{
         AddTransactionDescriptionModel, AddTransactionGroupModel, AddTransactionModel,
-        TransactionWithGroupModel,
+        TransactionWithGroupModel, CategoryModel,
     },
 };
 
@@ -33,6 +33,9 @@ pub trait TransactionDbSet {
         &mut self,
         models: Vec<AddTransactionModel>,
     ) -> Result<Vec<i32>, anyhow::Error>;
+    async fn get_categories(
+        &mut self,
+    ) -> anyhow::Result<Vec<CategoryModel>>;
 }
 
 #[async_trait]
@@ -196,6 +199,25 @@ impl TransactionDbSet for PgConnection {
             .fetch_all(&mut *self)
             .instrument(debug_span!("query", sql, ?values))
             .await?;
+        Ok(rows)
+    }
+
+    #[tracing::instrument(skip(self), ret, err)]
+    async fn get_categories(
+        &mut self,
+    ) -> anyhow::Result<Vec<CategoryModel>> {
+        let (sql, values) = Query::select()
+            .column( TransactionCategoriesIden::Id)
+            .column( TransactionCategoriesIden::Category)
+            .column( TransactionCategoriesIden::Icon)
+            .from(TransactionCategoriesIden::Table)
+            .build_sqlx(PostgresQueryBuilder);
+
+        let rows = sqlx::query_as_with::<_, CategoryModel, _>(&sql, values.clone())
+            .fetch_all(&mut *self)
+            .instrument(debug_span!("query", sql, ?values))
+            .await?;
+
         Ok(rows)
     }
 }

@@ -25,6 +25,7 @@ pub(crate) fn create_router(state: AppState) -> Router {
         )
         .route("/assets", get(handlers::asset_handler::get_assets))
         .route("/assets/:id", get(handlers::asset_handler::get_asset_by_id))
+        .route("/constants/categories", get(handlers::constants_handler::get_categories))
         .layer(observability::create_tower_http_tracing_layer())
         .with_state(state);
     app

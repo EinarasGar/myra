@@ -17,6 +17,7 @@ pub enum TransactionCategoriesIden {
     Table,
     Id,
     Category,
+    Icon,
 }
 
 #[allow(dead_code)]
@@ -65,6 +66,7 @@ impl Iden for TransactionCategoriesIden {
                 Self::Table => "transaction_categories",
                 Self::Id => "id",
                 Self::Category => "category",
+                Self::Icon => "icon",
             }
         )
         .unwrap();

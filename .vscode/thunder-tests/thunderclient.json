@@ -27,12 +27,12 @@
     "method": "POST",
     "sortNum": 10000,
     "created": "2023-03-18T23:50:56.876Z",
-    "modified": "2023-04-16T21:28:35.815Z",
+    "modified": "2023-05-10T21:47:32.285Z",
     "headers": [],
     "params": [],
     "body": {
       "type": "json",
-      "raw": "{\n  \"transactions\": [\n    {\n      \"asset_id\": 3,\n      \"quantity\": 2.123,\n      \"category_id\": 1,\n      \"date\": \"2022-12-12T23:10:00.511Z\",\n      \"account_id\": \"a4f3bc38-f0ae-46fc-9759-45b9e6ffdb77\",\n      \"description\": \"knyga\"\n    },\n    {\n      \"asset_id\": 4,\n      \"quantity\": 2,\n      \"category_id\": 1,\n      \"date\": \"2022-12-12T23:10:00.511Z\"\n    }\n  ],\n  \"description\": \"knyga\",\n  \"date\": \"2022-12-12T23:10:00.511Z\",\n  \"category_id\": 1\n}",
+      "raw": "{\n  \"transactions\": [\n    {\n      \"asset_id\": 3,\n      \"quantity\": 2.123,\n      \"category_id\": 1,\n      \"date\": \"2022-12-12T23:10:00.511Z\",\n      \"account_id\": \"a4f3bc38-f0ae-46fc-9759-45b9e6ffdb77\",\n      \"description\": \"Sandwic\"\n    },\n    {\n      \"asset_id\": 4,\n      \"quantity\": 2,\n      \"category_id\": 1,\n      \"date\": \"2022-12-12T23:10:00.511Z\",\n      \"description\": \"Cips\"\n    }\n  ],\n  \"description\": \"Meal Deal\",\n  \"date\": \"2022-12-12T23:10:00.511Z\",\n  \"category_id\": 1\n}",
       "form": []
     },
     "tests": []
@@ -115,14 +115,28 @@
     "method": "POST",
     "sortNum": 20000,
     "created": "2023-04-15T18:43:40.934Z",
-    "modified": "2023-04-16T20:46:32.047Z",
+    "modified": "2023-05-11T19:31:27.065Z",
     "headers": [],
     "params": [],
     "body": {
       "type": "json",
-      "raw": "{\n  \"id\": \"a4f3bc38-f0ae-46fc-9759-45b9e6ffdb77\",\n  \"name\": \"Onionas\"\n}",
+      "raw": "{\n  \"id\": \"a4f3bc38-f0ae-46fc-9759-45b9e6ffdb77\",\n  \"name\": \"Default2\"\n}",
       "form": []
     },
+    "tests": []
+  },
+  {
+    "_id": "9d292620-ac5d-48f5-9de8-f473957f83c7",
+    "colId": "d3d27665-c04c-4cb1-8316-9ed20cd689aa",
+    "containerId": "f6b7411a-48a8-4805-b45e-5ac289ee2661",
+    "name": "categories",
+    "url": "{{base}}/constants/categories",
+    "method": "GET",
+    "sortNum": 30000,
+    "created": "2023-05-10T23:05:06.473Z",
+    "modified": "2023-05-10T23:05:23.359Z",
+    "headers": [],
+    "params": [],
     "tests": []
   }
 ]
