@@ -5,6 +5,7 @@ import {
   CategoryViewModel,
   LoginDetailsViewModel,
   AuthViewModel,
+  AssetViewModel,
 } from "@/models";
 import { RootState } from "@/stores/store";
 
@@ -29,6 +30,9 @@ export const myraApi = createApi({
     getCategories: builder.query<CategoryViewModel[], void>({
       query: () => `/constants/categories`,
     }),
+    searchAssets: builder.query<AssetViewModel[], string>({
+      query: (query) => `/assets?search=${query}`,
+    }),
     login: builder.mutation<AuthViewModel, LoginDetailsViewModel>({
       query: (credentials) => ({
         url: "/auth",
@@ -45,4 +49,5 @@ export const {
   useGetTransactionsQuery,
   useGetCategoriesQuery,
   useLoginMutation,
+  useSearchAssetsQuery,
 } = myraApi;

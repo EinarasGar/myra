@@ -41,5 +41,6 @@ module.exports = {
         exceptions: ["TextField", "Box"],
       },
     ],
+    "import/prefer-default-export": "off",
   },
 };

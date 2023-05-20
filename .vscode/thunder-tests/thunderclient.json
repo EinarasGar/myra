@@ -64,23 +64,22 @@
     "colId": "d3d27665-c04c-4cb1-8316-9ed20cd689aa",
     "containerId": "8205d353-a482-47b3-b8d9-1d6c58d76cf1",
     "name": "/assets",
-    "url": "{{base}}/assets",
+    "url": "{{base}}/assets?search=p",
     "method": "GET",
     "sortNum": 10000,
     "created": "2023-03-19T22:51:52.640Z",
-    "modified": "2023-04-16T21:33:05.533Z",
+    "modified": "2023-05-20T18:00:36.313Z",
     "headers": [],
     "params": [
       {
         "name": "page",
-        "value": "3",
+        "value": "0",
         "isDisabled": true,
         "isPath": false
       },
       {
         "name": "search",
-        "value": "ford",
-        "isDisabled": true,
+        "value": "p",
         "isPath": false
       }
     ],

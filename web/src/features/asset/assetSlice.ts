@@ -14,6 +14,19 @@ const initialState: AssetState = {
   values: [],
 };
 
+function insertAndSortAssets(
+  curreentAssets: AssetViewModel[],
+  newAssets: AssetViewModel[]
+): AssetViewModel[] {
+  const existingAssetIds = new Set(curreentAssets.map((asset) => asset.id));
+  const uniqueAssets = newAssets.filter(
+    (asset) => !existingAssetIds.has(asset.id)
+  );
+
+  const combinedList = [...curreentAssets, ...uniqueAssets];
+  return combinedList.sort((a, b) => (a.category < b.category ? -1 : 1));
+}
+
 export const assetSlice = createSlice({
   name: "asset",
   initialState,
@@ -23,12 +36,22 @@ export const assetSlice = createSlice({
     // },
   },
   extraReducers: (builder) => {
-    builder.addMatcher(
-      myraApi.endpoints.getTransactions.matchFulfilled,
-      (state, { payload }) => {
-        state.values = payload.assets_lookup_table;
-      }
-    );
+    builder
+      .addMatcher(
+        myraApi.endpoints.getTransactions.matchFulfilled,
+        (state, { payload }) => {
+          state.values = insertAndSortAssets(
+            state.values,
+            payload.assets_lookup_table
+          );
+        }
+      )
+      .addMatcher(
+        myraApi.endpoints.searchAssets.matchFulfilled,
+        (state, { payload }) => {
+          state.values = insertAndSortAssets(state.values, payload);
+        }
+      );
   },
 });
 
