@@ -11,17 +11,18 @@ use crate::{
             add_transaction_view_model::AddTransactionGroupViewModel,
             get_tramscaton_view_model::TransactionGroupListViewModel,
         },
-    },
+    }, auth::{AuthenticatedUserState},
 };
 
 #[tracing::instrument(skip(transaction_service), ret, err)]
 pub async fn post_transactions(
-    Path(id): Path<Uuid>,
+    Path(user_id): Path<Uuid>,
     TransactionServiceState(transaction_service): TransactionServiceState,
+    AuthenticatedUserState(auth): AuthenticatedUserState,
     Json(params): Json<AddTransactionGroupViewModel>,
 ) -> Result<Json<TransactionGroupListViewModel>, AppError> {
     let insert_result = transaction_service
-        .add_transaction_group(id, params.clone().into())
+        .add_transaction_group(user_id, params.clone().into())
         .await?;
 
     let response = TransactionGroupListViewModel {
@@ -36,6 +37,7 @@ pub async fn get_transactions(
     Path(id): Path<Uuid>,
     AssetsServiceState(assets_service): AssetsServiceState,
     TransactionServiceState(transaction_service): TransactionServiceState,
+    AuthenticatedUserState(auth): AuthenticatedUserState,
 ) -> Result<Json<TransactionGroupListViewModel>, AppError> {
     let transactions = transaction_service.get_transaction_groups(id).await?;
 

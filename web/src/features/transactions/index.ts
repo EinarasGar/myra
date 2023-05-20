@@ -1,12 +1,12 @@
 import TransactionList from "./components/TransactionList";
-import TransactionRoutes from "./routes";
+import useTransactionRoutes from "./routes";
 import categoriesReducer, {
   selectTransactionCategories,
 } from "./slices/categorySlice";
 
 export {
   TransactionList,
-  TransactionRoutes,
+  useTransactionRoutes,
   categoriesReducer,
   selectTransactionCategories,
 };

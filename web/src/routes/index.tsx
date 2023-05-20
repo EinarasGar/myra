@@ -1,3 +1,3 @@
-import router from "./root";
+import AppRoutes from "./AppRoutes";
 
-export default router;
+export default AppRoutes;

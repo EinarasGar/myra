@@ -1,4 +1,3 @@
-import React from "react";
 import CategoryAutoComplete from "../components/CategoryAutoComplete";
 
 function AddTransaction() {

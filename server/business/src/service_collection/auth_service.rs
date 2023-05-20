@@ -1,21 +1,12 @@
+
 use std::str::FromStr;
 
 use dal::{
-    database_context::MyraDb, db_sets::user_db_set::UsersDbSet, models::user_models::AuthRoles,
+    database_context::MyraDb, db_sets::user_db_set::UsersDbSet,
 };
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
-use crate::service_collection::user_service::UsersService;
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Claims {
-    #[serde(with = "Uuid")]
-    sub: Uuid,
-    role: AuthRoles,
-    exp: u64,
-}
+use crate::{service_collection::user_service::UsersService, dtos::auth_dto::{ClaimsDto, AuthRolesDto}};
 
 #[derive(Clone)]
 pub struct AuthService {
@@ -62,10 +53,10 @@ impl AuthService {
         self.user_service
             .verify_user_password(password, user_auth_info.password)?;
 
-        let my_claims = Claims {
+        let my_claims = ClaimsDto {
             sub: user_auth_info.id,
             exp: jsonwebtoken::get_current_timestamp() + 6000,
-            role: AuthRoles::from_str(&user_auth_info.role).unwrap(),
+            role: AuthRolesDto::from_str(&user_auth_info.role).unwrap(),
         };
 
         let token = encode(&Header::default(), &my_claims, &self.jwt_keys.encoding).unwrap();
@@ -73,9 +64,9 @@ impl AuthService {
     }
 
     #[tracing::instrument(skip(self), ret, err)]
-    pub fn verify_auth_token(&self, token: String) -> anyhow::Result<Claims> {
+    pub fn verify_auth_token(&self, token: String) -> anyhow::Result<ClaimsDto> {
         let token_message =
-            decode::<Claims>(&token, &self.jwt_keys.decoding, &Validation::default())?;
+            decode::<ClaimsDto>(&token, &self.jwt_keys.decoding, &Validation::default())?;
         Ok(token_message.claims)
     }
 }

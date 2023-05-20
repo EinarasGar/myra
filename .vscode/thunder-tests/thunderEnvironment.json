@@ -9,7 +9,11 @@
     "data": [
       {
         "name": "base",
-        "value": "http://localhost:5000"
+        "value": "http://localhost:5000/api"
+      },
+      {
+        "name": "token",
+        "value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyMzk2NDgwZi0wMDUyLTRjZjAtODFkYy04Y2VkYmRlNWNlMTMiLCJyb2xlIjoiQWRtaW4iLCJleHAiOjE2ODQwOTA0MDZ9.1hLeH_PwW5FUiKKwg8RM0_dLdfS3fz2_qPA9frB2Tl4"
       }
     ]
   },

@@ -11,8 +11,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      "/users": "http://localhost:5000",
-      "/constants": "http://localhost:5000",
+      "/api": "http://localhost:5000",
     },
   },
 });

@@ -27,13 +27,17 @@
     "method": "POST",
     "sortNum": 10000,
     "created": "2023-03-18T23:50:56.876Z",
-    "modified": "2023-05-10T21:47:32.285Z",
+    "modified": "2023-05-14T18:27:22.385Z",
     "headers": [],
     "params": [],
     "body": {
       "type": "json",
       "raw": "{\n  \"transactions\": [\n    {\n      \"asset_id\": 3,\n      \"quantity\": 2.123,\n      \"category_id\": 1,\n      \"date\": \"2022-12-12T23:10:00.511Z\",\n      \"account_id\": \"a4f3bc38-f0ae-46fc-9759-45b9e6ffdb77\",\n      \"description\": \"Sandwic\"\n    },\n    {\n      \"asset_id\": 4,\n      \"quantity\": 2,\n      \"category_id\": 1,\n      \"date\": \"2022-12-12T23:10:00.511Z\",\n      \"description\": \"Cips\"\n    }\n  ],\n  \"description\": \"Meal Deal\",\n  \"date\": \"2022-12-12T23:10:00.511Z\",\n  \"category_id\": 1\n}",
       "form": []
+    },
+    "auth": {
+      "type": "bearer",
+      "bearer": "{{token}}"
     },
     "tests": []
   },
@@ -46,9 +50,13 @@
     "method": "GET",
     "sortNum": 10000,
     "created": "2023-03-19T11:06:45.424Z",
-    "modified": "2023-03-19T17:13:32.651Z",
+    "modified": "2023-05-14T17:13:57.859Z",
     "headers": [],
     "params": [],
+    "auth": {
+      "type": "bearer",
+      "bearer": "{{token}}"
+    },
     "tests": []
   },
   {
@@ -101,9 +109,13 @@
     "method": "GET",
     "sortNum": 20000,
     "created": "2023-04-01T00:46:51.023Z",
-    "modified": "2023-04-01T00:47:01.157Z",
+    "modified": "2023-05-14T18:27:28.762Z",
     "headers": [],
     "params": [],
+    "auth": {
+      "type": "bearer",
+      "bearer": "{{token}}"
+    },
     "tests": []
   },
   {
@@ -111,17 +123,21 @@
     "colId": "d3d27665-c04c-4cb1-8316-9ed20cd689aa",
     "containerId": "25ae6f65-5ca2-4055-8155-17d476a6fecd",
     "name": "/users/:uuid/portfolio/accounts",
-    "url": "{{base}}/users/2396480f-0052-4cf0-81dc-8cedbde5ce13/portfolio/accounts",
+    "url": "{{base}}/users/{{my-uuid}}/portfolio/accounts",
     "method": "POST",
     "sortNum": 20000,
     "created": "2023-04-15T18:43:40.934Z",
-    "modified": "2023-05-11T19:31:27.065Z",
+    "modified": "2023-05-14T18:27:16.149Z",
     "headers": [],
     "params": [],
     "body": {
       "type": "json",
       "raw": "{\n  \"id\": \"a4f3bc38-f0ae-46fc-9759-45b9e6ffdb77\",\n  \"name\": \"Default2\"\n}",
       "form": []
+    },
+    "auth": {
+      "type": "bearer",
+      "bearer": "{{token}}"
     },
     "tests": []
   },
@@ -138,5 +154,31 @@
     "headers": [],
     "params": [],
     "tests": []
+  },
+  {
+    "_id": "d3cd07d6-9103-4a65-9cee-58f074253781",
+    "colId": "d3d27665-c04c-4cb1-8316-9ed20cd689aa",
+    "containerId": "ad0b5949-1eb3-49b4-a6d4-97ce6b38f100",
+    "name": "auth",
+    "url": "{{base}}/auth",
+    "method": "POST",
+    "sortNum": 50000,
+    "created": "2023-05-12T23:11:52.726Z",
+    "modified": "2023-05-14T17:13:26.494Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"username\": \"einaras\",\n  \"password\": \"password\"\n}",
+      "form": []
+    },
+    "tests": [
+      {
+        "type": "set-env-var",
+        "custom": "json.token",
+        "action": "setto",
+        "value": "{{token}}"
+      }
+    ]
   }
 ]

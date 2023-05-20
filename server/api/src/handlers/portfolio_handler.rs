@@ -6,15 +6,16 @@ use crate::{
     states::PortfolioServiceState,
     view_models::portfolio_view_model::{
         PortfolioAccountViewModel, PortfolioEntryViewModel, PortfolioViewModel,
-    },
+    }, auth::{ AuthenticatedUserState},
 };
 
 #[tracing::instrument(skip(portfolio_service), ret, err)]
 pub async fn get_portfolio(
-    Path(id): Path<Uuid>,
+    Path(user_id): Path<Uuid>,
     PortfolioServiceState(portfolio_service): PortfolioServiceState,
+    AuthenticatedUserState(auth): AuthenticatedUserState,
 ) -> Result<Json<PortfolioViewModel>, AppError> {
-    let portfolio_assets_dto = portfolio_service.get_portfolio(id).await?;
+    let portfolio_assets_dto = portfolio_service.get_portfolio(user_id).await?;
     let response_assets: Vec<PortfolioEntryViewModel> = portfolio_assets_dto
         .iter()
         .map(|val| val.clone().into())
@@ -29,12 +30,13 @@ pub async fn get_portfolio(
 
 #[tracing::instrument(skip(portfolio_service), ret, err)]
 pub async fn post_portfolio_account(
-    Path(id): Path<Uuid>,
+    Path(user_id): Path<Uuid>,
     PortfolioServiceState(portfolio_service): PortfolioServiceState,
+    AuthenticatedUserState(auth): AuthenticatedUserState,
     Json(params): Json<PortfolioAccountViewModel>,
 ) -> Result<Json<PortfolioAccountViewModel>, AppError> {
     portfolio_service
-        .insert_or_update_portfolio_account(id, params.clone().into())
+        .insert_or_update_portfolio_account(user_id, params.clone().into())
         .await?;
 
     Ok(params.into())
