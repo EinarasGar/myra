@@ -6,8 +6,10 @@ import {
   LoginDetailsViewModel,
   AuthViewModel,
   AssetViewModel,
+  UserViewModel,
+  PortfolioAccountViewModel,
 } from "@/models";
-import { RootState } from "@/stores/store";
+import { RootState } from "@/app/store";
 
 // Define a service using a base URL and expected endpoints
 export const myraApi = createApi({
@@ -33,6 +35,34 @@ export const myraApi = createApi({
     searchAssets: builder.query<AssetViewModel[], string>({
       query: (query) => `/assets?search=${query}`,
     }),
+    getUser: builder.query<UserViewModel, string>({
+      query: (uuid) => `/users/${uuid}`,
+    }),
+    postAccount: builder.mutation<
+      PortfolioAccountViewModel,
+      { account: PortfolioAccountViewModel; user_id: string }
+    >({
+      query: ({ account, user_id }) => ({
+        url: `/users/${user_id}/portfolio/accounts`,
+        method: "POST",
+        body: account,
+      }),
+      async onQueryStarted({ user_id }, { dispatch, queryFulfilled }) {
+        try {
+          const { data: updatedPost } = await queryFulfilled;
+          const update = myraApi.util.updateQueryData(
+            "getUser",
+            user_id,
+            (draft) => {
+              draft.portfolio_accounts.push(updatedPost);
+            }
+          );
+          dispatch(update);
+        } catch {
+          // Ignore error
+        }
+      },
+    }),
     login: builder.mutation<AuthViewModel, LoginDetailsViewModel>({
       query: (credentials) => ({
         url: "/auth",
@@ -50,4 +80,6 @@ export const {
   useGetCategoriesQuery,
   useLoginMutation,
   useSearchAssetsQuery,
+  useGetUserQuery,
+  usePostAccountMutation,
 } = myraApi;

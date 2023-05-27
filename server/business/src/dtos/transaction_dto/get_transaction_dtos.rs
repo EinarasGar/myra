@@ -38,7 +38,7 @@ impl From<TransactionWithGroupModel> for TransactonDto {
             date: p.date,
             description: p.description,
             account: PortfolioAccountDto {
-                account_id: p.account_id,
+                account_id: Some(p.account_id),
                 account_name: p.account_name,
             },
         }

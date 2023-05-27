@@ -8,6 +8,10 @@ pub(crate) fn create_router(state: AppState) -> Router {
     let app = Router::new()
         .route("/api/users", post(handlers::user_handler::post_user))
         .route(
+            "/api/users/:user_id",
+            get(handlers::user_handler::get_user_by_id),
+        )
+        .route(
             "/api/users/:user_id/transactions",
             post(handlers::transaction_handler::post_transactions),
         )
@@ -24,9 +28,18 @@ pub(crate) fn create_router(state: AppState) -> Router {
             post(handlers::portfolio_handler::post_portfolio_account),
         )
         .route("/api/assets", get(handlers::asset_handler::get_assets))
-        .route("/api/assets/:id", get(handlers::asset_handler::get_asset_by_id))
-        .route("/api/constants/categories", get(handlers::constants_handler::get_categories))
-        .route("/api/auth", post(handlers::auth_handler::post_login_details))
+        .route(
+            "/api/assets/:id",
+            get(handlers::asset_handler::get_asset_by_id),
+        )
+        .route(
+            "/api/constants/categories",
+            get(handlers::constants_handler::get_categories),
+        )
+        .route(
+            "/api/auth",
+            post(handlers::auth_handler::post_login_details),
+        )
         .layer(observability::create_tower_http_tracing_layer())
         .with_state(state);
     app

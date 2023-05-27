@@ -1,5 +1,5 @@
 import { List, ListItemButton, Skeleton } from "@mui/material";
-import { useGetTransactionsQuery } from "@/services/myra";
+import { useGetTransactionsQuery } from "@/app/myraApi";
 import TransactionListItem from "./TransactionListItem";
 
 function TransactionList() {

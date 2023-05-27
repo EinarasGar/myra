@@ -21,7 +21,8 @@ use crate::dtos::{
     portfolio_dto::PortfolioAccountDto,
     transaction_dto::{
         add_transaction_dtos::AddTransactionGroupDto,
-        get_transaction_dtos::{TransactionGroupDto, TransactonDto}, CategoryDto,
+        get_transaction_dtos::{TransactionGroupDto, TransactonDto},
+        CategoryDto,
     },
 };
 
@@ -147,7 +148,7 @@ impl TransactionService {
                     category: model.category_id,
                     date: model.date,
                     account: PortfolioAccountDto {
-                        account_id: model.account_id,
+                        account_id: Some(model.account_id),
                         account_name: portfolio_account_vec
                             .iter()
                             .find(|acc| acc.id == model.account_id)
@@ -213,9 +214,7 @@ impl TransactionService {
     }
 
     #[tracing::instrument(skip(self), ret, err)]
-    pub async fn get_all_categories(
-        &self,
-    ) -> anyhow::Result<Vec<CategoryDto>> {
+    pub async fn get_all_categories(&self) -> anyhow::Result<Vec<CategoryDto>> {
         let mut conn = self.db.get_connection().await?;
         let models = conn.get_categories().await?;
         let ret_vec: Vec<CategoryDto> = models.iter().map(|val| val.clone().into()).collect();

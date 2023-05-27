@@ -1,5 +1,5 @@
 import { Button } from "@mui/material";
-import storage from "../utils";
+import { storage } from "../utils";
 
 function Logout() {
   return (

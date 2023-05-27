@@ -24,7 +24,7 @@ pub struct PortfolioEntryViewModel {
 #[typeshare::typeshare]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PortfolioAccountViewModel {
-    pub id: Uuid,
+    pub id: Option<Uuid>,
     pub name: String,
 }
 

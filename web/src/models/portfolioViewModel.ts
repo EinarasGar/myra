@@ -1,7 +1,7 @@
-import { AssetViewModel } from "./asset_view_model";
+import { AssetViewModel } from "./assetViewModel";
 
 export interface PortfolioAccountViewModel {
-  id: string;
+  id?: string;
   name: string;
 }
 

@@ -6,7 +6,7 @@ import { CircularProgress } from "@mui/material";
 import { AssetViewModel } from "@/models";
 import { useAppSelector } from "@/hooks/storeHooks";
 import { selectAssets } from "@/features/asset";
-import { useSearchAssetsQuery } from "@/services/myra";
+import { useSearchAssetsQuery } from "@/app/myraApi";
 import { useDebounce } from "@/hooks";
 
 function AssetAutoComplete() {

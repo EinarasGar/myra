@@ -1,4 +1,6 @@
-use dal::models::portfolio_models::PortfolioCombined;
+use dal::models::portfolio_models::{
+    PortfolioAccountIdNameModel, PortfolioAccountModel, PortfolioCombined,
+};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -14,8 +16,26 @@ pub struct PortfolioDto {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PortfolioAccountDto {
-    pub account_id: Uuid,
+    pub account_id: Option<Uuid>,
     pub account_name: String,
+}
+
+impl From<PortfolioAccountModel> for PortfolioAccountDto {
+    fn from(p: PortfolioAccountModel) -> Self {
+        Self {
+            account_id: Some(p.id),
+            account_name: p.name,
+        }
+    }
+}
+
+impl From<PortfolioAccountIdNameModel> for PortfolioAccountDto {
+    fn from(p: PortfolioAccountIdNameModel) -> Self {
+        Self {
+            account_id: Some(p.id),
+            account_name: p.name,
+        }
+    }
 }
 
 impl From<PortfolioCombined> for PortfolioDto {
@@ -28,7 +48,7 @@ impl From<PortfolioCombined> for PortfolioDto {
                 asset_id: p.asset_id,
             },
             account: PortfolioAccountDto {
-                account_id: p.account_id,
+                account_id: Some(p.account_id),
                 account_name: p.account_name,
             },
             sum: p.sum,

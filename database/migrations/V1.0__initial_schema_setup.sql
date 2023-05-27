@@ -61,7 +61,8 @@ CREATE TABLE IF NOT EXISTS public.users (
 CREATE TABLE IF NOT EXISTS public.portfolio_account (
     id UUID CONSTRAINT portfolio_account_pk PRIMARY KEY,
     user_id UUID NOT NULL CONSTRAINT portfolio_user_id_fkey REFERENCES public.users (id),
-    name TEXT NOT NULL
+    name TEXT NOT NULL,
+    UNIQUE (user_id, name)
 );
 CREATE TABLE IF NOT EXISTS public.portfolio (
     user_id UUID NOT NULL CONSTRAINT portfolio_user_id_fkey REFERENCES public.users (id),

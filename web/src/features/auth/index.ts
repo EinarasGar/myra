@@ -1,5 +1,11 @@
-import authReducer, { selectAuth } from "./authSlice";
+import authReducer, { selectAuthToken, selectUserId } from "./authSlice";
 import Login from "./components/Login";
 import useAuthRoutes from "./routes";
 
-export { authReducer, selectAuth, Login, useAuthRoutes };
+export {
+  authReducer,
+  selectAuthToken as selectAuth,
+  Login,
+  useAuthRoutes,
+  selectUserId,
+};

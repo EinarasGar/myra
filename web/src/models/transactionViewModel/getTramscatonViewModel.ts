@@ -1,5 +1,5 @@
-import { AssetViewModel } from "../asset_view_model";
-import { PortfolioAccountViewModel } from "../portfolio_view_model";
+import { AssetViewModel } from "../assetViewModel";
+import { PortfolioAccountViewModel } from "../portfolioViewModel";
 
 export interface TransactionViewModel {
   id: number;

@@ -1,12 +1,18 @@
 use dal::{
     database_context::MyraDb,
     db_sets::{portfolio_db_set::PortfolioDbSet, user_db_set::UsersDbSet},
-    models::{portfolio_models::PortfolioAccountModel, user_models::UserModel},
+    models::{
+        portfolio_models::PortfolioAccountModel,
+        user_models::{AddUserModel, UserRoleModel},
+    },
 };
 use tracing::{info_span, Instrument};
 use uuid::Uuid;
 
-use crate::dtos::user_dto::AddUserDto;
+use crate::dtos::{
+    portfolio_dto::PortfolioAccountDto,
+    user_dto::{AddUserDto, UserFullDto},
+};
 
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
@@ -24,29 +30,54 @@ impl UsersService {
     }
 
     #[tracing::instrument(skip(self, user), ret, err)]
-    pub async fn register_user(&self, user: AddUserDto) -> anyhow::Result<Uuid> {
+    pub async fn register_user(
+        &self,
+        user: AddUserDto,
+    ) -> anyhow::Result<(UserFullDto, PortfolioAccountDto)> {
         let new_user_id: Uuid = Uuid::new_v4();
-        let db_user: UserModel = UserModel {
+        let db_user: AddUserModel = AddUserModel {
             id: new_user_id,
-            username: user.username,
+            username: user.username.clone(),
             password: self.hash_password(user.password),
             default_asset: user.default_asset,
+            role_id: None,
+        };
+
+        let default_portfolio_account = PortfolioAccountModel {
+            id: new_user_id,
+            user_id: new_user_id,
+            name: "Default".to_string(),
         };
 
         let mut trans = self.db.get_transaction().await?;
         trans.inset_user(db_user).await?;
+        let user_role = trans.get_user_role(new_user_id).await?;
+
         trans
-            .insert_or_update_portfolio_account(PortfolioAccountModel {
-                id: new_user_id,
-                user_id: new_user_id,
-                name: "Default".to_string(),
-            })
+            .insert_or_update_portfolio_account(default_portfolio_account.clone())
             .await?;
         trans
             .commit()
             .instrument(info_span!("commit_sql_transaction"))
             .await?;
-        Ok(new_user_id)
+
+        let ret_obj = UserFullDto {
+            id: new_user_id,
+            username: user.username,
+            role: user_role.into(),
+            default_asset_id: user.default_asset,
+        };
+
+        Ok((ret_obj, default_portfolio_account.into()))
+    }
+
+    #[tracing::instrument(skip(self), ret, err)]
+    pub async fn get_full_user(&self, user_id: Uuid) -> anyhow::Result<UserFullDto> {
+        let mut conn = self.db.get_connection().await?;
+
+        let model = conn.get_user_full_info(user_id).await?;
+
+        Ok(model.into())
     }
 
     #[tracing::instrument(skip_all, ret)]
@@ -71,56 +102,3 @@ impl UsersService {
         Ok({})
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use dal::database_context;
-
-//     use crate::service_collection::user_service;
-
-//     async fn get_users_service() -> user_service::UsersService {
-//         let context = database_context::MyraDb::new().await.unwrap();
-//         let users_service = user_service::UsersService::new(context.users_db_set);
-//         return users_service;
-//     }
-
-//     #[tokio::test]
-//     async fn test_verify_correct_password() {
-//         //arrange
-//         let users_service = get_users_service().await;
-//         let password = "password".to_string();
-//         let hashed = "$argon2id$v=19$m=19456,t=2,p=1$cA/2g90uUzqvdHXniTwyBA$WIbpl9GH5JD93dpkDT8gHkMQOMeeNZkqhI5OKUS8/uc".to_string();
-//         //act
-//         let result = users_service.verify_user_password(password, hashed);
-
-//         //assert
-//         assert!(result.is_ok())
-//     }
-
-//     #[tokio::test]
-//     async fn test_verify_incorrect_password() {
-//         //arrange
-//         let users_service = get_users_service().await;
-//         let password = "incorrect_password".to_string();
-//         let hashed = "$argon2id$v=19$m=19456,t=2,p=1$cA/2g90uUzqvdHXniTwyBA$WIbpl9GH5JD93dpkDT8gHkMQOMeeNZkqhI5OKUS8/uc".to_string();
-//         //act
-//         let result = users_service.verify_user_password(password, hashed);
-
-//         //assert
-//         assert!(result.is_err())
-//     }
-
-//     #[tokio::test]
-//     async fn test_hash_and_verify() {
-//         //arrange
-//         let users_service = get_users_service().await;
-//         let password = "random_password".to_string();
-
-//         //act
-//         let hashed = users_service.hash_password(password.clone());
-//         let result = users_service.verify_user_password(password, hashed);
-
-//         //assert
-//         assert!(result.is_ok())
-//     }
-// }

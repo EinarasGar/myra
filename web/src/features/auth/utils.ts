@@ -1,6 +1,9 @@
+import jwt from "jwt-decode";
+import { JwtData } from "./types/jwtData";
+
 const storagePrefix = "myra_";
 
-const storage = {
+export const storage = {
   getToken: () => {
     const value = window.localStorage.getItem(
       `${storagePrefix}token`
@@ -16,4 +19,4 @@ const storage = {
   },
 };
 
-export default storage;
+export const decodeJwtToken = (token: string) => jwt<JwtData>(token);

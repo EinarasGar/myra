@@ -7,7 +7,7 @@ import {
 } from "@mui/material";
 import { TransactionGroupViewModel } from "@/models";
 import TransactionAmount from "./TransactionAmount";
-import { useGetCategoriesQuery } from "@/services/myra";
+import { useGetCategoriesQuery } from "@/app/myraApi";
 
 function TransactionListItem(model: TransactionGroupViewModel) {
   const { description, category_id, transactions } = model;

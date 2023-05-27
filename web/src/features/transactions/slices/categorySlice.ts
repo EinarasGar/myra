@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { myraApi } from "@/services/myra";
+import { myraApi } from "@/app/myraApi";
 import { CategoryViewModel } from "@/models";
-import { RootState } from "@/stores/store";
+import { RootState } from "@/app/store";
 
 interface CategoryState {
   values: CategoryViewModel[];

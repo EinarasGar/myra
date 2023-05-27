@@ -34,6 +34,10 @@ pub trait PortfolioDbSet {
         &mut self,
         uuids: Vec<Uuid>,
     ) -> Result<Vec<PortfolioAccountIdNameModel>, anyhow::Error>;
+    async fn get_portfolio_accounts_by_user_id(
+        &mut self,
+        user_id: Uuid,
+    ) -> Result<Vec<PortfolioAccountIdNameModel>, anyhow::Error>;
 }
 
 #[async_trait]
@@ -180,6 +184,25 @@ impl PortfolioDbSet for PgConnection {
             .column((PortfolioAccountIden::Table, PortfolioAccountIden::Name))
             .from(PortfolioAccountIden::Table)
             .and_where(Expr::col(PortfolioAccountIden::Id).is_in(uuids))
+            .build_sqlx(PostgresQueryBuilder);
+
+        let rows = sqlx::query_as_with::<_, PortfolioAccountIdNameModel, _>(&sql, values.clone())
+            .fetch_all(&mut *self)
+            .instrument(debug_span!("query", sql, ?values))
+            .await?;
+        Ok(rows)
+    }
+
+    #[tracing::instrument(skip(self), ret, err)]
+    async fn get_portfolio_accounts_by_user_id(
+        &mut self,
+        user_id: Uuid,
+    ) -> Result<Vec<PortfolioAccountIdNameModel>, anyhow::Error> {
+        let (sql, values) = Query::select()
+            .column((PortfolioAccountIden::Table, PortfolioAccountIden::Id))
+            .column((PortfolioAccountIden::Table, PortfolioAccountIden::Name))
+            .from(PortfolioAccountIden::Table)
+            .and_where(Expr::col(PortfolioAccountIden::UserId).eq(user_id))
             .build_sqlx(PostgresQueryBuilder);
 
         let rows = sqlx::query_as_with::<_, PortfolioAccountIdNameModel, _>(&sql, values.clone())

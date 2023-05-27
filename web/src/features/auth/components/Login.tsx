@@ -1,5 +1,5 @@
 import { Button } from "@mui/material";
-import { useLoginMutation } from "@/services/myra";
+import { useLoginMutation } from "@/app/myraApi";
 import { LoginDetailsViewModel } from "@/models";
 
 function Login() {

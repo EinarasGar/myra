@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { myraApi } from "@/services/myra";
+import { myraApi } from "@/app/myraApi";
 import { AssetViewModel } from "@/models";
-import { RootState } from "@/stores/store";
+import { RootState } from "@/app/store";
 // import type { RootState } from "@/stores/store";
 
 // Define a type for the slice state

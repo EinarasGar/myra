@@ -3,10 +3,11 @@ use uuid::Uuid;
 
 use crate::{
     app_error::AppError,
+    auth::AuthenticatedUserState,
     states::PortfolioServiceState,
     view_models::portfolio_view_model::{
         PortfolioAccountViewModel, PortfolioEntryViewModel, PortfolioViewModel,
-    }, auth::{ AuthenticatedUserState},
+    },
 };
 
 #[tracing::instrument(skip(portfolio_service), ret, err)]
@@ -35,9 +36,10 @@ pub async fn post_portfolio_account(
     AuthenticatedUserState(auth): AuthenticatedUserState,
     Json(params): Json<PortfolioAccountViewModel>,
 ) -> Result<Json<PortfolioAccountViewModel>, AppError> {
-    portfolio_service
+    let new_model = portfolio_service
         .insert_or_update_portfolio_account(user_id, params.clone().into())
         .await?;
 
-    Ok(params.into())
+    let ret_model: PortfolioAccountViewModel = new_model.into();
+    Ok(ret_model.into())
 }

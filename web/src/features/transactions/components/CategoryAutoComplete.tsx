@@ -4,7 +4,7 @@ import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
 import { CircularProgress, Icon } from "@mui/material";
 import { CategoryViewModel } from "@/models";
-import { useGetCategoriesQuery } from "@/services/myra";
+import { useGetCategoriesQuery } from "@/app/myraApi";
 
 function CategoryAutoComplete() {
   const [value, setValue] = React.useState<CategoryViewModel | null>(null);
