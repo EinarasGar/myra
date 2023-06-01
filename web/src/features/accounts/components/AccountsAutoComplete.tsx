@@ -6,25 +6,45 @@ import {
   TextField,
   createFilterOptions,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAccounts } from "../hooks/accountHooks";
-import { PortfolioAccountViewModel } from "@/models";
+import { AssetViewModel, PortfolioAccountViewModel } from "@/models";
 import { usePostAccountMutation } from "@/app/myraApi";
 import { useAppSelector } from "@/hooks";
 import { selectUserId } from "@/features/auth";
 
 const filter = createFilterOptions<AccountAutocompleteModel>();
 
+interface Props {
+  value: PortfolioAccountViewModel | null;
+  onChange: (value: PortfolioAccountViewModel | null) => void;
+}
+
 interface AccountAutocompleteModel {
   newAccount?: string;
   viewModel: PortfolioAccountViewModel;
 }
 
-function AccountsAutoComplete() {
+function AccountsAutoComplete({ onChange, value }: Props) {
   const userId = useAppSelector(selectUserId);
-  const [value, setValue] = useState<AccountAutocompleteModel | null>(null);
+  const [autocompleteValue, setAutocompleteValue] =
+    useState<AccountAutocompleteModel | null>(null);
   const { data, isLoading } = useAccounts();
   const [saveAccount, saveAccountSate] = usePostAccountMutation();
+
+  const autocompleteData: AccountAutocompleteModel[] | undefined = data?.map(
+    (viewModel) => ({
+      viewModel,
+    })
+  );
+
+  useEffect(() => {
+    if (autocompleteData && value) {
+      const matched = autocompleteData.find((x) => x.viewModel.id === value.id);
+      if (matched && matched.viewModel.id !== autocompleteValue?.viewModel.id)
+        setAutocompleteValue(matched);
+    }
+  }, [value, autocompleteData, autocompleteValue]);
 
   if (!userId) {
     return <Skeleton variant="rectangular" />;
@@ -34,15 +54,10 @@ function AccountsAutoComplete() {
 
   // Creates new array of objects for autocomplete. This will be used for functioanlity
   // to add new accounts
-  const autocompleteData: AccountAutocompleteModel[] | undefined = data?.map(
-    (viewModel) => ({
-      viewModel,
-    })
-  );
 
   return (
     <Autocomplete
-      value={value}
+      value={autocompleteValue}
       onChange={(_, newValue) => {
         let newAccountName: string;
 
@@ -55,7 +70,8 @@ function AccountsAutoComplete() {
           newAccountName = newValue.newAccount;
         } else {
           // Account selected by clicking on one of the options
-          setValue(newValue);
+          setAutocompleteValue(newValue);
+          onChange(newValue ? newValue.viewModel : null);
           return;
         }
 
@@ -66,7 +82,7 @@ function AccountsAutoComplete() {
 
         // Set the value if already exists
         if (existingValue) {
-          setValue(existingValue);
+          setAutocompleteValue(existingValue);
           return;
         }
 
@@ -77,7 +93,7 @@ function AccountsAutoComplete() {
         };
 
         // Set new model temporarily, as this doesnt have account id
-        setValue(updatedState);
+        setAutocompleteValue(updatedState);
 
         // Save account and update model to contain account id
         saveAccount({
@@ -86,10 +102,12 @@ function AccountsAutoComplete() {
         })
           .unwrap()
           .then((newViewModel) => {
-            setValue({ viewModel: newViewModel });
+            setAutocompleteValue({ viewModel: newViewModel });
+            onChange(newViewModel);
           })
           .catch((err) => {
-            setValue(null);
+            setAutocompleteValue(null);
+            onChange(null);
           });
       }}
       filterOptions={(options, params) => {

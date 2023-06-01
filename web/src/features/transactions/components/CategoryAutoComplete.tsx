@@ -6,46 +6,49 @@ import { CircularProgress, Icon } from "@mui/material";
 import { CategoryViewModel } from "@/models";
 import { useGetCategoriesQuery } from "@/app/myraApi";
 
-function CategoryAutoComplete() {
-  const [value, setValue] = React.useState<CategoryViewModel | null>(null);
+interface Props {
+  // add suggestedValue
+  value: CategoryViewModel | null;
+  onChange: (value: CategoryViewModel | null) => void;
+}
+
+function CategoryAutoComplete({ onChange, value }: Props) {
   const { data, isLoading } = useGetCategoriesQuery();
 
   return (
-    <>
-      <Autocomplete
-        options={data ?? []}
-        autoHighlight
-        loading={isLoading}
-        getOptionLabel={(option) => option.name}
-        renderOption={(props, option) => (
-          <Box component="li" {...props}>
-            <Icon>{option.icon}</Icon>
-            {option.name}
-          </Box>
-        )}
-        onChange={(_, newValue: CategoryViewModel | null) => {
-          setValue(newValue);
-        }}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label="Choose a category "
-            InputProps={{
-              ...params.InputProps,
-              endAdornment: (
-                <>
-                  {isLoading ? (
-                    <CircularProgress color="inherit" size={20} />
-                  ) : null}
-                  {params.InputProps.endAdornment}
-                </>
-              ),
-            }}
-          />
-        )}
-      />
-      <span>{value?.name}</span>
-    </>
+    <Autocomplete
+      options={data ?? []}
+      value={value}
+      autoHighlight
+      loading={isLoading}
+      getOptionLabel={(option) => option.name}
+      renderOption={(props, option) => (
+        <Box component="li" {...props}>
+          <Icon>{option.icon}</Icon>
+          {option.name}
+        </Box>
+      )}
+      onChange={(_, newValue: CategoryViewModel | null) => {
+        onChange(newValue);
+      }}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label="Choose a category "
+          InputProps={{
+            ...params.InputProps,
+            endAdornment: (
+              <>
+                {isLoading ? (
+                  <CircularProgress color="inherit" size={20} />
+                ) : null}
+                {params.InputProps.endAdornment}
+              </>
+            ),
+          }}
+        />
+      )}
+    />
   );
 }
 
