@@ -1,6 +1,6 @@
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
-import Autocomplete from "@mui/material/Autocomplete";
+import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
 import { useState } from "react";
 import { CircularProgress } from "@mui/material";
 import { AssetViewModel } from "@/models";
@@ -18,7 +18,7 @@ function AssetAutoComplete({ onChange, value }: Props) {
   const { debouncedValue } = useDebounce(searchValue, 300);
   const assets = useAppSelector(selectAssets);
   const { isFetching } = useSearchAssetsQuery(debouncedValue);
-  console.log("refresh");
+
   return (
     <Autocomplete
       options={assets ?? []}
@@ -28,9 +28,13 @@ function AssetAutoComplete({ onChange, value }: Props) {
       groupBy={(option) => option.category}
       renderOption={(props, option) => (
         <Box component="li" {...props}>
-          {option.ticker}·{option.name}
+          {option.ticker} · {option.name}
         </Box>
       )}
+      filterOptions={createFilterOptions({
+        matchFrom: "any",
+        stringify: (option) => option.ticker + option.name,
+      })}
       onChange={(_, newValue: AssetViewModel | null) => {
         onChange(newValue);
       }}

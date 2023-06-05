@@ -1,14 +1,12 @@
 import Grid from "@mui/material/Unstable_Grid2";
 import React, { useCallback, useEffect, useState } from "react";
-import { Button } from "@mui/material";
 import { AssetAutoComplete } from "@/features/asset";
-import CategoryAutoComplete from "./CategoryAutoComplete";
+import CategoryAutoComplete from "../../categories/components/CategoryAutoComplete";
 import { AccountsAutoComplete } from "@/features/accounts";
-import TransactionDatePicker from "./TransactionDatePicker";
+import { DatePicker } from "@/components";
 import AmountInput from "./AmountInput";
 import DescriptionInput from "./DescriptionInput";
 import {
-  AddTransactonViewModel,
   AssetViewModel,
   CategoryViewModel,
   PortfolioAccountViewModel,
@@ -31,7 +29,7 @@ export interface AddTransactionRowState {
 
 const MemorizedDescriptionInput = React.memo(DescriptionInput);
 const MemorizedCategoryAutoComplete = React.memo(CategoryAutoComplete);
-const MemorizedTransactionDatePicker = React.memo(TransactionDatePicker);
+const MemorizedTransactionDatePicker = React.memo(DatePicker);
 const MemorizedAssetAutoComplete = React.memo(AssetAutoComplete);
 const MemorizedAccountsAutoComplete = React.memo(AccountsAutoComplete);
 const MemorizedAmountInput = React.memo(AmountInput);
@@ -50,9 +48,10 @@ function AddTransactionRow({ onChange, defaultValue }: Props) {
   );
   const [amount, setAmount] = useState<number | null>(defaultValue.amount);
 
+  // Custom logic to autofill data
   useEffect(() => {
     if (category?.name === "Fuel") {
-      setDescription("asda");
+      setDescription("Fuel");
     }
   }, [category, setDescription]);
 
@@ -85,8 +84,6 @@ function AddTransactionRow({ onChange, defaultValue }: Props) {
     onChange,
     defaultValue,
   ]);
-
-  console.log("rr");
 
   return (
     <Grid container spacing={2}>
@@ -133,6 +130,7 @@ function AddTransactionRow({ onChange, defaultValue }: Props) {
       <Grid xs={4}>
         <MemorizedAmountInput
           value={amount}
+          ticker={asset?.ticker}
           onChange={useCallback((model) => {
             setAmount(model);
           }, [])}

@@ -4,22 +4,35 @@ import {
   InputLabel,
   OutlinedInput,
 } from "@mui/material";
+import { useEffect, useState } from "react";
 
 interface Props {
   value: number | null;
+  ticker: string | undefined;
   onChange: (value: number | null) => void;
 }
 
-function AmountInput({ onChange, value }: Props) {
+function AmountInput({ onChange, value, ticker }: Props) {
+  const [localValue, setLocalValue] = useState<string>("");
+
+  useEffect(() => {
+    setLocalValue(value?.toString() ?? "");
+  }, [value]);
   return (
     <FormControl fullWidth>
       <InputLabel htmlFor="outlined-adornment-amount">Amount</InputLabel>
       <OutlinedInput
         id="outlined-adornment-amount"
-        // startAdornment={<InputAdornment position="start">$</InputAdornment>}
+        startAdornment={
+          ticker ? (
+            <InputAdornment position="start">{ticker}</InputAdornment>
+          ) : undefined
+        }
         label="Amount"
-        value={value ?? ""}
+        value={localValue}
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+          setLocalValue(event.target.value);
+
           const parsed = parseFloat(event.target.value);
           onChange(Number.isNaN(parsed) ? null : parsed);
         }}

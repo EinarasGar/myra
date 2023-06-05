@@ -1,12 +1,11 @@
 import { DateTimePicker } from "@mui/x-date-pickers";
-import { useState } from "react";
 
 interface Props {
   value: Date | null;
   onChange: (value: Date | null) => void;
 }
 
-function TransactionDatePicker({ onChange, value }: Props) {
+function DatePicker({ onChange, value }: Props) {
   return (
     <DateTimePicker
       ampm={false}
@@ -14,9 +13,9 @@ function TransactionDatePicker({ onChange, value }: Props) {
       onChange={(val) => {
         onChange(val);
       }}
-      className=" w-full"
+      className="w-full"
     />
   );
 }
 
-export default TransactionDatePicker;
+export default DatePicker;

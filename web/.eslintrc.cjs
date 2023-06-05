@@ -43,5 +43,8 @@ module.exports = {
     ],
     "import/prefer-default-export": "off",
     "@typescript-eslint/no-unused-vars": "off",
+
+    //re-enable later
+    "jsx-a11y/click-events-have-key-events": "off",
   },
 };

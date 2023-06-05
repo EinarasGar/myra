@@ -46,6 +46,16 @@ function AccountsAutoComplete({ onChange, value }: Props) {
     }
   }, [value, autocompleteData, autocompleteValue]);
 
+  useEffect(() => {
+    if (autocompleteValue === null) {
+      const val = autocompleteData?.find((x) => x.viewModel.name === "Default");
+      if (val) {
+        setAutocompleteValue(val);
+        onChange(val.viewModel);
+      }
+    }
+  }, [autocompleteValue, setAutocompleteValue, autocompleteData, onChange]);
+
   if (!userId) {
     return <Skeleton variant="rectangular" />;
   }

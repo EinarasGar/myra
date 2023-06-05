@@ -1,13 +1,12 @@
-import * as React from "react";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
-import { CircularProgress, Icon } from "@mui/material";
+import Icon from "@mui/material/Icon";
+import CircularProgress from "@mui/material/CircularProgress";
 import { CategoryViewModel } from "@/models";
 import { useGetCategoriesQuery } from "@/app/myraApi";
 
 interface Props {
-  // add suggestedValue
   value: CategoryViewModel | null;
   onChange: (value: CategoryViewModel | null) => void;
 }
@@ -34,14 +33,12 @@ function CategoryAutoComplete({ onChange, value }: Props) {
       renderInput={(params) => (
         <TextField
           {...params}
-          label="Choose a category "
+          label="Choose a category"
           InputProps={{
             ...params.InputProps,
             endAdornment: (
               <>
-                {isLoading ? (
-                  <CircularProgress color="inherit" size={20} />
-                ) : null}
+                {isLoading && <CircularProgress color="inherit" size={20} />}
                 {params.InputProps.endAdornment}
               </>
             ),

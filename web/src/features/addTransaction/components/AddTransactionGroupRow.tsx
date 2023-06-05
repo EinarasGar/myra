@@ -1,18 +1,9 @@
 import Grid from "@mui/material/Unstable_Grid2";
 import React, { useCallback, useEffect, useState } from "react";
-import { Button } from "@mui/material";
-import { AssetAutoComplete } from "@/features/asset";
-import CategoryAutoComplete from "./CategoryAutoComplete";
-import { AccountsAutoComplete } from "@/features/accounts";
-import TransactionDatePicker from "./TransactionDatePicker";
-import AmountInput from "./AmountInput";
+import CategoryAutoComplete from "../../categories/components/CategoryAutoComplete";
+import { DatePicker } from "@/components";
 import DescriptionInput from "./DescriptionInput";
-import {
-  AddTransactonViewModel,
-  AssetViewModel,
-  CategoryViewModel,
-  PortfolioAccountViewModel,
-} from "@/models";
+import { CategoryViewModel } from "@/models";
 
 interface Props {
   defaultValue: AddTransactionGroupState;
@@ -27,7 +18,7 @@ export interface AddTransactionGroupState {
 
 const MemorizedDescriptionInput = React.memo(DescriptionInput);
 const MemorizedCategoryAutoComplete = React.memo(CategoryAutoComplete);
-const MemorizedTransactionDatePicker = React.memo(TransactionDatePicker);
+const MemorizedTransactionDatePicker = React.memo(DatePicker);
 
 function AddTransactionGroupRow({ onChange, defaultValue }: Props) {
   const [description, setDescription] = useState<string | null>(

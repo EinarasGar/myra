@@ -1,26 +1,31 @@
 import { useSelector } from "react-redux";
 import { selectAssets } from "@/features/asset";
-import { AssetViewModel, TransactionViewModel } from "@/models";
+import { AssetViewModel } from "@/models";
 
 export interface TransactionAmountProps {
-  transactions: TransactionViewModel[];
+  amounts: TransactionAmountData[];
+}
+
+export interface TransactionAmountData {
+  assetId: number;
+  quantity: number;
 }
 
 interface QuantityAssetPair {
   quantity: number;
   asset?: AssetViewModel;
 }
-function TransactionAmount({ transactions }: TransactionAmountProps) {
+function TransactionAmount({ amounts: transactions }: TransactionAmountProps) {
   const assets = useSelector(selectAssets);
 
   const acc: QuantityAssetPair[] = [];
   transactions.forEach((value) => {
-    const i = acc.findIndex((x) => x.asset?.id === value.asset_id);
+    const i = acc.findIndex((x) => x.asset?.id === value.assetId);
     if (i > -1) acc[i].quantity += value.quantity;
     else
       acc.push({
         quantity: value.quantity,
-        asset: assets.find((x) => x.id === value.asset_id),
+        asset: assets.find((x) => x.id === value.assetId),
       });
   });
   return (

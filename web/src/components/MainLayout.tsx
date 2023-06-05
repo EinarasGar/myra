@@ -8,16 +8,16 @@ function MainLayout() {
         <Toolbar>
           myra
           <Link to="/transactions">
-            <Button variant="contained">Transaction</Button>
+            <Button>Transaction</Button>
           </Link>
           <Link to="/transactions/add">
-            <Button variant="contained">Transaction Add</Button>
+            <Button>Transaction Add</Button>
           </Link>
           <Link to="/auth/login">
-            <Button variant="contained">Login</Button>
+            <Button>Login</Button>
           </Link>
           <Link to="/auth/logout">
-            <Button variant="contained">Logout</Button>
+            <Button>Logout</Button>
           </Link>
         </Toolbar>
       </AppBar>

@@ -1,14 +1,12 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { myraApi } from "@/app/myraApi";
 import { assetReducer } from "@/features/asset";
-import { categoriesReducer } from "@/features/transactions";
 import { authReducer } from "@/features/auth";
 import { userReducer } from "@/features/user";
 
 export const store = configureStore({
   reducer: {
     asset: assetReducer,
-    transcationCategories: categoriesReducer,
     auth: authReducer,
     user: userReducer,
     [myraApi.reducerPath]: myraApi.reducer,
