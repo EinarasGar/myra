@@ -6,6 +6,7 @@ import {
   Button,
   Divider,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import AddTransactionRow, {
   AddTransactionRowState,
 } from "../components/AddTransactionRow";
@@ -17,10 +18,16 @@ import {
   TransactionGroupSummary,
   TransactionSummary,
 } from "@/features/transactions";
+import { MapRowStatesToModel } from "../utils";
+import { usePostTransactionGroupMutation } from "@/app/myraApi";
+import { useAppSelector } from "@/hooks";
+import { selectUserId } from "@/features/auth";
 
 const MemoizedAddTransactionRow = React.memo(AddTransactionRow);
 
 function AddTransaction() {
+  const navigate = useNavigate();
+  const userId = useAppSelector(selectUserId);
   const [transactionGroup, setTransactionGroup] =
     useState<AddTransactionGroupState | null>(null);
   const [transactions, setTransactions] = useState<AddTransactionRowState[]>([
@@ -36,6 +43,7 @@ function AddTransaction() {
   ]);
 
   const [selectedAccordion, setSelectedAccordion] = useState<string>("");
+  const [saveGroup, saveGroupState] = usePostTransactionGroupMutation();
 
   useEffect(() => {
     if (transactions.length === 2 && transactionGroup === null) {
@@ -52,6 +60,13 @@ function AddTransaction() {
       oldState.map((c) => (c.componentId === x.componentId ? x : c))
     );
   }, []);
+
+  if (!userId) return "Err";
+
+  const reqModel: AddTransactionGroupViewModel | null = MapRowStatesToModel(
+    transactionGroup,
+    transactions
+  );
 
   const handleAccordionChange =
     (id: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
@@ -142,21 +157,18 @@ function AddTransaction() {
         Add Transaction
       </Button>
       <Button
+        disabled={reqModel === null}
         onClick={() => {
-          const reqModel: AddTransactionGroupViewModel = {
-            transactions: transactions.map((trans) => ({
-              asset_id: trans.asset?.id ?? 0,
-              category_id: trans.category?.id ?? 0,
-              date: trans.date?.toISOString() ?? "",
-              quantity: trans.amount ?? 0,
-              account_id: trans.account?.id ?? "",
-              description: trans.description ?? "",
-            })),
-            description: transactionGroup?.description ?? "",
-            category_id: transactionGroup?.category?.id ?? 0,
-            date: transactionGroup?.date?.toISOString() ?? "",
-          };
-          console.log(reqModel);
+          if (reqModel) {
+            saveGroup({ transaction: reqModel, user_id: userId })
+              .unwrap()
+              .then((newViewModel) => {
+                navigate("/transactions");
+              })
+              .catch((err) => {
+                console.log(err);
+              });
+          }
         }}
       >
         Save

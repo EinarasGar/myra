@@ -104,7 +104,7 @@ impl TransactionService {
         //Create a list of required description updates. If the list is empty, we don't need to update
         let mut transaction_decription_models: Vec<AddTransactionDescriptionModel> = Vec::new();
         let mut new_transaction_ids_for_description = new_transaction_ids.clone();
-        for model in dal_transactions.clone().into_iter() {
+        for model in dal_transactions.clone().into_iter().rev() {
             let trans_id = new_transaction_ids_for_description
                 .pop()
                 .expect("Rows returned from insertion are less than what we passed");

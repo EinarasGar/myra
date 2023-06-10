@@ -8,6 +8,7 @@ import {
   AssetViewModel,
   UserViewModel,
   PortfolioAccountViewModel,
+  AddTransactionGroupViewModel,
 } from "@/models";
 import { RootState } from "@/app/store";
 
@@ -63,6 +64,16 @@ export const myraApi = createApi({
         }
       },
     }),
+    postTransactionGroup: builder.mutation<
+      TransactionGroupListViewModel,
+      { transaction: AddTransactionGroupViewModel; user_id: string }
+    >({
+      query: ({ transaction, user_id }) => ({
+        url: `/users/${user_id}/transactions`,
+        method: "POST",
+        body: transaction,
+      }),
+    }),
     login: builder.mutation<AuthViewModel, LoginDetailsViewModel>({
       query: (credentials) => ({
         url: "/auth",
@@ -82,4 +93,5 @@ export const {
   useSearchAssetsQuery,
   useGetUserQuery,
   usePostAccountMutation,
+  usePostTransactionGroupMutation,
 } = myraApi;
