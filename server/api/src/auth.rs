@@ -9,7 +9,9 @@ use axum::{
     Json, RequestPartsExt, TypedHeader,
 };
 
-use business::{dtos::user_dto::UserRoleEnumDto, service_collection::auth_service::AuthService};
+use business::{
+    dtos::user_role_dto::UserRoleEnumDto, service_collection::auth_service::AuthService,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use uuid::Uuid;
@@ -49,13 +51,11 @@ where
             .extract::<Path<HashMap<String, String>>>()
             .await
             .unwrap();
-        if parsed_claims.role != UserRoleEnumDto::Admin {
-            if paths.contains_key("user_id") {
-                let user_id = paths["user_id"].to_string();
-                let uuid = Uuid::parse_str(&user_id).map_err(|_| AuthError::WrongUserId)?;
-                if !uuid.eq(&parsed_claims.sub) {
-                    return Err(AuthError::Unauthorized);
-                }
+        if parsed_claims.role != UserRoleEnumDto::Admin && paths.contains_key("user_id") {
+            let user_id = paths["user_id"].to_string();
+            let uuid = Uuid::parse_str(&user_id).map_err(|_| AuthError::WrongUserId)?;
+            if !uuid.eq(&parsed_claims.sub) {
+                return Err(AuthError::Unauthorized);
             }
         }
 

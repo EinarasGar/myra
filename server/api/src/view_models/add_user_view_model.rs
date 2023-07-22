@@ -1,4 +1,4 @@
-use business::dtos::user_dto::AddUserDto;
+use business::dtos::add_user_dto::AddUserDto;
 use serde::Deserialize;
 
 #[typeshare::typeshare]

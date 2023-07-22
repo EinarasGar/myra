@@ -6,10 +6,3 @@ export interface AddTransactonViewModel {
   account_id?: string;
   description?: string;
 }
-
-export interface AddTransactionGroupViewModel {
-  transactions: AddTransactonViewModel[];
-  description: string;
-  category_id: number;
-  date: string;
-}

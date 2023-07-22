@@ -1,18 +1,17 @@
 use std::net::SocketAddr;
 
-use tokio;
 use tracing::info;
 
 use crate::states::AppState;
 
 pub(crate) mod app_error;
+pub mod auth;
 mod fallback;
 pub(crate) mod handlers;
 mod observability;
 pub(crate) mod routes;
 pub(crate) mod states;
 pub(crate) mod view_models;
-pub mod auth;
 
 #[tokio::main]
 async fn main() {

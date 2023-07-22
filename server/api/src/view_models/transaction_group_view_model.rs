@@ -1,4 +1,4 @@
-use business::dtos::transaction_dto::get_transaction_dtos::TransactionGroupDto;
+use business::dtos::transaction_group_dto::TransactionGroupDto;
 use serde::{Deserialize, Serialize};
 use time::{serde::iso8601, OffsetDateTime};
 use uuid::Uuid;
@@ -22,7 +22,7 @@ impl From<TransactionGroupDto> for TransactionGroupViewModel {
             transactions: p
                 .transactions
                 .into_iter()
-                .map(|t| TransactionViewModel::from(t))
+                .map(TransactionViewModel::from)
                 .collect(),
             description: p.description,
             date: p.date,

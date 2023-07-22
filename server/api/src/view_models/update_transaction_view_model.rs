@@ -1,4 +1,4 @@
-use business::dtos::transaction_dto::add_transaction_dtos::AddUpdateTransactonDto;
+use business::dtos::add_update_transaction_dto::AddUpdateTransactonDto;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use time::{serde::iso8601, OffsetDateTime};

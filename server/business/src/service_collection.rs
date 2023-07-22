@@ -27,7 +27,7 @@ impl Services {
         let auth_service = AuthService::new(context.clone(), users_service.clone());
         let transaction_service = TransactionService::new(context.clone());
         let portfolio_service = PortfolioService::new(context.clone());
-        let assets_service = AssetsService::new(context.clone());
+        let assets_service = AssetsService::new(context);
 
         let serices = Services {
             users_service,

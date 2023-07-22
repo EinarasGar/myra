@@ -5,7 +5,7 @@ use axum::{
 };
 
 pub(crate) fn create_router(state: AppState) -> Router {
-    let app = Router::new()
+    Router::new()
         .route("/api/users", post(handlers::user_handler::post_user))
         .route(
             "/api/users/:user_id",
@@ -45,6 +45,5 @@ pub(crate) fn create_router(state: AppState) -> Router {
             post(handlers::auth_handler::post_login_details),
         )
         .layer(observability::create_tower_http_tracing_layer())
-        .with_state(state);
-    app
+        .with_state(state)
 }

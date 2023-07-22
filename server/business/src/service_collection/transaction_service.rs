@@ -10,8 +10,8 @@ use dal::{
     models::{
         portfolio_models::PortfolioUpdateModel,
         transaction_models::{
-            AddTransactionDescriptionModel, AddTransactionGroupModel, AddTransactionModel,
-            TransactionWithGroupModel,
+            AddTransactionDescriptionModel, AddUpdateTransactionGroupModel,
+            AddUpdateTransactionModel, TransactionWithGroupModel,
         },
     },
 };
@@ -20,12 +20,10 @@ use tracing::{info_span, Instrument};
 use uuid::Uuid;
 
 use crate::dtos::{
-    portfolio_dto::PortfolioAccountDto,
-    transaction_dto::{
-        add_transaction_dtos::{AddUpdateTransactionGroupDto, AddUpdateTransactonDto},
-        get_transaction_dtos::{TransactionGroupDto, TransactonDto},
-        CategoryDto,
-    },
+    add_update_transaction_dto::AddUpdateTransactonDto,
+    add_update_transaction_group_dto::AddUpdateTransactionGroupDto, category_dto::CategoryDto,
+    portfolio_account_dto::PortfolioAccountDto, transaction_dto::TransactonDto,
+    transaction_group_dto::TransactionGroupDto,
 };
 
 #[derive(Clone)]
@@ -48,7 +46,7 @@ impl TransactionService {
     ) -> anyhow::Result<TransactionGroupDto> {
         let group_id = Uuid::new_v4();
 
-        let dal_group = AddTransactionGroupModel {
+        let dal_group = AddUpdateTransactionGroupModel {
             group_id,
             category_id: group.category,
             description: group.description,
@@ -90,7 +88,7 @@ impl TransactionService {
         let transaction_decription_models =
             create_add_description_models(&group.transactions, &new_transaction_ids);
 
-        if transaction_decription_models.len() > 0 {
+        if !transaction_decription_models.is_empty() {
             trans
                 .insert_descriptions(transaction_decription_models)
                 .await?;
@@ -160,15 +158,15 @@ impl TransactionService {
         let old_group_transactions = trans.get_transaction_group(group_id).await?;
 
         //Compare the group data and update it if changed
-        let old_group_data = AddTransactionGroupModel {
-            group_id: old_group_transactions[0].group_id.clone(),
-            category_id: old_group_transactions[0].group_category_id.clone(),
+        let old_group_data = AddUpdateTransactionGroupModel {
+            group_id: old_group_transactions[0].group_id,
+            category_id: old_group_transactions[0].group_category_id,
             description: old_group_transactions[0].group_description.clone(),
-            date: old_group_transactions[0].date_added.clone(),
+            date: old_group_transactions[0].date_added,
         };
 
-        let updated_group = AddTransactionGroupModel {
-            group_id: group_id,
+        let updated_group = AddUpdateTransactionGroupModel {
+            group_id,
             category_id: group.category,
             description: group.description,
             date: group.date,
@@ -243,23 +241,23 @@ impl TransactionService {
             trans.update_group(updated_group.clone()).await?;
         }
 
-        if removed_ids.len() > 0 {
+        if !removed_ids.is_empty() {
             trans.delete_descriptions(removed_ids.clone()).await?;
             trans.delete_transactions(removed_ids).await?;
         }
 
-        if portfolio_updates.len() > 0 {
+        if !portfolio_updates.is_empty() {
             trans.update_portfolio(portfolio_updates).await?;
         }
 
         let mut new_transaction_ids: Vec<i32> = Vec::new();
-        if dal_transactions.len() > 0 {
+        if !dal_transactions.is_empty() {
             new_transaction_ids = trans.insert_transactions(dal_transactions.clone()).await?;
             new_transaction_ids.reverse();
             let transaction_decription_models =
                 create_add_description_models(&added, &new_transaction_ids);
 
-            if transaction_decription_models.len() > 0 {
+            if !transaction_decription_models.is_empty() {
                 trans
                     .insert_descriptions(transaction_decription_models)
                     .await?;
@@ -276,7 +274,7 @@ impl TransactionService {
                     .await?;
             }
 
-            let new_model = AddTransactionModel {
+            let new_model = AddUpdateTransactionModel {
                 user_id,
                 group_id,
                 asset_id: new.asset_id,
@@ -421,25 +419,25 @@ fn create_portfolio_updates_from_map(
     let mut portfolio_updates: Vec<PortfolioUpdateModel> = Vec::new();
     for ((user_id, asset_id, account_id), sum) in quantities_map {
         portfolio_updates.push(PortfolioUpdateModel {
-            user_id: user_id,
-            asset_id: asset_id,
-            account_id: account_id,
-            sum: sum,
+            user_id,
+            asset_id,
+            account_id,
+            sum,
         })
     }
-    return portfolio_updates;
+    portfolio_updates
 }
 
 fn create_add_transaction_model(
-    transactions: &Vec<AddUpdateTransactonDto>,
+    transactions: &[AddUpdateTransactonDto],
     user_id: Uuid,
     group_id: Uuid,
-) -> Vec<AddTransactionModel> {
+) -> Vec<AddUpdateTransactionModel> {
     transactions
         .iter()
-        .map(|trans| AddTransactionModel {
-            user_id: user_id,
-            group_id: group_id,
+        .map(|trans| AddUpdateTransactionModel {
+            user_id,
+            group_id,
             asset_id: trans.asset_id,
             category_id: trans.category,
             quantity: trans.quantity,
@@ -453,12 +451,12 @@ fn create_add_transaction_model(
 }
 
 fn create_add_description_models(
-    models: &Vec<AddUpdateTransactonDto>,
-    new_ids: &Vec<i32>,
+    models: &[AddUpdateTransactonDto],
+    new_ids: &[i32],
 ) -> Vec<AddTransactionDescriptionModel> {
     let mut transaction_decription_models: Vec<AddTransactionDescriptionModel> = Vec::new();
-    let mut new_transaction_ids_for_description = new_ids.clone();
-    for model in models.clone().into_iter() {
+    let mut new_transaction_ids_for_description = new_ids.to_owned();
+    for model in models.iter().cloned() {
         let trans_id = new_transaction_ids_for_description
             .pop()
             .expect("Rows returned from insertion are less than what we passed");
@@ -473,7 +471,7 @@ fn create_add_description_models(
     transaction_decription_models
 }
 
-fn get_unique_vec<T>(input: &Vec<T>) -> Vec<T>
+fn get_unique_vec<T>(input: &[T]) -> Vec<T>
 where
     T: Eq + Hash + Clone,
 {

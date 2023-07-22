@@ -1,18 +1,8 @@
-use dal::models::transaction_models::{AddTransactionModel, TransactionWithGroupModel};
+use dal::models::transaction_models::TransactionWithGroupModel;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use time::{serde::iso8601, OffsetDateTime};
 use uuid::Uuid;
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct AddUpdateTransactionGroupDto {
-    pub id: Option<Uuid>,
-    pub transactions: Vec<AddUpdateTransactonDto>,
-    pub description: String,
-    pub category: i32,
-    #[serde(with = "iso8601")]
-    pub date: OffsetDateTime,
-}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AddUpdateTransactonDto {

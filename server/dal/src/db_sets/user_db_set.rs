@@ -76,7 +76,7 @@ impl UsersDbSet for PgConnection {
         let sql =
             "SELECT id, name FROM user_roles WHERE id in (SELECT role from users where id = $1)";
 
-        let row = sqlx::query(&sql)
+        let row = sqlx::query(sql)
             .bind(user_id)
             .fetch_one(&mut *self)
             .instrument(debug_span!("query", sql, ?user_id))

@@ -20,7 +20,7 @@ pub struct TransactionWithGroupModel {
 
 //Used in a method to insert new transactions
 #[derive(Clone, Debug)]
-pub struct AddTransactionModel {
+pub struct AddUpdateTransactionModel {
     pub user_id: Uuid,
     pub group_id: Uuid,
     pub asset_id: i32,
@@ -38,7 +38,7 @@ pub struct AddTransactionDescriptionModel {
 
 //Used in a method to insert new transaction groups
 #[derive(Clone, Debug, PartialEq)]
-pub struct AddTransactionGroupModel {
+pub struct AddUpdateTransactionGroupModel {
     pub group_id: Uuid,
     pub category_id: i32,
     pub description: String,

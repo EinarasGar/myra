@@ -2,7 +2,8 @@ use dal::db_sets::portfolio_db_set::PortfolioDbSet;
 use dal::{database_context::MyraDb, models::portfolio_models::PortfolioAccountModel};
 use uuid::Uuid;
 
-use crate::dtos::portfolio_dto::{PortfolioAccountDto, PortfolioDto};
+use crate::dtos::portfolio_account_dto::PortfolioAccountDto;
+use crate::dtos::portfolio_dto::PortfolioDto;
 
 #[derive(Clone)]
 pub struct PortfolioService {

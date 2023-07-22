@@ -1,4 +1,4 @@
-use business::dtos::portfolio_dto::PortfolioAccountDto;
+use business::dtos::portfolio_account_dto::PortfolioAccountDto;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

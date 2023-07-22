@@ -1,22 +1,35 @@
-use dal::models::transaction_models::CategoryModel;
-use serde::{Serialize, Deserialize};
+use dal::models::transaction_models::TransactionWithGroupModel;
+use rust_decimal::Decimal;
+use serde::{Deserialize, Serialize};
+use time::{serde::iso8601, OffsetDateTime};
 
-pub mod add_transaction_dtos;
-pub mod get_transaction_dtos;
+use super::portfolio_account_dto::PortfolioAccountDto;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct CategoryDto {
-    pub id: i32,
-    pub name: String,
-    pub icon: String,
+pub struct TransactonDto {
+    pub transaction_id: i32,
+    pub asset_id: i32,
+    pub quantity: Decimal,
+    pub category: i32,
+    #[serde(with = "iso8601")]
+    pub date: OffsetDateTime,
+    pub account: PortfolioAccountDto,
+    pub description: Option<String>,
 }
 
-impl From<CategoryModel> for CategoryDto {
-    fn from(p: CategoryModel) -> Self {
+impl From<TransactionWithGroupModel> for TransactonDto {
+    fn from(p: TransactionWithGroupModel) -> Self {
         Self {
-            id: p.id,
-            name: p.category,
-            icon: p.icon,
+            transaction_id: p.id,
+            asset_id: p.asset_id,
+            quantity: p.quantity,
+            category: p.category_id,
+            date: p.date,
+            description: p.description,
+            account: PortfolioAccountDto {
+                account_id: Some(p.account_id),
+                account_name: p.account_name,
+            },
         }
     }
 }

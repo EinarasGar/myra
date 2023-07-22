@@ -13,7 +13,7 @@ use crate::{
         },
     },
     models::transaction_models::{
-        AddTransactionDescriptionModel, AddTransactionGroupModel, AddTransactionModel,
+        AddTransactionDescriptionModel, AddUpdateTransactionGroupModel, AddUpdateTransactionModel,
         CategoryModel, TransactionWithGroupModel,
     },
 };
@@ -34,21 +34,24 @@ pub trait TransactionDbSet {
     ) -> Result<(), anyhow::Error>;
     async fn insert_transaction_group(
         &mut self,
-        group: AddTransactionGroupModel,
+        group: AddUpdateTransactionGroupModel,
     ) -> anyhow::Result<()>;
     async fn insert_transactions(
         &mut self,
-        models: Vec<AddTransactionModel>,
+        models: Vec<AddUpdateTransactionModel>,
     ) -> Result<Vec<i32>, anyhow::Error>;
     async fn get_categories(&mut self) -> anyhow::Result<Vec<CategoryModel>>;
     async fn delete_transactions(&mut self, transaction_ids: Vec<i32>) -> anyhow::Result<()>;
     async fn delete_descriptions(&mut self, transaction_ids: Vec<i32>) -> anyhow::Result<()>;
-    async fn update_group(&mut self, new_model: AddTransactionGroupModel) -> anyhow::Result<()>;
+    async fn update_group(
+        &mut self,
+        new_model: AddUpdateTransactionGroupModel,
+    ) -> anyhow::Result<()>;
     async fn update_description(&mut self, id: i32, description: String) -> anyhow::Result<()>;
     async fn update_transaction(
         &mut self,
         id: i32,
-        model: AddTransactionModel,
+        model: AddUpdateTransactionModel,
     ) -> anyhow::Result<()>;
 }
 
@@ -217,13 +220,13 @@ impl TransactionDbSet for PgConnection {
             .execute(&mut *self)
             .instrument(debug_span!("query", sql, ?values))
             .await?;
-        Ok({})
+        Ok(())
     }
 
     #[tracing::instrument(skip(self), ret, err)]
     async fn insert_transaction_group(
         &mut self,
-        group: AddTransactionGroupModel,
+        group: AddUpdateTransactionGroupModel,
     ) -> anyhow::Result<()> {
         let (sql, values) = Query::insert()
             .into_table(TransactionGroupIden::Table)
@@ -251,7 +254,7 @@ impl TransactionDbSet for PgConnection {
     #[tracing::instrument(skip(self), ret, err)]
     async fn insert_transactions(
         &mut self,
-        models: Vec<AddTransactionModel>,
+        models: Vec<AddUpdateTransactionModel>,
     ) -> Result<Vec<i32>, anyhow::Error> {
         let mut builder2 = Query::insert()
             .into_table(TransactionIden::Table)
@@ -333,7 +336,10 @@ impl TransactionDbSet for PgConnection {
     }
 
     #[tracing::instrument(skip(self), ret, err)]
-    async fn update_group(&mut self, new_model: AddTransactionGroupModel) -> anyhow::Result<()> {
+    async fn update_group(
+        &mut self,
+        new_model: AddUpdateTransactionGroupModel,
+    ) -> anyhow::Result<()> {
         let (sql, values) = Query::update()
             .table(TransactionGroupIden::Table)
             .value(TransactionGroupIden::CategoryId, new_model.category_id)
@@ -368,7 +374,7 @@ impl TransactionDbSet for PgConnection {
     async fn update_transaction(
         &mut self,
         id: i32,
-        model: AddTransactionModel,
+        model: AddUpdateTransactionModel,
     ) -> anyhow::Result<()> {
         let (sql, values) = Query::update()
             .table(TransactionIden::Table)

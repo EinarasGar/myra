@@ -1,15 +1,4 @@
-import { AssetViewModel } from "./assetViewModel";
-
-export interface PortfolioAccountViewModel {
-  id?: string;
-  name: string;
-}
-
-export interface PortfolioEntryViewModel {
-  asset: AssetViewModel;
-  account: PortfolioAccountViewModel;
-  sum: number;
-}
+import { PortfolioEntryViewModel } from "./portfolioEntryViewModel";
 
 export interface PortfolioViewModel {
   portfolio_entries: PortfolioEntryViewModel[];

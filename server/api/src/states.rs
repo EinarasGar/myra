@@ -22,31 +22,31 @@ pub struct AssetsServiceState(pub AssetsService);
 
 impl FromRef<AppState> for UsersService {
     fn from_ref(state: &AppState) -> Self {
-        return state.serivces_collection.users_service.clone();
+        state.serivces_collection.users_service.clone()
     }
 }
 
 impl FromRef<AppState> for AuthService {
     fn from_ref(state: &AppState) -> Self {
-        return state.serivces_collection.auth_service.clone();
+        state.serivces_collection.auth_service.clone()
     }
 }
 
 impl FromRef<AppState> for TransactionService {
     fn from_ref(state: &AppState) -> Self {
-        return state.serivces_collection.transaction_service.clone();
+        state.serivces_collection.transaction_service.clone()
     }
 }
 
 impl FromRef<AppState> for PortfolioService {
     fn from_ref(state: &AppState) -> Self {
-        return state.serivces_collection.portfolio_service.clone();
+        state.serivces_collection.portfolio_service.clone()
     }
 }
 
 impl FromRef<AppState> for AssetsService {
     fn from_ref(state: &AppState) -> Self {
-        return state.serivces_collection.assets_service.clone();
+        state.serivces_collection.assets_service.clone()
     }
 }
 

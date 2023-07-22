@@ -1,4 +1,4 @@
-use business::dtos::transaction_dto::add_transaction_dtos::AddUpdateTransactionGroupDto;
+use business::dtos::add_update_transaction_group_dto::AddUpdateTransactionGroupDto;
 use serde::{Deserialize, Serialize};
 use time::{serde::iso8601, OffsetDateTime};
 

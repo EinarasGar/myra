@@ -10,7 +10,6 @@ use crate::{
         add_transaction_group_view_model::AddTransactionGroupViewModel,
         asset_view_model::AssetViewModel,
         transaction_group_list_view_model::TransactionGroupListViewModel,
-        transaction_group_view_model::TransactionGroupViewModel,
         update_transaction_group_view_model::UpdateTransactionGroupViewModel,
     },
 };

@@ -19,6 +19,7 @@ pub fn initialize_tracing_subscriber() {
         .init();
 }
 
+#[allow(clippy::type_complexity)]
 fn create_opentelemetry_layer() -> Option<
     OpenTelemetryLayer<
         Layered<Option<EnvFilter>, Layered<Box<dyn Layer<Registry> + Send + Sync>, Registry>>,
@@ -74,7 +75,7 @@ fn create_env_filter_layer() -> Option<EnvFilter> {
         "".into()
     });
     match tracing_subscriber::EnvFilter::try_new(rust_log) {
-        Ok(filter) => return Some(filter),
+        Ok(filter) => Some(filter),
         Err(err) => {
             println!(
                 "Failed to create env filter for tracing. No environment filter will be set. {}",

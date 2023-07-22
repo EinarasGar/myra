@@ -1,19 +1,18 @@
-use business::dtos::category_dto::CategoryDto;
+use dal::models::transaction_models::CategoryModel;
 use serde::{Deserialize, Serialize};
 
-#[typeshare::typeshare]
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct CategoryViewModel {
+pub struct CategoryDto {
     pub id: i32,
     pub name: String,
     pub icon: String,
 }
 
-impl From<CategoryDto> for CategoryViewModel {
-    fn from(p: CategoryDto) -> Self {
+impl From<CategoryModel> for CategoryDto {
+    fn from(p: CategoryModel) -> Self {
         Self {
             id: p.id,
-            name: p.name,
+            name: p.category,
             icon: p.icon,
         }
     }

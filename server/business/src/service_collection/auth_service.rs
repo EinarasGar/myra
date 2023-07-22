@@ -4,7 +4,7 @@ use dal::{database_context::MyraDb, db_sets::user_db_set::UsersDbSet};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 
 use crate::{
-    dtos::{auth_dto::ClaimsDto, user_dto::UserRoleEnumDto},
+    dtos::{auth_dto::ClaimsDto, user_role_dto::UserRoleEnumDto},
     service_collection::user_service::UsersService,
 };
 
@@ -60,7 +60,7 @@ impl AuthService {
         };
 
         let token = encode(&Header::default(), &my_claims, &self.jwt_keys.encoding).unwrap();
-        Ok(token.to_string())
+        Ok(token)
     }
 
     #[tracing::instrument(skip(self), ret, err)]

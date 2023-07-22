@@ -1,22 +1,19 @@
 use dal::{
     database_context::MyraDb,
     db_sets::{portfolio_db_set::PortfolioDbSet, user_db_set::UsersDbSet},
-    models::{
-        portfolio_models::PortfolioAccountModel,
-        user_models::{AddUserModel, UserRoleModel},
-    },
+    models::{portfolio_models::PortfolioAccountModel, user_models::AddUserModel},
 };
 use tracing::{info_span, Instrument};
 use uuid::Uuid;
 
-use crate::dtos::{
-    portfolio_dto::PortfolioAccountDto,
-    user_dto::{AddUserDto, UserFullDto},
-};
-
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
+};
+
+use crate::dtos::{
+    add_user_dto::AddUserDto, portfolio_account_dto::PortfolioAccountDto,
+    user_full_dto::UserFullDto,
 };
 
 #[derive(Clone)]
@@ -88,7 +85,7 @@ impl UsersService {
             .hash_password(password.as_bytes(), &salt)
             .unwrap()
             .to_string();
-        return password_hash;
+        password_hash
     }
 
     #[tracing::instrument(skip(self, password), err)]
@@ -99,6 +96,6 @@ impl UsersService {
     ) -> anyhow::Result<()> {
         let parsed_hash = PasswordHash::new(&password_hash)?;
         Argon2::default().verify_password(password.as_bytes(), &parsed_hash)?;
-        Ok({})
+        Ok(())
     }
 }
