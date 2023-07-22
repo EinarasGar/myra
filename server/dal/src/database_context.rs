@@ -14,10 +14,9 @@ pub struct MyraDb {
 impl MyraDb {
     pub async fn new() -> anyhow::Result<Self> {
         let connection_string = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-        let mut connection_options = PgConnectOptions::from_str(&connection_string)
-            .expect("Unable to parse DATABASE_URL connection string");
-
-        connection_options.log_statements(tracing::log::LevelFilter::Debug);
+        let connection_options = PgConnectOptions::from_str(&connection_string)
+            .expect("Unable to parse DATABASE_URL connection string")
+            .log_statements(tracing::log::LevelFilter::Debug);
 
         let pool: PgPool = PgPoolOptions::new()
             .max_connections(5)

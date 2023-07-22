@@ -7,12 +7,12 @@ edition = "2021"
 
 [dependencies]
 dal = {path="../dal"}
-anyhow = { version = "1.0.70", features = ["backtrace"] }
-tokio = { version = "1.28.0", features = ["full"] }
-argon2 = { version = "0.5.0", features = ["std"] }
-uuid = { version = "1.3.1", features = ["v4", "serde"] }
+anyhow = { version = "1.0.72", features = ["backtrace"] }
+tokio = { version = "1.29.1", features = ["full"] }
+argon2 = { version = "0.5.1", features = ["std"] }
+uuid = { version = "1.4.1", features = ["v4", "serde"] }
 jsonwebtoken = "8.3.0"
-serde = "1.0.160"
-time = { version = "0.3.20", features = ["macros", "formatting", "serde"] }
-rust_decimal = "1.29.1"
+serde = "1.0.174"
+time = { version = "0.3.23", features = ["macros", "formatting", "serde"] }
+rust_decimal = "1.30.0"
 tracing = { version = "0.1.38", features = ["async-await", "log"] }
