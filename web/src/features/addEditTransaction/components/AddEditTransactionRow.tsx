@@ -11,20 +11,11 @@ import {
   CategoryViewModel,
   PortfolioAccountViewModel,
 } from "@/models";
+import { RowState } from "../models/RowState";
 
 interface Props {
-  defaultValue: AddTransactionRowState;
-  onChange: (value: AddTransactionRowState) => void;
-}
-
-export interface AddTransactionRowState {
-  componentId: string;
-  description: string | null;
-  category: CategoryViewModel | null;
-  asset: AssetViewModel | null;
-  account: PortfolioAccountViewModel | null;
-  amount: number | null;
-  date: Date | null;
+  defaultValue: RowState;
+  onChange: (value: RowState) => void;
 }
 
 const MemorizedDescriptionInput = React.memo(DescriptionInput);
@@ -34,7 +25,7 @@ const MemorizedAssetAutoComplete = React.memo(AssetAutoComplete);
 const MemorizedAccountsAutoComplete = React.memo(AccountsAutoComplete);
 const MemorizedAmountInput = React.memo(AmountInput);
 
-function AddTransactionRow({ onChange, defaultValue }: Props) {
+function AddEditTransactionRow({ onChange, defaultValue }: Props) {
   const [description, setDescription] = useState<string | null>(
     defaultValue.description
   );
@@ -66,7 +57,7 @@ function AddTransactionRow({ onChange, defaultValue }: Props) {
     )
       return;
     onChange({
-      componentId: defaultValue.componentId,
+      id: defaultValue.id,
       description,
       category,
       asset,
@@ -140,4 +131,4 @@ function AddTransactionRow({ onChange, defaultValue }: Props) {
   );
 }
 
-export default AddTransactionRow;
+export default AddEditTransactionRow;

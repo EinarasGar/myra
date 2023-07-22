@@ -4,23 +4,18 @@ import CategoryAutoComplete from "../../categories/components/CategoryAutoComple
 import { DatePicker } from "@/components";
 import DescriptionInput from "./DescriptionInput";
 import { CategoryViewModel } from "@/models";
+import { GroupState } from "../models/GroupState";
 
 interface Props {
-  defaultValue: AddTransactionGroupState;
-  onChange: (value: AddTransactionGroupState) => void;
-}
-
-export interface AddTransactionGroupState {
-  description: string | null;
-  category: CategoryViewModel | null;
-  date: Date | null;
+  defaultValue: GroupState;
+  onChange: (value: GroupState) => void;
 }
 
 const MemorizedDescriptionInput = React.memo(DescriptionInput);
 const MemorizedCategoryAutoComplete = React.memo(CategoryAutoComplete);
 const MemorizedTransactionDatePicker = React.memo(DatePicker);
 
-function AddTransactionGroupRow({ onChange, defaultValue }: Props) {
+function AddEditTransactionGroupRow({ onChange, defaultValue }: Props) {
   const [description, setDescription] = useState<string | null>(
     defaultValue.description
   );
@@ -37,6 +32,7 @@ function AddTransactionGroupRow({ onChange, defaultValue }: Props) {
     )
       return;
     onChange({
+      id: defaultValue.id,
       description,
       category,
       date,
@@ -73,4 +69,4 @@ function AddTransactionGroupRow({ onChange, defaultValue }: Props) {
   );
 }
 
-export default AddTransactionGroupRow;
+export default AddEditTransactionGroupRow;

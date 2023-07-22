@@ -1,11 +1,11 @@
 /* eslint-disable react/destructuring-assignment */
 import { AddTransactionGroupViewModel, AddTransactonViewModel } from "@/models";
-import { AddTransactionGroupState } from "./components/AddTransactionGroupRow";
-import { AddTransactionRowState } from "./components/AddTransactionRow";
+import { GroupState } from "./models/GroupState";
+import { RowState } from "./models/RowState";
 
 export function MapRowStatesToModel(
-  transactionGroup: AddTransactionGroupState | null,
-  tranasctions: AddTransactionRowState[]
+  transactionGroup: GroupState | null,
+  tranasctions: RowState[]
 ): AddTransactionGroupViewModel | null {
   if (transactionGroup === null) return null;
   if (
@@ -47,4 +47,9 @@ export function MapRowStatesToModel(
     description: transactionGroup.description,
     transactions: tranasctionModels,
   };
+}
+
+export function GenerateNewId() {
+  const randomNumber = Math.floor(Math.random() * 10000000000000000);
+  return -randomNumber;
 }

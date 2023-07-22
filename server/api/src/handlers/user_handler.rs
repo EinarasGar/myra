@@ -5,7 +5,7 @@ use crate::{
     app_error::AppError,
     auth::AuthenticatedUserState,
     states::{AssetsServiceState, PortfolioServiceState, UsersServiceState},
-    view_models::user_view_model::{AddUserViewModel, UserViewModel},
+    view_models::{add_user_view_model::AddUserViewModel, user_view_model::UserViewModel},
 };
 
 #[tracing::instrument(skip_all, ret, err)]

@@ -5,8 +5,10 @@ use crate::{
     app_error::AppError,
     auth::AuthenticatedUserState,
     states::PortfolioServiceState,
-    view_models::portfolio_view_model::{
-        PortfolioAccountViewModel, PortfolioEntryViewModel, PortfolioViewModel,
+    view_models::{
+        portfolio_account_view_model::PortfolioAccountViewModel,
+        portfolio_entry_view_model::PortfolioEntryViewModel,
+        portfolio_view_model::PortfolioViewModel,
     },
 };
 

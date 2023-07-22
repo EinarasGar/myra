@@ -28,7 +28,6 @@ pub struct AddTransactionModel {
     pub quantity: Decimal,
     pub date: OffsetDateTime,
     pub account_id: Uuid,
-    pub description: Option<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -38,7 +37,7 @@ pub struct AddTransactionDescriptionModel {
 }
 
 //Used in a method to insert new transaction groups
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct AddTransactionGroupModel {
     pub group_id: Uuid,
     pub category_id: i32,

@@ -1,7 +1,7 @@
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import useAuthRotues from "@/features/auth/routes";
 import { MainLayout } from "@/components";
-import { useAddTransactionRoutes } from "@/features/addTransaction";
+import { useAddTransactionRoutes } from "@/features/addEditTransaction";
 import { useListTransactionRoutes } from "@/features/listTransactions";
 
 function AppRoutes() {

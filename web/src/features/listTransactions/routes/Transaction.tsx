@@ -1,8 +1,9 @@
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import Divider from "@mui/material/Divider";
+import { Button } from "@mui/material";
 import {
   TransactionGroupSummary,
   TransactionSummary,
@@ -12,6 +13,7 @@ import { TransactionGroupViewModel } from "@/models";
 function Transaction() {
   const { transactionId } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const state = location.state as TransactionGroupViewModel | null;
 
   if (state === null) return <span>blogai</span>;
@@ -51,6 +53,13 @@ function Transaction() {
           <AccordionDetails />
         </Accordion>
       ))}
+      <Button
+        onClick={() => {
+          navigate(`/transactions/${state.id}/edit`, { state });
+        }}
+      >
+        Edit
+      </Button>
     </div>
   );
 }

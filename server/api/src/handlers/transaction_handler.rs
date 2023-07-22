@@ -4,14 +4,15 @@ use uuid::Uuid;
 
 use crate::{
     app_error::AppError,
+    auth::AuthenticatedUserState,
     states::{AssetsServiceState, TransactionServiceState},
     view_models::{
+        add_transaction_group_view_model::AddTransactionGroupViewModel,
         asset_view_model::AssetViewModel,
-        transaction_view_model::{
-            add_transaction_view_model::AddTransactionGroupViewModel,
-            get_tramscaton_view_model::TransactionGroupListViewModel,
-        },
-    }, auth::{AuthenticatedUserState},
+        transaction_group_list_view_model::TransactionGroupListViewModel,
+        transaction_group_view_model::TransactionGroupViewModel,
+        update_transaction_group_view_model::UpdateTransactionGroupViewModel,
+    },
 };
 
 #[tracing::instrument(skip(transaction_service), ret, err)]
@@ -23,6 +24,25 @@ pub async fn post_transactions(
 ) -> Result<Json<TransactionGroupListViewModel>, AppError> {
     let insert_result = transaction_service
         .add_transaction_group(user_id, params.clone().into())
+        .await?;
+
+    let response = TransactionGroupListViewModel {
+        groups: vec![insert_result.into()],
+        assets_lookup_table: Vec::new(),
+    };
+    Ok(response.into())
+}
+
+#[tracing::instrument(skip(transaction_service), ret, err)]
+pub async fn post_transactions_by_group_id(
+    Path((user_id, group_id)): Path<(Uuid, Uuid)>,
+    TransactionServiceState(transaction_service): TransactionServiceState,
+    AuthenticatedUserState(auth): AuthenticatedUserState,
+    Json(params): Json<UpdateTransactionGroupViewModel>,
+) -> Result<Json<TransactionGroupListViewModel>, AppError> {
+    //check id
+    let insert_result = transaction_service
+        .update_transaction_group(user_id, params.clone().into())
         .await?;
 
     let response = TransactionGroupListViewModel {
