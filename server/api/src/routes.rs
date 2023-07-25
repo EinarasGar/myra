@@ -1,6 +1,6 @@
 use crate::{handlers, observability, AppState};
 use axum::{
-    routing::{get, post},
+    routing::{delete, get, post},
     Router,
 };
 
@@ -18,6 +18,10 @@ pub(crate) fn create_router(state: AppState) -> Router {
         .route(
             "/api/users/:user_id/transactions/:group_id",
             post(handlers::transaction_handler::post_transactions_by_group_id),
+        )
+        .route(
+            "/api/users/:user_id/transactions/:group_id",
+            delete(handlers::transaction_handler::delete_transactions_by_group_id),
         )
         .route(
             "/api/users/:user_id/transactions",

@@ -1,24 +1,44 @@
 import React from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { TransactionGroupViewModel } from "@/models";
 import AddEditTransaction from "../components/AddEditTransaction";
 import { GroupState } from "../models/GroupState";
-import { useGetCategoriesQuery } from "@/app/myraApi";
+import {
+  useGetCategoriesQuery,
+  usePostTransactionGroupByIdMutation,
+} from "@/app/myraApi";
 import { RowState } from "../models/RowState";
 import { useAppSelector } from "@/hooks";
 import { selectAssets } from "@/features/asset";
 import { useAccounts } from "@/features/accounts";
+import { MapRowStatesToUpdateModel } from "../utils";
+import { selectUserId } from "@/features/auth";
 
 function EditTransactions() {
   const { transactionId } = useParams();
   const location = useLocation();
   const { data, isLoading } = useGetCategoriesQuery();
+  const userId = useAppSelector(selectUserId);
   const assets = useAppSelector(selectAssets);
   const state = location.state as TransactionGroupViewModel | null;
+  const navigate = useNavigate();
+
+  const [updateGroup, updateGroupState] = usePostTransactionGroupByIdMutation();
+
+  if (!userId) return <span>loading</span>;
 
   const onSave = (group: GroupState, rows: RowState[]) => {
-    console.log(group);
-    console.log(rows);
+    const mapped = MapRowStatesToUpdateModel(group, rows);
+    if (mapped) {
+      updateGroup({ group: mapped, user_id: userId })
+        .unwrap()
+        .then(() => {
+          navigate("/transactions");
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
   };
 
   if (!state || !data) return <p>no</p>;

@@ -53,6 +53,7 @@ pub trait TransactionDbSet {
         id: i32,
         model: AddUpdateTransactionModel,
     ) -> anyhow::Result<()>;
+    async fn delete_transaction_group(&mut self, id: Uuid) -> anyhow::Result<()>;
 }
 
 #[async_trait]
@@ -384,6 +385,20 @@ impl TransactionDbSet for PgConnection {
             .value(TransactionIden::Quantity, model.quantity)
             .value(TransactionIden::Date, model.date)
             .and_where(Expr::col(TransactionIden::Id).eq(id))
+            .build_sqlx(PostgresQueryBuilder);
+
+        sqlx::query_with(&sql, values.clone())
+            .execute(&mut *self)
+            .instrument(debug_span!("query", sql, ?values))
+            .await?;
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self), ret, err)]
+    async fn delete_transaction_group(&mut self, id: Uuid) -> anyhow::Result<()> {
+        let (sql, values) = Query::delete()
+            .from_table(TransactionGroupIden::Table)
+            .and_where(Expr::col(TransactionGroupIden::TransactionGroupId).eq(id))
             .build_sqlx(PostgresQueryBuilder);
 
         sqlx::query_with(&sql, values.clone())

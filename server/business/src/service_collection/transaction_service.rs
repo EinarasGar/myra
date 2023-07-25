@@ -397,6 +397,51 @@ impl TransactionService {
         let ret_vec: Vec<CategoryDto> = models.iter().map(|val| val.clone().into()).collect();
         Ok(ret_vec)
     }
+
+    #[tracing::instrument(skip(self), ret, err)]
+    pub async fn delete_transaction_group(
+        &self,
+        user_id: Uuid,
+        group_id: Uuid,
+    ) -> anyhow::Result<()> {
+        let mut trans = self.db.get_transaction().await?;
+
+        let mut quantities_map = std::collections::HashMap::new();
+        let transactions = trans.get_transaction_group(group_id).await?;
+
+        let mut removed_ids: Vec<i32> = Vec::new();
+        for trans in transactions.clone() {
+            //Run for each deleted transaction
+            update_quantity_sum(
+                &mut quantities_map,
+                trans.user_id,
+                trans.asset_id,
+                trans.account_id,
+                -trans.quantity,
+            );
+            removed_ids.push(trans.id);
+        }
+
+        if !removed_ids.is_empty() {
+            trans.delete_descriptions(removed_ids.clone()).await?;
+            trans.delete_transactions(removed_ids).await?;
+        }
+
+        let portfolio_updates = create_portfolio_updates_from_map(quantities_map);
+        if !portfolio_updates.is_empty() {
+            trans.update_portfolio(portfolio_updates).await?;
+        }
+
+        trans.delete_transaction_group(group_id).await?;
+
+        //Save changes
+        trans
+            .commit()
+            .instrument(info_span!("commit_sql_transaction"))
+            .await?;
+
+        Ok(())
+    }
 }
 
 fn update_quantity_sum(

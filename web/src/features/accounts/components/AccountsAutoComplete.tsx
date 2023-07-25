@@ -28,7 +28,9 @@ interface AccountAutocompleteModel {
 function AccountsAutoComplete({ onChange, value }: Props) {
   const userId = useAppSelector(selectUserId);
   const [autocompleteValue, setAutocompleteValue] =
-    useState<AccountAutocompleteModel | null>(null);
+    useState<AccountAutocompleteModel | null>(
+      value ? { viewModel: value } : null
+    );
   const { data, isLoading } = useAccounts();
   const [saveAccount, saveAccountSate] = usePostAccountMutation();
 
@@ -38,6 +40,7 @@ function AccountsAutoComplete({ onChange, value }: Props) {
     })
   );
 
+  // used for updating value if it changed outside of the component
   useEffect(() => {
     if (autocompleteData && value) {
       const matched = autocompleteData.find((x) => x.viewModel.id === value.id);
@@ -93,6 +96,7 @@ function AccountsAutoComplete({ onChange, value }: Props) {
         // Set the value if already exists
         if (existingValue) {
           setAutocompleteValue(existingValue);
+          onChange(existingValue.viewModel);
           return;
         }
 

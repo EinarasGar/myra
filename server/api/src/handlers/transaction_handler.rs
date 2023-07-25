@@ -51,6 +51,18 @@ pub async fn post_transactions_by_group_id(
     Ok(response.into())
 }
 
+#[tracing::instrument(skip(transaction_service), ret, err)]
+pub async fn delete_transactions_by_group_id(
+    Path((user_id, group_id)): Path<(Uuid, Uuid)>,
+    TransactionServiceState(transaction_service): TransactionServiceState,
+    AuthenticatedUserState(auth): AuthenticatedUserState,
+) -> Result<(), AppError> {
+    transaction_service
+        .delete_transaction_group(user_id, group_id)
+        .await?;
+    Ok(())
+}
+
 #[tracing::instrument(skip(transaction_service, assets_service), ret, err)]
 pub async fn get_transactions(
     Path(id): Path<Uuid>,

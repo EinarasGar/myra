@@ -9,14 +9,21 @@ import {
   TransactionSummary,
 } from "@/features/transactions";
 import { TransactionGroupViewModel } from "@/models";
+import { useDeleteTransactionGroupByIdMutation } from "@/app/myraApi";
+import { useAppSelector } from "@/hooks";
+import { selectUserId } from "@/features/auth";
 
 function Transaction() {
   const { transactionId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state as TransactionGroupViewModel | null;
+  const userId = useAppSelector(selectUserId);
 
-  if (state === null) return <span>blogai</span>;
+  const [deleteGroup, deleteGroupState] =
+    useDeleteTransactionGroupByIdMutation();
+
+  if (state === null || userId === undefined) return <span>blogai</span>;
   return (
     <div className=" m-5">
       <Accordion expanded>
@@ -50,7 +57,6 @@ function Transaction() {
               date={new Date(trans.date)}
             />
           </AccordionSummary>
-          <AccordionDetails />
         </Accordion>
       ))}
       <Button
@@ -59,6 +65,20 @@ function Transaction() {
         }}
       >
         Edit
+      </Button>
+      <Button
+        onClick={() => {
+          deleteGroup({ group_id: state.id, user_id: userId })
+            .unwrap()
+            .then(() => {
+              navigate("/transactions");
+            })
+            .catch((err) => {
+              console.log(err);
+            });
+        }}
+      >
+        Delet
       </Button>
     </div>
   );

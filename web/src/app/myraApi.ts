@@ -9,6 +9,7 @@ import {
   UserViewModel,
   PortfolioAccountViewModel,
   AddTransactionGroupViewModel,
+  UpdateTransactionGroupViewModel,
 } from "@/models";
 import { RootState } from "@/app/store";
 
@@ -66,12 +67,31 @@ export const myraApi = createApi({
     }),
     postTransactionGroup: builder.mutation<
       TransactionGroupListViewModel,
-      { transaction: AddTransactionGroupViewModel; user_id: string }
+      { group: AddTransactionGroupViewModel; user_id: string }
     >({
-      query: ({ transaction, user_id }) => ({
+      query: ({ group, user_id }) => ({
         url: `/users/${user_id}/transactions`,
         method: "POST",
-        body: transaction,
+        body: group,
+      }),
+    }),
+    postTransactionGroupById: builder.mutation<
+      TransactionGroupListViewModel,
+      { group: UpdateTransactionGroupViewModel; user_id: string }
+    >({
+      query: ({ group, user_id }) => ({
+        url: `/users/${user_id}/transactions/${group.id}`,
+        method: "POST",
+        body: group,
+      }),
+    }),
+    deleteTransactionGroupById: builder.mutation<
+      void,
+      { user_id: string; group_id: string }
+    >({
+      query: ({ group_id, user_id }) => ({
+        url: `/users/${user_id}/transactions/${group_id}`,
+        method: "DELETE",
       }),
     }),
     login: builder.mutation<AuthViewModel, LoginDetailsViewModel>({
@@ -94,4 +114,6 @@ export const {
   useGetUserQuery,
   usePostAccountMutation,
   usePostTransactionGroupMutation,
+  usePostTransactionGroupByIdMutation,
+  useDeleteTransactionGroupByIdMutation,
 } = myraApi;

@@ -1,8 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import { useCallback } from "react";
 import { useAppSelector } from "@/hooks";
 import AddEditTransaction from "../components/AddEditTransaction";
-import { GenerateNewId, MapRowStatesToModel } from "../utils";
+import { GenerateNewId, MapRowStatesToAddModel } from "../utils";
 import { selectUserId } from "@/features/auth";
 import { usePostTransactionGroupMutation } from "@/app/myraApi";
 import { GroupState } from "../models/GroupState";
@@ -16,9 +15,9 @@ function AddTransaction() {
   if (!userId) return <span>loading</span>;
 
   const onSave = (group: GroupState, rows: RowState[]) => {
-    const mapped = MapRowStatesToModel(group, rows);
+    const mapped = MapRowStatesToAddModel(group, rows);
     if (mapped) {
-      saveGroup({ transaction: mapped, user_id: userId })
+      saveGroup({ group: mapped, user_id: userId })
         .unwrap()
         .then((newViewModel) => {
           navigate("/transactions");
