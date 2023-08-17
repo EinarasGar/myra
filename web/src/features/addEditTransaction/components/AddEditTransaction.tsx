@@ -21,78 +21,84 @@ import { RowState } from "../models/RowState";
 const MemoizedAddEditTransactionRow = React.memo(AddEditTransactionRow);
 
 interface Props {
-  initialGroup: GroupState | null;
+  initialGroup: GroupState;
   initialRows: RowState[];
   onSave: (group: GroupState, rows: RowState[]) => void;
 }
 
 function AddEditTransaction({ initialGroup, initialRows, onSave }: Props) {
-  const [group, setGroup] = useState<GroupState | null>(initialGroup);
+  const [group, setGroup] = useState<GroupState>(initialGroup);
   const [rows, setRows] = useState<RowState[]>(initialRows);
-
   const [selectedAccordion, setSelectedAccordion] = useState<number>(0);
-
   const [contextMenu, setContextMenu] = React.useState<{
     mouseX: number;
     mouseY: number;
     transactionId: number;
   } | null>(null);
 
+  // This is used for when any of the data in any of the rows update
   const transactionRowUpdated = useCallback((x: RowState) => {
     setRows((oldState) => oldState.map((c) => (c.id === x.id ? x : c)));
   }, []);
 
-  useEffect(() => {
-    if (rows.length === 2 && group === null) {
-      setGroup({
-        id: crypto.randomUUID(),
-        description: rows[0].description,
-        category: rows[0].category,
-        date: rows[0].date,
-      });
-    }
-  }, [rows, group]);
-
+  // This is used when you click on one of the summaries
   const handleAccordionChange =
     (id: number) => (event: React.SyntheticEvent, isExpanded: boolean) => {
       if (isExpanded) setSelectedAccordion(id);
     };
 
+  // This is used for context menu close
   const handleClose = () => {
     setContextMenu(null);
+  };
+
+  // This can be used whenever you want to add a new transaction
+  const addNewTransaction = () => {
+    const newId = GenerateNewId();
+    setRows([
+      ...rows,
+      {
+        id: newId,
+        description: null,
+        category: group.category,
+        asset: rows[0].asset,
+        account: rows[0].account,
+        amount: null,
+        date: group.date,
+      },
+    ]);
+    setSelectedAccordion(newId);
   };
 
   return (
     <>
       <div className=" m-5">
-        {group && (
-          <Accordion expanded>
-            <AccordionSummary>
-              <TransactionGroupSummary
-                categoryId={group.category?.id}
-                amounts={rows.flatMap((trans) => {
-                  if (trans.asset !== null && trans.amount !== null) {
-                    return [
-                      {
-                        assetId: trans.asset.id,
-                        quantity: trans.amount,
-                      },
-                    ];
-                  }
-                  return [];
-                })}
-                description={group.description ?? "Transaction Group"}
-                date={group.date}
-              />
-            </AccordionSummary>
-            <AccordionDetails>
-              <AddEditTransactionGroupRow
-                defaultValue={group}
-                onChange={(model) => setGroup(model)}
-              />
-            </AccordionDetails>
-          </Accordion>
-        )}
+        <Accordion expanded>
+          <AccordionSummary>
+            <TransactionGroupSummary
+              categoryId={group.category?.id}
+              amounts={rows.flatMap((trans) => {
+                if (trans.asset !== null && trans.amount !== null) {
+                  return [
+                    {
+                      assetId: trans.asset.id,
+                      quantity: trans.amount,
+                    },
+                  ];
+                }
+                return [];
+              })}
+              description={group.description ?? "Transaction Group"}
+              date={group.date}
+            />
+          </AccordionSummary>
+          <AccordionDetails>
+            <AddEditTransactionGroupRow
+              defaultValue={group}
+              onChange={(model) => setGroup(model)}
+            />
+          </AccordionDetails>
+        </Accordion>
 
         <Divider className="my-5" />
 
@@ -130,6 +136,7 @@ function AddEditTransaction({ initialGroup, initialRows, onSave }: Props) {
               <MemoizedAddEditTransactionRow
                 defaultValue={trans}
                 onChange={transactionRowUpdated}
+                onSubmit={() => addNewTransaction()}
               />
             </AccordionDetails>
             {contextMenu?.transactionId === trans.id && (
@@ -163,20 +170,7 @@ function AddEditTransaction({ initialGroup, initialRows, onSave }: Props) {
       </div>
       <Button
         onClick={() => {
-          const newId = GenerateNewId();
-          setRows([
-            ...rows,
-            {
-              id: newId,
-              description: null,
-              category: rows[0].category,
-              asset: rows[0].asset,
-              account: rows[0].account,
-              amount: null,
-              date: rows[0].date,
-            },
-          ]);
-          setSelectedAccordion(newId);
+          addNewTransaction();
         }}
       >
         Add Transaction

@@ -10,16 +10,24 @@ interface Props {
   value: number | null;
   ticker: string | undefined;
   onChange: (value: number | null) => void;
+  onSubmit: () => void;
 }
 
-function AmountInput({ onChange, value, ticker }: Props) {
+function AmountInput({ onChange, onSubmit, value, ticker }: Props) {
   const [localValue, setLocalValue] = useState<string>("");
 
   useEffect(() => {
     setLocalValue(value?.toString() ?? "");
   }, [value]);
   return (
-    <FormControl fullWidth>
+    <FormControl
+      fullWidth
+      onKeyUp={(ev) => {
+        if (ev.key === "Enter") {
+          onSubmit();
+        }
+      }}
+    >
       <InputLabel htmlFor="outlined-adornment-amount">Amount</InputLabel>
       <OutlinedInput
         id="outlined-adornment-amount"

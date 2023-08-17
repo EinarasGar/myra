@@ -19,6 +19,7 @@ function DescriptionInput(props: Props) {
           const str = event.target.value;
           onChange(str.length === 0 ? null : str);
         }}
+        inputRef={(input) => input && input.focus()}
       />
     </FormControl>
   );

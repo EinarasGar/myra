@@ -30,7 +30,12 @@ function AddTransaction() {
 
   return (
     <AddEditTransaction
-      initialGroup={null}
+      initialGroup={{
+        id: crypto.randomUUID(),
+        category: null,
+        date: null,
+        description: null,
+      }}
       initialRows={[
         {
           id: GenerateNewId(),

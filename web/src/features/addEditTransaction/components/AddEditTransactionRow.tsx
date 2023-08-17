@@ -16,6 +16,7 @@ import { RowState } from "../models/RowState";
 interface Props {
   defaultValue: RowState;
   onChange: (value: RowState) => void;
+  onSubmit: () => void;
 }
 
 const MemorizedDescriptionInput = React.memo(DescriptionInput);
@@ -25,7 +26,7 @@ const MemorizedAssetAutoComplete = React.memo(AssetAutoComplete);
 const MemorizedAccountsAutoComplete = React.memo(AccountsAutoComplete);
 const MemorizedAmountInput = React.memo(AmountInput);
 
-function AddEditTransactionRow({ onChange, defaultValue }: Props) {
+function AddEditTransactionRow({ onChange, onSubmit, defaultValue }: Props) {
   const [description, setDescription] = useState<string | null>(
     defaultValue.description
   );
@@ -87,6 +88,16 @@ function AddEditTransactionRow({ onChange, defaultValue }: Props) {
         />
       </Grid>
       <Grid xs={4}>
+        <MemorizedAmountInput
+          value={amount}
+          ticker={asset?.ticker}
+          onChange={useCallback((model) => {
+            setAmount(model);
+          }, [])}
+          onSubmit={onSubmit}
+        />
+      </Grid>
+      <Grid xs={4}>
         <MemorizedCategoryAutoComplete
           value={category}
           onChange={useCallback((model) => {
@@ -115,15 +126,6 @@ function AddEditTransactionRow({ onChange, defaultValue }: Props) {
           value={account}
           onChange={useCallback((model) => {
             setAccount(model);
-          }, [])}
-        />
-      </Grid>
-      <Grid xs={4}>
-        <MemorizedAmountInput
-          value={amount}
-          ticker={asset?.ticker}
-          onChange={useCallback((model) => {
-            setAmount(model);
           }, [])}
         />
       </Grid>
