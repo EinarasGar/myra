@@ -3,6 +3,7 @@ import useAuthRotues from "@/features/auth/routes";
 import { MainLayout } from "@/components";
 import { useAddTransactionRoutes } from "@/features/addEditTransaction";
 import { useListTransactionRoutes } from "@/features/listTransactions";
+import usePortfolioOverviewRoutes from "@/features/portfolioOverview/routes";
 
 function AppRoutes() {
   // could be useful
@@ -15,6 +16,7 @@ function AppRoutes() {
       children: [
         ...useAddTransactionRoutes(),
         ...useListTransactionRoutes(),
+        ...usePortfolioOverviewRoutes(),
         ...useAuthRotues(),
       ],
     },

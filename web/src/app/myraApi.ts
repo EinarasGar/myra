@@ -10,6 +10,7 @@ import {
   PortfolioAccountViewModel,
   AddTransactionGroupViewModel,
   UpdateTransactionGroupViewModel,
+  PortfolioViewModel,
 } from "@/models";
 import { RootState } from "@/app/store";
 
@@ -39,6 +40,9 @@ export const myraApi = createApi({
     }),
     getUser: builder.query<UserViewModel, string>({
       query: (uuid) => `/users/${uuid}`,
+    }),
+    getPortfolio: builder.query<PortfolioViewModel, string>({
+      query: (uuid) => `/users/2396480f-0052-4cf0-81dc-8cedbde5ce13/portfolio`,
     }),
     postAccount: builder.mutation<
       PortfolioAccountViewModel,
@@ -116,4 +120,5 @@ export const {
   usePostTransactionGroupMutation,
   usePostTransactionGroupByIdMutation,
   useDeleteTransactionGroupByIdMutation,
+  useGetPortfolioQuery,
 } = myraApi;

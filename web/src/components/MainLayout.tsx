@@ -10,6 +10,9 @@ function MainLayout() {
           <Link to="/transactions">
             <Button>Transaction</Button>
           </Link>
+          <Link to="/portfolio">
+            <Button>Portfolio</Button>
+          </Link>
           <Link to="/transactions/add">
             <Button>Transaction Add</Button>
           </Link>
