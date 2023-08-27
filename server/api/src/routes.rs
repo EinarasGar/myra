@@ -41,6 +41,10 @@ pub(crate) fn create_router(state: AppState) -> Router {
             get(handlers::asset_handler::get_asset_by_id),
         )
         .route(
+            "/api/assets/:id/:pair2",
+            get(handlers::asset_handler::get_asset_pair),
+        )
+        .route(
             "/api/constants/categories",
             get(handlers::constants_handler::get_categories),
         )

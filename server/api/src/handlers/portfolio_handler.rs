@@ -51,7 +51,7 @@ pub async fn get_portfolio(
     };
 
     let asset_rates: HashMap<i32, AssetPairRateDto> = asset_service
-        .get_asset_prices_default(default_asset, unique_asset_ids)
+        .get_asset_rates_default(default_asset, unique_asset_ids)
         .await?;
 
     let response_assets: Vec<PortfolioEntryViewModel> = portfolio_assets_dto

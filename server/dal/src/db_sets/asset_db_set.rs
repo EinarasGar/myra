@@ -1,5 +1,7 @@
 use async_trait::async_trait;
-use sea_query::{extension::postgres::PgExpr, Alias, Cond, Expr, PostgresQueryBuilder, Query};
+use sea_query::{
+    extension::postgres::PgExpr, Alias, Cond, Expr, Order, PostgresQueryBuilder, Query,
+};
 use sea_query_binder::SqlxBinder;
 use sqlx::PgConnection;
 use tracing::{debug_span, Instrument};
@@ -10,6 +12,7 @@ use crate::{
         asset_models::{Asset, AssetRaw},
         asset_pair::AssetPair,
         asset_pair_rate::AssetPairRate,
+        asset_rate::AssetRate,
     },
 };
 
@@ -27,6 +30,7 @@ pub trait AssetDbSet {
         &mut self,
         pairs: Vec<AssetPair>,
     ) -> anyhow::Result<Vec<AssetPairRate>>;
+    async fn get_pair_rates(&mut self, pair1: i32, pair2: i32) -> anyhow::Result<Vec<AssetRate>>;
 }
 
 #[async_trait]
@@ -164,6 +168,34 @@ impl AssetDbSet for PgConnection {
             .build_sqlx(PostgresQueryBuilder);
 
         let rows = sqlx::query_as_with::<_, AssetPairRate, _>(&sql, values.clone())
+            .fetch_all(&mut *self)
+            .instrument(debug_span!("query", sql, ?values))
+            .await?;
+        Ok(rows)
+    }
+
+    async fn get_pair_rates(&mut self, pair1: i32, pair2: i32) -> anyhow::Result<Vec<AssetRate>> {
+        let (sql, values) = Query::select()
+            .column((AssetHistoryIden::Table, AssetHistoryIden::Rate))
+            .column((AssetHistoryIden::Table, AssetHistoryIden::Date))
+            .from(AssetHistoryIden::Table)
+            .and_where(
+                Expr::col(AssetHistoryIden::PairId).in_subquery(
+                    Query::select()
+                        .column(AssetPairsIden::Id)
+                        .from(AssetPairsIden::Table)
+                        .and_where(
+                            Expr::col(AssetPairsIden::Pair1)
+                                .eq(pair1)
+                                .and(Expr::col(AssetPairsIden::Pair2).eq(pair2)),
+                        )
+                        .take(),
+                ),
+            )
+            .order_by(AssetHistoryIden::Date, Order::Desc)
+            .build_sqlx(PostgresQueryBuilder);
+
+        let rows = sqlx::query_as_with::<_, AssetRate, _>(&sql, values.clone())
             .fetch_all(&mut *self)
             .instrument(debug_span!("query", sql, ?values))
             .await?;

@@ -8,7 +8,9 @@ use dal::{
 use rust_decimal::Decimal;
 use time::OffsetDateTime;
 
-use crate::dtos::{asset_dto::AssetDto, asset_pair_rate_dto::AssetPairRateDto};
+use crate::dtos::{
+    asset_dto::AssetDto, asset_pair_rate_dto::AssetPairRateDto, asset_rate_dto::AssetRateDto,
+};
 
 #[derive(Clone)]
 pub struct AssetsService {
@@ -34,7 +36,7 @@ impl AssetsService {
             .get_assets(page_size, page, search)
             .await?;
 
-        let ret_vec: Vec<AssetDto> = models.iter().map(|val| val.clone().into()).collect();
+        let ret_vec: Vec<AssetDto> = models.into_iter().map(|val| val.into()).collect();
 
         Ok(ret_vec)
     }
@@ -47,7 +49,7 @@ impl AssetsService {
     }
 
     #[tracing::instrument(skip(self), ret, err)]
-    pub async fn get_asset_prices_default(
+    pub async fn get_asset_rates_default(
         &self,
         default_asset_id: i32,
         asset_ids: HashSet<i32>,
@@ -60,10 +62,10 @@ impl AssetsService {
             .await?
             .get_latest_asset_pair_rates(
                 asset_ids
-                    .iter()
+                    .into_iter()
                     .map(|x| AssetPair {
-                        pair1: *x,
-                        pair2: default_asset_id.clone(),
+                        pair1: x,
+                        pair2: default_asset_id,
                     })
                     .collect(),
             )
@@ -72,6 +74,24 @@ impl AssetsService {
         for pair in ret {
             result.insert(pair.pair1, pair.into());
         }
+
+        return Ok(result);
+    }
+
+    #[tracing::instrument(skip(self), ret, err)]
+    pub async fn get_asset_pair_rates(
+        &self,
+        pair1: i32,
+        pair2: i32,
+    ) -> anyhow::Result<Vec<AssetRateDto>> {
+        let ret = self
+            .db
+            .get_connection()
+            .await?
+            .get_pair_rates(pair1, pair2)
+            .await?;
+
+        let result: Vec<AssetRateDto> = ret.into_iter().map(|x| x.into()).collect();
 
         return Ok(result);
     }

@@ -5,7 +5,12 @@ use axum::{
 use serde::Deserialize;
 
 use crate::{
-    app_error::AppError, states::AssetsServiceState, view_models::asset_view_model::AssetViewModel,
+    app_error::AppError,
+    states::AssetsServiceState,
+    view_models::{
+        asset_pair_view_model::AssetPairViewModel, asset_rate_view_model::AssetRateViewModel,
+        asset_view_model::AssetViewModel,
+    },
 };
 
 #[derive(Deserialize, Debug)]
@@ -37,5 +42,23 @@ pub async fn get_asset_by_id(
 ) -> Result<Json<AssetViewModel>, AppError> {
     let asset = assets_service.get_asset(id).await?;
     let ret: AssetViewModel = asset.into();
+    Ok(ret.into())
+}
+
+#[tracing::instrument(skip(assets_service), ret, err)]
+pub async fn get_asset_pair(
+    Path((pair1, pair2)): Path<(i32, i32)>,
+    AssetsServiceState(assets_service): AssetsServiceState,
+) -> Result<Json<AssetPairViewModel>, AppError> {
+    let asset1 = assets_service.get_asset(pair1).await?;
+    let asset2 = assets_service.get_asset(pair2).await?;
+    let rates = assets_service.get_asset_pair_rates(pair1, pair2).await?;
+
+    let ret = AssetPairViewModel {
+        pair1: asset1.into(),
+        pair2: asset2.into(),
+        rates: rates.into_iter().map(|x| x.into()).collect(),
+    };
+
     Ok(ret.into())
 }

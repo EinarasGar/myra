@@ -1,4 +1,4 @@
-use business::dtos::asset_pair_rate_dto::AssetPairRateDto;
+use business::dtos::{asset_pair_rate_dto::AssetPairRateDto, asset_rate_dto::AssetRateDto};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use time::{serde::iso8601, OffsetDateTime};
@@ -13,6 +13,15 @@ pub struct AssetRateViewModel {
 
 impl From<AssetPairRateDto> for AssetRateViewModel {
     fn from(p: AssetPairRateDto) -> Self {
+        Self {
+            date: p.date,
+            rate: p.rate,
+        }
+    }
+}
+
+impl From<AssetRateDto> for AssetRateViewModel {
+    fn from(p: AssetRateDto) -> Self {
         Self {
             date: p.date,
             rate: p.rate,
