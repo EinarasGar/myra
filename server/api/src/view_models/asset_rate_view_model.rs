@@ -1,12 +1,15 @@
 use business::dtos::{asset_pair_rate_dto::AssetPairRateDto, asset_rate_dto::AssetRateDto};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use time::{serde::iso8601, OffsetDateTime};
+use time::{
+    serde::{iso8601, rfc3339},
+    OffsetDateTime,
+};
 
 #[typeshare::typeshare]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AssetRateViewModel {
-    #[serde(with = "iso8601")]
+    #[serde(with = "rfc3339")]
     pub date: OffsetDateTime,
     pub rate: Decimal,
 }

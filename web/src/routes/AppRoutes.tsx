@@ -4,6 +4,7 @@ import { MainLayout } from "@/components";
 import { useAddTransactionRoutes } from "@/features/addEditTransaction";
 import { useListTransactionRoutes } from "@/features/listTransactions";
 import usePortfolioOverviewRoutes from "@/features/portfolioOverview/routes";
+import useAssetsRoutes from "@/features/asset/routes";
 
 function AppRoutes() {
   // could be useful
@@ -18,6 +19,7 @@ function AppRoutes() {
         ...useListTransactionRoutes(),
         ...usePortfolioOverviewRoutes(),
         ...useAuthRotues(),
+        ...useAssetsRoutes(),
       ],
     },
   ]);
