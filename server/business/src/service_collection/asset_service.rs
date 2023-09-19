@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 use dal::{
     database_context::MyraDb,
@@ -12,14 +12,18 @@ use crate::dtos::{
     asset_dto::AssetDto, asset_pair_rate_dto::AssetPairRateDto, asset_rate_dto::AssetRateDto,
 };
 
+use super::Services;
+
 #[derive(Clone)]
 pub struct AssetsService {
     db: MyraDb,
 }
 
 impl AssetsService {
-    pub fn new(db_context: MyraDb) -> Self {
-        Self { db: db_context }
+    pub fn new(services: Services) -> Self {
+        Self {
+            db: services.context,
+        }
     }
 
     #[tracing::instrument(skip(self), ret, err)]
@@ -49,7 +53,7 @@ impl AssetsService {
     }
 
     #[tracing::instrument(skip(self), ret, err)]
-    pub async fn get_asset_rates_default(
+    pub async fn get_asset_rates_default_latest(
         &self,
         default_asset_id: i32,
         asset_ids: HashSet<i32>,
@@ -68,11 +72,87 @@ impl AssetsService {
                         pair2: default_asset_id,
                     })
                     .collect(),
+                None,
+                true,
             )
             .await?;
 
         for pair in ret {
             result.insert(pair.pair1, pair.into());
+        }
+
+        return Ok(result);
+    }
+
+    #[tracing::instrument(skip(self), ret, err)]
+    pub async fn get_asset_rates_default_from_date(
+        &self,
+        default_asset_id: i32,
+        asset_ids: HashSet<i32>,
+        staret_time: OffsetDateTime,
+    ) -> anyhow::Result<HashMap<(i32, i32), VecDeque<AssetRateDto>>> {
+        let mut result: HashMap<(i32, i32), VecDeque<AssetRateDto>> = HashMap::new();
+
+        let ret = self
+            .db
+            .get_connection()
+            .await?
+            .get_latest_asset_pair_rates(
+                asset_ids
+                    .into_iter()
+                    .map(|x| AssetPair {
+                        pair1: x,
+                        pair2: default_asset_id,
+                    })
+                    .collect(),
+                Some(staret_time),
+                false,
+            )
+            .await?;
+
+        for pair in ret {
+            result
+                .entry((pair.pair1, pair.pair2))
+                .or_insert(VecDeque::new())
+                .push_back(AssetRateDto {
+                    rate: pair.rate,
+                    date: pair.date,
+                })
+        }
+
+        let non_default_rates_pair1_ids: Vec<i32> = result
+            .keys()
+            .filter(|p| p.1 != default_asset_id)
+            .map(|p| p.1)
+            .collect();
+
+        if non_default_rates_pair1_ids.len() > 0 {
+            let ret_bases = self
+                .db
+                .get_connection()
+                .await?
+                .get_latest_asset_pair_rates(
+                    non_default_rates_pair1_ids
+                        .into_iter()
+                        .map(|x| AssetPair {
+                            pair1: x,
+                            pair2: default_asset_id,
+                        })
+                        .collect(),
+                    Some(staret_time),
+                    false,
+                )
+                .await?;
+
+            for pair in ret_bases {
+                result
+                    .entry((pair.pair1, pair.pair2))
+                    .or_insert(VecDeque::new())
+                    .push_back(AssetRateDto {
+                        rate: pair.rate,
+                        date: pair.date,
+                    })
+            }
         }
 
         return Ok(result);
@@ -94,5 +174,16 @@ impl AssetsService {
         let result: Vec<AssetRateDto> = ret.into_iter().map(|x| x.into()).collect();
 
         return Ok(result);
+    }
+
+    #[tracing::instrument(skip(self), ret, err)]
+    pub async fn add_asset_rate(&self, rate: AssetPairRateDto) -> anyhow::Result<()> {
+        let ret = self
+            .db
+            .get_connection()
+            .await?
+            .insert_pair_rate(rate.into())
+            .await?;
+        Ok(())
     }
 }

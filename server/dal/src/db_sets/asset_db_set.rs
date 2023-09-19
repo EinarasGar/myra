@@ -1,13 +1,19 @@
 use async_trait::async_trait;
+use mockall::automock;
 use sea_query::{
-    extension::postgres::PgExpr, Alias, Cond, Expr, Order, PostgresQueryBuilder, Query,
+    extension::postgres::PgExpr, Alias, Cond, Expr, Func, Order, PostgresQueryBuilder, Query,
 };
 use sea_query_binder::SqlxBinder;
-use sqlx::PgConnection;
+use sqlx::{
+    types::time::{Date, OffsetDateTime},
+    PgConnection,
+};
 use tracing::{debug_span, Instrument};
 
 use crate::{
-    idens::asset_idens::{AssetHistoryIden, AssetPairsIden, AssetTypesIden, AssetsIden},
+    idens::asset_idens::{
+        AssetHistoryIden, AssetPairsIden, AssetTypesIden, AssetsAliasIden, AssetsIden,
+    },
     models::{
         asset_models::{Asset, AssetRaw},
         asset_pair::AssetPair,
@@ -29,10 +35,14 @@ pub trait AssetDbSet {
     async fn get_latest_asset_pair_rates(
         &mut self,
         pairs: Vec<AssetPair>,
+        date_floor: Option<OffsetDateTime>,
+        only_latest: bool,
     ) -> anyhow::Result<Vec<AssetPairRate>>;
     async fn get_pair_rates(&mut self, pair1: i32, pair2: i32) -> anyhow::Result<Vec<AssetRate>>;
+    async fn insert_pair_rate(&mut self, rate: AssetPairRate) -> anyhow::Result<()>;
 }
 
+#[automock]
 #[async_trait]
 impl AssetDbSet for PgConnection {
     #[tracing::instrument(skip(self), ret, err)]
@@ -135,14 +145,90 @@ impl AssetDbSet for PgConnection {
     async fn get_latest_asset_pair_rates(
         &mut self,
         pairs: Vec<AssetPair>,
+        date_floor: Option<OffsetDateTime>,
+        only_latest: bool,
     ) -> anyhow::Result<Vec<AssetPairRate>> {
         let tuples: Vec<(i32, i32)> = pairs.iter().map(|x| (x.pair1, x.pair2)).collect();
-        let (sql, values) = Query::select()
+        let base_main_ids: Vec<i32> = pairs.iter().map(|x| x.pair1).collect();
+
+        let base_pairs_query = Query::select()
+            .column((AssetPairsIden::Table, AssetPairsIden::Id))
             .column((AssetPairsIden::Table, AssetPairsIden::Pair1))
             .column((AssetPairsIden::Table, AssetPairsIden::Pair2))
+            .from(AssetPairsIden::Table)
+            .join(
+                sea_query::JoinType::Join,
+                AssetsIden::Table,
+                Expr::col((AssetsIden::Table, AssetsIden::Id))
+                    .equals((AssetPairsIden::Table, AssetPairsIden::Pair1)),
+            )
+            .and_where(
+                Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair1)).is_in(base_main_ids),
+            )
+            .and_where(
+                Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair2))
+                    .equals((AssetsIden::Table, AssetsIden::BasePairId)),
+            )
+            .to_owned();
+
+        let pairs_query = Query::select()
+            .column((AssetPairsIden::Table, AssetPairsIden::Id))
+            .column((AssetPairsIden::Table, AssetPairsIden::Pair1))
+            .column((AssetPairsIden::Table, AssetPairsIden::Pair2))
+            .from(AssetPairsIden::Table)
+            .and_where(
+                Expr::tuple([
+                    Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair1)).into(),
+                    Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair2)).into(),
+                ])
+                .in_tuples(tuples),
+            )
+            .to_owned();
+
+        let filtered_query = Query::select()
+            .expr_as(
+                Func::coalesce([
+                    Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Pair1)).into(),
+                    Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Pair1)).into(),
+                ]),
+                AssetPairsIden::Pair1,
+            )
+            .expr_as(
+                Func::coalesce([
+                    Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Pair2)).into(),
+                    Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Pair2)).into(),
+                ]),
+                AssetPairsIden::Pair2,
+            )
+            .expr_as(
+                Func::coalesce([
+                    Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Id)).into(),
+                    Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Id)).into(),
+                ]),
+                AssetPairsIden::Id,
+            )
+            .from_subquery(base_pairs_query, AssetsAliasIden::BasePairsSubquery)
+            .join_subquery(
+                sea_query::JoinType::FullOuterJoin,
+                pairs_query,
+                AssetsAliasIden::PairsSubquery,
+                Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Pair1))
+                    .equals((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Pair1)),
+            )
+            .to_owned();
+
+        let (sql, values) = Query::select()
+            .column((
+                AssetsAliasIden::FilteredPairsSubquery,
+                AssetPairsIden::Pair1,
+            ))
+            .column((
+                AssetsAliasIden::FilteredPairsSubquery,
+                AssetPairsIden::Pair2,
+            ))
             .column((AssetHistoryIden::Table, AssetHistoryIden::Rate))
             .column((AssetHistoryIden::Table, AssetHistoryIden::Date))
-            .from(AssetPairsIden::Table)
+            .from_subquery(filtered_query, AssetsAliasIden::FilteredPairsSubquery)
             .join_lateral(
                 sea_query::JoinType::Join,
                 Query::select()
@@ -150,20 +236,33 @@ impl AssetDbSet for PgConnection {
                     .from(AssetHistoryIden::Table)
                     .and_where(
                         Expr::col(AssetHistoryIden::PairId)
-                            .equals((AssetPairsIden::Table, AssetPairsIden::Id)),
+                            .equals((AssetsAliasIden::FilteredPairsSubquery, AssetPairsIden::Id)),
                     )
-                    .order_by(AssetHistoryIden::Date, sea_query::Order::Desc)
-                    .limit(1)
+                    .conditions(
+                        only_latest,
+                        // if condition is true then add the following condition
+                        |q| {
+                            q.limit(1)
+                                .order_by(AssetHistoryIden::Date, sea_query::Order::Desc);
+                        },
+                        // otherwise leave it as is
+                        |q| {},
+                    )
+                    .conditions(
+                        date_floor.is_some(), // if condition is true then add the following condition
+                        |q| {
+                            q.and_where(
+                                Expr::col(AssetHistoryIden::Date)
+                                    .gte(Expr::val(date_floor.unwrap())),
+                            )
+                            .order_by(AssetHistoryIden::Date, sea_query::Order::Asc);
+                        },
+                        // otherwise leave it as is
+                        |q| {},
+                    )
                     .take(),
                 AssetHistoryIden::Table,
                 Expr::value(true),
-            )
-            .and_where(
-                Expr::tuple([
-                    Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair1)).into(),
-                    Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair2)).into(),
-                ])
-                .in_tuples(tuples),
             )
             .build_sqlx(PostgresQueryBuilder);
 
@@ -174,6 +273,7 @@ impl AssetDbSet for PgConnection {
         Ok(rows)
     }
 
+    #[tracing::instrument(skip(self))]
     async fn get_pair_rates(&mut self, pair1: i32, pair2: i32) -> anyhow::Result<Vec<AssetRate>> {
         let (sql, values) = Query::select()
             .column((AssetHistoryIden::Table, AssetHistoryIden::Rate))
@@ -200,5 +300,24 @@ impl AssetDbSet for PgConnection {
             .instrument(debug_span!("query", sql, ?values))
             .await?;
         Ok(rows)
+    }
+
+    #[tracing::instrument(skip(self))]
+    async fn insert_pair_rate(&mut self, rate: AssetPairRate) -> anyhow::Result<()> {
+        let (sql, values) = Query::insert()
+            .into_table(AssetHistoryIden::Table)
+            .columns([
+                AssetHistoryIden::PairId,
+                AssetHistoryIden::Rate,
+                AssetHistoryIden::Date,
+            ])
+            .values_panic([8.into(), rate.rate.into(), rate.date.into()])
+            .build_sqlx(PostgresQueryBuilder);
+
+        sqlx::query_with(&sql, values.clone())
+            .execute(&mut *self)
+            .instrument(debug_span!("query", sql, ?values))
+            .await?;
+        Ok(())
     }
 }

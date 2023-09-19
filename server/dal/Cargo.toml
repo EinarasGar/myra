@@ -14,4 +14,5 @@ sqlx = { version = "0.7.1", features = ["runtime-tokio-rustls", "postgres", "uui
 serde = "1.0.174"
 tokio = { version = "1.29.1", features = ["full"] }
 tracing = { version = "0.1.38", features = ["async-await", "log"] }
+mockall = "0.11.4"
  

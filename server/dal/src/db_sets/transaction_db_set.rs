@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use mockall::automock;
 use sea_query::{Alias, Expr, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
 use sqlx::{types::Uuid, PgConnection};
@@ -14,16 +15,20 @@ use crate::{
     },
     models::transaction_models::{
         AddTransactionDescriptionModel, AddUpdateTransactionGroupModel, AddUpdateTransactionModel,
-        CategoryModel, TransactionWithGroupModel,
+        CategoryModel, TransactionFinancials, TransactionWithGroupModel,
     },
 };
 
 #[async_trait]
 pub trait TransactionDbSet {
-    async fn get_transactions(
+    async fn get_transactions_with_groups(
         &mut self,
         user_id: Uuid,
     ) -> anyhow::Result<Vec<TransactionWithGroupModel>>;
+    async fn get_transactions_financials(
+        &mut self,
+        user_id: Uuid,
+    ) -> anyhow::Result<Vec<TransactionFinancials>>;
     async fn get_transaction_group(
         &mut self,
         transaction_group_id: Uuid,
@@ -56,10 +61,36 @@ pub trait TransactionDbSet {
     async fn delete_transaction_group(&mut self, id: Uuid) -> anyhow::Result<()>;
 }
 
+#[automock]
 #[async_trait]
 impl TransactionDbSet for PgConnection {
     #[tracing::instrument(skip(self), ret, err)]
-    async fn get_transactions(
+    async fn get_transactions_financials(
+        &mut self,
+        user_id: Uuid,
+    ) -> anyhow::Result<Vec<TransactionFinancials>> {
+        let (sql, values) = Query::select()
+            .columns([
+                TransactionIden::AssetId,
+                TransactionIden::AccountId,
+                TransactionIden::Quantity,
+                TransactionIden::Date,
+            ])
+            .from(TransactionIden::Table)
+            .and_where(Expr::col(TransactionIden::UserId).eq(user_id))
+            .order_by(TransactionIden::Date, sea_query::Order::Asc)
+            .build_sqlx(PostgresQueryBuilder);
+
+        let rows = sqlx::query_as_with::<_, TransactionFinancials, _>(&sql, values.clone())
+            .fetch_all(&mut *self)
+            .instrument(debug_span!("query", sql, ?values))
+            .await?;
+
+        Ok(rows)
+    }
+
+    #[tracing::instrument(skip(self), ret, err)]
+    async fn get_transactions_with_groups(
         &mut self,
         user_id: Uuid,
     ) -> anyhow::Result<Vec<TransactionWithGroupModel>> {

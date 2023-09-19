@@ -8,6 +8,8 @@ use crate::{
     service_collection::user_service::UsersService,
 };
 
+use super::Services;
+
 #[derive(Clone)]
 pub struct AuthService {
     jwt_keys: JwtKeys,
@@ -31,13 +33,13 @@ impl JwtKeys {
 }
 
 impl AuthService {
-    pub fn new(db: MyraDb, user_service: UsersService) -> Self {
+    pub fn new(services: Services) -> Self {
         let secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
         let jwt_keys = JwtKeys::new(secret.as_bytes());
         Self {
             jwt_keys,
-            db_context: db,
-            user_service,
+            user_service: services.get_users_service(),
+            db_context: services.context,
         }
     }
 

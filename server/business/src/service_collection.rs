@@ -12,30 +12,33 @@ pub mod user_service;
 
 #[derive(Clone)]
 pub struct Services {
-    pub users_service: UsersService,
-    pub auth_service: AuthService,
-    pub transaction_service: TransactionService,
-    pub portfolio_service: PortfolioService,
-    pub assets_service: AssetsService,
+    pub context: dal::database_context::MyraDb,
 }
 
 impl Services {
     pub async fn new() -> anyhow::Result<Self> {
         let context = dal::database_context::MyraDb::new().await.unwrap();
 
-        let users_service = UsersService::new(context.clone());
-        let auth_service = AuthService::new(context.clone(), users_service.clone());
-        let transaction_service = TransactionService::new(context.clone());
-        let portfolio_service = PortfolioService::new(context.clone());
-        let assets_service = AssetsService::new(context);
+        Ok(Services { context })
+    }
 
-        let serices = Services {
-            users_service,
-            auth_service,
-            transaction_service,
-            portfolio_service,
-            assets_service,
-        };
-        Ok(serices)
+    pub fn get_users_service(&self) -> UsersService {
+        UsersService::new(self.clone())
+    }
+
+    pub fn get_auth_service(&self) -> AuthService {
+        AuthService::new(self.clone())
+    }
+
+    pub fn get_transaction_service(&self) -> TransactionService {
+        TransactionService::new(self.clone())
+    }
+
+    pub fn get_portfolio_service(&self) -> PortfolioService {
+        PortfolioService::new(self.clone())
+    }
+
+    pub fn get_assets_service(&self) -> AssetsService {
+        AssetsService::new(self.clone())
     }
 }

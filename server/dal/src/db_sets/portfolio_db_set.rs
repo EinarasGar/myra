@@ -1,5 +1,6 @@
 use anyhow::bail;
 use async_trait::async_trait;
+use mockall::automock;
 use sea_query::{Alias, Expr, OnConflict, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
 use sqlx::{types::Uuid, PgConnection};
@@ -40,6 +41,7 @@ pub trait PortfolioDbSet {
     ) -> Result<Vec<PortfolioAccountIdNameModel>, anyhow::Error>;
 }
 
+#[automock]
 #[async_trait]
 impl PortfolioDbSet for PgConnection {
     #[tracing::instrument(skip(self), ret, err)]

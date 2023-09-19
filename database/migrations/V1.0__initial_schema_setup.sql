@@ -45,7 +45,8 @@ CREATE TABLE IF NOT EXISTS public.assets (
     id SERIAL CONSTRAINT assets_pk PRIMARY KEY,
     asset_type INT NOT NULL CONSTRAINT asset_type_fkey REFERENCES public.asset_types (id),
     name TEXT NOT NULL,
-    ticker TEXT NOT NULL
+    ticker TEXT NOT NULL,
+    base_pair_id INT,
 );
 CREATE TABLE IF NOT EXISTS public.user_roles (
     id SERIAL CONSTRAINT user_roles_pk PRIMARY KEY,

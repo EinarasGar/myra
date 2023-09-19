@@ -1,12 +1,20 @@
 use sea_query::Iden;
 
 #[allow(dead_code)]
+pub enum AssetsAliasIden {
+    BasePairsSubquery,
+    PairsSubquery,
+    FilteredPairsSubquery,
+}
+
+#[allow(dead_code)]
 pub enum AssetsIden {
     Table,
     Id,
     AssetType,
     Name,
     Ticker,
+    BasePairId,
 }
 
 #[allow(dead_code)]
@@ -33,6 +41,21 @@ pub enum AssetHistoryIden {
     Date,
 }
 
+impl Iden for AssetsAliasIden {
+    fn unquoted(&self, s: &mut dyn std::fmt::Write) {
+        write!(
+            s,
+            "{}",
+            match self {
+                Self::BasePairsSubquery => "base_pairs",
+                Self::PairsSubquery => "pairs",
+                Self::FilteredPairsSubquery => "filtered",
+            }
+        )
+        .unwrap();
+    }
+}
+
 impl Iden for AssetsIden {
     fn unquoted(&self, s: &mut dyn std::fmt::Write) {
         write!(
@@ -44,6 +67,7 @@ impl Iden for AssetsIden {
                 Self::AssetType => "asset_type",
                 Self::Name => "name",
                 Self::Ticker => "ticker",
+                Self::BasePairId => "base_pair_id",
             }
         )
         .unwrap();

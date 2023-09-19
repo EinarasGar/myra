@@ -30,7 +30,7 @@ function AssetPair() {
         >
           <Tooltip />
           <XAxis dataKey="date" />
-          <YAxis domain={[0, 50]} />
+          <YAxis domain={[0, 500]} />
           <Line dataKey="rate" dot={false} activeDot={{ r: 4 }} />
         </LineChart>
       </ResponsiveContainer>

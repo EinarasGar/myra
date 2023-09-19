@@ -9,6 +9,7 @@ pub mod category_view_model;
 pub mod login_details_view_model;
 pub mod portfolio_account_view_model;
 pub mod portfolio_entry_view_model;
+pub mod portfolio_history_view_model;
 pub mod portfolio_view_model;
 pub mod transaction_group_list_view_model;
 pub mod transaction_group_view_model;

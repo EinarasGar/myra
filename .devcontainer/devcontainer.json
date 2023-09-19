@@ -20,7 +20,6 @@
         "mtxr.sqltools",
         "mtxr.sqltools-driver-pg",
         "bierner.markdown-mermaid",
-        "rangav.vscode-thunder-client",
         "bradlc.vscode-tailwindcss",
         "esbenp.prettier-vscode"
       ],

@@ -16,14 +16,18 @@ use crate::dtos::{
     user_full_dto::UserFullDto,
 };
 
+use super::Services;
+
 #[derive(Clone)]
 pub struct UsersService {
     db: MyraDb,
 }
 
 impl UsersService {
-    pub fn new(db_context: MyraDb) -> Self {
-        Self { db: db_context }
+    pub fn new(services: Services) -> Self {
+        Self {
+            db: services.context,
+        }
     }
 
     #[tracing::instrument(skip(self, user), ret, err)]

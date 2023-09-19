@@ -16,3 +16,4 @@ serde = "1.0.174"
 time = { version = "0.3.23", features = ["macros", "formatting", "serde"] }
 rust_decimal = "1.30.0"
 tracing = { version = "0.1.38", features = ["async-await", "log"] }
+mockall = "0.11.4"

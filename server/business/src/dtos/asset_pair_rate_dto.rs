@@ -22,3 +22,14 @@ impl From<AssetPairRate> for AssetPairRateDto {
         }
     }
 }
+
+impl From<AssetPairRateDto> for AssetPairRate {
+    fn from(p: AssetPairRateDto) -> Self {
+        Self {
+            pair1: p.asset1_id,
+            pair2: p.asset2_id,
+            rate: p.rate,
+            date: p.date,
+        }
+    }
+}

@@ -19,6 +19,7 @@ use crate::{
         asset_rate_view_model::AssetRateViewModel,
         portfolio_account_view_model::PortfolioAccountViewModel,
         portfolio_entry_view_model::PortfolioEntryViewModel,
+        portfolio_history_view_model::PortfolioHistoryViewModel,
         portfolio_view_model::PortfolioViewModel,
     },
 };
@@ -51,7 +52,7 @@ pub async fn get_portfolio(
     };
 
     let asset_rates: HashMap<i32, AssetPairRateDto> = asset_service
-        .get_asset_rates_default(default_asset, unique_asset_ids)
+        .get_asset_rates_default_latest(default_asset, unique_asset_ids)
         .await?;
 
     let response_assets: Vec<PortfolioEntryViewModel> = portfolio_assets_dto
@@ -69,6 +70,26 @@ pub async fn get_portfolio(
 
     let response = PortfolioViewModel {
         portfolio_entries: response_assets,
+    };
+
+    Ok(response.into())
+}
+
+#[tracing::instrument(skip(portfolio_service, auth, asset_service, user_service), ret, err)]
+pub async fn get_portfolio_history(
+    Path(user_id): Path<Uuid>,
+    query_params: Query<GetPortfolioQueryParams>,
+    PortfolioServiceState(portfolio_service): PortfolioServiceState,
+    AssetsServiceState(asset_service): AssetsServiceState,
+    UsersServiceState(user_service): UsersServiceState,
+    AuthenticatedUserState(auth): AuthenticatedUserState,
+) -> Result<Json<PortfolioHistoryViewModel>, AppError> {
+    let a = portfolio_service
+        .get_full_portfolio_history(user_id, 2)
+        .await?;
+
+    let response = PortfolioHistoryViewModel {
+        sums: a.into_iter().map(|x| x.into()).collect(),
     };
 
     Ok(response.into())

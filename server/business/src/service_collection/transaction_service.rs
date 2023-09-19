@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, HashMap, HashSet},
+    collections::{BTreeMap, HashMap, HashSet, VecDeque},
     hash::Hash,
     vec,
 };
@@ -16,15 +16,22 @@ use dal::{
     },
 };
 use rust_decimal::Decimal;
+use time::Date;
 use tracing::{info_span, Instrument};
 use uuid::Uuid;
 
 use crate::dtos::{
     add_update_transaction_dto::AddUpdateTransactonDto,
-    add_update_transaction_group_dto::AddUpdateTransactionGroupDto, category_dto::CategoryDto,
+    add_update_transaction_group_dto::AddUpdateTransactionGroupDto,
+    asset_quantity_dto::AssetQuantityDto, category_dto::CategoryDto,
     portfolio_account_dto::PortfolioAccountDto, transaction_dto::TransactonDto,
+    transaction_financials_dto::TransactionFinancialsDto,
     transaction_group_dto::TransactionGroupDto,
 };
+
+use super::Services;
+
+type FullHistoryNestedHashMap = HashMap<Date, HashMap<i32, Decimal>>;
 
 #[derive(Clone)]
 pub struct TransactionService {
@@ -32,9 +39,9 @@ pub struct TransactionService {
 }
 
 impl TransactionService {
-    pub fn new(transactions_db_set: MyraDb) -> Self {
+    pub fn new(services: Services) -> Self {
         Self {
-            db: transactions_db_set,
+            db: services.context,
         }
     }
 
@@ -355,7 +362,7 @@ impl TransactionService {
             .db
             .get_connection()
             .await?
-            .get_transactions(user_id)
+            .get_transactions_with_groups(user_id)
             .await?;
 
         //Asign the transactions to groups
@@ -441,6 +448,38 @@ impl TransactionService {
             .await?;
 
         Ok(())
+    }
+
+    #[tracing::instrument(skip(self), ret, err)]
+    pub async fn get_all_transaction_financials(
+        &self,
+        user_id: Uuid,
+    ) -> anyhow::Result<(VecDeque<TransactionFinancialsDto>, HashSet<i32>)> {
+        let financials_vec = self
+            .db
+            .get_connection()
+            .await?
+            .get_transactions_financials(user_id)
+            .await?;
+
+        let mut ids: HashSet<i32> = HashSet::new();
+        let mut financials: VecDeque<TransactionFinancialsDto> = VecDeque::new();
+        financials_vec.into_iter().for_each(|transaction| {
+            ids.insert(transaction.asset_id);
+            // financials
+            //     .entry(transaction.date.date())
+            //     .or_insert_with(HashMap::new)
+            //     .entry(transaction.asset_id)
+            //     .and_modify(|quantity| *quantity += transaction.quantity)
+            //     .or_insert(transaction.quantity);
+            financials.push_back(TransactionFinancialsDto {
+                asset_id: transaction.asset_id,
+                account_id: transaction.account_id,
+                quantity: transaction.quantity,
+                date: transaction.date,
+            })
+        });
+        Ok((financials, ids))
     }
 }
 

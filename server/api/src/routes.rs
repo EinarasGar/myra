@@ -32,6 +32,10 @@ pub(crate) fn create_router(state: AppState) -> Router {
             get(handlers::portfolio_handler::get_portfolio),
         )
         .route(
+            "/api/users/:user_id/portfolio/history",
+            get(handlers::portfolio_handler::get_portfolio_history),
+        )
+        .route(
             "/api/users/:user_id/portfolio/accounts",
             post(handlers::portfolio_handler::post_portfolio_account),
         )

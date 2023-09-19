@@ -14,6 +14,7 @@ import {
 } from "@/models";
 import { RootState } from "@/app/store";
 import { AssetPairViewModel } from "@/models/assetPairViewModel";
+import { PortfolioHistoryViewModel } from "@/models/portfolioHistoryViewModel";
 
 // Define a service using a base URL and expected endpoints
 export const myraApi = createApi({
@@ -46,7 +47,11 @@ export const myraApi = createApi({
       query: (uuid) => `/users/2396480f-0052-4cf0-81dc-8cedbde5ce13/portfolio`,
     }),
     getAssetPairRates: builder.query<AssetPairViewModel, string>({
-      query: (uuid) => `/assets/4/2`,
+      query: (uuid) => `/assets/5/2`,
+    }),
+    getPortfolioHistory: builder.query<PortfolioHistoryViewModel, string>({
+      query: (uuid) =>
+        `/users/2396480f-0052-4cf0-81dc-8cedbde5ce13/portfolio/history`,
     }),
     postAccount: builder.mutation<
       PortfolioAccountViewModel,
@@ -126,4 +131,5 @@ export const {
   useDeleteTransactionGroupByIdMutation,
   useGetPortfolioQuery,
   useGetAssetPairRatesQuery,
+  useGetPortfolioHistoryQuery,
 } = myraApi;

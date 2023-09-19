@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use mockall::automock;
 use sea_query::*;
 use sea_query_binder::SqlxBinder;
 use sqlx::{types::Uuid, PgConnection, Row};
@@ -17,6 +18,7 @@ pub trait UsersDbSet {
     async fn get_user_full_info(&mut self, user_id: Uuid) -> anyhow::Result<UserFullModel>;
 }
 
+#[automock]
 #[async_trait]
 impl UsersDbSet for PgConnection {
     #[tracing::instrument(skip(self), ret, err)]

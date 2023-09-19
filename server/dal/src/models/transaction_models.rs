@@ -18,6 +18,14 @@ pub struct TransactionWithGroupModel {
     pub date_added: OffsetDateTime,
 }
 
+#[derive(Clone, Debug, sqlx::FromRow)]
+pub struct TransactionFinancials {
+    pub asset_id: i32,
+    pub account_id: Uuid,
+    pub quantity: Decimal,
+    pub date: OffsetDateTime,
+}
+
 //Used in a method to insert new transactions
 #[derive(Clone, Debug)]
 pub struct AddUpdateTransactionModel {
