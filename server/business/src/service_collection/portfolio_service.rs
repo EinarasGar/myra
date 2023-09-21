@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::ops::Add;
 
-use dal::db_sets::asset_db_set::AssetDbSet;
-use dal::db_sets::portfolio_db_set::PortfolioDbSet;
+use dal::db_sets::portfolio_db_set::{self};
 use dal::models::asset_pair::AssetPair;
+use dal::models::portfolio_models::{PortfolioAccountIdNameModel, PortfolioCombined};
 use dal::{database_context::MyraDb, models::portfolio_models::PortfolioAccountModel};
 use rust_decimal::Decimal;
 use time::{Date, Duration, OffsetDateTime};
@@ -25,11 +25,11 @@ pub struct PortfolioService {
 }
 
 impl PortfolioService {
-    pub fn new(services: Services) -> Self {
+    pub fn new(db: MyraDb) -> Self {
         Self {
-            transaction_service: services.get_transaction_service(),
-            asset_serice: services.get_assets_service(),
-            db_context: services.context,
+            db_context: db.clone(),
+            transaction_service: Services::get_transaction_service(db.clone()),
+            asset_serice: Services::get_assets_service(db),
         }
     }
 
@@ -152,8 +152,13 @@ impl PortfolioService {
 
     #[tracing::instrument(skip(self), ret, err)]
     pub async fn get_portfolio(&self, user_id: Uuid) -> anyhow::Result<Vec<PortfolioDto>> {
-        let mut conn = self.db_context.get_connection().await?;
-        let models = conn.get_portfolio_with_asset_account_info(user_id).await?;
+        let (sql, values) = portfolio_db_set::get_portfolio_with_asset_account_info(user_id);
+
+        let models = self
+            .db_context
+            .fetch_all::<PortfolioCombined>(sql, values)
+            .await?;
+
         let ret_vec: Vec<PortfolioDto> = models.iter().map(|val| val.clone().into()).collect();
         Ok(ret_vec)
     }
@@ -171,9 +176,8 @@ impl PortfolioService {
             name: account.account_name,
         };
 
-        let mut conn = self.db_context.get_connection().await?;
-        conn.insert_or_update_portfolio_account(model.clone())
-            .await?;
+        let (sql, values) = portfolio_db_set::insert_or_update_portfolio_account(model.clone());
+        self.db_context.execute(sql, values).await?;
 
         Ok(model.into())
     }
@@ -183,8 +187,12 @@ impl PortfolioService {
         &self,
         user_id: Uuid,
     ) -> anyhow::Result<Vec<PortfolioAccountDto>> {
-        let mut conn = self.db_context.get_connection().await?;
-        let models = conn.get_portfolio_accounts_by_user_id(user_id).await?;
+        let (sql, values) = portfolio_db_set::get_portfolio_accounts_by_user_id(user_id);
+        let models = self
+            .db_context
+            .fetch_all::<PortfolioAccountIdNameModel>(sql, values)
+            .await?;
+
         let ret_models = models.iter().map(|val| val.clone().into()).collect();
         Ok(ret_models)
     }

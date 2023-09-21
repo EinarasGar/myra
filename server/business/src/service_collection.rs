@@ -1,3 +1,5 @@
+use dal::database_context::MyraDb;
+
 use self::asset_service::AssetsService;
 use self::auth_service::AuthService;
 use self::portfolio_service::PortfolioService;
@@ -12,33 +14,40 @@ pub mod user_service;
 
 #[derive(Clone)]
 pub struct Services {
-    pub context: dal::database_context::MyraDb,
+    pub connection: dal::database_connection::MyraDbConnection,
 }
 
 impl Services {
     pub async fn new() -> anyhow::Result<Self> {
-        let context = dal::database_context::MyraDb::new().await.unwrap();
+        let connection = dal::database_connection::MyraDbConnection::new()
+            .await
+            .unwrap();
 
-        Ok(Services { context })
+        Ok(Services { connection })
     }
 
-    pub fn get_users_service(&self) -> UsersService {
-        UsersService::new(self.clone())
+    pub fn get_db_instance(&self) -> MyraDb {
+        dal::database_context::MyraDb::new(self.connection.clone())
     }
 
-    pub fn get_auth_service(&self) -> AuthService {
-        AuthService::new(self.clone())
+    //krc refactorinti kad vietoj to kad 1 instance butu, sukurtu nauja instance kiekviena karta
+    pub fn get_users_service(db: MyraDb) -> UsersService {
+        UsersService::new(db)
     }
 
-    pub fn get_transaction_service(&self) -> TransactionService {
-        TransactionService::new(self.clone())
+    pub fn get_auth_service(db: MyraDb) -> AuthService {
+        AuthService::new(db)
     }
 
-    pub fn get_portfolio_service(&self) -> PortfolioService {
-        PortfolioService::new(self.clone())
+    pub fn get_transaction_service(db: MyraDb) -> TransactionService {
+        TransactionService::new(db)
     }
 
-    pub fn get_assets_service(&self) -> AssetsService {
-        AssetsService::new(self.clone())
+    pub fn get_portfolio_service(db: MyraDb) -> PortfolioService {
+        PortfolioService::new(db)
+    }
+
+    pub fn get_assets_service(db: MyraDb) -> AssetsService {
+        AssetsService::new(db)
     }
 }

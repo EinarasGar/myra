@@ -2,8 +2,11 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 use dal::{
     database_context::MyraDb,
-    db_sets::asset_db_set::AssetDbSet,
-    models::{asset_pair::AssetPair, asset_pair_rate::AssetPairRate},
+    db_sets::asset_db_set::{self},
+    models::{
+        asset_models::Asset, asset_pair::AssetPair, asset_pair_rate::AssetPairRate,
+        asset_rate::AssetRate,
+    },
 };
 use rust_decimal::Decimal;
 use time::OffsetDateTime;
@@ -20,10 +23,8 @@ pub struct AssetsService {
 }
 
 impl AssetsService {
-    pub fn new(services: Services) -> Self {
-        Self {
-            db: services.context,
-        }
+    pub fn new(db: MyraDb) -> Self {
+        Self { db }
     }
 
     #[tracing::instrument(skip(self), ret, err)]
@@ -33,12 +34,8 @@ impl AssetsService {
         search: Option<String>,
     ) -> anyhow::Result<Vec<AssetDto>> {
         let page_size = 20;
-        let models = self
-            .db
-            .get_connection()
-            .await?
-            .get_assets(page_size, page, search)
-            .await?;
+        let (sql, values) = asset_db_set::get_assets(page_size, page, search);
+        let models = self.db.fetch_all::<Asset>(sql, values).await?;
 
         let ret_vec: Vec<AssetDto> = models.into_iter().map(|val| val.into()).collect();
 
@@ -47,7 +44,8 @@ impl AssetsService {
 
     #[tracing::instrument(skip(self), ret, err)]
     pub async fn get_asset(&self, id: i32) -> anyhow::Result<AssetDto> {
-        let model = self.db.get_connection().await?.get_asset(id).await?;
+        let (sql, values) = asset_db_set::get_asset(id);
+        let model = self.db.fetch_one::<Asset>(sql, values).await?;
 
         Ok(model.into())
     }
@@ -60,22 +58,18 @@ impl AssetsService {
     ) -> anyhow::Result<HashMap<i32, AssetPairRateDto>> {
         let mut result: HashMap<i32, AssetPairRateDto> = HashMap::new();
 
-        let ret = self
-            .db
-            .get_connection()
-            .await?
-            .get_latest_asset_pair_rates(
-                asset_ids
-                    .into_iter()
-                    .map(|x| AssetPair {
-                        pair1: x,
-                        pair2: default_asset_id,
-                    })
-                    .collect(),
-                None,
-                true,
-            )
-            .await?;
+        let (sql, values) = asset_db_set::get_latest_asset_pair_rates(
+            asset_ids
+                .into_iter()
+                .map(|x| AssetPair {
+                    pair1: x,
+                    pair2: default_asset_id,
+                })
+                .collect(),
+            None,
+            true,
+        );
+        let ret = self.db.fetch_all::<AssetPairRate>(sql, values).await?;
 
         for pair in ret {
             result.insert(pair.pair1, pair.into());
@@ -93,22 +87,18 @@ impl AssetsService {
     ) -> anyhow::Result<HashMap<(i32, i32), VecDeque<AssetRateDto>>> {
         let mut result: HashMap<(i32, i32), VecDeque<AssetRateDto>> = HashMap::new();
 
-        let ret = self
-            .db
-            .get_connection()
-            .await?
-            .get_latest_asset_pair_rates(
-                asset_ids
-                    .into_iter()
-                    .map(|x| AssetPair {
-                        pair1: x,
-                        pair2: default_asset_id,
-                    })
-                    .collect(),
-                Some(staret_time),
-                false,
-            )
-            .await?;
+        let (sql, values) = asset_db_set::get_latest_asset_pair_rates(
+            asset_ids
+                .into_iter()
+                .map(|x| AssetPair {
+                    pair1: x,
+                    pair2: default_asset_id,
+                })
+                .collect(),
+            Some(staret_time),
+            false,
+        );
+        let ret = self.db.fetch_all::<AssetPairRate>(sql, values).await?;
 
         for pair in ret {
             result
@@ -127,22 +117,19 @@ impl AssetsService {
             .collect();
 
         if non_default_rates_pair1_ids.len() > 0 {
-            let ret_bases = self
-                .db
-                .get_connection()
-                .await?
-                .get_latest_asset_pair_rates(
-                    non_default_rates_pair1_ids
-                        .into_iter()
-                        .map(|x| AssetPair {
-                            pair1: x,
-                            pair2: default_asset_id,
-                        })
-                        .collect(),
-                    Some(staret_time),
-                    false,
-                )
-                .await?;
+            let (sql, values) = asset_db_set::get_latest_asset_pair_rates(
+                non_default_rates_pair1_ids
+                    .into_iter()
+                    .map(|x| AssetPair {
+                        pair1: x,
+                        pair2: default_asset_id,
+                    })
+                    .collect(),
+                Some(staret_time),
+                false,
+            );
+
+            let ret_bases = self.db.fetch_all::<AssetPairRate>(sql, values).await?;
 
             for pair in ret_bases {
                 result
@@ -164,12 +151,8 @@ impl AssetsService {
         pair1: i32,
         pair2: i32,
     ) -> anyhow::Result<Vec<AssetRateDto>> {
-        let ret = self
-            .db
-            .get_connection()
-            .await?
-            .get_pair_rates(pair1, pair2)
-            .await?;
+        let (sql, values) = asset_db_set::get_pair_rates(pair1, pair2);
+        let ret = self.db.fetch_all::<AssetRate>(sql, values).await?;
 
         let result: Vec<AssetRateDto> = ret.into_iter().map(|x| x.into()).collect();
 
@@ -178,12 +161,9 @@ impl AssetsService {
 
     #[tracing::instrument(skip(self), ret, err)]
     pub async fn add_asset_rate(&self, rate: AssetPairRateDto) -> anyhow::Result<()> {
-        let ret = self
-            .db
-            .get_connection()
-            .await?
-            .insert_pair_rate(rate.into())
-            .await?;
+        let (sql, values) = asset_db_set::insert_pair_rate(rate.into());
+
+        let ret = self.db.execute(sql, values).await?;
         Ok(())
     }
 }

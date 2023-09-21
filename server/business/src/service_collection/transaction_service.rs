@@ -4,14 +4,19 @@ use std::{
     vec,
 };
 
+use anyhow::bail;
 use dal::{
     database_context::MyraDb,
-    db_sets::{portfolio_db_set::PortfolioDbSet, transaction_db_set::TransactionDbSet},
+    db_sets::{
+        portfolio_db_set::{self},
+        transaction_db_set::{self},
+    },
     models::{
-        portfolio_models::PortfolioUpdateModel,
+        portfolio_models::{PortfolioAccountIdNameModel, PortfolioUpdateModel},
         transaction_models::{
             AddTransactionDescriptionModel, AddUpdateTransactionGroupModel,
-            AddUpdateTransactionModel, TransactionWithGroupModel,
+            AddUpdateTransactionModel, CategoryModel, TransactionFinancials,
+            TransactionWithGroupModel,
         },
     },
 };
@@ -39,10 +44,8 @@ pub struct TransactionService {
 }
 
 impl TransactionService {
-    pub fn new(services: Services) -> Self {
-        Self {
-            db: services.context,
-        }
+    pub fn new(db: MyraDb) -> Self {
+        Self { db }
     }
 
     #[tracing::instrument(skip(self), ret, err)]
@@ -63,7 +66,7 @@ impl TransactionService {
         let dal_transactions = create_add_transaction_model(&group.transactions, user_id, group_id);
 
         //Start SQL transaction. If anything following fails, no changes will be made to the database
-        let mut trans = self.db.get_transaction().await?;
+        self.db.get_transaction().await?;
 
         let mut quantities_map = std::collections::HashMap::new();
         dal_transactions.clone().iter().for_each(|model| {
@@ -80,38 +83,42 @@ impl TransactionService {
         let portfolio_updates = create_portfolio_updates_from_map(quantities_map);
 
         //Update portfolio
-        trans.update_portfolio(portfolio_updates).await?;
+        let (sql, values) = portfolio_db_set::update_portfolio(portfolio_updates);
+        self.db.execute_in_trans(sql, values).await?;
 
         //Insert new transcations and get their auto-generated ids back
-        let mut new_transaction_ids = trans.insert_transactions(dal_transactions.clone()).await?;
+        let (sql, values) = transaction_db_set::insert_transactions(dal_transactions.clone());
+
+        let mut new_transaction_ids = self.db.fetch_all_in_trans_scalar(sql, values).await?;
 
         //As we are using this array to pop elements from, reverse it so its in order
         new_transaction_ids.reverse();
 
         //Insert group
-        trans.insert_transaction_group(dal_group.clone()).await?;
+        let (sql, values) = transaction_db_set::insert_transaction_group(dal_group.clone());
+        self.db.execute_in_trans(sql, values).await?;
 
         //Create a list of required description updates. If the list is empty, we don't need to update
         let transaction_decription_models =
             create_add_description_models(&group.transactions, &new_transaction_ids);
 
         if !transaction_decription_models.is_empty() {
-            trans
-                .insert_descriptions(transaction_decription_models)
-                .await?;
+            let (sql, values) =
+                transaction_db_set::insert_descriptions(transaction_decription_models);
+            self.db.execute_in_trans(sql, values).await?;
         }
 
         let account_ids_vec: Vec<Uuid> = dal_transactions.iter().map(|x| x.account_id).collect();
         let account_ids_unique_vec: Vec<Uuid> = get_unique_vec(&account_ids_vec);
-        let portfolio_account_vec = trans
-            .get_portfolio_accounts_by_ids(account_ids_unique_vec)
+
+        let (sql, values) = portfolio_db_set::get_portfolio_accounts_by_ids(account_ids_unique_vec);
+        let portfolio_account_vec = self
+            .db
+            .fetch_all_in_trans::<PortfolioAccountIdNameModel>(sql, values)
             .await?;
 
         //Save changes
-        trans
-            .commit()
-            .instrument(info_span!("commit_sql_transaction"))
-            .await?;
+        self.db.commit_transaction().await?;
 
         //Create return object
         let mut descriptions: Vec<Option<String>> = group
@@ -158,11 +165,15 @@ impl TransactionService {
         group: AddUpdateTransactionGroupDto,
     ) -> anyhow::Result<TransactionGroupDto> {
         //Start SQL transaction. If anything following fails, no changes will be made to the database
-        let mut trans = self.db.get_transaction().await?;
+        self.db.get_transaction().await?;
 
         let group_id = group.id.unwrap();
 
-        let old_group_transactions = trans.get_transaction_group(group_id).await?;
+        let (sql, values) = transaction_db_set::get_transaction_group(group_id);
+        let old_group_transactions = self
+            .db
+            .fetch_all_in_trans::<TransactionWithGroupModel>(sql, values)
+            .await?;
 
         //Compare the group data and update it if changed
         let old_group_data = AddUpdateTransactionGroupModel {
@@ -240,34 +251,38 @@ impl TransactionService {
                 }
             }
         }
-
         let portfolio_updates = create_portfolio_updates_from_map(quantities_map);
         let dal_transactions = create_add_transaction_model(&added, user_id, group_id);
 
         if old_group_data != updated_group {
-            trans.update_group(updated_group.clone()).await?;
+            let (sql, values) = transaction_db_set::update_group(updated_group.clone());
+            self.db.execute_in_trans(sql, values).await?;
         }
 
         if !removed_ids.is_empty() {
-            trans.delete_descriptions(removed_ids.clone()).await?;
-            trans.delete_transactions(removed_ids).await?;
+            let (sql, values) = transaction_db_set::delete_descriptions(removed_ids.clone());
+            self.db.execute_in_trans(sql, values).await?;
+            let (sql, values) = transaction_db_set::delete_transactions(removed_ids);
+            self.db.execute_in_trans(sql, values).await?;
         }
 
         if !portfolio_updates.is_empty() {
-            trans.update_portfolio(portfolio_updates).await?;
+            let (sql, values) = portfolio_db_set::update_portfolio(portfolio_updates);
+            self.db.execute_in_trans(sql, values).await?;
         }
 
         let mut new_transaction_ids: Vec<i32> = Vec::new();
         if !dal_transactions.is_empty() {
-            new_transaction_ids = trans.insert_transactions(dal_transactions.clone()).await?;
+            let (sql, values) = transaction_db_set::insert_transactions(dal_transactions.clone());
+            new_transaction_ids = self.db.fetch_all_in_trans_scalar(sql, values).await?;
             new_transaction_ids.reverse();
             let transaction_decription_models =
                 create_add_description_models(&added, &new_transaction_ids);
 
             if !transaction_decription_models.is_empty() {
-                trans
-                    .insert_descriptions(transaction_decription_models)
-                    .await?;
+                let (sql, values) =
+                    transaction_db_set::insert_descriptions(transaction_decription_models);
+                self.db.execute_in_trans(sql, values).await?;
             }
         }
 
@@ -276,9 +291,11 @@ impl TransactionService {
             let new = updated_trans.1.clone();
 
             if old.description != new.description && new.description.is_some() {
-                trans
-                    .update_description(old.id, new.description.clone().unwrap())
-                    .await?;
+                let (sql, values) = transaction_db_set::update_description(
+                    old.id,
+                    new.description.clone().unwrap(),
+                );
+                self.db.execute_in_trans(sql, values).await?;
             }
 
             let new_model = AddUpdateTransactionModel {
@@ -297,7 +314,8 @@ impl TransactionService {
             //the logic here is that we only compare if the core transaction model
             //has changed. any data stored in other tables is to be comapred before
             if !new.compare_core(&old) {
-                trans.update_transaction(old.id, new_model).await?;
+                let (sql, values) = transaction_db_set::update_transaction(old.id, new_model);
+                self.db.execute_in_trans(sql, values).await?;
             }
         }
 
@@ -308,15 +326,19 @@ impl TransactionService {
             .collect();
 
         let account_ids_unique_vec: Vec<Uuid> = get_unique_vec(&account_ids_vec);
-        let portfolio_account_vec = trans
-            .get_portfolio_accounts_by_ids(account_ids_unique_vec)
+        let (sql, values) = portfolio_db_set::get_portfolio_accounts_by_ids(account_ids_unique_vec);
+
+        let portfolio_account_vec = self
+            .db
+            .fetch_all_in_trans::<PortfolioAccountIdNameModel>(sql, values)
             .await?;
 
+        self.db.commit_transaction().await?;
         //Save changes
-        trans
-            .commit()
-            .instrument(info_span!("commit_sql_transaction"))
-            .await?;
+        // trans
+        //     .commit()
+        //     .instrument(info_span!("commit_sql_transaction"))
+        //     .await?;
 
         let result: TransactionGroupDto = TransactionGroupDto {
             transactions: group
@@ -358,11 +380,10 @@ impl TransactionService {
         user_id: Uuid,
     ) -> anyhow::Result<Vec<TransactionGroupDto>> {
         //Get list of unformatted transactions from database
+        let (sql, values) = transaction_db_set::get_transactions_with_groups(user_id);
         let transaction_vec = self
             .db
-            .get_connection()
-            .await?
-            .get_transactions_with_groups(user_id)
+            .fetch_all::<TransactionWithGroupModel>(sql, values)
             .await?;
 
         //Asign the transactions to groups
@@ -399,8 +420,8 @@ impl TransactionService {
 
     #[tracing::instrument(skip(self), ret, err)]
     pub async fn get_all_categories(&self) -> anyhow::Result<Vec<CategoryDto>> {
-        let mut conn = self.db.get_connection().await?;
-        let models = conn.get_categories().await?;
+        let (sql, values) = transaction_db_set::get_categories();
+        let models = self.db.fetch_all::<CategoryModel>(sql, values).await?;
         let ret_vec: Vec<CategoryDto> = models.iter().map(|val| val.clone().into()).collect();
         Ok(ret_vec)
     }
@@ -411,10 +432,14 @@ impl TransactionService {
         user_id: Uuid,
         group_id: Uuid,
     ) -> anyhow::Result<()> {
-        let mut trans = self.db.get_transaction().await?;
+        self.db.get_transaction().await?;
 
         let mut quantities_map = std::collections::HashMap::new();
-        let transactions = trans.get_transaction_group(group_id).await?;
+        let (sql, values) = transaction_db_set::get_transaction_group(group_id);
+        let transactions = self
+            .db
+            .fetch_all_in_trans::<TransactionWithGroupModel>(sql, values)
+            .await?;
 
         let mut removed_ids: Vec<i32> = Vec::new();
         for trans in transactions.clone() {
@@ -430,22 +455,22 @@ impl TransactionService {
         }
 
         if !removed_ids.is_empty() {
-            trans.delete_descriptions(removed_ids.clone()).await?;
-            trans.delete_transactions(removed_ids).await?;
+            let (sql, values) = transaction_db_set::delete_descriptions(removed_ids.clone());
+            self.db.execute_in_trans(sql, values).await?;
+            let (sql, values) = transaction_db_set::delete_transactions(removed_ids);
+            self.db.execute_in_trans(sql, values).await?;
         }
 
         let portfolio_updates = create_portfolio_updates_from_map(quantities_map);
         if !portfolio_updates.is_empty() {
-            trans.update_portfolio(portfolio_updates).await?;
+            let (sql, values) = portfolio_db_set::update_portfolio(portfolio_updates);
+            self.db.execute_in_trans(sql, values).await?;
         }
 
-        trans.delete_transaction_group(group_id).await?;
-
+        let (sql, values) = transaction_db_set::delete_transaction_group(group_id);
+        self.db.execute_in_trans(sql, values).await?;
         //Save changes
-        trans
-            .commit()
-            .instrument(info_span!("commit_sql_transaction"))
-            .await?;
+        self.db.commit_transaction().await?;
 
         Ok(())
     }
@@ -455,11 +480,11 @@ impl TransactionService {
         &self,
         user_id: Uuid,
     ) -> anyhow::Result<(VecDeque<TransactionFinancialsDto>, HashSet<i32>)> {
+        let (sql, values) = transaction_db_set::get_transactions_financials(user_id);
+
         let financials_vec = self
             .db
-            .get_connection()
-            .await?
-            .get_transactions_financials(user_id)
+            .fetch_all::<TransactionFinancials>(sql, values)
             .await?;
 
         let mut ids: HashSet<i32> = HashSet::new();

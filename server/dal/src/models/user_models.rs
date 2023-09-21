@@ -9,7 +9,7 @@ pub struct AddUserModel {
     pub role_id: Option<i32>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, sqlx::FromRow)]
 pub struct UserAuthModel {
     pub id: Uuid,
     pub password: String,
@@ -25,7 +25,7 @@ pub struct UserFullModel {
     pub default_asset: i32,
 }
 
-#[derive(Debug)]
+#[derive(Debug, sqlx::FromRow)]
 pub struct UserRoleModel {
     pub id: i32,
     pub name: String,

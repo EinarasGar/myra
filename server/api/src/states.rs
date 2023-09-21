@@ -6,7 +6,7 @@ use axum::{
 
 use business::service_collection::{
     asset_service::AssetsService, auth_service::AuthService, portfolio_service::PortfolioService,
-    transaction_service::TransactionService, user_service::UsersService,
+    transaction_service::TransactionService, user_service::UsersService, Services,
 };
 
 #[derive(Clone)]
@@ -21,32 +21,37 @@ pub struct PortfolioServiceState(pub PortfolioService);
 pub struct AssetsServiceState(pub AssetsService);
 
 impl FromRef<AppState> for UsersService {
-    fn from_ref(state: &AppState) -> Self {
-        state.serivces_collection.get_users_service()
+    fn from_ref(state: &AppState) -> UsersService {
+        let db = state.serivces_collection.get_db_instance();
+        Services::get_users_service(db)
     }
 }
 
 impl FromRef<AppState> for AuthService {
-    fn from_ref(state: &AppState) -> Self {
-        state.serivces_collection.get_auth_service()
+    fn from_ref(state: &AppState) -> AuthService {
+        let db = state.serivces_collection.get_db_instance();
+        Services::get_auth_service(db)
     }
 }
 
 impl FromRef<AppState> for TransactionService {
-    fn from_ref(state: &AppState) -> Self {
-        state.serivces_collection.get_transaction_service()
+    fn from_ref(state: &AppState) -> TransactionService {
+        let db = state.serivces_collection.get_db_instance();
+        Services::get_transaction_service(db)
     }
 }
 
 impl FromRef<AppState> for PortfolioService {
     fn from_ref(state: &AppState) -> Self {
-        state.serivces_collection.get_portfolio_service()
+        let db = state.serivces_collection.get_db_instance();
+        Services::get_portfolio_service(db)
     }
 }
 
 impl FromRef<AppState> for AssetsService {
     fn from_ref(state: &AppState) -> Self {
-        state.serivces_collection.get_assets_service()
+        let db = state.serivces_collection.get_db_instance();
+        Services::get_assets_service(db)
     }
 }
 
