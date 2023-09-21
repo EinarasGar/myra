@@ -1,24 +1,22 @@
-use async_trait::async_trait;
-use mockall::automock;
+
+
 use sea_query::{
     extension::postgres::PgExpr, Alias, Cond, Expr, Func, Order, PostgresQueryBuilder, Query,
 };
 use sea_query_binder::{SqlxBinder, SqlxValues};
 use sqlx::{
-    types::time::{Date, OffsetDateTime},
-    PgConnection,
+    types::time::{OffsetDateTime},
 };
-use tracing::{debug_span, Instrument};
+
 
 use crate::{
     idens::asset_idens::{
         AssetHistoryIden, AssetPairsIden, AssetTypesIden, AssetsAliasIden, AssetsIden,
     },
     models::{
-        asset_models::{Asset, AssetRaw},
+        asset_models::{AssetRaw},
         asset_pair::AssetPair,
         asset_pair_rate::AssetPairRate,
-        asset_rate::AssetRate,
     },
 };
 
@@ -234,7 +232,7 @@ pub fn get_latest_asset_pair_rates(
                             .order_by(AssetHistoryIden::Date, sea_query::Order::Desc);
                     },
                     // otherwise leave it as is
-                    |q| {},
+                    |_q| {},
                 )
                 .conditions(
                     date_floor.is_some(), // if condition is true then add the following condition
@@ -245,7 +243,7 @@ pub fn get_latest_asset_pair_rates(
                         .order_by(AssetHistoryIden::Date, sea_query::Order::Asc);
                     },
                     // otherwise leave it as is
-                    |q| {},
+                    |_q| {},
                 )
                 .take(),
             AssetHistoryIden::Table,

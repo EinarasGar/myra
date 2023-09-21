@@ -8,14 +8,14 @@ use dal::{
         asset_rate::AssetRate,
     },
 };
-use rust_decimal::Decimal;
+
 use time::OffsetDateTime;
 
 use crate::dtos::{
     asset_dto::AssetDto, asset_pair_rate_dto::AssetPairRateDto, asset_rate_dto::AssetRateDto,
 };
 
-use super::Services;
+
 
 #[derive(Clone)]
 pub struct AssetsService {
@@ -163,7 +163,7 @@ impl AssetsService {
     pub async fn add_asset_rate(&self, rate: AssetPairRateDto) -> anyhow::Result<()> {
         let (sql, values) = asset_db_set::insert_pair_rate(rate.into());
 
-        let ret = self.db.execute(sql, values).await?;
+        let _ret = self.db.execute(sql, values).await?;
         Ok(())
     }
 }

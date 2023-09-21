@@ -1,13 +1,10 @@
-use async_trait::async_trait;
-use mockall::automock;
 use sea_query::*;
 use sea_query_binder::{SqlxBinder, SqlxValues};
-use sqlx::{types::Uuid, PgConnection, Row};
-use tracing::{debug_span, Instrument};
+use sqlx::types::Uuid;
 
 use crate::{
     idens::user_idens::{UserRolesIden, UsersIden},
-    models::user_models::{AddUserModel, UserAuthModel, UserFullModel, UserRoleModel},
+    models::user_models::AddUserModel,
 };
 
 #[tracing::instrument(ret)]

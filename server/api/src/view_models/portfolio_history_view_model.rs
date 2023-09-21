@@ -1,9 +1,9 @@
-use business::dtos::asset_pair_rate_dto::AssetPairRateDto;
-use rust_decimal::Decimal;
-use serde::{Deserialize, Serialize};
-use time::{serde::iso8601, OffsetDateTime};
 
-use super::{asset_rate_view_model::AssetRateViewModel, asset_view_model::AssetViewModel};
+
+use serde::{Deserialize, Serialize};
+
+
+use super::{asset_rate_view_model::AssetRateViewModel};
 
 #[typeshare::typeshare]
 #[derive(Clone, Debug, Serialize, Deserialize)]

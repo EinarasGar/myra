@@ -1,10 +1,10 @@
-use anyhow::bail;
-use async_trait::async_trait;
-use mockall::automock;
+
+
+
 use sea_query::{Alias, Expr, OnConflict, PostgresQueryBuilder, Query};
 use sea_query_binder::{SqlxBinder, SqlxValues};
-use sqlx::{types::Uuid, PgConnection};
-use tracing::{debug_span, Instrument};
+use sqlx::{types::Uuid};
+
 
 use crate::{
     idens::{
@@ -13,7 +13,7 @@ use crate::{
         CommonsIden,
     },
     models::portfolio_models::{
-        PortfolioAccountIdNameModel, PortfolioAccountModel, PortfolioCombined, PortfolioUpdateModel,
+        PortfolioAccountModel, PortfolioUpdateModel,
     },
 };
 

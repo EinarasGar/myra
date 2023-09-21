@@ -9,7 +9,7 @@ use dal::{
         user_models::{AddUserModel, UserFullModel, UserRoleModel},
     },
 };
-use tracing::{info_span, Instrument};
+
 use uuid::Uuid;
 
 use argon2::{
@@ -22,7 +22,7 @@ use crate::dtos::{
     user_full_dto::UserFullDto,
 };
 
-use super::Services;
+
 
 #[derive(Clone)]
 pub struct UsersService {

@@ -4,7 +4,6 @@ use std::{
     vec,
 };
 
-use anyhow::bail;
 use dal::{
     database_context::MyraDb,
     db_sets::{
@@ -21,22 +20,16 @@ use dal::{
     },
 };
 use rust_decimal::Decimal;
-use time::Date;
-use tracing::{info_span, Instrument};
+
 use uuid::Uuid;
 
 use crate::dtos::{
     add_update_transaction_dto::AddUpdateTransactonDto,
-    add_update_transaction_group_dto::AddUpdateTransactionGroupDto,
-    asset_quantity_dto::AssetQuantityDto, category_dto::CategoryDto,
+    add_update_transaction_group_dto::AddUpdateTransactionGroupDto, category_dto::CategoryDto,
     portfolio_account_dto::PortfolioAccountDto, transaction_dto::TransactonDto,
     transaction_financials_dto::TransactionFinancialsDto,
     transaction_group_dto::TransactionGroupDto,
 };
-
-use super::Services;
-
-type FullHistoryNestedHashMap = HashMap<Date, HashMap<i32, Decimal>>;
 
 #[derive(Clone)]
 pub struct TransactionService {

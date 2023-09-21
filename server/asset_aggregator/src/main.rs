@@ -10,7 +10,7 @@ use yahoo_finance_api as yahoo;
 #[tokio::main]
 async fn main() {
     let services = Services::new().await.unwrap();
-    let asset_service = AssetsService::new(services);
+    let asset_service = AssetsService::new(services.get_db_instance());
     let latest_rate = asset_service
         .get_asset_rates_default_latest(2, HashSet::from([4]))
         .await
@@ -49,7 +49,7 @@ async fn main() {
 #[tokio::test]
 async fn new_asset() {
     let services = Services::new().await.unwrap();
-    let asset_service = AssetsService::new(services);
+    let asset_service = AssetsService::new(services.get_db_instance());
     let provider = yahoo::YahooConnector::new();
     let start = OffsetDateTime::from_unix_timestamp(0).unwrap();
     let end = OffsetDateTime::now_utc()

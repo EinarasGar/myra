@@ -1,12 +1,12 @@
 use std::collections::HashMap;
-use std::ops::Add;
+
 
 use dal::db_sets::portfolio_db_set::{self};
-use dal::models::asset_pair::AssetPair;
+
 use dal::models::portfolio_models::{PortfolioAccountIdNameModel, PortfolioCombined};
 use dal::{database_context::MyraDb, models::portfolio_models::PortfolioAccountModel};
 use rust_decimal::Decimal;
-use time::{Date, Duration, OffsetDateTime};
+use time::{Duration, OffsetDateTime};
 use uuid::Uuid;
 
 use crate::dtos::asset_rate_dto::AssetRateDto;

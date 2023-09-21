@@ -1,9 +1,9 @@
-use async_trait::async_trait;
-use mockall::automock;
+
+
 use sea_query::{Alias, Expr, PostgresQueryBuilder, Query};
 use sea_query_binder::{SqlxBinder, SqlxValues};
-use sqlx::{types::Uuid, PgConnection};
-use tracing::{debug_span, Instrument};
+use sqlx::{types::Uuid};
+
 
 use crate::{
     idens::{
@@ -15,7 +15,6 @@ use crate::{
     },
     models::transaction_models::{
         AddTransactionDescriptionModel, AddUpdateTransactionGroupModel, AddUpdateTransactionModel,
-        CategoryModel, TransactionFinancials, TransactionWithGroupModel,
     },
 };
 

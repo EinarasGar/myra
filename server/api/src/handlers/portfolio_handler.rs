@@ -4,10 +4,7 @@ use axum::{
     extract::{Path, Query},
     Json,
 };
-use business::{
-    dtos::asset_pair_rate_dto::AssetPairRateDto,
-    service_collection::{asset_service::AssetsService, user_service::UsersService},
-};
+use business::dtos::asset_pair_rate_dto::AssetPairRateDto;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -29,14 +26,14 @@ pub struct GetPortfolioQueryParams {
     default_asset_id: Option<i32>,
 }
 
-#[tracing::instrument(skip(portfolio_service, auth, asset_service, user_service), ret, err)]
+#[tracing::instrument(skip(portfolio_service, _auth, asset_service, user_service), ret, err)]
 pub async fn get_portfolio(
     Path(user_id): Path<Uuid>,
     query_params: Query<GetPortfolioQueryParams>,
     PortfolioServiceState(portfolio_service): PortfolioServiceState,
     AssetsServiceState(asset_service): AssetsServiceState,
     UsersServiceState(user_service): UsersServiceState,
-    AuthenticatedUserState(auth): AuthenticatedUserState,
+    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<PortfolioViewModel>, AppError> {
     let portfolio_assets_dto = portfolio_service.get_portfolio(user_id).await?;
 
@@ -75,14 +72,18 @@ pub async fn get_portfolio(
     Ok(response.into())
 }
 
-#[tracing::instrument(skip(portfolio_service, auth, asset_service, user_service), ret, err)]
+#[tracing::instrument(
+    skip(portfolio_service, _auth, _asset_service, _user_service),
+    ret,
+    err
+)]
 pub async fn get_portfolio_history(
     Path(user_id): Path<Uuid>,
     query_params: Query<GetPortfolioQueryParams>,
     PortfolioServiceState(portfolio_service): PortfolioServiceState,
-    AssetsServiceState(asset_service): AssetsServiceState,
-    UsersServiceState(user_service): UsersServiceState,
-    AuthenticatedUserState(auth): AuthenticatedUserState,
+    AssetsServiceState(_asset_service): AssetsServiceState,
+    UsersServiceState(_user_service): UsersServiceState,
+    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<PortfolioHistoryViewModel>, AppError> {
     let a = portfolio_service
         .get_full_portfolio_history(user_id, 2)

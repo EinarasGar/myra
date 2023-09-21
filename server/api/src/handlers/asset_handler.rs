@@ -8,7 +8,7 @@ use crate::{
     app_error::AppError,
     states::AssetsServiceState,
     view_models::{
-        asset_pair_view_model::AssetPairViewModel, asset_rate_view_model::AssetRateViewModel,
+        asset_pair_view_model::AssetPairViewModel,
         asset_view_model::AssetViewModel,
     },
 };

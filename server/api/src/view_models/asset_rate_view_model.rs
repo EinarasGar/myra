@@ -2,7 +2,7 @@ use business::dtos::{asset_pair_rate_dto::AssetPairRateDto, asset_rate_dto::Asse
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use time::{
-    serde::{iso8601, rfc3339},
+    serde::{rfc3339},
     OffsetDateTime,
 };
 

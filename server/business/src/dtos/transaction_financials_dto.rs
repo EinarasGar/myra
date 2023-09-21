@@ -1,5 +1,4 @@
 use dal::models::{
-    asset_pair_rate::AssetPairRate, asset_rate::AssetRate,
     transaction_models::TransactionFinancials,
 };
 use rust_decimal::Decimal;
