@@ -1,5 +1,4 @@
 use dal::{
-    database_context::MyraDb,
     db_sets::{
         portfolio_db_set::{self},
         user_db_set::{self},
@@ -9,6 +8,9 @@ use dal::{
         user_models::{AddUserModel, UserFullModel, UserRoleModel},
     },
 };
+
+#[mockall_double::double]
+use dal::database_context::MyraDb;
 
 use uuid::Uuid;
 
@@ -21,8 +23,6 @@ use crate::dtos::{
     add_user_dto::AddUserDto, portfolio_account_dto::PortfolioAccountDto,
     user_full_dto::UserFullDto,
 };
-
-
 
 #[derive(Clone)]
 pub struct UsersService {
@@ -54,18 +54,15 @@ impl UsersService {
             name: "Default".to_string(),
         };
 
-        self.db.get_transaction().await?;
+        self.db.start_transaction().await?;
 
-        let (sql, values) = user_db_set::inset_user(db_user);
-        self.db.execute_in_trans(sql, values).await?;
-        let (sql, values) = user_db_set::get_user_role(new_user_id);
-        let user_role = self
-            .db
-            .fetch_one_in_trans::<UserRoleModel>(sql, values)
-            .await?;
-        let (sql, values) =
+        let query = user_db_set::inset_user(db_user);
+        self.db.execute_in_trans(query).await?;
+        let query = user_db_set::get_user_role(new_user_id);
+        let user_role = self.db.fetch_one_in_trans::<UserRoleModel>(query).await?;
+        let query =
             portfolio_db_set::insert_or_update_portfolio_account(default_portfolio_account.clone());
-        self.db.execute_in_trans(sql, values).await?;
+        self.db.execute_in_trans(query).await?;
 
         self.db.commit_transaction().await?;
 
@@ -81,8 +78,8 @@ impl UsersService {
 
     #[tracing::instrument(skip(self), ret, err)]
     pub async fn get_full_user(&self, user_id: Uuid) -> anyhow::Result<UserFullDto> {
-        let (sql, values) = user_db_set::get_user_full_info(user_id);
-        let model = self.db.fetch_one::<UserFullModel>(sql, values).await?;
+        let query = user_db_set::get_user_full_info(user_id);
+        let model = self.db.fetch_one::<UserFullModel>(query).await?;
 
         Ok(model.into())
     }

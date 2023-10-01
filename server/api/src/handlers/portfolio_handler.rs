@@ -6,6 +6,7 @@ use axum::{
 };
 use business::dtos::asset_pair_rate_dto::AssetPairRateDto;
 use serde::Deserialize;
+use time::Duration;
 use uuid::Uuid;
 
 use crate::{
@@ -86,7 +87,7 @@ pub async fn get_portfolio_history(
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<PortfolioHistoryViewModel>, AppError> {
     let a = portfolio_service
-        .get_full_portfolio_history(user_id, 2)
+        .get_full_portfolio_history(user_id, 2, Duration::hours(12))
         .await?;
 
     let response = PortfolioHistoryViewModel {

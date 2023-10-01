@@ -24,12 +24,6 @@ pub fn inset_user(user: AddUserModel) -> (String, SqlxValues) {
             user.default_asset.into(),
         ])
         .build_sqlx(PostgresQueryBuilder)
-
-    // sqlx::query_with(&sql, values.clone())
-    //     .execute(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-    // Ok(())
 }
 
 #[tracing::instrument(ret)]
@@ -49,17 +43,6 @@ pub fn get_user_auth_info(username: String) -> (String, SqlxValues) {
         )
         .and_where(Expr::col(UsersIden::Username).eq(username))
         .build_sqlx(PostgresQueryBuilder)
-
-    // let row = sqlx::query_with(&sql, values.clone())
-    //     .fetch_one(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-
-    // Ok(UserAuthModel {
-    //     id: row.try_get(0)?,
-    //     password: row.try_get(1)?,
-    //     role: row.try_get(2)?,
-    // })
 }
 
 #[tracing::instrument(ret)]
@@ -102,11 +85,4 @@ pub fn get_user_full_info(user_id: Uuid) -> (String, SqlxValues) {
         )
         .and_where(Expr::col((UsersIden::Table, UsersIden::Id)).eq(user_id))
         .build_sqlx(PostgresQueryBuilder)
-
-    // let row = sqlx::query_as_with::<_, UserFullModel, _>(&sql, values.clone())
-    //     .fetch_one(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-
-    // Ok(row)
 }

@@ -1,10 +1,6 @@
-
-
-
 use sea_query::{Alias, Expr, OnConflict, PostgresQueryBuilder, Query};
 use sea_query_binder::{SqlxBinder, SqlxValues};
-use sqlx::{types::Uuid};
-
+use sqlx::types::Uuid;
 
 use crate::{
     idens::{
@@ -12,38 +8,9 @@ use crate::{
         portfolio_idens::{PortfolioAccountIden, PortfolioIden},
         CommonsIden,
     },
-    models::portfolio_models::{
-        PortfolioAccountModel, PortfolioUpdateModel,
-    },
+    models::portfolio_models::{PortfolioAccountModel, PortfolioUpdateModel},
 };
 
-// #[async_trait]
-// pub trait PortfolioDbSet {
-//     pub fn get_portfolio_with_asset_account_info(
-//
-//         user_id: Uuid,
-//     ) -> anyhow::Result<Vec<PortfolioCombined>>;
-//     pub fn update_portfolio(
-//
-//         models: Vec<PortfolioUpdateModel>,
-//     ) -> (String, SqlxValues);
-//     pub fn insert_or_update_portfolio_account(
-//
-//         models: PortfolioAccountModel,
-//     ) -> (String, SqlxValues);
-//     pub fn get_portfolio_accounts_by_ids(
-//
-//         uuids: Vec<Uuid>,
-//     ) -> (String, SqlxValues);
-//     pub fn get_portfolio_accounts_by_user_id(
-//
-//         user_id: Uuid,
-//     ) -> (String, SqlxValues);
-// }
-
-// #[automock]
-// #[async_trait]
-// impl PortfolioDbSet for PgConnection {
 #[tracing::instrument(ret)]
 pub fn get_portfolio_with_asset_account_info(user_id: Uuid) -> (String, SqlxValues) {
     Query::select()
@@ -78,12 +45,6 @@ pub fn get_portfolio_with_asset_account_info(user_id: Uuid) -> (String, SqlxValu
         )
         .and_where(Expr::col((PortfolioIden::Table, PortfolioIden::UserId)).eq(user_id))
         .build_sqlx(PostgresQueryBuilder)
-
-    // let rows = sqlx::query_as_with::<_, PortfolioCombined, _>(&sql, values.clone())
-    //     .fetch_all(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-    // Ok(rows)
 }
 
 #[tracing::instrument(ret)]
@@ -122,12 +83,6 @@ pub fn update_portfolio(models: Vec<PortfolioUpdateModel>) -> (String, SqlxValue
     }
 
     builder.build_sqlx(PostgresQueryBuilder)
-
-    // sqlx::query_with(&sql, values.clone())
-    //     .execute(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-    // Ok(())
 }
 
 #[tracing::instrument(ret)]
@@ -155,16 +110,6 @@ pub fn insert_or_update_portfolio_account(models: PortfolioAccountModel) -> (Str
                 .to_owned(),
         )
         .build_sqlx(PostgresQueryBuilder)
-
-    // let execution_result = sqlx::query_with(&sql, values.clone())
-    //     .execute(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-    // if execution_result.rows_affected() == 0 {
-    //     bail!("Failed to insert or update portfolio account");
-    // }
-
-    // Ok(())
 }
 
 #[tracing::instrument(ret)]
@@ -175,12 +120,6 @@ pub fn get_portfolio_accounts_by_ids(uuids: Vec<Uuid>) -> (String, SqlxValues) {
         .from(PortfolioAccountIden::Table)
         .and_where(Expr::col(PortfolioAccountIden::Id).is_in(uuids))
         .build_sqlx(PostgresQueryBuilder)
-
-    // let rows = sqlx::query_as_with::<_, PortfolioAccountIdNameModel, _>(&sql, values.clone())
-    //     .fetch_all(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-    // Ok(rows)
 }
 
 #[tracing::instrument(ret)]
@@ -191,11 +130,4 @@ pub fn get_portfolio_accounts_by_user_id(user_id: Uuid) -> (String, SqlxValues) 
         .from(PortfolioAccountIden::Table)
         .and_where(Expr::col(PortfolioAccountIden::UserId).eq(user_id))
         .build_sqlx(PostgresQueryBuilder)
-
-    // let rows = sqlx::query_as_with::<_, PortfolioAccountIdNameModel, _>(&sql, values.clone())
-    //     .fetch_all(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-    // Ok(rows)
 }
-// }

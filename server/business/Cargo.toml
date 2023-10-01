@@ -17,3 +17,7 @@ time = { version = "0.3.23", features = ["macros", "formatting", "serde"] }
 rust_decimal = "1.30.0"
 tracing = { version = "0.1.38", features = ["async-await", "log"] }
 mockall = "0.11.4"
+mockall_double = "0.3.0"
+
+[dev-dependencies]
+rust_decimal_macros = "1.32.0"

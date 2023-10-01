@@ -47,6 +47,37 @@ async fn main() {
 }
 
 #[tokio::test]
+async fn add_data_to_existing_asset() {
+    let services = Services::new().await.unwrap();
+    let asset_service = AssetsService::new(services.get_db_instance());
+    let provider = yahoo::YahooConnector::new();
+    let start = OffsetDateTime::from_unix_timestamp(0).unwrap();
+    let end = OffsetDateTime::now_utc()
+        .checked_add(Duration::hours(-24))
+        .unwrap();
+    let resp = provider
+        .get_quote_history("0P0001LPRC.F", start, end)
+        .await
+        .unwrap();
+    let quotes = resp.quotes().unwrap();
+    for quote in quotes {
+        let date =
+            OffsetDateTime::from_unix_timestamp(quote.timestamp.try_into().unwrap()).unwrap();
+        let price = quote.close;
+        asset_service
+            .add_asset_rate(AssetPairRateDto {
+                asset1_id: 1,
+                asset2_id: 1,
+                rate: Decimal::from_f64(price).unwrap(),
+                date: date,
+            })
+            .await
+            .unwrap();
+        println!("{:?} {:?}", date, price);
+    }
+}
+
+#[tokio::test]
 async fn new_asset() {
     let services = Services::new().await.unwrap();
     let asset_service = AssetsService::new(services.get_db_instance());
@@ -56,7 +87,7 @@ async fn new_asset() {
         .checked_add(Duration::hours(-24))
         .unwrap();
     let resp = provider
-        .get_quote_history("GBPEUR=X", start, end)
+        .get_quote_history("0P0001LPRC.F", start, end)
         .await
         .unwrap();
     let quotes = resp.quotes().unwrap();

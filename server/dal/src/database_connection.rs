@@ -1,17 +1,9 @@
 use std::str::FromStr;
 
-
 use sqlx::{
     postgres::{PgConnectOptions, PgPoolOptions},
     ConnectOptions, PgPool,
 };
-
-
-
-
-
-
-
 
 #[derive(Clone)]
 pub struct MyraDbConnection {

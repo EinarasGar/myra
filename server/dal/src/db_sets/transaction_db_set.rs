@@ -1,9 +1,6 @@
-
-
 use sea_query::{Alias, Expr, PostgresQueryBuilder, Query};
 use sea_query_binder::{SqlxBinder, SqlxValues};
-use sqlx::{types::Uuid};
-
+use sqlx::types::Uuid;
 
 use crate::{
     idens::{
@@ -31,13 +28,6 @@ pub fn get_transactions_financials(user_id: Uuid) -> (String, SqlxValues) {
         .and_where(Expr::col(TransactionIden::UserId).eq(user_id))
         .order_by(TransactionIden::Date, sea_query::Order::Asc)
         .build_sqlx(PostgresQueryBuilder)
-
-    // let rows = sqlx::query_as_with::<_, TransactionFinancials, _>(&sql, values.clone())
-    //     .fetch_all(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-
-    // Ok(rows)
 }
 
 #[tracing::instrument(ret)]
@@ -96,13 +86,6 @@ pub fn get_transactions_with_groups(user_id: Uuid) -> (String, SqlxValues) {
         )
         .and_where(Expr::col((TransactionIden::Table, TransactionIden::UserId)).eq(user_id))
         .build_sqlx(PostgresQueryBuilder)
-
-    // let rows = sqlx::query_as_with::<_, TransactionWithGroupModel, _>(&sql, values.clone())
-    //     .fetch_all(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-
-    // Ok(rows)
 }
 
 #[tracing::instrument(ret)]
@@ -163,13 +146,6 @@ pub fn get_transaction_group(transaction_group_id: Uuid) -> (String, SqlxValues)
             Expr::col((TransactionIden::Table, TransactionIden::GroupId)).eq(transaction_group_id),
         )
         .build_sqlx(PostgresQueryBuilder)
-
-    // let rows = sqlx::query_as_with::<_, TransactionWithGroupModel, _>(&sql, values.clone())
-    //     .fetch_all(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-
-    // Ok(rows)
 }
 
 #[tracing::instrument(ret)]
@@ -188,12 +164,6 @@ pub fn insert_descriptions(models: Vec<AddTransactionDescriptionModel>) -> (Stri
     }
 
     description_builder.build_sqlx(PostgresQueryBuilder)
-
-    // sqlx::query_with(&sql, values.clone())
-    //     .execute(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-    // Ok(())
 }
 
 #[tracing::instrument(ret)]
@@ -213,12 +183,6 @@ pub fn insert_transaction_group(group: AddUpdateTransactionGroupModel) -> (Strin
             group.date.into(),
         ])
         .build_sqlx(PostgresQueryBuilder)
-
-    // sqlx::query_with(&sql, values.clone())
-    //     .execute(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-    // Ok(())
 }
 
 #[tracing::instrument(ret)]
@@ -249,12 +213,6 @@ pub fn insert_transactions(models: Vec<AddUpdateTransactionModel>) -> (String, S
         ]);
     }
     builder2.build_sqlx(PostgresQueryBuilder)
-
-    // let rows: Vec<i32> = sqlx::query_scalar_with(&sql, values.clone())
-    //     .fetch_all(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-    // Ok(rows)
 }
 
 #[tracing::instrument(ret)]
@@ -265,13 +223,6 @@ pub fn get_categories() -> (String, SqlxValues) {
         .column(TransactionCategoriesIden::Icon)
         .from(TransactionCategoriesIden::Table)
         .build_sqlx(PostgresQueryBuilder)
-
-    // let rows = sqlx::query_as_with::<_, CategoryModel, _>(&sql, values.clone())
-    //     .fetch_all(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-
-    // Ok(rows)
 }
 
 #[tracing::instrument(ret)]
@@ -280,12 +231,6 @@ pub fn delete_transactions(transaction_ids: Vec<i32>) -> (String, SqlxValues) {
         .from_table(TransactionIden::Table)
         .and_where(Expr::col(TransactionIden::Id).is_in(transaction_ids))
         .build_sqlx(PostgresQueryBuilder)
-
-    // sqlx::query_with(&sql, values.clone())
-    //     .execute(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-    // Ok(())
 }
 
 #[tracing::instrument(ret)]
@@ -294,12 +239,6 @@ pub fn delete_descriptions(transaction_ids: Vec<i32>) -> (String, SqlxValues) {
         .from_table(TransactionDescriptionsIden::Table)
         .and_where(Expr::col(TransactionDescriptionsIden::TransactionId).is_in(transaction_ids))
         .build_sqlx(PostgresQueryBuilder)
-
-    // sqlx::query_with(&sql, values.clone())
-    //     .execute(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-    // Ok(())
 }
 
 #[tracing::instrument(ret)]
@@ -311,12 +250,6 @@ pub fn update_group(new_model: AddUpdateTransactionGroupModel) -> (String, SqlxV
         .value(TransactionGroupIden::DateAdded, new_model.date)
         .and_where(Expr::col(TransactionGroupIden::TransactionGroupId).eq(new_model.group_id))
         .build_sqlx(PostgresQueryBuilder)
-
-    // sqlx::query_with(&sql, values.clone())
-    //     .execute(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-    // Ok(())
 }
 
 #[tracing::instrument(ret)]
@@ -326,12 +259,6 @@ pub fn update_description(id: i32, description: String) -> (String, SqlxValues) 
         .value(TransactionDescriptionsIden::Description, description)
         .and_where(Expr::col(TransactionDescriptionsIden::TransactionId).eq(id))
         .build_sqlx(PostgresQueryBuilder)
-
-    // sqlx::query_with(&sql, values.clone())
-    //     .execute(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-    // Ok(())
 }
 
 #[tracing::instrument(ret)]
@@ -345,12 +272,6 @@ pub fn update_transaction(id: i32, model: AddUpdateTransactionModel) -> (String,
         .value(TransactionIden::Date, model.date)
         .and_where(Expr::col(TransactionIden::Id).eq(id))
         .build_sqlx(PostgresQueryBuilder)
-
-    // sqlx::query_with(&sql, values.clone())
-    //     .execute(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-    // Ok(())
 }
 
 #[tracing::instrument(ret)]
@@ -359,10 +280,4 @@ pub fn delete_transaction_group(id: Uuid) -> (String, SqlxValues) {
         .from_table(TransactionGroupIden::Table)
         .and_where(Expr::col(TransactionGroupIden::TransactionGroupId).eq(id))
         .build_sqlx(PostgresQueryBuilder)
-
-    // sqlx::query_with(&sql, values.clone())
-    //     .execute(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-    // Ok(())
 }

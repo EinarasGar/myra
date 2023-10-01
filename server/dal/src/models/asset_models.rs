@@ -13,5 +13,4 @@ pub struct AssetRaw {
     pub ticker: String,
     pub name: String,
     pub asset_type: i32,
-    pub id: i32,
 }

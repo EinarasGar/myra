@@ -1,18 +1,18 @@
 use std::str::FromStr;
 
 use dal::{
-    database_context::MyraDb,
     db_sets::user_db_set::{self},
     models::user_models::UserAuthModel,
 };
+
+#[mockall_double::double]
+use dal::database_context::MyraDb;
+
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 
-use crate::{
-    dtos::{auth_dto::ClaimsDto, user_role_dto::UserRoleEnumDto},
-    service_collection::user_service::UsersService,
-};
+use crate::dtos::{auth_dto::ClaimsDto, user_role_dto::UserRoleEnumDto};
 
-use super::Services;
+use super::user_service::UsersService;
 
 #[derive(Clone)]
 pub struct AuthService {
@@ -43,7 +43,7 @@ impl AuthService {
         Self {
             db_context: db.clone(),
             jwt_keys,
-            user_service: Services::get_users_service(db),
+            user_service: UsersService::new(db),
         }
     }
 
@@ -53,12 +53,9 @@ impl AuthService {
         username: String,
         password: String,
     ) -> anyhow::Result<String> {
-        let (sql, values) = user_db_set::get_user_auth_info(username);
+        let query = user_db_set::get_user_auth_info(username);
 
-        let user_auth_info = self
-            .db_context
-            .fetch_one::<UserAuthModel>(sql, values)
-            .await?;
+        let user_auth_info = self.db_context.fetch_one::<UserAuthModel>(query).await?;
 
         self.user_service
             .verify_user_password(password, user_auth_info.password)?;

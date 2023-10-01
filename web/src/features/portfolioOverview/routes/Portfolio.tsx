@@ -18,6 +18,14 @@ function Portfolio() {
   if (isLoading) return <span>Loading</span>;
   if (portfolioResp.isLoading) return <span>Loading</span>;
 
+  const rates = data?.sums.map((sum) => sum.rate) ?? [];
+  const minRate = Math.min(...rates);
+  const maxRate = Math.max(...rates);
+  const rateRange = maxRate - minRate;
+  const bufferPercentage = 0.1; // 10% buffer
+  const buffer = rateRange * bufferPercentage;
+  const yAxisDomain = [minRate - buffer, maxRate + buffer];
+
   return (
     // (portfolioResp.data?.portfolio_entries.map((x) => (
     //   <div key={x.account.id}>
@@ -26,12 +34,17 @@ function Portfolio() {
     //   </div>
     // ))
     <>
-      {portfolioResp.data?.portfolio_entries.map((x) => (
-        <div key={x.account.id}>
-          {x.asset.name} {x.account.name} {x.sum} {x.last_rate?.rate}{" "}
-          {x.last_rate?.rate * x.sum} {x.last_rate?.date}
-        </div>
-      ))}
+      {portfolioResp.data?.portfolio_entries.map((x) => {
+        if (x.sum === 0) {
+          return null;
+        }
+        return (
+          <div key={x.account.id}>
+            {x.asset.name} {x.account.name} {x.sum} {x.last_rate?.rate}{" "}
+            {x.last_rate?.rate! * x.sum} {x.last_rate?.date}
+          </div>
+        );
+      })}
       <div className=" h-96">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
@@ -45,7 +58,8 @@ function Portfolio() {
           >
             <Tooltip />
             <XAxis dataKey="date" />
-            <YAxis domain={[990, 4000]} />
+
+            <YAxis domain={yAxisDomain} />
             <Line dataKey="rate" dot={false} activeDot={{ r: 4 }} />
           </LineChart>
         </ResponsiveContainer>

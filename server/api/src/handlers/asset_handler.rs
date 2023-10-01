@@ -7,10 +7,7 @@ use serde::Deserialize;
 use crate::{
     app_error::AppError,
     states::AssetsServiceState,
-    view_models::{
-        asset_pair_view_model::AssetPairViewModel,
-        asset_view_model::AssetViewModel,
-    },
+    view_models::{asset_pair_view_model::AssetPairViewModel, asset_view_model::AssetViewModel},
 };
 
 #[derive(Deserialize, Debug)]

@@ -1,46 +1,16 @@
-
-
 use sea_query::{
     extension::postgres::PgExpr, Alias, Cond, Expr, Func, Order, PostgresQueryBuilder, Query,
 };
 use sea_query_binder::{SqlxBinder, SqlxValues};
-use sqlx::{
-    types::time::{OffsetDateTime},
-};
-
+use sqlx::types::time::OffsetDateTime;
 
 use crate::{
     idens::asset_idens::{
         AssetHistoryIden, AssetPairsIden, AssetTypesIden, AssetsAliasIden, AssetsIden,
     },
-    models::{
-        asset_models::{AssetRaw},
-        asset_pair::AssetPair,
-        asset_pair_rate::AssetPairRate,
-    },
+    models::{asset_models::AssetRaw, asset_pair::AssetPair, asset_pair_rate::AssetPairRate},
 };
 
-// #[automock]
-// #[async_trait]
-// pub trait AssetDbSet {
-//     pub fn get_assets(
-//         page_length: u64,
-//         page: u64,
-//         search: Option<String>,
-//     ) -> anyhow::Result<Vec<Asset>>;
-//     pub fn get_asset(id: i32) -> anyhow::Result<Asset>;
-//     pub fn insert_asset(asset: AssetRaw);
-//     pub fn get_latest_asset_pair_rates(
-//         pairs: Vec<AssetPair>,
-//         date_floor: Option<OffsetDateTime>,
-//         only_latest: bool,
-//     ) -> anyhow::Result<Vec<AssetPairRate>>;
-//     pub fn get_pair_rates(pair1: i32, pair2: i32) -> anyhow::Result<Vec<AssetRate>>;
-//     pub fn insert_pair_rate(rate: AssetPairRate) -> anyhow::Result<()>;
-// }
-
-// #[async_trait]
-// impl AssetDbSet {
 #[tracing::instrument(ret)]
 pub fn get_assets(page_length: u64, page: u64, search: Option<String>) -> (String, SqlxValues) {
     let rows_to_skip = page_length * page;
@@ -79,11 +49,6 @@ pub fn get_assets(page_length: u64, page: u64, search: Option<String>) -> (Strin
         .limit(page_length)
         .offset(rows_to_skip)
         .build_sqlx(PostgresQueryBuilder)
-
-    // let rows = sqlx::query_as_with::<_, Asset, _>(&sql, values.clone())
-    //     .fetch_all(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
 }
 
 #[tracing::instrument(ret)]
@@ -104,11 +69,6 @@ pub fn get_asset(id: i32) -> (String, SqlxValues) {
         )
         .and_where(Expr::col((AssetsIden::Table, AssetsIden::Id)).eq(id))
         .build_sqlx(PostgresQueryBuilder)
-
-    // let rows = sqlx::query_as_with::<_, Asset, _>(&sql, values.clone())
-    //     .fetch_one(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
 }
 
 #[tracing::instrument()]
@@ -122,12 +82,6 @@ pub fn insert_asset(asset: AssetRaw) -> (String, SqlxValues) {
             asset.ticker.into(),
         ])
         .build_sqlx(PostgresQueryBuilder)
-
-    // sqlx::query_with(&sql, values.clone())
-    //     .execute(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await
-    //     .unwrap();
 }
 
 #[tracing::instrument()]
@@ -250,12 +204,6 @@ pub fn get_latest_asset_pair_rates(
             Expr::value(true),
         )
         .build_sqlx(PostgresQueryBuilder)
-
-    // let rows = sqlx::query_as_with::<_, AssetPairRate, _>(&sql, values.clone())
-    //     .fetch_all(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-    // Ok(rows)
 }
 
 #[tracing::instrument()]
@@ -279,12 +227,6 @@ pub fn get_pair_rates(pair1: i32, pair2: i32) -> (String, SqlxValues) {
         )
         .order_by(AssetHistoryIden::Date, Order::Desc)
         .build_sqlx(PostgresQueryBuilder)
-
-    // let rows = sqlx::query_as_with::<_, AssetRate, _>(&sql, values.clone())
-    //     .fetch_all(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-    // Ok(rows)
 }
 
 #[tracing::instrument()]
@@ -296,13 +238,6 @@ pub fn insert_pair_rate(rate: AssetPairRate) -> (String, SqlxValues) {
             AssetHistoryIden::Rate,
             AssetHistoryIden::Date,
         ])
-        .values_panic([8.into(), rate.rate.into(), rate.date.into()])
+        .values_panic([7.into(), rate.rate.into(), rate.date.into()])
         .build_sqlx(PostgresQueryBuilder)
-
-    // sqlx::query_with(&sql, values.clone())
-    //     .execute(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?values))
-    //     .await?;
-    // Ok(())
 }
-// }

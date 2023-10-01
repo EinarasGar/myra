@@ -1,7 +1,6 @@
 use std::collections::{HashMap, HashSet, VecDeque};
 
 use dal::{
-    database_context::MyraDb,
     db_sets::asset_db_set::{self},
     models::{
         asset_models::Asset, asset_pair::AssetPair, asset_pair_rate::AssetPairRate,
@@ -9,13 +8,14 @@ use dal::{
     },
 };
 
+#[mockall_double::double]
+use dal::database_context::MyraDb;
+
 use time::OffsetDateTime;
 
 use crate::dtos::{
     asset_dto::AssetDto, asset_pair_rate_dto::AssetPairRateDto, asset_rate_dto::AssetRateDto,
 };
-
-
 
 #[derive(Clone)]
 pub struct AssetsService {
@@ -34,8 +34,8 @@ impl AssetsService {
         search: Option<String>,
     ) -> anyhow::Result<Vec<AssetDto>> {
         let page_size = 20;
-        let (sql, values) = asset_db_set::get_assets(page_size, page, search);
-        let models = self.db.fetch_all::<Asset>(sql, values).await?;
+        let query = asset_db_set::get_assets(page_size, page, search);
+        let models = self.db.fetch_all::<Asset>(query).await?;
 
         let ret_vec: Vec<AssetDto> = models.into_iter().map(|val| val.into()).collect();
 
@@ -44,8 +44,8 @@ impl AssetsService {
 
     #[tracing::instrument(skip(self), ret, err)]
     pub async fn get_asset(&self, id: i32) -> anyhow::Result<AssetDto> {
-        let (sql, values) = asset_db_set::get_asset(id);
-        let model = self.db.fetch_one::<Asset>(sql, values).await?;
+        let query = asset_db_set::get_asset(id);
+        let model = self.db.fetch_one::<Asset>(query).await?;
 
         Ok(model.into())
     }
@@ -58,7 +58,7 @@ impl AssetsService {
     ) -> anyhow::Result<HashMap<i32, AssetPairRateDto>> {
         let mut result: HashMap<i32, AssetPairRateDto> = HashMap::new();
 
-        let (sql, values) = asset_db_set::get_latest_asset_pair_rates(
+        let query = asset_db_set::get_latest_asset_pair_rates(
             asset_ids
                 .into_iter()
                 .map(|x| AssetPair {
@@ -69,7 +69,7 @@ impl AssetsService {
             None,
             true,
         );
-        let ret = self.db.fetch_all::<AssetPairRate>(sql, values).await?;
+        let ret = self.db.fetch_all::<AssetPairRate>(query).await?;
 
         for pair in ret {
             result.insert(pair.pair1, pair.into());
@@ -87,7 +87,7 @@ impl AssetsService {
     ) -> anyhow::Result<HashMap<(i32, i32), VecDeque<AssetRateDto>>> {
         let mut result: HashMap<(i32, i32), VecDeque<AssetRateDto>> = HashMap::new();
 
-        let (sql, values) = asset_db_set::get_latest_asset_pair_rates(
+        let query = asset_db_set::get_latest_asset_pair_rates(
             asset_ids
                 .into_iter()
                 .map(|x| AssetPair {
@@ -98,7 +98,7 @@ impl AssetsService {
             Some(staret_time),
             false,
         );
-        let ret = self.db.fetch_all::<AssetPairRate>(sql, values).await?;
+        let ret = self.db.fetch_all::<AssetPairRate>(query).await?;
 
         for pair in ret {
             result
@@ -117,7 +117,7 @@ impl AssetsService {
             .collect();
 
         if non_default_rates_pair1_ids.len() > 0 {
-            let (sql, values) = asset_db_set::get_latest_asset_pair_rates(
+            let query = asset_db_set::get_latest_asset_pair_rates(
                 non_default_rates_pair1_ids
                     .into_iter()
                     .map(|x| AssetPair {
@@ -129,7 +129,7 @@ impl AssetsService {
                 false,
             );
 
-            let ret_bases = self.db.fetch_all::<AssetPairRate>(sql, values).await?;
+            let ret_bases = self.db.fetch_all::<AssetPairRate>(query).await?;
 
             for pair in ret_bases {
                 result
@@ -151,8 +151,8 @@ impl AssetsService {
         pair1: i32,
         pair2: i32,
     ) -> anyhow::Result<Vec<AssetRateDto>> {
-        let (sql, values) = asset_db_set::get_pair_rates(pair1, pair2);
-        let ret = self.db.fetch_all::<AssetRate>(sql, values).await?;
+        let query = asset_db_set::get_pair_rates(pair1, pair2);
+        let ret = self.db.fetch_all::<AssetRate>(query).await?;
 
         let result: Vec<AssetRateDto> = ret.into_iter().map(|x| x.into()).collect();
 
@@ -161,9 +161,63 @@ impl AssetsService {
 
     #[tracing::instrument(skip(self), ret, err)]
     pub async fn add_asset_rate(&self, rate: AssetPairRateDto) -> anyhow::Result<()> {
-        let (sql, values) = asset_db_set::insert_pair_rate(rate.into());
+        let query = asset_db_set::insert_pair_rate(rate.into());
 
-        let _ret = self.db.execute(sql, values).await?;
+        let _ret = self.db.execute(query).await?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use dal::database_context::MockMyraDb;
+
+    #[tokio::test]
+    async fn test_get_assets_happy_path() {
+        let mut mock_db = MockMyraDb::default();
+
+        // Set expectations
+        mock_db.expect_fetch_all::<Asset>().returning(|_query| {
+            Ok(vec![Asset {
+                category: "category".to_string(),
+                name: "name".to_string(),
+                ticker: "ticker".to_string(),
+                id: 1,
+            }])
+        });
+
+        let service = AssetsService { db: mock_db };
+
+        // Call the method
+        let result = service.get_assets(1, None).await;
+
+        // Assert
+        assert!(result.is_ok());
+        let assets = result.unwrap();
+        assert_eq!(assets.len(), 1);
+        assert_eq!(assets[0].category, "category");
+        assert_eq!(assets[0].name, "name");
+        assert_eq!(assets[0].ticker, "ticker");
+        assert_eq!(assets[0].asset_id, 1);
+    }
+
+    #[tokio::test]
+    async fn test_get_assets_no_assets_found() {
+        let mut mock_db = MockMyraDb::default();
+
+        // Set expectations
+        mock_db
+            .expect_fetch_all::<Asset>()
+            .returning(|_query| Ok(vec![]));
+
+        let service = AssetsService { db: mock_db };
+
+        // Call the method
+        let result = service.get_assets(1, Some("nonexistent".to_string())).await;
+
+        // Assert
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_empty());
     }
 }
