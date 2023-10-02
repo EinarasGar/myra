@@ -8,7 +8,10 @@ use crate::{
     idens::asset_idens::{
         AssetHistoryIden, AssetPairsIden, AssetTypesIden, AssetsAliasIden, AssetsIden,
     },
-    models::{asset_models::AssetRaw, asset_pair::AssetPair, asset_pair_rate::AssetPairRate},
+    models::{
+        asser_pair_rate_insert::AssetPairRateInsert, asset_models::InsertAsset,
+        asset_pair::AssetPair,
+    },
 };
 
 #[tracing::instrument(ret)]
@@ -72,15 +75,22 @@ pub fn get_asset(id: i32) -> (String, SqlxValues) {
 }
 
 #[tracing::instrument()]
-pub fn insert_asset(asset: AssetRaw) -> (String, SqlxValues) {
+pub fn insert_asset(asset: InsertAsset) -> (String, SqlxValues) {
     Query::insert()
         .into_table(AssetsIden::Table)
-        .columns([AssetsIden::AssetType, AssetsIden::Name, AssetsIden::Ticker])
+        .columns([
+            AssetsIden::AssetType,
+            AssetsIden::Name,
+            AssetsIden::Ticker,
+            AssetsIden::BasePairId,
+        ])
         .values_panic([
             asset.asset_type.into(),
             asset.name.into(),
             asset.ticker.into(),
+            asset.base_pair_id.into(),
         ])
+        .returning_col(AssetsIden::Id)
         .build_sqlx(PostgresQueryBuilder)
 }
 
@@ -230,7 +240,7 @@ pub fn get_pair_rates(pair1: i32, pair2: i32) -> (String, SqlxValues) {
 }
 
 #[tracing::instrument()]
-pub fn insert_pair_rate(rate: AssetPairRate) -> (String, SqlxValues) {
+pub fn insert_pair_rate(rate: AssetPairRateInsert) -> (String, SqlxValues) {
     Query::insert()
         .into_table(AssetHistoryIden::Table)
         .columns([
@@ -238,6 +248,16 @@ pub fn insert_pair_rate(rate: AssetPairRate) -> (String, SqlxValues) {
             AssetHistoryIden::Rate,
             AssetHistoryIden::Date,
         ])
-        .values_panic([7.into(), rate.rate.into(), rate.date.into()])
+        .values_panic([rate.pair_id.into(), rate.rate.into(), rate.date.into()])
+        .build_sqlx(PostgresQueryBuilder)
+}
+
+#[tracing::instrument()]
+pub fn inser_pair(pair: AssetPair) -> (String, SqlxValues) {
+    Query::insert()
+        .into_table(AssetPairsIden::Table)
+        .columns([AssetPairsIden::Pair1, AssetPairsIden::Pair2])
+        .values_panic([pair.pair1.into(), pair.pair2.into()])
+        .returning_col(AssetPairsIden::Id)
         .build_sqlx(PostgresQueryBuilder)
 }

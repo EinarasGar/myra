@@ -34,17 +34,6 @@ function Portfolio() {
     //   </div>
     // ))
     <>
-      {portfolioResp.data?.portfolio_entries.map((x) => {
-        if (x.sum === 0) {
-          return null;
-        }
-        return (
-          <div key={x.account.id}>
-            {x.asset.name} {x.account.name} {x.sum} {x.last_rate?.rate}{" "}
-            {x.last_rate?.rate! * x.sum} {x.last_rate?.date}
-          </div>
-        );
-      })}
       <div className=" h-96">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
@@ -64,6 +53,17 @@ function Portfolio() {
           </LineChart>
         </ResponsiveContainer>
       </div>
+      {portfolioResp.data?.portfolio_entries.map((x) => {
+        if (x.sum === 0) {
+          return null;
+        }
+        return (
+          <div key={x.account.id}>
+            {x.asset.name} {x.account.name} {x.sum} {x.last_rate?.rate}{" "}
+            {x.last_rate?.rate! * x.sum} {x.last_rate?.date}
+          </div>
+        );
+      })}
     </>
   );
 }

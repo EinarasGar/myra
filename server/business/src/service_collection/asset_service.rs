@@ -3,7 +3,9 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use dal::{
     db_sets::asset_db_set::{self},
     models::{
-        asset_models::Asset, asset_pair::AssetPair, asset_pair_rate::AssetPairRate,
+        asset_models::{Asset, AssetId, AssetPairId},
+        asset_pair::AssetPair,
+        asset_pair_rate::AssetPairRate,
         asset_rate::AssetRate,
     },
 };
@@ -14,7 +16,9 @@ use dal::database_context::MyraDb;
 use time::OffsetDateTime;
 
 use crate::dtos::{
-    asset_dto::AssetDto, asset_pair_rate_dto::AssetPairRateDto, asset_rate_dto::AssetRateDto,
+    asset_dto::AssetDto, asset_insert_dto::InsertAssetDto,
+    asset_insert_result_dto::InsertAssetResultDto, asset_pair_rate_dto::AssetPairRateDto,
+    asset_pair_rate_insert_dto::AssetPairRateInsertDto, asset_rate_dto::AssetRateDto,
 };
 
 #[derive(Clone)]
@@ -75,10 +79,10 @@ impl AssetsService {
             result.insert(pair.pair1, pair.into());
         }
 
-        return Ok(result);
+        Ok(result)
     }
 
-    #[tracing::instrument(skip(self), ret, err)]
+    #[tracing::instrument(skip(self), err)]
     pub async fn get_asset_rates_default_from_date(
         &self,
         default_asset_id: i32,
@@ -116,7 +120,7 @@ impl AssetsService {
             .map(|p| p.1)
             .collect();
 
-        if non_default_rates_pair1_ids.len() > 0 {
+        if !non_default_rates_pair1_ids.is_empty() {
             let query = asset_db_set::get_latest_asset_pair_rates(
                 non_default_rates_pair1_ids
                     .into_iter()
@@ -142,7 +146,7 @@ impl AssetsService {
             }
         }
 
-        return Ok(result);
+        Ok(result)
     }
 
     #[tracing::instrument(skip(self), ret, err)]
@@ -156,15 +160,40 @@ impl AssetsService {
 
         let result: Vec<AssetRateDto> = ret.into_iter().map(|x| x.into()).collect();
 
-        return Ok(result);
+        Ok(result)
     }
 
     #[tracing::instrument(skip(self), ret, err)]
-    pub async fn add_asset_rate(&self, rate: AssetPairRateDto) -> anyhow::Result<()> {
+    pub async fn add_asset_rate(&self, rate: AssetPairRateInsertDto) -> anyhow::Result<()> {
         let query = asset_db_set::insert_pair_rate(rate.into());
-
-        let _ret = self.db.execute(query).await?;
+        self.db.execute(query).await?;
         Ok(())
+    }
+
+    #[tracing::instrument(skip(self), ret, err)]
+    pub async fn add_asset(&self, rate: InsertAssetDto) -> anyhow::Result<InsertAssetResultDto> {
+        let query = asset_db_set::insert_asset(rate.clone().into());
+
+        self.db.start_transaction().await?;
+        let asset_id = self.db.fetch_one_in_trans::<AssetId>(query).await?;
+        if rate.base_pair_id.is_some() {
+            let pair = AssetPair {
+                pair1: asset_id.id,
+                pair2: rate.base_pair_id.unwrap(),
+            };
+            let query = asset_db_set::inser_pair(pair);
+            let asset_pair_id = self.db.fetch_one_in_trans::<AssetPairId>(query).await?;
+            self.db.commit_transaction().await?;
+            return Ok(InsertAssetResultDto {
+                new_asset_id: asset_id.id,
+                new_asset_pair_id: Some(asset_pair_id.id),
+            });
+        }
+        self.db.commit_transaction().await?;
+        Ok(InsertAssetResultDto {
+            new_asset_id: asset_id.id,
+            new_asset_pair_id: None,
+        })
     }
 }
 

@@ -38,7 +38,7 @@ impl PortfolioService {
         }
     }
 
-    #[tracing::instrument(skip(self), ret, err)]
+    #[tracing::instrument(skip(self), err)]
     pub async fn get_full_portfolio_history(
         &self,
         user_id: Uuid,
@@ -53,7 +53,7 @@ impl PortfolioService {
         let transactions_queue = financials_pair.0;
         let asset_ids = financials_pair.1;
 
-        if transactions_queue.len() == 0 {
+        if transactions_queue.is_empty() {
             return Ok(Vec::new());
         };
 
@@ -147,7 +147,7 @@ fn calculate_portfolio_history(
             .or_insert(AssetRateDto::default()) = rate_queue.front().unwrap().clone();
     });
 
-    update_rates_with_base_rate(&mut asset_rate_queues, reference_asset, &mut last_rates);
+    update_rates_with_base_rate(&asset_rate_queues, reference_asset, &mut last_rates);
 
     let mut iter_date: OffsetDateTime = start_time;
     while iter_date <= end_time {

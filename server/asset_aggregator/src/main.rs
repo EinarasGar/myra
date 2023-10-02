@@ -1,53 +1,22 @@
 use business::{
-    dtos::asset_pair_rate_dto::AssetPairRateDto,
+    dtos::{asset_insert_dto::InsertAssetDto, asset_pair_rate_insert_dto::AssetPairRateInsertDto},
     service_collection::{asset_service::AssetsService, Services},
 };
 use rust_decimal::{prelude::FromPrimitive, Decimal};
-use std::collections::HashSet;
 use yahoo::time::{Duration, OffsetDateTime};
 use yahoo_finance_api as yahoo;
 
 #[tokio::main]
 async fn main() {
-    let services = Services::new().await.unwrap();
-    let asset_service = AssetsService::new(services.get_db_instance());
-    let latest_rate = asset_service
-        .get_asset_rates_default_latest(2, HashSet::from([4]))
-        .await
-        .unwrap()
-        .values()
-        .last()
-        .unwrap()
-        .to_owned();
-    let provider = yahoo::YahooConnector::new();
-    let start = latest_rate.date.checked_add(Duration::hours(24)).unwrap();
-    let end = OffsetDateTime::now_utc()
-        .checked_add(Duration::hours(-24))
-        .unwrap();
-    let resp = provider
-        .get_quote_history("DOT-EUR", start, end)
-        .await
-        .unwrap();
-    let quotes = resp.quotes().unwrap();
-    for quote in quotes {
-        let date =
-            OffsetDateTime::from_unix_timestamp(quote.timestamp.try_into().unwrap()).unwrap();
-        let price = quote.close;
-        asset_service
-            .add_asset_rate(AssetPairRateDto {
-                asset1_id: 1,
-                asset2_id: 1,
-                rate: Decimal::from_f64(price).unwrap(),
-                date: date,
-            })
-            .await
-            .unwrap();
-        println!("{:?} {:?}", date, price);
-    }
+    //add_data_to_existing_asset_pair();
+    //add_new_asset_with_data();
 }
 
-#[tokio::test]
-async fn add_data_to_existing_asset() {
+#[allow(dead_code)]
+async fn add_data_to_existing_asset_pair() {
+    let ticker = "EUR=X";
+    let asset_pair_id = 9;
+
     let services = Services::new().await.unwrap();
     let asset_service = AssetsService::new(services.get_db_instance());
     let provider = yahoo::YahooConnector::new();
@@ -56,7 +25,7 @@ async fn add_data_to_existing_asset() {
         .checked_add(Duration::hours(-24))
         .unwrap();
     let resp = provider
-        .get_quote_history("0P0001LPRC.F", start, end)
+        .get_quote_history(ticker, start, end)
         .await
         .unwrap();
     let quotes = resp.quotes().unwrap();
@@ -65,11 +34,10 @@ async fn add_data_to_existing_asset() {
             OffsetDateTime::from_unix_timestamp(quote.timestamp.try_into().unwrap()).unwrap();
         let price = quote.close;
         asset_service
-            .add_asset_rate(AssetPairRateDto {
-                asset1_id: 1,
-                asset2_id: 1,
+            .add_asset_rate(AssetPairRateInsertDto {
+                pair_id: asset_pair_id,
                 rate: Decimal::from_f64(price).unwrap(),
-                date: date,
+                date,
             })
             .await
             .unwrap();
@@ -77,17 +45,33 @@ async fn add_data_to_existing_asset() {
     }
 }
 
-#[tokio::test]
-async fn new_asset() {
+#[allow(dead_code)]
+async fn add_new_asset_with_data() {
+    let asset_name = "Ethereum";
+    let asset_ticker = "ETH";
+    let asset_type = 2;
+    let base_pair_id = Some(2);
+    let ticker = "ETH-EUR";
+
     let services = Services::new().await.unwrap();
     let asset_service = AssetsService::new(services.get_db_instance());
+    let kkkk = asset_service
+        .add_asset(InsertAssetDto {
+            name: asset_name.to_string(),
+            ticker: asset_ticker.to_string(),
+            asset_type,
+            base_pair_id,
+        })
+        .await
+        .unwrap();
+
     let provider = yahoo::YahooConnector::new();
     let start = OffsetDateTime::from_unix_timestamp(0).unwrap();
     let end = OffsetDateTime::now_utc()
         .checked_add(Duration::hours(-24))
         .unwrap();
     let resp = provider
-        .get_quote_history("0P0001LPRC.F", start, end)
+        .get_quote_history(ticker, start, end)
         .await
         .unwrap();
     let quotes = resp.quotes().unwrap();
@@ -96,11 +80,10 @@ async fn new_asset() {
             OffsetDateTime::from_unix_timestamp(quote.timestamp.try_into().unwrap()).unwrap();
         let price = quote.close;
         asset_service
-            .add_asset_rate(AssetPairRateDto {
-                asset1_id: 1,
-                asset2_id: 1,
+            .add_asset_rate(AssetPairRateInsertDto {
+                pair_id: kkkk.new_asset_pair_id.unwrap(),
                 rate: Decimal::from_f64(price).unwrap(),
-                date: date,
+                date,
             })
             .await
             .unwrap();

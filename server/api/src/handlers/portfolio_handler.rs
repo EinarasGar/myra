@@ -59,10 +59,9 @@ pub async fn get_portfolio(
             asset: val.asset.clone().into(),
             account: val.account.clone().into(),
             sum: val.sum,
-            last_rate: match asset_rates.get(&val.asset.asset_id) {
-                Some(rate) => Some(AssetRateViewModel::from(rate.clone())),
-                None => None,
-            },
+            last_rate: asset_rates
+                .get(&val.asset.asset_id)
+                .map(|rate| AssetRateViewModel::from(rate.clone())),
         })
         .collect();
 
@@ -73,11 +72,7 @@ pub async fn get_portfolio(
     Ok(response.into())
 }
 
-#[tracing::instrument(
-    skip(portfolio_service, _auth, _asset_service, _user_service),
-    ret,
-    err
-)]
+#[tracing::instrument(skip(portfolio_service, _auth, _asset_service, _user_service), err)]
 pub async fn get_portfolio_history(
     Path(user_id): Path<Uuid>,
     query_params: Query<GetPortfolioQueryParams>,

@@ -1,3 +1,4 @@
+pub mod asser_pair_rate_insert;
 pub mod asset_models;
 pub mod asset_pair;
 pub mod asset_pair_rate;
