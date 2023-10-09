@@ -1,5 +1,5 @@
 use sea_query::{Alias, Expr, PostgresQueryBuilder, Query};
-use sea_query_binder::{SqlxBinder, SqlxValues};
+use sea_query_binder::SqlxBinder;
 use sqlx::types::Uuid;
 
 use crate::{
@@ -15,8 +15,10 @@ use crate::{
     },
 };
 
-#[tracing::instrument(ret)]
-pub fn get_transactions_financials(user_id: Uuid) -> (String, SqlxValues) {
+use super::DbQueryWithValues;
+
+#[tracing::instrument(skip_all)]
+pub fn get_transactions_financials(user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .columns([
             TransactionIden::AssetId,
@@ -28,10 +30,11 @@ pub fn get_transactions_financials(user_id: Uuid) -> (String, SqlxValues) {
         .and_where(Expr::col(TransactionIden::UserId).eq(user_id))
         .order_by(TransactionIden::Date, sea_query::Order::Asc)
         .build_sqlx(PostgresQueryBuilder)
+        .into()
 }
 
-#[tracing::instrument(ret)]
-pub fn get_transactions_with_groups(user_id: Uuid) -> (String, SqlxValues) {
+#[tracing::instrument(skip_all)]
+pub fn get_transactions_with_groups(user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .column((TransactionIden::Table, TransactionIden::Id))
         .column((TransactionIden::Table, TransactionIden::UserId))
@@ -86,10 +89,11 @@ pub fn get_transactions_with_groups(user_id: Uuid) -> (String, SqlxValues) {
         )
         .and_where(Expr::col((TransactionIden::Table, TransactionIden::UserId)).eq(user_id))
         .build_sqlx(PostgresQueryBuilder)
+        .into()
 }
 
-#[tracing::instrument(ret)]
-pub fn get_transaction_group(transaction_group_id: Uuid) -> (String, SqlxValues) {
+#[tracing::instrument(skip_all)]
+pub fn get_transaction_group(transaction_group_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .column((TransactionIden::Table, TransactionIden::Id))
         .column((TransactionIden::Table, TransactionIden::UserId))
@@ -146,10 +150,11 @@ pub fn get_transaction_group(transaction_group_id: Uuid) -> (String, SqlxValues)
             Expr::col((TransactionIden::Table, TransactionIden::GroupId)).eq(transaction_group_id),
         )
         .build_sqlx(PostgresQueryBuilder)
+        .into()
 }
 
-#[tracing::instrument(ret)]
-pub fn insert_descriptions(models: Vec<AddTransactionDescriptionModel>) -> (String, SqlxValues) {
+#[tracing::instrument(skip_all)]
+pub fn insert_descriptions(models: Vec<AddTransactionDescriptionModel>) -> DbQueryWithValues {
     let mut description_builder = Query::insert()
         .into_table(TransactionDescriptionsIden::Table)
         .columns([
@@ -163,11 +168,11 @@ pub fn insert_descriptions(models: Vec<AddTransactionDescriptionModel>) -> (Stri
             .values_panic(vec![model.transaction_id.into(), model.description.into()]);
     }
 
-    description_builder.build_sqlx(PostgresQueryBuilder)
+    description_builder.build_sqlx(PostgresQueryBuilder).into()
 }
 
-#[tracing::instrument(ret)]
-pub fn insert_transaction_group(group: AddUpdateTransactionGroupModel) -> (String, SqlxValues) {
+#[tracing::instrument(skip_all)]
+pub fn insert_transaction_group(group: AddUpdateTransactionGroupModel) -> DbQueryWithValues {
     Query::insert()
         .into_table(TransactionGroupIden::Table)
         .columns([
@@ -183,10 +188,11 @@ pub fn insert_transaction_group(group: AddUpdateTransactionGroupModel) -> (Strin
             group.date.into(),
         ])
         .build_sqlx(PostgresQueryBuilder)
+        .into()
 }
 
-#[tracing::instrument(ret)]
-pub fn insert_transactions(models: Vec<AddUpdateTransactionModel>) -> (String, SqlxValues) {
+#[tracing::instrument(skip_all)]
+pub fn insert_transactions(models: Vec<AddUpdateTransactionModel>) -> DbQueryWithValues {
     let mut builder2 = Query::insert()
         .into_table(TransactionIden::Table)
         .columns([
@@ -212,37 +218,40 @@ pub fn insert_transactions(models: Vec<AddUpdateTransactionModel>) -> (String, S
             model.date.into(),
         ]);
     }
-    builder2.build_sqlx(PostgresQueryBuilder)
+    builder2.build_sqlx(PostgresQueryBuilder).into()
 }
 
-#[tracing::instrument(ret)]
-pub fn get_categories() -> (String, SqlxValues) {
+#[tracing::instrument(skip_all)]
+pub fn get_categories() -> DbQueryWithValues {
     Query::select()
         .column(TransactionCategoriesIden::Id)
         .column(TransactionCategoriesIden::Category)
         .column(TransactionCategoriesIden::Icon)
         .from(TransactionCategoriesIden::Table)
         .build_sqlx(PostgresQueryBuilder)
+        .into()
 }
 
-#[tracing::instrument(ret)]
-pub fn delete_transactions(transaction_ids: Vec<i32>) -> (String, SqlxValues) {
+#[tracing::instrument(skip_all)]
+pub fn delete_transactions(transaction_ids: Vec<i32>) -> DbQueryWithValues {
     Query::delete()
         .from_table(TransactionIden::Table)
         .and_where(Expr::col(TransactionIden::Id).is_in(transaction_ids))
         .build_sqlx(PostgresQueryBuilder)
+        .into()
 }
 
-#[tracing::instrument(ret)]
-pub fn delete_descriptions(transaction_ids: Vec<i32>) -> (String, SqlxValues) {
+#[tracing::instrument(skip_all)]
+pub fn delete_descriptions(transaction_ids: Vec<i32>) -> DbQueryWithValues {
     Query::delete()
         .from_table(TransactionDescriptionsIden::Table)
         .and_where(Expr::col(TransactionDescriptionsIden::TransactionId).is_in(transaction_ids))
         .build_sqlx(PostgresQueryBuilder)
+        .into()
 }
 
-#[tracing::instrument(ret)]
-pub fn update_group(new_model: AddUpdateTransactionGroupModel) -> (String, SqlxValues) {
+#[tracing::instrument(skip_all)]
+pub fn update_group(new_model: AddUpdateTransactionGroupModel) -> DbQueryWithValues {
     Query::update()
         .table(TransactionGroupIden::Table)
         .value(TransactionGroupIden::CategoryId, new_model.category_id)
@@ -250,19 +259,21 @@ pub fn update_group(new_model: AddUpdateTransactionGroupModel) -> (String, SqlxV
         .value(TransactionGroupIden::DateAdded, new_model.date)
         .and_where(Expr::col(TransactionGroupIden::TransactionGroupId).eq(new_model.group_id))
         .build_sqlx(PostgresQueryBuilder)
+        .into()
 }
 
-#[tracing::instrument(ret)]
-pub fn update_description(id: i32, description: String) -> (String, SqlxValues) {
+#[tracing::instrument(skip_all)]
+pub fn update_description(id: i32, description: String) -> DbQueryWithValues {
     Query::update()
         .table(TransactionDescriptionsIden::Table)
         .value(TransactionDescriptionsIden::Description, description)
         .and_where(Expr::col(TransactionDescriptionsIden::TransactionId).eq(id))
         .build_sqlx(PostgresQueryBuilder)
+        .into()
 }
 
-#[tracing::instrument(ret)]
-pub fn update_transaction(id: i32, model: AddUpdateTransactionModel) -> (String, SqlxValues) {
+#[tracing::instrument(skip_all)]
+pub fn update_transaction(id: i32, model: AddUpdateTransactionModel) -> DbQueryWithValues {
     Query::update()
         .table(TransactionIden::Table)
         .value(TransactionIden::AccountId, model.account_id)
@@ -272,12 +283,14 @@ pub fn update_transaction(id: i32, model: AddUpdateTransactionModel) -> (String,
         .value(TransactionIden::Date, model.date)
         .and_where(Expr::col(TransactionIden::Id).eq(id))
         .build_sqlx(PostgresQueryBuilder)
+        .into()
 }
 
-#[tracing::instrument(ret)]
-pub fn delete_transaction_group(id: Uuid) -> (String, SqlxValues) {
+#[tracing::instrument(skip_all)]
+pub fn delete_transaction_group(id: Uuid) -> DbQueryWithValues {
     Query::delete()
         .from_table(TransactionGroupIden::Table)
         .and_where(Expr::col(TransactionGroupIden::TransactionGroupId).eq(id))
         .build_sqlx(PostgresQueryBuilder)
+        .into()
 }

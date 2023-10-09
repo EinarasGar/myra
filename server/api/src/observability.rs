@@ -5,9 +5,9 @@ use opentelemetry_otlp::WithExportConfig;
 use tower_http::classify::{ServerErrorsAsFailures, SharedClassifier};
 use tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer};
 use tower_http::LatencyUnit;
-use tracing::Level;
+use tracing::{Level, Subscriber};
 use tracing_opentelemetry::OpenTelemetryLayer;
-use tracing_subscriber::layer::Layered;
+use tracing_subscriber::registry::LookupSpan;
 use tracing_subscriber::{prelude::*, EnvFilter};
 use tracing_subscriber::{Layer, Registry};
 
@@ -20,12 +20,10 @@ pub fn initialize_tracing_subscriber() {
 }
 
 #[allow(clippy::type_complexity)]
-fn create_opentelemetry_layer() -> Option<
-    OpenTelemetryLayer<
-        Layered<Option<EnvFilter>, Layered<Box<dyn Layer<Registry> + Send + Sync>, Registry>>,
-        Tracer,
-    >,
-> {
+fn create_opentelemetry_layer<S>() -> Option<OpenTelemetryLayer<S, Tracer>>
+where
+    S: Subscriber + for<'span> LookupSpan<'span>,
+{
     let otlp_endpoint = std::env::var("OTLP_ENDPOINT");
     match otlp_endpoint {
         Ok(endpoint) => {
@@ -65,7 +63,7 @@ fn create_opentelemetry_layer() -> Option<
 }
 
 fn create_print_layer() -> Box<dyn Layer<Registry> + Send + Sync> {
-    tracing_subscriber::fmt::layer().compact().boxed()
+    tracing_subscriber::fmt::layer().pretty().boxed()
 }
 
 //Creates an env filter from RUST_LOG. If its invalid - panics. If its empty or unset - defaults to erros only
@@ -87,16 +85,15 @@ fn create_env_filter_layer() -> Option<EnvFilter> {
 }
 
 pub fn create_tower_http_tracing_layer() -> TraceLayer<SharedClassifier<ServerErrorsAsFailures>> {
-    TraceLayer::new_for_http()
-        .make_span_with(
-            DefaultMakeSpan::new()
-                .include_headers(true)
-                .level(Level::INFO),
-        )
-        .on_request(DefaultOnRequest::new().level(Level::INFO))
-        .on_response(
-            DefaultOnResponse::new()
-                .level(Level::INFO)
-                .latency_unit(LatencyUnit::Micros),
-        )
+    TraceLayer::new_for_http().make_span_with(
+        DefaultMakeSpan::new()
+            .include_headers(false)
+            .level(Level::INFO),
+    )
+    // .on_request(DefaultOnRequest::new().level(Level::INFO))
+    // .on_response(
+    //     DefaultOnResponse::new()
+    //         .level(Level::INFO)
+    //         .latency_unit(LatencyUnit::Micros),
+    // )
 }

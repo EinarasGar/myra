@@ -38,7 +38,7 @@ impl PortfolioService {
         }
     }
 
-    #[tracing::instrument(skip(self), err)]
+    #[tracing::instrument(skip_all, err)]
     pub async fn get_full_portfolio_history(
         &self,
         user_id: Uuid,
@@ -62,7 +62,7 @@ impl PortfolioService {
 
         let asset_rate_queues = self
             .asset_serice
-            .get_asset_rates_default_from_date(reference_asset, asset_ids, earliest_date)
+            .get_assets_rates_default_from_date(reference_asset, asset_ids, earliest_date)
             .await?;
 
         let history = calculate_portfolio_history(
@@ -80,7 +80,7 @@ impl PortfolioService {
         Ok(history)
     }
 
-    #[tracing::instrument(skip(self), ret, err)]
+    #[tracing::instrument(skip_all, err)]
     pub async fn get_portfolio(&self, user_id: Uuid) -> anyhow::Result<Vec<PortfolioDto>> {
         let query = portfolio_db_set::get_portfolio_with_asset_account_info(user_id);
 
@@ -93,7 +93,7 @@ impl PortfolioService {
         Ok(ret_vec)
     }
 
-    #[tracing::instrument(skip(self), ret, err)]
+    #[tracing::instrument(skip_all, err)]
     pub async fn insert_or_update_portfolio_account(
         &self,
         user_id: Uuid,
@@ -112,7 +112,7 @@ impl PortfolioService {
         Ok(model.into())
     }
 
-    #[tracing::instrument(skip(self), ret, err)]
+    #[tracing::instrument(skip_all, err)]
     pub async fn get_portfolio_accounts(
         &self,
         user_id: Uuid,
@@ -506,7 +506,7 @@ mod tests {
     #[test]
     fn test_calculate_portfolio_hisotry_empty() {
         let transactions_queue = vec![];
-        let mut asset_rate_queues: HashMap<(i32, i32), VecDeque<AssetRateDto>> = HashMap::new();
+        let asset_rate_queues: HashMap<(i32, i32), VecDeque<AssetRateDto>> = HashMap::new();
 
         let result = calculate_portfolio_history(
             transactions_queue.into_iter().collect(),

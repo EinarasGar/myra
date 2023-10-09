@@ -12,4 +12,5 @@ pub struct UserViewModel {
     pub username: String,
     pub default_asset_id: AssetViewModel,
     pub portfolio_accounts: Vec<PortfolioAccountViewModel>,
+    pub custom_assets: Vec<AssetViewModel>,
 }

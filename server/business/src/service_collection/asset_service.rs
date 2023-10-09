@@ -3,10 +3,12 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use dal::{
     db_sets::asset_db_set::{self},
     models::{
-        asset_models::{Asset, AssetId, AssetPairId},
+        asset_models::{Asset, AssetId, AssetPairId, PublicAsset},
         asset_pair::AssetPair,
         asset_pair_rate::AssetPairRate,
         asset_rate::AssetRate,
+        count::Count,
+        exists::Exsists,
     },
 };
 
@@ -14,11 +16,13 @@ use dal::{
 use dal::database_context::MyraDb;
 
 use time::OffsetDateTime;
+use uuid::Uuid;
 
 use crate::dtos::{
-    asset_dto::AssetDto, asset_insert_dto::InsertAssetDto,
-    asset_insert_result_dto::InsertAssetResultDto, asset_pair_rate_dto::AssetPairRateDto,
-    asset_pair_rate_insert_dto::AssetPairRateInsertDto, asset_rate_dto::AssetRateDto,
+    add_custom_asset_dto::AddCustomAssetDto, asset_dto::AssetDto, asset_insert_dto::AssetInsertDto,
+    asset_insert_result_dto::InsertAssetResultDto, asset_pair_insert_dto::AssetPairInsertDto,
+    asset_pair_rate_dto::AssetPairRateDto, asset_pair_rate_insert_dto::AssetPairRateInsertDto,
+    asset_rate_dto::AssetRateDto,
 };
 
 #[derive(Clone)]
@@ -31,22 +35,59 @@ impl AssetsService {
         Self { db }
     }
 
-    #[tracing::instrument(skip(self), ret, err)]
-    pub async fn get_assets(
+    #[tracing::instrument(skip_all, err)]
+    pub async fn get_public_assets(
         &self,
         page: u64,
         search: Option<String>,
     ) -> anyhow::Result<Vec<AssetDto>> {
         let page_size = 20;
-        let query = asset_db_set::get_assets(page_size, page, search);
-        let models = self.db.fetch_all::<Asset>(query).await?;
+        let query = asset_db_set::get_public_assets(page_size, page, search);
+        let models = self.db.fetch_all::<PublicAsset>(query).await?;
 
         let ret_vec: Vec<AssetDto> = models.into_iter().map(|val| val.into()).collect();
 
         Ok(ret_vec)
     }
 
-    #[tracing::instrument(skip(self), ret, err)]
+    #[tracing::instrument(skip_all, err)]
+    pub async fn get_all_user_assets(&self, user_id: Uuid) -> anyhow::Result<Vec<AssetDto>> {
+        let query = asset_db_set::get_users_assets(user_id.clone());
+        let models = self.db.fetch_all::<PublicAsset>(query).await?;
+
+        let ret_vec: Vec<AssetDto> = models
+            .into_iter()
+            .map(|val| AssetDto {
+                ticker: val.ticker,
+                name: val.name,
+                category: val.category,
+                asset_id: val.id,
+                owner: Some(user_id.clone()),
+            })
+            .collect();
+
+        Ok(ret_vec)
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn check_assets_access(
+        &self,
+        user_id: Uuid,
+        asset_ids: Vec<i32>,
+    ) -> anyhow::Result<()> {
+        let nums = asset_ids.len() as i64;
+        let query = asset_db_set::assets_count_by_ids_and_access(asset_ids, user_id);
+        let models = self.db.fetch_one::<Count>(query).await?;
+        if models.count != nums {
+            return Err(anyhow::anyhow!(
+                "Not all assets found or no permission fot them"
+            ));
+        }
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip_all, err)]
     pub async fn get_asset(&self, id: i32) -> anyhow::Result<AssetDto> {
         let query = asset_db_set::get_asset(id);
         let model = self.db.fetch_one::<Asset>(query).await?;
@@ -54,8 +95,8 @@ impl AssetsService {
         Ok(model.into())
     }
 
-    #[tracing::instrument(skip(self), ret, err)]
-    pub async fn get_asset_rates_default_latest(
+    #[tracing::instrument(skip_all, err)]
+    pub async fn get_assets_rates_default_latest(
         &self,
         default_asset_id: i32,
         asset_ids: HashSet<i32>,
@@ -82,8 +123,8 @@ impl AssetsService {
         Ok(result)
     }
 
-    #[tracing::instrument(skip(self), err)]
-    pub async fn get_asset_rates_default_from_date(
+    #[tracing::instrument(skip_all, err)]
+    pub async fn get_assets_rates_default_from_date(
         &self,
         default_asset_id: i32,
         asset_ids: HashSet<i32>,
@@ -149,7 +190,7 @@ impl AssetsService {
         Ok(result)
     }
 
-    #[tracing::instrument(skip(self), ret, err)]
+    #[tracing::instrument(skip_all, err)]
     pub async fn get_asset_pair_rates(
         &self,
         pair1: i32,
@@ -163,37 +204,130 @@ impl AssetsService {
         Ok(result)
     }
 
-    #[tracing::instrument(skip(self), ret, err)]
-    pub async fn add_asset_rate(&self, rate: AssetPairRateInsertDto) -> anyhow::Result<()> {
-        let query = asset_db_set::insert_pair_rate(rate.into());
-        self.db.execute(query).await?;
-        Ok(())
+    #[tracing::instrument(skip_all, err)]
+    pub async fn get_asset_pair_id(&self, pair1: i32, pair2: i32) -> anyhow::Result<i32> {
+        let query = asset_db_set::get_pair_id(pair1, pair2);
+        let ret = self.db.fetch_one::<AssetPairId>(query).await?;
+        Ok(ret.id)
     }
 
-    #[tracing::instrument(skip(self), ret, err)]
-    pub async fn add_asset(&self, rate: InsertAssetDto) -> anyhow::Result<InsertAssetResultDto> {
-        let query = asset_db_set::insert_asset(rate.clone().into());
-
+    #[tracing::instrument(skip_all, err)]
+    pub async fn add_asset(&self, rate: AssetInsertDto) -> anyhow::Result<InsertAssetResultDto> {
         self.db.start_transaction().await?;
-        let asset_id = self.db.fetch_one_in_trans::<AssetId>(query).await?;
+        let asset_id = self.insert_asset(rate.clone()).await?;
         if rate.base_pair_id.is_some() {
-            let pair = AssetPair {
-                pair1: asset_id.id,
+            let pair = AssetPairInsertDto {
+                pair1: asset_id,
                 pair2: rate.base_pair_id.unwrap(),
             };
-            let query = asset_db_set::inser_pair(pair);
-            let asset_pair_id = self.db.fetch_one_in_trans::<AssetPairId>(query).await?;
+            let asset_pair_id = self.insert_asset_pair(pair).await?;
             self.db.commit_transaction().await?;
             return Ok(InsertAssetResultDto {
-                new_asset_id: asset_id.id,
-                new_asset_pair_id: Some(asset_pair_id.id),
+                new_asset_id: asset_id,
+                new_asset_pair_id: Some(asset_pair_id),
             });
         }
         self.db.commit_transaction().await?;
         Ok(InsertAssetResultDto {
-            new_asset_id: asset_id.id,
+            new_asset_id: asset_id,
             new_asset_pair_id: None,
         })
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn add_custom_asset(&self, asset_dto: AddCustomAssetDto) -> anyhow::Result<AssetDto> {
+        self.db.start_transaction().await?;
+
+        let asset_insert = AssetInsertDto {
+            name: asset_dto.name.clone(),
+            ticker: asset_dto.ticker.clone(),
+            asset_type: asset_dto.asset_type,
+            base_pair_id: Some(asset_dto.base_pair_id),
+            user_id: Some(asset_dto.user_id),
+        };
+
+        let asset_id = self.insert_asset(asset_insert).await?;
+
+        let asset_pair_insert = AssetPairInsertDto {
+            pair1: asset_id,
+            pair2: asset_dto.base_pair_id,
+        };
+
+        self.insert_asset_pair(asset_pair_insert).await?;
+
+        //TODO: We have most of the information, except for type string,
+        //so in the future we could improve this by not doing a sperate query
+        let ret = self.get_asset(asset_id).await?;
+
+        self.db.commit_transaction().await?;
+
+        Ok(ret)
+    }
+
+    pub async fn add_rates_by_pair(
+        &self,
+        pair1: i32,
+        pair2: i32,
+        rates: Vec<AssetRateDto>,
+    ) -> anyhow::Result<()> {
+        let pair_id = self.get_asset_pair_id(pair1, pair2).await?;
+
+        let inserts: Vec<AssetPairRateInsertDto> = rates
+            .into_iter()
+            .map(|rate| AssetPairRateInsertDto {
+                pair_id,
+                rate: rate.rate,
+                date: rate.date,
+            })
+            .collect();
+
+        self.insert_asset_pair_rates(inserts).await?;
+        Ok(())
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn validate_asset_ownership(
+        &self,
+        user_id: Uuid,
+        asset_id: i32,
+    ) -> anyhow::Result<bool> {
+        let query = asset_db_set::asset_exists_by_id_and_user_id(asset_id, user_id);
+        let ret = self.db.fetch_one::<Exsists>(query).await?;
+        Ok(ret.exists)
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    async fn insert_asset(&self, asset_dto: AssetInsertDto) -> anyhow::Result<i32> {
+        let query = asset_db_set::insert_asset(asset_dto.clone().into());
+        let asset_id = self.db.fetch_one::<AssetId>(query).await?;
+        Ok(asset_id.id)
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    async fn insert_asset_pair(&self, pair_dto: AssetPairInsertDto) -> anyhow::Result<i32> {
+        let query = asset_db_set::inser_pair(pair_dto.into());
+        let asset_pair_id = self.db.fetch_one::<AssetPairId>(query).await?;
+        Ok(asset_pair_id.id)
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn insert_asset_pair_rate(&self, rate: AssetPairRateInsertDto) -> anyhow::Result<()> {
+        self.insert_asset_pair_rates(vec![rate]).await?;
+        Ok(())
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn insert_asset_pair_rates(
+        &self,
+        rates: Vec<AssetPairRateInsertDto>,
+    ) -> anyhow::Result<()> {
+        if rates.is_empty() {
+            return Ok(());
+        }
+
+        let query = asset_db_set::insert_pair_rates(rates.into_iter().map(|x| x.into()).collect());
+        self.db.execute(query).await?;
+        Ok(())
     }
 }
 
@@ -213,13 +347,14 @@ mod tests {
                 name: "name".to_string(),
                 ticker: "ticker".to_string(),
                 id: 1,
+                user_id: None,
             }])
         });
 
         let service = AssetsService { db: mock_db };
 
         // Call the method
-        let result = service.get_assets(1, None).await;
+        let result = service.get_public_assets(1, None).await;
 
         // Assert
         assert!(result.is_ok());
@@ -243,7 +378,9 @@ mod tests {
         let service = AssetsService { db: mock_db };
 
         // Call the method
-        let result = service.get_assets(1, Some("nonexistent".to_string())).await;
+        let result = service
+            .get_public_assets(1, Some("nonexistent".to_string()))
+            .await;
 
         // Assert
         assert!(result.is_ok());

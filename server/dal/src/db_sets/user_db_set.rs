@@ -1,5 +1,5 @@
 use sea_query::*;
-use sea_query_binder::{SqlxBinder, SqlxValues};
+use sea_query_binder::SqlxBinder;
 use sqlx::types::Uuid;
 
 use crate::{
@@ -7,8 +7,10 @@ use crate::{
     models::user_models::AddUserModel,
 };
 
-#[tracing::instrument(ret)]
-pub fn inset_user(user: AddUserModel) -> (String, SqlxValues) {
+use super::DbQueryWithValues;
+
+#[tracing::instrument(skip_all)]
+pub fn inset_user(user: AddUserModel) -> DbQueryWithValues {
     Query::insert()
         .into_table(UsersIden::Table)
         .columns([
@@ -24,10 +26,11 @@ pub fn inset_user(user: AddUserModel) -> (String, SqlxValues) {
             user.default_asset.into(),
         ])
         .build_sqlx(PostgresQueryBuilder)
+        .into()
 }
 
-#[tracing::instrument(ret)]
-pub fn get_user_auth_info(username: String) -> (String, SqlxValues) {
+#[tracing::instrument(skip_all)]
+pub fn get_user_auth_info(username: String) -> DbQueryWithValues {
     Query::select()
         .column((UsersIden::Table, UsersIden::Id))
         .column((UsersIden::Table, UsersIden::Password))
@@ -43,10 +46,11 @@ pub fn get_user_auth_info(username: String) -> (String, SqlxValues) {
         )
         .and_where(Expr::col(UsersIden::Username).eq(username))
         .build_sqlx(PostgresQueryBuilder)
+        .into()
 }
 
-#[tracing::instrument(ret)]
-pub fn get_user_role(user_id: Uuid) -> (String, SqlxValues) {
+#[tracing::instrument(skip_all)]
+pub fn get_user_role(user_id: Uuid) -> DbQueryWithValues {
     unimplemented!()
     // let sql =
     //     "SELECT id, name FROM user_roles WHERE id in (SELECT role from users where id = $1)";
@@ -63,8 +67,8 @@ pub fn get_user_role(user_id: Uuid) -> (String, SqlxValues) {
     // })
 }
 
-#[tracing::instrument(ret)]
-pub fn get_user_full_info(user_id: Uuid) -> (String, SqlxValues) {
+#[tracing::instrument(skip_all)]
+pub fn get_user_full_info(user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .column((UsersIden::Table, UsersIden::Id))
         .column((UsersIden::Table, UsersIden::Username))
@@ -85,4 +89,5 @@ pub fn get_user_full_info(user_id: Uuid) -> (String, SqlxValues) {
         )
         .and_where(Expr::col((UsersIden::Table, UsersIden::Id)).eq(user_id))
         .build_sqlx(PostgresQueryBuilder)
+        .into()
 }

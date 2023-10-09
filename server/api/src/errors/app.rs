@@ -5,6 +5,14 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
+use super::ApiError;
+
+impl From<anyhow::Error> for ApiError {
+    fn from(error: anyhow::Error) -> Self {
+        ApiError::AppError(AppError(error))
+    }
+}
+
 // Make our own error that wraps `anyhow::Error`.
 pub struct AppError(anyhow::Error);
 

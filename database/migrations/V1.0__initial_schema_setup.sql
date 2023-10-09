@@ -35,7 +35,8 @@ CREATE TABLE IF NOT EXISTS public.asset_history (
     id SERIAL CONSTRAINT asset_history_pk PRIMARY KEY,
     pair_id INT NOT NULL CONSTRAINT asset_history_pair_id_fkey REFERENCES public.asset_pairs (id),
     rate numeric NOT NULL,
-    date TIMESTAMPTZ NOT NULL
+    date TIMESTAMPTZ NOT NULL,
+    CONSTRAINT asset_history_pair_date_unique UNIQUE (pair_id, date)
 );
 CREATE TABLE IF NOT EXISTS public.asset_types (
     id SERIAL CONSTRAINT asset_types_pk PRIMARY KEY,
@@ -47,6 +48,7 @@ CREATE TABLE IF NOT EXISTS public.assets (
     name TEXT NOT NULL,
     ticker TEXT NOT NULL,
     base_pair_id INT,
+    user_id UUID CONSTRAINT assets_user_id_fkey REFERENCES public.users (id)
 );
 CREATE TABLE IF NOT EXISTS public.user_roles (
     id SERIAL CONSTRAINT user_roles_pk PRIMARY KEY,

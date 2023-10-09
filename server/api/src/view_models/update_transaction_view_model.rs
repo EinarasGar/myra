@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 #[typeshare::typeshare]
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct UpdateTransactonViewModel {
+pub struct UpdateTransactionViewModel {
     pub id: Option<i32>,
     pub asset_id: i32,
 
@@ -20,8 +20,8 @@ pub struct UpdateTransactonViewModel {
     pub description: Option<String>,
 }
 
-impl From<UpdateTransactonViewModel> for AddUpdateTransactonDto {
-    fn from(p: UpdateTransactonViewModel) -> Self {
+impl From<UpdateTransactionViewModel> for AddUpdateTransactonDto {
+    fn from(p: UpdateTransactionViewModel) -> Self {
         Self {
             asset_id: p.asset_id,
             quantity: p.quantity,

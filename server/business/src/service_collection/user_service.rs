@@ -34,7 +34,7 @@ impl UsersService {
         Self { db }
     }
 
-    #[tracing::instrument(skip(self, user), ret, err)]
+    #[tracing::instrument(skip_all, err)]
     pub async fn register_user(
         &self,
         user: AddUserDto,
@@ -57,12 +57,12 @@ impl UsersService {
         self.db.start_transaction().await?;
 
         let query = user_db_set::inset_user(db_user);
-        self.db.execute_in_trans(query).await?;
+        self.db.execute(query).await?;
         let query = user_db_set::get_user_role(new_user_id);
-        let user_role = self.db.fetch_one_in_trans::<UserRoleModel>(query).await?;
+        let user_role = self.db.fetch_one::<UserRoleModel>(query).await?;
         let query =
             portfolio_db_set::insert_or_update_portfolio_account(default_portfolio_account.clone());
-        self.db.execute_in_trans(query).await?;
+        self.db.execute(query).await?;
 
         self.db.commit_transaction().await?;
 
@@ -76,7 +76,7 @@ impl UsersService {
         Ok((ret_obj, default_portfolio_account.into()))
     }
 
-    #[tracing::instrument(skip(self), ret, err)]
+    #[tracing::instrument(skip_all, err)]
     pub async fn get_full_user(&self, user_id: Uuid) -> anyhow::Result<UserFullDto> {
         let query = user_db_set::get_user_full_info(user_id);
         let model = self.db.fetch_one::<UserFullModel>(query).await?;
@@ -84,7 +84,7 @@ impl UsersService {
         Ok(model.into())
     }
 
-    #[tracing::instrument(skip_all, ret)]
+    #[tracing::instrument(skip_all)]
     fn hash_password(&self, password: String) -> String {
         let salt = SaltString::generate(&mut OsRng);
         let argon2 = Argon2::default();
@@ -95,7 +95,7 @@ impl UsersService {
         password_hash
     }
 
-    #[tracing::instrument(skip(self, password), err)]
+    #[tracing::instrument(skip_all, err)]
     pub fn verify_user_password(
         &self,
         password: String,

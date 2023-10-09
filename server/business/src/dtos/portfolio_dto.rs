@@ -19,6 +19,7 @@ impl From<PortfolioCombined> for PortfolioDto {
                 name: p.name,
                 category: p.category,
                 asset_id: p.asset_id,
+                owner: None,
             },
             account: PortfolioAccountDto {
                 account_id: Some(p.account_id),

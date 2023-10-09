@@ -1,7 +1,8 @@
 use sea_query::{Alias, Expr, OnConflict, PostgresQueryBuilder, Query};
-use sea_query_binder::{SqlxBinder, SqlxValues};
+use sea_query_binder::SqlxBinder;
 use sqlx::types::Uuid;
 
+use super::DbQueryWithValues;
 use crate::{
     idens::{
         asset_idens::{AssetTypesIden, AssetsIden},
@@ -11,8 +12,8 @@ use crate::{
     models::portfolio_models::{PortfolioAccountModel, PortfolioUpdateModel},
 };
 
-#[tracing::instrument(ret)]
-pub fn get_portfolio_with_asset_account_info(user_id: Uuid) -> (String, SqlxValues) {
+#[tracing::instrument(skip_all)]
+pub fn get_portfolio_with_asset_account_info(user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .column((PortfolioIden::Table, PortfolioIden::AssetId))
         .column((PortfolioIden::Table, PortfolioIden::Sum))
@@ -45,10 +46,11 @@ pub fn get_portfolio_with_asset_account_info(user_id: Uuid) -> (String, SqlxValu
         )
         .and_where(Expr::col((PortfolioIden::Table, PortfolioIden::UserId)).eq(user_id))
         .build_sqlx(PostgresQueryBuilder)
+        .into()
 }
 
-#[tracing::instrument(ret)]
-pub fn update_portfolio(models: Vec<PortfolioUpdateModel>) -> (String, SqlxValues) {
+#[tracing::instrument(skip_all)]
+pub fn update_portfolio(models: Vec<PortfolioUpdateModel>) -> DbQueryWithValues {
     let mut builder = Query::insert()
         .into_table(PortfolioIden::Table)
         .columns([
@@ -82,11 +84,11 @@ pub fn update_portfolio(models: Vec<PortfolioUpdateModel>) -> (String, SqlxValue
         ]);
     }
 
-    builder.build_sqlx(PostgresQueryBuilder)
+    builder.build_sqlx(PostgresQueryBuilder).into()
 }
 
-#[tracing::instrument(ret)]
-pub fn insert_or_update_portfolio_account(models: PortfolioAccountModel) -> (String, SqlxValues) {
+#[tracing::instrument(skip_all)]
+pub fn insert_or_update_portfolio_account(models: PortfolioAccountModel) -> DbQueryWithValues {
     Query::insert()
         .into_table(PortfolioAccountIden::Table)
         .columns([
@@ -110,24 +112,27 @@ pub fn insert_or_update_portfolio_account(models: PortfolioAccountModel) -> (Str
                 .to_owned(),
         )
         .build_sqlx(PostgresQueryBuilder)
+        .into()
 }
 
-#[tracing::instrument(ret)]
-pub fn get_portfolio_accounts_by_ids(uuids: Vec<Uuid>) -> (String, SqlxValues) {
+#[tracing::instrument(skip_all)]
+pub fn get_portfolio_accounts_by_ids(uuids: Vec<Uuid>) -> DbQueryWithValues {
     Query::select()
         .column((PortfolioAccountIden::Table, PortfolioAccountIden::Id))
         .column((PortfolioAccountIden::Table, PortfolioAccountIden::Name))
         .from(PortfolioAccountIden::Table)
         .and_where(Expr::col(PortfolioAccountIden::Id).is_in(uuids))
         .build_sqlx(PostgresQueryBuilder)
+        .into()
 }
 
-#[tracing::instrument(ret)]
-pub fn get_portfolio_accounts_by_user_id(user_id: Uuid) -> (String, SqlxValues) {
+#[tracing::instrument(skip_all)]
+pub fn get_portfolio_accounts_by_user_id(user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .column((PortfolioAccountIden::Table, PortfolioAccountIden::Id))
         .column((PortfolioAccountIden::Table, PortfolioAccountIden::Name))
         .from(PortfolioAccountIden::Table)
         .and_where(Expr::col(PortfolioAccountIden::UserId).eq(user_id))
         .build_sqlx(PostgresQueryBuilder)
+        .into()
 }

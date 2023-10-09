@@ -10,8 +10,8 @@ use time::Duration;
 use uuid::Uuid;
 
 use crate::{
-    app_error::AppError,
     auth::AuthenticatedUserState,
+    errors::ApiError,
     states::{AssetsServiceState, PortfolioServiceState, UsersServiceState},
     view_models::{
         asset_rate_view_model::AssetRateViewModel,
@@ -27,7 +27,7 @@ pub struct GetPortfolioQueryParams {
     default_asset_id: Option<i32>,
 }
 
-#[tracing::instrument(skip(portfolio_service, _auth, asset_service, user_service), ret, err)]
+#[tracing::instrument(skip_all, err)]
 pub async fn get_portfolio(
     Path(user_id): Path<Uuid>,
     query_params: Query<GetPortfolioQueryParams>,
@@ -35,7 +35,7 @@ pub async fn get_portfolio(
     AssetsServiceState(asset_service): AssetsServiceState,
     UsersServiceState(user_service): UsersServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-) -> Result<Json<PortfolioViewModel>, AppError> {
+) -> Result<Json<PortfolioViewModel>, ApiError> {
     let portfolio_assets_dto = portfolio_service.get_portfolio(user_id).await?;
 
     let mut unique_asset_ids: HashSet<i32> = HashSet::new();
@@ -50,7 +50,7 @@ pub async fn get_portfolio(
     };
 
     let asset_rates: HashMap<i32, AssetPairRateDto> = asset_service
-        .get_asset_rates_default_latest(default_asset, unique_asset_ids)
+        .get_assets_rates_default_latest(default_asset, unique_asset_ids)
         .await?;
 
     let response_assets: Vec<PortfolioEntryViewModel> = portfolio_assets_dto
@@ -72,7 +72,7 @@ pub async fn get_portfolio(
     Ok(response.into())
 }
 
-#[tracing::instrument(skip(portfolio_service, _auth, _asset_service, _user_service), err)]
+#[tracing::instrument(skip_all, err)]
 pub async fn get_portfolio_history(
     Path(user_id): Path<Uuid>,
     query_params: Query<GetPortfolioQueryParams>,
@@ -80,7 +80,7 @@ pub async fn get_portfolio_history(
     AssetsServiceState(_asset_service): AssetsServiceState,
     UsersServiceState(_user_service): UsersServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-) -> Result<Json<PortfolioHistoryViewModel>, AppError> {
+) -> Result<Json<PortfolioHistoryViewModel>, ApiError> {
     let a = portfolio_service
         .get_full_portfolio_history(user_id, 2, Duration::hours(12))
         .await?;
@@ -92,13 +92,13 @@ pub async fn get_portfolio_history(
     Ok(response.into())
 }
 
-#[tracing::instrument(skip(portfolio_service), ret, err)]
+#[tracing::instrument(skip_all, err)]
 pub async fn post_portfolio_account(
     Path(user_id): Path<Uuid>,
     PortfolioServiceState(portfolio_service): PortfolioServiceState,
     AuthenticatedUserState(auth): AuthenticatedUserState,
     Json(params): Json<PortfolioAccountViewModel>,
-) -> Result<Json<PortfolioAccountViewModel>, AppError> {
+) -> Result<Json<PortfolioAccountViewModel>, ApiError> {
     let new_model = portfolio_service
         .insert_or_update_portfolio_account(user_id, params.clone().into())
         .await?;

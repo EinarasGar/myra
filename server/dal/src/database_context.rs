@@ -1,15 +1,13 @@
 use mockall::mock;
-use sea_query_binder::SqlxValues;
 use sqlx::{postgres::PgRow, FromRow, PgPool, Postgres, Transaction};
 
 use anyhow::Result;
 use std::sync::Arc;
 
 use tokio::sync::Mutex as AsyncMutex;
-use tracing::debug_span;
-use tracing::Instrument;
 
 use crate::database_connection::MyraDbConnection;
+use crate::db_sets::DbQueryWithValues;
 
 #[derive(Clone)]
 pub struct MyraDb {
@@ -25,6 +23,7 @@ impl MyraDb {
         }
     }
 
+    #[tracing::instrument(skip(self), err)]
     pub async fn start_transaction(&self) -> Result<(), sqlx::Error> {
         let mut tx_guard = self.transaction.lock().await;
 
@@ -36,6 +35,7 @@ impl MyraDb {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self), err)]
     pub async fn commit_transaction(&self) -> Result<(), sqlx::Error> {
         let mut tx_guard = self.transaction.lock().await;
 
@@ -51,34 +51,34 @@ impl MyraDb {
         Ok(())
     }
 
-    pub async fn fetch_all_in_trans<T>(
-        &self,
-        query: (String, SqlxValues),
-    ) -> Result<Vec<T>, sqlx::Error>
+    #[tracing::instrument(skip(self), err)]
+    pub async fn fetch_all<T>(&self, query: DbQueryWithValues) -> Result<Vec<T>, sqlx::Error>
     where
         for<'r> T: FromRow<'r, PgRow> + Send + Unpin,
     {
         let mut tx_guard = self.transaction.lock().await;
         if let Some(ref mut tx) = &mut *tx_guard {
-            let rows = sqlx::query_as_with::<_, T, _>(&query.0, query.1.clone())
+            let rows = sqlx::query_as_with::<_, T, _>(&query.query, query.values)
                 .fetch_all(&mut **tx)
-                .instrument(debug_span!("fetch_all_in_trans", ?query))
                 .await?;
             Ok(rows)
         } else {
-            Err(sqlx::Error::Configuration("No transaction to use".into()))
+            let rows = sqlx::query_as_with::<_, T, _>(&query.query, query.values)
+                .fetch_all(&self.pool)
+                .await?;
+            Ok(rows)
         }
     }
 
-    pub async fn fetch_all_in_trans_scalar(
+    #[tracing::instrument(skip(self), err)]
+    pub async fn fetch_all_scalar(
         &self,
-        query: (String, SqlxValues),
+        query: DbQueryWithValues,
     ) -> Result<Vec<i32>, sqlx::Error> {
         let mut tx_guard = self.transaction.lock().await;
         if let Some(ref mut tx) = &mut *tx_guard {
-            let rows = sqlx::query_scalar_with(&query.0, query.1.clone())
+            let rows = sqlx::query_scalar_with(&query.query, query.values)
                 .fetch_all(&mut **tx)
-                .instrument(debug_span!("fetch_all_in_trans_scalar", ?query))
                 .await?;
             Ok(rows)
         } else {
@@ -86,64 +86,40 @@ impl MyraDb {
         }
     }
 
-    pub async fn fetch_one_in_trans<T>(&self, query: (String, SqlxValues)) -> Result<T, sqlx::Error>
+    #[tracing::instrument(skip(self), err)]
+    pub async fn fetch_one<T>(&self, query: DbQueryWithValues) -> Result<T, sqlx::Error>
     where
         for<'r> T: FromRow<'r, PgRow> + Send + Unpin,
     {
         let mut tx_guard = self.transaction.lock().await;
         if let Some(ref mut tx) = &mut *tx_guard {
-            let rows = sqlx::query_as_with::<_, T, _>(&query.0, query.1.clone())
+            let rows = sqlx::query_as_with::<_, T, _>(&query.query, query.values)
                 .fetch_one(&mut **tx)
-                .instrument(debug_span!("fetch_one_in_trans", ?query))
                 .await?;
             Ok(rows)
         } else {
-            Err(sqlx::Error::Configuration("No transaction to use".into()))
+            let rows = sqlx::query_as_with::<_, T, _>(&query.query, query.values)
+                .fetch_one(&self.pool)
+                .await?;
+            Ok(rows)
         }
     }
 
-    pub async fn execute_in_trans(&self, query: (String, SqlxValues)) -> Result<(), sqlx::Error> {
+    #[tracing::instrument(skip(self), err)]
+    pub async fn execute(&self, query: DbQueryWithValues) -> Result<(), sqlx::Error> {
         let mut tx_guard = self.transaction.lock().await;
         if let Some(ref mut tx) = &mut *tx_guard {
-            sqlx::query_with(&query.0, query.1.clone())
+            sqlx::query_with(&query.query, query.values)
                 .execute(&mut **tx)
-                .instrument(debug_span!("execute_in_trans", ?query))
                 .await?;
             Ok(())
         } else {
-            Err(sqlx::Error::Configuration("No transaction to use".into()))
+            sqlx::query_with(&query.query, query.values)
+                .execute(&self.pool)
+                .await?;
+
+            Ok(())
         }
-    }
-
-    pub async fn fetch_all<T>(&self, query: (String, SqlxValues)) -> Result<Vec<T>, sqlx::Error>
-    where
-        for<'r> T: FromRow<'r, PgRow> + Send + Unpin,
-    {
-        let rows = sqlx::query_as_with::<_, T, _>(&query.0, query.1.clone())
-            .fetch_all(&self.pool)
-            .instrument(debug_span!("fetch_all", ?query))
-            .await?;
-        Ok(rows)
-    }
-
-    pub async fn fetch_one<T>(&self, query: (String, SqlxValues)) -> Result<T, sqlx::Error>
-    where
-        for<'r> T: FromRow<'r, PgRow> + Send + Unpin,
-    {
-        let rows = sqlx::query_as_with::<_, T, _>(&query.0, query.1.clone())
-            .fetch_one(&self.pool)
-            .instrument(debug_span!("fetch_one", ?query))
-            .await?;
-        Ok(rows)
-    }
-
-    pub async fn execute(&self, query: (String, SqlxValues)) -> Result<(), sqlx::Error> {
-        sqlx::query_with(&query.0, query.1.clone())
-            .execute(&self.pool)
-            .instrument(debug_span!("execute", ?query))
-            .await?;
-
-        Ok(())
     }
 }
 
@@ -153,22 +129,16 @@ mock! {
 
         pub async fn start_transaction(&self) -> Result<(), sqlx::Error>;
         pub async fn commit_transaction(&self) -> Result<(), sqlx::Error>;
-        pub async fn fetch_all_in_trans<T: 'static>(
+        pub async fn fetch_all<T: 'static>(
             &self,
-            query: (String, SqlxValues),
+            query: DbQueryWithValues,
         ) -> Result<Vec<T>, sqlx::Error>;
-        pub async fn fetch_all_in_trans_scalar(
+        pub async fn fetch_all_scalar(
             &self,
-            query: (String, SqlxValues),
+            query: DbQueryWithValues,
         ) -> Result<Vec<i32>, sqlx::Error>;
-        pub async fn fetch_one_in_trans<T: 'static>(&self, query: (String, SqlxValues)) -> Result<T, sqlx::Error>;
-
-        pub async fn execute_in_trans(&self, query: (String, SqlxValues)) -> Result<(), sqlx::Error>;
-
-        pub async fn fetch_all<T: 'static>(&self, query: (String, SqlxValues)) -> Result<Vec<T>, sqlx::Error>;
-
-        pub async fn fetch_one<T: 'static>(&self, query: (String, SqlxValues)) -> Result<T, sqlx::Error>;
-        pub async fn execute(&self, query: (String, SqlxValues)) -> Result<(), sqlx::Error>;
+        pub async fn fetch_one<T: 'static>(&self, query: DbQueryWithValues) -> Result<T, sqlx::Error>;
+        pub async fn execute(&self, query: DbQueryWithValues) -> Result<(), sqlx::Error>;
     }
 
     impl Clone for MyraDb {

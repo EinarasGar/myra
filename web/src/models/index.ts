@@ -1,6 +1,7 @@
 export * from "./addTransactionGroupViewModel";
 export * from "./addTransactionViewModel";
 export * from "./addUserViewModel";
+export * from "./assetRateViewModel";
 export * from "./assetViewModel";
 export * from "./authViewModel";
 export * from "./categoryViewModel";
@@ -14,3 +15,7 @@ export * from "./transactionViewModel";
 export * from "./updateTransactionGroupViewModel";
 export * from "./updateTransactionViewModel";
 export * from "./userViewModel";
+export * from "./assetPairViewModel";
+export * from "./portfolioHistoryViewModel";
+export * from "./addAssetViewModel";
+export * from "./addAssetRateViewModel";

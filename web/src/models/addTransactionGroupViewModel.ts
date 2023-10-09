@@ -1,4 +1,4 @@
-import { AddTransactonViewModel } from "./addTransactionViewModel";
+import { AddTransactonViewModel } from "./addTransactonViewModel";
 
 export interface AddTransactionGroupViewModel {
   transactions: AddTransactonViewModel[];

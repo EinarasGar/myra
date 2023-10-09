@@ -1,3 +1,5 @@
+pub mod add_asset_rate_view_model;
+pub mod add_asset_view_model;
 pub mod add_transaction_group_view_model;
 pub mod add_transaction_view_model;
 pub mod add_user_view_model;

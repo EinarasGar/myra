@@ -1,8 +1,9 @@
 use sea_query::{
-    extension::postgres::PgExpr, Alias, Cond, Expr, Func, Order, PostgresQueryBuilder, Query,
+    extension::postgres::PgExpr, Alias, Asterisk, Cond, Expr, Func, Order, PostgresQueryBuilder,
+    Query,
 };
-use sea_query_binder::{SqlxBinder, SqlxValues};
-use sqlx::types::time::OffsetDateTime;
+use sea_query_binder::SqlxBinder;
+use sqlx::types::{time::OffsetDateTime, Uuid};
 
 use crate::{
     idens::asset_idens::{
@@ -14,14 +15,17 @@ use crate::{
     },
 };
 
-#[tracing::instrument(ret)]
-pub fn get_assets(page_length: u64, page: u64, search: Option<String>) -> (String, SqlxValues) {
+use super::DbQueryWithValues;
+
+#[tracing::instrument(skip_all)]
+pub fn get_public_assets(page_length: u64, page: u64, search: Option<String>) -> DbQueryWithValues {
     let rows_to_skip = page_length * page;
 
     Query::select()
         .column((AssetsIden::Table, AssetsIden::Id))
         .column((AssetsIden::Table, AssetsIden::Name))
         .column((AssetsIden::Table, AssetsIden::Ticker))
+        .column((AssetsIden::Table, AssetsIden::UserId))
         .expr_as(
             Expr::col((AssetTypesIden::Table, AssetTypesIden::Name)),
             Alias::new("category"),
@@ -49,13 +53,15 @@ pub fn get_assets(page_length: u64, page: u64, search: Option<String>) -> (Strin
             },
             |_| {},
         )
+        .and_where(Expr::col((AssetsIden::Table, AssetsIden::UserId)).is_null())
         .limit(page_length)
         .offset(rows_to_skip)
         .build_sqlx(PostgresQueryBuilder)
+        .into()
 }
 
-#[tracing::instrument(ret)]
-pub fn get_asset(id: i32) -> (String, SqlxValues) {
+#[tracing::instrument(skip_all)]
+pub fn get_users_assets(user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .column((AssetsIden::Table, AssetsIden::Id))
         .column((AssetsIden::Table, AssetsIden::Name))
@@ -70,36 +76,53 @@ pub fn get_asset(id: i32) -> (String, SqlxValues) {
             Expr::col((AssetsIden::Table, AssetsIden::AssetType))
                 .equals((AssetTypesIden::Table, AssetTypesIden::Id)),
         )
+        .and_where(Expr::col((AssetsIden::Table, AssetsIden::UserId)).eq(user_id))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn get_asset(id: i32) -> DbQueryWithValues {
+    Query::select()
+        .column((AssetsIden::Table, AssetsIden::Id))
+        .column((AssetsIden::Table, AssetsIden::Name))
+        .column((AssetsIden::Table, AssetsIden::Ticker))
+        .column((AssetsIden::Table, AssetsIden::UserId))
+        .expr_as(
+            Expr::col((AssetTypesIden::Table, AssetTypesIden::Name)),
+            Alias::new("category"),
+        )
+        .from(AssetsIden::Table)
+        .inner_join(
+            AssetTypesIden::Table,
+            Expr::col((AssetsIden::Table, AssetsIden::AssetType))
+                .equals((AssetTypesIden::Table, AssetTypesIden::Id)),
+        )
         .and_where(Expr::col((AssetsIden::Table, AssetsIden::Id)).eq(id))
         .build_sqlx(PostgresQueryBuilder)
+        .into()
 }
 
-#[tracing::instrument()]
-pub fn insert_asset(asset: InsertAsset) -> (String, SqlxValues) {
-    Query::insert()
-        .into_table(AssetsIden::Table)
-        .columns([
-            AssetsIden::AssetType,
-            AssetsIden::Name,
-            AssetsIden::Ticker,
-            AssetsIden::BasePairId,
-        ])
-        .values_panic([
-            asset.asset_type.into(),
-            asset.name.into(),
-            asset.ticker.into(),
-            asset.base_pair_id.into(),
-        ])
-        .returning_col(AssetsIden::Id)
+#[tracing::instrument(skip_all)]
+pub fn get_pair_id(pair1: i32, pair2: i32) -> DbQueryWithValues {
+    Query::select()
+        .column((AssetPairsIden::Table, AssetPairsIden::Id))
+        .from(AssetPairsIden::Table)
+        .and_where(
+            Expr::col(AssetPairsIden::Pair1)
+                .eq(pair1)
+                .and(Expr::col(AssetPairsIden::Pair2).eq(pair2)),
+        )
         .build_sqlx(PostgresQueryBuilder)
+        .into()
 }
 
-#[tracing::instrument()]
+#[tracing::instrument(skip_all)]
 pub fn get_latest_asset_pair_rates(
     pairs: Vec<AssetPair>,
     date_floor: Option<OffsetDateTime>,
     only_latest: bool,
-) -> (String, SqlxValues) {
+) -> DbQueryWithValues {
     let tuples: Vec<(i32, i32)> = pairs.iter().map(|x| (x.pair1, x.pair2)).collect();
     let base_main_ids: Vec<i32> = pairs.iter().map(|x| x.pair1).collect();
 
@@ -214,10 +237,11 @@ pub fn get_latest_asset_pair_rates(
             Expr::value(true),
         )
         .build_sqlx(PostgresQueryBuilder)
+        .into()
 }
 
-#[tracing::instrument()]
-pub fn get_pair_rates(pair1: i32, pair2: i32) -> (String, SqlxValues) {
+#[tracing::instrument(skip_all)]
+pub fn get_pair_rates(pair1: i32, pair2: i32) -> DbQueryWithValues {
     Query::select()
         .column((AssetHistoryIden::Table, AssetHistoryIden::Rate))
         .column((AssetHistoryIden::Table, AssetHistoryIden::Date))
@@ -237,27 +261,86 @@ pub fn get_pair_rates(pair1: i32, pair2: i32) -> (String, SqlxValues) {
         )
         .order_by(AssetHistoryIden::Date, Order::Desc)
         .build_sqlx(PostgresQueryBuilder)
+        .into()
 }
 
-#[tracing::instrument()]
-pub fn insert_pair_rate(rate: AssetPairRateInsert) -> (String, SqlxValues) {
-    Query::insert()
+#[tracing::instrument(skip_all)]
+pub fn insert_pair_rates(rates: Vec<AssetPairRateInsert>) -> DbQueryWithValues {
+    let mut query_builder = Query::insert()
         .into_table(AssetHistoryIden::Table)
         .columns([
             AssetHistoryIden::PairId,
             AssetHistoryIden::Rate,
             AssetHistoryIden::Date,
         ])
-        .values_panic([rate.pair_id.into(), rate.rate.into(), rate.date.into()])
-        .build_sqlx(PostgresQueryBuilder)
+        .to_owned();
+
+    rates.into_iter().for_each(|rate| {
+        query_builder.values_panic([rate.pair_id.into(), rate.rate.into(), rate.date.into()]);
+    });
+
+    query_builder.build_sqlx(PostgresQueryBuilder).into()
 }
 
-#[tracing::instrument()]
-pub fn inser_pair(pair: AssetPair) -> (String, SqlxValues) {
+#[tracing::instrument(skip_all)]
+pub fn inser_pair(pair: AssetPair) -> DbQueryWithValues {
     Query::insert()
         .into_table(AssetPairsIden::Table)
         .columns([AssetPairsIden::Pair1, AssetPairsIden::Pair2])
         .values_panic([pair.pair1.into(), pair.pair2.into()])
         .returning_col(AssetPairsIden::Id)
         .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn insert_asset(asset: InsertAsset) -> DbQueryWithValues {
+    Query::insert()
+        .into_table(AssetsIden::Table)
+        .columns([
+            AssetsIden::AssetType,
+            AssetsIden::Name,
+            AssetsIden::Ticker,
+            AssetsIden::BasePairId,
+            AssetsIden::UserId,
+        ])
+        .values_panic([
+            asset.asset_type.into(),
+            asset.name.into(),
+            asset.ticker.into(),
+            asset.base_pair_id.into(),
+            asset.user_id.into(),
+        ])
+        .returning_col(AssetsIden::Id)
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn asset_exists_by_id_and_user_id(asset_id: i32, user_id: Uuid) -> DbQueryWithValues {
+    Query::select()
+        .expr(Expr::exists(
+            Query::select()
+                .from(AssetsIden::Table)
+                .and_where(Expr::col(AssetsIden::Id).eq(asset_id))
+                .and_where(Expr::col(AssetsIden::UserId).eq(user_id))
+                .take(),
+        ))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn assets_count_by_ids_and_access(asset_ids: Vec<i32>, user_id: Uuid) -> DbQueryWithValues {
+    Query::select()
+        .expr(Expr::col(Asterisk).count())
+        .from(AssetsIden::Table)
+        .and_where(Expr::col(AssetsIden::Id).is_in(asset_ids))
+        .and_where(
+            Expr::col(AssetsIden::UserId)
+                .eq(user_id)
+                .or(Expr::col(AssetsIden::UserId).is_null()),
+        )
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
 }

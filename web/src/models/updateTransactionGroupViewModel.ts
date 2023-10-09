@@ -1,8 +1,8 @@
-import { UpdateTransactonViewModel } from "./updateTransactionViewModel";
+import { UpdateTransactionViewModel } from "./updateTransactionViewModel";
 
 export interface UpdateTransactionGroupViewModel {
   id: string;
-  transactions: UpdateTransactonViewModel[];
+  transactions: UpdateTransactionViewModel[];
   description: string;
   category_id: number;
   date: string;

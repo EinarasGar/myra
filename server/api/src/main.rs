@@ -4,8 +4,8 @@ use tracing::info;
 
 use crate::states::AppState;
 
-pub(crate) mod app_error;
 pub mod auth;
+pub mod errors;
 mod fallback;
 pub(crate) mod handlers;
 mod observability;

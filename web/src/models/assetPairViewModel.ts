@@ -1,5 +1,5 @@
-import { AssetRateViewModel } from "./assetRateViewModel";
 import { AssetViewModel } from "./assetViewModel";
+import { AssetRateViewModel } from "./assetRateViewModel";
 
 export interface AssetPairViewModel {
   pair1: AssetViewModel;

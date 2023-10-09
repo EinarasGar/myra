@@ -33,17 +33,23 @@ use crate::dtos::{
     transaction_group_dto::TransactionGroupDto,
 };
 
+use super::asset_service::AssetsService;
+
 #[derive(Clone)]
 pub struct TransactionService {
     db: MyraDb,
+    asset_service: AssetsService,
 }
 
 impl TransactionService {
     pub fn new(db: MyraDb) -> Self {
-        Self { db }
+        Self {
+            asset_service: AssetsService::new(db.clone()),
+            db,
+        }
     }
 
-    #[tracing::instrument(skip(self), ret, err)]
+    #[tracing::instrument(skip_all, err)]
     pub async fn add_transaction_group(
         &self,
         user_id: Uuid,
@@ -63,6 +69,17 @@ impl TransactionService {
         //Start SQL transaction. If anything following fails, no changes will be made to the database
         self.db.start_transaction().await?;
 
+        let asset_ids = group
+            .transactions
+            .iter()
+            .map(|x| x.asset_id)
+            .collect::<Vec<i32>>();
+        let unique_asset_ids = get_unique_vec(&asset_ids);
+
+        self.asset_service
+            .check_assets_access(user_id, unique_asset_ids)
+            .await?;
+
         let mut quantities_map = std::collections::HashMap::new();
         dal_transactions.clone().iter().for_each(|model| {
             update_quantity_sum(
@@ -79,19 +96,19 @@ impl TransactionService {
 
         //Update portfolio
         let query = portfolio_db_set::update_portfolio(portfolio_updates);
-        self.db.execute_in_trans(query).await?;
+        self.db.execute(query).await?;
 
         //Insert new transcations and get their auto-generated ids back
         let query = transaction_db_set::insert_transactions(dal_transactions.clone());
 
-        let mut new_transaction_ids = self.db.fetch_all_in_trans_scalar(query).await?;
+        let mut new_transaction_ids = self.db.fetch_all_scalar(query).await?;
 
         //As we are using this array to pop elements from, reverse it so its in order
         new_transaction_ids.reverse();
 
         //Insert group
         let query = transaction_db_set::insert_transaction_group(dal_group.clone());
-        self.db.execute_in_trans(query).await?;
+        self.db.execute(query).await?;
 
         //Create a list of required description updates. If the list is empty, we don't need to update
         let transaction_decription_models =
@@ -99,7 +116,7 @@ impl TransactionService {
 
         if !transaction_decription_models.is_empty() {
             let query = transaction_db_set::insert_descriptions(transaction_decription_models);
-            self.db.execute_in_trans(query).await?;
+            self.db.execute(query).await?;
         }
 
         let account_ids_vec: Vec<Uuid> = dal_transactions.iter().map(|x| x.account_id).collect();
@@ -108,7 +125,7 @@ impl TransactionService {
         let query = portfolio_db_set::get_portfolio_accounts_by_ids(account_ids_unique_vec);
         let portfolio_account_vec = self
             .db
-            .fetch_all_in_trans::<PortfolioAccountIdNameModel>(query)
+            .fetch_all::<PortfolioAccountIdNameModel>(query)
             .await?;
 
         //Save changes
@@ -152,7 +169,7 @@ impl TransactionService {
         Ok(result)
     }
 
-    #[tracing::instrument(skip(self), ret, err)]
+    #[tracing::instrument(skip_all, err)]
     pub async fn update_transaction_group(
         &self,
         user_id: Uuid,
@@ -161,12 +178,23 @@ impl TransactionService {
         //Start SQL transaction. If anything following fails, no changes will be made to the database
         self.db.start_transaction().await?;
 
+        let asset_ids = group
+            .transactions
+            .iter()
+            .map(|x| x.asset_id)
+            .collect::<Vec<i32>>();
+        let unique_asset_ids = get_unique_vec(&asset_ids);
+
+        self.asset_service
+            .check_assets_access(user_id, unique_asset_ids)
+            .await?;
+
         let group_id = group.id.unwrap();
 
         let query = transaction_db_set::get_transaction_group(group_id);
         let old_group_transactions = self
             .db
-            .fetch_all_in_trans::<TransactionWithGroupModel>(query)
+            .fetch_all::<TransactionWithGroupModel>(query)
             .await?;
 
         //Compare the group data and update it if changed
@@ -250,32 +278,32 @@ impl TransactionService {
 
         if old_group_data != updated_group {
             let query = transaction_db_set::update_group(updated_group.clone());
-            self.db.execute_in_trans(query).await?;
+            self.db.execute(query).await?;
         }
 
         if !removed_ids.is_empty() {
             let query = transaction_db_set::delete_descriptions(removed_ids.clone());
-            self.db.execute_in_trans(query).await?;
+            self.db.execute(query).await?;
             let query = transaction_db_set::delete_transactions(removed_ids);
-            self.db.execute_in_trans(query).await?;
+            self.db.execute(query).await?;
         }
 
         if !portfolio_updates.is_empty() {
             let query = portfolio_db_set::update_portfolio(portfolio_updates);
-            self.db.execute_in_trans(query).await?;
+            self.db.execute(query).await?;
         }
 
         let mut new_transaction_ids: Vec<i32> = Vec::new();
         if !dal_transactions.is_empty() {
             let query = transaction_db_set::insert_transactions(dal_transactions.clone());
-            new_transaction_ids = self.db.fetch_all_in_trans_scalar(query).await?;
+            new_transaction_ids = self.db.fetch_all_scalar(query).await?;
             new_transaction_ids.reverse();
             let transaction_decription_models =
                 create_add_description_models(&added, &new_transaction_ids);
 
             if !transaction_decription_models.is_empty() {
                 let query = transaction_db_set::insert_descriptions(transaction_decription_models);
-                self.db.execute_in_trans(query).await?;
+                self.db.execute(query).await?;
             }
         }
 
@@ -288,7 +316,7 @@ impl TransactionService {
                     old.id,
                     new.description.clone().unwrap(),
                 );
-                self.db.execute_in_trans(query).await?;
+                self.db.execute(query).await?;
             }
 
             let new_model = AddUpdateTransactionModel {
@@ -308,7 +336,7 @@ impl TransactionService {
             //has changed. any data stored in other tables is to be comapred before
             if !new.compare_core(&old) {
                 let query = transaction_db_set::update_transaction(old.id, new_model);
-                self.db.execute_in_trans(query).await?;
+                self.db.execute(query).await?;
             }
         }
 
@@ -323,15 +351,10 @@ impl TransactionService {
 
         let portfolio_account_vec = self
             .db
-            .fetch_all_in_trans::<PortfolioAccountIdNameModel>(query)
+            .fetch_all::<PortfolioAccountIdNameModel>(query)
             .await?;
 
         self.db.commit_transaction().await?;
-        //Save changes
-        // trans
-        //     .commit()
-        //     .instrument(info_span!("commit_sql_transaction"))
-        //     .await?;
 
         let result: TransactionGroupDto = TransactionGroupDto {
             transactions: group
@@ -367,7 +390,7 @@ impl TransactionService {
         Ok(result)
     }
 
-    #[tracing::instrument(skip(self), ret, err)]
+    #[tracing::instrument(skip_all, err)]
     pub async fn get_transaction_groups(
         &self,
         user_id: Uuid,
@@ -411,7 +434,7 @@ impl TransactionService {
         Ok(result_dto_vec)
     }
 
-    #[tracing::instrument(skip(self), ret, err)]
+    #[tracing::instrument(skip_all, err)]
     pub async fn get_all_categories(&self) -> anyhow::Result<Vec<CategoryDto>> {
         let query = transaction_db_set::get_categories();
         let models = self.db.fetch_all::<CategoryModel>(query).await?;
@@ -419,7 +442,7 @@ impl TransactionService {
         Ok(ret_vec)
     }
 
-    #[tracing::instrument(skip(self), ret, err)]
+    #[tracing::instrument(skip_all, err)]
     pub async fn delete_transaction_group(
         &self,
         user_id: Uuid,
@@ -431,7 +454,7 @@ impl TransactionService {
         let query = transaction_db_set::get_transaction_group(group_id);
         let transactions = self
             .db
-            .fetch_all_in_trans::<TransactionWithGroupModel>(query)
+            .fetch_all::<TransactionWithGroupModel>(query)
             .await?;
 
         let mut removed_ids: Vec<i32> = Vec::new();
@@ -449,26 +472,26 @@ impl TransactionService {
 
         if !removed_ids.is_empty() {
             let query = transaction_db_set::delete_descriptions(removed_ids.clone());
-            self.db.execute_in_trans(query).await?;
+            self.db.execute(query).await?;
             let query = transaction_db_set::delete_transactions(removed_ids);
-            self.db.execute_in_trans(query).await?;
+            self.db.execute(query).await?;
         }
 
         let portfolio_updates = create_portfolio_updates_from_map(quantities_map);
         if !portfolio_updates.is_empty() {
             let query = portfolio_db_set::update_portfolio(portfolio_updates);
-            self.db.execute_in_trans(query).await?;
+            self.db.execute(query).await?;
         }
 
         let query = transaction_db_set::delete_transaction_group(group_id);
-        self.db.execute_in_trans(query).await?;
+        self.db.execute(query).await?;
         //Save changes
         self.db.commit_transaction().await?;
 
         Ok(())
     }
 
-    #[tracing::instrument(skip(self), ret, err)]
+    #[tracing::instrument(skip_all, err)]
     pub async fn get_all_transaction_financials(
         &self,
         user_id: Uuid,

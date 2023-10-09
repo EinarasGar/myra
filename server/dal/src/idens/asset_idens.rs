@@ -15,6 +15,7 @@ pub enum AssetsIden {
     Name,
     Ticker,
     BasePairId,
+    UserId,
 }
 
 #[allow(dead_code)]
@@ -68,6 +69,7 @@ impl Iden for AssetsIden {
                 Self::Name => "name",
                 Self::Ticker => "ticker",
                 Self::BasePairId => "base_pair_id",
+                Self::UserId => "user_id",
             }
         )
         .unwrap();

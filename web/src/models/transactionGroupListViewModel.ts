@@ -1,5 +1,5 @@
-import { AssetViewModel } from "./assetViewModel";
 import { TransactionGroupViewModel } from "./transactionGroupViewModel";
+import { AssetViewModel } from "./assetViewModel";
 
 export interface TransactionGroupListViewModel {
   groups: TransactionGroupViewModel[];

@@ -1,4 +1,4 @@
-export interface UpdateTransactonViewModel {
+export interface UpdateTransactionViewModel {
   id?: number;
   asset_id: number;
   quantity: number;

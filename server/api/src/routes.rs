@@ -39,6 +39,18 @@ pub(crate) fn create_router(state: AppState) -> Router {
             "/api/users/:user_id/portfolio/accounts",
             post(handlers::portfolio_handler::post_portfolio_account),
         )
+        .route(
+            "/api/users/:user_id/assets",
+            post(handlers::asset_handler::post_custom_asset),
+        )
+        .route(
+            "/api/users/:user_id/assets/:id/:pair2",
+            post(handlers::asset_handler::post_custom_asset_rates),
+        )
+        .route(
+            "/api/users/:user_id/assets/:id/:pair2",
+            get(handlers::asset_handler::get_custom_asset_pair),
+        )
         .route("/api/assets", get(handlers::asset_handler::get_assets))
         .route(
             "/api/assets/:id",

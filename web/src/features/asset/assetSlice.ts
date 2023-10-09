@@ -51,6 +51,15 @@ export const assetSlice = createSlice({
         (state, { payload }) => {
           state.values = insertAndSortAssets(state.values, payload);
         }
+      )
+      .addMatcher(
+        myraApi.endpoints.getUser.matchFulfilled,
+        (state, { payload }) => {
+          state.values = insertAndSortAssets(
+            state.values,
+            payload.custom_assets
+          );
+        }
       );
   },
 });

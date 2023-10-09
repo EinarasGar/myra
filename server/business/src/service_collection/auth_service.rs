@@ -47,7 +47,7 @@ impl AuthService {
         }
     }
 
-    #[tracing::instrument(skip(self, password), ret, err)]
+    #[tracing::instrument(skip_all, err)]
     pub async fn get_auth_token(
         &self,
         username: String,
@@ -70,7 +70,7 @@ impl AuthService {
         Ok(token)
     }
 
-    #[tracing::instrument(skip(self), ret, err)]
+    #[tracing::instrument(skip_all, err)]
     pub fn verify_auth_token(&self, token: String) -> anyhow::Result<ClaimsDto> {
         let token_message =
             decode::<ClaimsDto>(&token, &self.jwt_keys.decoding, &Validation::default())?;

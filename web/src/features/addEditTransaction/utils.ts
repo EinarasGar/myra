@@ -1,5 +1,10 @@
 /* eslint-disable react/destructuring-assignment */
-import { AddTransactionGroupViewModel, AddTransactonViewModel, UpdateTransactionGroupViewModel, UpdateTransactonViewModel } from "@/models";
+import {
+  AddTransactionGroupViewModel,
+  AddTransactonViewModel,
+  UpdateTransactionGroupViewModel,
+  UpdateTransactionViewModel,
+} from "@/models";
 import { GroupState } from "./models/GroupState";
 import { RowState } from "./models/RowState";
 
@@ -63,7 +68,7 @@ export function MapRowStatesToUpdateModel(
 
   if (tranasctions.length === 0) return null;
 
-  const tranasctionModels: UpdateTransactonViewModel[] = [];
+  const tranasctionModels: UpdateTransactionViewModel[] = [];
 
   for (let i = 0; i < tranasctions.length; i += 1) {
     const trans = tranasctions[i];
