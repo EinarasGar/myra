@@ -1,5 +1,5 @@
 use business::{
-    dtos::{asset_insert_dto::InsertAssetDto, asset_pair_rate_insert_dto::AssetPairRateInsertDto},
+    dtos::{asset_insert_dto::AssetInsertDto, asset_pair_rate_insert_dto::AssetPairRateInsertDto},
     service_collection::{asset_service::AssetsService, Services},
 };
 use rust_decimal::{prelude::FromPrimitive, Decimal};
@@ -34,7 +34,7 @@ async fn add_data_to_existing_asset_pair() {
             OffsetDateTime::from_unix_timestamp(quote.timestamp.try_into().unwrap()).unwrap();
         let price = quote.close;
         asset_service
-            .add_asset_rate(AssetPairRateInsertDto {
+            .insert_asset_pair_rate(AssetPairRateInsertDto {
                 pair_id: asset_pair_id,
                 rate: Decimal::from_f64(price).unwrap(),
                 date,
@@ -56,11 +56,12 @@ async fn add_new_asset_with_data() {
     let services = Services::new().await.unwrap();
     let asset_service = AssetsService::new(services.get_db_instance());
     let kkkk = asset_service
-        .add_asset(InsertAssetDto {
+        .add_asset(AssetInsertDto {
             name: asset_name.to_string(),
             ticker: asset_ticker.to_string(),
             asset_type,
             base_pair_id,
+            user_id: None,
         })
         .await
         .unwrap();
@@ -80,7 +81,7 @@ async fn add_new_asset_with_data() {
             OffsetDateTime::from_unix_timestamp(quote.timestamp.try_into().unwrap()).unwrap();
         let price = quote.close;
         asset_service
-            .add_asset_rate(AssetPairRateInsertDto {
+            .insert_asset_pair_rate(AssetPairRateInsertDto {
                 pair_id: kkkk.new_asset_pair_id.unwrap(),
                 rate: Decimal::from_f64(price).unwrap(),
                 date,

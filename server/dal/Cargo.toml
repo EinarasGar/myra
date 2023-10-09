@@ -6,13 +6,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = { version = "1.0.72", features = ["backtrace"] }
-async-trait = "0.1.72"
-sea-query = { version = "0.30.0", features = ["backend-postgres", "postgres-array", "with-uuid", "with-time", "with-rust_decimal"] }
+anyhow = { version = "1.0.75", features = ["backtrace"] }
+async-trait = "0.1.73"
+sea-query = { version = "0.30.2", features = ["backend-postgres", "postgres-array", "with-uuid", "with-time", "with-rust_decimal"] }
 sea-query-binder = { version = "0.5.0", features = ["sqlx-postgres", "postgres-array", "with-uuid", "with-time", "with-rust_decimal"] }
-sqlx = { version = "0.7.1", features = ["runtime-tokio-rustls", "postgres", "uuid", "time", "rust_decimal", "macros"] }
-serde = "1.0.174"
-tokio = { version = "1.29.1", features = ["full"] }
+sqlx = { version = "0.7.2", features = ["runtime-tokio-rustls", "postgres", "uuid", "time", "rust_decimal", "macros"] }
+serde = "1.0.188"
+tokio = { version = "1.33.0", features = ["full"] }
 tracing = { version = "0.1.38", features = ["async-await", "log"] }
 mockall = "0.11.4"
  

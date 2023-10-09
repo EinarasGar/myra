@@ -34,7 +34,7 @@ pub async fn get_user_by_id(
     AssetsServiceState(assets_service): AssetsServiceState,
     PortfolioServiceState(portfolio_service): PortfolioServiceState,
     UsersServiceState(users_service): UsersServiceState,
-    AuthenticatedUserState(auth): AuthenticatedUserState,
+    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<UserViewModel>, ApiError> {
     let (user, portfolio_accounts) = tokio::try_join!(
         users_service.get_full_user(user_id),

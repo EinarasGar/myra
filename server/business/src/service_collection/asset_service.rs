@@ -52,7 +52,7 @@ impl AssetsService {
 
     #[tracing::instrument(skip_all, err)]
     pub async fn get_all_user_assets(&self, user_id: Uuid) -> anyhow::Result<Vec<AssetDto>> {
-        let query = asset_db_set::get_users_assets(user_id.clone());
+        let query = asset_db_set::get_users_assets(user_id);
         let models = self.db.fetch_all::<PublicAsset>(query).await?;
 
         let ret_vec: Vec<AssetDto> = models
@@ -62,7 +62,7 @@ impl AssetsService {
                 name: val.name,
                 category: val.category,
                 asset_id: val.id,
-                owner: Some(user_id.clone()),
+                owner: Some(user_id),
             })
             .collect();
 

@@ -99,7 +99,7 @@ pub fn insert_or_update_portfolio_account(models: PortfolioAccountModel) -> DbQu
         .values_panic(vec![
             models.id.to_owned().into(),
             models.user_id.to_owned().into(),
-            models.name.to_owned().into(),
+            models.name.into(),
         ])
         .on_conflict(
             OnConflict::column(PortfolioAccountIden::Id)

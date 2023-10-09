@@ -145,20 +145,20 @@ pub async fn post_custom_asset_rates(
         .await?;
 
     //Recall same asset pair get method
-    let updated_asset_response = self::get_custom_asset_pair(
+    self::get_custom_asset_pair(
         Path((user_id, pair1, pair2)),
         AuthenticatedUserState(_auth),
         AssetsServiceState(assets_service),
     )
-    .await;
-
-    updated_asset_response
+    .await
 }
 
+#[allow(dead_code)]
 pub async fn delete_custom_asset_rate() {
     todo!();
 }
 
+#[allow(dead_code)]
 pub async fn delete_custom_asset() {
     todo!();
 }

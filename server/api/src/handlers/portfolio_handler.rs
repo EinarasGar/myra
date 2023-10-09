@@ -78,15 +78,21 @@ pub async fn get_portfolio_history(
     query_params: Query<GetPortfolioQueryParams>,
     PortfolioServiceState(portfolio_service): PortfolioServiceState,
     AssetsServiceState(_asset_service): AssetsServiceState,
-    UsersServiceState(_user_service): UsersServiceState,
+    UsersServiceState(user_service): UsersServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<PortfolioHistoryViewModel>, ApiError> {
-    let a = portfolio_service
-        .get_full_portfolio_history(user_id, 2, Duration::hours(12))
+    let default_asset: i32 = if query_params.default_asset_id.is_some() {
+        query_params.default_asset_id.unwrap()
+    } else {
+        user_service.get_full_user(user_id).await?.default_asset_id
+    };
+
+    let hisotry = portfolio_service
+        .get_full_portfolio_history(user_id, default_asset, Duration::hours(12))
         .await?;
 
     let response = PortfolioHistoryViewModel {
-        sums: a.into_iter().map(|x| x.into()).collect(),
+        sums: hisotry.into_iter().map(|x| x.into()).collect(),
     };
 
     Ok(response.into())
@@ -96,7 +102,7 @@ pub async fn get_portfolio_history(
 pub async fn post_portfolio_account(
     Path(user_id): Path<Uuid>,
     PortfolioServiceState(portfolio_service): PortfolioServiceState,
-    AuthenticatedUserState(auth): AuthenticatedUserState,
+    AuthenticatedUserState(_auth): AuthenticatedUserState,
     Json(params): Json<PortfolioAccountViewModel>,
 ) -> Result<Json<PortfolioAccountViewModel>, ApiError> {
     let new_model = portfolio_service

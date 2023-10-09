@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::{
     auth::AuthenticatedUserState,
-    errors::ApiError,
+    errors::{auth::AuthError, ApiError},
     states::{AssetsServiceState, TransactionServiceState},
     view_models::{
         add_transaction_group_view_model::AddTransactionGroupViewModel,
@@ -18,7 +18,7 @@ use crate::{
 pub async fn post_transactions(
     Path(user_id): Path<Uuid>,
     TransactionServiceState(transaction_service): TransactionServiceState,
-    AuthenticatedUserState(auth): AuthenticatedUserState,
+    AuthenticatedUserState(_auth): AuthenticatedUserState,
     Json(params): Json<AddTransactionGroupViewModel>,
 ) -> Result<Json<TransactionGroupListViewModel>, ApiError> {
     let insert_result = transaction_service
@@ -36,13 +36,18 @@ pub async fn post_transactions(
 pub async fn post_transactions_by_group_id(
     Path((user_id, group_id)): Path<(Uuid, Uuid)>,
     TransactionServiceState(transaction_service): TransactionServiceState,
-    AuthenticatedUserState(auth): AuthenticatedUserState,
+    AuthenticatedUserState(_auth): AuthenticatedUserState,
     Json(params): Json<UpdateTransactionGroupViewModel>,
 ) -> Result<Json<TransactionGroupListViewModel>, ApiError> {
     //check id
     let insert_result = transaction_service
         .update_transaction_group(user_id, params.clone().into())
         .await?;
+
+    if group_id != params.id {
+        //TODO: Need to do proper error handling
+        return Err(AuthError::Unauthorized.into());
+    }
 
     let response = TransactionGroupListViewModel {
         groups: vec![insert_result.into()],
@@ -51,6 +56,7 @@ pub async fn post_transactions_by_group_id(
     Ok(response.into())
 }
 
+#[allow(unused_variables)]
 #[tracing::instrument(skip_all, err)]
 pub async fn delete_transactions_by_group_id(
     Path((user_id, group_id)): Path<(Uuid, Uuid)>,
@@ -58,19 +64,19 @@ pub async fn delete_transactions_by_group_id(
     AuthenticatedUserState(auth): AuthenticatedUserState,
 ) -> Result<(), ApiError> {
     transaction_service
-        .delete_transaction_group(user_id, group_id)
+        .delete_transaction_group(group_id)
         .await?;
     Ok(())
 }
 
 #[tracing::instrument(skip_all, err)]
 pub async fn get_transactions(
-    Path(id): Path<Uuid>,
+    Path(user_id): Path<Uuid>,
     AssetsServiceState(assets_service): AssetsServiceState,
     TransactionServiceState(transaction_service): TransactionServiceState,
-    AuthenticatedUserState(auth): AuthenticatedUserState,
+    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<TransactionGroupListViewModel>, ApiError> {
-    let transactions = transaction_service.get_transaction_groups(id).await?;
+    let transactions = transaction_service.get_transaction_groups(user_id).await?;
 
     let mut unique_asset_ids: HashSet<i32> = HashSet::new();
     transactions.iter().for_each(|val| {

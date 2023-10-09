@@ -1,7 +1,4 @@
-
-
 use serde::{Deserialize, Serialize};
-
 
 use super::{asset_rate_view_model::AssetRateViewModel, asset_view_model::AssetViewModel};
 

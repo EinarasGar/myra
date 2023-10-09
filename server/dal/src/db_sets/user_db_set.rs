@@ -51,20 +51,21 @@ pub fn get_user_auth_info(username: String) -> DbQueryWithValues {
 
 #[tracing::instrument(skip_all)]
 pub fn get_user_role(user_id: Uuid) -> DbQueryWithValues {
-    unimplemented!()
-    // let sql =
-    //     "SELECT id, name FROM user_roles WHERE id in (SELECT role from users where id = $1)";
-
-    // let row = sqlx::query(sql)
-    //     .bind(user_id)
-    //     .fetch_one(&mut *self)
-    //     .instrument(debug_span!("query", sql, ?user_id))
-    //     .await?;
-
-    // Ok(UserRoleModel {
-    //     id: row.try_get(0)?,
-    //     name: row.try_get(1)?,
-    // })
+    Query::select()
+        .column(UserRolesIden::Id)
+        .column(UserRolesIden::Name)
+        .from(UserRolesIden::Table)
+        .and_where(
+            Expr::col(UserRolesIden::Id).in_subquery(
+                Query::select()
+                    .column(UsersIden::Role)
+                    .from(UsersIden::Table)
+                    .and_where(Expr::col(UsersIden::Id).eq(user_id))
+                    .take(),
+            ),
+        )
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
 }
 
 #[tracing::instrument(skip_all)]

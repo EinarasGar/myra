@@ -443,11 +443,7 @@ impl TransactionService {
     }
 
     #[tracing::instrument(skip_all, err)]
-    pub async fn delete_transaction_group(
-        &self,
-        user_id: Uuid,
-        group_id: Uuid,
-    ) -> anyhow::Result<()> {
+    pub async fn delete_transaction_group(&self, group_id: Uuid) -> anyhow::Result<()> {
         self.db.start_transaction().await?;
 
         let mut quantities_map = std::collections::HashMap::new();
