@@ -47,6 +47,12 @@ jobs:
       - name: Install @redocly/cli
         run: npm install -g @redocly/cli
 
+      - name: Install @redocly/cli1
+        run: ls
+
+      - name: Install @redocly/cli2
+        run: ls server
+
       - name: Generate ReDoc static HTML
         run: npx @redocly/cli build-docs server/OpenApi.json -o index.html
 
