@@ -21,15 +21,15 @@ jobs:
         toolchain: stable
         override: true
         components: rustfmt, clippy
-        
-    - name: Change to server directory
-      run: cd server
 
     - name: Check
       run: cargo check
+      working-directory: ./server
 
     - name: Clippy
       run: cargo clippy -- -D warnings
+      working-directory: ./server
 
     - name: Format Check
       run: cargo fmt -- --check
+      working-directory: ./server
