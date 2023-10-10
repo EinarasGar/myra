@@ -21,6 +21,9 @@ jobs:
         toolchain: stable
         override: true
         components: rustfmt, clippy
+        
+    - name: Change to server directory
+      run: cd server
 
     - name: Check
       run: cargo check
