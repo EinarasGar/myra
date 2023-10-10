@@ -2,9 +2,14 @@ use business::dtos::{asset_pair_rate_dto::AssetPairRateDto, asset_rate_dto::Asse
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use time::{serde::rfc3339, OffsetDateTime};
+use utoipa::ToSchema;
 
 #[typeshare::typeshare]
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+#[schema(example = json!({
+        "date": "2000-03-22T23:00:00Z",
+        "rate": "12709.75"
+}))]
 pub struct AssetRateViewModel {
     #[serde(with = "rfc3339")]
     pub date: OffsetDateTime,

@@ -9,6 +9,7 @@ pub mod errors;
 mod fallback;
 pub(crate) mod handlers;
 mod observability;
+pub mod openapi;
 pub(crate) mod routes;
 pub(crate) mod states;
 pub(crate) mod view_models;

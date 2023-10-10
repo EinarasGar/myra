@@ -72,6 +72,23 @@ pub async fn get_portfolio(
     Ok(response.into())
 }
 
+/// Get portfolio history
+///
+/// Get full portfolio history for a user. The returned
+#[utoipa::path(
+    get,
+    path = "/api/users/{user_id}/portfolio/history",
+    tag = "Portfolio",
+    responses(
+        (status = 200, description = "Portoflio hisotry calculated successfully", body = PortfolioHistoryViewModel),
+        (status = NOT_FOUND, description = "History was not found")
+    ),
+    params(
+        ("user_id" = Uuid, Path, description = "User id for who to calculate history"),
+        ("default_asset_id" = Option<i32>, Query, description = "Default asset id to use for calculating history.
+         If not provided, the default asset id from the user will be used")
+    )
+)]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_portfolio_history(
     Path(user_id): Path<Uuid>,
@@ -98,6 +115,28 @@ pub async fn get_portfolio_history(
     Ok(response.into())
 }
 
+/// Post Portfolio Account
+/// 
+/// The portfolio account is used to store same assets in different baskets
+#[utoipa::path(
+    post,
+    path = "/api/users/:user_id/portfolio/accounts",
+    tag = "Portfolio",
+    responses(
+        (status = 200, description = "Portoflio account created successfully", body = PortfolioAccountViewModel),
+    ),
+    request_body (
+      content = PortfolioAccountViewModel,
+      examples( 
+        ("Add" = (summary = "Adding a new account", value = json!({"name": "Vanguard"}))),
+        ("Update" = (summary = "Updating existing account", value = json!({"id": "2396480f-0052-4cf0-81dc-8cedbde5ce13", "name": "Vanguard ISA"})))
+    )
+    ),
+    params(
+        ("user_id" = Uuid, Path, description = "User id for who to post account for"),
+    )
+
+)]
 #[tracing::instrument(skip_all, err)]
 pub async fn post_portfolio_account(
     Path(user_id): Path<Uuid>,

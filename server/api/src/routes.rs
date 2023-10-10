@@ -1,11 +1,14 @@
-use crate::{handlers, observability, AppState};
+use crate::{handlers, observability, openapi::ApiDoc, AppState};
 use axum::{
     routing::{delete, get, post},
     Router,
 };
+use utoipa::OpenApi;
+use utoipa_redoc::{Redoc, Servable};
 
 pub(crate) fn create_router(state: AppState) -> Router {
     Router::new()
+        .merge(Redoc::with_url("/redoc", ApiDoc::openapi()))
         .route("/api/users", post(handlers::user_handler::post_user))
         .route(
             "/api/users/:user_id",

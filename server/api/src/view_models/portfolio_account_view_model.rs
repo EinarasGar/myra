@@ -1,9 +1,14 @@
 use business::dtos::portfolio_account_dto::PortfolioAccountDto;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 #[typeshare::typeshare]
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+#[schema(example = json!({
+    "id": "2396480f-0052-4cf0-81dc-8cedbde5ce13",
+    "name": "Vanguard",
+}))]
 pub struct PortfolioAccountViewModel {
     pub id: Option<Uuid>,
     pub name: String,
