@@ -47,11 +47,8 @@ jobs:
       - name: Install @redocly/cli
         run: npm install -g @redocly/cli
 
-      - name: Install @redocly/cli1
-        run: npx @redocly/cli --ignore-existing
-
       - name: Generate ReDoc static HTML
-        run: npx @redocly/cli --ignore-existing build-docs server/OpenApi.json -o index.html
+        run: redocly build-docs server/OpenApi.json -o index.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
