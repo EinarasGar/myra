@@ -50,11 +50,17 @@ jobs:
       - name: Generate ReDoc static HTML
         run: redocly build-docs server/OpenApi.json -o index.html
 
+      - name: ls
+        run: ls
+
+      - name: ls server
+        run: ls server
+
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
           # Upload entire repository
-          path: "index.html"
+          path: "./index.html"
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v2
