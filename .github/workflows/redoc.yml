@@ -57,7 +57,7 @@ jobs:
         run: ls server
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v2
         with:
           # Upload entire repository
           path: "./index.html"
