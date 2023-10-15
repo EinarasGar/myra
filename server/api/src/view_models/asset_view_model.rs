@@ -1,8 +1,15 @@
 use business::dtos::asset_dto::AssetDto;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 #[typeshare::typeshare]
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+#[schema(example = json!({
+    "ticker": "EUR",
+    "Name": "Euro",
+    "Category": "Currencies",
+    "id": 1
+}))]
 pub struct AssetViewModel {
     pub ticker: String,
     pub name: String,

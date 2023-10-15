@@ -5,7 +5,7 @@ use sqlx::types::Uuid;
 use super::DbQueryWithValues;
 use crate::{
     idens::{
-        asset_idens::{AssetTypesIden, AssetsIden},
+        asset_idens::{AssetTypesIden, AssetsAliasIden, AssetsIden},
         portfolio_idens::{PortfolioAccountIden, PortfolioIden},
         CommonsIden,
     },
@@ -19,6 +19,7 @@ pub fn get_portfolio_with_asset_account_info(user_id: Uuid) -> DbQueryWithValues
         .column((PortfolioIden::Table, PortfolioIden::Sum))
         .column((AssetsIden::Table, AssetsIden::Name))
         .column((AssetsIden::Table, AssetsIden::Ticker))
+        .column((AssetsIden::Table, AssetsIden::BasePairId))
         .column((PortfolioIden::Table, PortfolioIden::AccountId))
         .expr_as(
             Expr::col((AssetTypesIden::Table, AssetTypesIden::Name)),
@@ -28,16 +29,42 @@ pub fn get_portfolio_with_asset_account_info(user_id: Uuid) -> DbQueryWithValues
             Expr::col((PortfolioAccountIden::Table, PortfolioAccountIden::Name)),
             Alias::new("account_name"),
         )
+        .expr_as(
+            Expr::col((AssetsAliasIden::BaseAssetJoin, AssetsIden::Ticker)),
+            Alias::new("base_pair_ticker"),
+        )
+        .expr_as(
+            Expr::col((AssetsAliasIden::BaseAssetJoin, AssetsIden::Name)),
+            Alias::new("base_pair_name"),
+        )
+        .expr_as(
+            Expr::col((AssetsAliasIden::BaseAssetTypeJoin, AssetTypesIden::Name)),
+            Alias::new("base_pair_category"),
+        )
         .from(PortfolioIden::Table)
         .inner_join(
             AssetsIden::Table,
             Expr::col((PortfolioIden::Table, PortfolioIden::AssetId))
                 .equals((AssetsIden::Table, AssetsIden::Id)),
         )
+        .join_as(
+            sea_query::JoinType::LeftJoin,
+            AssetsIden::Table,
+            AssetsAliasIden::BaseAssetJoin,
+            Expr::col((AssetsIden::Table, AssetsIden::BasePairId))
+                .equals((AssetsAliasIden::BaseAssetJoin, AssetsIden::Id)),
+        )
         .inner_join(
             AssetTypesIden::Table,
             Expr::col((AssetsIden::Table, AssetsIden::AssetType))
                 .equals((AssetTypesIden::Table, AssetTypesIden::Id)),
+        )
+        .join_as(
+            sea_query::JoinType::InnerJoin,
+            AssetTypesIden::Table,
+            AssetsAliasIden::BaseAssetTypeJoin,
+            Expr::col((AssetsAliasIden::BaseAssetJoin, AssetsIden::AssetType))
+                .equals((AssetsAliasIden::BaseAssetTypeJoin, AssetTypesIden::Id)),
         )
         .left_join(
             PortfolioAccountIden::Table,

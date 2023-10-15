@@ -1,10 +1,7 @@
-use std::collections::{HashMap, HashSet};
-
 use axum::{
     extract::{Path, Query},
     Json,
 };
-use business::dtos::asset_pair_rate_dto::AssetPairRateDto;
 use serde::Deserialize;
 use time::Duration;
 use uuid::Uuid;
@@ -14,9 +11,7 @@ use crate::{
     errors::ApiError,
     states::{AssetsServiceState, PortfolioServiceState, UsersServiceState},
     view_models::{
-        asset_rate_view_model::AssetRateViewModel,
         portfolio_account_view_model::PortfolioAccountViewModel,
-        portfolio_entry_view_model::PortfolioEntryViewModel,
         portfolio_history_view_model::PortfolioHistoryViewModel,
         portfolio_view_model::PortfolioViewModel,
     },
@@ -27,47 +22,38 @@ pub struct GetPortfolioQueryParams {
     default_asset_id: Option<i32>,
 }
 
+/// Get portfolio
+///
+/// Gets portfolio state at current this time.
+#[utoipa::path(
+    get,
+    path = "/api/users/:user_id/portfolio",
+    tag = "Portfolio",
+    responses(
+        (status = 200, description = "Portoflio retrieved successfully", body = PortfolioViewModel),
+        (status = NOT_FOUND, description = "History was not found")
+    ),
+    params(
+        ("user_id" = Uuid, Path, description = "User id for who to get portfolio for"),
+        ("default_asset_id" = Option<i32>, Query, description = "Default asset id to use for getting porftolio reference.
+         If not provided, the default asset id from the user will be used")
+    )
+)]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_portfolio(
     Path(user_id): Path<Uuid>,
     query_params: Query<GetPortfolioQueryParams>,
     PortfolioServiceState(portfolio_service): PortfolioServiceState,
-    AssetsServiceState(asset_service): AssetsServiceState,
     UsersServiceState(user_service): UsersServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<PortfolioViewModel>, ApiError> {
-    let portfolio_assets_dto = portfolio_service.get_portfolio(user_id).await?;
-
-    let mut unique_asset_ids: HashSet<i32> = HashSet::new();
-    portfolio_assets_dto.iter().for_each(|val| {
-        unique_asset_ids.insert(val.asset.asset_id);
-    });
-
-    //if default asset is not provided, use the one stored in the database
     let default_asset = match query_params.default_asset_id {
         Some(i) => i,
         None => user_service.get_full_user(user_id).await?.default_asset_id,
     };
 
-    let asset_rates: HashMap<i32, AssetPairRateDto> = asset_service
-        .get_assets_rates_default_latest(default_asset, unique_asset_ids)
-        .await?;
-
-    let response_assets: Vec<PortfolioEntryViewModel> = portfolio_assets_dto
-        .iter()
-        .map(|val| PortfolioEntryViewModel {
-            asset: val.asset.clone().into(),
-            account: val.account.clone().into(),
-            sum: val.sum,
-            last_rate: asset_rates
-                .get(&val.asset.asset_id)
-                .map(|rate| AssetRateViewModel::from(rate.clone())),
-        })
-        .collect();
-
-    let response = PortfolioViewModel {
-        portfolio_entries: response_assets,
-    };
+    let portfolio_assets_dto = portfolio_service.get_portfolio(user_id, default_asset).await?;
+    let response: PortfolioViewModel = portfolio_assets_dto.into();
 
     Ok(response.into())
 }

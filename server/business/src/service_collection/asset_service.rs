@@ -16,13 +16,13 @@ use dal::{
 use dal::database_context::MyraDb;
 
 use time::OffsetDateTime;
+use tracing::error;
 use uuid::Uuid;
 
 use crate::dtos::{
     add_custom_asset_dto::AddCustomAssetDto, asset_dto::AssetDto, asset_insert_dto::AssetInsertDto,
     asset_insert_result_dto::InsertAssetResultDto, asset_pair_insert_dto::AssetPairInsertDto,
-    asset_pair_rate_dto::AssetPairRateDto, asset_pair_rate_insert_dto::AssetPairRateInsertDto,
-    asset_rate_dto::AssetRateDto,
+    asset_pair_rate_insert_dto::AssetPairRateInsertDto, asset_rate_dto::AssetRateDto,
 };
 
 #[derive(Clone)]
@@ -98,27 +98,38 @@ impl AssetsService {
     #[tracing::instrument(skip_all, err)]
     pub async fn get_assets_rates_default_latest(
         &self,
-        default_asset_id: i32,
-        asset_ids: HashSet<i32>,
-    ) -> anyhow::Result<HashMap<i32, AssetPairRateDto>> {
-        let mut result: HashMap<i32, AssetPairRateDto> = HashMap::new();
-
+        asset_ids: HashSet<(i32, i32)>,
+    ) -> anyhow::Result<HashMap<(i32, i32), AssetRateDto>> {
+        let assets_ids_len = asset_ids.len();
         let query = asset_db_set::get_latest_asset_pair_rates(
             asset_ids
                 .into_iter()
                 .map(|x| AssetPair {
-                    pair1: x,
-                    pair2: default_asset_id,
+                    pair1: x.0,
+                    pair2: x.1,
                 })
                 .collect(),
             None,
-            true,
         );
-        let ret = self.db.fetch_all::<AssetPairRate>(query).await?;
 
-        for pair in ret {
-            result.insert(pair.pair1, pair.into());
+        let rates = self.db.fetch_all::<AssetPairRate>(query).await?;
+
+        if rates.len() > assets_ids_len {
+            error!("Too many rates returned from latest rates query");
         }
+
+        let result: HashMap<(i32, i32), AssetRateDto> = rates
+            .into_iter()
+            .map(|val| {
+                (
+                    (val.pair1, val.pair2),
+                    AssetRateDto {
+                        rate: val.rate,
+                        date: val.date,
+                    },
+                )
+            })
+            .collect();
 
         Ok(result)
     }
@@ -128,7 +139,7 @@ impl AssetsService {
         &self,
         default_asset_id: i32,
         asset_ids: HashSet<i32>,
-        staret_time: OffsetDateTime,
+        start_time: Option<OffsetDateTime>,
     ) -> anyhow::Result<HashMap<(i32, i32), VecDeque<AssetRateDto>>> {
         let mut result: HashMap<(i32, i32), VecDeque<AssetRateDto>> = HashMap::new();
 
@@ -140,8 +151,7 @@ impl AssetsService {
                     pair2: default_asset_id,
                 })
                 .collect(),
-            Some(staret_time),
-            false,
+            start_time,
         );
         let ret = self.db.fetch_all::<AssetPairRate>(query).await?;
 
@@ -170,8 +180,7 @@ impl AssetsService {
                         pair2: default_asset_id,
                     })
                     .collect(),
-                Some(staret_time),
-                false,
+                start_time,
             );
 
             let ret_bases = self.db.fetch_all::<AssetPairRate>(query).await?;

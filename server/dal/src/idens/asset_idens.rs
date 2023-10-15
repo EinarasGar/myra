@@ -5,6 +5,8 @@ pub enum AssetsAliasIden {
     BasePairsSubquery,
     PairsSubquery,
     FilteredPairsSubquery,
+    BaseAssetJoin,
+    BaseAssetTypeJoin,
 }
 
 #[allow(dead_code)]
@@ -51,6 +53,8 @@ impl Iden for AssetsAliasIden {
                 Self::BasePairsSubquery => "base_pairs",
                 Self::PairsSubquery => "pairs",
                 Self::FilteredPairsSubquery => "filtered",
+                Self::BaseAssetJoin => "base_assets",
+                Self::BaseAssetTypeJoin => "base_assets_types",
             }
         )
         .unwrap();

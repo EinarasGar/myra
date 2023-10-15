@@ -3,13 +3,17 @@ use sqlx::types::{Decimal, Uuid};
 
 #[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct PortfolioCombined {
-    pub ticker: String,
-    pub name: String,
-    pub category: String,
-    pub asset_id: i32,
     pub sum: Decimal,
     pub account_id: Uuid,
     pub account_name: String,
+    pub asset_id: i32,
+    pub ticker: String,
+    pub name: String,
+    pub category: String,
+    pub base_pair_id: Option<i32>,
+    pub base_pair_ticker: Option<String>,
+    pub base_pair_name: Option<String>,
+    pub base_pair_category: Option<String>,
 }
 
 #[derive(Clone, Debug)]

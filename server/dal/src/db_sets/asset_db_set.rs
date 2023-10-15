@@ -121,7 +121,6 @@ pub fn get_pair_id(pair1: i32, pair2: i32) -> DbQueryWithValues {
 pub fn get_latest_asset_pair_rates(
     pairs: Vec<AssetPair>,
     date_floor: Option<OffsetDateTime>,
-    only_latest: bool,
 ) -> DbQueryWithValues {
     let tuples: Vec<(i32, i32)> = pairs.iter().map(|x| (x.pair1, x.pair2)).collect();
     let base_main_ids: Vec<i32> = pairs.iter().map(|x| x.pair1).collect();
@@ -212,7 +211,7 @@ pub fn get_latest_asset_pair_rates(
                         .equals((AssetsAliasIden::FilteredPairsSubquery, AssetPairsIden::Id)),
                 )
                 .conditions(
-                    only_latest,
+                    date_floor.is_none(),
                     // if condition is true then add the following condition
                     |q| {
                         q.limit(1)

@@ -1,5 +1,5 @@
 use std::cmp::min;
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 use dal::db_sets::portfolio_db_set::{self};
 
@@ -14,9 +14,11 @@ use uuid::Uuid;
 #[mockall_double::double]
 use dal::database_context::MyraDb;
 
+use crate::dtos::asset_dto::AssetDto;
 use crate::dtos::asset_rate_dto::AssetRateDto;
 use crate::dtos::portfolio_account_dto::PortfolioAccountDto;
 use crate::dtos::portfolio_dto::PortfolioDto;
+use crate::dtos::portfolio_row_dto::PortfolioRowDto;
 use crate::dtos::transaction_financials_dto::TransactionFinancialsDto;
 
 use super::asset_service::AssetsService;
@@ -62,7 +64,7 @@ impl PortfolioService {
 
         let asset_rate_queues = self
             .asset_serice
-            .get_assets_rates_default_from_date(reference_asset, asset_ids, earliest_date)
+            .get_assets_rates_default_from_date(reference_asset, asset_ids, Some(earliest_date))
             .await?;
 
         let history = calculate_portfolio_history(
@@ -81,7 +83,11 @@ impl PortfolioService {
     }
 
     #[tracing::instrument(skip_all, err)]
-    pub async fn get_portfolio(&self, user_id: Uuid) -> anyhow::Result<Vec<PortfolioDto>> {
+    pub async fn get_portfolio(
+        &self,
+        user_id: Uuid,
+        reference_asset: i32,
+    ) -> anyhow::Result<PortfolioDto> {
         let query = portfolio_db_set::get_portfolio_with_asset_account_info(user_id);
 
         let models = self
@@ -89,8 +95,88 @@ impl PortfolioService {
             .fetch_all::<PortfolioCombined>(query)
             .await?;
 
-        let ret_vec: Vec<PortfolioDto> = models.iter().map(|val| val.clone().into()).collect();
-        Ok(ret_vec)
+        let mut rates_ids: HashSet<(i32, i32)> = HashSet::new();
+        for model in &models {
+            if model.base_pair_id.is_some() {
+                rates_ids.insert((model.asset_id, model.base_pair_id.unwrap()));
+                rates_ids.insert((model.base_pair_id.unwrap(), reference_asset));
+            }
+            rates_ids.insert((model.asset_id, reference_asset));
+        }
+
+        let asset_rates: HashMap<(i32, i32), AssetRateDto> = self
+            .asset_serice
+            .get_assets_rates_default_latest(rates_ids)
+            .await?;
+
+        let ref_asset = self.asset_serice.get_asset(reference_asset).await?;
+
+        let ret_rows: Vec<PortfolioRowDto> = models
+            .into_iter()
+            .map(|val| {
+                let mut last_rate: Option<AssetRateDto> = None;
+                let mut last_reference_rate: Option<AssetRateDto> = None;
+                if val.base_pair_id.is_some() {
+                    last_rate = asset_rates
+                        .get(&(val.asset_id, val.base_pair_id.unwrap()))
+                        .cloned();
+                }
+
+                if asset_rates.contains_key(&(val.asset_id, reference_asset)) {
+                    last_reference_rate =
+                        asset_rates.get(&(val.asset_id, reference_asset)).cloned();
+                } else if last_rate.is_some()
+                    && asset_rates.contains_key(&(val.base_pair_id.unwrap(), reference_asset))
+                {
+                    let ref_rate = asset_rates
+                        .get(&(val.base_pair_id.unwrap(), reference_asset))
+                        .cloned();
+
+                    last_reference_rate = Some(AssetRateDto {
+                        rate: last_rate.clone().unwrap().rate * ref_rate.unwrap().rate,
+                        date: last_rate.clone().unwrap().date,
+                    })
+                }
+
+                PortfolioRowDto {
+                    asset: AssetDto {
+                        ticker: val.ticker,
+                        name: val.name,
+                        category: val.category,
+                        asset_id: val.asset_id,
+                        owner: None,
+                    },
+                    base_asset: if val.base_pair_id.is_some()
+                        && val.base_pair_name.is_some()
+                        && val.base_pair_ticker.is_some()
+                        && val.base_pair_category.is_some()
+                    {
+                        Some(AssetDto {
+                            ticker: val.base_pair_ticker.unwrap(),
+                            name: val.base_pair_name.unwrap(),
+                            category: val.base_pair_category.unwrap(),
+                            asset_id: val.base_pair_id.unwrap(),
+                            owner: None,
+                        })
+                    } else {
+                        None
+                    },
+                    account: PortfolioAccountDto {
+                        account_id: Some(val.account_id),
+                        account_name: val.account_name,
+                    },
+                    sum: val.sum,
+
+                    last_rate,
+                    last_reference_rate,
+                }
+            })
+            .collect();
+
+        Ok(PortfolioDto {
+            rows: ret_rows,
+            reference_asset: ref_asset,
+        })
     }
 
     #[tracing::instrument(skip_all, err)]
