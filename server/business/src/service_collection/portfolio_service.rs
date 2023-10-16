@@ -8,6 +8,7 @@ use dal::models::portfolio_models::{PortfolioAccountIdNameModel, PortfolioCombin
 use rust_decimal::prelude::FromPrimitive;
 use rust_decimal::Decimal;
 
+use rust_decimal_macros::dec;
 use time::{Duration, OffsetDateTime};
 use uuid::Uuid;
 
@@ -116,26 +117,34 @@ impl PortfolioService {
             .map(|val| {
                 let mut last_rate: Option<AssetRateDto> = None;
                 let mut last_reference_rate: Option<AssetRateDto> = None;
-                if val.base_pair_id.is_some() {
-                    last_rate = asset_rates
-                        .get(&(val.asset_id, val.base_pair_id.unwrap()))
-                        .cloned();
-                }
+                if val.asset_id == reference_asset {
+                    last_rate = Some(AssetRateDto {
+                        rate: dec!(1),
+                        date: OffsetDateTime::now_utc(),
+                    });
+                    last_reference_rate = last_rate.clone();
+                } else {
+                    if val.base_pair_id.is_some() {
+                        last_rate = asset_rates
+                            .get(&(val.asset_id, val.base_pair_id.unwrap()))
+                            .cloned();
+                    }
 
-                if asset_rates.contains_key(&(val.asset_id, reference_asset)) {
-                    last_reference_rate =
-                        asset_rates.get(&(val.asset_id, reference_asset)).cloned();
-                } else if last_rate.is_some()
-                    && asset_rates.contains_key(&(val.base_pair_id.unwrap(), reference_asset))
-                {
-                    let ref_rate = asset_rates
-                        .get(&(val.base_pair_id.unwrap(), reference_asset))
-                        .cloned();
+                    if asset_rates.contains_key(&(val.asset_id, reference_asset)) {
+                        last_reference_rate =
+                            asset_rates.get(&(val.asset_id, reference_asset)).cloned();
+                    } else if last_rate.is_some()
+                        && asset_rates.contains_key(&(val.base_pair_id.unwrap(), reference_asset))
+                    {
+                        let ref_rate = asset_rates
+                            .get(&(val.base_pair_id.unwrap(), reference_asset))
+                            .cloned();
 
-                    last_reference_rate = Some(AssetRateDto {
-                        rate: last_rate.clone().unwrap().rate * ref_rate.unwrap().rate,
-                        date: last_rate.clone().unwrap().date,
-                    })
+                        last_reference_rate = Some(AssetRateDto {
+                            rate: last_rate.clone().unwrap().rate * ref_rate.unwrap().rate,
+                            date: last_rate.clone().unwrap().date,
+                        })
+                    }
                 }
 
                 PortfolioRowDto {

@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use dal::{
     db_sets::asset_db_set::{self},
     models::{
-        asset_models::{Asset, AssetId, AssetPairId, PublicAsset},
+        asset_models::{Asset, AssetId, AssetPairId, AssetRaw, PublicAsset},
         asset_pair::AssetPair,
         asset_pair_rate::AssetPairRate,
         asset_rate::AssetRate,
@@ -23,6 +23,7 @@ use crate::dtos::{
     add_custom_asset_dto::AddCustomAssetDto, asset_dto::AssetDto, asset_insert_dto::AssetInsertDto,
     asset_insert_result_dto::InsertAssetResultDto, asset_pair_insert_dto::AssetPairInsertDto,
     asset_pair_rate_insert_dto::AssetPairRateInsertDto, asset_rate_dto::AssetRateDto,
+    asset_ticker_pair_ids_dto::AssetTickerPairIdsDto,
 };
 
 #[derive(Clone)]
@@ -33,6 +34,19 @@ pub struct AssetsService {
 impl AssetsService {
     pub fn new(db: MyraDb) -> Self {
         Self { db }
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn get_all_assets_ticker_and_pair_ids(
+        &self,
+    ) -> anyhow::Result<Vec<AssetTickerPairIdsDto>> {
+        let query = asset_db_set::get_assets_raw();
+        let models = self.db.fetch_all::<AssetRaw>(query).await?;
+
+        let ret_vec: Vec<AssetTickerPairIdsDto> =
+            models.into_iter().map(|val| val.into()).collect();
+
+        Ok(ret_vec)
     }
 
     #[tracing::instrument(skip_all, err)]

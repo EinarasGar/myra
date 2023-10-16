@@ -52,7 +52,9 @@ pub async fn get_portfolio(
         None => user_service.get_full_user(user_id).await?.default_asset_id,
     };
 
-    let portfolio_assets_dto = portfolio_service.get_portfolio(user_id, default_asset).await?;
+    let portfolio_assets_dto = portfolio_service
+        .get_portfolio(user_id, default_asset)
+        .await?;
     let response: PortfolioViewModel = portfolio_assets_dto.into();
 
     Ok(response.into())
@@ -102,7 +104,7 @@ pub async fn get_portfolio_history(
 }
 
 /// Post Portfolio Account
-/// 
+///
 /// The portfolio account is used to store same assets in different baskets
 #[utoipa::path(
     post,
@@ -113,7 +115,7 @@ pub async fn get_portfolio_history(
     ),
     request_body (
       content = PortfolioAccountViewModel,
-      examples( 
+      examples(
         ("Add" = (summary = "Adding a new account", value = json!({"name": "Vanguard"}))),
         ("Update" = (summary = "Updating existing account", value = json!({"id": "2396480f-0052-4cf0-81dc-8cedbde5ce13", "name": "Vanguard ISA"})))
     )

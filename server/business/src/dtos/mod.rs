@@ -11,6 +11,7 @@ pub mod asset_pair_rate_dto;
 pub mod asset_pair_rate_insert_dto;
 pub mod asset_quantity_dto;
 pub mod asset_rate_dto;
+pub mod asset_ticker_pair_ids_dto;
 pub mod auth_dto;
 pub mod category_dto;
 pub mod portfolio_account_dto;

@@ -343,3 +343,17 @@ pub fn assets_count_by_ids_and_access(asset_ids: Vec<i32>, user_id: Uuid) -> DbQ
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }
+
+#[tracing::instrument(skip_all)]
+pub fn get_assets_raw() -> DbQueryWithValues {
+    Query::select()
+        .column((AssetsIden::Table, AssetsIden::Id))
+        .column((AssetsIden::Table, AssetsIden::AssetType))
+        .column((AssetsIden::Table, AssetsIden::Name))
+        .column((AssetsIden::Table, AssetsIden::Ticker))
+        .column((AssetsIden::Table, AssetsIden::BasePairId))
+        .column((AssetsIden::Table, AssetsIden::UserId))
+        .from(AssetsIden::Table)
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}

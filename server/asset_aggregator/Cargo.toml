@@ -3,7 +3,17 @@ name = "asset_aggregator"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+name = "add_data_to_existing_asset_pair"
+path = "src/add_data_to_existing_asset_pair.rs"
+
+[[bin]]
+name = "add_new_asset_with_data"
+path = "src/add_new_asset_with_data.rs"
+
+[[bin]]
+name = "update_current_assets"
+path = "src/update_current_assets.rs"
 
 [dependencies]
 tokio = { version = "1.33.0", features = ["full"] }

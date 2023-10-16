@@ -60,7 +60,7 @@ pub fn get_portfolio_with_asset_account_info(user_id: Uuid) -> DbQueryWithValues
                 .equals((AssetTypesIden::Table, AssetTypesIden::Id)),
         )
         .join_as(
-            sea_query::JoinType::InnerJoin,
+            sea_query::JoinType::LeftJoin,
             AssetTypesIden::Table,
             AssetsAliasIden::BaseAssetTypeJoin,
             Expr::col((AssetsAliasIden::BaseAssetJoin, AssetsIden::AssetType))

@@ -11,6 +11,16 @@ pub struct Asset {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct AssetRaw {
+    pub ticker: String,
+    pub name: String,
+    pub asset_type: i32,
+    pub id: i32,
+    pub base_pair_id: Option<i32>,
+    pub user_id: Option<Uuid>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct PublicAsset {
     pub ticker: String,
     pub name: String,

@@ -108,10 +108,12 @@ function Portfolio() {
                 <TableCell align="right">{row.asset.ticker}</TableCell>
                 <TableCell align="right">{row.sum}</TableCell>
                 <TableCell align="right">
-                  {(row.sum * (row.last_rate?.rate ?? 0)).toLocaleString(
-                    "en-US",
-                    { style: "currency", currency: row.base_asset?.ticker }
-                  )}
+                  {row.base_asset
+                    ? (row.sum * (row.last_rate?.rate ?? 0)).toLocaleString(
+                        "en-US",
+                        { style: "currency", currency: row.base_asset.ticker }
+                      )
+                    : "-"}
                 </TableCell>
                 <TableCell align="right">
                   {(
@@ -131,6 +133,30 @@ function Portfolio() {
                 </TableCell>
               </TableRow>
             ))}
+            <TableRow
+              sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+            >
+              <TableCell component="th" scope="row">
+                Total
+              </TableCell>
+              <TableCell align="right">-</TableCell>
+              <TableCell align="right">-</TableCell>
+              <TableCell align="right">-</TableCell>
+              <TableCell align="right">-</TableCell>
+              <TableCell align="right">
+                {portfolioResp.data?.portfolio_entries
+                  .reduce(
+                    (acc, x) =>
+                      acc + x.sum * (x.last_reference_rate?.rate ?? 0),
+                    0
+                  )
+                  .toLocaleString("en-US", {
+                    style: "currency",
+                    currency: portfolioResp.data?.reference_asset?.ticker,
+                  })}
+              </TableCell>
+              <TableCell align="right">-</TableCell>
+            </TableRow>
           </TableBody>
         </Table>
       </TableContainer>
