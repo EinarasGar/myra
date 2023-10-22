@@ -19,16 +19,30 @@ pub struct AddTransactonViewModel {
     pub description: Option<String>,
 }
 
-impl From<AddTransactonViewModel> for AddUpdateTransactonDto {
-    fn from(p: AddTransactonViewModel) -> Self {
-        Self {
-            asset_id: p.asset_id,
-            quantity: p.quantity,
-            category: p.category_id,
-            date: p.date,
-            account_id: p.account_id,
-            description: p.description,
+impl AddTransactonViewModel {
+    pub fn into_dto(self) -> AddUpdateTransactonDto {
+        AddUpdateTransactonDto {
+            asset_id: self.asset_id,
+            quantity: self.quantity,
+            category: self.category_id,
+            date: self.date,
+            account_id: self.account_id,
+            description: self.description,
             id: None,
+            link_id: None,
+        }
+    }
+
+    pub fn into_linked_dto(self, link_id: Uuid) -> AddUpdateTransactonDto {
+        AddUpdateTransactonDto {
+            asset_id: self.asset_id,
+            quantity: self.quantity,
+            category: self.category_id,
+            date: self.date,
+            account_id: self.account_id,
+            description: self.description,
+            id: None,
+            link_id: Some(link_id),
         }
     }
 }

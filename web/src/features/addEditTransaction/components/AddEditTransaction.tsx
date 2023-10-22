@@ -65,6 +65,7 @@ function AddEditTransaction({ initialGroup, initialRows, onSave }: Props) {
         account: rows[0].account,
         amount: null,
         date: group.date,
+        linkId: null,
       },
     ]);
     setSelectedAccordion(newId);

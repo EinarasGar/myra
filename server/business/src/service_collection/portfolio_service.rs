@@ -9,6 +9,7 @@ use rust_decimal::prelude::FromPrimitive;
 use rust_decimal::Decimal;
 
 use rust_decimal_macros::dec;
+use time::macros::datetime;
 use time::{Duration, OffsetDateTime};
 use uuid::Uuid;
 
@@ -20,6 +21,7 @@ use crate::dtos::asset_rate_dto::AssetRateDto;
 use crate::dtos::portfolio_account_dto::PortfolioAccountDto;
 use crate::dtos::portfolio_dto::PortfolioDto;
 use crate::dtos::portfolio_row_dto::PortfolioRowDto;
+use crate::dtos::portfolio_update_dto::PortfolioUpdateDto;
 use crate::dtos::transaction_financials_dto::TransactionFinancialsDto;
 
 use super::asset_service::AssetsService;
@@ -60,7 +62,6 @@ impl PortfolioService {
             return Ok(Vec::new());
         };
 
-        //let earliest_date = datetime!(2022-01-01 12:00:00 UTC);
         let earliest_date = transactions_queue.front().unwrap().date;
 
         let asset_rate_queues = self
@@ -80,7 +81,13 @@ impl PortfolioService {
         //next order of business - get the actual last value + make so we only fetch asset prices before
         // that asset earliest day + add currency conversions
 
-        Ok(history)
+        //THIS IS FOR TESTING PURPOSES ONLY
+        let reduced: Vec<AssetRateDto> = history
+            .into_iter()
+            .filter(|x| x.date >= datetime!(2023-10-14 12:00:00 UTC))
+            .collect();
+
+        Ok(reduced)
     }
 
     #[tracing::instrument(skip_all, err)]
@@ -220,6 +227,16 @@ impl PortfolioService {
 
         let ret_models = models.iter().map(|val| val.clone().into()).collect();
         Ok(ret_models)
+    }
+
+    pub async fn update_portfolio(
+        &self,
+        update_entries: Vec<PortfolioUpdateDto>,
+    ) -> anyhow::Result<()> {
+        let portfolio_updates = update_entries.into_iter().map(|val| val.into()).collect();
+        let query = portfolio_db_set::update_portfolio(portfolio_updates);
+        self.db_context.execute(query).await?;
+        Ok(())
     }
 }
 

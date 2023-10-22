@@ -10,6 +10,7 @@ pub enum TransactionIden {
     CategoryId,
     Quantity,
     Date,
+    LinkId,
 }
 
 #[allow(dead_code)]
@@ -18,6 +19,7 @@ pub enum TransactionCategoriesIden {
     Id,
     Category,
     Icon,
+    Type,
 }
 
 #[allow(dead_code)]
@@ -51,6 +53,7 @@ impl Iden for TransactionIden {
                 Self::CategoryId => "category_id",
                 Self::Quantity => "quantity",
                 Self::Date => "date",
+                Self::LinkId => "link_id",
             }
         )
         .unwrap();
@@ -67,6 +70,7 @@ impl Iden for TransactionCategoriesIden {
                 Self::Id => "id",
                 Self::Category => "category",
                 Self::Icon => "icon",
+                Self::Type => "type",
             }
         )
         .unwrap();

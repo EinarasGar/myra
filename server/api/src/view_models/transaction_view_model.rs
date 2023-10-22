@@ -37,16 +37,3 @@ impl From<TransactonDto> for TransactionViewModel {
         }
     }
 }
-impl From<TransactionViewModel> for TransactonDto {
-    fn from(p: TransactionViewModel) -> Self {
-        Self {
-            asset_id: p.asset_id,
-            quantity: p.quantity,
-            category: p.category_id,
-            date: p.date,
-            description: p.description,
-            transaction_id: p.id,
-            account: p.account.into(),
-        }
-    }
-}

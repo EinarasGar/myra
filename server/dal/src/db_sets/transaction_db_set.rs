@@ -44,6 +44,7 @@ pub fn get_transactions_with_groups(user_id: Uuid) -> DbQueryWithValues {
         .column((TransactionIden::Table, TransactionIden::CategoryId))
         .column((TransactionIden::Table, TransactionIden::Quantity))
         .column((TransactionIden::Table, TransactionIden::Date))
+        .column((TransactionIden::Table, TransactionIden::LinkId))
         .column((
             TransactionDescriptionsIden::Table,
             TransactionDescriptionsIden::Description,
@@ -103,6 +104,7 @@ pub fn get_transaction_group(transaction_group_id: Uuid) -> DbQueryWithValues {
         .column((TransactionIden::Table, TransactionIden::CategoryId))
         .column((TransactionIden::Table, TransactionIden::Quantity))
         .column((TransactionIden::Table, TransactionIden::Date))
+        .column((TransactionIden::Table, TransactionIden::LinkId))
         .column((
             TransactionDescriptionsIden::Table,
             TransactionDescriptionsIden::Description,
@@ -203,6 +205,7 @@ pub fn insert_transactions(models: Vec<AddUpdateTransactionModel>) -> DbQueryWit
             TransactionIden::CategoryId,
             TransactionIden::Quantity,
             TransactionIden::Date,
+            TransactionIden::LinkId,
         ])
         .returning_col(TransactionIden::Id)
         .to_owned();
@@ -216,6 +219,7 @@ pub fn insert_transactions(models: Vec<AddUpdateTransactionModel>) -> DbQueryWit
             model.category_id.into(),
             model.quantity.into(),
             model.date.into(),
+            model.link_id.into(),
         ]);
     }
     builder2.build_sqlx(PostgresQueryBuilder).into()
@@ -281,6 +285,7 @@ pub fn update_transaction(id: i32, model: AddUpdateTransactionModel) -> DbQueryW
         .value(TransactionIden::CategoryId, model.category_id)
         .value(TransactionIden::Quantity, model.quantity)
         .value(TransactionIden::Date, model.date)
+        .value(TransactionIden::LinkId, model.link_id)
         .and_where(Expr::col(TransactionIden::Id).eq(id))
         .build_sqlx(PostgresQueryBuilder)
         .into()

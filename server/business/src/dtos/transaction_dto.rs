@@ -2,6 +2,7 @@ use dal::models::transaction_models::TransactionWithGroupModel;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use time::{serde::iso8601, OffsetDateTime};
+use uuid::Uuid;
 
 use super::portfolio_account_dto::PortfolioAccountDto;
 
@@ -15,6 +16,7 @@ pub struct TransactonDto {
     pub date: OffsetDateTime,
     pub account: PortfolioAccountDto,
     pub description: Option<String>,
+    pub link_id: Option<Uuid>,
 }
 
 impl From<TransactionWithGroupModel> for TransactonDto {
@@ -30,6 +32,7 @@ impl From<TransactionWithGroupModel> for TransactonDto {
                 account_id: Some(p.account_id),
                 account_name: p.account_name,
             },
+            link_id: p.link_id,
         }
     }
 }

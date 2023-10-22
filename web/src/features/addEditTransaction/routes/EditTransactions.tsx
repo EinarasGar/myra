@@ -50,7 +50,7 @@ function EditTransactions() {
     date: new Date(state.date),
   };
 
-  const rows: RowState[] = state.transactions.map((trans) => {
+  const unmappedRows = state.transactions.map((trans) => {
     const mappedRow: RowState = {
       id: trans.id,
       description: trans.description ?? null,
@@ -59,10 +59,34 @@ function EditTransactions() {
       account: trans.account,
       amount: trans.quantity,
       date: new Date(trans.date),
+      linkId: null,
     };
 
     return mappedRow;
   });
+
+  const mappedrows = state.linked_transactions
+    .map((linked) => {
+      const linkId = Math.floor(Math.random() * 1000000000);
+      return linked.map((trans) => {
+        const mappedRow: RowState = {
+          id: trans.id,
+          description: trans.description ?? null,
+          category: data.find((x) => x.id === trans.category_id) ?? null,
+          asset: assets.find((x) => x.id === trans.asset_id) ?? null,
+          account: trans.account,
+          amount: trans.quantity,
+          date: new Date(trans.date),
+          linkId,
+        };
+
+        return mappedRow;
+      });
+    })
+    .flat();
+
+  const rows: RowState[] = unmappedRows.concat(mappedrows);
+
   return (
     <AddEditTransaction
       initialGroup={group}

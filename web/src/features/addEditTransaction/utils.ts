@@ -23,9 +23,23 @@ export function MapRowStatesToAddModel(
   if (tranasctions.length === 0) return null;
 
   const tranasctionModels: AddTransactonViewModel[] = [];
+  const linkedTranasctionModels: UpdateTransactionViewModel[][] = [];
 
-  for (let i = 0; i < tranasctions.length; i += 1) {
-    const trans = tranasctions[i];
+  const transactionsNoLinkId = tranasctions.filter((x) => x.linkId === null);
+  const transactionsWithLinkid = tranasctions.filter((x) => x.linkId !== null);
+  const groupedByLinkId: { [key: string]: RowState[] } =
+    transactionsWithLinkid.reduce(
+      (r: { [key: string]: RowState[] }, a: RowState) => {
+        if (a.linkId !== null) {
+          r[a.linkId] = [...(r[a.linkId] || []), a];
+        }
+        return r;
+      },
+      {}
+    );
+
+  for (let i = 0; i < transactionsNoLinkId.length; i += 1) {
+    const trans = transactionsNoLinkId[i];
     if (
       !trans.account?.id ||
       !trans.amount ||
@@ -46,11 +60,43 @@ export function MapRowStatesToAddModel(
     });
   }
 
+  // for each unique link id
+  for (const linkId in groupedByLinkId) {
+    const linkedTransactions = groupedByLinkId[linkId];
+    const linkedTransactionModels: UpdateTransactionViewModel[] = [];
+
+    for (let i = 0; i < linkedTransactions.length; i += 1) {
+      const trans = linkedTransactions[i];
+      if (
+        !trans.account?.id ||
+        !trans.amount ||
+        !trans.asset?.id ||
+        !trans.category?.id ||
+        !trans.date ||
+        !trans.description
+      )
+        return null;
+
+      linkedTransactionModels.push({
+        id: trans.id > 0 ? trans.id : undefined,
+        asset_id: trans.asset.id,
+        category_id: trans.category.id,
+        date: trans.date.toISOString(),
+        quantity: trans.amount,
+        account_id: trans.account.id,
+        description: trans.description,
+      });
+    }
+
+    linkedTranasctionModels.push(linkedTransactionModels);
+  }
+
   return {
     category_id: transactionGroup.category.id,
     date: transactionGroup.date.toISOString(),
     description: transactionGroup.description,
     transactions: tranasctionModels,
+    linked_transactions: linkedTranasctionModels,
   };
 }
 
@@ -58,6 +104,7 @@ export function MapRowStatesToUpdateModel(
   transactionGroup: GroupState | null,
   tranasctions: RowState[]
 ): UpdateTransactionGroupViewModel | null {
+  console.log(tranasctions);
   if (transactionGroup === null) return null;
   if (
     !transactionGroup.category?.id ||
@@ -69,9 +116,23 @@ export function MapRowStatesToUpdateModel(
   if (tranasctions.length === 0) return null;
 
   const tranasctionModels: UpdateTransactionViewModel[] = [];
+  const linkedTranasctionModels: UpdateTransactionViewModel[][] = [];
 
-  for (let i = 0; i < tranasctions.length; i += 1) {
-    const trans = tranasctions[i];
+  const transactionsNoLinkId = tranasctions.filter((x) => x.linkId === null);
+  const transactionsWithLinkid = tranasctions.filter((x) => x.linkId !== null);
+  const groupedByLinkId: { [key: string]: RowState[] } =
+    transactionsWithLinkid.reduce(
+      (r: { [key: string]: RowState[] }, a: RowState) => {
+        if (a.linkId !== null) {
+          r[a.linkId] = [...(r[a.linkId] || []), a];
+        }
+        return r;
+      },
+      {}
+    );
+
+  for (let i = 0; i < transactionsNoLinkId.length; i += 1) {
+    const trans = transactionsNoLinkId[i];
     if (
       !trans.account?.id ||
       !trans.amount ||
@@ -93,12 +154,44 @@ export function MapRowStatesToUpdateModel(
     });
   }
 
+  // for each unique link id
+  for (const linkId in groupedByLinkId) {
+    const linkedTransactions = groupedByLinkId[linkId];
+    const linkedTransactionModels: UpdateTransactionViewModel[] = [];
+
+    for (let i = 0; i < linkedTransactions.length; i += 1) {
+      const trans = linkedTransactions[i];
+      if (
+        !trans.account?.id ||
+        !trans.amount ||
+        !trans.asset?.id ||
+        !trans.category?.id ||
+        !trans.date ||
+        !trans.description
+      )
+        return null;
+
+      linkedTransactionModels.push({
+        id: trans.id > 0 ? trans.id : undefined,
+        asset_id: trans.asset.id,
+        category_id: trans.category.id,
+        date: trans.date.toISOString(),
+        quantity: trans.amount,
+        account_id: trans.account.id,
+        description: trans.description,
+      });
+    }
+
+    linkedTranasctionModels.push(linkedTransactionModels);
+  }
+
   return {
     id: transactionGroup.id,
     category_id: transactionGroup.category.id,
     date: transactionGroup.date.toISOString(),
     description: transactionGroup.description,
     transactions: tranasctionModels,
+    linked_transactions: linkedTranasctionModels,
   };
 }
 

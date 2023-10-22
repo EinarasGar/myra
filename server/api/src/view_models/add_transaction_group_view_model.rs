@@ -1,6 +1,10 @@
-use business::dtos::add_update_transaction_group_dto::AddUpdateTransactionGroupDto;
+use business::dtos::{
+    add_update_transaction_dto::AddUpdateTransactonDto,
+    add_update_transaction_group_dto::AddUpdateTransactionGroupDto,
+};
 use serde::{Deserialize, Serialize};
 use time::{serde::iso8601, OffsetDateTime};
+use uuid::Uuid;
 
 use super::add_transaction_view_model::AddTransactonViewModel;
 
@@ -8,6 +12,7 @@ use super::add_transaction_view_model::AddTransactonViewModel;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AddTransactionGroupViewModel {
     pub transactions: Vec<AddTransactonViewModel>,
+    pub linked_transactions: Vec<Vec<AddTransactonViewModel>>,
     pub description: String,
     pub category_id: i32,
     #[serde(with = "iso8601")]
@@ -17,11 +22,27 @@ pub struct AddTransactionGroupViewModel {
 impl From<AddTransactionGroupViewModel> for AddUpdateTransactionGroupDto {
     fn from(p: AddTransactionGroupViewModel) -> Self {
         Self {
-            transactions: p
-                .transactions
-                .iter()
-                .map(|val| val.clone().into())
-                .collect(),
+            transactions: {
+                let mut transactions: Vec<AddUpdateTransactonDto> = p
+                    .transactions
+                    .into_iter()
+                    .map(|val| val.into_dto())
+                    .collect();
+                transactions.append(
+                    &mut p
+                        .linked_transactions
+                        .into_iter()
+                        .map(|val| {
+                            let link_id = Uuid::new_v4();
+                            val.into_iter()
+                                .map(|val| val.into_linked_dto(link_id))
+                                .collect::<Vec<AddUpdateTransactonDto>>()
+                        })
+                        .flatten()
+                        .collect(),
+                );
+                transactions
+            },
             description: p.description,
             category: p.category_id,
             date: p.date,

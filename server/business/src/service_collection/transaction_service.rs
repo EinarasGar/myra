@@ -158,6 +158,7 @@ impl TransactionService {
                             .clone(),
                     },
                     description: descriptions.pop().unwrap(),
+                    link_id: model.link_id,
                 })
                 .collect(),
             group_id: dal_group.group_id,
@@ -319,22 +320,10 @@ impl TransactionService {
                 self.db.execute(query).await?;
             }
 
-            let new_model = AddUpdateTransactionModel {
-                user_id,
-                group_id,
-                asset_id: new.asset_id,
-                category_id: new.category,
-                quantity: new.quantity,
-                date: new.date,
-                account_id: match new.account_id {
-                    Some(acc) => acc,
-                    None => user_id,
-                },
-            };
-
             //the logic here is that we only compare if the core transaction model
             //has changed. any data stored in other tables is to be comapred before
             if !new.compare_core(&old) {
+                let new_model = new.into_model(user_id, group_id);
                 let query = transaction_db_set::update_transaction(old.id, new_model);
                 self.db.execute(query).await?;
             }
@@ -379,6 +368,7 @@ impl TransactionService {
                             .clone(),
                     },
                     description: x.description,
+                    link_id: x.link_id,
                 })
                 .collect(),
             group_id: updated_group.group_id,
@@ -553,18 +543,7 @@ fn create_add_transaction_model(
 ) -> Vec<AddUpdateTransactionModel> {
     transactions
         .iter()
-        .map(|trans| AddUpdateTransactionModel {
-            user_id,
-            group_id,
-            asset_id: trans.asset_id,
-            category_id: trans.category,
-            quantity: trans.quantity,
-            date: trans.date,
-            account_id: match trans.account_id {
-                Some(acc) => acc,
-                None => user_id,
-            },
-        })
+        .map(|trans| trans.clone().into_model(user_id, group_id))
         .collect()
 }
 

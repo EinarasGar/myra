@@ -17,6 +17,7 @@ pub mod category_dto;
 pub mod portfolio_account_dto;
 pub mod portfolio_dto;
 pub mod portfolio_row_dto;
+pub mod portfolio_update_dto;
 pub mod transaction_dto;
 pub mod transaction_financials_dto;
 pub mod transaction_group_dto;

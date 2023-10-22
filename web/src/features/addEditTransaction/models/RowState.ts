@@ -12,4 +12,5 @@ export interface RowState {
   account: PortfolioAccountViewModel | null;
   amount: number | null;
   date: Date | null;
+  linkId: number | null;
 }

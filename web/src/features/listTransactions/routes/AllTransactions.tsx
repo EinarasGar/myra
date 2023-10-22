@@ -20,10 +20,13 @@ function AllTransactions() {
           <TransactionGroupSummary
             key={model.id}
             categoryId={model.category_id}
-            amounts={model.transactions.map((trans) => ({
-              assetId: trans.asset_id,
-              quantity: trans.quantity,
-            }))}
+            amounts={model.linked_transactions
+              .flat()
+              .concat(model.transactions)
+              .map((trans) => ({
+                assetId: trans.asset_id,
+                quantity: trans.quantity,
+              }))}
             description={model.description}
             date={new Date(model.date)}
             onClick={() => {

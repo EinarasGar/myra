@@ -30,10 +30,13 @@ function Transaction() {
         <AccordionSummary>
           <TransactionGroupSummary
             categoryId={state.category_id}
-            amounts={state.transactions.map((trans) => ({
-              assetId: trans.asset_id,
-              quantity: trans.quantity,
-            }))}
+            amounts={state.linked_transactions
+              .flat()
+              .concat(state.transactions)
+              .map((trans) => ({
+                assetId: trans.asset_id,
+                quantity: trans.quantity,
+              }))}
             description={state.description}
             date={new Date(state.date)}
           />
@@ -43,22 +46,25 @@ function Transaction() {
 
       <Divider className="my-5" />
 
-      {state.transactions.map((trans, i) => (
-        <Accordion key={trans.id}>
-          <AccordionSummary>
-            <TransactionSummary
-              categoryId={trans.category_id}
-              assetId={trans.asset_id}
-              amount={trans.quantity}
-              description={
-                trans.description ? trans.description : `Transaction ${i + 1}`
-              }
-              accountName={trans.account?.name}
-              date={new Date(trans.date)}
-            />
-          </AccordionSummary>
-        </Accordion>
-      ))}
+      {state.linked_transactions
+        .flat()
+        .concat(state.transactions)
+        .map((trans, i) => (
+          <Accordion key={trans.id}>
+            <AccordionSummary>
+              <TransactionSummary
+                categoryId={trans.category_id}
+                assetId={trans.asset_id}
+                amount={trans.quantity}
+                description={
+                  trans.description ? trans.description : `Transaction ${i + 1}`
+                }
+                accountName={trans.account?.name}
+                date={new Date(trans.date)}
+              />
+            </AccordionSummary>
+          </Accordion>
+        ))}
       <Button
         onClick={() => {
           navigate(`/transactions/${state.id}/edit`, { state });

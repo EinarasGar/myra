@@ -45,6 +45,7 @@ function AddTransaction() {
           account: null,
           amount: null,
           date: null,
+          linkId: null,
         },
       ]}
       onSave={onSave}

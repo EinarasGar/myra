@@ -39,6 +39,7 @@ function AddEditTransactionRow({ onChange, onSubmit, defaultValue }: Props) {
     defaultValue.account
   );
   const [amount, setAmount] = useState<number | null>(defaultValue.amount);
+  const [linkId, setLinkid] = useState<number | null>(defaultValue.linkId);
 
   // Custom logic to autofill data
   useEffect(() => {
@@ -54,7 +55,8 @@ function AddEditTransactionRow({ onChange, onSubmit, defaultValue }: Props) {
       defaultValue.asset === asset &&
       defaultValue.account === account &&
       defaultValue.amount === amount &&
-      defaultValue.date === date
+      defaultValue.date === date &&
+      defaultValue.linkId === linkId
     )
       return;
     onChange({
@@ -65,6 +67,7 @@ function AddEditTransactionRow({ onChange, onSubmit, defaultValue }: Props) {
       account,
       amount,
       date,
+      linkId,
     });
   }, [
     description,
@@ -73,6 +76,7 @@ function AddEditTransactionRow({ onChange, onSubmit, defaultValue }: Props) {
     account,
     amount,
     date,
+    linkId,
     onChange,
     defaultValue,
   ]);
@@ -127,6 +131,16 @@ function AddEditTransactionRow({ onChange, onSubmit, defaultValue }: Props) {
           onChange={useCallback((model) => {
             setAccount(model);
           }, [])}
+        />
+      </Grid>
+      <Grid xs={4}>
+        <MemorizedAmountInput
+          value={linkId}
+          ticker={asset?.ticker}
+          onChange={useCallback((model) => {
+            setLinkid(model);
+          }, [])}
+          onSubmit={onSubmit}
         />
       </Grid>
     </Grid>

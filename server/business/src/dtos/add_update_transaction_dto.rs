@@ -1,4 +1,4 @@
-use dal::models::transaction_models::TransactionWithGroupModel;
+use dal::models::transaction_models::{AddUpdateTransactionModel, TransactionWithGroupModel};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use time::{serde::iso8601, OffsetDateTime};
@@ -14,6 +14,7 @@ pub struct AddUpdateTransactonDto {
     pub date: OffsetDateTime,
     pub account_id: Option<Uuid>,
     pub description: Option<String>,
+    pub link_id: Option<Uuid>,
 }
 
 impl AddUpdateTransactonDto {
@@ -25,6 +26,7 @@ impl AddUpdateTransactonDto {
             && self.quantity == other.quantity
             && self.category == other.category_id
             && self.date == other.date
+            && self.link_id == other.link_id
     }
 
     pub fn compare_core(&self, other: &TransactionWithGroupModel) -> bool {
@@ -33,5 +35,22 @@ impl AddUpdateTransactonDto {
             && self.quantity == other.quantity
             && self.category == other.category_id
             && self.date == other.date
+            && self.link_id == other.link_id
+    }
+
+    pub fn into_model(self, user_id: Uuid, group_id: Uuid) -> AddUpdateTransactionModel {
+        AddUpdateTransactionModel {
+            user_id,
+            group_id,
+            asset_id: self.asset_id,
+            category_id: self.category,
+            quantity: self.quantity,
+            date: self.date,
+            account_id: match self.account_id {
+                Some(acc) => acc,
+                None => user_id,
+            },
+            link_id: self.link_id,
+        }
     }
 }

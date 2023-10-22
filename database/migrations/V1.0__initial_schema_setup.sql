@@ -1,10 +1,12 @@
 DROP SCHEMA public CASCADE;
 CREATE SCHEMA public;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE TYPE category_type AS ENUM ('fees', 'investments');
 CREATE TABLE IF NOT EXISTS public.transaction_categories (
     id SERIAL CONSTRAINT transaction_categories_pk PRIMARY KEY,
     category TEXT NOT NULL,
-    icon TEXT NOT NULL
+    icon TEXT NOT NULL,
+    type category_type
 );
 CREATE TABLE IF NOT EXISTS public.transaction_descriptions (
     transaction_id INT CONSTRAINT transaction_descriptions_pk PRIMARY KEY,
@@ -48,6 +50,7 @@ CREATE TABLE IF NOT EXISTS public.assets (
     name TEXT NOT NULL,
     ticker TEXT NOT NULL,
     base_pair_id INT,
+    link_id UUID,
     user_id UUID CONSTRAINT assets_user_id_fkey REFERENCES public.users (id)
 );
 CREATE TABLE IF NOT EXISTS public.user_roles (
