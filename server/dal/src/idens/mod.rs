@@ -1,4 +1,4 @@
-use sea_query::Iden;
+use sea_query::{Iden, Write};
 
 pub mod asset_idens;
 pub(crate) mod portfolio_idens;
@@ -19,5 +19,13 @@ impl Iden for CommonsIden {
             }
         )
         .unwrap();
+    }
+}
+
+pub struct Unnest;
+
+impl Iden for Unnest {
+    fn unquoted(&self, s: &mut dyn Write) {
+        write!(s, "unnest").unwrap();
     }
 }

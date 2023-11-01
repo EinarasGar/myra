@@ -9,4 +9,5 @@ export interface PortfolioEntryViewModel {
   sum: number;
   last_rate?: AssetRateViewModel;
   last_reference_rate?: AssetRateViewModel;
+  sum_of_costs?: number;
 }

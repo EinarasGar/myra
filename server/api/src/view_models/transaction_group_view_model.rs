@@ -1,4 +1,4 @@
-use std::{collections::HashMap, hash::Hash};
+use std::collections::HashMap;
 
 use business::dtos::transaction_group_dto::TransactionGroupDto;
 use serde::{Deserialize, Serialize};

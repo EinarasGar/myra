@@ -119,6 +119,11 @@ impl PortfolioService {
 
         let ref_asset = self.asset_serice.get_asset(reference_asset).await?;
 
+        let sums_of_costs = self
+            .transaction_service
+            .get_sums_of_costs(user_id, reference_asset)
+            .await?;
+
         let ret_rows: Vec<PortfolioRowDto> = models
             .into_iter()
             .map(|val| {
@@ -185,6 +190,7 @@ impl PortfolioService {
 
                     last_rate,
                     last_reference_rate,
+                    sum_of_cost: sums_of_costs.get(&(val.asset_id, val.account_id)).cloned(),
                 }
             })
             .collect();

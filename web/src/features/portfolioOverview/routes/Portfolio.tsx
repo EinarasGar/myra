@@ -92,6 +92,7 @@ function Portfolio() {
               <TableCell align="right">Quantity</TableCell>
               <TableCell align="right">Worth Base</TableCell>
               <TableCell align="right">Worth Reference</TableCell>
+              <TableCell align="right">PL</TableCell>
               <TableCell align="right">Last updated</TableCell>
             </TableRow>
           </TableHead>
@@ -122,6 +123,22 @@ function Portfolio() {
                     style: "currency",
                     currency: portfolioResp.data?.reference_asset?.ticker,
                   })}
+                </TableCell>
+                <TableCell align="right">
+                  {row.sum_of_costs
+                    ? `${(
+                        row.sum * (row.last_reference_rate?.rate ?? 0) -
+                        row.sum_of_costs
+                      ).toLocaleString("en-US", {
+                        style: "currency",
+                        currency: portfolioResp.data?.reference_asset?.ticker,
+                      })} (${(
+                        ((row.sum * (row.last_reference_rate?.rate ?? 0) -
+                          row.sum_of_costs) /
+                          row.sum_of_costs) *
+                        100
+                      ).toFixed(2)}%)`
+                    : "-"}
                 </TableCell>
 
                 <TableCell align="right">

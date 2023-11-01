@@ -13,7 +13,9 @@ use dal::{
         transaction_db_set::{self},
     },
     models::{
+        investment_detail::InvestmentDetailModel,
         portfolio_models::{PortfolioAccountIdNameModel, PortfolioUpdateModel},
+        transaction_category_type::TransactionCategoryType,
         transaction_models::{
             AddTransactionDescriptionModel, AddUpdateTransactionGroupModel,
             AddUpdateTransactionModel, CategoryModel, TransactionFinancials,
@@ -23,13 +25,15 @@ use dal::{
 };
 use rust_decimal::Decimal;
 
+use rust_decimal_macros::dec;
 use uuid::Uuid;
 
 use crate::dtos::{
     add_update_transaction_dto::AddUpdateTransactonDto,
-    add_update_transaction_group_dto::AddUpdateTransactionGroupDto, category_dto::CategoryDto,
-    portfolio_account_dto::PortfolioAccountDto, transaction_dto::TransactonDto,
-    transaction_financials_dto::TransactionFinancialsDto,
+    add_update_transaction_group_dto::AddUpdateTransactionGroupDto,
+    asset_id_date_dto::AssetIdDateDto, asset_pair_rate_dto::AssetPairRateDto,
+    category_dto::CategoryDto, portfolio_account_dto::PortfolioAccountDto,
+    transaction_dto::TransactonDto, transaction_financials_dto::TransactionFinancialsDto,
     transaction_group_dto::TransactionGroupDto,
 };
 
@@ -504,6 +508,112 @@ impl TransactionService {
             })
         });
         Ok((financials, ids))
+    }
+
+    /// Gets all users transactions that are linked with a investment purchase transaction
+    #[tracing::instrument(skip_all, err)]
+    pub async fn get_investment_transactions_with_links(
+        &self,
+        user_id: Uuid,
+    ) -> anyhow::Result<Vec<InvestmentDetailModel>> {
+        let query =
+            transaction_db_set::get_investment_linked_trans_quantities_and_categories(user_id);
+        Ok(self.db.fetch_all::<InvestmentDetailModel>(query).await?)
+    }
+
+    /// Calculates total sums of costs in reference for each asset in each account
+    /// by getting all linked transactions and adding up any expenses.
+    /// For any transactions that are not in reference asset, it gets the price
+    /// of the asset for that time in reference asset
+    #[tracing::instrument(skip_all, err)]
+    pub async fn get_sums_of_costs(
+        &self,
+        user_id: Uuid,
+        reference_asset_id: i32,
+    ) -> anyhow::Result<HashMap<(i32, Uuid), Decimal>> {
+        let models = self.get_investment_transactions_with_links(user_id).await?;
+
+        //Group the transactions by link id
+        let mut grouped_results_full: HashMap<Uuid, Vec<InvestmentDetailModel>> = HashMap::new();
+        models.into_iter().for_each(|model| {
+            let entry = grouped_results_full
+                .entry(model.link_id)
+                .or_insert(Vec::new());
+            entry.push(model);
+        });
+
+        //Remove any groups where there are more than 1 buy invetments
+        let grouped_results: HashMap<Uuid, Vec<InvestmentDetailModel>> = grouped_results_full
+            .into_iter()
+            .filter(|(_, transactions)| {
+                transactions
+                    .iter()
+                    .filter(|x| {
+                        x.quantity > dec!(0)
+                            && x.category_type.clone().is_some_and(|category| {
+                                category == TransactionCategoryType::Investments
+                            })
+                    })
+                    .count()
+                    == 1
+            })
+            .collect();
+
+        //Iterate over all groups and only collect infomration about assets that would need conversion to ref asset
+        let mut data_for_asset_query: Vec<AssetIdDateDto> = Vec::new();
+        grouped_results.iter().for_each(|(_, transactions)| {
+            transactions.iter().cloned().for_each(|transaction| {
+                if transaction.quantity < dec!(0) && transaction.asset_id != reference_asset_id {
+                    data_for_asset_query.push(AssetIdDateDto {
+                        asset_id: transaction.asset_id,
+                        date: transaction.date,
+                    });
+                }
+            })
+        });
+
+        // Fetch the prices for transactions that require reference asset conversion
+        let mut prices: VecDeque<Option<AssetPairRateDto>> = self
+            .asset_service
+            .get_asset_refrence_price_by_dates(data_for_asset_query, reference_asset_id)
+            .await?
+            .into_iter()
+            .collect();
+
+        // Iterate over transactions in the same order as before, so that the prices fetched before are
+        // dequeued the same way
+        let mut results: HashMap<(i32, Uuid), Decimal> = HashMap::new();
+        grouped_results.iter().for_each(|(_, transactions)| {
+            //Get the investment purchase transaction, so we know which asset and account to add sum of costs to
+            //Safe to unwrap as the groups are filtered to have only 1 buy investment
+            let buy_investment: &InvestmentDetailModel = transactions
+                .iter()
+                .find(|x| {
+                    x.quantity > dec!(0)
+                        && x.category_type.clone().is_some_and(|category| {
+                            category == TransactionCategoryType::Investments
+                        })
+                })
+                .unwrap();
+            let id = buy_investment.asset_id;
+            let account = buy_investment.account_id;
+
+            // Since we are iterating over the same transactions, we can pop the prices from the front
+            // and they will be in the same order as the transactions. Here we do the actual calculation
+            // of sums of costs
+            transactions.iter().cloned().for_each(|transaction| {
+                if transaction.quantity < dec!(0) {
+                    let sum = results.entry((id, account)).or_insert(Decimal::new(0, 0));
+                    if transaction.asset_id == reference_asset_id {
+                        *sum -= transaction.quantity;
+                    } else if let Some(Some(rate)) = prices.pop_front() {
+                        *sum -= transaction.quantity * rate.rate;
+                    }
+                }
+            })
+        });
+
+        Ok(results)
     }
 }
 

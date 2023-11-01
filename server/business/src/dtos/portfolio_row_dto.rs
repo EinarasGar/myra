@@ -13,4 +13,5 @@ pub struct PortfolioRowDto {
     pub sum: Decimal,
     pub last_rate: Option<AssetRateDto>,
     pub last_reference_rate: Option<AssetRateDto>,
+    pub sum_of_cost: Option<Decimal>,
 }

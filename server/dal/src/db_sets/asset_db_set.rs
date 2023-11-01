@@ -1,17 +1,20 @@
 use sea_query::{
     extension::postgres::PgExpr, Alias, Asterisk, Cond, Expr, Func, Order, PostgresQueryBuilder,
-    Query,
+    Query, Value,
 };
 use sea_query_binder::SqlxBinder;
 use sqlx::types::{time::OffsetDateTime, Uuid};
 
 use crate::{
-    idens::asset_idens::{
-        AssetHistoryIden, AssetPairsIden, AssetTypesIden, AssetsAliasIden, AssetsIden,
+    idens::{
+        asset_idens::{
+            AssetHistoryIden, AssetPairsIden, AssetTypesIden, AssetsAliasIden, AssetsIden,
+        },
+        Unnest,
     },
     models::{
         asser_pair_rate_insert::AssetPairRateInsert, asset_models::InsertAsset,
-        asset_pair::AssetPair,
+        asset_pair::AssetPair, asset_pair_date::AssetPairDate,
     },
 };
 
@@ -354,6 +357,194 @@ pub fn get_assets_raw() -> DbQueryWithValues {
         .column((AssetsIden::Table, AssetsIden::BasePairId))
         .column((AssetsIden::Table, AssetsIden::UserId))
         .from(AssetsIden::Table)
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+/// This query takes in array of `AssetPairDate`, which contains asset id 1, asset id 2 and date
+/// For each pair it tries to get pair id from the database. If not found, it tries to get pair id
+/// with the base id for the first asset.
+/// For each passed element in array retruns a row with the latest price for that pair (or that base pair)
+/// If price is not found, it returns null for the price and date.
+/// If pair is not found, it returns null for all elements in the row.
+///
+/// Executes the following query
+/// Returns response which can be mapped to `AssetPairRate`
+/// ```sql
+/// SELECT "pair_ids_dates_list"."pair1",
+///     "pair_ids_dates_list"."pair2",
+///     "asset_history"."rate",
+///     "asset_history"."date"
+/// FROM (
+///         SELECT COALESCE("pairs"."pair1", "base_pairs"."pair1") AS "pair1",
+///             COALESCE("pairs"."pair2", "base_pairs"."pair2") AS "pair2",
+///             COALESCE("pairs"."id", "base_pairs"."id") AS "id",
+///             "pairs_dates_list"."date"
+///         FROM (
+///                 SELECT unnest(ARRAY [5, ...]) AS "pair1",
+///                     unnest(ARRAY [2, ...]) AS "pair2",
+///                     unnest(ARRAY ['2003-01-01 12:00:00'::timestamp, ...]
+///                     ) AS "date"
+///             ) AS "pairs_dates_list"
+///             LEFT JOIN (
+///                 SELECT "asset_pairs"."id",
+///                     "asset_pairs"."pair1",
+///                     "asset_pairs"."pair2"
+///                 FROM "asset_pairs"
+///             ) AS "pairs" ON ("pairs"."pair1", "pairs"."pair2") = (
+///                 "pairs_dates_list"."pair1",
+///                 "pairs_dates_list"."pair2"
+///             )
+///             LEFT JOIN (
+///                 SELECT "asset_pairs"."id",
+///                     "asset_pairs"."pair1",
+///                     "asset_pairs"."pair2"
+///                 FROM "asset_pairs"
+///                     JOIN "assets" ON "assets"."id" = "asset_pairs"."pair1"
+///                 WHERE "asset_pairs"."pair2" = "assets"."base_pair_id"
+///             ) AS "base_pairs" ON "base_pairs"."pair1" = "pairs_dates_list"."pair1"
+///     ) AS "pair_ids_dates_list"
+///     LEFT JOIN LATERAL (
+///         SELECT "rate",
+///             "date"
+///         FROM "asset_history"
+///         WHERE "pair_id" = "pair_ids_dates_list"."id"
+///             AND "date" <= "pair_ids_dates_list"."date"
+///         ORDER BY "date" DESC
+///         LIMIT 1
+///     ) AS "asset_history" ON TRUE
+/// ```
+#[tracing::instrument(skip_all)]
+pub fn get_pair_prices_by_dates(pair_dates: Vec<AssetPairDate>) -> DbQueryWithValues {
+    let assets_1_array = Value::Array(
+        sea_query::ArrayType::Int,
+        Some(Box::new(
+            pair_dates.iter().map(|x| x.pair1.into()).collect(),
+        )),
+    );
+    let assets_2_array = Value::Array(
+        sea_query::ArrayType::Int,
+        Some(Box::new(
+            pair_dates.iter().map(|x| x.pair2.into()).collect(),
+        )),
+    );
+    let target_date_array = Value::Array(
+        sea_query::ArrayType::TimeDateTimeWithTimeZone,
+        Some(Box::new(pair_dates.iter().map(|x| x.date.into()).collect())),
+    );
+
+    let asset_pairs_dates = Query::select()
+        .expr_as(
+            Func::cust(Unnest).arg(assets_1_array),
+            AssetPairsIden::Pair1,
+        )
+        .expr_as(
+            Func::cust(Unnest).arg(assets_2_array),
+            AssetPairsIden::Pair2,
+        )
+        .expr_as(
+            Func::cust(Unnest).arg(target_date_array),
+            AssetHistoryIden::Date,
+        )
+        .to_owned();
+
+    let base_pairs_query = Query::select()
+        .column((AssetPairsIden::Table, AssetPairsIden::Id))
+        .column((AssetPairsIden::Table, AssetPairsIden::Pair1))
+        .column((AssetPairsIden::Table, AssetPairsIden::Pair2))
+        .from(AssetPairsIden::Table)
+        .join(
+            sea_query::JoinType::Join,
+            AssetsIden::Table,
+            Expr::col((AssetsIden::Table, AssetsIden::Id))
+                .equals((AssetPairsIden::Table, AssetPairsIden::Pair1)),
+        )
+        .and_where(
+            Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair2))
+                .equals((AssetsIden::Table, AssetsIden::BasePairId)),
+        )
+        .to_owned();
+
+    let pairs_query = Query::select()
+        .column((AssetPairsIden::Table, AssetPairsIden::Id))
+        .column((AssetPairsIden::Table, AssetPairsIden::Pair1))
+        .column((AssetPairsIden::Table, AssetPairsIden::Pair2))
+        .from(AssetPairsIden::Table)
+        .to_owned();
+
+    let paior_ids_dates_query = Query::select()
+        .expr_as(
+            Func::coalesce([
+                Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Pair1)).into(),
+                Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Pair1)).into(),
+            ]),
+            AssetPairsIden::Pair1,
+        )
+        .expr_as(
+            Func::coalesce([
+                Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Pair2)).into(),
+                Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Pair2)).into(),
+            ]),
+            AssetPairsIden::Pair2,
+        )
+        .expr_as(
+            Func::coalesce([
+                Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Id)).into(),
+                Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Id)).into(),
+            ]),
+            AssetPairsIden::Id,
+        )
+        .column((AssetsAliasIden::PairsDatesList, AssetHistoryIden::Date))
+        .from_subquery(asset_pairs_dates, AssetsAliasIden::PairsDatesList)
+        .join_subquery(
+            sea_query::JoinType::LeftJoin,
+            pairs_query,
+            AssetsAliasIden::PairsSubquery,
+            Expr::tuple([
+                Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Pair1)).into(),
+                Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Pair2)).into(),
+            ])
+            .eq(Expr::tuple([
+                Expr::col((AssetsAliasIden::PairsDatesList, AssetPairsIden::Pair1)).into(),
+                Expr::col((AssetsAliasIden::PairsDatesList, AssetPairsIden::Pair2)).into(),
+            ])),
+        )
+        .join_subquery(
+            sea_query::JoinType::LeftJoin,
+            base_pairs_query,
+            AssetsAliasIden::BasePairsSubquery,
+            Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Pair1))
+                .equals((AssetsAliasIden::PairsDatesList, AssetPairsIden::Pair1)),
+        )
+        .to_owned();
+
+    let history_query = Query::select()
+        .columns([AssetHistoryIden::Rate, AssetHistoryIden::Date])
+        .from(AssetHistoryIden::Table)
+        .and_where(
+            Expr::col(AssetHistoryIden::PairId)
+                .equals((AssetsAliasIden::PairIdsDatesList, AssetPairsIden::Id)),
+        )
+        .and_where(Expr::col(AssetHistoryIden::Date).lte(Expr::col((
+            AssetsAliasIden::PairIdsDatesList,
+            AssetHistoryIden::Date,
+        ))))
+        .order_by(AssetHistoryIden::Date, Order::Desc)
+        .limit(1)
+        .to_owned();
+
+    Query::select()
+        .column((AssetsAliasIden::PairIdsDatesList, AssetPairsIden::Pair1))
+        .column((AssetsAliasIden::PairIdsDatesList, AssetPairsIden::Pair2))
+        .column((AssetHistoryIden::Table, AssetHistoryIden::Rate))
+        .column((AssetHistoryIden::Table, AssetHistoryIden::Date))
+        .from_subquery(paior_ids_dates_query, AssetsAliasIden::PairIdsDatesList)
+        .join_lateral(
+            sea_query::JoinType::LeftJoin,
+            history_query,
+            AssetHistoryIden::Table,
+            Expr::cust("TRUE"),
+        )
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }

@@ -19,6 +19,7 @@ pub struct PortfolioEntryViewModel {
     pub sum: Decimal,
     pub last_rate: Option<AssetRateViewModel>,
     pub last_reference_rate: Option<AssetRateViewModel>,
+    pub sum_of_costs: Option<Decimal>,
 }
 
 impl From<PortfolioRowDto> for PortfolioEntryViewModel {
@@ -30,6 +31,7 @@ impl From<PortfolioRowDto> for PortfolioEntryViewModel {
             last_rate: p.last_rate.map(|rate| rate.into()),
             last_reference_rate: p.last_reference_rate.map(|rate| rate.into()),
             base_asset: p.base_asset.map(|asset| asset.into()),
+            sum_of_costs: p.sum_of_cost,
         }
     }
 }

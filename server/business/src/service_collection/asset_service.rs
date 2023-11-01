@@ -6,6 +6,7 @@ use dal::{
         asset_models::{Asset, AssetId, AssetPairId, AssetRaw, PublicAsset},
         asset_pair::AssetPair,
         asset_pair_rate::AssetPairRate,
+        asset_pair_rate_option::AssetPairRateOption,
         asset_rate::AssetRate,
         count::Count,
         exists::Exsists,
@@ -20,8 +21,10 @@ use tracing::error;
 use uuid::Uuid;
 
 use crate::dtos::{
-    add_custom_asset_dto::AddCustomAssetDto, asset_dto::AssetDto, asset_insert_dto::AssetInsertDto,
-    asset_insert_result_dto::InsertAssetResultDto, asset_pair_insert_dto::AssetPairInsertDto,
+    add_custom_asset_dto::AddCustomAssetDto, asset_dto::AssetDto,
+    asset_id_date_dto::AssetIdDateDto, asset_insert_dto::AssetInsertDto,
+    asset_insert_result_dto::InsertAssetResultDto, asset_pair_date_dto::AssetPairDateDto,
+    asset_pair_insert_dto::AssetPairInsertDto, asset_pair_rate_dto::AssetPairRateDto,
     asset_pair_rate_insert_dto::AssetPairRateInsertDto, asset_rate_dto::AssetRateDto,
     asset_ticker_pair_ids_dto::AssetTickerPairIdsDto,
 };
@@ -351,6 +354,119 @@ impl AssetsService {
         let query = asset_db_set::insert_pair_rates(rates.into_iter().map(|x| x.into()).collect());
         self.db.execute(query).await?;
         Ok(())
+    }
+
+    /// This method takes a list of asset pairs and dates
+    /// It then queries the database to find prices for those pairs
+    /// If the pair for the two provided ids is found, the price for it is returned
+    /// if it is not foud, the price for base conversion is returned
+    /// The number of elements returned is the same as the number of elements in the input list
+    /// For elements where id is found but price is not, the Option for rate and date will be null
+    #[tracing::instrument(skip_all, err)]
+    pub async fn get_pair_prices_by_dates(
+        &self,
+        pair_dates: Vec<AssetPairDateDto>,
+    ) -> anyhow::Result<Vec<Option<AssetPairRateDto>>> {
+        if pair_dates.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let query = asset_db_set::get_pair_prices_by_dates(
+            pair_dates.into_iter().map(|x| x.into()).collect(),
+        );
+        let ret = self.db.fetch_all::<AssetPairRateOption>(query).await?;
+
+        Ok(ret
+            .into_iter()
+            .rev()
+            .map(|x| {
+                if x.rate.is_some() {
+                    Some(AssetPairRateDto {
+                        asset1_id: x.pair1,
+                        asset2_id: x.pair2,
+                        rate: x.rate.unwrap(),
+                        date: x.date.unwrap(),
+                    })
+                } else {
+                    None
+                }
+            })
+            .collect())
+    }
+
+    /// This method takes in a list of asset id and date pairs plus reference asset id
+    /// It then generates a list of asset pairs with the reference asset id
+    /// It queries the database to get prices for those dates and that asset
+    /// The first query that it runs returns prices for asset to direct conversio to refference
+    /// plus prices with base pair if the direct conversion is not found
+    /// Another query is performed if there are any prices returned that are not direct conversion
+    /// to get the correct conversion price to reference asset
+    #[tracing::instrument(skip_all, err)]
+    pub async fn get_asset_refrence_price_by_dates(
+        &self,
+        asset_id_dates: Vec<AssetIdDateDto>,
+        reference_asset_id: i32,
+    ) -> anyhow::Result<Vec<Option<AssetPairRateDto>>> {
+        if asset_id_dates.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let initial_pair_dates: Vec<AssetPairDateDto> = asset_id_dates
+            .into_iter()
+            .map(|x| AssetPairDateDto {
+                asset1_id: x.asset_id,
+                asset2_id: reference_asset_id,
+                date: x.date,
+            })
+            .collect();
+
+        let prices = self.get_pair_prices_by_dates(initial_pair_dates).await?;
+
+        // Find any prices returned that does not have reference asset mapping.
+        let mut ref_pair_dates: Vec<AssetPairDateDto> = Vec::new();
+        for price in prices.clone().into_iter().flatten() {
+            if price.asset2_id != reference_asset_id {
+                ref_pair_dates.push(AssetPairDateDto {
+                    asset1_id: price.asset2_id,
+                    asset2_id: reference_asset_id,
+                    date: price.date,
+                });
+            }
+        }
+
+        let mut mapping_prices_queue: VecDeque<Option<AssetPairRateDto>> = VecDeque::new();
+        if !ref_pair_dates.is_empty() {
+            mapping_prices_queue = self
+                .get_pair_prices_by_dates(ref_pair_dates)
+                .await?
+                .into_iter()
+                .collect();
+        }
+
+        // Iterate over initial prices list in the same order, so that the reference queue is read in the correct squence
+        let mut mapped_prices: Vec<Option<AssetPairRateDto>> = Vec::new();
+        for price in prices {
+            if let Some(price) = price {
+                if price.asset2_id != reference_asset_id {
+                    if let Some(Some(ref_rate)) = mapping_prices_queue.pop_front() {
+                        mapped_prices.push(Some(AssetPairRateDto {
+                            asset1_id: price.asset1_id,
+                            asset2_id: reference_asset_id,
+                            date: price.date,
+                            rate: price.rate * ref_rate.rate,
+                        }));
+                    } else {
+                        mapped_prices.push(None);
+                    }
+                } else {
+                    mapped_prices.push(Some(price));
+                }
+            } else {
+                mapped_prices.push(None);
+            }
+        }
+
+        Ok(mapped_prices)
     }
 }
 

@@ -299,3 +299,57 @@ pub fn delete_transaction_group(id: Uuid) -> DbQueryWithValues {
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }
+
+/// ```sql
+/// SELECT asset_id, account_id, quantity, link_id, date, transaction_categories.type FROM transaction
+/// INNER JOIN transaction_categories ON transaction_categories.id = transaction.category_id
+/// WHERE link_id IN (
+///     SELECT DISTINCT link_id FROM transaction
+///     INNER JOIN transaction_categories ON transaction_categories.id = "transaction".category_id
+///     WHERE transaction_categories."type" = 'investments' and user_id = 'uuid'
+/// )
+/// ```
+#[tracing::instrument(skip_all)]
+pub fn get_investment_linked_trans_quantities_and_categories(user_id: Uuid) -> DbQueryWithValues {
+    Query::select()
+        .column((TransactionIden::Table, TransactionIden::AssetId))
+        .column((TransactionIden::Table, TransactionIden::AccountId))
+        .column((TransactionIden::Table, TransactionIden::Quantity))
+        .column((TransactionIden::Table, TransactionIden::LinkId))
+        .column((TransactionIden::Table, TransactionIden::Date))
+        .column((
+            TransactionCategoriesIden::Table,
+            TransactionCategoriesIden::Type,
+        ))
+        .from(TransactionIden::Table)
+        .inner_join(
+            TransactionCategoriesIden::Table,
+            Expr::col((TransactionIden::Table, TransactionIden::CategoryId)).equals((
+                TransactionCategoriesIden::Table,
+                TransactionCategoriesIden::Id,
+            )),
+        )
+        .and_where(
+            Expr::col((TransactionIden::Table, TransactionIden::LinkId)).in_subquery(
+                Query::select()
+                    .distinct()
+                    .column(TransactionIden::LinkId)
+                    .from(TransactionIden::Table)
+                    .inner_join(
+                        TransactionCategoriesIden::Table,
+                        Expr::col((TransactionIden::Table, TransactionIden::CategoryId)).equals((
+                            TransactionCategoriesIden::Table,
+                            TransactionCategoriesIden::Id,
+                        )),
+                    )
+                    .and_where(
+                        Expr::col(TransactionCategoriesIden::Type)
+                            .eq(Expr::cust("'investments'::category_type")),
+                    )
+                    .and_where(Expr::col(TransactionIden::UserId).eq(user_id))
+                    .to_owned(),
+            ),
+        )
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}

@@ -33,13 +33,12 @@ impl From<UpdateTransactionGroupViewModel> for AddUpdateTransactionGroupDto {
                     &mut p
                         .linked_transactions
                         .into_iter()
-                        .map(|val| {
+                        .flat_map(|val| {
                             let link_id = Uuid::new_v4();
                             val.into_iter()
                                 .map(|val| val.into_linked_dto(link_id))
                                 .collect::<Vec<AddUpdateTransactonDto>>()
                         })
-                        .flatten()
                         .collect(),
                 );
                 transactions
