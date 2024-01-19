@@ -27,7 +27,6 @@ use crate::dtos::transaction_financials_dto::TransactionFinancialsDto;
 use super::asset_service::AssetsService;
 use super::transaction_service::TransactionService;
 
-#[derive(Clone)]
 pub struct PortfolioService {
     db_context: MyraDb,
     transaction_service: TransactionService,

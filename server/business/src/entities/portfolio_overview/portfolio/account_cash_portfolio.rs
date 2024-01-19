@@ -1,0 +1,55 @@
+use rust_decimal::Decimal;
+
+#[derive(Clone, Debug)]
+pub struct AccountCashPortfolio {
+    units: Decimal,
+    fees: Decimal,
+    dividends: Decimal,
+}
+
+impl Default for AccountCashPortfolio {
+    fn default() -> Self {
+        Self {
+            units: Decimal::new(0, 0),
+            fees: Decimal::new(0, 0),
+            dividends: Decimal::new(0, 0),
+        }
+    }
+}
+
+impl AccountCashPortfolio {
+    pub fn new(units: Decimal, fees: Decimal, dividends: Decimal) -> Self {
+        Self {
+            units,
+            fees,
+            dividends,
+        }
+    }
+
+    pub fn units(&self) -> Decimal {
+        self.units
+    }
+
+    pub fn fees(&self) -> Decimal {
+        self.fees
+    }
+
+    pub fn dividends(&self) -> Decimal {
+        self.dividends
+    }
+
+    //TODO: Add fees implementation
+    pub fn add_units(&mut self, units: Decimal, _fees: Decimal) {
+        self.units += units;
+    }
+
+    pub fn add_fees(&mut self, fees: Decimal) {
+        self.fees += fees;
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.units == Decimal::new(0, 0)
+            && self.fees == Decimal::new(0, 0)
+            && self.dividends == Decimal::new(0, 0)
+    }
+}

@@ -23,6 +23,7 @@ use dal::{
         },
     },
 };
+use mockall::automock;
 use rust_decimal::Decimal;
 
 use rust_decimal_macros::dec;
@@ -39,12 +40,12 @@ use crate::dtos::{
 
 use super::asset_service::AssetsService;
 
-#[derive(Clone)]
 pub struct TransactionService {
     db: MyraDb,
     asset_service: AssetsService,
 }
 
+#[automock]
 impl TransactionService {
     pub fn new(db: MyraDb) -> Self {
         Self {
@@ -515,9 +516,11 @@ impl TransactionService {
     pub async fn get_investment_transactions_with_links(
         &self,
         user_id: Uuid,
+        asset_id: Option<i32>,
     ) -> anyhow::Result<Vec<InvestmentDetailModel>> {
-        let query =
-            transaction_db_set::get_investment_linked_trans_quantities_and_categories(user_id);
+        let query = transaction_db_set::get_investment_linked_trans_quantities_and_categories(
+            user_id, asset_id,
+        );
         Ok(self.db.fetch_all::<InvestmentDetailModel>(query).await?)
     }
 
@@ -531,7 +534,9 @@ impl TransactionService {
         user_id: Uuid,
         reference_asset_id: i32,
     ) -> anyhow::Result<HashMap<(i32, Uuid), Decimal>> {
-        let models = self.get_investment_transactions_with_links(user_id).await?;
+        let models = self
+            .get_investment_transactions_with_links(user_id, None)
+            .await?;
 
         //Group the transactions by link id
         let mut grouped_results_full: HashMap<Uuid, Vec<InvestmentDetailModel>> = HashMap::new();

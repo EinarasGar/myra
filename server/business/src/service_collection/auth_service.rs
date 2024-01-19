@@ -14,14 +14,12 @@ use crate::dtos::{auth_dto::ClaimsDto, user_role_dto::UserRoleEnumDto};
 
 use super::user_service::UsersService;
 
-#[derive(Clone)]
 pub struct AuthService {
     jwt_keys: JwtKeys,
     db_context: MyraDb,
     user_service: UsersService,
 }
 
-#[derive(Clone)]
 struct JwtKeys {
     encoding: EncodingKey,
     decoding: DecodingKey,

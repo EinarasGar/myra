@@ -306,11 +306,14 @@ pub fn delete_transaction_group(id: Uuid) -> DbQueryWithValues {
 /// WHERE link_id IN (
 ///     SELECT DISTINCT link_id FROM transaction
 ///     INNER JOIN transaction_categories ON transaction_categories.id = "transaction".category_id
-///     WHERE transaction_categories."type" = 'investments' and user_id = 'uuid'
+///     WHERE transaction_categories."type" = 'investments' AND user_id = 'uuid' (AND asset_id = i32)
 /// )
 /// ```
 #[tracing::instrument(skip_all)]
-pub fn get_investment_linked_trans_quantities_and_categories(user_id: Uuid) -> DbQueryWithValues {
+pub fn get_investment_linked_trans_quantities_and_categories(
+    user_id: Uuid,
+    asset_id: Option<i32>,
+) -> DbQueryWithValues {
     Query::select()
         .column((TransactionIden::Table, TransactionIden::AssetId))
         .column((TransactionIden::Table, TransactionIden::AccountId))
@@ -347,6 +350,13 @@ pub fn get_investment_linked_trans_quantities_and_categories(user_id: Uuid) -> D
                             .eq(Expr::cust("'investments'::category_type")),
                     )
                     .and_where(Expr::col(TransactionIden::UserId).eq(user_id))
+                    .conditions(
+                        asset_id.is_some(),
+                        |q| {
+                            q.and_where(Expr::col(TransactionIden::AssetId).eq(asset_id.unwrap()));
+                        },
+                        |_q| {},
+                    )
                     .to_owned(),
             ),
         )

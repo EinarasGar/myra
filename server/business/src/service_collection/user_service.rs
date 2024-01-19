@@ -24,7 +24,6 @@ use crate::dtos::{
     user_full_dto::UserFullDto,
 };
 
-#[derive(Clone)]
 pub struct UsersService {
     db: MyraDb,
 }

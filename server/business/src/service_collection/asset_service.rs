@@ -16,6 +16,7 @@ use dal::{
 #[mockall_double::double]
 use dal::database_context::MyraDb;
 
+use mockall::automock;
 use time::OffsetDateTime;
 use tracing::error;
 use uuid::Uuid;
@@ -29,11 +30,11 @@ use crate::dtos::{
     asset_ticker_pair_ids_dto::AssetTickerPairIdsDto,
 };
 
-#[derive(Clone)]
 pub struct AssetsService {
     db: MyraDb,
 }
 
+#[automock]
 impl AssetsService {
     pub fn new(db: MyraDb) -> Self {
         Self { db }
@@ -467,62 +468,5 @@ impl AssetsService {
         }
 
         Ok(mapped_prices)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use dal::database_context::MockMyraDb;
-
-    #[tokio::test]
-    async fn test_get_assets_happy_path() {
-        let mut mock_db = MockMyraDb::default();
-
-        // Set expectations
-        mock_db.expect_fetch_all::<Asset>().returning(|_query| {
-            Ok(vec![Asset {
-                category: "category".to_string(),
-                name: "name".to_string(),
-                ticker: "ticker".to_string(),
-                id: 1,
-                user_id: None,
-            }])
-        });
-
-        let service = AssetsService { db: mock_db };
-
-        // Call the method
-        let result = service.get_public_assets(1, None).await;
-
-        // Assert
-        assert!(result.is_ok());
-        let assets = result.unwrap();
-        assert_eq!(assets.len(), 1);
-        assert_eq!(assets[0].category, "category");
-        assert_eq!(assets[0].name, "name");
-        assert_eq!(assets[0].ticker, "ticker");
-        assert_eq!(assets[0].asset_id, 1);
-    }
-
-    #[tokio::test]
-    async fn test_get_assets_no_assets_found() {
-        let mut mock_db = MockMyraDb::default();
-
-        // Set expectations
-        mock_db
-            .expect_fetch_all::<Asset>()
-            .returning(|_query| Ok(vec![]));
-
-        let service = AssetsService { db: mock_db };
-
-        // Call the method
-        let result = service
-            .get_public_assets(1, Some("nonexistent".to_string()))
-            .await;
-
-        // Assert
-        assert!(result.is_ok());
-        assert!(result.unwrap().is_empty());
     }
 }

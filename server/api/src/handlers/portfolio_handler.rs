@@ -9,10 +9,13 @@ use uuid::Uuid;
 use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
-    states::{AssetsServiceState, PortfolioServiceState, UsersServiceState},
+    states::{
+        AssetsServiceState, PortfolioOverviewServiceState, PortfolioServiceState, UsersServiceState,
+    },
     view_models::{
         portfolio_account_view_model::PortfolioAccountViewModel,
         portfolio_history_view_model::PortfolioHistoryViewModel,
+        portfolio_overview_view_model::PortfolioOverviewViewModel,
         portfolio_view_model::PortfolioViewModel,
     },
 };
@@ -138,4 +141,17 @@ pub async fn post_portfolio_account(
 
     let ret_model: PortfolioAccountViewModel = new_model.into();
     Ok(ret_model.into())
+}
+
+#[tracing::instrument(skip_all, err)]
+pub async fn get_portfolio_asset(
+    Path((_user_id, _asset_id)): Path<(Uuid, i32)>,
+    PortfolioOverviewServiceState(portfolio_overview_service): PortfolioOverviewServiceState,
+) -> Result<Json<PortfolioOverviewViewModel>, ApiError> {
+    // TODO: This endpoint is for testing purposes only right now as it has nothing to do with asset id.
+    let overview_dto = portfolio_overview_service
+        .get_full_portfolio_overview()
+        .await?;
+    let overview: PortfolioOverviewViewModel = overview_dto.into();
+    Ok(overview.into())
 }
