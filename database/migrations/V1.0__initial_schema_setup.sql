@@ -1,12 +1,28 @@
 DROP SCHEMA public CASCADE;
 CREATE SCHEMA public;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE TYPE category_type AS ENUM ('fees', 'investments');
+CREATE TYPE portfolio_event_type AS ENUM (
+    'account_fees',
+    'balance_transfer',
+    'asset_purhcase',
+    'asset_sale',
+    'asset_trade',
+    'asset_transfer_in',
+    'asset_transfer_out',
+    'cash_transfer_in',
+    'cash_transfer_out',
+    'asset_dividend',
+    'cash_dividend'
+);
+CREATE TABLE IF NOT EXISTS public.category_type (
+    id SERIAL CONSTRAINT category_type_pk PRIMARY KEY,
+    name TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS public.transaction_categories (
     id SERIAL CONSTRAINT transaction_categories_pk PRIMARY KEY,
     category TEXT NOT NULL,
     icon TEXT NOT NULL,
-    type category_type
+    type int CONSTRAINT transaction_categories_type_fkey REFERENCES public.category_type (id)
 );
 CREATE TABLE IF NOT EXISTS public.transaction_descriptions (
     transaction_id INT CONSTRAINT transaction_descriptions_pk PRIMARY KEY,
@@ -50,7 +66,6 @@ CREATE TABLE IF NOT EXISTS public.assets (
     name TEXT NOT NULL,
     ticker TEXT NOT NULL,
     base_pair_id INT,
-    link_id UUID,
     user_id UUID CONSTRAINT assets_user_id_fkey REFERENCES public.users (id)
 );
 CREATE TABLE IF NOT EXISTS public.user_roles (
@@ -77,6 +92,14 @@ CREATE TABLE IF NOT EXISTS public.portfolio (
     sum NUMERIC NOT NULL,
     CONSTRAINT portfolio_user_id_asset_id_pk PRIMARY KEY(user_id, asset_id, account_id)
 );
+CREATE TABLE IF NOT EXISTS public.portfoloio_event (
+    id UUID NOT NULL CONSTRAINT portfoloio_event_id_pkey PRIMARY KEY,
+    type portfolio_event
+);
+CREATE TABLE IF NOT EXISTS public.dividends (
+    portfolo_event_id INT NOT NULL CONSTRAINT dividends_portfoloio_event_id_pkey_fkey PRIMARY KEY REFERENCES public.portfoloio_event (id),
+    source_asset_id INT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS public.transaction (
     id SERIAL CONSTRAINT transaction_pk PRIMARY KEY,
     user_id UUID NOT NULL CONSTRAINT transaction_user_id_fkey REFERENCES public.users (id),
@@ -86,6 +109,7 @@ CREATE TABLE IF NOT EXISTS public.transaction (
     category_id INT NOT NULL CONSTRAINT transaction_category_id_fkey REFERENCES public.transaction_categories (id),
     quantity NUMERIC NOT NULL,
     date TIMESTAMPTZ NOT NULL,
+    portfolio_event_id UUID CONSTRAINT transaction_portfolio_event_id_fkey REFERENCES public.portfoloio_event (id),
     CONSTRAINT transaction_user_id_asset_id_fkey FOREIGN KEY(user_id, asset_id, account_id) REFERENCES public.portfolio(user_id, asset_id, account_id)
 );
 CREATE TABLE IF NOT EXISTS public.portfolio_history (

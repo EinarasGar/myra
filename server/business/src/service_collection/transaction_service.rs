@@ -60,6 +60,7 @@ impl TransactionService {
         user_id: Uuid,
         group: AddUpdateTransactionGroupDto,
     ) -> anyhow::Result<TransactionGroupDto> {
+        unimplemented!();
         let group_id = Uuid::new_v4();
 
         let dal_group = AddUpdateTransactionGroupModel {
@@ -163,7 +164,7 @@ impl TransactionService {
                             .clone(),
                     },
                     description: descriptions.pop().unwrap(),
-                    link_id: model.link_id,
+                    link_id: model.portfolio_event_id,
                 })
                 .collect(),
             group_id: dal_group.group_id,
@@ -534,6 +535,7 @@ impl TransactionService {
         user_id: Uuid,
         reference_asset_id: i32,
     ) -> anyhow::Result<HashMap<(i32, Uuid), Decimal>> {
+        unimplemented!();
         let models = self
             .get_investment_transactions_with_links(user_id, None)
             .await?;
@@ -542,7 +544,7 @@ impl TransactionService {
         let mut grouped_results_full: HashMap<Uuid, Vec<InvestmentDetailModel>> = HashMap::new();
         models.into_iter().for_each(|model| {
             let entry = grouped_results_full
-                .entry(model.link_id)
+                .entry(model.portfolio_event_id)
                 .or_insert(Vec::new());
             entry.push(model);
         });

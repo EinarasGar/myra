@@ -1,35 +1,37 @@
 use crate::{handlers, observability, openapi::ApiDoc, AppState};
 use axum::{
-    routing::{delete, get, post},
+    routing::{get, post},
     Router,
 };
 use utoipa::OpenApi;
+use utoipa_rapidoc::RapiDoc;
 use utoipa_redoc::{Redoc, Servable};
 
 pub(crate) fn create_router(state: AppState) -> Router {
     Router::new()
         .merge(Redoc::with_url("/redoc", ApiDoc::openapi()))
+        .merge(RapiDoc::with_openapi("/api-docs/openapi.json", ApiDoc::openapi()).path("/rapidoc"))
         .route("/api/users", post(handlers::user_handler::post_user))
         .route(
             "/api/users/:user_id",
             get(handlers::user_handler::get_user_by_id),
         )
-        .route(
-            "/api/users/:user_id/transactions",
-            post(handlers::transaction_handler::post_transactions),
-        )
-        .route(
-            "/api/users/:user_id/transactions/:group_id",
-            post(handlers::transaction_handler::post_transactions_by_group_id),
-        )
-        .route(
-            "/api/users/:user_id/transactions/:group_id",
-            delete(handlers::transaction_handler::delete_transactions_by_group_id),
-        )
-        .route(
-            "/api/users/:user_id/transactions",
-            get(handlers::transaction_handler::get_transactions),
-        )
+        // .route(
+        //     "/api/users/:user_id/transactions",
+        //     post(handlers::transaction_handler::post),
+        // )
+        // .route(
+        //     "/api/users/:user_id/transactions/:group_id",
+        //     post(handlers::transactions::post_transactions_by_group_id),
+        // )
+        // .route(
+        //     "/api/users/:user_id/transactions/:group_id",
+        //     delete(handlers::transactions::delete_transactions_by_group_id),
+        // )
+        // .route(
+        //     "/api/users/:user_id/transactions",
+        //     get(handlers::transactions::get_transactions),
+        // )
         .route(
             "/api/users/:user_id/portfolio",
             get(handlers::portfolio_handler::get_portfolio),

@@ -1,6 +1,19 @@
 use sea_query::Iden;
 
 #[allow(dead_code)]
+pub enum PortfolioEventIden {
+    Table,
+    Id,
+    Type,
+}
+
+pub enum DividendsIden {
+    Table,
+    PortfoloEventId,
+    SourceAssetId,
+}
+
+#[allow(dead_code)]
 pub enum PortfolioIden {
     Table,
     Id,
@@ -16,6 +29,36 @@ pub enum PortfolioAccountIden {
     Id,
     UserId,
     Name,
+}
+
+impl Iden for DividendsIden {
+    fn unquoted(&self, s: &mut dyn std::fmt::Write) {
+        write!(
+            s,
+            "{}",
+            match self {
+                Self::Table => "dividends",
+                Self::PortfoloEventId => "portfolio_event_id",
+                Self::SourceAssetId => "source_asset_id",
+            }
+        )
+        .unwrap();
+    }
+}
+
+impl Iden for PortfolioEventIden {
+    fn unquoted(&self, s: &mut dyn std::fmt::Write) {
+        write!(
+            s,
+            "{}",
+            match self {
+                Self::Table => "portfolio_event",
+                Self::Id => "id",
+                Self::Type => "type",
+            }
+        )
+        .unwrap();
+    }
 }
 
 impl Iden for PortfolioIden {

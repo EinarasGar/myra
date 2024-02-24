@@ -21,6 +21,7 @@ pub struct TransactonDto {
 
 impl From<TransactionWithGroupModel> for TransactonDto {
     fn from(p: TransactionWithGroupModel) -> Self {
+        unimplemented!();
         Self {
             transaction_id: p.id,
             asset_id: p.asset_id,
@@ -32,7 +33,7 @@ impl From<TransactionWithGroupModel> for TransactonDto {
                 account_id: Some(p.account_id),
                 account_name: p.account_name,
             },
-            link_id: p.link_id,
+            link_id: p.portfolio_event_id,
         }
     }
 }

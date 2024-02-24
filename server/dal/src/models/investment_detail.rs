@@ -12,6 +12,6 @@ pub struct InvestmentDetailModel {
     pub quantity: Decimal,
     #[sqlx(rename = "type")]
     pub category_type: Option<TransactionCategoryType>,
-    pub link_id: Uuid,
+    pub portfolio_event_id: Uuid,
     pub date: OffsetDateTime,
 }

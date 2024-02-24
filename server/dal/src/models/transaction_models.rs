@@ -16,7 +16,7 @@ pub struct TransactionWithGroupModel {
     pub group_description: String,
     pub group_category_id: i32,
     pub date_added: OffsetDateTime,
-    pub link_id: Option<Uuid>,
+    pub portfolio_event_id: Option<Uuid>,
 }
 
 #[derive(Clone, Debug, sqlx::FromRow)]
@@ -37,7 +37,7 @@ pub struct AddUpdateTransactionModel {
     pub quantity: Decimal,
     pub date: OffsetDateTime,
     pub account_id: Uuid,
-    pub link_id: Option<Uuid>,
+    pub portfolio_event_id: Option<Uuid>,
 }
 
 #[derive(Clone, Debug)]

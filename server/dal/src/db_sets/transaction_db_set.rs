@@ -195,6 +195,7 @@ pub fn insert_transaction_group(group: AddUpdateTransactionGroupModel) -> DbQuer
 
 #[tracing::instrument(skip_all)]
 pub fn insert_transactions(models: Vec<AddUpdateTransactionModel>) -> DbQueryWithValues {
+    return unimplemented!();
     let mut builder2 = Query::insert()
         .into_table(TransactionIden::Table)
         .columns([
@@ -219,7 +220,7 @@ pub fn insert_transactions(models: Vec<AddUpdateTransactionModel>) -> DbQueryWit
             model.category_id.into(),
             model.quantity.into(),
             model.date.into(),
-            model.link_id.into(),
+            model.portfolio_event_id.into(),
         ]);
     }
     builder2.build_sqlx(PostgresQueryBuilder).into()
@@ -278,6 +279,7 @@ pub fn update_description(id: i32, description: String) -> DbQueryWithValues {
 
 #[tracing::instrument(skip_all)]
 pub fn update_transaction(id: i32, model: AddUpdateTransactionModel) -> DbQueryWithValues {
+    return unimplemented!();
     Query::update()
         .table(TransactionIden::Table)
         .value(TransactionIden::AccountId, model.account_id)
@@ -285,7 +287,7 @@ pub fn update_transaction(id: i32, model: AddUpdateTransactionModel) -> DbQueryW
         .value(TransactionIden::CategoryId, model.category_id)
         .value(TransactionIden::Quantity, model.quantity)
         .value(TransactionIden::Date, model.date)
-        .value(TransactionIden::LinkId, model.link_id)
+        .value(TransactionIden::LinkId, model.portfolio_event_id)
         .and_where(Expr::col(TransactionIden::Id).eq(id))
         .build_sqlx(PostgresQueryBuilder)
         .into()

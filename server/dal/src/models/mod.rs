@@ -8,6 +8,7 @@ pub mod asset_rate;
 pub mod count;
 pub mod exists;
 pub mod investment_detail;
+pub mod portfolio_event_type;
 pub mod portfolio_models;
 pub mod transaction_category_type;
 pub mod transaction_models;

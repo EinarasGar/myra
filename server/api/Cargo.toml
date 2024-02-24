@@ -25,4 +25,6 @@ typeshare = "1.0.1"
 serde_json = "1.0.107"
 utoipa = { version = "4.0.0", features = ["axum_extras", "time", "uuid", "decimal"] }
 utoipa-redoc = { version = "1.0.0", features = ["axum"] }
-
+utoipa-rapidoc = { version = "1.0.0", features = ["axum"] }
+rust_decimal_macros = "1.32.0"
+paste = "1.0.14"

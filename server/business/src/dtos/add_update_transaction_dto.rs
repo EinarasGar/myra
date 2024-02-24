@@ -19,6 +19,7 @@ pub struct AddUpdateTransactonDto {
 
 impl AddUpdateTransactonDto {
     pub fn compare_full(&self, other: &TransactionWithGroupModel) -> bool {
+        unimplemented!();
         self.account_id.is_some_and(|x| x == other.account_id)
             && self.id.is_some_and(|x| x == other.id)
             && self.description == other.description
@@ -26,19 +27,22 @@ impl AddUpdateTransactonDto {
             && self.quantity == other.quantity
             && self.category == other.category_id
             && self.date == other.date
-            && self.link_id == other.link_id
+            && self.link_id == other.portfolio_event_id
     }
 
     pub fn compare_core(&self, other: &TransactionWithGroupModel) -> bool {
+        unimplemented!();
+
         self.account_id.is_some_and(|x| x == other.account_id)
             && self.asset_id == other.asset_id
             && self.quantity == other.quantity
             && self.category == other.category_id
             && self.date == other.date
-            && self.link_id == other.link_id
+            && self.link_id == other.portfolio_event_id
     }
 
     pub fn into_model(self, user_id: Uuid, group_id: Uuid) -> AddUpdateTransactionModel {
+        unimplemented!();
         AddUpdateTransactionModel {
             user_id,
             group_id,
@@ -50,7 +54,7 @@ impl AddUpdateTransactonDto {
                 Some(acc) => acc,
                 None => user_id,
             },
-            link_id: self.link_id,
+            portfolio_event_id: self.link_id,
         }
     }
 }
