@@ -3,9 +3,12 @@ use std::collections::HashMap;
 use axum::{
     async_trait,
     extract::{FromRef, FromRequestParts, Path},
-    headers::{authorization::Bearer, Authorization},
     http::request::Parts,
-    RequestPartsExt, TypedHeader,
+    RequestPartsExt,
+};
+use axum_extra::{
+    headers::{authorization::Bearer, Authorization},
+    TypedHeader,
 };
 
 use business::{

@@ -1,5 +1,3 @@
-use std::net::SocketAddr;
-
 use tracing::info;
 
 use crate::states::AppState;
@@ -16,22 +14,19 @@ pub(crate) mod view_models;
 
 #[tokio::main]
 async fn main() {
-    //Initialize logging and opentelemetry
+    //Initialize logging and OpenTelemetry
     observability::initialize_tracing_subscriber();
 
-    //Create shared services instance, which contaisn a connectiopn to a database
+    //Create shared services instance, which contains a connection to a database
     let shared_state = AppState {
-        serivces_collection: business::service_collection::Services::new().await.unwrap(),
+        services_collection: business::service_collection::Services::new().await.unwrap(),
     };
 
-    //Initize a router for the API
+    //Initialize a router for the API
     let app = routes::create_router(shared_state).fallback(fallback::handler_404);
 
-    // Run the webserver
-    let addr = SocketAddr::from(([0, 0, 0, 0], 5000));
-    info!("Starting web server on {}", addr);
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    // Run the WebServer
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:5000").await.unwrap();
+    info!("Starting web server on {}", listener.local_addr().unwrap());
+    axum::serve(listener, app).await.unwrap();
 }

@@ -1,7 +1,7 @@
-use opentelemetry::sdk::trace::{self, Tracer};
-use opentelemetry::sdk::Resource;
 use opentelemetry::KeyValue;
 use opentelemetry_otlp::WithExportConfig;
+use opentelemetry_sdk::trace::{self, Tracer};
+use opentelemetry_sdk::Resource;
 use tower_http::classify::{ServerErrorsAsFailures, SharedClassifier};
 use tower_http::trace::{DefaultMakeSpan, TraceLayer};
 use tracing::{Level, Subscriber};

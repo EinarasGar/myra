@@ -12,7 +12,7 @@ use business::service_collection::{
 
 #[derive(Clone)]
 pub(crate) struct AppState {
-    pub(crate) serivces_collection: business::service_collection::Services,
+    pub(crate) services_collection: business::service_collection::Services,
 }
 
 macro_rules! service_state {
@@ -21,7 +21,7 @@ macro_rules! service_state {
 
         impl FromRef<AppState> for $service {
             fn from_ref(state: &AppState) -> $service {
-                let db = state.serivces_collection.get_db_instance();
+                let db = state.services_collection.get_db_instance();
                 <$service>::new(db)
             }
         }
