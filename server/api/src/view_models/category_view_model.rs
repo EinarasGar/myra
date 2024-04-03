@@ -1,7 +1,7 @@
 use business::dtos::category_dto::CategoryDto;
 use serde::{Deserialize, Serialize};
 
-#[typeshare::typeshare]
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CategoryViewModel {
     pub id: i32,

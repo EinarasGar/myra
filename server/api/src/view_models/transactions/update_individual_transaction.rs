@@ -8,7 +8,7 @@ use super::{
     },
 };
 
-#[typeshare::typeshare]
+
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct UpdateIndividualTransactionRequestViewModel {
     pub transaction: TransactionWithIdentifiableEntries,

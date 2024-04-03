@@ -8,7 +8,7 @@ use super::base_models::{
     },
 };
 
-#[typeshare::typeshare]
+
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct UpdateTransactionGroupRequestViewModel {
     #[serde(flatten)]

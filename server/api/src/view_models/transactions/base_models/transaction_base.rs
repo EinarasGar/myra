@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use time::{serde::rfc3339, OffsetDateTime};
+use time::{serde::timestamp, OffsetDateTime};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -13,7 +13,7 @@ use super::transaction_fee::{IdentifiableTransactionFeeViewModel, MandatoryIdent
 )]
 pub struct TransactionBase<F> {
     /// Date when the transaction occured.
-    #[serde(with = "rfc3339")]
+    #[serde(with = "timestamp")]
     pub date: OffsetDateTime,
 
     /// Any other fees related to the transaction, such as transfer or conversion fees.

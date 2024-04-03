@@ -1,12 +1,8 @@
-pub mod add_asset_rate_view_model;
-pub mod add_asset_view_model;
 pub mod add_user_view_model;
-pub mod asset_pair_view_model;
-pub mod asset_rate_view_model;
-pub mod asset_view_model;
-pub mod auth_view_model;
+pub mod assets;
+pub mod authentication;
+pub mod base_models;
 pub mod category_view_model;
-pub mod login_details_view_model;
 pub mod portfolio_account_view_model;
 pub mod portfolio_entry_view_model;
 pub mod portfolio_history_view_model;

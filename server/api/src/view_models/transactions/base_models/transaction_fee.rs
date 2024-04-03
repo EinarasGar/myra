@@ -4,7 +4,6 @@ use utoipa::ToSchema;
 use super::account_asset_entry::{AccountAssetEntryViewModel,  IdentifiableAccountAssetEntryViewModel, MandatoryIdentifiableAccountAssetEntryViewModel};
 
 
-#[typeshare::typeshare]
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 #[aliases(
     TransactionFeeViewModel = TransactionFee<AccountAssetEntryViewModel>, 

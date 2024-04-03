@@ -1,7 +1,7 @@
 use business::dtos::portfolio_overview_dto::{PortfolioOverviewDto, PortfolioOverviewType};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use time::{serde::rfc3339, OffsetDateTime};
+use time::{serde::timestamp, OffsetDateTime};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -34,7 +34,7 @@ pub struct PortfolioAssetOverviewViewModel {
 pub struct PortfolioAssetOverviewPositionViewModel {
     pub add_price: Decimal,
     pub quantity_added: Decimal,
-    #[serde(with = "rfc3339")]
+    #[serde(with = "timestamp")]
     pub add_date: OffsetDateTime,
     pub fees: Decimal,
     pub amount_sold: Decimal,

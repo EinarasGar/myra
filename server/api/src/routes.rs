@@ -1,6 +1,6 @@
 use crate::{handlers, observability, openapi::ApiDoc, AppState};
 use axum::{
-    routing::{get, post},
+    routing::{delete, get, post, put},
     Router,
 };
 use utoipa::OpenApi;
@@ -16,63 +16,99 @@ pub(crate) fn create_router(state: AppState) -> Router {
             "/api/users/:user_id",
             get(handlers::user_handler::get_user_by_id),
         )
-        // .route(
-        //     "/api/users/:user_id/transactions",
-        //     post(handlers::transaction_handler::post),
-        // )
-        // .route(
-        //     "/api/users/:user_id/transactions/:group_id",
-        //     post(handlers::transactions::post_transactions_by_group_id),
-        // )
-        // .route(
-        //     "/api/users/:user_id/transactions/:group_id",
-        //     delete(handlers::transactions::delete_transactions_by_group_id),
-        // )
-        // .route(
-        //     "/api/users/:user_id/transactions",
-        //     get(handlers::transactions::get_transactions),
-        // )
         .route(
-            "/api/users/:user_id/portfolio",
-            get(handlers::portfolio_handler::get_portfolio),
+            "/api/users/:user_id/transactions/groups",
+            post(handlers::transaction_groups::add),
         )
         .route(
-            "/api/users/:user_id/portfolio/asset/:asset_id",
-            get(handlers::portfolio_handler::get_portfolio_asset),
+            "/api/users/:user_id/transactions/groups/:group_id",
+            put(handlers::transaction_groups::update),
         )
         .route(
-            "/api/users/:user_id/portfolio/history",
-            get(handlers::portfolio_handler::get_portfolio_history),
+            "/api/users/:user_id/transactions/groups/:group_id",
+            delete(handlers::transaction_groups::delete),
         )
         .route(
-            "/api/users/:user_id/portfolio/accounts",
-            post(handlers::portfolio_handler::post_portfolio_account),
+            "/api/users/:user_id/transactions/groups",
+            get(handlers::transaction_groups::get),
+        )
+        .route(
+            "/api/users/:user_id/transactions/:transaction_id",
+            put(handlers::transactions::update),
+        )
+        .route(
+            "/api/users/:user_id/transactions/:transaction_id",
+            delete(handlers::transactions::delete),
+        )
+        .route(
+            "/api/users/:user_id/transactions",
+            get(handlers::transactions::get),
+        )
+        .route(
+            "/api/users/:user_id/transactions/individual",
+            post(handlers::individual_transactions::add),
+        )
+        .route(
+            "/api/users/:user_id/transactions/individual/:transaction_id",
+            put(handlers::individual_transactions::update),
+        )
+        .route(
+            "/api/users/:user_id/transactions/individual",
+            get(handlers::individual_transactions::get),
+        )
+        .route(
+            "/api/users/:user_id/assets/:asset_id",
+            delete(handlers::user_asset_handler::delete_asset),
+        )
+        .route(
+            "/api/users/:user_id/assets/:asset_id/:reference_id/rates",
+            delete(handlers::user_asset_handler::delete_asset_pair_rates),
+        )
+        .route(
+            "/api/users/:user_id/assets/:asset_id/:reference_id",
+            delete(handlers::user_asset_handler::delete_asset_pair),
+        )
+        .route(
+            "/api/users/:user_id/assets/:asset_id/:reference_id/rates",
+            post(handlers::user_asset_handler::post_custom_asset_rates),
         )
         .route(
             "/api/users/:user_id/assets",
-            post(handlers::asset_handler::post_custom_asset),
+            post(handlers::user_asset_handler::post_custom_asset),
         )
         .route(
-            "/api/users/:user_id/assets/:id/:pair2",
-            post(handlers::asset_handler::post_custom_asset_rates),
+            "/api/users/:user_id/assets/:asset_id",
+            put(handlers::user_asset_handler::put_custom_asset),
         )
         .route(
-            "/api/users/:user_id/assets/:id/:pair2",
-            get(handlers::asset_handler::get_custom_asset_pair),
-        )
-        .route("/api/assets", get(handlers::asset_handler::get_assets))
-        .route(
-            "/api/assets/:id",
-            get(handlers::asset_handler::get_asset_by_id),
+            "/api/users/:user_id/assets/:asset_id",
+            get(handlers::user_asset_handler::get_user_asset),
         )
         .route(
-            "/api/assets/:id/:pair2",
+            "/api/users/:user_id/assets/:asset_id/:reference_id",
+            get(handlers::user_asset_handler::get_user_asset_pair),
+        )
+        .route(
+            "/api/users/:user_id/assets/:asset_id/:reference_id/rates",
+            get(handlers::user_asset_handler::get_user_asset_pair_rates),
+        )
+        .route(
+            "/api/users/:user_id/assets/:asset_id/:reference_id/usermetadata",
+            put(handlers::user_asset_handler::put_custom_asset_pair),
+        )
+        .route(
+            "/api/assets/:asset_id",
+            get(handlers::asset_handler::get_asset),
+        )
+        .route(
+            "/api/assets/:asset_id/:reference_id",
             get(handlers::asset_handler::get_asset_pair),
         )
         .route(
-            "/api/constants/categories",
-            get(handlers::constants_handler::get_categories),
+            "/api/assets/:asset_id/:reference_id/rates",
+            get(handlers::asset_handler::get_asset_pair_rates),
         )
+        .route("/api/assets", get(handlers::asset_handler::search_assets))
         .route(
             "/api/auth",
             post(handlers::auth_handler::post_login_details),

@@ -6,7 +6,6 @@ use super::{
     transaction_types::MandatoryIdentifiableTransactionWithIdentifiableEntries,
 };
 
-#[typeshare::typeshare]
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct GetIndividualTransactionsViewModel {
     pub transactions: Vec<MandatoryIdentifiableTransactionWithIdentifiableEntries>,

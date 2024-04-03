@@ -2,163 +2,132 @@ use axum::{
     extract::{Path, Query},
     Json,
 };
-use business::dtos::{add_custom_asset_dto::AddCustomAssetDto, asset_dto::AssetDto};
-use serde::Deserialize;
-use uuid::Uuid;
 
 use crate::{
     auth::AuthenticatedUserState,
-    errors::{auth::AuthError, ApiError},
+    errors::ApiError,
     states::AssetsServiceState,
     view_models::{
-        add_asset_rate_view_model::AddAssetRateViewModel, add_asset_view_model::AddAssetViewModel,
-        asset_pair_view_model::AssetPairViewModel, asset_view_model::AssetViewModel,
+        assets::{
+            get_asset::GetAssetResponseViewModel,
+            get_asset_pair::GetAssetPairResponseViewModel,
+            get_asset_pair_rates::{
+                GetAssetPairRatesRequestParams, GetAssetPairRatesResponseViewModel,
+            },
+        },
+        base_models::search::{PageOfAssetsResultsWithLookupViewModel, PaginatedSearchQuery},
     },
 };
 
-#[derive(Deserialize, Debug)]
-pub struct GetAssetsQueryParams {
-    page: Option<u64>,
-    search: Option<String>,
-}
+/// Search assets
+///
+/// Query to search shared assets. Returns a page of results.
+/// If not query parameters are provided, returns results sorted by most popular.
+/// The equivalent search endpoint for the user assets is not provided, as user
+/// assets can be retrieved in full due to it being a small subset.
+#[utoipa::path(
+    get,
+    path = "/api/assets",
+    tag = "Assets",
+    params(PaginatedSearchQuery),
+    responses(
+        (status = 200,  body = PageOfAssetsResultsWithLookupViewModel),
+    ),
+    security(
+        ("auth_token" = [])
+    )
 
+)]
 #[tracing::instrument(skip_all, err)]
-pub async fn get_assets(
-    AssetsServiceState(assets_service): AssetsServiceState,
-    query_params: Query<GetAssetsQueryParams>,
-) -> Result<Json<Vec<AssetViewModel>>, ApiError> {
-    let page = query_params.page.unwrap_or_default();
-
-    let assets_vec = assets_service
-        .get_public_assets(page, query_params.search.clone())
-        .await?;
-
-    let ret_vec: Vec<AssetViewModel> = assets_vec.iter().map(|val| val.clone().into()).collect();
-
-    Ok(ret_vec.into())
+pub async fn search_assets(
+    _query_params: Query<PaginatedSearchQuery>,
+    AssetsServiceState(_assets_service): AssetsServiceState,
+    AuthenticatedUserState(_auth): AuthenticatedUserState,
+) -> Result<Json<PageOfAssetsResultsWithLookupViewModel>, ApiError> {
+    unimplemented!()
 }
 
+/// Get asset
+///
+/// Gets a shared asset.
+#[utoipa::path(
+    get,
+    path = "/api/assets/:asset_id",
+    tag = "Assets",
+    params(
+        ("asset_id" = i32, Path, description = "Id of the shared asset to retrieve.")
+    ),
+    responses(
+        (status = 200,  body = GetAssetResponseViewModel),
+    ),
+    security(
+        ("auth_token" = [])
+    )
+
+)]
 #[tracing::instrument(skip_all, err)]
-pub async fn get_asset_by_id(
-    Path(id): Path<i32>,
-    AssetsServiceState(assets_service): AssetsServiceState,
-) -> Result<Json<AssetViewModel>, ApiError> {
-    let asset = assets_service.get_asset(id).await?;
-    if asset.owner.is_some() {
-        return Err(AuthError::Unauthorized.into());
-    }
-    let ret: AssetViewModel = asset.into();
-    Ok(ret.into())
+pub async fn get_asset(
+    Path(_id): Path<i32>,
+    AssetsServiceState(_assets_service): AssetsServiceState,
+    AuthenticatedUserState(_auth): AuthenticatedUserState,
+) -> Result<Json<GetAssetResponseViewModel>, ApiError> {
+    unimplemented!()
 }
 
+/// Get asset pair
+///
+/// Gets asset pair and its metadata.
+#[utoipa::path(
+    get,
+    path = "/api/assets/:asset_id/:reference_id",
+    tag = "Assets",
+    params(
+        ("asset_id" = i32, Path, description = "Id of the shared asset to retrieve."),
+        ("reference_id" = i32, Path, description = "Id of the reference asset.")
+    ),
+    responses(
+        (status = 200,  body = GetAssetPairResponseViewModel),
+    ),
+    security(
+        ("auth_token" = [])
+    )
+
+)]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_asset_pair(
-    Path((pair1, pair2)): Path<(i32, i32)>,
-    AssetsServiceState(assets_service): AssetsServiceState,
-) -> Result<Json<AssetPairViewModel>, ApiError> {
-    let asset1 = assets_service.get_asset(pair1).await?;
-    if asset1.owner.is_some() {
-        return Err(AuthError::Unauthorized.into());
-    }
-    let asset2 = assets_service.get_asset(pair2).await?;
-    if asset2.owner.is_some() {
-        return Err(AuthError::Unauthorized.into());
-    }
-    let rates = assets_service.get_asset_pair_rates(pair1, pair2).await?;
-
-    let ret = AssetPairViewModel {
-        pair1: asset1.into(),
-        pair2: asset2.into(),
-        rates: rates.into_iter().map(|x| x.into()).collect(),
-    };
-
-    Ok(ret.into())
+    Path((_id, _reference_id)): Path<(i32, i32)>,
+    AssetsServiceState(_assets_service): AssetsServiceState,
+    AuthenticatedUserState(_auth): AuthenticatedUserState,
+) -> Result<Json<GetAssetPairResponseViewModel>, ApiError> {
+    unimplemented!()
 }
 
-#[tracing::instrument(skip_all, err)]
-pub async fn get_custom_asset_pair(
-    Path((user_id, pair1, pair2)): Path<(Uuid, i32, i32)>,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
-    AssetsServiceState(assets_service): AssetsServiceState,
-) -> Result<Json<AssetPairViewModel>, ApiError> {
-    let asset1 = assets_service.get_asset(pair1).await?;
-    if asset1.owner.is_some_and(|x| x != user_id) {
-        return Err(AuthError::Unauthorized.into());
-    }
-    let asset2 = assets_service.get_asset(pair2).await?;
-    if asset2.owner.is_some_and(|x| x != user_id) {
-        return Err(AuthError::Unauthorized.into());
-    }
-
-    let rates = assets_service.get_asset_pair_rates(pair1, pair2).await?;
-
-    let ret = AssetPairViewModel {
-        pair1: asset1.into(),
-        pair2: asset2.into(),
-        rates: rates.into_iter().map(|x| x.into()).collect(),
-    };
-
-    Ok(ret.into())
-}
-
-#[tracing::instrument(skip_all, err)]
-pub async fn post_custom_asset(
-    Path(user_id): Path<Uuid>,
-    AssetsServiceState(assets_service): AssetsServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
-    Json(params): Json<AddAssetViewModel>,
-) -> Result<Json<AssetViewModel>, ApiError> {
-    let asset_dto = AddCustomAssetDto {
-        ticker: params.ticker,
-        name: params.name,
-        asset_type: params.type_id,
-        base_pair_id: params.base_asset_id,
-        user_id,
-    };
-
-    let new_asset: AssetDto = assets_service.add_custom_asset(asset_dto).await?;
-    let ret: AssetViewModel = new_asset.into();
-    Ok(ret.into())
-}
-
-#[tracing::instrument(skip_all, err)]
-pub async fn post_custom_asset_rates(
-    Path((user_id, pair1, pair2)): Path<(Uuid, i32, i32)>,
-    AssetsServiceState(assets_service): AssetsServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
-    Json(params): Json<AddAssetRateViewModel>,
-) -> Result<Json<AssetPairViewModel>, ApiError> {
-    let is_user_owned: bool = assets_service
-        .validate_asset_ownership(user_id, pair1)
-        .await?;
-
-    if !is_user_owned {
-        return Err(AuthError::Unauthorized.into());
-    }
-
-    assets_service
-        .add_rates_by_pair(
-            pair1,
-            pair2,
-            params.rates.into_iter().map(|x| x.into()).collect(),
-        )
-        .await?;
-
-    //Recall same asset pair get method
-    self::get_custom_asset_pair(
-        Path((user_id, pair1, pair2)),
-        AuthenticatedUserState(_auth),
-        AssetsServiceState(assets_service),
+/// Get asset pair rates
+///
+/// Gets asset pair rates based on provided query params
+#[utoipa::path(
+    get,
+    path = "/api/assets/:asset_id/:reference_id/rates",
+    tag = "Assets",
+    params(
+        ("asset_id" = i32, Path, description = "Id of the shared asset to retrieve."),
+        ("reference_id" = i32, Path, description = "Id of the reference asset."),
+        GetAssetPairRatesRequestParams
+    ),
+    responses(
+        (status = 200,  body = GetAssetPairRatesResponseViewModel),
+    ),
+    security(
+        ("auth_token" = [])
     )
-    .await
-}
 
-#[allow(dead_code)]
-pub async fn delete_custom_asset_rate() {
-    todo!();
-}
-
-#[allow(dead_code)]
-pub async fn delete_custom_asset() {
-    todo!();
+)]
+#[tracing::instrument(skip_all, err)]
+pub async fn get_asset_pair_rates(
+    Path((_id, _reference_id)): Path<(i32, i32)>,
+    _query_params: Query<GetAssetPairRatesRequestParams>,
+    AssetsServiceState(_assets_service): AssetsServiceState,
+    AuthenticatedUserState(_auth): AuthenticatedUserState,
+) -> Result<Json<GetAssetPairRatesResponseViewModel>, ApiError> {
+    unimplemented!()
 }

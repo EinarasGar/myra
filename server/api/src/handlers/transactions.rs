@@ -1,11 +1,27 @@
 use axum::{extract::Path, Json};
+use rust_decimal_macros::dec;
+use time::macros::datetime;
 use uuid::Uuid;
 
 use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
     view_models::transactions::{
+        base_models::{
+            account_asset_entry::{
+                AccountAssetEntryViewModel, MandatoryIdentifiableAccountAssetEntryViewModel,
+            },
+            metadata_lookup::MetadataLookupTables,
+            transaction_base::{
+                MandatoryIdentifiableTransactionBaseWithIdentifiableEntries,
+                MandatoryTransactionBaseWithIdentifiableEntries,
+            },
+        },
         get_transactions::GetTransactionsViewModel,
+        transaction_types::{
+            regular_transaction::MandatoryIdentifiableRegularTransactionWithIdentifiableEntriesViewModel,
+            MandatoryIdentifiableTransactionWithIdentifiableEntries,
+        },
         update_transaction::{
             UpdateTransactionRequestViewModel, UpdateTransactionResponseViewModel,
         },
@@ -42,6 +58,7 @@ pub async fn update(
     AuthenticatedUserState(_auth): AuthenticatedUserState,
     Json(_params): Json<UpdateTransactionRequestViewModel>,
 ) -> Result<Json<UpdateTransactionResponseViewModel>, ApiError> {
+    println!("{:#?}", _params);
     unimplemented!();
 }
 
@@ -96,7 +113,38 @@ pub async fn get(
     Path(_user_id): Path<Uuid>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetTransactionsViewModel>, ApiError> {
-    unimplemented!();
+    let model = GetTransactionsViewModel {
+        individual_transactions: vec![
+            MandatoryIdentifiableTransactionWithIdentifiableEntries::RegularTransaction(
+                MandatoryIdentifiableRegularTransactionWithIdentifiableEntriesViewModel {
+                    category_id: 3,
+                    description: None,
+                    entry: MandatoryIdentifiableAccountAssetEntryViewModel {
+                        entry_id: 1,
+                        entry: AccountAssetEntryViewModel {
+                            account_id: Uuid::new_v4(),
+                            asset_id: 1,
+                            amount: dec!(100.0),
+                        },
+                    },
+                    base: MandatoryIdentifiableTransactionBaseWithIdentifiableEntries {
+                        transaction_id: Uuid::new_v4(),
+                        fee: MandatoryTransactionBaseWithIdentifiableEntries {
+                            date: datetime!(2000-03-22 00:00:00 UTC),
+                            fees: None,
+                        },
+                    },
+                },
+            ),
+        ],
+        transaction_groups: vec![],
+        metadata: MetadataLookupTables {
+            assets: vec![],
+            accounts: vec![],
+        },
+    };
+    let ret = model.into();
+    Ok(ret)
 }
 
 // #[tracing::instrument(skip_all, err)]

@@ -10,13 +10,13 @@ use utoipa::{
 };
 
 use crate::view_models::{
-    asset_rate_view_model::AssetRateViewModel,
-    asset_view_model::AssetViewModel,
-    portfolio_account_view_model::PortfolioAccountViewModel,
-    portfolio_entry_view_model::PortfolioEntryViewModel,
-    portfolio_history_view_model::PortfolioHistoryViewModel,
-    portfolio_view_model::PortfolioViewModel,
-    transactions::{
+    assets::{
+        add_asset::{AddAssetRequestViewModel, AddAssetResponseViewModel}, add_asset_pair_rates::{
+            AddAssetPairRatesRequestViewModel, AddAssetPairRatesResponseViewModel,
+        }, base_models::{
+            asset::{AssetViewModel, IdentifiableAssetViewModel}, asset_metadata::AssetMetadataViewModel, asset_pair_metadata::AssetPairMetadataViewModel, asset_type::IdentifiableAssetTypeViewModel, lookup::AssetLookupTables, rate::AssetRateViewModel, shared_asset_pair_metadata::SharedAssetPairMetadataViewModel, user_asset_pair_metadata::UserAssetPairMetadataViewModel
+        }, get_asset::GetAssetResponseViewModel, get_asset_pair::GetAssetPairResponseViewModel, get_asset_pair_rates::GetAssetPairRatesResponseViewModel, get_assets::GetAssetsLineResponseViewModel, get_user_asset_pair::GetUserAssetPairResponseViewModel, update_asset::{UpdateAssetRequestViewModel, UpdateAssetResponseViewModel}, update_asset_pair::{UpdateAssetPairRequestViewModel, UpdateAssetPairResponseViewModel}
+    }, authentication::{auth::AuthViewModel, login_details::LoginDetailsViewModel}, base_models::search::PageOfAssetsResultsWithLookupViewModel, portfolio_account_view_model::PortfolioAccountViewModel, portfolio_entry_view_model::PortfolioEntryViewModel, portfolio_history_view_model::PortfolioHistoryViewModel, portfolio_view_model::PortfolioViewModel, transactions::{
         add_individual_transaction::{
             AddIndividualTransactionRequestViewModel, AddIndividualTransactionResponseViewModel,
         },
@@ -123,7 +123,7 @@ use crate::view_models::{
         update_transaction_group::{
             UpdateTransactionGroupRequestViewModel, UpdateTransactionGroupResponseViewModel,
         },
-    },
+    }
 };
 
 #[derive(OpenApi)]
@@ -142,14 +142,31 @@ use crate::view_models::{
         super::handlers::individual_transactions::add,
         super::handlers::individual_transactions::update,
         super::handlers::individual_transactions::get,
+        super::handlers::auth_handler::post_login_details,
+        super::handlers::user_asset_handler::delete_asset,
+        super::handlers::user_asset_handler::delete_asset_pair_rates,
+        super::handlers::user_asset_handler::delete_asset_pair,
+        super::handlers::user_asset_handler::post_custom_asset_rates,
+        super::handlers::user_asset_handler::post_custom_asset,
+        super::handlers::user_asset_handler::put_custom_asset,
+        super::handlers::user_asset_handler::get_user_asset,
+        super::handlers::user_asset_handler::get_user_asset_pair,
+        super::handlers::user_asset_handler::get_user_asset_pair_rates,
+        super::handlers::user_asset_handler::put_custom_asset_pair,
+        super::handlers::asset_handler::get_asset,
+        super::handlers::asset_handler::get_asset_pair,
+        super::handlers::asset_handler::get_asset_pair_rates,
+        super::handlers::asset_handler::search_assets,
+        
+        // search common assets
+        // get user asset pair rates
+        // get common asset pair rates
     ),
     components(
         schemas(PortfolioHistoryViewModel),
         schemas(PortfolioAccountViewModel),
-        schemas(AssetRateViewModel),
         schemas(PortfolioViewModel),
         schemas(PortfolioEntryViewModel),
-        schemas(AssetViewModel),
 
         // Transaction schemas
         schemas(AccountAssetEntryViewModel),
@@ -231,13 +248,127 @@ use crate::view_models::{
         schemas(AccountFeesViewModel),
         schemas(AccountFeesWithIdentifiableEntriesViewModel),
         schemas(MandatoryAccountFeesWithIdentifiableEntriesViewModel),
+
+        // Authentication schemas
+        schemas(AuthViewModel),
+        schemas(LoginDetailsViewModel),
+
+        //Assets
+        schemas(IdentifiableAssetViewModel),
+        schemas(AssetViewModel),
+        schemas(AssetRateViewModel),
+        schemas(AddAssetPairRatesRequestViewModel),
+        schemas(AddAssetPairRatesResponseViewModel),
+        schemas(AddAssetRequestViewModel),
+        schemas(AddAssetResponseViewModel),
+        schemas(UpdateAssetRequestViewModel),
+        schemas(UpdateAssetResponseViewModel),
+        schemas(GetAssetResponseViewModel),
+        schemas(GetAssetPairResponseViewModel),
+        schemas(GetAssetPairRatesResponseViewModel),
+        schemas(UpdateAssetPairRequestViewModel),
+        schemas(UpdateAssetPairResponseViewModel),
+        schemas(PageOfAssetsResultsWithLookupViewModel),
+        schemas(IdentifiableAssetTypeViewModel),
+        schemas(AssetMetadataViewModel),
+        schemas(AssetLookupTables),
+        schemas(GetAssetsLineResponseViewModel),
+        schemas(SharedAssetPairMetadataViewModel),
+        schemas(UserAssetPairMetadataViewModel),
+        schemas(GetUserAssetPairResponseViewModel),
+        schemas(AssetPairMetadataViewModel)
     ),
     modifiers(
         &TransformSchemasWithTag,
         &SecurityAddon
     ),
     tags(
-        (name = "Myra", description = "Best product!")
+        (name = "Myra", description = 
+r#"# What is Myra?
+somethings something financial tracking tool
+
+# Authentication
+something something authentication
+
+# API Design principles
+The API design _tries_ to follow the same design principles across all contracts.
+
+## Object relationships
+### Identification
+Each entity has an identification, whether or not it is returned in response object is determined by the use case.
+- If we are querying a list of entities, the identification is always returned.
+- If we are querying a single entity, the is identification for the entity not returned in the response object, as it is used in query path. However, the identification for related entities is returned.
+- If we are creating a new entity using POST - the identification the entity and all its relationships is returned in response object.
+- If we are updating a single entity  the is identification for the entity not returned in the response object, as it is used in query path. However, the identification for related entities is returned.
+
+### Input data
+If we are querying an endpoint which has some object relationships, for input data (Request body, params or path), we provide only the `id` of the related object. 
+
+This is because in order to update or fetch something related, the assumption is that for the correct decision, the client mut have already up to date data about the related objects.
+
+Example of this would be that if we want to update an asset to a different category, we would pass the category `id` and not the whole category object, as we would have known it before hand.
+
+### Response contracts
+For the relationships in response contracts, there are multiple approaches:
+- For responses which contain many objects with some kind of relationship, a lookup table is provided as part of the root response.
+For example, if we are querying a lot of arbitrary transactions, the response would contain a `metadata` object which would contain the `account` and `asset` lookup tables. This is to avoid duplication of the same object in the response.
+```js
+GET /api/assets
+{
+    list: [
+        {
+            id: 1,
+            name: "name",
+            relationship: 5,
+        }
+    ],
+    lookup_tables: {
+        relationship: [
+               { id: 5, name: "relationship_name"}
+            ]
+        }
+    }
+}
+```
+- For queries, where only a single entity is returned without nested objects of array type, the relationship is expanded inplace.
+For example, if we query for a specific asset, the asset type would be returned as an object instead of the `id`.
+This is because the consumer could not know the necessary metadata beforehand and providing a lookup table for a single entity is not gud.
+```js
+GET /api/assets/1
+{
+    id: 1,
+    name: "name",
+    relationship: {
+        id: 5,
+        name: "relationship_name"
+    }
+}
+```
+- For queries where we are adding or updating data, we do not provide any lookup or expansion. The reason is the same as for input data - the client should have the necessary data to make the correct decision beforehand, so returning the same metadata is irrelevant.
+```js
+POST /api/assets
+{
+    id: 1,
+    name: "name",
+    relationship: 5,
+}
+```
+- For queries that have recursion, lookup or expansion is not provided. This is to avoid ambiguity caused by recursion. 
+For example, if we query the asset entity, we get a list of related assets. If we were to expand the related assets, it would cause ambiguity for the client 
+as to how the rest of the objects are expanded.
+```js
+GET /api/assets/1
+{
+    id: 1,
+    name: "name",
+    related_asset: 2
+}
+```
+
+
+
+
+"#)
     )
 )]
 pub struct ApiDoc;

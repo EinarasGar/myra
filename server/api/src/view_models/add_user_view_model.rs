@@ -1,7 +1,6 @@
 use business::dtos::add_user_dto::AddUserDto;
 use serde::Deserialize;
 
-#[typeshare::typeshare]
 #[derive(Clone, Debug, Deserialize)]
 pub struct AddUserViewModel {
     pub username: String,

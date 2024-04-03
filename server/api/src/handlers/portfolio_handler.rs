@@ -3,7 +3,6 @@ use axum::{
     Json,
 };
 use serde::Deserialize;
-use time::Duration;
 use uuid::Uuid;
 
 use crate::{
@@ -22,7 +21,7 @@ use crate::{
 
 #[derive(Deserialize, Debug)]
 pub struct GetPortfolioQueryParams {
-    default_asset_id: Option<i32>,
+    _default_asset_id: Option<i32>,
 }
 
 /// Get portfolio
@@ -44,23 +43,24 @@ pub struct GetPortfolioQueryParams {
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_portfolio(
-    Path(user_id): Path<Uuid>,
-    query_params: Query<GetPortfolioQueryParams>,
-    PortfolioServiceState(portfolio_service): PortfolioServiceState,
-    UsersServiceState(user_service): UsersServiceState,
+    Path(_user_id): Path<Uuid>,
+    _query_params: Query<GetPortfolioQueryParams>,
+    PortfolioServiceState(_portfolio_service): PortfolioServiceState,
+    UsersServiceState(_user_service): UsersServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<PortfolioViewModel>, ApiError> {
-    let default_asset = match query_params.default_asset_id {
-        Some(i) => i,
-        None => user_service.get_full_user(user_id).await?.default_asset_id,
-    };
+    unimplemented!()
+    // let default_asset = match query_params.default_asset_id {
+    //     Some(i) => i,
+    //     None => user_service.get_full_user(user_id).await?.default_asset_id,
+    // };
 
-    let portfolio_assets_dto = portfolio_service
-        .get_portfolio(user_id, default_asset)
-        .await?;
-    let response: PortfolioViewModel = portfolio_assets_dto.into();
+    // let portfolio_assets_dto = portfolio_service
+    //     .get_portfolio(user_id, default_asset)
+    //     .await?;
+    // let response: PortfolioViewModel = portfolio_assets_dto.into();
 
-    Ok(response.into())
+    // Ok(response.into())
 }
 
 /// Get portfolio history
@@ -82,28 +82,29 @@ pub async fn get_portfolio(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_portfolio_history(
-    Path(user_id): Path<Uuid>,
-    query_params: Query<GetPortfolioQueryParams>,
-    PortfolioServiceState(portfolio_service): PortfolioServiceState,
+    Path(_user_id): Path<Uuid>,
+    _query_params: Query<GetPortfolioQueryParams>,
+    PortfolioServiceState(_portfolio_service): PortfolioServiceState,
     AssetsServiceState(_asset_service): AssetsServiceState,
-    UsersServiceState(user_service): UsersServiceState,
+    UsersServiceState(_user_service): UsersServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<PortfolioHistoryViewModel>, ApiError> {
-    let default_asset: i32 = if query_params.default_asset_id.is_some() {
-        query_params.default_asset_id.unwrap()
-    } else {
-        user_service.get_full_user(user_id).await?.default_asset_id
-    };
+    unimplemented!()
+    // let default_asset: i32 = if query_params.default_asset_id.is_some() {
+    //     query_params.default_asset_id.unwrap()
+    // } else {
+    //     user_service.get_full_user(user_id).await?.default_asset_id
+    // };
 
-    let hisotry = portfolio_service
-        .get_full_portfolio_history(user_id, default_asset, Duration::hours(12))
-        .await?;
+    // let hisotry = portfolio_service
+    //     .get_full_portfolio_history(user_id, default_asset, Duration::hours(12))
+    //     .await?;
 
-    let response = PortfolioHistoryViewModel {
-        sums: hisotry.into_iter().map(|x| x.into()).collect(),
-    };
+    // let response = PortfolioHistoryViewModel {
+    //     sums: hisotry.into_iter().map(|x| x.into()).collect(),
+    // };
 
-    Ok(response.into())
+    // Ok(response.into())
 }
 
 /// Post Portfolio Account
