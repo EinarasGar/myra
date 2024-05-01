@@ -6,7 +6,6 @@ use super::base_models::{
     transaction_group::MandatoryIdentifiableTransactionGroupViewModel,
 };
 
-
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct GetTransactionGroupsViewModel {
     pub groups: Vec<MandatoryIdentifiableTransactionGroupViewModel>,

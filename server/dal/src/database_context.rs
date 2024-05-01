@@ -7,7 +7,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex as AsyncMutex;
 
 use crate::database_connection::MyraDbConnection;
-use crate::db_sets::DbQueryWithValues;
+use crate::queries::DbQueryWithValues;
 
 #[derive(Clone)]
 pub struct MyraDb {
@@ -52,6 +52,21 @@ impl MyraDb {
     }
 
     #[tracing::instrument(skip(self), err)]
+    pub async fn rollback_transaction(&self) -> Result<(), sqlx::Error> {
+        let mut tx_guard = self.transaction.lock().await;
+
+        if let Some(tx) = tx_guard.take() {
+            tx.rollback().await?;
+        } else {
+            // Handle the case where there is no transaction to commit
+            return Err(sqlx::Error::Configuration(
+                "No transaction to rollback".into(),
+            ));
+        }
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self), err)]
     pub async fn fetch_all<T>(&self, query: DbQueryWithValues) -> Result<Vec<T>, sqlx::Error>
     where
         for<'r> T: FromRow<'r, PgRow> + Send + Unpin,
@@ -71,18 +86,21 @@ impl MyraDb {
     }
 
     #[tracing::instrument(skip(self), err)]
-    pub async fn fetch_all_scalar(
-        &self,
-        query: DbQueryWithValues,
-    ) -> Result<Vec<i32>, sqlx::Error> {
+    pub async fn fetch_all_scalar<T>(&self, query: DbQueryWithValues) -> Result<Vec<T>, sqlx::Error>
+    where
+        for<'r> T: Send + Unpin + sqlx::Decode<'r, Postgres> + sqlx::Type<Postgres>,
+    {
         let mut tx_guard = self.transaction.lock().await;
         if let Some(ref mut tx) = &mut *tx_guard {
-            let rows = sqlx::query_scalar_with(&query.query, query.values)
+            let rows = sqlx::query_scalar_with::<_, T, _>(&query.query, query.values)
                 .fetch_all(&mut **tx)
                 .await?;
             Ok(rows)
         } else {
-            Err(sqlx::Error::Configuration("No transaction to use".into()))
+            let rows = sqlx::query_scalar_with::<_, T, _>(&query.query, query.values)
+                .fetch_all(&self.pool)
+                .await?;
+            Ok(rows)
         }
     }
 
@@ -129,14 +147,15 @@ mock! {
 
         pub async fn start_transaction(&self) -> Result<(), sqlx::Error>;
         pub async fn commit_transaction(&self) -> Result<(), sqlx::Error>;
+        pub async fn rollback_transaction(&self) -> Result<(), sqlx::Error>;
         pub async fn fetch_all<T: 'static>(
             &self,
             query: DbQueryWithValues,
         ) -> Result<Vec<T>, sqlx::Error>;
-        pub async fn fetch_all_scalar(
+        pub async fn fetch_all_scalar<T: 'static>(
             &self,
             query: DbQueryWithValues,
-        ) -> Result<Vec<i32>, sqlx::Error>;
+        ) -> Result<Vec<T>, sqlx::Error>;
         pub async fn fetch_one<T: 'static>(&self, query: DbQueryWithValues) -> Result<T, sqlx::Error>;
         pub async fn execute(&self, query: DbQueryWithValues) -> Result<(), sqlx::Error>;
     }

@@ -3,14 +3,10 @@ use sea_query::Iden;
 pub enum TransactionIden {
     Table,
     Id,
-    UserId,
     GroupId,
-    AssetId,
-    AccountId,
-    CategoryId,
-    Quantity,
+    UserId,
     Date,
-    LinkId,
+    TypeId,
 }
 
 #[allow(dead_code)]
@@ -46,14 +42,10 @@ impl Iden for TransactionIden {
             match self {
                 Self::Table => "transaction",
                 Self::Id => "id",
-                Self::UserId => "user_id",
                 Self::GroupId => "group_id",
-                Self::AssetId => "asset_id",
-                Self::AccountId => "account_id",
-                Self::CategoryId => "category_id",
-                Self::Quantity => "quantity",
+                Self::UserId => "user_id",
+                Self::TypeId => "type_id",
                 Self::Date => "date",
-                Self::LinkId => "link_id",
             }
         )
         .unwrap();

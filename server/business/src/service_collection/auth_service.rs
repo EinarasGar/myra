@@ -1,8 +1,8 @@
 use std::str::FromStr;
 
 use dal::{
-    db_sets::user_db_set::{self},
     models::user_models::UserAuthModel,
+    queries::user_queries::{self},
 };
 
 #[mockall_double::double]
@@ -51,7 +51,7 @@ impl AuthService {
         username: String,
         password: String,
     ) -> anyhow::Result<String> {
-        let query = user_db_set::get_user_auth_info(username);
+        let query = user_queries::get_user_auth_info(username);
 
         let user_auth_info = self.db_context.fetch_one::<UserAuthModel>(query).await?;
 

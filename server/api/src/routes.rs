@@ -57,6 +57,10 @@ pub(crate) fn create_router(state: AppState) -> Router {
             get(handlers::individual_transactions::get),
         )
         .route(
+            "/api/users/:user_id/transactions/individual/:transaction_id",
+            get(handlers::individual_transactions::get_single),
+        )
+        .route(
             "/api/users/:user_id/assets/:asset_id",
             delete(handlers::user_asset_handler::delete_asset),
         )

@@ -1,21 +1,24 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Debug Web (Edge)",
-            "request": "launch",
-            "type": "msedge",
-            "url": "http://localhost:5173",
-            "webRoot": "${workspaceFolder}/web",
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug Server (LLDB)",
-            "program": "${workspaceFolder}/server/target/debug/api",
-            "args": [],
-            "cwd": "${workspaceFolder}/server",
-            "preLaunchTask": "rust: cargo build api",
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Web (Edge)",
+      "request": "launch",
+      "type": "msedge",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}/web"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug Server (LLDB)",
+      "program": "${workspaceFolder}/server/target/debug/api",
+      "args": [],
+      "cwd": "${workspaceFolder}/server",
+      "preLaunchTask": "rust: cargo build api",
+      "initCommands": [
+        "command script import '${workspaceFolder}/.vscode/decimal_printer.py'"
+      ]
+    }
+  ]
 }

@@ -1,4 +1,4 @@
-use dal::models::transaction_models::{AddUpdateTransactionModel, TransactionWithGroupModel};
+use dal::models::transaction_models::{AddTransactionModel, TransactionWithGroupModel};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use time::{serde::iso8601, OffsetDateTime};
@@ -41,20 +41,20 @@ impl AddUpdateTransactonDto {
             && self.link_id == other.portfolio_event_id
     }
 
-    pub fn into_model(self, user_id: Uuid, group_id: Uuid) -> AddUpdateTransactionModel {
+    pub fn into_model(self, user_id: Uuid, group_id: Uuid) -> AddTransactionModel {
         unimplemented!();
-        AddUpdateTransactionModel {
-            user_id,
-            group_id,
-            asset_id: self.asset_id,
-            category_id: self.category,
-            quantity: self.quantity,
-            date: self.date,
-            account_id: match self.account_id {
-                Some(acc) => acc,
-                None => user_id,
-            },
-            portfolio_event_id: self.link_id,
-        }
+        // AddUpdateTransactionModel {
+        //     user_id,
+        //     group_id,
+        //     asset_id: self.asset_id,
+        //     category_id: self.category,
+        //     quantity: self.quantity,
+        //     date: self.date,
+        //     account_id: match self.account_id {
+        //         Some(acc) => acc,
+        //         None => user_id,
+        //     },
+        //     portfolio_event_id: self.link_id,
+        // }
     }
 }

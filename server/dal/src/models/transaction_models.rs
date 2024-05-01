@@ -27,22 +27,17 @@ pub struct TransactionFinancials {
     pub date: OffsetDateTime,
 }
 
-//Used in a method to insert new transactions
 #[derive(Clone, Debug)]
-pub struct AddUpdateTransactionModel {
+pub struct AddTransactionModel {
     pub user_id: Uuid,
-    pub group_id: Uuid,
-    pub asset_id: i32,
-    pub category_id: i32,
-    pub quantity: Decimal,
+    pub group_id: Option<Uuid>,
     pub date: OffsetDateTime,
-    pub account_id: Uuid,
-    pub portfolio_event_id: Option<Uuid>,
+    pub transaction_type_id: i32,
 }
 
 #[derive(Clone, Debug)]
 pub struct AddTransactionDescriptionModel {
-    pub transaction_id: i32,
+    pub transaction_id: Uuid,
     pub description: String,
 }
 

@@ -8,7 +8,6 @@ use super::{
     },
 };
 
-
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct UpdateTransactionRequestViewModel {
     pub transaction: TransactionWithIdentifiableEntries,

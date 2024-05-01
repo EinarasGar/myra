@@ -1,11 +1,11 @@
 use dal::{
-    db_sets::{
-        portfolio_db_set::{self},
-        user_db_set::{self},
-    },
     models::{
         portfolio_models::PortfolioAccountModel,
         user_models::{AddUserModel, UserFullModel, UserRoleModel},
+    },
+    queries::{
+        portfolio_queries::{self},
+        user_queries::{self},
     },
 };
 
@@ -55,12 +55,13 @@ impl UsersService {
 
         self.db.start_transaction().await?;
 
-        let query = user_db_set::inset_user(db_user);
+        let query = user_queries::inset_user(db_user);
         self.db.execute(query).await?;
-        let query = user_db_set::get_user_role(new_user_id);
+        let query = user_queries::get_user_role(new_user_id);
         let user_role = self.db.fetch_one::<UserRoleModel>(query).await?;
-        let query =
-            portfolio_db_set::insert_or_update_portfolio_account(default_portfolio_account.clone());
+        let query = portfolio_queries::insert_or_update_portfolio_account(
+            default_portfolio_account.clone(),
+        );
         self.db.execute(query).await?;
 
         self.db.commit_transaction().await?;
@@ -77,7 +78,7 @@ impl UsersService {
 
     #[tracing::instrument(skip_all, err)]
     pub async fn get_full_user(&self, user_id: Uuid) -> anyhow::Result<UserFullDto> {
-        let query = user_db_set::get_user_full_info(user_id);
+        let query = user_queries::get_user_full_info(user_id);
         let model = self.db.fetch_one::<UserFullModel>(query).await?;
 
         Ok(model.into())

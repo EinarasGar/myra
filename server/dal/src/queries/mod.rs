@@ -1,9 +1,11 @@
 use sea_query_binder::SqlxValues;
 
-pub mod asset_db_set;
-pub mod portfolio_db_set;
-pub mod transaction_db_set;
-pub mod user_db_set;
+pub mod asset_queries;
+pub mod entries_queries;
+pub mod portfolio_queries;
+pub mod transaction_data_queries;
+pub mod transaction_queries;
+pub mod user_queries;
 
 #[derive(Debug)]
 pub struct DbQueryWithValues {

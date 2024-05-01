@@ -11,3 +11,12 @@ pub struct MetadataLookupTables {
     pub accounts: Vec<PortfolioAccountViewModel>,
     pub assets: Vec<IdentifiableAssetViewModel>,
 }
+
+impl Default for MetadataLookupTables {
+    fn default() -> Self {
+        Self {
+            accounts: Vec::new(),
+            assets: Vec::new(),
+        }
+    }
+}

@@ -10,6 +10,7 @@ pub mod cash_dividend;
 pub mod cash_transfer_in;
 pub mod cash_transfer_out;
 pub mod regular_transaction;
+use business::dtos::transaction_dto::{TransactionDto, TransactionTypeDto};
 use paste::paste;
 
 use serde::{Deserialize, Serialize};
@@ -82,3 +83,37 @@ generate_transaction_type_enums!(
     AssetBalanceTransfer,
     AccountFees
 );
+
+impl From<TransactionWithEntries> for TransactionDto {
+    fn from(value: TransactionWithEntries) -> Self {
+        match value {
+            TransactionWithEntries::RegularTransaction(t) => t.into(),
+            TransactionWithEntries::CashTransferOut(_) => todo!(),
+            TransactionWithEntries::CashTransferIn(_) => todo!(),
+            TransactionWithEntries::CashDividend(_) => todo!(),
+            TransactionWithEntries::AssetTransferOut(_) => todo!(),
+            TransactionWithEntries::AssetTransferIn(_) => todo!(),
+            TransactionWithEntries::AssetTrade(_) => todo!(),
+            TransactionWithEntries::AssetSale(_) => todo!(),
+            TransactionWithEntries::AssetPurchase(_) => todo!(),
+            TransactionWithEntries::AssetDividend(_) => todo!(),
+            TransactionWithEntries::AssetBalanceTransfer(_) => todo!(),
+            TransactionWithEntries::AccountFees(_) => todo!(),
+        }
+    }
+}
+
+impl From<TransactionDto> for MandatoryIdentifiableTransactionWithIdentifiableEntries {
+    fn from(value: TransactionDto) -> Self {
+        match value.transaction_type {
+            TransactionTypeDto::Regular(_) => {
+                MandatoryIdentifiableTransactionWithIdentifiableEntries::RegularTransaction(
+                    MandatoryIdentifiableRegularTransactionWithIdentifiableEntriesViewModel::from(
+                        value,
+                    ),
+                )
+            }
+            TransactionTypeDto::AssetPurchase => todo!(),
+        }
+    }
+}

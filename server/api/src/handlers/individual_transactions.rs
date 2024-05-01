@@ -1,17 +1,28 @@
-use axum::{extract::Path, Json};
+use axum::{
+    extract::{Path, Query},
+    Json,
+};
+use business::dtos::{paging_dto::PagingDto, transaction_dto::TransactionDto};
 use uuid::Uuid;
 
 use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
-    view_models::transactions::{
-        add_individual_transaction::{
-            AddIndividualTransactionRequestViewModel, AddIndividualTransactionResponseViewModel,
+    states::TransactionManagementServiceState,
+    view_models::{
+        base_models::search::{
+            PageOfIndividualTransactionsWithLookupViewModel, PaginatedSearchQuery,
         },
-        get_individual_transactions::GetIndividualTransactionsViewModel,
-        update_individual_transaction::{
-            UpdateIndividualTransactionRequestViewModel,
-            UpdateIndividualTransactionResponseViewModel,
+        transactions::{
+            add_individual_transaction::{
+                AddIndividualTransactionRequestViewModel, AddIndividualTransactionResponseViewModel,
+            },
+            base_models::metadata_lookup::MetadataLookupTables,
+            get_individual_transaction::GetIndividualTransactionViewModel,
+            update_individual_transaction::{
+                UpdateIndividualTransactionRequestViewModel,
+                UpdateIndividualTransactionResponseViewModel,
+            },
         },
     },
 };
@@ -39,11 +50,24 @@ use crate::{
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn add(
-    Path(_user_id): Path<Uuid>,
+    Path(user_id): Path<Uuid>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-    Json(_params): Json<AddIndividualTransactionRequestViewModel>,
+    TransactionManagementServiceState(transaction_service): TransactionManagementServiceState,
+    Json(params): Json<AddIndividualTransactionRequestViewModel>,
 ) -> Result<Json<AddIndividualTransactionResponseViewModel>, ApiError> {
-    unimplemented!();
+    let dto: TransactionDto = params.transaction.into();
+
+    let return_dto = transaction_service
+        .add_individual_transaction(user_id, dto)
+        .await?;
+
+    let view_model = return_dto.into();
+
+    let ret = AddIndividualTransactionResponseViewModel {
+        transaction: view_model,
+    };
+
+    Ok(ret.into())
 }
 
 /// Update existing
@@ -87,7 +111,52 @@ pub async fn update(
     path = "/api/users/:user_id/transactions/individual",
     tag = "Individual Transactions",
     responses(
-        (status = 200, body = GetIndividualTransactionsViewModel)
+        (status = 200, body = PageOfIndividualTransactionsWithLookupViewModel)
+    ),
+    params(
+        ("user_id" = Uuid, Path, description = "User id for which the transactions group belongs to."),
+        PaginatedSearchQuery
+    ),
+    security(
+        ("auth_token" = [])
+    )
+
+)]
+#[tracing::instrument(skip_all, err)]
+pub async fn get(
+    Path(user_id): Path<Uuid>,
+    query_params: Query<PaginatedSearchQuery>,
+    TransactionManagementServiceState(transaction_service): TransactionManagementServiceState,
+    AuthenticatedUserState(_auth): AuthenticatedUserState,
+) -> Result<Json<PageOfIndividualTransactionsWithLookupViewModel>, ApiError> {
+    let paging_dto = PagingDto {
+        start: query_params.start,
+        count: query_params.count,
+    };
+
+    let dtos = transaction_service
+        .search_transactions(user_id, paging_dto)
+        .await?;
+
+    let ret = PageOfIndividualTransactionsWithLookupViewModel {
+        results: dtos.results.into_iter().map(Into::into).collect(),
+        total_results: dtos.total_results,
+        lookup_tables: MetadataLookupTables::default(),
+    };
+
+    Ok(ret.into())
+}
+
+// Blogai nes reik returninti objekta be transaction id
+/// Get all
+///
+/// Retrieves a list of all individual transactions
+#[utoipa::path(
+    get,
+    path = "/api/users/:user_id/transactions/individual/:transaction_id",
+    tag = "Individual Transactions",
+    responses(
+        (status = 200, body = GetIndividualTransactionViewModel)
     ),
     params(
         ("user_id" = Uuid, Path, description = "User id for which the transactions group belongs to.")
@@ -98,9 +167,20 @@ pub async fn update(
 
 )]
 #[tracing::instrument(skip_all, err)]
-pub async fn get(
-    Path(_user_id): Path<Uuid>,
+pub async fn get_single(
+    Path((user_id, transaction_id)): Path<(Uuid, Uuid)>,
+    TransactionManagementServiceState(transaction_service): TransactionManagementServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-) -> Result<Json<GetIndividualTransactionsViewModel>, ApiError> {
-    unimplemented!();
+) -> Result<Json<GetIndividualTransactionViewModel>, ApiError> {
+    let transaction = transaction_service
+        .get_individual_transaction(user_id, transaction_id)
+        .await?;
+
+    let view_model = transaction.into();
+
+    let ret = GetIndividualTransactionViewModel {
+        transaction: view_model,
+        lookup_tables: MetadataLookupTables::default(),
+    };
+    Ok(ret.into())
 }

@@ -8,7 +8,6 @@ use super::base_models::{
     },
 };
 
-
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct AddTransactionGroupRequestViewModel {
     #[serde(flatten)]

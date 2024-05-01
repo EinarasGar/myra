@@ -2,12 +2,10 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::{
-    base_models::metadata_lookup::MetadataLookupTables,
     transaction_types::{
         MandatoryIdentifiableTransactionWithIdentifiableEntries, TransactionWithEntries,
     },
 };
-
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct AddIndividualTransactionRequestViewModel {
@@ -18,7 +16,4 @@ pub struct AddIndividualTransactionRequestViewModel {
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct AddIndividualTransactionResponseViewModel {
     pub transaction: MandatoryIdentifiableTransactionWithIdentifiableEntries,
-
-    #[serde(flatten)]
-    pub metadata: MetadataLookupTables,
 }

@@ -11,12 +11,35 @@ use utoipa::{
 
 use crate::view_models::{
     assets::{
-        add_asset::{AddAssetRequestViewModel, AddAssetResponseViewModel}, add_asset_pair_rates::{
+        add_asset::{AddAssetRequestViewModel, AddAssetResponseViewModel},
+        add_asset_pair_rates::{
             AddAssetPairRatesRequestViewModel, AddAssetPairRatesResponseViewModel,
-        }, base_models::{
-            asset::{AssetViewModel, IdentifiableAssetViewModel}, asset_metadata::AssetMetadataViewModel, asset_pair_metadata::AssetPairMetadataViewModel, asset_type::IdentifiableAssetTypeViewModel, lookup::AssetLookupTables, rate::AssetRateViewModel, shared_asset_pair_metadata::SharedAssetPairMetadataViewModel, user_asset_pair_metadata::UserAssetPairMetadataViewModel
-        }, get_asset::GetAssetResponseViewModel, get_asset_pair::GetAssetPairResponseViewModel, get_asset_pair_rates::GetAssetPairRatesResponseViewModel, get_assets::GetAssetsLineResponseViewModel, get_user_asset_pair::GetUserAssetPairResponseViewModel, update_asset::{UpdateAssetRequestViewModel, UpdateAssetResponseViewModel}, update_asset_pair::{UpdateAssetPairRequestViewModel, UpdateAssetPairResponseViewModel}
-    }, authentication::{auth::AuthViewModel, login_details::LoginDetailsViewModel}, base_models::search::PageOfAssetsResultsWithLookupViewModel, portfolio_account_view_model::PortfolioAccountViewModel, portfolio_entry_view_model::PortfolioEntryViewModel, portfolio_history_view_model::PortfolioHistoryViewModel, portfolio_view_model::PortfolioViewModel, transactions::{
+        },
+        base_models::{
+            asset::{AssetViewModel, IdentifiableAssetViewModel},
+            asset_metadata::AssetMetadataViewModel,
+            asset_pair_metadata::AssetPairMetadataViewModel,
+            asset_type::IdentifiableAssetTypeViewModel,
+            lookup::AssetLookupTables,
+            rate::AssetRateViewModel,
+            shared_asset_pair_metadata::SharedAssetPairMetadataViewModel,
+            user_asset_pair_metadata::UserAssetPairMetadataViewModel,
+        },
+        get_asset::GetAssetResponseViewModel,
+        get_asset_pair::GetAssetPairResponseViewModel,
+        get_asset_pair_rates::GetAssetPairRatesResponseViewModel,
+        get_assets::GetAssetsLineResponseViewModel,
+        get_user_asset_pair::GetUserAssetPairResponseViewModel,
+        update_asset::{UpdateAssetRequestViewModel, UpdateAssetResponseViewModel},
+        update_asset_pair::{UpdateAssetPairRequestViewModel, UpdateAssetPairResponseViewModel},
+    },
+    authentication::{auth::AuthViewModel, login_details::LoginDetailsViewModel},
+    base_models::search::PageOfAssetsResultsWithLookupViewModel,
+    portfolio_account_view_model::PortfolioAccountViewModel,
+    portfolio_entry_view_model::PortfolioEntryViewModel,
+    portfolio_history_view_model::PortfolioHistoryViewModel,
+    portfolio_view_model::PortfolioViewModel,
+    transactions::{
         add_individual_transaction::{
             AddIndividualTransactionRequestViewModel, AddIndividualTransactionResponseViewModel,
         },
@@ -123,7 +146,7 @@ use crate::view_models::{
         update_transaction_group::{
             UpdateTransactionGroupRequestViewModel, UpdateTransactionGroupResponseViewModel,
         },
-    }
+    },
 };
 
 #[derive(OpenApi)]

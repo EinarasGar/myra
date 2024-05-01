@@ -3,8 +3,11 @@ use dal::database_connection::MyraDbConnection;
 use dal::database_context::MyraDb;
 pub mod asset_service;
 pub mod auth_service;
+pub mod entries_service;
 pub mod portfolio_overview_service;
 pub mod portfolio_service;
+pub mod transaction_management_service;
+pub mod transaction_metadata_service;
 pub mod transaction_service;
 pub mod user_service;
 

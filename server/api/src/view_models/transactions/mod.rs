@@ -1,6 +1,7 @@
 pub mod add_individual_transaction;
 pub mod add_transaction_group;
 pub mod base_models;
+pub mod get_individual_transaction;
 pub mod get_individual_transactions;
 pub mod get_transaction_groups;
 pub mod get_transactions;

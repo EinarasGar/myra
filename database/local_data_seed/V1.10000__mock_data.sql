@@ -20,17 +20,22 @@ VALUES (1, 'US Dollar', 'USD'),
 INSERT INTO user_roles (name)
 VALUES ('User'),
     ('Admin');
+INSERT INTO category_type (id, name)
+VALUES (1, 'Income'),
+    (2, 'Expense'),
+    (3, 'Investments'),
+    (4, 'Fees');
 INSERT INTO transaction_categories (category, icon, type)
-VALUES ('Income', 'attach_money', null),
-    ('Investment', 'trending_up', 'investments'),
-    ('Fees', 'money_off', 'fees'),
-    ('Transport', 'directions_transit', null),
-    ('Entertainment', 'movie', null),
-    ('Bills', 'money_off', null),
-    ('Fast Food', 'fastfood', null),
-    ('Parking', 'parking', null),
-    ('Groceries', 'shopping_cart', null),
-    ('Fuel', 'local_gas_station', null);
+VALUES ('Income', 'attach_money', 1),
+    ('Investment', 'trending_up', 3),
+    ('Fees', 'money_off', 4),
+    ('Transport', 'directions_transit', 2),
+    ('Entertainment', 'movie', 2),
+    ('Bills', 'money_off', 2),
+    ('Fast Food', 'fastfood', 2),
+    ('Parking', 'parking', 2),
+    ('Groceries', 'shopping_cart', 2),
+    ('Fuel', 'local_gas_station', 2);
 INSERT INTO users (id, username, password, default_asset, role)
 VALUES (
         '2396480f-0052-4cf0-81dc-8cedbde5ce13',
@@ -39,9 +44,11 @@ VALUES (
         1,
         2
     );
-INSERT INTO portfolio_account (id, user_id, name)
+INSERT INTO account (id, user_id, name)
 VALUES (
         '2396480f-0052-4cf0-81dc-8cedbde5ce13',
         '2396480f-0052-4cf0-81dc-8cedbde5ce13',
         'Default'
     );
+INSERT INTO transaction_types (id, name)
+VALUES (1, 'regular');

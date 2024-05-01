@@ -1,39 +1,41 @@
-use dal::models::transaction_models::TransactionWithGroupModel;
-use rust_decimal::Decimal;
-use serde::{Deserialize, Serialize};
-use time::{serde::iso8601, OffsetDateTime};
+use time::OffsetDateTime;
 use uuid::Uuid;
 
-use super::portfolio_account_dto::PortfolioAccountDto;
+use super::{entry_dto::EntryDto, fee_entry_dto::FeeEntryDto};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct TransactonDto {
-    pub transaction_id: i32,
-    pub asset_id: i32,
-    pub quantity: Decimal,
-    pub category: i32,
-    #[serde(with = "iso8601")]
+#[derive(Clone, Debug)]
+pub struct TransactionDto {
+    pub transaction_id: Option<Uuid>,
     pub date: OffsetDateTime,
-    pub account: PortfolioAccountDto,
-    pub description: Option<String>,
-    pub link_id: Option<Uuid>,
+    pub fee_entries: Vec<FeeEntryDto>,
+    pub transaction_type: TransactionTypeDto,
 }
 
-impl From<TransactionWithGroupModel> for TransactonDto {
-    fn from(p: TransactionWithGroupModel) -> Self {
-        unimplemented!();
-        Self {
-            transaction_id: p.id,
-            asset_id: p.asset_id,
-            quantity: p.quantity,
-            category: p.category_id,
-            date: p.date,
-            description: p.description,
-            account: PortfolioAccountDto {
-                account_id: Some(p.account_id),
-                account_name: p.account_name,
-            },
-            link_id: p.portfolio_event_id,
-        }
-    }
+#[derive(Clone, Debug)]
+pub enum TransactionTypeDto {
+    Regular(RegularTransactionMetadataDto),
+    AssetPurchase,
 }
+
+#[derive(Clone, Debug)]
+pub struct RegularTransactionMetadataDto {
+    pub description: Option<String>,
+    pub entry: EntryDto,
+    pub category_id: i32,
+}
+
+// {
+//     "date": "2019-08-24T14:15:22Z",
+//     "type": {
+//       "type": "regular_transaction",
+//       "description": "string"
+//     },
+//     "entries": [
+//       {
+//         "category_id": 0,
+//         "account_id": "449e7a5c-69d3-4b8a-aaaf-5c9b713ebc65",
+//         "amount": 0,
+//         "asset_id": 0
+//       }
+//     ]
+//   }

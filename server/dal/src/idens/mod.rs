@@ -1,6 +1,7 @@
 use sea_query::{Iden, Write};
 
 pub mod asset_idens;
+pub mod entries_idens;
 pub(crate) mod portfolio_idens;
 pub(crate) mod transaction_idens;
 pub(crate) mod user_idens;
@@ -27,5 +28,13 @@ pub struct Unnest;
 impl Iden for Unnest {
     fn unquoted(&self, s: &mut dyn Write) {
         write!(s, "unnest").unwrap();
+    }
+}
+
+pub struct Over;
+
+impl Iden for Over {
+    fn unquoted(&self, s: &mut dyn Write) {
+        write!(s, "over").unwrap();
     }
 }

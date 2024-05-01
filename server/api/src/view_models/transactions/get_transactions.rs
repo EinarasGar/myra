@@ -9,7 +9,6 @@ use super::{
     transaction_types::MandatoryIdentifiableTransactionWithIdentifiableEntries,
 };
 
-
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct GetTransactionsViewModel {
     pub individual_transactions: Vec<MandatoryIdentifiableTransactionWithIdentifiableEntries>,

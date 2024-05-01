@@ -1,7 +1,6 @@
 use std::collections::{HashMap, HashSet, VecDeque};
 
 use dal::{
-    db_sets::asset_db_set::{self},
     models::{
         asset_models::{Asset, AssetId, AssetPairId, AssetRaw, PublicAsset},
         asset_pair::AssetPair,
@@ -11,6 +10,7 @@ use dal::{
         count::Count,
         exists::Exsists,
     },
+    queries::asset_queries::{self},
 };
 
 #[mockall_double::double]
@@ -44,7 +44,7 @@ impl AssetsService {
     pub async fn get_all_assets_ticker_and_pair_ids(
         &self,
     ) -> anyhow::Result<Vec<AssetTickerPairIdsDto>> {
-        let query = asset_db_set::get_assets_raw();
+        let query = asset_queries::get_assets_raw();
         let models = self.db.fetch_all::<AssetRaw>(query).await?;
 
         let ret_vec: Vec<AssetTickerPairIdsDto> =
@@ -60,7 +60,7 @@ impl AssetsService {
         search: Option<String>,
     ) -> anyhow::Result<Vec<AssetDto>> {
         let page_size = 20;
-        let query = asset_db_set::get_public_assets(page_size, page, search);
+        let query = asset_queries::get_public_assets(page_size, page, search);
         let models = self.db.fetch_all::<PublicAsset>(query).await?;
 
         let ret_vec: Vec<AssetDto> = models.into_iter().map(|val| val.into()).collect();
@@ -70,7 +70,7 @@ impl AssetsService {
 
     #[tracing::instrument(skip_all, err)]
     pub async fn get_all_user_assets(&self, user_id: Uuid) -> anyhow::Result<Vec<AssetDto>> {
-        let query = asset_db_set::get_users_assets(user_id);
+        let query = asset_queries::get_users_assets(user_id);
         let models = self.db.fetch_all::<PublicAsset>(query).await?;
 
         let ret_vec: Vec<AssetDto> = models
@@ -94,7 +94,7 @@ impl AssetsService {
         asset_ids: Vec<i32>,
     ) -> anyhow::Result<()> {
         let nums = asset_ids.len() as i64;
-        let query = asset_db_set::assets_count_by_ids_and_access(asset_ids, user_id);
+        let query = asset_queries::assets_count_by_ids_and_access(asset_ids, user_id);
         let models = self.db.fetch_one::<Count>(query).await?;
         if models.count != nums {
             return Err(anyhow::anyhow!(
@@ -107,7 +107,7 @@ impl AssetsService {
 
     #[tracing::instrument(skip_all, err)]
     pub async fn get_asset(&self, id: i32) -> anyhow::Result<AssetDto> {
-        let query = asset_db_set::get_asset(id);
+        let query = asset_queries::get_asset(id);
         let model = self.db.fetch_one::<Asset>(query).await?;
 
         Ok(model.into())
@@ -119,7 +119,7 @@ impl AssetsService {
         asset_ids: HashSet<(i32, i32)>,
     ) -> anyhow::Result<HashMap<(i32, i32), AssetRateDto>> {
         let assets_ids_len = asset_ids.len();
-        let query = asset_db_set::get_latest_asset_pair_rates(
+        let query = asset_queries::get_latest_asset_pair_rates(
             asset_ids
                 .into_iter()
                 .map(|x| AssetPair {
@@ -161,7 +161,7 @@ impl AssetsService {
     ) -> anyhow::Result<HashMap<(i32, i32), VecDeque<AssetRateDto>>> {
         let mut result: HashMap<(i32, i32), VecDeque<AssetRateDto>> = HashMap::new();
 
-        let query = asset_db_set::get_latest_asset_pair_rates(
+        let query = asset_queries::get_latest_asset_pair_rates(
             asset_ids
                 .into_iter()
                 .map(|x| AssetPair {
@@ -190,7 +190,7 @@ impl AssetsService {
             .collect();
 
         if !non_default_rates_pair1_ids.is_empty() {
-            let query = asset_db_set::get_latest_asset_pair_rates(
+            let query = asset_queries::get_latest_asset_pair_rates(
                 non_default_rates_pair1_ids
                     .into_iter()
                     .map(|x| AssetPair {
@@ -223,7 +223,7 @@ impl AssetsService {
         pair1: i32,
         pair2: i32,
     ) -> anyhow::Result<Vec<AssetRateDto>> {
-        let query = asset_db_set::get_pair_rates(pair1, pair2);
+        let query = asset_queries::get_pair_rates(pair1, pair2);
         let ret = self.db.fetch_all::<AssetRate>(query).await?;
 
         let result: Vec<AssetRateDto> = ret.into_iter().map(|x| x.into()).collect();
@@ -233,7 +233,7 @@ impl AssetsService {
 
     #[tracing::instrument(skip_all, err)]
     pub async fn get_asset_pair_id(&self, pair1: i32, pair2: i32) -> anyhow::Result<i32> {
-        let query = asset_db_set::get_pair_id(pair1, pair2);
+        let query = asset_queries::get_pair_id(pair1, pair2);
         let ret = self.db.fetch_one::<AssetPairId>(query).await?;
         Ok(ret.id)
     }
@@ -318,21 +318,21 @@ impl AssetsService {
         user_id: Uuid,
         asset_id: i32,
     ) -> anyhow::Result<bool> {
-        let query = asset_db_set::asset_exists_by_id_and_user_id(asset_id, user_id);
+        let query = asset_queries::asset_exists_by_id_and_user_id(asset_id, user_id);
         let ret = self.db.fetch_one::<Exsists>(query).await?;
         Ok(ret.exists)
     }
 
     #[tracing::instrument(skip_all, err)]
     async fn insert_asset(&self, asset_dto: AssetInsertDto) -> anyhow::Result<i32> {
-        let query = asset_db_set::insert_asset(asset_dto.clone().into());
+        let query = asset_queries::insert_asset(asset_dto.clone().into());
         let asset_id = self.db.fetch_one::<AssetId>(query).await?;
         Ok(asset_id.id)
     }
 
     #[tracing::instrument(skip_all, err)]
     async fn insert_asset_pair(&self, pair_dto: AssetPairInsertDto) -> anyhow::Result<i32> {
-        let query = asset_db_set::inser_pair(pair_dto.into());
+        let query = asset_queries::inser_pair(pair_dto.into());
         let asset_pair_id = self.db.fetch_one::<AssetPairId>(query).await?;
         Ok(asset_pair_id.id)
     }
@@ -352,7 +352,7 @@ impl AssetsService {
             return Ok(());
         }
 
-        let query = asset_db_set::insert_pair_rates(rates.into_iter().map(|x| x.into()).collect());
+        let query = asset_queries::insert_pair_rates(rates.into_iter().map(|x| x.into()).collect());
         self.db.execute(query).await?;
         Ok(())
     }
@@ -372,7 +372,7 @@ impl AssetsService {
             return Ok(vec![]);
         }
 
-        let query = asset_db_set::get_pair_prices_by_dates(
+        let query = asset_queries::get_pair_prices_by_dates(
             pair_dates.into_iter().map(|x| x.into()).collect(),
         );
         let ret = self.db.fetch_all::<AssetPairRateOption>(query).await?;

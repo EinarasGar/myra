@@ -131,28 +131,30 @@ pub async fn get_portfolio_history(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn post_portfolio_account(
-    Path(user_id): Path<Uuid>,
-    PortfolioServiceState(portfolio_service): PortfolioServiceState,
+    Path(_user_id): Path<Uuid>,
+    PortfolioServiceState(_portfolio_service): PortfolioServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-    Json(params): Json<PortfolioAccountViewModel>,
+    Json(_params): Json<PortfolioAccountViewModel>,
 ) -> Result<Json<PortfolioAccountViewModel>, ApiError> {
-    let new_model = portfolio_service
-        .insert_or_update_portfolio_account(user_id, params.clone().into())
-        .await?;
+    // let new_model = portfolio_service
+    //     .insert_or_update_portfolio_account(user_id, params.clone().into())
+    //     .await?;
 
-    let ret_model: PortfolioAccountViewModel = new_model.into();
-    Ok(ret_model.into())
+    // let ret_model: PortfolioAccountViewModel = new_model.into();
+    // Ok(ret_model.into())
+    unimplemented!()
 }
 
 #[tracing::instrument(skip_all, err)]
 pub async fn get_portfolio_asset(
     Path((_user_id, _asset_id)): Path<(Uuid, i32)>,
-    PortfolioOverviewServiceState(portfolio_overview_service): PortfolioOverviewServiceState,
+    PortfolioOverviewServiceState(_portfolio_overview_service): PortfolioOverviewServiceState,
 ) -> Result<Json<PortfolioOverviewViewModel>, ApiError> {
     // TODO: This endpoint is for testing purposes only right now as it has nothing to do with asset id.
-    let overview_dto = portfolio_overview_service
-        .get_full_portfolio_overview()
-        .await?;
-    let overview: PortfolioOverviewViewModel = overview_dto.into();
-    Ok(overview.into())
+    //     let overview_dto = portfolio_overview_service
+    //         .get_full_portfolio_overview()
+    //         .await?;
+    //     let overview: PortfolioOverviewViewModel = overview_dto.into();
+    //     Ok(overview.into())
+    unimplemented!()
 }

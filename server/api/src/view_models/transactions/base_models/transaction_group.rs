@@ -2,7 +2,10 @@ use serde::{Deserialize, Serialize};
 use time::{serde::iso8601, OffsetDateTime};
 use utoipa::ToSchema;
 
-use crate::view_models::transactions::transaction_types::{IdentifiableTransactionWithIdentifiableEntries, MandatoryIdentifiableTransactionWithIdentifiableEntries, TransactionWithEntries};
+use crate::view_models::transactions::transaction_types::{
+    IdentifiableTransactionWithIdentifiableEntries,
+    MandatoryIdentifiableTransactionWithIdentifiableEntries, TransactionWithEntries,
+};
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 #[aliases(
