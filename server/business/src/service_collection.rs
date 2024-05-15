@@ -1,6 +1,7 @@
 use dal::database_connection::MyraDbConnection;
 #[mockall_double::double]
 use dal::database_context::MyraDb;
+pub mod asset_rates_service;
 pub mod asset_service;
 pub mod auth_service;
 pub mod entries_service;

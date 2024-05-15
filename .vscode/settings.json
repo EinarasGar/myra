@@ -26,7 +26,7 @@
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
+    "source.fixAll.eslint": "explicit"
   },
   "thunder-client.saveToWorkspace": true,
   "thunder-client.workspaceRelativePath": ".vscode",
@@ -47,5 +47,7 @@
   "rust-analyzer.lens.references.adt.enable": true,
   "rust-analyzer.lens.references.enumVariant.enable": true,
   "rust-analyzer.lens.references.method.enable": true,
-  "rust-analyzer.lens.references.trait.enable": true
+  "rust-analyzer.lens.references.trait.enable": false,
+  "rust-analyzer.references.excludeImports": true,
+  "rust-analyzer.testExplorer": true
 }

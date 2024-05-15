@@ -7,3 +7,11 @@ use super::asset_type::IdentifiableAssetTypeViewModel;
 pub struct AssetLookupTables {
     pub asset_types: Vec<IdentifiableAssetTypeViewModel>,
 }
+
+impl Default for AssetLookupTables {
+    fn default() -> Self {
+        Self {
+            asset_types: Vec::new(),
+        }
+    }
+}

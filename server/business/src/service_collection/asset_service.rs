@@ -2,15 +2,18 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 use dal::{
     models::{
-        asset_models::{Asset, AssetId, AssetPairId, AssetRaw, PublicAsset},
+        asset_models::{Asset, AssetId, AssetPairId, AssetRaw, AssetWithMetadata, PublicAsset},
         asset_pair::AssetPair,
         asset_pair_rate::AssetPairRate,
         asset_pair_rate_option::AssetPairRateOption,
+        asset_pair_shared_metadta::AssetPairSharedMetadata,
         asset_rate::AssetRate,
         count::Count,
         exists::Exsists,
+        total_count_model::TotalCount,
     },
-    queries::asset_queries::{self},
+    queries::{self, asset_queries},
+    query_params::get_assets_params::GetAssetsParams,
 };
 
 #[mockall_double::double]
@@ -22,22 +25,135 @@ use tracing::error;
 use uuid::Uuid;
 
 use crate::dtos::{
-    add_custom_asset_dto::AddCustomAssetDto, asset_dto::AssetDto,
-    asset_id_date_dto::AssetIdDateDto, asset_insert_dto::AssetInsertDto,
-    asset_insert_result_dto::InsertAssetResultDto, asset_pair_date_dto::AssetPairDateDto,
-    asset_pair_insert_dto::AssetPairInsertDto, asset_pair_rate_dto::AssetPairRateDto,
-    asset_pair_rate_insert_dto::AssetPairRateInsertDto, asset_rate_dto::AssetRateDto,
+    self,
+    add_custom_asset_dto::AddCustomAssetDto,
+    asset_dto::AssetDto,
+    asset_id_date_dto::AssetIdDateDto,
+    asset_insert_dto::AssetInsertDto,
+    asset_insert_result_dto::InsertAssetResultDto,
+    asset_pair_date_dto::AssetPairDateDto,
+    asset_pair_insert_dto::AssetPairInsertDto,
+    asset_pair_rate_dto::AssetPairRateDto,
+    asset_pair_rate_insert_dto::AssetPairRateInsertDto,
+    asset_rate_dto::AssetRateDto,
     asset_ticker_pair_ids_dto::AssetTickerPairIdsDto,
+    assets::{
+        asset_dto, full_asset_dto::FullAssetDto,
+        shared_asset_pair_metadata_dto::SharedAssetPairMetadataDto,
+    },
+    page_of_results_dto::PageOfResultsDto,
+    paging_dto::PagingDto,
 };
+
+use super::asset_rates_service::AssetRatesService;
 
 pub struct AssetsService {
     db: MyraDb,
+    transaction_service: AssetRatesService,
 }
 
 #[automock]
 impl AssetsService {
     pub fn new(db: MyraDb) -> Self {
-        Self { db }
+        Self {
+            transaction_service: AssetRatesService::new(db.clone()),
+            db,
+        }
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn get_asset_with_metadata(&self, id: i32) -> anyhow::Result<FullAssetDto> {
+        let query = asset_queries::get_asset_with_metadata(GetAssetsParams::by_id(id));
+        let model = self.db.fetch_optional::<AssetWithMetadata>(query).await?;
+
+        if let Some(model) = model {
+            return Ok(model.into());
+        } else {
+            return Err(anyhow::anyhow!("Asset not found"));
+        }
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn search_assets(
+        &self,
+        paging: PagingDto,
+        query: Option<String>,
+    ) -> anyhow::Result<PageOfResultsDto<asset_dto::AssetDto>> {
+        let query = if let Some(query) = query {
+            asset_queries::get_asset_with_metadata(GetAssetsParams::by_query(
+                query,
+                paging.start,
+                paging.count,
+            ))
+        } else {
+            asset_queries::get_asset_with_metadata(GetAssetsParams::all(paging.start, paging.count))
+        };
+
+        let counted_models = self.db.fetch_all::<TotalCount<Asset>>(query).await?;
+
+        if let Some(first) = counted_models.first() {
+            let total_results = first.total_results;
+            let models: Vec<Asset> = counted_models.into_iter().map(|x| x.model).collect();
+            let ret_vec: Vec<asset_dto::AssetDto> = models.into_iter().map(Into::into).collect();
+            let page = PageOfResultsDto {
+                results: ret_vec,
+                total_results: total_results as i32,
+            };
+            Ok(page)
+        } else {
+            Ok(PageOfResultsDto {
+                results: vec![],
+                total_results: 0,
+            })
+        }
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn get_asset_pair(
+        &self,
+        pair1: i32,
+        pair2: i32,
+    ) -> anyhow::Result<(
+        dtos::assets::asset_dto::AssetDto,
+        dtos::assets::asset_dto::AssetDto,
+    )> {
+        let query = asset_queries::get_asset_with_metadata(GetAssetsParams::by_pair(pair1, pair2));
+        let models = self.db.fetch_all::<Asset>(query).await?;
+
+        if models.len() != 2 {
+            return Err(anyhow::anyhow!("Pair not found"));
+        }
+
+        let ret1: dtos::assets::asset_dto::AssetDto = models[1].clone().into();
+        let ret2: dtos::assets::asset_dto::AssetDto = models[0].clone().into();
+        Ok((ret1, ret2))
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn get_shared_asset_pair_metadata(
+        &self,
+        pair1: i32,
+        pair2: i32,
+    ) -> anyhow::Result<Option<SharedAssetPairMetadataDto>> {
+        let query = asset_queries::get_shared_asset_pair_metadata(vec![AssetPair { pair1, pair2 }]);
+        let models = self
+            .db
+            .fetch_optional::<AssetPairSharedMetadata>(query)
+            .await?;
+
+        if let Some(model) = models {
+            return Ok(Some(model.into()));
+        } else {
+            return Ok(None);
+        }
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn get_asset(&self, id: i32) -> anyhow::Result<AssetDto> {
+        let query = asset_queries::get_asset(id);
+        let model = self.db.fetch_one::<Asset>(query).await?;
+
+        Ok(model.into())
     }
 
     #[tracing::instrument(skip_all, err)]
@@ -103,53 +219,6 @@ impl AssetsService {
         }
 
         Ok(())
-    }
-
-    #[tracing::instrument(skip_all, err)]
-    pub async fn get_asset(&self, id: i32) -> anyhow::Result<AssetDto> {
-        let query = asset_queries::get_asset(id);
-        let model = self.db.fetch_one::<Asset>(query).await?;
-
-        Ok(model.into())
-    }
-
-    #[tracing::instrument(skip_all, err)]
-    pub async fn get_assets_rates_default_latest(
-        &self,
-        asset_ids: HashSet<(i32, i32)>,
-    ) -> anyhow::Result<HashMap<(i32, i32), AssetRateDto>> {
-        let assets_ids_len = asset_ids.len();
-        let query = asset_queries::get_latest_asset_pair_rates(
-            asset_ids
-                .into_iter()
-                .map(|x| AssetPair {
-                    pair1: x.0,
-                    pair2: x.1,
-                })
-                .collect(),
-            None,
-        );
-
-        let rates = self.db.fetch_all::<AssetPairRate>(query).await?;
-
-        if rates.len() > assets_ids_len {
-            error!("Too many rates returned from latest rates query");
-        }
-
-        let result: HashMap<(i32, i32), AssetRateDto> = rates
-            .into_iter()
-            .map(|val| {
-                (
-                    (val.pair1, val.pair2),
-                    AssetRateDto {
-                        rate: val.rate,
-                        date: val.date,
-                    },
-                )
-            })
-            .collect();
-
-        Ok(result)
     }
 
     #[tracing::instrument(skip_all, err)]

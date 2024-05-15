@@ -6,7 +6,6 @@ use time::{serde::iso8601, OffsetDateTime};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AssetRateDto {
     pub rate: Decimal,
-    #[serde(with = "iso8601")]
     pub date: OffsetDateTime,
 }
 

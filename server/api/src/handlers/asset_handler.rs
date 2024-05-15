@@ -1,19 +1,31 @@
+use std::collections::HashMap;
+
 use axum::{
     extract::{Path, Query},
     Json,
 };
+use business::dtos::paging_dto::PagingDto;
 
 use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
-    states::AssetsServiceState,
+    parsers::parse_duration_string,
+    states::{AssetRatesServiceState, AssetsServiceState},
     view_models::{
         assets::{
+            base_models::{
+                asset_metadata::AssetMetadataViewModel,
+                asset_pair_metadata::AssetPairMetadataViewModel,
+                asset_type::IdentifiableAssetTypeViewModel, lookup::AssetLookupTables,
+                rate::AssetRateViewModel,
+                shared_asset_pair_metadata::SharedAssetPairMetadataViewModel,
+            },
             get_asset::GetAssetResponseViewModel,
             get_asset_pair::GetAssetPairResponseViewModel,
             get_asset_pair_rates::{
                 GetAssetPairRatesRequestParams, GetAssetPairRatesResponseViewModel,
             },
+            get_assets::GetAssetsLineResponseViewModel,
         },
         base_models::search::{PageOfAssetsResultsWithLookupViewModel, PaginatedSearchQuery},
     },
@@ -40,11 +52,43 @@ use crate::{
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn search_assets(
-    _query_params: Query<PaginatedSearchQuery>,
-    AssetsServiceState(_assets_service): AssetsServiceState,
+    query_params: Query<PaginatedSearchQuery>,
+    AssetsServiceState(assets_service): AssetsServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<PageOfAssetsResultsWithLookupViewModel>, ApiError> {
-    unimplemented!()
+    let paging_dto = PagingDto {
+        start: query_params.start,
+        count: query_params.count,
+    };
+
+    let page = assets_service
+        .search_assets(paging_dto, query_params.query.clone())
+        .await?;
+
+    let mut map: HashMap<i32, IdentifiableAssetTypeViewModel> = HashMap::new();
+    for x in &page.results {
+        map.entry(x.asset_type.id)
+            .or_insert_with(|| IdentifiableAssetTypeViewModel {
+                name: x.asset_type.name.clone(),
+                id: x.asset_type.id,
+            });
+    }
+    let metadata: Vec<IdentifiableAssetTypeViewModel> = map.into_values().collect();
+
+    let asset_view_models: Vec<GetAssetsLineResponseViewModel> = page
+        .results
+        .into_iter()
+        .map(|x| GetAssetsLineResponseViewModel { asset: x.into() })
+        .collect();
+
+    let ret = PageOfAssetsResultsWithLookupViewModel {
+        results: asset_view_models,
+        total_results: page.total_results,
+        lookup_tables: AssetLookupTables {
+            asset_types: metadata,
+        },
+    };
+    Ok(ret.into())
 }
 
 /// Get asset
@@ -67,11 +111,21 @@ pub async fn search_assets(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_asset(
-    Path(_id): Path<i32>,
-    AssetsServiceState(_assets_service): AssetsServiceState,
+    Path(id): Path<i32>,
+    AssetsServiceState(assets_service): AssetsServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetAssetResponseViewModel>, ApiError> {
-    unimplemented!()
+    let asset_dto = assets_service.get_asset_with_metadata(id).await?;
+
+    let ret = GetAssetResponseViewModel {
+        asset: asset_dto.asset.into(),
+        metadata: AssetMetadataViewModel {
+            base_asset_id: asset_dto.base_asset_id,
+            pairs: asset_dto.pairs.unwrap(),
+        },
+    };
+
+    Ok(ret.into())
 }
 
 /// Get asset pair
@@ -95,11 +149,33 @@ pub async fn get_asset(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_asset_pair(
-    Path((_id, _reference_id)): Path<(i32, i32)>,
-    AssetsServiceState(_assets_service): AssetsServiceState,
+    Path((id, reference_id)): Path<(i32, i32)>,
+    AssetsServiceState(assets_service): AssetsServiceState,
+    AssetRatesServiceState(asset_rates_service): AssetRatesServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetAssetPairResponseViewModel>, ApiError> {
-    unimplemented!()
+    let (pair_dtos, latest_rate, shared_metadata) = tokio::try_join!(
+        assets_service.get_asset_pair(id, reference_id),
+        asset_rates_service.get_asset_pair_latest_rate(id, reference_id),
+        assets_service.get_shared_asset_pair_metadata(id, reference_id)
+    )?;
+
+    let ret = GetAssetPairResponseViewModel {
+        main_asset: pair_dtos.0.into(),
+        reference_asset: pair_dtos.1.into(),
+        metadata: SharedAssetPairMetadataViewModel {
+            common_metadata: match latest_rate {
+                Some(rate) => Some(AssetPairMetadataViewModel {
+                    latest_rate: rate.rate,
+                    last_updated: rate.date,
+                }),
+                None => None,
+            },
+            volume: shared_metadata.unwrap().volume,
+        },
+    };
+
+    Ok(ret.into())
 }
 
 /// Get asset pair rates
@@ -124,10 +200,22 @@ pub async fn get_asset_pair(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_asset_pair_rates(
-    Path((_id, _reference_id)): Path<(i32, i32)>,
-    _query_params: Query<GetAssetPairRatesRequestParams>,
-    AssetsServiceState(_assets_service): AssetsServiceState,
+    Path((id, reference_id)): Path<(i32, i32)>,
+    query_params: Query<GetAssetPairRatesRequestParams>,
+    AssetRatesServiceState(asset_rates_service): AssetRatesServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetAssetPairRatesResponseViewModel>, ApiError> {
-    unimplemented!()
+    let duration = parse_duration_string(query_params.range.clone())?;
+    let rates = asset_rates_service
+        .get_asset_pair_rates_by_duration(id, reference_id, duration)
+        .await?;
+
+    let ret_rates: Vec<AssetRateViewModel> = rates.into_iter().map(Into::into).collect();
+
+    let ret = GetAssetPairRatesResponseViewModel {
+        rates: ret_rates,
+        range: query_params.range.clone(),
+    };
+
+    Ok(ret.into())
 }

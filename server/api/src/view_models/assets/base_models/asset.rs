@@ -1,3 +1,4 @@
+use business::dtos::assets::asset_dto::AssetDto;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -28,4 +29,33 @@ pub struct IdentifiableAsset<T> {
 
     #[serde(flatten)]
     pub asset: T,
+}
+
+impl From<AssetDto> for ExpandedAssetViewModel {
+    fn from(value: AssetDto) -> Self {
+        Self {
+            ticker: value.ticker,
+            name: value.name,
+            asset_type: value.asset_type.into(),
+        }
+    }
+}
+
+impl From<AssetDto> for AssetViewModel {
+    fn from(value: AssetDto) -> Self {
+        Self {
+            ticker: value.ticker,
+            name: value.name,
+            asset_type: value.asset_type.id,
+        }
+    }
+}
+
+impl From<AssetDto> for IdentifiableAssetViewModel {
+    fn from(value: AssetDto) -> Self {
+        Self {
+            asset_id: value.id,
+            asset: value.into(),
+        }
+    }
 }

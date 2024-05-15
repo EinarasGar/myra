@@ -38,6 +38,14 @@ CREATE TABLE IF NOT EXISTS public.asset_pairs (
     pair1 INT NOT NULL,
     pair2 INT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS public.asset_pairs_shared_metadata (
+    pair_id INT NOT NULL CONSTRAINT asset_pairs_shared_metadata_pair_id_fkey REFERENCES public.asset_pairs (id) PRIMARY KEY,
+    volume numeric
+);
+CREATE TABLE IF NOT EXISTS public.asset_pairs_user_metadata (
+    pair_id INT NOT NULL CONSTRAINT asset_pairs_user_metadata_pair_id_fkey REFERENCES public.asset_pairs (id) PRIMARY KEY,
+    exchange TEXT
+);
 CREATE TABLE IF NOT EXISTS public.asset_history (
     id SERIAL CONSTRAINT asset_history_pk PRIMARY KEY,
     pair_id INT NOT NULL CONSTRAINT asset_history_pair_id_fkey REFERENCES public.asset_pairs (id),

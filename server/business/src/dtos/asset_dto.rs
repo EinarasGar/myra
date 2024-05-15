@@ -16,7 +16,7 @@ impl From<Asset> for AssetDto {
         Self {
             ticker: p.ticker,
             name: p.name,
-            category: p.category,
+            category: "obselete dto".to_string(),
             asset_id: p.id,
             owner: p.user_id,
         }

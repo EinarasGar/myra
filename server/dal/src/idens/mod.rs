@@ -38,3 +38,7 @@ impl Iden for Over {
         write!(s, "over").unwrap();
     }
 }
+
+#[derive(Iden)]
+#[iden = "ARRAY"]
+pub struct ArrayFunc;

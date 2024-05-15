@@ -5,6 +5,7 @@ pub mod asset_pair;
 pub mod asset_pair_date;
 pub mod asset_pair_rate;
 pub mod asset_pair_rate_option;
+pub mod asset_pair_shared_metadta;
 pub mod asset_rate;
 pub mod count;
 pub mod exists;

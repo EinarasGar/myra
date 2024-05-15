@@ -1,3 +1,4 @@
+use business::dtos::asset_rate_dto::AssetRateDto;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use time::{serde::timestamp, OffsetDateTime};
@@ -12,4 +13,13 @@ pub struct AssetRateViewModel {
     #[serde(with = "timestamp")]
     pub date: OffsetDateTime,
     pub rate: Decimal,
+}
+
+impl From<AssetRateDto> for AssetRateViewModel {
+    fn from(p: AssetRateDto) -> Self {
+        Self {
+            date: p.date,
+            rate: p.rate,
+        }
+    }
 }

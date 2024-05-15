@@ -124,6 +124,26 @@ impl MyraDb {
     }
 
     #[tracing::instrument(skip(self), err)]
+    pub async fn fetch_optional<T>(
+        &self,
+        query: DbQueryWithValues,
+    ) -> Result<Option<T>, sqlx::Error>
+    where
+        for<'r> T: FromRow<'r, PgRow> + Send + Unpin,
+    {
+        let mut tx_guard = self.transaction.lock().await;
+        if let Some(ref mut tx) = &mut *tx_guard {
+            sqlx::query_as_with::<_, T, _>(&query.query, query.values)
+                .fetch_optional(&mut **tx)
+                .await
+        } else {
+            sqlx::query_as_with::<_, T, _>(&query.query, query.values)
+                .fetch_optional(&self.pool)
+                .await
+        }
+    }
+
+    #[tracing::instrument(skip(self), err)]
     pub async fn execute(&self, query: DbQueryWithValues) -> Result<(), sqlx::Error> {
         let mut tx_guard = self.transaction.lock().await;
         if let Some(ref mut tx) = &mut *tx_guard {
@@ -157,6 +177,7 @@ mock! {
             query: DbQueryWithValues,
         ) -> Result<Vec<T>, sqlx::Error>;
         pub async fn fetch_one<T: 'static>(&self, query: DbQueryWithValues) -> Result<T, sqlx::Error>;
+        pub async fn fetch_optional<T: 'static>(&self, query: DbQueryWithValues) -> Result<Option<T>, sqlx::Error>;
         pub async fn execute(&self, query: DbQueryWithValues) -> Result<(), sqlx::Error>;
     }
 

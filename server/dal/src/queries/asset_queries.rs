@@ -1,6 +1,6 @@
 use sea_query::{
     extension::postgres::PgExpr, Alias, Asterisk, Cond, Expr, Func, Order, PostgresQueryBuilder,
-    Query, Value,
+    Query, SimpleExpr, Value, WindowStatement,
 };
 use sea_query_binder::SqlxBinder;
 use sqlx::types::{time::OffsetDateTime, Uuid};
@@ -8,13 +8,18 @@ use sqlx::types::{time::OffsetDateTime, Uuid};
 use crate::{
     idens::{
         asset_idens::{
-            AssetHistoryIden, AssetPairsIden, AssetTypesIden, AssetsAliasIden, AssetsIden,
+            AssetHistoryIden, AssetPairSharedMetadataIden, AssetPairsIden, AssetTypesIden,
+            AssetsAliasIden, AssetsIden,
         },
-        Unnest,
+        ArrayFunc, Unnest,
     },
     models::{
         asser_pair_rate_insert::AssetPairRateInsert, asset_models::InsertAsset,
         asset_pair::AssetPair, asset_pair_date::AssetPairDate,
+    },
+    query_params::{
+        get_assets_params::{GetAssetsParams, GetAssetsParamsSeachType},
+        get_rates_params::{GetRatesParams, GetRatesSeachType},
     },
 };
 
@@ -85,15 +90,160 @@ pub fn get_users_assets(user_id: Uuid) -> DbQueryWithValues {
 }
 
 #[tracing::instrument(skip_all)]
-pub fn get_asset(id: i32) -> DbQueryWithValues {
-    Query::select()
+pub fn get_asset_with_metadata(params: GetAssetsParams) -> DbQueryWithValues {
+    let mut get_assets_builder = Query::select()
         .column((AssetsIden::Table, AssetsIden::Id))
         .column((AssetsIden::Table, AssetsIden::Name))
+        .column((AssetsIden::Table, AssetsIden::AssetType))
         .column((AssetsIden::Table, AssetsIden::Ticker))
         .column((AssetsIden::Table, AssetsIden::UserId))
         .expr_as(
             Expr::col((AssetTypesIden::Table, AssetTypesIden::Name)),
-            Alias::new("category"),
+            Alias::new("asset_type_name"),
+        )
+        .conditions(
+            params.include_metadata,
+            |q| {
+                let sub_select = Query::select()
+                    .column(AssetPairsIden::Pair2)
+                    .from(AssetPairsIden::Table)
+                    .and_where(
+                        Expr::col(AssetPairsIden::Pair1)
+                            .eq(Expr::col((AssetsIden::Table, AssetsIden::Id))),
+                    )
+                    .to_owned();
+
+                q.column((AssetsIden::Table, AssetsIden::BasePairId))
+                    .expr_as(
+                        Func::cust(ArrayFunc).arg(SimpleExpr::SubQuery(
+                            None,
+                            Box::new(sub_select.into_sub_query_statement()),
+                        )),
+                        Alias::new("pairs"),
+                    );
+            },
+            |_q| {},
+        )
+        .conditions(
+            params.paging.is_some(),
+            |q| {
+                q.expr_window_as(
+                    Expr::col(Asterisk).count(),
+                    WindowStatement::default(),
+                    Alias::new("total_results"),
+                );
+            },
+            |_q| {},
+        )
+        .from(AssetsIden::Table)
+        .inner_join(
+            AssetTypesIden::Table,
+            Expr::col((AssetsIden::Table, AssetsIden::AssetType))
+                .equals((AssetTypesIden::Table, AssetTypesIden::Id)),
+        )
+        .to_owned();
+
+    match params.search_type {
+        GetAssetsParamsSeachType::ById(pair1) => {
+            get_assets_builder.and_where(Expr::col((AssetsIden::Table, AssetsIden::Id)).eq(pair1));
+        }
+        GetAssetsParamsSeachType::ByPairId(pair1, pair2) => {
+            get_assets_builder.and_where(
+                Expr::col((AssetsIden::Table, AssetsIden::Id))
+                    .eq(pair1)
+                    .or(Expr::col((AssetsIden::Table, AssetsIden::Id)).eq(pair2)),
+            );
+        }
+        GetAssetsParamsSeachType::All => {}
+        GetAssetsParamsSeachType::ByQuery(query) => todo!(),
+    };
+
+    if let Some(paging) = params.paging {
+        get_assets_builder.limit(paging.count).offset(paging.start);
+    }
+
+    get_assets_builder.build_sqlx(PostgresQueryBuilder).into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn get_rates(params: GetRatesParams) -> DbQueryWithValues {
+    let mut builder = Query::select()
+        .column((AssetHistoryIden::Table, AssetHistoryIden::Rate))
+        .column((AssetHistoryIden::Table, AssetHistoryIden::Date))
+        .from(AssetHistoryIden::Table)
+        .to_owned();
+
+    match params.search_type {
+        GetRatesSeachType::ByPair(pair1, pair2) => {
+            builder.and_where(
+                Expr::col(AssetHistoryIden::PairId).in_subquery(
+                    Query::select()
+                        .column(AssetPairsIden::Id)
+                        .from(AssetPairsIden::Table)
+                        .and_where(
+                            Expr::col(AssetPairsIden::Pair1)
+                                .eq(pair1)
+                                .and(Expr::col(AssetPairsIden::Pair2).eq(pair2)),
+                        )
+                        .to_owned(),
+                ),
+            );
+        }
+    }
+
+    builder
+        .and_where(Expr::col(AssetHistoryIden::Date).lte(params.interval.end_date))
+        .and_where(Expr::col(AssetHistoryIden::Date).gte(params.interval.start_date))
+        .order_by(AssetHistoryIden::Date, Order::Desc)
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+/// ```sql
+/// SELECT volume
+/// FROM asset_pairs_shared_metadata m
+///     JOIN asset_pairs p ON m.pair_id = p.id
+/// WHERE (p.pair1, p.pair2) IN ((4, 1), (5, 2), (6, 3))
+/// ```
+#[tracing::instrument(skip_all)]
+pub fn get_shared_asset_pair_metadata(pairs: Vec<AssetPair>) -> DbQueryWithValues {
+    let tuples: Vec<(i32, i32)> = pairs.iter().map(|x| (x.pair1, x.pair2)).collect();
+    Query::select()
+        .column((
+            AssetPairSharedMetadataIden::Table,
+            AssetPairSharedMetadataIden::Volume,
+        ))
+        .from(AssetPairSharedMetadataIden::Table)
+        .inner_join(
+            AssetPairsIden::Table,
+            Expr::col((
+                AssetPairSharedMetadataIden::Table,
+                AssetPairSharedMetadataIden::Id,
+            ))
+            .equals((AssetPairsIden::Table, AssetPairsIden::Id)),
+        )
+        .and_where(
+            Expr::tuple([
+                Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair1)).into(),
+                Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair2)).into(),
+            ])
+            .in_tuples(tuples),
+        )
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn get_asset(id: i32) -> DbQueryWithValues {
+    Query::select()
+        .column((AssetsIden::Table, AssetsIden::Id))
+        .column((AssetsIden::Table, AssetsIden::Name))
+        .column((AssetsIden::Table, AssetsIden::AssetType))
+        .column((AssetsIden::Table, AssetsIden::Ticker))
+        .column((AssetsIden::Table, AssetsIden::UserId))
+        .expr_as(
+            Expr::col((AssetTypesIden::Table, AssetTypesIden::Name)),
+            Alias::new("asset_type_name"),
         )
         .from(AssetsIden::Table)
         .inner_join(

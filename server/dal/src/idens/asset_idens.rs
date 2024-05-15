@@ -38,6 +38,20 @@ pub enum AssetPairsIden {
 }
 
 #[allow(dead_code)]
+pub enum AssetPairSharedMetadataIden {
+    Table,
+    Id,
+    Volume,
+}
+
+#[allow(dead_code)]
+pub enum AssetPairUserMetadataIden {
+    Table,
+    Id,
+    Exchange,
+}
+
+#[allow(dead_code)]
 pub enum AssetHistoryIden {
     Table,
     Id,
@@ -126,6 +140,36 @@ impl Iden for AssetHistoryIden {
                 Self::PairId => "pair_id",
                 Self::Rate => "rate",
                 Self::Date => "date",
+            }
+        )
+        .unwrap();
+    }
+}
+
+impl Iden for AssetPairSharedMetadataIden {
+    fn unquoted(&self, s: &mut dyn std::fmt::Write) {
+        write!(
+            s,
+            "{}",
+            match self {
+                Self::Table => "asset_pairs_shared_metadata",
+                Self::Id => "pair_id",
+                Self::Volume => "volume",
+            }
+        )
+        .unwrap();
+    }
+}
+
+impl Iden for AssetPairUserMetadataIden {
+    fn unquoted(&self, s: &mut dyn std::fmt::Write) {
+        write!(
+            s,
+            "{}",
+            match self {
+                Self::Table => "asset_pair_user_metadata",
+                Self::Id => "id",
+                Self::Exchange => "exchange",
             }
         )
         .unwrap();
