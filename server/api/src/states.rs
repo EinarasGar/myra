@@ -5,8 +5,8 @@ use axum::{
 };
 
 use business::service_collection::{
-    asset_rates_service::AssetRatesService, asset_service::AssetsService,
-    auth_service::AuthService, entries_service::EntriesService,
+    accounts_service::AccountsService, asset_rates_service::AssetRatesService,
+    asset_service::AssetsService, auth_service::AuthService, entries_service::EntriesService,
     portfolio_overview_service::PortfolioOverviewService, portfolio_service::PortfolioService,
     transaction_management_service::TransactionManagementService,
     transaction_service::TransactionService, user_service::UsersService,
@@ -59,3 +59,4 @@ service_state!(AssetsServiceState, AssetsService);
 service_state!(AssetRatesServiceState, AssetRatesService);
 service_state!(PortfolioOverviewServiceState, PortfolioOverviewService);
 service_state!(EntriesServiceState, EntriesService);
+service_state!(AccountsServiceState, AccountsService);

@@ -81,3 +81,12 @@ impl From<FeeEntryDto> for MandatoryIdentifiableTransactionFeeViewModel {
         }
     }
 }
+
+impl From<FeeEntryDto> for IdentifiableTransactionFeeViewModel {
+    fn from(value: FeeEntryDto) -> Self {
+        IdentifiableTransactionFeeViewModel {
+            entry: value.entry.into(),
+            fee_type: value.entry_type.into(),
+        }
+    }
+}

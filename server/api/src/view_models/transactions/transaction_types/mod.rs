@@ -117,3 +117,16 @@ impl From<TransactionDto> for MandatoryIdentifiableTransactionWithIdentifiableEn
         }
     }
 }
+
+impl From<TransactionDto> for MandatoryTransactionWithIdentifiableEntries {
+    fn from(value: TransactionDto) -> Self {
+        match value.transaction_type {
+            TransactionTypeDto::Regular(_) => {
+                MandatoryTransactionWithIdentifiableEntries::RegularTransaction(
+                    MandatoryRegularTransactionWithIdentifiableEntriesViewModel::from(value),
+                )
+            }
+            TransactionTypeDto::AssetPurchase => todo!(),
+        }
+    }
+}

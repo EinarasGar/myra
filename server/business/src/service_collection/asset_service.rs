@@ -130,6 +130,14 @@ impl AssetsService {
     }
 
     #[tracing::instrument(skip_all, err)]
+    pub async fn get_assets(&self, ids: HashSet<i32>) -> anyhow::Result<Vec<asset_dto::AssetDto>> {
+        let query = asset_queries::get_asset_with_metadata(GetAssetsParams::by_ids(ids));
+        let models = self.db.fetch_all::<Asset>(query).await?;
+        let ret_vec: Vec<asset_dto::AssetDto> = models.into_iter().map(Into::into).collect();
+        Ok(ret_vec)
+    }
+
+    #[tracing::instrument(skip_all, err)]
     pub async fn get_shared_asset_pair_metadata(
         &self,
         pair1: i32,

@@ -1,5 +1,6 @@
 use sea_query_binder::SqlxValues;
 
+pub mod account_queries;
 pub mod asset_queries;
 pub mod entries_queries;
 pub mod portfolio_queries;

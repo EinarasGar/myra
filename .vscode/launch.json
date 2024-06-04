@@ -17,7 +17,8 @@
       "cwd": "${workspaceFolder}/server",
       "preLaunchTask": "rust: cargo build api",
       "initCommands": [
-        "command script import '${workspaceFolder}/.vscode/decimal_printer.py'"
+        "command script import '${workspaceFolder}/.vscode/decimal_printer.py'",
+        "command script import '${workspaceFolder}/.vscode/uuid_printer.py'"
       ]
     }
   ]

@@ -3,12 +3,15 @@ use utoipa::ToSchema;
 
 use super::{
     base_models::metadata_lookup::MetadataLookupTables,
-    transaction_types::MandatoryIdentifiableTransactionWithIdentifiableEntries,
+    transaction_types::{
+        MandatoryIdentifiableTransactionWithIdentifiableEntries,
+        MandatoryTransactionWithIdentifiableEntries,
+    },
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct GetIndividualTransactionViewModel {
-    pub transaction: MandatoryIdentifiableTransactionWithIdentifiableEntries,
+    pub transaction: MandatoryTransactionWithIdentifiableEntries,
 
     pub lookup_tables: MetadataLookupTables,
 }

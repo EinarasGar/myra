@@ -1,5 +1,5 @@
-use business::dtos::{
-    transaction_dto::{RegularTransactionMetadataDto, TransactionDto, TransactionTypeDto},
+use business::dtos::transaction_dto::{
+    RegularTransactionMetadataDto, TransactionDto, TransactionTypeDto,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -15,6 +15,7 @@ use crate::view_models::transactions::base_models::{
         MandatoryTransactionBaseWithIdentifiableEntries, TransactionBaseWithEntries,
         TransactionBaseWithIdentifiableEntries,
     },
+    transaction_fee::IdentifiableTransactionFeeViewModel,
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
@@ -67,13 +68,35 @@ impl From<TransactionDto>
                     transaction_id: value
                         .transaction_id
                         .expect("Transaction Id mut not be None"),
-                    fee: MandatoryTransactionBaseWithIdentifiableEntries {
+                    base: MandatoryTransactionBaseWithIdentifiableEntries {
                         date: value.date,
                         fees: if value.fee_entries.len() > 0 {
                             Some(value.fee_entries.into_iter().map(|x| x.into()).collect())
                         } else {
                             None
                         },
+                    },
+                },
+                entry: r.entry.into(),
+                category_id: r.category_id,
+                description: r.description,
+            }
+        } else {
+            panic!("Can not convert TransactionDto into MandatoryIdentifiableRegularTransactionWithIdentifiableEntriesViewModel as the type is not Regular")
+        }
+    }
+}
+
+impl From<TransactionDto> for MandatoryRegularTransactionWithIdentifiableEntriesViewModel {
+    fn from(value: TransactionDto) -> Self {
+        if let TransactionTypeDto::Regular(r) = value.transaction_type {
+            MandatoryRegularTransactionWithIdentifiableEntriesViewModel {
+                base: TransactionBaseWithIdentifiableEntries {
+                    date: value.date,
+                    fees: if value.fee_entries.len() > 0 {
+                        Some(value.fee_entries.into_iter().map(|x| x.into()).collect())
+                    } else {
+                        None
                     },
                 },
                 entry: r.entry.into(),

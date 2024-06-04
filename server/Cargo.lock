@@ -109,6 +109,7 @@ dependencies = [
  "axum 0.7.4",
  "axum-extra",
  "business",
+ "itertools 0.13.0",
  "opentelemetry",
  "opentelemetry-otlp",
  "opentelemetry_sdk",
@@ -492,6 +493,7 @@ dependencies = [
  "argon2",
  "dal",
  "derivative",
+ "itertools 0.13.0",
  "jsonwebtoken",
  "mockall",
  "mockall_double",
@@ -1390,6 +1392,15 @@ name = "itertools"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
 dependencies = [
  "either",
 ]

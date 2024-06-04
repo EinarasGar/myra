@@ -10,7 +10,7 @@ use utoipa::{
 };
 
 use crate::view_models::{
-    assets::{
+    accounts::{add_account::{AddAccountRequestViewModel, AddAccountResponseViewModel}, base_models::{account::{AccountViewModel, ExpandedAccountViewModel, IdentifiableAccountViewModel, IdentifiableExpandedAccountViewModel}, account_liquidity_type::IdentifiableAccountLiquidityTypeViewModel, account_type::{AccountTypeViewModel, IdentifiableAccountTypeViewModel}, metadata_lookup::AccountMetadataLookupTables}, get_account::GetAccountResponseViewModel, get_account_liquidity_types::GetAccountLiquidityTypesResponseViewModel, get_account_types::GetAccountTypesResponseViewModel, get_accounts::{GetAccountsResponseViewModel, GetAccountsResponseViewModelRow}, update_account::UpdateAccountViewModel}, assets::{
         add_asset::{AddAssetRequestViewModel, AddAssetResponseViewModel},
         add_asset_pair_rates::{
             AddAssetPairRatesRequestViewModel, AddAssetPairRatesResponseViewModel,
@@ -32,14 +32,7 @@ use crate::view_models::{
         get_user_asset_pair::GetUserAssetPairResponseViewModel,
         update_asset::{UpdateAssetRequestViewModel, UpdateAssetResponseViewModel},
         update_asset_pair::{UpdateAssetPairRequestViewModel, UpdateAssetPairResponseViewModel},
-    },
-    authentication::{auth::AuthViewModel, login_details::LoginDetailsViewModel},
-    base_models::search::PageOfAssetsResultsWithLookupViewModel,
-    portfolio_account_view_model::PortfolioAccountViewModel,
-    portfolio_entry_view_model::PortfolioEntryViewModel,
-    portfolio_history_view_model::PortfolioHistoryViewModel,
-    portfolio_view_model::PortfolioViewModel,
-    transactions::{
+    }, authentication::{auth::AuthViewModel, login_details::LoginDetailsViewModel}, base_models::search::PageOfAssetsResultsWithLookupViewModel, portfolio_account_view_model::PortfolioAccountViewModel, portfolio_entry_view_model::PortfolioEntryViewModel, portfolio_history_view_model::PortfolioHistoryViewModel, portfolio_view_model::PortfolioViewModel, transactions::{
         add_individual_transaction::{
             AddIndividualTransactionRequestViewModel, AddIndividualTransactionResponseViewModel,
         },
@@ -146,7 +139,7 @@ use crate::view_models::{
         update_transaction_group::{
             UpdateTransactionGroupRequestViewModel, UpdateTransactionGroupResponseViewModel,
         },
-    },
+    }
 };
 
 #[derive(OpenApi)]
@@ -180,6 +173,13 @@ use crate::view_models::{
         super::handlers::asset_handler::get_asset_pair,
         super::handlers::asset_handler::get_asset_pair_rates,
         super::handlers::asset_handler::search_assets,
+        super::handlers::accounts_handler::get_account,
+        super::handlers::accounts_handler::get_accounts,
+        super::handlers::accounts_handler::update_account,
+        super::handlers::accounts_handler::add_account,
+        super::handlers::accounts_handler::delete_account,
+        super::handlers::accounts_handler::get_account_types,
+        super::handlers::accounts_handler::get_account_liquidity_types,
         
         // search common assets
         // get user asset pair rates
@@ -299,7 +299,25 @@ use crate::view_models::{
         schemas(SharedAssetPairMetadataViewModel),
         schemas(UserAssetPairMetadataViewModel),
         schemas(GetUserAssetPairResponseViewModel),
-        schemas(AssetPairMetadataViewModel)
+        schemas(AssetPairMetadataViewModel),
+
+        // Accounts
+        schemas(GetAccountResponseViewModel),
+        schemas(GetAccountsResponseViewModel),
+        schemas(IdentifiableAccountViewModel),
+        schemas(IdentifiableExpandedAccountViewModel),
+        schemas(ExpandedAccountViewModel),
+        schemas(AccountViewModel),
+        schemas(AccountTypeViewModel),
+        schemas(IdentifiableAccountTypeViewModel),
+        schemas(GetAccountsResponseViewModelRow),
+        schemas(AccountMetadataLookupTables),
+        schemas(IdentifiableAccountLiquidityTypeViewModel),        
+        schemas(AddAccountRequestViewModel),        
+        schemas(AddAccountResponseViewModel),        
+        schemas(UpdateAccountViewModel),     
+        schemas(GetAccountTypesResponseViewModel),
+        schemas(GetAccountLiquidityTypesResponseViewModel)
     ),
     modifiers(
         &TransformSchemasWithTag,

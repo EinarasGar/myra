@@ -7,8 +7,9 @@ use uuid::Uuid;
 
 use crate::{
     auth::AuthenticatedUserState,
+    converters::transaction_dtos_to_asset_ids_hashset,
     errors::ApiError,
-    states::TransactionManagementServiceState,
+    states::{AssetsServiceState, TransactionManagementServiceState},
     view_models::{
         base_models::search::{
             PageOfIndividualTransactionsWithLookupViewModel, PaginatedSearchQuery,
@@ -126,6 +127,7 @@ pub async fn update(
 pub async fn get(
     Path(user_id): Path<Uuid>,
     query_params: Query<PaginatedSearchQuery>,
+    AssetsServiceState(asset_service): AssetsServiceState,
     TransactionManagementServiceState(transaction_service): TransactionManagementServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<PageOfIndividualTransactionsWithLookupViewModel>, ApiError> {
@@ -138,10 +140,16 @@ pub async fn get(
         .search_transactions(user_id, paging_dto)
         .await?;
 
+    let asset_ids = transaction_dtos_to_asset_ids_hashset(&dtos.results.iter().collect::<Vec<_>>());
+    let assets = asset_service.get_assets(asset_ids).await?;
+
     let ret = PageOfIndividualTransactionsWithLookupViewModel {
         results: dtos.results.into_iter().map(Into::into).collect(),
         total_results: dtos.total_results,
-        lookup_tables: MetadataLookupTables::default(),
+        lookup_tables: MetadataLookupTables {
+            assets: assets.into_iter().map(Into::into).collect(),
+            ..Default::default()
+        },
     };
 
     Ok(ret.into())
@@ -170,17 +178,24 @@ pub async fn get(
 pub async fn get_single(
     Path((user_id, transaction_id)): Path<(Uuid, Uuid)>,
     TransactionManagementServiceState(transaction_service): TransactionManagementServiceState,
+    AssetsServiceState(asset_service): AssetsServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetIndividualTransactionViewModel>, ApiError> {
     let transaction = transaction_service
         .get_individual_transaction(user_id, transaction_id)
         .await?;
 
+    let asset_ids = transaction_dtos_to_asset_ids_hashset(&[&transaction]);
     let view_model = transaction.into();
+
+    let assets = asset_service.get_assets(asset_ids).await?;
 
     let ret = GetIndividualTransactionViewModel {
         transaction: view_model,
-        lookup_tables: MetadataLookupTables::default(),
+        lookup_tables: MetadataLookupTables {
+            assets: assets.into_iter().map(Into::into).collect(),
+            ..Default::default()
+        },
     };
     Ok(ret.into())
 }

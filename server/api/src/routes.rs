@@ -101,6 +101,34 @@ pub(crate) fn create_router(state: AppState) -> Router {
             put(handlers::user_asset_handler::put_custom_asset_pair),
         )
         .route(
+            "/api/users/:user_id/accounts/:account_id",
+            get(handlers::accounts_handler::get_account),
+        )
+        .route(
+            "/api/users/:user_id/accounts/:account_id",
+            put(handlers::accounts_handler::update_account),
+        )
+        .route(
+            "/api/users/:user_id/accounts/:account_id",
+            delete(handlers::accounts_handler::delete_account),
+        )
+        .route(
+            "/api/users/:user_id/accounts",
+            get(handlers::accounts_handler::get_accounts),
+        )
+        .route(
+            "/api/users/:user_id/accounts",
+            post(handlers::accounts_handler::add_account),
+        )
+        .route(
+            "/api/accounts/types",
+            get(handlers::accounts_handler::get_account_types),
+        )
+        .route(
+            "/api/accounts/liquiditytypes",
+            get(handlers::accounts_handler::get_account_liquidity_types),
+        )
+        .route(
             "/api/assets/:asset_id",
             get(handlers::asset_handler::get_asset),
         )

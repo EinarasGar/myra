@@ -1,3 +1,4 @@
+pub mod accounts;
 pub mod add_custom_asset_dto;
 pub mod add_custom_asset_pair_dto;
 pub mod add_update_transaction_dto;

@@ -14,8 +14,14 @@ CREATE TABLE IF NOT EXISTS public.category_type (
     name TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS public.account_types (
-    id SERIAL CONSTRAINT account_types_pk PRIMARY KEY,
-    name TEXT NOT NULL
+    id SERIAL,
+    account_type_name TEXT NOT NULL,
+    CONSTRAINT account_types_pk PRIMARY KEY (id)
+);
+CREATE TABLE IF NOT EXISTS public.account_liquidity_types (
+    id SERIAL,
+    liquidity_type_name TEXT NOT NULL,
+    CONSTRAINT account_liquidity_types_pk PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS public.transaction_categories (
     id SERIAL CONSTRAINT transaction_categories_pk PRIMARY KEY,
@@ -24,7 +30,7 @@ CREATE TABLE IF NOT EXISTS public.transaction_categories (
     type int CONSTRAINT transaction_categories_type_fkey REFERENCES public.category_type (id)
 );
 CREATE TABLE IF NOT EXISTS public.transaction_descriptions (
-    transaction_id UUID CONSTRAINT transaction_descriptions_pk PRIMARY KEY,
+    transaction_id UUID CONSTRAINT transaction_descriptions_pk PRIMARY KEY REFERENCES public.transaction (id),
     description TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS public.transaction_group (
@@ -75,15 +81,21 @@ CREATE TABLE IF NOT EXISTS public.users (
 ALTER TABLE public.assets
 ADD CONSTRAINT assets_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users (id);
 CREATE TABLE IF NOT EXISTS public.account (
-    id UUID CONSTRAINT account_pk PRIMARY KEY,
-    user_id UUID NOT NULL CONSTRAINT portfolio_user_id_fkey REFERENCES public.users (id),
-    name TEXT NOT NULL,
-    type int CONSTRAINT account_type_fkey REFERENCES public.account_types (id),
-    UNIQUE (user_id, name)
+    id uuid DEFAULT uuid_generate_v4() NOT NULL,
+    user_id uuid NOT NULL,
+    account_name text NOT NULL,
+    account_type int4 NOT NULL,
+    liquidity_type int4 NOT NULL,
+    active bool DEFAULT true NOT NULL,
+    CONSTRAINT account_pk PRIMARY KEY (id),
+    CONSTRAINT account_user_id_name_key UNIQUE (user_id, account_name),
+    CONSTRAINT account_liquidity_type_fkey FOREIGN KEY (liquidity_type) REFERENCES public.account_liquidity_types(id),
+    CONSTRAINT account_type_fkey FOREIGN KEY (account_type) REFERENCES public.account_types(id),
+    CONSTRAINT account_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 CREATE TABLE IF NOT EXISTS public.transaction (
     id UUID NOT NULL CONSTRAINT transaction_id_pkey PRIMARY KEY DEFAULT uuid_generate_v4(),
-    group_id UUID,
+    group_id UUID REFERENCES public.transaction_group (transaction_group_id),
     user_id UUID NOT NULL CONSTRAINT transaction_user_id_fkey REFERENCES public.users (id),
     type_id int CONSTRAINT transcation_type_fkey REFERENCES public.transaction_types (id),
     date TIMESTAMPTZ NOT NULL

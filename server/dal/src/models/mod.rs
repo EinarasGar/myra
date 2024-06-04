@@ -1,3 +1,4 @@
+pub mod account_model;
 pub mod add_entry_model;
 pub mod asser_pair_rate_insert;
 pub mod asset_models;

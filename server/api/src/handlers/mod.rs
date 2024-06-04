@@ -1,3 +1,4 @@
+pub mod accounts_handler;
 pub mod asset_handler;
 pub mod auth_handler;
 pub mod constants_handler;

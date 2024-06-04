@@ -1,3 +1,4 @@
+pub mod accounts;
 pub mod add_user_view_model;
 pub mod assets;
 pub mod authentication;

@@ -147,6 +147,9 @@ pub fn get_asset_with_metadata(params: GetAssetsParams) -> DbQueryWithValues {
         GetAssetsParamsSeachType::ById(pair1) => {
             get_assets_builder.and_where(Expr::col((AssetsIden::Table, AssetsIden::Id)).eq(pair1));
         }
+        GetAssetsParamsSeachType::ByIds(ids) => {
+            get_assets_builder.and_where(Expr::col((AssetsIden::Table, AssetsIden::Id)).is_in(ids));
+        }
         GetAssetsParamsSeachType::ByPairId(pair1, pair2) => {
             get_assets_builder.and_where(
                 Expr::col((AssetsIden::Table, AssetsIden::Id))

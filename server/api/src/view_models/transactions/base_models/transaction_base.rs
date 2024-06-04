@@ -34,5 +34,5 @@ pub struct IdentifiableTransactionBase<B, I> {
 
     /// Date when the transaction occured.
     #[serde(flatten)]
-    pub fee: B,
+    pub base: B,
 }

@@ -129,7 +129,7 @@ pub async fn get(
                     },
                     base: MandatoryIdentifiableTransactionBaseWithIdentifiableEntries {
                         transaction_id: Uuid::new_v4(),
-                        fee: MandatoryTransactionBaseWithIdentifiableEntries {
+                        base: MandatoryTransactionBaseWithIdentifiableEntries {
                             date: datetime!(2000-03-22 00:00:00 UTC),
                             fees: None,
                         },

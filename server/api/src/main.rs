@@ -3,6 +3,7 @@ use tracing::info;
 use crate::states::AppState;
 
 pub mod auth;
+pub mod converters;
 pub mod errors;
 mod fallback;
 pub(crate) mod handlers;

@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use super::paging_params::PagingParams;
 
 pub struct GetAssetsParams {
@@ -12,6 +14,14 @@ impl GetAssetsParams {
             search_type: GetAssetsParamsSeachType::ById(id),
             paging: None,
             include_metadata: true,
+        }
+    }
+
+    pub fn by_ids(ids: HashSet<i32>) -> Self {
+        Self {
+            search_type: GetAssetsParamsSeachType::ByIds(ids),
+            paging: None,
+            include_metadata: false,
         }
     }
 
@@ -42,6 +52,7 @@ impl GetAssetsParams {
 
 pub enum GetAssetsParamsSeachType {
     All,
+    ByIds(HashSet<i32>),
     ById(i32),
     ByPairId(i32, i32),
     ByQuery(String),
