@@ -18,31 +18,31 @@ pub(crate) fn create_router(state: AppState) -> Router {
         )
         .route(
             "/api/users/:user_id/transactions/groups",
-            post(handlers::transaction_groups::add),
+            post(handlers::transaction_groups::add_transaction_group),
         )
         .route(
             "/api/users/:user_id/transactions/groups/:group_id",
-            put(handlers::transaction_groups::update),
+            put(handlers::transaction_groups::update_transaction_group),
         )
         .route(
             "/api/users/:user_id/transactions/groups/:group_id",
-            delete(handlers::transaction_groups::delete),
+            delete(handlers::transaction_groups::delete_transaction_group),
         )
         .route(
             "/api/users/:user_id/transactions/groups",
-            get(handlers::transaction_groups::get),
+            get(handlers::transaction_groups::get_transaction_group),
         )
         .route(
             "/api/users/:user_id/transactions/:transaction_id",
-            put(handlers::transactions::update),
+            put(handlers::transactions::update_transaction),
         )
         .route(
             "/api/users/:user_id/transactions/:transaction_id",
-            delete(handlers::transactions::delete),
+            delete(handlers::transactions::delete_transaction),
         )
         .route(
             "/api/users/:user_id/transactions",
-            get(handlers::transactions::get),
+            get(handlers::transactions::get_transactions),
         )
         .route(
             "/api/users/:user_id/transactions/individual",

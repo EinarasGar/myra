@@ -37,7 +37,7 @@ use crate::{
 
 )]
 #[tracing::instrument(skip_all, err)]
-pub async fn add(
+pub async fn add_transaction_group(
     Path(_user_id): Path<Uuid>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
     Json(_params): Json<AddTransactionGroupRequestViewModel>,
@@ -69,7 +69,7 @@ pub async fn add(
 
 )]
 #[tracing::instrument(skip_all, err)]
-pub async fn update(
+pub async fn update_transaction_group(
     Path((_user_id, _group_id)): Path<(Uuid, i32)>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
     Json(_params): Json<UpdateTransactionGroupRequestViewModel>,
@@ -98,7 +98,7 @@ pub async fn update(
 
 )]
 #[tracing::instrument(skip_all, err)]
-pub async fn delete(
+pub async fn delete_transaction_group(
     Path((_user_id, _group_id)): Path<(Uuid, i32)>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<(), ApiError> {
@@ -124,7 +124,7 @@ pub async fn delete(
 
 )]
 #[tracing::instrument(skip_all, err)]
-pub async fn get(
+pub async fn get_transaction_group(
     Path(_user_id): Path<Uuid>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetTransactionGroupsViewModel>, ApiError> {

@@ -142,19 +142,20 @@ use crate::view_models::{
     }
 };
 
+
 #[derive(OpenApi)]
 #[openapi(
     paths(
         super::handlers::portfolio_handler::get_portfolio_history,
         super::handlers::portfolio_handler::post_portfolio_account,
         super::handlers::portfolio_handler::get_portfolio,
-        super::handlers::transaction_groups::add,
-        super::handlers::transaction_groups::update,
-        super::handlers::transaction_groups::delete,
-        super::handlers::transaction_groups::get,
-        super::handlers::transactions::update,
-        super::handlers::transactions::delete,
-        super::handlers::transactions::get,
+        super::handlers::transaction_groups::add_transaction_group,
+        super::handlers::transaction_groups::update_transaction_group,
+        super::handlers::transaction_groups::delete_transaction_group,
+        super::handlers::transaction_groups::get_transaction_group,
+        super::handlers::transactions::update_transaction,
+        super::handlers::transactions::delete_transaction,
+        super::handlers::transactions::get_transactions,
         super::handlers::individual_transactions::add,
         super::handlers::individual_transactions::update,
         super::handlers::individual_transactions::get,
@@ -180,10 +181,6 @@ use crate::view_models::{
         super::handlers::accounts_handler::delete_account,
         super::handlers::accounts_handler::get_account_types,
         super::handlers::accounts_handler::get_account_liquidity_types,
-        
-        // search common assets
-        // get user asset pair rates
-        // get common asset pair rates
     ),
     components(
         schemas(PortfolioHistoryViewModel),

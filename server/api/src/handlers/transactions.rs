@@ -53,7 +53,7 @@ use crate::{
 
 )]
 #[tracing::instrument(skip_all, err)]
-pub async fn update(
+pub async fn update_transaction(
     Path((_user_id, _transaction_id)): Path<(Uuid, Uuid)>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
     Json(_params): Json<UpdateTransactionRequestViewModel>,
@@ -83,7 +83,7 @@ pub async fn update(
 
 )]
 #[tracing::instrument(skip_all, err)]
-pub async fn delete(
+pub async fn delete_transaction(
     Path((_user_id, _transaction_id)): Path<(Uuid, Uuid)>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<(), ApiError> {
@@ -109,7 +109,7 @@ pub async fn delete(
 
 )]
 #[tracing::instrument(skip_all, err)]
-pub async fn get(
+pub async fn get_transactions(
     Path(_user_id): Path<Uuid>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetTransactionsViewModel>, ApiError> {
