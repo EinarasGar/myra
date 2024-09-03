@@ -15,7 +15,6 @@ use crate::view_models::transactions::base_models::{
         MandatoryTransactionBaseWithIdentifiableEntries, TransactionBaseWithEntries,
         TransactionBaseWithIdentifiableEntries,
     },
-    transaction_fee::IdentifiableTransactionFeeViewModel,
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]

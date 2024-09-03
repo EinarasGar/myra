@@ -3,13 +3,14 @@ use axum::{
     Json,
 };
 use business::dtos::{paging_dto::PagingDto, transaction_dto::TransactionDto};
+use itertools::Itertools;
 use uuid::Uuid;
 
 use crate::{
     auth::AuthenticatedUserState,
-    converters::transaction_dtos_to_asset_ids_hashset,
+    converters::{transaction_dtos_to_account_ids_hashset, transaction_dtos_to_asset_ids_hashset},
     errors::ApiError,
-    states::{AssetsServiceState, TransactionManagementServiceState},
+    states::{AccountsServiceState, AssetsServiceState, TransactionManagementServiceState},
     view_models::{
         base_models::search::{
             PageOfIndividualTransactionsWithLookupViewModel, PaginatedSearchQuery,
@@ -129,6 +130,7 @@ pub async fn get(
     query_params: Query<PaginatedSearchQuery>,
     AssetsServiceState(asset_service): AssetsServiceState,
     TransactionManagementServiceState(transaction_service): TransactionManagementServiceState,
+    AccountsServiceState(accounts_service): AccountsServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<PageOfIndividualTransactionsWithLookupViewModel>, ApiError> {
     let paging_dto = PagingDto {
@@ -141,24 +143,29 @@ pub async fn get(
         .await?;
 
     let asset_ids = transaction_dtos_to_asset_ids_hashset(&dtos.results.iter().collect::<Vec<_>>());
-    let assets = asset_service.get_assets(asset_ids).await?;
+    let account_ids =
+        transaction_dtos_to_account_ids_hashset(&dtos.results.iter().collect::<Vec<_>>());
+
+    let (assets, accounts) = tokio::try_join!(
+        asset_service.get_assets(asset_ids),
+        accounts_service.get_accounts(account_ids),
+    )?;
 
     let ret = PageOfIndividualTransactionsWithLookupViewModel {
         results: dtos.results.into_iter().map(Into::into).collect(),
         total_results: dtos.total_results,
         lookup_tables: MetadataLookupTables {
-            assets: assets.into_iter().map(Into::into).collect(),
-            ..Default::default()
+            assets: assets.into_iter().map_into().collect(),
+            accounts: accounts.into_iter().map_into().collect(),
         },
     };
 
     Ok(ret.into())
 }
 
-// Blogai nes reik returninti objekta be transaction id
-/// Get all
+/// Get Single
 ///
-/// Retrieves a list of all individual transactions
+/// Retrieves a single transaction by specified id
 #[utoipa::path(
     get,
     path = "/api/users/:user_id/transactions/individual/:transaction_id",
@@ -179,6 +186,7 @@ pub async fn get_single(
     Path((user_id, transaction_id)): Path<(Uuid, Uuid)>,
     TransactionManagementServiceState(transaction_service): TransactionManagementServiceState,
     AssetsServiceState(asset_service): AssetsServiceState,
+    AccountsServiceState(accounts_service): AccountsServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetIndividualTransactionViewModel>, ApiError> {
     let transaction = transaction_service
@@ -186,15 +194,19 @@ pub async fn get_single(
         .await?;
 
     let asset_ids = transaction_dtos_to_asset_ids_hashset(&[&transaction]);
+    let account_ids = transaction_dtos_to_account_ids_hashset(&[&transaction]);
     let view_model = transaction.into();
 
-    let assets = asset_service.get_assets(asset_ids).await?;
+    let (assets, accounts) = tokio::try_join!(
+        asset_service.get_assets(asset_ids),
+        accounts_service.get_accounts(account_ids),
+    )?;
 
     let ret = GetIndividualTransactionViewModel {
         transaction: view_model,
         lookup_tables: MetadataLookupTables {
-            assets: assets.into_iter().map(Into::into).collect(),
-            ..Default::default()
+            assets: assets.into_iter().map_into().collect(),
+            accounts: accounts.into_iter().map_into().collect(),
         },
     };
     Ok(ret.into())

@@ -2,13 +2,13 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::view_models::{
+    accounts::base_models::account::IdentifiableAccountViewModel,
     assets::base_models::asset::IdentifiableAssetViewModel,
-    portfolio_account_view_model::PortfolioAccountViewModel,
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct MetadataLookupTables {
-    pub accounts: Vec<PortfolioAccountViewModel>,
+    pub accounts: Vec<IdentifiableAccountViewModel>,
     pub assets: Vec<IdentifiableAssetViewModel>,
 }
 

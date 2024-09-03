@@ -10,7 +10,24 @@ use utoipa::{
 };
 
 use crate::view_models::{
-    accounts::{add_account::{AddAccountRequestViewModel, AddAccountResponseViewModel}, base_models::{account::{AccountViewModel, ExpandedAccountViewModel, IdentifiableAccountViewModel, IdentifiableExpandedAccountViewModel}, account_liquidity_type::IdentifiableAccountLiquidityTypeViewModel, account_type::{AccountTypeViewModel, IdentifiableAccountTypeViewModel}, metadata_lookup::AccountMetadataLookupTables}, get_account::GetAccountResponseViewModel, get_account_liquidity_types::GetAccountLiquidityTypesResponseViewModel, get_account_types::GetAccountTypesResponseViewModel, get_accounts::{GetAccountsResponseViewModel, GetAccountsResponseViewModelRow}, update_account::UpdateAccountViewModel}, assets::{
+    accounts::{
+        add_account::{AddAccountRequestViewModel, AddAccountResponseViewModel},
+        base_models::{
+            account::{
+                AccountViewModel, ExpandedAccountViewModel, IdentifiableAccountViewModel,
+                IdentifiableExpandedAccountViewModel,
+            },
+            account_liquidity_type::IdentifiableAccountLiquidityTypeViewModel,
+            account_type::{AccountTypeViewModel, IdentifiableAccountTypeViewModel},
+            metadata_lookup::AccountMetadataLookupTables,
+        },
+        get_account::GetAccountResponseViewModel,
+        get_account_liquidity_types::GetAccountLiquidityTypesResponseViewModel,
+        get_account_types::GetAccountTypesResponseViewModel,
+        get_accounts::{GetAccountsResponseViewModel, GetAccountsResponseViewModelRow},
+        update_account::UpdateAccountViewModel,
+    },
+    assets::{
         add_asset::{AddAssetRequestViewModel, AddAssetResponseViewModel},
         add_asset_pair_rates::{
             AddAssetPairRatesRequestViewModel, AddAssetPairRatesResponseViewModel,
@@ -32,7 +49,11 @@ use crate::view_models::{
         get_user_asset_pair::GetUserAssetPairResponseViewModel,
         update_asset::{UpdateAssetRequestViewModel, UpdateAssetResponseViewModel},
         update_asset_pair::{UpdateAssetPairRequestViewModel, UpdateAssetPairResponseViewModel},
-    }, authentication::{auth::AuthViewModel, login_details::LoginDetailsViewModel}, base_models::search::PageOfAssetsResultsWithLookupViewModel, portfolio_account_view_model::PortfolioAccountViewModel, portfolio_entry_view_model::PortfolioEntryViewModel, portfolio_history_view_model::PortfolioHistoryViewModel, portfolio_view_model::PortfolioViewModel, transactions::{
+    },
+    authentication::{auth::AuthViewModel, login_details::LoginDetailsViewModel},
+    base_models::search::PageOfAssetsResultsWithLookupViewModel,
+    portfolio::get_networth_history::GetNetWorthHistoryResponseViewModel,
+    transactions::{
         add_individual_transaction::{
             AddIndividualTransactionRequestViewModel, AddIndividualTransactionResponseViewModel,
         },
@@ -59,6 +80,7 @@ use crate::view_models::{
                 TransactionGroupWithIdentifiableChildrenViewModel,
             },
         },
+        get_individual_transaction::GetIndividualTransactionViewModel,
         get_individual_transactions::GetIndividualTransactionsViewModel,
         get_transaction_groups::GetTransactionGroupsViewModel,
         get_transactions::GetTransactionsViewModel,
@@ -139,15 +161,12 @@ use crate::view_models::{
         update_transaction_group::{
             UpdateTransactionGroupRequestViewModel, UpdateTransactionGroupResponseViewModel,
         },
-    }
+    },
 };
 
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        super::handlers::portfolio_handler::get_portfolio_history,
-        super::handlers::portfolio_handler::post_portfolio_account,
-        super::handlers::portfolio_handler::get_portfolio,
         super::handlers::transaction_groups::add,
         super::handlers::transaction_groups::update,
         super::handlers::transaction_groups::delete,
@@ -158,6 +177,7 @@ use crate::view_models::{
         super::handlers::individual_transactions::add,
         super::handlers::individual_transactions::update,
         super::handlers::individual_transactions::get,
+        super::handlers::individual_transactions::get_single,
         super::handlers::auth_handler::post_login_details,
         super::handlers::user_asset_handler::delete_asset,
         super::handlers::user_asset_handler::delete_asset_pair_rates,
@@ -180,17 +200,13 @@ use crate::view_models::{
         super::handlers::accounts_handler::delete_account,
         super::handlers::accounts_handler::get_account_types,
         super::handlers::accounts_handler::get_account_liquidity_types,
+        super::handlers::portfolio_handler::get_networth_history,
         
         // search common assets
         // get user asset pair rates
         // get common asset pair rates
     ),
     components(
-        schemas(PortfolioHistoryViewModel),
-        schemas(PortfolioAccountViewModel),
-        schemas(PortfolioViewModel),
-        schemas(PortfolioEntryViewModel),
-
         // Transaction schemas
         schemas(AccountAssetEntryViewModel),
         schemas(AddIndividualTransactionRequestViewModel),
@@ -271,6 +287,7 @@ use crate::view_models::{
         schemas(AccountFeesViewModel),
         schemas(AccountFeesWithIdentifiableEntriesViewModel),
         schemas(MandatoryAccountFeesWithIdentifiableEntriesViewModel),
+        schemas(GetIndividualTransactionViewModel),
 
         // Authentication schemas
         schemas(AuthViewModel),
@@ -317,7 +334,10 @@ use crate::view_models::{
         schemas(AddAccountResponseViewModel),        
         schemas(UpdateAccountViewModel),     
         schemas(GetAccountTypesResponseViewModel),
-        schemas(GetAccountLiquidityTypesResponseViewModel)
+        schemas(GetAccountLiquidityTypesResponseViewModel),
+
+        // Portfolio
+        schemas(GetNetWorthHistoryResponseViewModel),
     ),
     modifiers(
         &TransformSchemasWithTag,

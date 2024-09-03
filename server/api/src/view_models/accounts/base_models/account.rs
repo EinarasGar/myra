@@ -1,4 +1,4 @@
-use business::dtos::accounts::full_account_dto::FullAccountDto;
+use business::dtos::accounts::{account_dto::AccountDto, full_account_dto::FullAccountDto};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -50,6 +50,24 @@ impl From<FullAccountDto> for ExpandedAccountViewModel {
         Account {
             name: account.account_name,
             account_type: account.account_type.into(),
+        }
+    }
+}
+
+impl From<AccountDto> for IdentifiableAccountViewModel {
+    fn from(account: AccountDto) -> Self {
+        Self {
+            account_id: account.id,
+            account: account.into(),
+        }
+    }
+}
+
+impl From<AccountDto> for AccountViewModel {
+    fn from(account: AccountDto) -> Self {
+        Account {
+            name: account.account_name,
+            account_type: account.account_type,
         }
     }
 }
