@@ -13,7 +13,7 @@ async fn main() {
 
     let services = Services::new().await.unwrap();
     let asset_service = AssetsService::new(services.get_db_instance());
-    let provider = yahoo::YahooConnector::new();
+    let provider = yahoo::YahooConnector::new().unwrap();
     let start = OffsetDateTime::from_unix_timestamp(0).unwrap();
     let end = OffsetDateTime::now_utc()
         .checked_add(Duration::hours(-24))

@@ -25,7 +25,7 @@ async fn main() {
 
         let latest_date = asset_rates.first().unwrap().date;
 
-        let provider = yahoo::YahooConnector::new();
+        let provider = yahoo::YahooConnector::new().unwrap();
         let start = latest_date.checked_add(Duration::days(1)).unwrap();
         let end = OffsetDateTime::now_utc();
 

@@ -49,5 +49,9 @@
   "rust-analyzer.lens.references.method.enable": true,
   "rust-analyzer.lens.references.trait.enable": false,
   "rust-analyzer.references.excludeImports": true,
-  "rust-analyzer.testExplorer": true
+  "rust-analyzer.testExplorer": true,
+  "files.readonlyInclude": {
+    "**/.cargo/registry/src/**/*.rs": true,
+    "**/lib/rustlib/src/rust/library/**/*.rs": true
+  }
 }

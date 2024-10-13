@@ -7,17 +7,17 @@ edition = "2021"
 
 [dependencies]
 dal = {path="../dal"}
-anyhow = { version = "1.0.80", features = ["backtrace"] }
-tokio = { version = "1.36.0", features = ["full"] }
+anyhow = { version = "1.0.89", features = ["backtrace"] }
+tokio = { version = "1.40.0", features = ["full"] }
 argon2 = { version = "0.5.3", features = ["std"] }
-uuid = { version = "1.7.0", features = ["v4", "serde"] }
-jsonwebtoken = "9.2.0"
-serde = "1.0.197"
-time = { version = "0.3.34", features = ["macros", "formatting", "serde"] }
-rust_decimal = "1.34.3"
+uuid = { version = "1.10.0", features = ["v4", "serde"] }
+jsonwebtoken = "9.3.0"
+serde = "1.0.210"
+time = { version = "0.3.36", features = ["macros", "formatting", "serde"] }
+rust_decimal = "1.36.0"
 tracing = { version = "0.1.40", features = ["async-await", "log"] }
-mockall = "0.12.1"
+mockall = "0.13.0"
 mockall_double = "0.3.1"
-rust_decimal_macros = "1.34.2"
+rust_decimal_macros = "1.36.0"
 derivative = "2.2.0"
 itertools = "0.13.0"

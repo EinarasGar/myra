@@ -1,17 +1,20 @@
+use opentelemetry::trace::TracerProvider;
 use opentelemetry::KeyValue;
 use opentelemetry_otlp::WithExportConfig;
-use opentelemetry_sdk::trace::{self, Tracer};
+use opentelemetry_sdk::trace::{Config, Tracer};
 use opentelemetry_sdk::Resource;
 use tower_http::classify::{ServerErrorsAsFailures, SharedClassifier};
 use tower_http::trace::{DefaultMakeSpan, TraceLayer};
 use tracing::{Level, Subscriber};
 use tracing_opentelemetry::OpenTelemetryLayer;
+use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::registry::LookupSpan;
+use tracing_subscriber::Layer;
+use tracing_subscriber::Registry;
 use tracing_subscriber::{prelude::*, EnvFilter};
-use tracing_subscriber::{Layer, Registry};
 
 pub fn initialize_tracing_subscriber() {
-    tracing_subscriber::registry()
+    Registry::default()
         .with(create_print_layer())
         .with(create_env_filter_layer())
         .with(create_opentelemetry_layer())
@@ -33,13 +36,15 @@ where
                         .tonic()
                         .with_endpoint(endpoint),
                 )
-                .with_trace_config(trace::config().with_resource(Resource::new(vec![
+                .with_trace_config(Config::default().with_resource(Resource::new(vec![
                     KeyValue::new("service.name", "myra_api"),
                 ])))
-                .install_simple()
+                // Previously used install_simple, but after updating it started to hang. Found this
+                // https://github.com/open-telemetry/opentelemetry-rust/issues/2071
+                .install_batch(opentelemetry_sdk::runtime::Tokio)
             {
                 Ok(tracer) => {
-                    let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
+                    let telemetry = OpenTelemetryLayer::new(tracer.tracer("myra_api"));
                     Some(telemetry)
                 }
                 Err(err) => {
