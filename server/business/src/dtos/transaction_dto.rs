@@ -1,6 +1,8 @@
 use time::OffsetDateTime;
 use uuid::Uuid;
 
+use crate::entities::transactions::transaction_types::TransactionTypes;
+
 use super::{entry_dto::EntryDto, fee_entry_dto::FeeEntryDto};
 
 #[derive(Clone, Debug)]
@@ -14,7 +16,7 @@ pub struct TransactionDto {
 #[derive(Clone, Debug)]
 pub enum TransactionTypeDto {
     Regular(RegularTransactionMetadataDto),
-    AssetPurchase,
+    AssetPurchase(AssetPurchaseMetadataDto),
 }
 
 #[derive(Clone, Debug)]
@@ -24,18 +26,17 @@ pub struct RegularTransactionMetadataDto {
     pub category_id: i32,
 }
 
-// {
-//     "date": "2019-08-24T14:15:22Z",
-//     "type": {
-//       "type": "regular_transaction",
-//       "description": "string"
-//     },
-//     "entries": [
-//       {
-//         "category_id": 0,
-//         "account_id": "449e7a5c-69d3-4b8a-aaaf-5c9b713ebc65",
-//         "amount": 0,
-//         "asset_id": 0
-//       }
-//     ]
-//   }
+#[derive(Clone, Debug)]
+pub struct AssetPurchaseMetadataDto {
+    pub purchase: EntryDto,
+    pub sale: EntryDto,
+}
+
+impl From<TransactionTypeDto> for TransactionTypes {
+    fn from(value: TransactionTypeDto) -> Self {
+        match value {
+            TransactionTypeDto::Regular(_) => TransactionTypes::RegularTransaction,
+            TransactionTypeDto::AssetPurchase(_) => TransactionTypes::AssetPurchase,
+        }
+    }
+}

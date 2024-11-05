@@ -19,6 +19,14 @@ pub enum TransactionCategoriesIden {
 }
 
 #[allow(dead_code)]
+pub enum TransactionCategoriesStaticMappingIden {
+    Table,
+    EnumId,
+    EnumIndex,
+    CategoryMapping,
+}
+
+#[allow(dead_code)]
 pub enum TransactionDescriptionsIden {
     Table,
     TransactionId,
@@ -63,6 +71,22 @@ impl Iden for TransactionCategoriesIden {
                 Self::Category => "category",
                 Self::Icon => "icon",
                 Self::Type => "type",
+            }
+        )
+        .unwrap();
+    }
+}
+
+impl Iden for TransactionCategoriesStaticMappingIden {
+    fn unquoted(&self, s: &mut dyn std::fmt::Write) {
+        write!(
+            s,
+            "{}",
+            match self {
+                Self::Table => "transaction_categories_static_mapping",
+                Self::EnumId => "enum_id",
+                Self::EnumIndex => "enum_index",
+                Self::CategoryMapping => "category_mapping",
             }
         )
         .unwrap();

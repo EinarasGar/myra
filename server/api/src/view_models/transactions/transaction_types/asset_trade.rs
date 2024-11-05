@@ -1,3 +1,4 @@
+use business::dtos::transaction_dto::TransactionDto;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -30,4 +31,10 @@ pub struct AssetTrade<B, E> {
 
     /// How many units of asset are added as part of the trade.
     pub incoming_entry: E,
+}
+
+impl From<AssetTradeViewModel> for TransactionDto {
+    fn from(trans: AssetTradeViewModel) -> Self {
+        todo!()
+    }
 }

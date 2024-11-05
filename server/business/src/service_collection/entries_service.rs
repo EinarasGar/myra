@@ -14,7 +14,7 @@ use crate::entities::entries::entry::Entry;
 use crate::entities::portfolio_overview::investment_transaction::asset_purchase::AssetPurchase;
 use crate::entities::portfolio_overview::investment_transaction::cash_transfer_in::CashTransferIn;
 use crate::entities::portfolio_overview::portfolio::{Portfolio, PortfolioAction};
-use crate::entities::transactions::transaction::{Transaction, Transcation};
+use crate::entities::transactions::transaction::{Transaction, TransactionProcessor};
 
 #[mockall_double::double]
 use super::asset_service::AssetsService;

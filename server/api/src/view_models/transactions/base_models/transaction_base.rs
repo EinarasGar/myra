@@ -1,3 +1,4 @@
+use business::dtos::{fee_entry_dto::FeeEntryDto, transaction_dto::TransactionDto};
 use serde::{Deserialize, Serialize};
 use time::{serde::timestamp, OffsetDateTime};
 use utoipa::ToSchema;
@@ -23,6 +24,20 @@ pub struct TransactionBase<F> {
     pub fees: Option<Vec<F>>,
 }
 
+impl<F> From<TransactionDto> for TransactionBase<F> 
+where F: From<FeeEntryDto> {
+    fn from(value: TransactionDto) -> Self {
+        Self {
+            date: value.date,
+            fees: if value.fee_entries.len() > 0 {
+                Some(value.fee_entries.into_iter().map(|x| x.into()).collect())
+            } else {
+                None
+            },
+        }
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 #[aliases(
     IdentifiableTransactionBaseWithIdentifiableEntries = IdentifiableTransactionBase<TransactionBaseWithIdentifiableEntries, Option<Uuid>>,
@@ -35,4 +50,25 @@ pub struct IdentifiableTransactionBase<B, I> {
     /// Date when the transaction occured.
     #[serde(flatten)]
     pub base: B,
+}
+
+impl From<TransactionDto> for MandatoryIdentifiableTransactionBaseWithIdentifiableEntries {
+    fn from(value: TransactionDto) -> Self {
+        Self {
+            transaction_id: value
+                .transaction_id
+                .expect("Transaction Id mut not be None"),
+            base: value.into(),
+        }
+    }
+}
+
+impl From<TransactionDto> for IdentifiableTransactionBaseWithIdentifiableEntries {
+    fn from(value: TransactionDto) -> Self {
+        Self {
+            transaction_id: value
+                .transaction_id,
+            base: value.into(),
+        }
+    }
 }

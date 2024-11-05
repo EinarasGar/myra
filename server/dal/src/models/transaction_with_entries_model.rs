@@ -1,5 +1,7 @@
 use sqlx::types::{time::OffsetDateTime, Decimal, Uuid};
 
+use crate::enums::transaction_types::DatabaseTransactionTypes;
+
 #[derive(sqlx::FromRow)]
 pub struct TransactionWithEntriesModel {
     pub id: i32,
@@ -9,6 +11,6 @@ pub struct TransactionWithEntriesModel {
     pub category_id: i32,
     pub transaction_id: Uuid,
     pub user_id: Uuid,
-    pub type_id: i32,
+    pub type_id: DatabaseTransactionTypes,
     pub date: OffsetDateTime,
 }

@@ -14,6 +14,8 @@ pub mod investment_detail;
 pub mod portfolio_event_type;
 pub mod portfolio_models;
 pub mod total_count_model;
+pub mod transaction_category_fee_enum;
+pub mod transaction_category_transaction_type_enum;
 pub mod transaction_category_type;
 pub mod transaction_models;
 pub mod transaction_with_entries_model;

@@ -36,7 +36,7 @@ use crate::{
         transaction_group_dto::TransactionGroupDto,
     },
     entities::transactions::{
-        transaction::{Transaction, Transcation},
+        transaction::{Transaction, TransactionProcessor},
         transaction_types::create_transaction_from_dto,
     },
 };

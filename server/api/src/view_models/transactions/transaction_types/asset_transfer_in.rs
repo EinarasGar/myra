@@ -1,3 +1,4 @@
+use business::dtos::transaction_dto::TransactionDto;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -27,4 +28,10 @@ pub struct AssetTransferIn<B, E> {
 
     /// How much cash is being transferred out
     pub entry: E,
+}
+
+impl From<AssetTransferInViewModel> for TransactionDto {
+    fn from(trans: AssetTransferInViewModel) -> Self {
+        todo!()
+    }
 }

@@ -1,3 +1,4 @@
+use business::dtos::transaction_dto::TransactionDto;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -30,4 +31,10 @@ pub struct CashDividend<B, E> {
 
     /// An id of a cash asset for which the dividends were paid for.
     pub origin_asset_id: i32,
+}
+
+impl From<CashDividendViewModel> for TransactionDto {
+    fn from(trans: CashDividendViewModel) -> Self {
+        todo!()
+    }
 }

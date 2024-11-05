@@ -1,4 +1,6 @@
-pub enum TransactionTypes {
+#[derive(sqlx::Type, Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[repr(i32)]
+pub enum DatabaseTransactionTypes {
     RegularTransaction = 1,
     CashTransferOut = 2,
     CashTransferIn = 3,

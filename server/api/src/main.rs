@@ -1,3 +1,4 @@
+use business::loader::StartupLoader;
 use tracing::info;
 
 use crate::states::AppState;
@@ -18,6 +19,9 @@ pub(crate) mod view_models;
 async fn main() {
     //Initialize logging and OpenTelemetry
     observability::initialize_tracing_subscriber();
+
+    //Load all dynamic enums
+    StartupLoader::load_all().await.unwrap();
 
     //Create shared services instance, which contains a connection to a database
     let shared_state = AppState {

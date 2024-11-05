@@ -12,13 +12,15 @@ use crate::{
         fee_entry_dto::FeeEntryDto,
         transaction_dto::{RegularTransactionMetadataDto, TransactionDto, TransactionTypeDto},
     },
+    dynamic_enums::{fee_categories::FeeCategories, DynamicEnum},
     entities::{
-        categories::fee_categories::is_fee_category, entries::entry::Entry,
-        transactions::metadata::MetadataField,
+        categories::fee_categories::is_fee_category,
+        entries::entry::Entry,
+        transactions::{metadata::MetadataField, transaction::Transaction},
     },
 };
 
-use super::Transcation;
+use super::TransactionProcessor;
 
 pub struct RegularTransaction {
     user_id: Uuid,
@@ -28,7 +30,7 @@ pub struct RegularTransaction {
     entries: Vec<Entry>,
 }
 
-impl Transcation for RegularTransaction {
+impl TransactionProcessor for RegularTransaction {
     fn get_add_transaction_model(&self) -> AddTransactionModel {
         AddTransactionModel {
             user_id: self.user_id,
@@ -43,16 +45,6 @@ impl Transcation for RegularTransaction {
     }
 
     fn get_entries(&self) -> &Vec<Entry> {
-        // self.entries
-        //     .iter()
-        //     .map(|x| AddEntryModel {
-        //         asset_id: x.asset_id,
-        //         quantity: x.quantity,
-        //         account_id: x.account_id,
-        //         category_id: x.category,
-        //         transaction_id: self.transaction_id.unwrap(),
-        //     })
-        //     .collect()
         &self.entries
     }
 
@@ -99,7 +91,8 @@ impl Transcation for RegularTransaction {
                         quantity: x.quantity,
                         account_id: x.account_id,
                     },
-                    entry_type: x.category.try_into().unwrap(),
+                    entry_type: FeeCategories::try_from_dynamic_enum(x.category)
+                        .expect("this should be handled tbh"),
                 })
                 .collect(),
         }
@@ -116,14 +109,12 @@ impl Transcation for RegularTransaction {
             panic!("Regular transaction only supports description metadata");
         }
     }
-}
 
-impl RegularTransaction {
-    pub fn from_dto(
-        dto: TransactionDto,
-        user_id: Uuid,
-        metadata: RegularTransactionMetadataDto,
-    ) -> Box<dyn Transcation + Send> {
+    fn from_dto(dto: TransactionDto, user_id: Uuid) -> Transaction {
+        let metadata = match dto.transaction_type {
+            TransactionTypeDto::Regular(metadata) => metadata,
+            _ => panic!("Invalid transaction type"),
+        };
         Box::new(RegularTransaction {
             transaction_id: dto.transaction_id,
             date: dto.date,
@@ -146,7 +137,8 @@ impl RegularTransaction {
                             asset_id: x.entry.asset_id,
                             quantity: x.entry.quantity,
                             account_id: x.entry.account_id,
-                            category: x.entry_type as i32,
+                            category: FeeCategories::try_into_dynamic_enum(x.entry_type)
+                                .expect("this should be handled tbh"),
                         })
                         .collect::<Vec<Entry>>(),
                 );
@@ -156,9 +148,9 @@ impl RegularTransaction {
         })
     }
 
-    pub fn from_transaction_with_entries_models(
+    fn from_transaction_with_entries_models(
         models: Vec<TransactionWithEntriesModel>,
-    ) -> Box<dyn Transcation + Send> {
+    ) -> Transaction {
         Box::new(RegularTransaction {
             transaction_id: Some(models[0].transaction_id),
             date: models[0].date,

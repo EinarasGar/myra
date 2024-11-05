@@ -34,6 +34,16 @@ macro_rules! generate_transaction_type_enums {
                 )*
             }
 
+            impl From<TransactionWithEntries> for TransactionDto {
+                fn from(value: TransactionWithEntries) -> Self {
+                    match value {
+                        $(
+                            TransactionWithEntries::$name(t) => t.into(),
+                        )*
+                    }
+                }
+            }
+
             #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
             #[serde(tag = "type", rename_all = "snake_case")]
             pub enum IdentifiableTransactionWithIdentifiableEntries {
@@ -84,25 +94,6 @@ generate_transaction_type_enums!(
     AccountFees
 );
 
-impl From<TransactionWithEntries> for TransactionDto {
-    fn from(value: TransactionWithEntries) -> Self {
-        match value {
-            TransactionWithEntries::RegularTransaction(t) => t.into(),
-            TransactionWithEntries::CashTransferOut(_) => todo!(),
-            TransactionWithEntries::CashTransferIn(_) => todo!(),
-            TransactionWithEntries::CashDividend(_) => todo!(),
-            TransactionWithEntries::AssetTransferOut(_) => todo!(),
-            TransactionWithEntries::AssetTransferIn(_) => todo!(),
-            TransactionWithEntries::AssetTrade(_) => todo!(),
-            TransactionWithEntries::AssetSale(_) => todo!(),
-            TransactionWithEntries::AssetPurchase(_) => todo!(),
-            TransactionWithEntries::AssetDividend(_) => todo!(),
-            TransactionWithEntries::AssetBalanceTransfer(_) => todo!(),
-            TransactionWithEntries::AccountFees(_) => todo!(),
-        }
-    }
-}
-
 impl From<TransactionDto> for MandatoryIdentifiableTransactionWithIdentifiableEntries {
     fn from(value: TransactionDto) -> Self {
         match value.transaction_type {
@@ -113,7 +104,11 @@ impl From<TransactionDto> for MandatoryIdentifiableTransactionWithIdentifiableEn
                     ),
                 )
             }
-            TransactionTypeDto::AssetPurchase => todo!(),
+            TransactionTypeDto::AssetPurchase(_) => {
+                MandatoryIdentifiableTransactionWithIdentifiableEntries::AssetPurchase(
+                    MandatoryIdentifiableAssetPurchaseWithIdentifiableEntriesViewModel::from(value),
+                )
+            }
         }
     }
 }
@@ -126,7 +121,11 @@ impl From<TransactionDto> for MandatoryTransactionWithIdentifiableEntries {
                     MandatoryRegularTransactionWithIdentifiableEntriesViewModel::from(value),
                 )
             }
-            TransactionTypeDto::AssetPurchase => todo!(),
+            TransactionTypeDto::AssetPurchase(_) => {
+                MandatoryTransactionWithIdentifiableEntries::AssetPurchase(
+                    MandatoryAssetPurchaseWithIdentifiableEntriesViewModel::from(value),
+                )
+            }
         }
     }
 }

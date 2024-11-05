@@ -1,4 +1,4 @@
-use business::dtos::{fee_entry_dto::FeeEntryDto, fee_entry_types_dto::FeeEntryTypesDto};
+use business::dtos::{entry_dto::EntryDto, fee_entry_dto::FeeEntryDto, fee_entry_types_dto::FeeEntryTypesDto};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -46,8 +46,12 @@ impl From<FeeEntryTypesDto> for TransactionFeeType {
     }
 }
 
-impl From<MandatoryIdentifiableTransactionFeeViewModel> for FeeEntryDto {
-    fn from(value: MandatoryIdentifiableTransactionFeeViewModel) -> Self {
+
+impl<E> From<TransactionFee<E>> for FeeEntryDto
+where
+    E: Into<EntryDto>,
+{
+    fn from(value: TransactionFee<E>) -> Self {
         FeeEntryDto {
             entry: value.entry.into(),
             entry_type: value.fee_type.into(),
@@ -55,36 +59,11 @@ impl From<MandatoryIdentifiableTransactionFeeViewModel> for FeeEntryDto {
     }
 }
 
-impl From<IdentifiableTransactionFeeViewModel> for FeeEntryDto {
-    fn from(value: IdentifiableTransactionFeeViewModel) -> Self {
-        FeeEntryDto {
-            entry: value.entry.into(),
-            entry_type: value.fee_type.into(),
-        }
-    }
-}
-
-impl From<TransactionFeeViewModel> for FeeEntryDto {
-    fn from(value: TransactionFeeViewModel) -> Self {
-        FeeEntryDto {
-            entry: value.entry.into(),
-            entry_type: value.fee_type.into(),
-        }
-    }
-}
-
-impl From<FeeEntryDto> for MandatoryIdentifiableTransactionFeeViewModel {
+impl<E> From<FeeEntryDto> for TransactionFee<E>
+where
+    E: From<EntryDto>,  {
     fn from(value: FeeEntryDto) -> Self {
-        MandatoryIdentifiableTransactionFeeViewModel {
-            entry: value.entry.into(),
-            fee_type: value.entry_type.into(),
-        }
-    }
-}
-
-impl From<FeeEntryDto> for IdentifiableTransactionFeeViewModel {
-    fn from(value: FeeEntryDto) -> Self {
-        IdentifiableTransactionFeeViewModel {
+        Self {
             entry: value.entry.into(),
             fee_type: value.entry_type.into(),
         }

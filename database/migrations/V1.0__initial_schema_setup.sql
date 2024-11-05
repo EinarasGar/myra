@@ -40,9 +40,12 @@ CREATE TABLE IF NOT EXISTS public.transaction_group (
     date_added TIMESTAMPTZ NOT NULL
 );
 CREATE TABLE IF NOT EXISTS public.asset_pairs (
-    id SERIAL CONSTRAINT asset_pairs_pk PRIMARY KEY,
+    id SERIAL NOT NULL,
     pair1 INT NOT NULL,
-    pair2 INT NOT NULL
+    pair2 INT NOT NULL,
+    CONSTRAINT asset_pairs_pk PRIMARY KEY (id),
+    CONSTRAINT asset_pairs_pair1_asset_id_fkey FOREIGN KEY (pair1) REFERENCES public.assets(id),
+    CONSTRAINT asset_pairs_pair2_asset_id_fkey FOREIGN KEY (pair2) REFERENCES public.assets(id)
 );
 CREATE TABLE IF NOT EXISTS public.asset_pairs_shared_metadata (
     pair_id INT NOT NULL CONSTRAINT asset_pairs_shared_metadata_pair_id_fkey REFERENCES public.asset_pairs (id) PRIMARY KEY,
@@ -111,4 +114,10 @@ CREATE TABLE IF NOT EXISTS public.entry (
     quantity NUMERIC NOT NULL,
     category_id INT NOT NULL CONSTRAINT transaction_category_id_fkey REFERENCES public.transaction_categories (id),
     transaction_id UUID CONSTRAINT entry_transaction__id_fkey REFERENCES public.transaction (id)
+);
+CREATE TABLE public.transaction_categories_fees_enum (
+    enum_id int4 NOT NULL,
+    category_mapping int4 NOT NULL,
+    CONSTRAINT transaction_categories_fees_enum_pk PRIMARY KEY (enum_id),
+    CONSTRAINT transaction_categories_fees_enum_transaction_categories_fk FOREIGN KEY (category_mapping) REFERENCES public.transaction_categories(id)
 );

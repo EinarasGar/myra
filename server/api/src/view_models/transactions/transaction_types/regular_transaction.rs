@@ -1,5 +1,6 @@
-use business::dtos::transaction_dto::{
-    RegularTransactionMetadataDto, TransactionDto, TransactionTypeDto,
+use business::dtos::{
+    entry_dto::EntryDto,
+    transaction_dto::{RegularTransactionMetadataDto, TransactionDto, TransactionTypeDto},
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -57,47 +58,15 @@ impl From<RegularTransactionViewModel> for TransactionDto {
     }
 }
 
-impl From<TransactionDto>
-    for MandatoryIdentifiableRegularTransactionWithIdentifiableEntriesViewModel
+impl<B, E> From<TransactionDto> for RegularTransaction<B, E>
+where
+    E: From<EntryDto>,
+    B: From<TransactionDto>,
 {
     fn from(value: TransactionDto) -> Self {
-        if let TransactionTypeDto::Regular(r) = value.transaction_type {
-            MandatoryIdentifiableRegularTransactionWithIdentifiableEntriesViewModel {
-                base: MandatoryIdentifiableTransactionBaseWithIdentifiableEntries {
-                    transaction_id: value
-                        .transaction_id
-                        .expect("Transaction Id mut not be None"),
-                    base: MandatoryTransactionBaseWithIdentifiableEntries {
-                        date: value.date,
-                        fees: if value.fee_entries.len() > 0 {
-                            Some(value.fee_entries.into_iter().map(|x| x.into()).collect())
-                        } else {
-                            None
-                        },
-                    },
-                },
-                entry: r.entry.into(),
-                category_id: r.category_id,
-                description: r.description,
-            }
-        } else {
-            panic!("Can not convert TransactionDto into MandatoryIdentifiableRegularTransactionWithIdentifiableEntriesViewModel as the type is not Regular")
-        }
-    }
-}
-
-impl From<TransactionDto> for MandatoryRegularTransactionWithIdentifiableEntriesViewModel {
-    fn from(value: TransactionDto) -> Self {
-        if let TransactionTypeDto::Regular(r) = value.transaction_type {
-            MandatoryRegularTransactionWithIdentifiableEntriesViewModel {
-                base: TransactionBaseWithIdentifiableEntries {
-                    date: value.date,
-                    fees: if value.fee_entries.len() > 0 {
-                        Some(value.fee_entries.into_iter().map(|x| x.into()).collect())
-                    } else {
-                        None
-                    },
-                },
+        if let TransactionTypeDto::Regular(r) = value.clone().transaction_type {
+            Self {
+                base: value.into(),
                 entry: r.entry.into(),
                 category_id: r.category_id,
                 description: r.description,

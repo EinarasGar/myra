@@ -159,6 +159,7 @@ impl TransactionManagementService {
         let mut transaction: Transaction = create_transaction_from_dto(transaction, user_id);
         let mut transactions = vec![transaction];
 
+        //Maybe a cool thing would be to do something like .in_database_transaction to wrap a method around transaction
         self.add_transactions(&mut transactions).await?;
         transaction = transactions
             .pop()

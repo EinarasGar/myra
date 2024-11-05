@@ -8,11 +8,11 @@ use yahoo_finance_api as yahoo;
 
 #[tokio::main]
 async fn main() {
-    let asset_name = "Ethereum";
-    let asset_ticker = "ETH";
-    let asset_type = 2;
-    let base_pair_id = Some(2);
-    let ticker = "ETH-EUR";
+    let asset_name = "Vanguard S&P 500 UCITS ETF";
+    let asset_ticker = "VUSA.L";
+    let asset_type = 5;
+    let base_pair_id = Some(3);
+    let ticker = "VUSA.L";
 
     let services = Services::new().await.unwrap();
     let asset_service = AssetsService::new(services.get_db_instance());

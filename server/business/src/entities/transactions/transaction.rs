@@ -1,18 +1,23 @@
 use dal::models::{
-    add_entry_model::AddEntryModel,
-    transaction_models::{AddTransactionDescriptionModel, AddTransactionModel},
+    transaction_models::AddTransactionModel,
+    transaction_with_entries_model::TransactionWithEntriesModel,
 };
 use uuid::Uuid;
 
-use crate::{
-    dtos::transaction_dto::{TransactionDto, TransactionTypeDto},
-    entities::entries::entry::Entry,
-};
+use crate::{dtos::transaction_dto::TransactionDto, entities::entries::entry::Entry};
 
 use super::metadata::MetadataField;
 
-pub trait Transcation {
+pub trait TransactionProcessor {
     fn into_dto(&self) -> TransactionDto;
+    fn from_dto(dto: TransactionDto, user_id: Uuid) -> Transaction
+    where
+        Self: Sized;
+    fn from_transaction_with_entries_models(
+        models: Vec<TransactionWithEntriesModel>,
+    ) -> Transaction
+    where
+        Self: Sized;
     fn get_metadata_fields(&self) -> Vec<MetadataField>;
     fn set_metadata_fields(&mut self, field: MetadataField);
     fn get_entries(&self) -> &Vec<Entry>;
@@ -22,4 +27,5 @@ pub trait Transcation {
     fn set_transaction_id(&mut self, transaction_id: Uuid);
 }
 
-pub type Transaction = Box<dyn Transcation + Send>;
+/// A boxed trait object for a transaction processor
+pub type Transaction = Box<dyn TransactionProcessor + Send>;

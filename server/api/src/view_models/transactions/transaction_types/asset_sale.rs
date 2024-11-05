@@ -1,3 +1,4 @@
+use business::dtos::transaction_dto::TransactionDto;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -28,4 +29,10 @@ pub struct AssetSale<B, E> {
     pub sale_entry: E,
 
     pub proceeds_entry: E,
+}
+
+impl From<AssetSaleViewModel> for TransactionDto {
+    fn from(trans: AssetSaleViewModel) -> Self {
+        todo!()
+    }
 }
