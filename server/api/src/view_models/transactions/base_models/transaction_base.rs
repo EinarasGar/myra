@@ -11,7 +11,7 @@ use super::transaction_fee::{
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 #[aliases(
-    TransactionBaseWithEntries = TransactionBase<TransactionFeeViewModel>, 
+    TransactionBaseWithEntries = TransactionBase<TransactionFeeViewModel>,
     TransactionBaseWithIdentifiableEntries = TransactionBase<IdentifiableTransactionFeeViewModel>,
     MandatoryTransactionBaseWithIdentifiableEntries = TransactionBase<MandatoryIdentifiableTransactionFeeViewModel>
 )]
@@ -24,12 +24,14 @@ pub struct TransactionBase<F> {
     pub fees: Option<Vec<F>>,
 }
 
-impl<F> From<TransactionDto> for TransactionBase<F> 
-where F: From<FeeEntryDto> {
+impl<F> From<TransactionDto> for TransactionBase<F>
+where
+    F: From<FeeEntryDto>,
+{
     fn from(value: TransactionDto) -> Self {
         Self {
             date: value.date,
-            fees: if value.fee_entries.len() > 0 {
+            fees: if !value.fee_entries.is_empty() {
                 Some(value.fee_entries.into_iter().map(|x| x.into()).collect())
             } else {
                 None
@@ -66,8 +68,7 @@ impl From<TransactionDto> for MandatoryIdentifiableTransactionBaseWithIdentifiab
 impl From<TransactionDto> for IdentifiableTransactionBaseWithIdentifiableEntries {
     fn from(value: TransactionDto) -> Self {
         Self {
-            transaction_id: value
-                .transaction_id,
+            transaction_id: value.transaction_id,
             base: value.into(),
         }
     }

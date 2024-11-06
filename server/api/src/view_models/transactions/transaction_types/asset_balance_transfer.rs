@@ -32,7 +32,7 @@ pub struct AssetBalanceTransfer<B, E> {
 }
 
 impl From<AssetBalanceTransferViewModel> for TransactionDto {
-    fn from(trans: AssetBalanceTransferViewModel) -> Self {
+    fn from(_trans: AssetBalanceTransferViewModel) -> Self {
         todo!()
     }
 }

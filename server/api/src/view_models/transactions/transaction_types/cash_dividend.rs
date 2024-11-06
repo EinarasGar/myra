@@ -34,7 +34,7 @@ pub struct CashDividend<B, E> {
 }
 
 impl From<CashDividendViewModel> for TransactionDto {
-    fn from(trans: CashDividendViewModel) -> Self {
+    fn from(_trans: CashDividendViewModel) -> Self {
         todo!()
     }
 }

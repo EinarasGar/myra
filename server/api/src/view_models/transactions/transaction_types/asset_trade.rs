@@ -34,7 +34,7 @@ pub struct AssetTrade<B, E> {
 }
 
 impl From<AssetTradeViewModel> for TransactionDto {
-    fn from(trans: AssetTradeViewModel) -> Self {
+    fn from(_trans: AssetTradeViewModel) -> Self {
         todo!()
     }
 }

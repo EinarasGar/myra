@@ -31,7 +31,7 @@ pub struct CashTransferIn<B, E> {
 }
 
 impl From<CashTransferInViewModel> for TransactionDto {
-    fn from(trans: CashTransferInViewModel) -> Self {
+    fn from(_trans: CashTransferInViewModel) -> Self {
         todo!()
     }
 }

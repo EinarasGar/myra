@@ -12,7 +12,7 @@ use dal::{
         exists::Exsists,
         total_count_model::TotalCount,
     },
-    queries::{self, asset_queries},
+    queries::asset_queries,
     query_params::get_assets_params::GetAssetsParams,
 };
 
@@ -21,7 +21,6 @@ use dal::database_context::MyraDb;
 
 use mockall::automock;
 use time::OffsetDateTime;
-use tracing::error;
 use uuid::Uuid;
 
 use crate::dtos::{
@@ -45,20 +44,14 @@ use crate::dtos::{
     paging_dto::PagingDto,
 };
 
-use super::asset_rates_service::AssetRatesService;
-
 pub struct AssetsService {
     db: MyraDb,
-    transaction_service: AssetRatesService,
 }
 
 #[automock]
 impl AssetsService {
     pub fn new(db: MyraDb) -> Self {
-        Self {
-            transaction_service: AssetRatesService::new(db.clone()),
-            db,
-        }
+        Self { db }
     }
 
     #[tracing::instrument(skip_all, err)]
@@ -253,7 +246,7 @@ impl AssetsService {
         for pair in ret {
             result
                 .entry((pair.pair1, pair.pair2))
-                .or_insert(VecDeque::new())
+                .or_default()
                 .push_back(AssetRateDto {
                     rate: pair.rate,
                     date: pair.date,
@@ -283,7 +276,7 @@ impl AssetsService {
             for pair in ret_bases {
                 result
                     .entry((pair.pair1, pair.pair2))
-                    .or_insert(VecDeque::new())
+                    .or_default()
                     .push_back(AssetRateDto {
                         rate: pair.rate,
                         date: pair.date,

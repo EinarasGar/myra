@@ -158,7 +158,7 @@ pub fn get_asset_with_metadata(params: GetAssetsParams) -> DbQueryWithValues {
             );
         }
         GetAssetsParamsSeachType::All => {}
-        GetAssetsParamsSeachType::ByQuery(query) => todo!(),
+        GetAssetsParamsSeachType::ByQuery(_query) => todo!(),
     };
 
     if let Some(paging) = params.paging {

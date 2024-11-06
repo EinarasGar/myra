@@ -31,7 +31,7 @@ pub struct AssetTransferOut<B, E> {
 }
 
 impl From<AssetTransferOutViewModel> for TransactionDto {
-    fn from(trans: AssetTransferOutViewModel) -> Self {
+    fn from(_trans: AssetTransferOutViewModel) -> Self {
         todo!()
     }
 }

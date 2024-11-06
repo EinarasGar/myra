@@ -17,6 +17,12 @@ pub struct Portfolio {
     account_portfolios: HashMap<Uuid, AccountPortfolio>,
 }
 
+impl Default for Portfolio {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Portfolio {
     pub fn new() -> Self {
         Self {
@@ -25,7 +31,7 @@ impl Portfolio {
     }
 
     pub fn process_transactions(&mut self, mut transactions: Vec<Box<dyn PortfolioAction>>) {
-        transactions.sort_by(|a, b| a.date().cmp(&b.date()));
+        transactions.sort_by_key(|a| a.date());
 
         transactions.into_iter().for_each(|transaction| {
             transaction.update_porfolio(self);

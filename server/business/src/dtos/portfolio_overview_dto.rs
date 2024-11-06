@@ -47,8 +47,8 @@ impl From<Portfolio> for PortfolioOverviewDto {
         for portfolio in portfolio_overview_dto.account_portfolios() {
             for asset_portfolio in &portfolio.1.asset_portfolios {
                 portfolios.push(PortfolioOverviewType::Asset(PortfolioAssetOverviewDto {
-                    asset_id: asset_portfolio.0.clone(),
-                    account_id: portfolio.0.clone(),
+                    asset_id: *asset_portfolio.0,
+                    account_id: *portfolio.0,
                     positions: asset_portfolio
                         .1
                         .positions
@@ -69,8 +69,8 @@ impl From<Portfolio> for PortfolioOverviewDto {
             }
             for cash_portfolio in &portfolio.1.cash_portfolios {
                 portfolios.push(PortfolioOverviewType::Cash(PortfolioCashOverviewDto {
-                    asset_id: cash_portfolio.0.clone(),
-                    account_id: portfolio.0.clone(),
+                    asset_id: *cash_portfolio.0,
+                    account_id: *portfolio.0,
                     units: cash_portfolio.1.units(),
                     fees: cash_portfolio.1.fees(),
                     dividends: cash_portfolio.1.dividends(),

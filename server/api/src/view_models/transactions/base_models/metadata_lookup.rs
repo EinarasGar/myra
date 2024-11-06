@@ -6,17 +6,8 @@ use crate::view_models::{
     assets::base_models::asset::IdentifiableAssetViewModel,
 };
 
-#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema, Default)]
 pub struct MetadataLookupTables {
     pub accounts: Vec<IdentifiableAccountViewModel>,
     pub assets: Vec<IdentifiableAssetViewModel>,
-}
-
-impl Default for MetadataLookupTables {
-    fn default() -> Self {
-        Self {
-            accounts: Vec::new(),
-            assets: Vec::new(),
-        }
-    }
 }

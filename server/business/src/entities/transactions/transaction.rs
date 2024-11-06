@@ -9,6 +9,7 @@ use crate::{dtos::transaction_dto::TransactionDto, entities::entries::entry::Ent
 use super::metadata::MetadataField;
 
 pub trait TransactionProcessor {
+    #[allow(clippy::wrong_self_convention)]
     fn into_dto(&self) -> TransactionDto;
     fn from_dto(dto: TransactionDto, user_id: Uuid) -> Transaction
     where

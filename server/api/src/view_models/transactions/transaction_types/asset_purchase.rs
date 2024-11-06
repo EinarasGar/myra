@@ -11,9 +11,8 @@ use crate::view_models::transactions::base_models::{
         MandatoryIdentifiableAccountAssetEntryViewModel,
     },
     transaction_base::{
-        IdentifiableTransactionBase, IdentifiableTransactionBaseWithIdentifiableEntries,
-        MandatoryIdentifiableTransactionBaseWithIdentifiableEntries,
-        MandatoryTransactionBaseWithIdentifiableEntries, TransactionBaseWithEntries,
+        IdentifiableTransactionBaseWithIdentifiableEntries,
+        MandatoryIdentifiableTransactionBaseWithIdentifiableEntries, TransactionBaseWithEntries,
         TransactionBaseWithIdentifiableEntries,
     },
 };

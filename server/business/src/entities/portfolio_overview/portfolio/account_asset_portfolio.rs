@@ -24,7 +24,7 @@ impl Default for AccountAssetPortfolio {
 
 impl AccountAssetPortfolio {
     fn sort(&mut self) {
-        self.positions.sort_by(|a, b| b.compare_by_date(&a));
+        self.positions.sort_by(|a, b| b.compare_by_date(a));
     }
 
     pub fn add_positions(&mut self, mut positions: Vec<PortfolioAssetPosition>) {
@@ -43,8 +43,7 @@ impl AccountAssetPortfolio {
                         acc
                     },
                 )
-                .into_iter()
-                .map(|(_, position)| position)
+                .into_values()
                 .collect();
         }
 
@@ -147,7 +146,7 @@ impl AccountAssetPortfolio {
             }
         }
         self.sort();
-        removed_positions.sort_by(|a, b| b.compare_by_date(&a));
+        removed_positions.sort_by(|a, b| b.compare_by_date(a));
         removed_positions
     }
 

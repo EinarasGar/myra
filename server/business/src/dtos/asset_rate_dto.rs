@@ -1,7 +1,7 @@
 use dal::models::asset_rate::AssetRate;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use time::{serde::iso8601, OffsetDateTime};
+use time::OffsetDateTime;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AssetRateDto {

@@ -1,65 +1,32 @@
-use std::{
-    collections::{BTreeMap, HashMap, HashSet, VecDeque},
-    hash::Hash,
-    vec,
-};
-
 #[mockall_double::double]
 use dal::database_context::MyraDb;
 
-use dal::{
-    models::{
-        investment_detail::InvestmentDetailModel,
-        portfolio_models::{PortfolioAccountIdNameModel, PortfolioUpdateModel},
-        transaction_category_type::TransactionCategoryType,
-        transaction_models::{
-            AddTransactionDescriptionModel, AddTransactionModel, AddUpdateTransactionGroupModel,
-            CategoryModel, TransactionFinancials, TransactionWithGroupModel,
-        },
-        transcation_description::TransactionDescriptionModel,
-    },
-    queries::{portfolio_queries, transaction_data_queries, transaction_queries},
-};
+use dal::{models::transaction_models::AddTransactionModel, queries::transaction_data_queries};
 use mockall::automock;
-use rust_decimal::Decimal;
 
-use rust_decimal_macros::dec;
 use uuid::Uuid;
 
-use crate::{
-    dtos::{
-        add_update_transaction_dto::AddUpdateTransactonDto,
-        add_update_transaction_group_dto::AddUpdateTransactionGroupDto,
-        asset_id_date_dto::AssetIdDateDto, asset_pair_rate_dto::AssetPairRateDto,
-        category_dto::CategoryDto, portfolio_account_dto::PortfolioAccountDto,
-        transaction_dto::TransactionDto, transaction_financials_dto::TransactionFinancialsDto,
-        transaction_group_dto::TransactionGroupDto,
-    },
-    entities::transactions::{
-        transaction::{Transaction, TransactionProcessor},
-        transaction_types::create_transaction_from_dto,
-    },
-};
+use crate::entities::transactions::transaction::Transaction;
 
-use super::{asset_service::AssetsService, entries_service::EntriesService};
+use super::asset_service::AssetsService;
 
 pub struct TransactionService {
     db: MyraDb,
-    asset_service: AssetsService,
+    _asset_service: AssetsService,
 }
 
 #[automock]
 impl TransactionService {
     pub fn new(db: MyraDb) -> Self {
         Self {
-            asset_service: AssetsService::new(db.clone()),
+            _asset_service: AssetsService::new(db.clone()),
             db,
         }
     }
 
     pub async fn add_transactions_info(
         &self,
-        transactions: &mut Vec<Transaction>,
+        transactions: &mut [Transaction],
     ) -> anyhow::Result<()> {
         let new_transaction_models = transactions
             .iter()

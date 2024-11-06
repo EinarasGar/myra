@@ -31,7 +31,7 @@ pub struct AccountFees<B, E> {
 }
 
 impl From<AccountFeesViewModel> for TransactionDto {
-    fn from(trans: AccountFeesViewModel) -> Self {
+    fn from(_trans: AccountFeesViewModel) -> Self {
         todo!()
     }
 }

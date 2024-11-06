@@ -9,8 +9,8 @@ use crate::view_models::transactions::transaction_types::{
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 #[aliases(
-    TransactionGroupViewModel = TransactionGroup<TransactionWithEntries>, 
-    TransactionGroupWithIdentifiableChildrenViewModel = TransactionGroup<IdentifiableTransactionWithIdentifiableEntries>, 
+    TransactionGroupViewModel = TransactionGroup<TransactionWithEntries>,
+    TransactionGroupWithIdentifiableChildrenViewModel = TransactionGroup<IdentifiableTransactionWithIdentifiableEntries>,
     MandatoryTransactionGroupViewModel = TransactionGroup<MandatoryIdentifiableTransactionWithIdentifiableEntries>
 )]
 pub struct TransactionGroup<T> {

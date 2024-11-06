@@ -32,7 +32,7 @@ pub struct AssetSale<B, E> {
 }
 
 impl From<AssetSaleViewModel> for TransactionDto {
-    fn from(trans: AssetSaleViewModel) -> Self {
+    fn from(_trans: AssetSaleViewModel) -> Self {
         todo!()
     }
 }

@@ -18,7 +18,7 @@ impl Entry {
             quantity: self.quantity,
             account_id: self.account_id,
             category_id: self.category,
-            transaction_id: transaction_id,
+            transaction_id,
         }
     }
 

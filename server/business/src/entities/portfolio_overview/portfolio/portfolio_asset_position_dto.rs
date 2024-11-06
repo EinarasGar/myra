@@ -84,7 +84,7 @@ impl PortfolioAssetPosition {
     }
 
     pub fn get_amount_left(&self) -> Decimal {
-        return self.quantity_added - self.amount_sold;
+        self.quantity_added - self.amount_sold
     }
 
     pub fn units(&self) -> Decimal {

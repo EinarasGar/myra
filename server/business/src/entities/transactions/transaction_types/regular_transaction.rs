@@ -1,6 +1,5 @@
 use dal::models::{
-    add_entry_model::AddEntryModel,
-    transaction_models::{AddTransactionDescriptionModel, AddTransactionModel},
+    transaction_models::AddTransactionModel,
     transaction_with_entries_model::TransactionWithEntriesModel,
 };
 use time::OffsetDateTime;

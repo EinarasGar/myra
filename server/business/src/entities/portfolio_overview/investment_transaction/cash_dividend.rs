@@ -45,7 +45,7 @@ mod tests {
 
         let input: Vec<Box<dyn PortfolioAction>> = vec![Box::new(CashDividend {
             asset_id: 10,
-            account_id: account_id.clone(),
+            account_id,
             quantity: dec!(5),
             origin_asset_id: 1,
             price: dec!(1.2),

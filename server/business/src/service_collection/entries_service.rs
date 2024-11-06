@@ -1,25 +1,8 @@
-use std::vec;
-
 #[mockall_double::double]
 use dal::database_context::MyraDb;
 
-use dal::models::add_entry_model::AddEntryModel;
+use crate::entities::transactions::transaction::Transaction;
 use dal::queries::entries_queries;
-use rust_decimal_macros::dec;
-use time::macros::datetime;
-use uuid::Uuid;
-
-use crate::dtos::portfolio_overview_dto::PortfolioOverviewDto;
-use crate::entities::entries::entry::Entry;
-use crate::entities::portfolio_overview::investment_transaction::asset_purchase::AssetPurchase;
-use crate::entities::portfolio_overview::investment_transaction::cash_transfer_in::CashTransferIn;
-use crate::entities::portfolio_overview::portfolio::{Portfolio, PortfolioAction};
-use crate::entities::transactions::transaction::{Transaction, TransactionProcessor};
-
-#[mockall_double::double]
-use super::asset_service::AssetsService;
-#[mockall_double::double]
-use super::transaction_service::TransactionService;
 
 pub struct EntriesService {
     #[allow(dead_code)]
@@ -33,7 +16,7 @@ impl EntriesService {
 
     pub async fn add_transcation_entries(
         &self,
-        transactions: &mut Vec<Transaction>,
+        transactions: &mut [Transaction],
     ) -> anyhow::Result<()> {
         let mut new_entries_models = Vec::new();
 

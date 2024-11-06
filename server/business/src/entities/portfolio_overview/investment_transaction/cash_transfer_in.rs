@@ -39,7 +39,7 @@ mod tests {
 
         let input: Vec<Box<dyn PortfolioAction>> = vec![Box::new(CashTransferIn {
             asset_id: 1,
-            account_id: account_id.clone(),
+            account_id,
             fees: dec!(1),
             units: dec!(1),
             date: datetime!(2000-03-22 00:00:00 UTC),

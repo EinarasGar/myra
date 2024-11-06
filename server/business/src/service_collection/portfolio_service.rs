@@ -1,44 +1,21 @@
-use std::cmp::min;
-use std::collections::{HashMap, HashSet, VecDeque};
-
-use dal::queries::portfolio_queries::{self};
-
-use dal::models::portfolio_models::PortfolioAccountModel;
-use dal::models::portfolio_models::{PortfolioAccountIdNameModel, PortfolioCombined};
-use rust_decimal::prelude::FromPrimitive;
-use rust_decimal::Decimal;
-
-use rust_decimal_macros::dec;
-use time::macros::datetime;
-use time::{Duration, OffsetDateTime};
-use uuid::Uuid;
-
 #[mockall_double::double]
 use dal::database_context::MyraDb;
-
-use crate::dtos::asset_dto::AssetDto;
-use crate::dtos::asset_rate_dto::AssetRateDto;
-use crate::dtos::portfolio_account_dto::PortfolioAccountDto;
-use crate::dtos::portfolio_dto::PortfolioDto;
-use crate::dtos::portfolio_row_dto::PortfolioRowDto;
-use crate::dtos::portfolio_update_dto::PortfolioUpdateDto;
-use crate::dtos::transaction_financials_dto::TransactionFinancialsDto;
 
 use super::asset_service::AssetsService;
 use super::transaction_service::TransactionService;
 
 pub struct PortfolioService {
-    db_context: MyraDb,
-    transaction_service: TransactionService,
-    asset_serice: AssetsService,
+    _db_context: MyraDb,
+    _transaction_service: TransactionService,
+    _asset_serice: AssetsService,
 }
 
 impl PortfolioService {
     pub fn new(db: MyraDb) -> Self {
         Self {
-            db_context: db.clone(),
-            transaction_service: TransactionService::new(db.clone()),
-            asset_serice: AssetsService::new(db),
+            _db_context: db.clone(),
+            _transaction_service: TransactionService::new(db.clone()),
+            _asset_serice: AssetsService::new(db),
         }
     }
 

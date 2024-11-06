@@ -1,4 +1,6 @@
-use business::dtos::{entry_dto::EntryDto, fee_entry_dto::FeeEntryDto, fee_entry_types_dto::FeeEntryTypesDto};
+use business::dtos::{
+    entry_dto::EntryDto, fee_entry_dto::FeeEntryDto, fee_entry_types_dto::FeeEntryTypesDto,
+};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -9,7 +11,7 @@ use super::account_asset_entry::{
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 #[aliases(
-    TransactionFeeViewModel = TransactionFee<AccountAssetEntryViewModel>, 
+    TransactionFeeViewModel = TransactionFee<AccountAssetEntryViewModel>,
     IdentifiableTransactionFeeViewModel = TransactionFee<IdentifiableAccountAssetEntryViewModel>,
     MandatoryIdentifiableTransactionFeeViewModel = TransactionFee<MandatoryIdentifiableAccountAssetEntryViewModel>
 )]
@@ -46,7 +48,6 @@ impl From<FeeEntryTypesDto> for TransactionFeeType {
     }
 }
 
-
 impl<E> From<TransactionFee<E>> for FeeEntryDto
 where
     E: Into<EntryDto>,
@@ -61,7 +62,8 @@ where
 
 impl<E> From<FeeEntryDto> for TransactionFee<E>
 where
-    E: From<EntryDto>,  {
+    E: From<EntryDto>,
+{
     fn from(value: FeeEntryDto) -> Self {
         Self {
             entry: value.entry.into(),

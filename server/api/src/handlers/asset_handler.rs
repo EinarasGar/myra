@@ -164,13 +164,10 @@ pub async fn get_asset_pair(
         main_asset: pair_dtos.0.into(),
         reference_asset: pair_dtos.1.into(),
         metadata: SharedAssetPairMetadataViewModel {
-            common_metadata: match latest_rate {
-                Some(rate) => Some(AssetPairMetadataViewModel {
-                    latest_rate: rate.rate,
-                    last_updated: rate.date,
-                }),
-                None => None,
-            },
+            common_metadata: latest_rate.map(|rate| AssetPairMetadataViewModel {
+                latest_rate: rate.rate,
+                last_updated: rate.date,
+            }),
             volume: shared_metadata.unwrap().volume,
         },
     };

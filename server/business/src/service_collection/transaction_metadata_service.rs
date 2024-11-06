@@ -21,23 +21,23 @@ impl TransactionMetadataService {
         Self { db }
     }
 
-    pub async fn write_metadata(&self, transactions: &mut Vec<Transaction>) -> anyhow::Result<()> {
+    pub async fn write_metadata(&self, transactions: &mut [Transaction]) -> anyhow::Result<()> {
         self.write_transaction_descriptions(transactions).await?;
         Ok(())
     }
 
-    pub async fn load_metadata(&self, transactions: &mut Vec<Transaction>) -> anyhow::Result<()> {
+    pub async fn load_metadata(&self, transactions: &mut [Transaction]) -> anyhow::Result<()> {
         self.load_transactions_descriptions(transactions).await?;
         Ok(())
     }
 
-    pub async fn sync_metadata(&self, transactions: &mut Vec<Transaction>) -> anyhow::Result<()> {
+    pub async fn sync_metadata(&self, _transactions: &mut [Transaction]) -> anyhow::Result<()> {
         todo!();
     }
 
     pub async fn write_transaction_descriptions(
         &self,
-        transactions: &mut Vec<Transaction>,
+        transactions: &mut [Transaction],
     ) -> anyhow::Result<()> {
         let mut update_models: Vec<AddTransactionDescriptionModel> = Vec::new();
 
@@ -46,13 +46,11 @@ impl TransactionMetadataService {
             let metadata_fields = transaction.get_metadata_fields();
 
             for field in metadata_fields {
-                if let MetadataField::Description(description) = field {
-                    if let Some(description) = description {
-                        update_models.push(AddTransactionDescriptionModel {
-                            transaction_id,
-                            description,
-                        });
-                    }
+                if let MetadataField::Description(Some(description)) = field {
+                    update_models.push(AddTransactionDescriptionModel {
+                        transaction_id,
+                        description,
+                    });
                 }
             }
         });
@@ -77,7 +75,7 @@ impl TransactionMetadataService {
 
     async fn load_transactions_descriptions(
         &self,
-        transactions: &mut Vec<Transaction>,
+        transactions: &mut [Transaction],
     ) -> anyhow::Result<()> {
         let mut transaction_ids: Vec<Uuid> = Vec::new();
 

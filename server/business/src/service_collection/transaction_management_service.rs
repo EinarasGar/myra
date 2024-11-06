@@ -144,9 +144,9 @@ impl TransactionManagementService {
                 total_results: total_results as i32,
             };
 
-            return Ok(page);
+            Ok(page)
         } else {
-            return Err(anyhow::anyhow!("No results found"));
+            Err(anyhow::anyhow!("No results found"))
         }
     }
 
@@ -173,7 +173,7 @@ impl TransactionManagementService {
 
     pub async fn add_transactions(
         &self,
-        transaction_refs: &mut Vec<Transaction>,
+        transaction_refs: &mut [Transaction],
     ) -> anyhow::Result<()> {
         self.transaction_service
             .add_transactions_info(transaction_refs)

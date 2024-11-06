@@ -50,7 +50,7 @@ mod tests {
         let input: Vec<Box<dyn PortfolioAction>> = vec![
             Box::new(AssetTransferIn {
                 asset_id: 1,
-                account_id: account_id.clone(),
+                account_id,
                 quantity: dec!(2),
                 price: dec!(1),
                 fees: dec!(1),
@@ -58,8 +58,8 @@ mod tests {
             }),
             Box::new(AssetBalanceTransfer {
                 asset_id: 1,
-                account_from: account_id.clone(),
-                account_to: account_id_2.clone(),
+                account_from: account_id,
+                account_to: account_id_2,
                 quantity: dec!(2),
                 fees: dec!(1),
                 date: datetime!(2000-03-23 00:00:00 UTC),
@@ -93,7 +93,7 @@ mod tests {
         let input: Vec<Box<dyn PortfolioAction>> = vec![
             Box::new(AssetTransferIn {
                 asset_id: 1,
-                account_id: account_id.clone(),
+                account_id,
                 quantity: dec!(2),
                 price: dec!(1),
                 fees: dec!(1),
@@ -101,8 +101,8 @@ mod tests {
             }),
             Box::new(AssetBalanceTransfer {
                 asset_id: 1,
-                account_from: account_id.clone(),
-                account_to: account_id_2.clone(),
+                account_from: account_id,
+                account_to: account_id_2,
                 quantity: dec!(1),
                 fees: dec!(1),
                 date: datetime!(2000-03-23 00:00:00 UTC),

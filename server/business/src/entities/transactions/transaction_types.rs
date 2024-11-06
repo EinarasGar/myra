@@ -126,18 +126,19 @@ pub fn create_transactions_from_transaction_with_entries_models(
     // split vector into multiple by transaction_id
     let grouped_results_full: Vec<Vec<TransactionWithEntriesModel>> = models
         .into_iter()
-        .fold(HashMap::new(), |mut acc, model| {
-            acc.entry(model.transaction_id)
-                .or_insert_with(Vec::new)
-                .push(model);
-            acc
-        })
+        .fold(
+            HashMap::new(),
+            |mut acc: HashMap<Uuid, Vec<TransactionWithEntriesModel>>, model| {
+                acc.entry(model.transaction_id).or_default().push(model);
+                acc
+            },
+        )
         .into_values()
         .collect();
 
     let transactions: Vec<Transaction> = grouped_results_full
         .into_iter()
-        .map(|group| create_transaction_from_transaction_with_entries_model(group))
+        .map(create_transaction_from_transaction_with_entries_model)
         .collect::<Result<_, _>>()?;
 
     Ok(transactions)

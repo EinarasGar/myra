@@ -7,6 +7,7 @@ pub enum PortfolioEventIden {
     Type,
 }
 
+#[allow(dead_code)]
 pub enum DividendsIden {
     Table,
     PortfoloEventId,

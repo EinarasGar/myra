@@ -146,7 +146,7 @@ impl TransactionProcessor for AssetPurchaseTransaction {
                     category: TransactionTypeCategories::try_into_dynamic_enum(
                         DatabaseTransactionTypeCategories::AssetPurchase,
                     )
-                    .expect("handle this plss") as i32,
+                    .expect("handle this plss"),
                 });
                 entries.push(Entry {
                     entry_id: None,
@@ -156,7 +156,7 @@ impl TransactionProcessor for AssetPurchaseTransaction {
                     category: TransactionTypeCategories::try_into_dynamic_enum(
                         DatabaseTransactionTypeCategories::AssetPurchase,
                     )
-                    .expect("handle this plss") as i32,
+                    .expect("handle this plss"),
                 });
                 entries.append(
                     &mut dto

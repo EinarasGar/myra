@@ -12,8 +12,7 @@ use crate::view_models::transactions::base_models::{
     },
     transaction_base::{
         IdentifiableTransactionBaseWithIdentifiableEntries,
-        MandatoryIdentifiableTransactionBaseWithIdentifiableEntries,
-        MandatoryTransactionBaseWithIdentifiableEntries, TransactionBaseWithEntries,
+        MandatoryIdentifiableTransactionBaseWithIdentifiableEntries, TransactionBaseWithEntries,
         TransactionBaseWithIdentifiableEntries,
     },
 };

@@ -19,6 +19,7 @@ pub(crate) struct AppState {
 
 macro_rules! service_state {
     ($name:ident, $service:ty) => {
+        #[allow(dead_code)]
         pub struct $name(pub $service);
 
         impl FromRef<AppState> for $service {

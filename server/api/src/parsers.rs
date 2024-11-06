@@ -19,6 +19,7 @@ pub fn parse_duration_string(duration: String) -> anyhow::Result<Duration> {
     }
 }
 
+#[allow(dead_code)]
 fn get_unique_vec<T>(input: &[T]) -> Vec<T>
 where
     T: Eq + Hash + Clone,

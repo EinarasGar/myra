@@ -1,4 +1,4 @@
-use crate::{dtos::fee_entry_types_dto::FeeEntryTypesDto, dynamic_enums::DynamicEnum};
+use crate::dynamic_enums::DynamicEnum;
 
 pub type FeeCategoeis = dal::enums::fee_categories::DatabaseFeeCategories;
 
