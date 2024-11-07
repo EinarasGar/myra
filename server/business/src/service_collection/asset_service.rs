@@ -2,15 +2,13 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 use dal::{
     models::{
-        asset_models::{Asset, AssetId, AssetPairId, AssetRaw, AssetWithMetadata, PublicAsset},
-        asset_pair::AssetPair,
-        asset_pair_rate::AssetPairRate,
-        asset_pair_rate_option::AssetPairRateOption,
-        asset_pair_shared_metadta::AssetPairSharedMetadata,
-        asset_rate::AssetRate,
-        count::Count,
-        exists::Exsists,
-        total_count_model::TotalCount,
+        asset_models::{
+            Asset, AssetId, AssetPair, AssetPairId, AssetPairRate, AssetPairRateOption,
+            AssetPairSharedMetadata, AssetRate, AssetRaw, AssetWithMetadata, PublicAsset,
+        },
+        base::Count,
+        base::Exsists,
+        base::TotalCount,
     },
     queries::asset_queries,
     query_params::get_assets_params::GetAssetsParams,
@@ -194,7 +192,7 @@ impl AssetsService {
             .into_iter()
             .map(|val| AssetDto {
                 ticker: val.ticker,
-                name: val.name,
+                name: val.asset_name,
                 category: val.category,
                 asset_id: val.id,
                 owner: Some(user_id),
@@ -249,7 +247,7 @@ impl AssetsService {
                 .or_default()
                 .push_back(AssetRateDto {
                     rate: pair.rate,
-                    date: pair.date,
+                    date: pair.recorded_at,
                 })
         }
 
@@ -279,7 +277,7 @@ impl AssetsService {
                     .or_default()
                     .push_back(AssetRateDto {
                         rate: pair.rate,
-                        date: pair.date,
+                        date: pair.recorded_at,
                     })
             }
         }

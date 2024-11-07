@@ -1,31 +1,10 @@
 use sqlx::types::{time::OffsetDateTime, Decimal, Uuid};
 
-//Used to retrieve transactions joined with group info and descriptions
-#[derive(Clone, Debug, sqlx::FromRow)]
-pub struct TransactionWithGroupModel {
-    pub id: i32,
-    pub user_id: Uuid,
-    pub group_id: Uuid,
-    pub asset_id: i32,
-    pub category_id: i32,
-    pub quantity: Decimal,
-    pub date: OffsetDateTime,
-    pub account_id: Uuid,
-    pub account_name: String,
-    pub description: Option<String>,
-    pub group_description: String,
-    pub group_category_id: i32,
-    pub date_added: OffsetDateTime,
-    pub portfolio_event_id: Option<Uuid>,
-}
-
-#[derive(Clone, Debug, sqlx::FromRow)]
-pub struct TransactionFinancials {
-    pub asset_id: i32,
-    pub account_id: Uuid,
-    pub quantity: Decimal,
-    pub date: OffsetDateTime,
-}
+use crate::enums::{
+    fee_categories::DatabaseFeeCategories,
+    transaction_type_categories::DatabaseTransactionTypeCategories,
+    transaction_types::DatabaseTransactionTypes,
+};
 
 #[derive(Clone, Debug)]
 pub struct AddTransactionModel {
@@ -41,18 +20,33 @@ pub struct AddTransactionDescriptionModel {
     pub description: String,
 }
 
-//Used in a method to insert new transaction groups
-#[derive(Clone, Debug, PartialEq)]
-pub struct AddUpdateTransactionGroupModel {
-    pub group_id: Uuid,
-    pub category_id: i32,
-    pub description: String,
-    pub date: OffsetDateTime,
+#[derive(Clone, Debug, sqlx::FromRow)]
+pub struct TransactionCategoryFeeEnumModel {
+    pub enum_index: DatabaseFeeCategories,
+    pub category_mapping: i32,
 }
 
 #[derive(Clone, Debug, sqlx::FromRow)]
-pub struct CategoryModel {
+pub struct TransactionCategoryTransactionTypeEnumModel {
+    pub enum_index: DatabaseTransactionTypeCategories,
+    pub category_mapping: i32,
+}
+
+#[derive(sqlx::FromRow)]
+pub struct TransactionWithEntriesModel {
     pub id: i32,
-    pub category: String,
-    pub icon: String,
+    pub asset_id: i32,
+    pub account_id: Uuid,
+    pub quantity: Decimal,
+    pub category_id: i32,
+    pub transaction_id: Uuid,
+    pub user_id: Uuid,
+    pub type_id: DatabaseTransactionTypes,
+    pub date_transacted: OffsetDateTime,
+}
+
+#[derive(sqlx::FromRow)]
+pub struct TransactionDescriptionModel {
+    pub transaction_id: Uuid,
+    pub description: String,
 }

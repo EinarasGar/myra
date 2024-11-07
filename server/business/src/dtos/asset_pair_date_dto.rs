@@ -1,4 +1,4 @@
-use dal::models::asset_pair_date::AssetPairDate;
+use dal::models::asset_models::AssetPairDate;
 use time::OffsetDateTime;
 
 #[derive(Clone, Debug)]

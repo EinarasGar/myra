@@ -16,7 +16,7 @@ impl From<AssetWithMetadata> for FullAssetDto {
                     name: p.asset_type_name,
                     id: p.asset_type,
                 },
-                name: p.name,
+                name: p.asset_name,
                 ticker: p.ticker,
                 id: p.id,
             },

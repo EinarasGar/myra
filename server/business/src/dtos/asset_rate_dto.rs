@@ -1,4 +1,4 @@
-use dal::models::asset_rate::AssetRate;
+use dal::models::asset_models::AssetRate;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
@@ -22,7 +22,7 @@ impl From<AssetRate> for AssetRateDto {
     fn from(p: AssetRate) -> Self {
         Self {
             rate: p.rate,
-            date: p.date,
+            date: p.recorded_at,
         }
     }
 }

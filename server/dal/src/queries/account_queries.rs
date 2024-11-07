@@ -5,7 +5,7 @@ use sqlx::types::Uuid;
 use super::DbQueryWithValues;
 use crate::{
     idens::account_idens::{AccountIden, AccountLiquidityTypesIden, AccountTypesIden},
-    models::account_model::{AccountCreationModel, AccountUpdateModel},
+    models::account_models::{AccountCreationModel, AccountUpdateModel},
     query_params::get_accounts_params::{GetAccountsParams, GetAccountsParamsSeachType},
 };
 

@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use dal::{
     database_connection::MyraDbConnection, database_context::MyraDb,
     enums::fee_categories::DatabaseFeeCategories,
-    models::transaction_category_fee_enum::TransactionCategoryFeeEnumModel,
+    models::transaction_models::TransactionCategoryFeeEnumModel,
     queries::transaction_categories_queries,
 };
 use once_cell::sync::Lazy;

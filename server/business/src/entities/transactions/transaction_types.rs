@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use asset_purhcase::AssetPurchaseTransaction;
 use dal::{
     enums::transaction_types::DatabaseTransactionTypes,
-    models::transaction_with_entries_model::TransactionWithEntriesModel,
+    models::transaction_models::TransactionWithEntriesModel,
 };
 use uuid::Uuid;
 

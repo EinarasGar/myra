@@ -5,9 +5,7 @@ use anyhow::Ok;
 use dal::database_context::MyraDb;
 
 use dal::{
-    models::{
-        total_count_model::TotalCount, transaction_with_entries_model::TransactionWithEntriesModel,
-    },
+    models::{base::TotalCount, transaction_models::TransactionWithEntriesModel},
     queries::transaction_queries,
     query_params::get_transaction_with_entries_params::GetTransactionWithEntriesParams,
 };

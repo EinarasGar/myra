@@ -1,4 +1,4 @@
-use dal::models::add_entry_model::AddEntryModel;
+use dal::models::entry_models::AddEntryModel;
 use rust_decimal::Decimal;
 use uuid::Uuid;
 

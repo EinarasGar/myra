@@ -1,4 +1,4 @@
-use dal::models::asset_pair_shared_metadta::AssetPairSharedMetadata;
+use dal::models::asset_models::AssetPairSharedMetadata;
 use rust_decimal::Decimal;
 
 pub struct SharedAssetPairMetadataDto {

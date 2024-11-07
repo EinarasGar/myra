@@ -1,4 +1,4 @@
-use dal::models::asset_pair_rate::AssetPairRate;
+use dal::models::asset_models::AssetPairRate;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use time::{serde::iso8601, OffsetDateTime};
@@ -18,7 +18,7 @@ impl From<AssetPairRate> for AssetPairRateDto {
             asset1_id: p.pair1,
             asset2_id: p.pair2,
             rate: p.rate,
-            date: p.date,
+            date: p.recorded_at,
         }
     }
 }
@@ -29,7 +29,7 @@ impl From<AssetPairRateDto> for AssetPairRate {
             pair1: p.asset1_id,
             pair2: p.asset2_id,
             rate: p.rate,
-            date: p.date,
+            recorded_at: p.date,
         }
     }
 }

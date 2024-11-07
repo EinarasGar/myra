@@ -13,10 +13,7 @@ use crate::{
         },
         ArrayFunc, Unnest,
     },
-    models::{
-        asser_pair_rate_insert::AssetPairRateInsert, asset_models::InsertAsset,
-        asset_pair::AssetPair, asset_pair_date::AssetPairDate,
-    },
+    models::asset_models::{AssetPair, AssetPairDate, AssetPairRateInsert, InsertAsset},
     query_params::{
         get_assets_params::{GetAssetsParams, GetAssetsParamsSeachType},
         get_rates_params::{GetRatesParams, GetRatesSeachType},
@@ -31,11 +28,11 @@ pub fn get_public_assets(page_length: u64, page: u64, search: Option<String>) ->
 
     Query::select()
         .column((AssetsIden::Table, AssetsIden::Id))
-        .column((AssetsIden::Table, AssetsIden::Name))
+        .column((AssetsIden::Table, AssetsIden::AssetName))
         .column((AssetsIden::Table, AssetsIden::Ticker))
         .column((AssetsIden::Table, AssetsIden::UserId))
         .expr_as(
-            Expr::col((AssetTypesIden::Table, AssetTypesIden::Name)),
+            Expr::col((AssetTypesIden::Table, AssetTypesIden::AssetTypeName)),
             Alias::new("category"),
         )
         .from(AssetsIden::Table)
@@ -50,7 +47,7 @@ pub fn get_public_assets(page_length: u64, page: u64, search: Option<String>) ->
                 q.cond_where(
                     Cond::any()
                         .add(
-                            Expr::col((AssetsIden::Table, AssetsIden::Name))
+                            Expr::col((AssetsIden::Table, AssetsIden::AssetName))
                                 .ilike(format!("%{}%", search.clone().unwrap())),
                         )
                         .add(
@@ -72,10 +69,10 @@ pub fn get_public_assets(page_length: u64, page: u64, search: Option<String>) ->
 pub fn get_users_assets(user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .column((AssetsIden::Table, AssetsIden::Id))
-        .column((AssetsIden::Table, AssetsIden::Name))
+        .column((AssetsIden::Table, AssetsIden::AssetName))
         .column((AssetsIden::Table, AssetsIden::Ticker))
         .expr_as(
-            Expr::col((AssetTypesIden::Table, AssetTypesIden::Name)),
+            Expr::col((AssetTypesIden::Table, AssetTypesIden::AssetTypeName)),
             Alias::new("category"),
         )
         .from(AssetsIden::Table)
@@ -93,14 +90,11 @@ pub fn get_users_assets(user_id: Uuid) -> DbQueryWithValues {
 pub fn get_asset_with_metadata(params: GetAssetsParams) -> DbQueryWithValues {
     let mut get_assets_builder = Query::select()
         .column((AssetsIden::Table, AssetsIden::Id))
-        .column((AssetsIden::Table, AssetsIden::Name))
+        .column((AssetsIden::Table, AssetsIden::AssetName))
         .column((AssetsIden::Table, AssetsIden::AssetType))
         .column((AssetsIden::Table, AssetsIden::Ticker))
         .column((AssetsIden::Table, AssetsIden::UserId))
-        .expr_as(
-            Expr::col((AssetTypesIden::Table, AssetTypesIden::Name)),
-            Alias::new("asset_type_name"),
-        )
+        .column((AssetTypesIden::Table, AssetTypesIden::AssetTypeName))
         .conditions(
             params.include_metadata,
             |q| {
@@ -172,7 +166,7 @@ pub fn get_asset_with_metadata(params: GetAssetsParams) -> DbQueryWithValues {
 pub fn get_rates(params: GetRatesParams) -> DbQueryWithValues {
     let mut builder = Query::select()
         .column((AssetHistoryIden::Table, AssetHistoryIden::Rate))
-        .column((AssetHistoryIden::Table, AssetHistoryIden::Date))
+        .column((AssetHistoryIden::Table, AssetHistoryIden::RecordedAt))
         .from(AssetHistoryIden::Table)
         .to_owned();
 
@@ -195,9 +189,9 @@ pub fn get_rates(params: GetRatesParams) -> DbQueryWithValues {
     }
 
     builder
-        .and_where(Expr::col(AssetHistoryIden::Date).lte(params.interval.end_date))
-        .and_where(Expr::col(AssetHistoryIden::Date).gte(params.interval.start_date))
-        .order_by(AssetHistoryIden::Date, Order::Desc)
+        .and_where(Expr::col(AssetHistoryIden::RecordedAt).lte(params.interval.end_date))
+        .and_where(Expr::col(AssetHistoryIden::RecordedAt).gte(params.interval.start_date))
+        .order_by(AssetHistoryIden::RecordedAt, Order::Desc)
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }
@@ -240,14 +234,11 @@ pub fn get_shared_asset_pair_metadata(pairs: Vec<AssetPair>) -> DbQueryWithValue
 pub fn get_asset(id: i32) -> DbQueryWithValues {
     Query::select()
         .column((AssetsIden::Table, AssetsIden::Id))
-        .column((AssetsIden::Table, AssetsIden::Name))
+        .column((AssetsIden::Table, AssetsIden::AssetName))
         .column((AssetsIden::Table, AssetsIden::AssetType))
         .column((AssetsIden::Table, AssetsIden::Ticker))
         .column((AssetsIden::Table, AssetsIden::UserId))
-        .expr_as(
-            Expr::col((AssetTypesIden::Table, AssetTypesIden::Name)),
-            Alias::new("asset_type_name"),
-        )
+        .column((AssetTypesIden::Table, AssetTypesIden::AssetTypeName))
         .from(AssetsIden::Table)
         .inner_join(
             AssetTypesIden::Table,
@@ -355,12 +346,12 @@ pub fn get_latest_asset_pair_rates(
             AssetPairsIden::Pair2,
         ))
         .column((AssetHistoryIden::Table, AssetHistoryIden::Rate))
-        .column((AssetHistoryIden::Table, AssetHistoryIden::Date))
+        .column((AssetHistoryIden::Table, AssetHistoryIden::RecordedAt))
         .from_subquery(filtered_query, AssetsAliasIden::FilteredPairsSubquery)
         .join_lateral(
             sea_query::JoinType::Join,
             Query::select()
-                .columns([AssetHistoryIden::Rate, AssetHistoryIden::Date])
+                .columns([AssetHistoryIden::Rate, AssetHistoryIden::RecordedAt])
                 .from(AssetHistoryIden::Table)
                 .and_where(
                     Expr::col(AssetHistoryIden::PairId)
@@ -371,7 +362,7 @@ pub fn get_latest_asset_pair_rates(
                     // if condition is true then add the following condition
                     |q| {
                         q.limit(1)
-                            .order_by(AssetHistoryIden::Date, sea_query::Order::Desc);
+                            .order_by(AssetHistoryIden::RecordedAt, sea_query::Order::Desc);
                     },
                     // otherwise leave it as is
                     |_q| {},
@@ -380,9 +371,10 @@ pub fn get_latest_asset_pair_rates(
                     date_floor.is_some(), // if condition is true then add the following condition
                     |q| {
                         q.and_where(
-                            Expr::col(AssetHistoryIden::Date).gte(Expr::val(date_floor.unwrap())),
+                            Expr::col(AssetHistoryIden::RecordedAt)
+                                .gte(Expr::val(date_floor.unwrap())),
                         )
-                        .order_by(AssetHistoryIden::Date, sea_query::Order::Asc);
+                        .order_by(AssetHistoryIden::RecordedAt, sea_query::Order::Asc);
                     },
                     // otherwise leave it as is
                     |_q| {},
@@ -399,7 +391,7 @@ pub fn get_latest_asset_pair_rates(
 pub fn get_pair_rates(pair1: i32, pair2: i32) -> DbQueryWithValues {
     Query::select()
         .column((AssetHistoryIden::Table, AssetHistoryIden::Rate))
-        .column((AssetHistoryIden::Table, AssetHistoryIden::Date))
+        .column((AssetHistoryIden::Table, AssetHistoryIden::RecordedAt))
         .from(AssetHistoryIden::Table)
         .and_where(
             Expr::col(AssetHistoryIden::PairId).in_subquery(
@@ -414,7 +406,7 @@ pub fn get_pair_rates(pair1: i32, pair2: i32) -> DbQueryWithValues {
                     .take(),
             ),
         )
-        .order_by(AssetHistoryIden::Date, Order::Desc)
+        .order_by(AssetHistoryIden::RecordedAt, Order::Desc)
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }
@@ -426,12 +418,16 @@ pub fn insert_pair_rates(rates: Vec<AssetPairRateInsert>) -> DbQueryWithValues {
         .columns([
             AssetHistoryIden::PairId,
             AssetHistoryIden::Rate,
-            AssetHistoryIden::Date,
+            AssetHistoryIden::RecordedAt,
         ])
         .to_owned();
 
     rates.into_iter().for_each(|rate| {
-        query_builder.values_panic([rate.pair_id.into(), rate.rate.into(), rate.date.into()]);
+        query_builder.values_panic([
+            rate.pair_id.into(),
+            rate.rate.into(),
+            rate.recorded_at.into(),
+        ]);
     });
 
     query_builder.build_sqlx(PostgresQueryBuilder).into()
@@ -454,14 +450,14 @@ pub fn insert_asset(asset: InsertAsset) -> DbQueryWithValues {
         .into_table(AssetsIden::Table)
         .columns([
             AssetsIden::AssetType,
-            AssetsIden::Name,
+            AssetsIden::AssetName,
             AssetsIden::Ticker,
             AssetsIden::BasePairId,
             AssetsIden::UserId,
         ])
         .values_panic([
             asset.asset_type.into(),
-            asset.name.into(),
+            asset.asset_name.into(),
             asset.ticker.into(),
             asset.base_pair_id.into(),
             asset.user_id.into(),
@@ -505,7 +501,7 @@ pub fn get_assets_raw() -> DbQueryWithValues {
     Query::select()
         .column((AssetsIden::Table, AssetsIden::Id))
         .column((AssetsIden::Table, AssetsIden::AssetType))
-        .column((AssetsIden::Table, AssetsIden::Name))
+        .column((AssetsIden::Table, AssetsIden::AssetName))
         .column((AssetsIden::Table, AssetsIden::Ticker))
         .column((AssetsIden::Table, AssetsIden::BasePairId))
         .column((AssetsIden::Table, AssetsIden::UserId))
@@ -597,7 +593,7 @@ pub fn get_pair_prices_by_dates(pair_dates: Vec<AssetPairDate>) -> DbQueryWithVa
         )
         .expr_as(
             Func::cust(Unnest).arg(target_date_array),
-            AssetHistoryIden::Date,
+            AssetHistoryIden::RecordedAt,
         )
         .to_owned();
 
@@ -647,7 +643,10 @@ pub fn get_pair_prices_by_dates(pair_dates: Vec<AssetPairDate>) -> DbQueryWithVa
             ]),
             AssetPairsIden::Id,
         )
-        .column((AssetsAliasIden::PairsDatesList, AssetHistoryIden::Date))
+        .column((
+            AssetsAliasIden::PairsDatesList,
+            AssetHistoryIden::RecordedAt,
+        ))
         .from_subquery(asset_pairs_dates, AssetsAliasIden::PairsDatesList)
         .join_subquery(
             sea_query::JoinType::LeftJoin,
@@ -672,17 +671,17 @@ pub fn get_pair_prices_by_dates(pair_dates: Vec<AssetPairDate>) -> DbQueryWithVa
         .to_owned();
 
     let history_query = Query::select()
-        .columns([AssetHistoryIden::Rate, AssetHistoryIden::Date])
+        .columns([AssetHistoryIden::Rate, AssetHistoryIden::RecordedAt])
         .from(AssetHistoryIden::Table)
         .and_where(
             Expr::col(AssetHistoryIden::PairId)
                 .equals((AssetsAliasIden::PairIdsDatesList, AssetPairsIden::Id)),
         )
-        .and_where(Expr::col(AssetHistoryIden::Date).lte(Expr::col((
+        .and_where(Expr::col(AssetHistoryIden::RecordedAt).lte(Expr::col((
             AssetsAliasIden::PairIdsDatesList,
-            AssetHistoryIden::Date,
+            AssetHistoryIden::RecordedAt,
         ))))
-        .order_by(AssetHistoryIden::Date, Order::Desc)
+        .order_by(AssetHistoryIden::RecordedAt, Order::Desc)
         .limit(1)
         .to_owned();
 
@@ -690,7 +689,7 @@ pub fn get_pair_prices_by_dates(pair_dates: Vec<AssetPairDate>) -> DbQueryWithVa
         .column((AssetsAliasIden::PairIdsDatesList, AssetPairsIden::Pair1))
         .column((AssetsAliasIden::PairIdsDatesList, AssetPairsIden::Pair2))
         .column((AssetHistoryIden::Table, AssetHistoryIden::Rate))
-        .column((AssetHistoryIden::Table, AssetHistoryIden::Date))
+        .column((AssetHistoryIden::Table, AssetHistoryIden::RecordedAt))
         .from_subquery(paior_ids_dates_query, AssetsAliasIden::PairIdsDatesList)
         .join_lateral(
             sea_query::JoinType::LeftJoin,

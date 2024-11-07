@@ -1,6 +1,5 @@
 use dal::models::{
-    transaction_models::AddTransactionModel,
-    transaction_with_entries_model::TransactionWithEntriesModel,
+    transaction_models::AddTransactionModel, transaction_models::TransactionWithEntriesModel,
 };
 use time::OffsetDateTime;
 use uuid::Uuid;
@@ -152,7 +151,7 @@ impl TransactionProcessor for RegularTransaction {
     ) -> Transaction {
         Box::new(RegularTransaction {
             transaction_id: Some(models[0].transaction_id),
-            date: models[0].date,
+            date: models[0].date_transacted,
             description: None,
             entries: models
                 .iter()

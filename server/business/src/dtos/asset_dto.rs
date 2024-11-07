@@ -15,7 +15,7 @@ impl From<Asset> for AssetDto {
     fn from(p: Asset) -> Self {
         Self {
             ticker: p.ticker,
-            name: p.name,
+            name: p.asset_name,
             category: "obselete dto".to_string(),
             asset_id: p.id,
             owner: p.user_id,
@@ -27,7 +27,7 @@ impl From<PublicAsset> for AssetDto {
     fn from(p: PublicAsset) -> Self {
         Self {
             ticker: p.ticker,
-            name: p.name,
+            name: p.asset_name,
             category: p.category,
             asset_id: p.id,
             owner: None,

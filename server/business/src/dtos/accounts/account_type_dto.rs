@@ -1,4 +1,4 @@
-use dal::models::account_model::AccountTypeModel;
+use dal::models::account_models::AccountTypeModel;
 
 pub struct AccountTypeDto {
     pub id: i32,

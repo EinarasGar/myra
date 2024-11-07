@@ -48,7 +48,7 @@ pub fn insert_transactions(models: Vec<AddTransactionModel>) -> DbQueryWithValue
             TransactionIden::GroupId,
             TransactionIden::UserId,
             TransactionIden::TypeId,
-            TransactionIden::Date,
+            TransactionIden::DateTransacted,
         ])
         .returning_col(TransactionIden::Id)
         .to_owned();

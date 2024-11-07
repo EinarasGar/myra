@@ -2,10 +2,7 @@
 use dal::database_context::MyraDb;
 
 use dal::{
-    models::{
-        transaction_models::AddTransactionDescriptionModel,
-        transcation_description::TransactionDescriptionModel,
-    },
+    models::transaction_models::{AddTransactionDescriptionModel, TransactionDescriptionModel},
     queries::transaction_data_queries,
 };
 use uuid::Uuid;

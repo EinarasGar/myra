@@ -3,7 +3,7 @@ use std::collections::HashSet;
 #[mockall_double::double]
 use dal::database_context::MyraDb;
 use dal::{
-    models::account_model::{
+    models::account_models::{
         Account, AccountCreationModel, AccountLiquidityTypeModel, AccountTypeModel,
         AccountUpdateModel, AccountWithMetadata,
     },

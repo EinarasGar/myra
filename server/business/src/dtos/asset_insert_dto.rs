@@ -15,7 +15,7 @@ impl From<AssetInsertDto> for InsertAsset {
     fn from(p: AssetInsertDto) -> Self {
         Self {
             ticker: p.ticker,
-            name: p.name,
+            asset_name: p.name,
             asset_type: p.asset_type,
             base_pair_id: p.base_pair_id,
             user_id: p.user_id,

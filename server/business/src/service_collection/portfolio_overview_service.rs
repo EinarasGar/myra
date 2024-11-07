@@ -1,16 +1,5 @@
-use std::vec;
-
 #[mockall_double::double]
 use dal::database_context::MyraDb;
-
-use rust_decimal_macros::dec;
-use time::macros::datetime;
-use uuid::Uuid;
-
-use crate::dtos::portfolio_overview_dto::PortfolioOverviewDto;
-use crate::entities::portfolio_overview::investment_transaction::asset_purchase::AssetPurchase;
-use crate::entities::portfolio_overview::investment_transaction::cash_transfer_in::CashTransferIn;
-use crate::entities::portfolio_overview::portfolio::{Portfolio, PortfolioAction};
 
 #[mockall_double::double]
 use super::asset_service::AssetsService;
@@ -33,33 +22,33 @@ impl PortfolioOverviewService {
         }
     }
 
-    pub async fn get_full_portfolio_overview(&self) -> anyhow::Result<PortfolioOverviewDto> {
-        let mut portfolio = Portfolio::new();
-        let account_id = Uuid::new_v4();
+    // pub async fn get_full_portfolio_overview(&self) -> anyhow::Result<PortfolioOverviewDto> {
+    //     let mut portfolio = Portfolio::new();
+    //     let account_id = Uuid::new_v4();
 
-        let input: Vec<Box<dyn PortfolioAction>> = vec![
-            Box::new(CashTransferIn {
-                asset_id: 10,
-                account_id,
-                fees: dec!(0),
-                units: dec!(20),
-                date: datetime!(2000-03-22 00:00:00 UTC),
-            }),
-            Box::new(AssetPurchase {
-                instrument_asset_id: 1,
-                account_id,
-                instrument_units: dec!(1),
-                instrument_reference_price: dec!(1),
-                fees: dec!(1),
-                cash_asset_id: 10,
-                cash_units: dec!(15),
-                date: datetime!(2000-03-22 00:00:00 UTC),
-            }),
-        ];
+    //     let input: Vec<Box<dyn PortfolioAction>> = vec![
+    //         Box::new(CashTransferIn {
+    //             asset_id: 10,
+    //             account_id,
+    //             fees: dec!(0),
+    //             units: dec!(20),
+    //             date: datetime!(2000-03-22 00:00:00 UTC),
+    //         }),
+    //         Box::new(AssetPurchase {
+    //             instrument_asset_id: 1,
+    //             account_id,
+    //             instrument_units: dec!(1),
+    //             instrument_reference_price: dec!(1),
+    //             fees: dec!(1),
+    //             cash_asset_id: 10,
+    //             cash_units: dec!(15),
+    //             date: datetime!(2000-03-22 00:00:00 UTC),
+    //         }),
+    //     ];
 
-        portfolio.process_transactions(input);
-        Ok(portfolio.into())
-    }
+    //     portfolio.process_transactions(input);
+    //     Ok(portfolio.into())
+    // }
 
     // pub async fn get_portfolio_asset_overview(
     //     &self,

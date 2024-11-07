@@ -56,12 +56,12 @@ impl AuthService {
         let user_auth_info = self.db_context.fetch_one::<UserAuthModel>(query).await?;
 
         self.user_service
-            .verify_user_password(password, user_auth_info.password)?;
+            .verify_user_password(password, user_auth_info.password_hash)?;
 
         let my_claims = ClaimsDto {
             sub: user_auth_info.id,
             exp: jsonwebtoken::get_current_timestamp() + 6000,
-            role: UserRoleEnumDto::from_str(&user_auth_info.role).unwrap(),
+            role: UserRoleEnumDto::from_str(&user_auth_info.user_role_name).unwrap(),
         };
 
         let token = encode(&Header::default(), &my_claims, &self.jwt_keys.encoding).unwrap();

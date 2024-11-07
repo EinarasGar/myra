@@ -4,15 +4,15 @@ pub enum UsersIden {
     Table,
     Id,
     Username,
-    Password,
+    PasswordHash,
     DefaultAssset,
-    Role,
+    UserRole,
 }
 
 pub enum UserRolesIden {
     Table,
     Id,
-    Name,
+    RoleName,
 }
 
 impl Iden for UsersIden {
@@ -24,9 +24,9 @@ impl Iden for UsersIden {
                 Self::Table => "users",
                 Self::Id => "id",
                 Self::Username => "username",
-                Self::Password => "password",
+                Self::PasswordHash => "password_hash",
                 Self::DefaultAssset => "default_asset",
-                Self::Role => "role",
+                Self::UserRole => "user_role",
             }
         )
         .unwrap();
@@ -41,7 +41,7 @@ impl Iden for UserRolesIden {
             match self {
                 Self::Table => "user_roles",
                 Self::Id => "id",
-                Self::Name => "name",
+                Self::RoleName => "role_name",
             }
         )
         .unwrap();

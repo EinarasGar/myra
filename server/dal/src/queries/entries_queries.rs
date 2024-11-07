@@ -1,7 +1,7 @@
 use sea_query::{PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
 
-use crate::{idens::entries_idens::EntryIden, models::add_entry_model::AddEntryModel};
+use crate::{idens::entries_idens::EntryIden, models::entry_models::AddEntryModel};
 
 use super::DbQueryWithValues;
 

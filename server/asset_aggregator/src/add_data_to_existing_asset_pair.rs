@@ -8,8 +8,8 @@ use yahoo_finance_api as yahoo;
 
 #[tokio::main]
 async fn main() {
-    let ticker = "EUR=X";
-    let asset_pair_id = 9;
+    let ticker = "VUSA.L";
+    let asset_pair_id = 3;
 
     let services = Services::new().await.unwrap();
     let asset_service = AssetsService::new(services.get_db_instance());

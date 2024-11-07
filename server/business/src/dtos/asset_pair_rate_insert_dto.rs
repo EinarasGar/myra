@@ -1,4 +1,4 @@
-use dal::models::asser_pair_rate_insert::AssetPairRateInsert;
+use dal::models::asset_models::AssetPairRateInsert;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use time::{serde::iso8601, OffsetDateTime};
@@ -16,7 +16,7 @@ impl From<AssetPairRateInsertDto> for AssetPairRateInsert {
         AssetPairRateInsert {
             pair_id: dto.pair_id,
             rate: dto.rate,
-            date: dto.date,
+            recorded_at: dto.date,
         }
     }
 }

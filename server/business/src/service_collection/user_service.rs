@@ -1,12 +1,6 @@
 use dal::{
-    models::{
-        portfolio_models::PortfolioAccountModel,
-        user_models::{AddUserModel, UserFullModel, UserRoleModel},
-    },
-    queries::{
-        portfolio_queries::{self},
-        user_queries::{self},
-    },
+    models::user_models::{AddUserModel, UserFullModel, UserRoleModel},
+    queries::user_queries::{self},
 };
 
 #[mockall_double::double]
@@ -19,10 +13,7 @@ use argon2::{
     Argon2,
 };
 
-use crate::dtos::{
-    add_user_dto::AddUserDto, portfolio_account_dto::PortfolioAccountDto,
-    user_full_dto::UserFullDto,
-};
+use crate::dtos::{add_user_dto::AddUserDto, user_full_dto::UserFullDto};
 
 pub struct UsersService {
     db: MyraDb,
@@ -34,10 +25,7 @@ impl UsersService {
     }
 
     #[tracing::instrument(skip_all, err)]
-    pub async fn register_user(
-        &self,
-        user: AddUserDto,
-    ) -> anyhow::Result<(UserFullDto, PortfolioAccountDto)> {
+    pub async fn register_user(&self, user: AddUserDto) -> anyhow::Result<UserFullDto> {
         let new_user_id: Uuid = Uuid::new_v4();
         let db_user: AddUserModel = AddUserModel {
             id: new_user_id,
@@ -47,22 +35,12 @@ impl UsersService {
             role_id: None,
         };
 
-        let default_portfolio_account = PortfolioAccountModel {
-            id: new_user_id,
-            user_id: new_user_id,
-            name: "Default".to_string(),
-        };
-
         self.db.start_transaction().await?;
 
         let query = user_queries::inset_user(db_user);
         self.db.execute(query).await?;
         let query = user_queries::get_user_role(new_user_id);
         let user_role = self.db.fetch_one::<UserRoleModel>(query).await?;
-        let query = portfolio_queries::insert_or_update_portfolio_account(
-            default_portfolio_account.clone(),
-        );
-        self.db.execute(query).await?;
 
         self.db.commit_transaction().await?;
 
@@ -73,7 +51,7 @@ impl UsersService {
             default_asset_id: user.default_asset,
         };
 
-        Ok((ret_obj, default_portfolio_account.into()))
+        Ok(ret_obj)
     }
 
     #[tracing::instrument(skip_all, err)]

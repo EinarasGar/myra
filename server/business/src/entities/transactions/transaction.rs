@@ -1,6 +1,5 @@
 use dal::models::{
-    transaction_models::AddTransactionModel,
-    transaction_with_entries_model::TransactionWithEntriesModel,
+    transaction_models::AddTransactionModel, transaction_models::TransactionWithEntriesModel,
 };
 use uuid::Uuid;
 

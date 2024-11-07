@@ -16,7 +16,7 @@ pub enum AssetsIden {
     Table,
     Id,
     AssetType,
-    Name,
+    AssetName,
     Ticker,
     BasePairId,
     UserId,
@@ -26,7 +26,7 @@ pub enum AssetsIden {
 pub enum AssetTypesIden {
     Table,
     Id,
-    Name,
+    AssetTypeName,
 }
 
 #[allow(dead_code)]
@@ -57,7 +57,7 @@ pub enum AssetHistoryIden {
     Id,
     PairId,
     Rate,
-    Date,
+    RecordedAt,
 }
 
 impl Iden for AssetsAliasIden {
@@ -88,7 +88,7 @@ impl Iden for AssetsIden {
                 Self::Table => "assets",
                 Self::Id => "id",
                 Self::AssetType => "asset_type",
-                Self::Name => "name",
+                Self::AssetName => "asset_name",
                 Self::Ticker => "ticker",
                 Self::BasePairId => "base_pair_id",
                 Self::UserId => "user_id",
@@ -106,7 +106,7 @@ impl Iden for AssetTypesIden {
             match self {
                 Self::Table => "asset_types",
                 Self::Id => "id",
-                Self::Name => "name",
+                Self::AssetTypeName => "asset_type_name",
             }
         )
         .unwrap();
@@ -139,7 +139,7 @@ impl Iden for AssetHistoryIden {
                 Self::Id => "id",
                 Self::PairId => "pair_id",
                 Self::Rate => "rate",
-                Self::Date => "date",
+                Self::RecordedAt => "recorded_at",
             }
         )
         .unwrap();

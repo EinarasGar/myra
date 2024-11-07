@@ -1,4 +1,4 @@
-use dal::models::account_model::Account;
+use dal::models::account_models::Account;
 use uuid::Uuid;
 
 pub struct AccountDto {

@@ -1,4 +1,4 @@
-use dal::models::account_model::AccountLiquidityTypeModel;
+use dal::models::account_models::AccountLiquidityTypeModel;
 
 #[derive(Clone)]
 pub struct AccountLiquidityTypeDto {

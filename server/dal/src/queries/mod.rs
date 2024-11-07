@@ -3,7 +3,6 @@ use sea_query_binder::SqlxValues;
 pub mod account_queries;
 pub mod asset_queries;
 pub mod entries_queries;
-pub mod portfolio_queries;
 pub mod transaction_categories_queries;
 pub mod transaction_data_queries;
 pub mod transaction_queries;

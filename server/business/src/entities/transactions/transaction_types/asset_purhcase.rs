@@ -4,8 +4,7 @@ use dal::{
         transaction_types::DatabaseTransactionTypes,
     },
     models::{
-        transaction_models::AddTransactionModel,
-        transaction_with_entries_model::TransactionWithEntriesModel,
+        transaction_models::AddTransactionModel, transaction_models::TransactionWithEntriesModel,
     },
 };
 use rust_decimal_macros::dec;
@@ -183,7 +182,7 @@ impl TransactionProcessor for AssetPurchaseTransaction {
     ) -> Transaction {
         Box::new(AssetPurchaseTransaction {
             transaction_id: Some(models[0].transaction_id),
-            date: models[0].date,
+            date: models[0].date_transacted,
             entries: models
                 .iter()
                 .map(|x| Entry {

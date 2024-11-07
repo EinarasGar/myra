@@ -4,7 +4,7 @@ use anyhow::bail;
 #[mockall_double::double]
 use dal::database_context::MyraDb;
 use dal::{
-    models::{asset_pair::AssetPair, asset_pair_rate::AssetPairRate, asset_rate::AssetRate},
+    models::asset_models::{AssetPair, AssetPairRate, AssetRate},
     queries::asset_queries,
     query_params::get_rates_params::{GetRatesParams, GetRatesSeachType, GetRatesTimeParams},
 };
@@ -70,7 +70,7 @@ impl AssetRatesService {
                     (val.pair1, val.pair2),
                     AssetRateDto {
                         rate: val.rate,
-                        date: val.date,
+                        date: val.recorded_at,
                     },
                 )
             })

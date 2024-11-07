@@ -1,6 +1,16 @@
 use sqlx::{postgres::PgRow, FromRow};
 
-#[derive(sqlx::FromRow)]
+#[derive(Clone, Debug, FromRow)]
+pub struct Count {
+    pub count: i64,
+}
+
+#[derive(Clone, Debug, FromRow)]
+pub struct Exsists {
+    pub exists: bool,
+}
+
+#[derive(FromRow)]
 pub struct TotalCount<T>
 where
     for<'r> T: FromRow<'r, PgRow>,

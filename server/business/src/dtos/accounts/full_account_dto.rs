@@ -1,4 +1,4 @@
-use dal::models::account_model::AccountWithMetadata;
+use dal::models::account_models::AccountWithMetadata;
 use uuid::Uuid;
 
 use super::{

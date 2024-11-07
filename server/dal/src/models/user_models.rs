@@ -12,8 +12,8 @@ pub struct AddUserModel {
 #[derive(Debug, sqlx::FromRow)]
 pub struct UserAuthModel {
     pub id: Uuid,
-    pub password: String,
-    pub role: String,
+    pub password_hash: String,
+    pub user_role_name: String,
 }
 
 #[derive(Debug, sqlx::FromRow)]
