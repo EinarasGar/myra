@@ -11,10 +11,10 @@ CREATE TABLE IF NOT EXISTS asset_types (
     asset_type_name TEXT NOT NULL,
     CONSTRAINT asset_types_pk PRIMARY KEY (id)
 );
-CREATE TABLE IF NOT EXISTS category_type (
+CREATE TABLE IF NOT EXISTS transaction_category_type (
     id SERIAL NOT NULL,
     category_type_name TEXT NOT NULL,
-    CONSTRAINT category_type_pk PRIMARY KEY (id)
+    CONSTRAINT transaction_category_type_pk PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS account_types (
     id SERIAL NOT NULL,
@@ -32,19 +32,14 @@ CREATE TABLE IF NOT EXISTS transaction_categories (
     icon TEXT NOT NULL,
     category_type INT NOT NULL,
     CONSTRAINT transaction_categories_pk PRIMARY KEY (id),
-    CONSTRAINT transaction_categories_type_fkey FOREIGN KEY (category_type) REFERENCES category_type(id)
-);
-CREATE TABLE IF NOT EXISTS transaction_descriptions (
-    transaction_id UUID NOT NULL,
-    description TEXT NOT NULL,
-    CONSTRAINT transaction_descriptions_pk PRIMARY KEY (transaction_id)
+    CONSTRAINT transaction_categories_type_fkey FOREIGN KEY (category_type) REFERENCES transaction_category_type(id)
 );
 CREATE TABLE IF NOT EXISTS transaction_group (
-    transaction_group_id UUID NOT NULL,
+    id UUID NOT NULL,
     category_id INT NOT NULL,
     description TEXT NOT NULL,
     date_added TIMESTAMPTZ NOT NULL,
-    CONSTRAINT transaction_group_descriptions_pk PRIMARY KEY (transaction_group_id),
+    CONSTRAINT transaction_group_id_pkey PRIMARY KEY (id),
     CONSTRAINT transaction_group_category_id_fkey FOREIGN KEY (category_id) REFERENCES transaction_categories(id)
 );
 CREATE TABLE IF NOT EXISTS assets (
@@ -55,7 +50,7 @@ CREATE TABLE IF NOT EXISTS assets (
     base_pair_id INT NULL,
     user_id UUID NULL,
     CONSTRAINT assets_pk PRIMARY KEY (id),
-    CONSTRAINT asset_type_fkey FOREIGN KEY (asset_type) REFERENCES asset_types(id) --CONSTRAINT assets_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id)
+    CONSTRAINT asset_type_fkey FOREIGN KEY (asset_type) REFERENCES asset_types(id)
 );
 CREATE TABLE IF NOT EXISTS asset_pairs (
     id SERIAL NOT NULL,
@@ -125,13 +120,21 @@ CREATE TABLE IF NOT EXISTS transaction (
     date_transacted TIMESTAMPTZ NOT NULL,
     CONSTRAINT transaction_id_pkey PRIMARY KEY (id),
     CONSTRAINT transaction_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id),
-    CONSTRAINT transcation_type_fkey FOREIGN KEY (type_id) REFERENCES transaction_types(id)
+    CONSTRAINT transcation_type_fkey FOREIGN KEY (type_id) REFERENCES transaction_types(id),
+    CONSTRAINT transcation_group_id_fkey FOREIGN KEY (group_id) REFERENCES transaction_group(id)
 );
-CREATE TABLE IF NOT EXISTS dividends (
+CREATE TABLE IF NOT EXISTS transaction_dividends (
     transaction_id UUID NOT NULL,
     source_asset_id INT NOT NULL,
-    CONSTRAINT dividends_transaction_id_pkey_fkey PRIMARY KEY (transaction_id),
-    CONSTRAINT dividends_transaction_id_fkey FOREIGN KEY (transaction_id) REFERENCES transaction(id)
+    CONSTRAINT transaction_dividends_transaction_id_pkey PRIMARY KEY (transaction_id),
+    CONSTRAINT transaction_dividends_source_asset_id_fkey FOREIGN KEY (source_asset_id) REFERENCES assets(id),
+    CONSTRAINT transaction_dividends_transaction_id_fkey FOREIGN KEY (transaction_id) REFERENCES transaction(id)
+);
+CREATE TABLE IF NOT EXISTS transaction_descriptions (
+    transaction_id UUID NOT NULL,
+    description TEXT NOT NULL,
+    CONSTRAINT transaction_descriptions_transaction_id_pkey PRIMARY KEY (transaction_id),
+    CONSTRAINT transaction_descriptions_transaction_id_fkey FOREIGN KEY (transaction_id) REFERENCES transaction(id)
 );
 CREATE TABLE IF NOT EXISTS entry (
     id SERIAL NOT NULL,

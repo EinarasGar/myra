@@ -1,6 +1,6 @@
 use sqlx::types::{Decimal, Uuid};
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct AddEntryModel {
     pub asset_id: i32,
     pub account_id: Uuid,

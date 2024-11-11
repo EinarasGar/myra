@@ -6,7 +6,6 @@ use crate::enums::{
     transaction_types::DatabaseTransactionTypes,
 };
 
-#[derive(Clone, Debug)]
 pub struct AddTransactionModel {
     pub user_id: Uuid,
     pub group_id: Option<Uuid>,
@@ -14,19 +13,19 @@ pub struct AddTransactionModel {
     pub transaction_type_id: i32,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct AddTransactionDescriptionModel {
     pub transaction_id: Uuid,
     pub description: String,
 }
 
-#[derive(Clone, Debug, sqlx::FromRow)]
+#[derive(sqlx::FromRow)]
 pub struct TransactionCategoryFeeEnumModel {
     pub enum_index: DatabaseFeeCategories,
     pub category_mapping: i32,
 }
 
-#[derive(Clone, Debug, sqlx::FromRow)]
+#[derive(sqlx::FromRow)]
 pub struct TransactionCategoryTransactionTypeEnumModel {
     pub enum_index: DatabaseTransactionTypeCategories,
     pub category_mapping: i32,

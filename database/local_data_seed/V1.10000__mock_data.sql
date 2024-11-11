@@ -22,7 +22,7 @@ VALUES (1, 'US Dollar', 'USD', NULL),
 INSERT INTO user_roles (role_name)
 VALUES ('User'),
     ('Admin');
-INSERT INTO category_type (category_type_name)
+INSERT INTO transaction_category_type (category_type_name)
 VALUES ('Income'),
     ('Expense'),
     ('Investments'),

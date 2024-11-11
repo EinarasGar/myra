@@ -589,7 +589,6 @@ dependencies = [
  "mockall",
  "sea-query",
  "sea-query-binder",
- "serde",
  "sqlx",
  "strum",
  "tokio",
