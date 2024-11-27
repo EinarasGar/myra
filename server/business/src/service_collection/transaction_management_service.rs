@@ -1,6 +1,7 @@
 use std::vec;
 
 use anyhow::Ok;
+use anyhow::Result;
 #[mockall_double::double]
 use dal::database_context::MyraDb;
 
@@ -78,7 +79,7 @@ impl TransactionManagementService {
             .pop()
             .expect("No transaction found in the vector");
 
-        Ok(transaction.into_dto())
+        Ok(transaction.try_into_dto()?)
     }
 
     // pub async fn get_transactions(&self, user_id: Uuid) -> anyhow::Result<Vec<TransactionDto>> {
@@ -134,8 +135,10 @@ impl TransactionManagementService {
                 .load_metadata(&mut transcations)
                 .await?;
 
-            let dtos: Vec<TransactionDto> =
-                transcations.into_iter().map(|x| x.into_dto()).collect();
+            let dtos = transcations
+                .into_iter()
+                .map(|x| x.try_into_dto())
+                .collect::<Result<Vec<TransactionDto>>>()?;
 
             let page = PageOfResultsDto {
                 results: dtos,
@@ -154,7 +157,7 @@ impl TransactionManagementService {
         transaction: TransactionDto,
     ) -> anyhow::Result<TransactionDto> {
         self.db.start_transaction().await?;
-        let mut transaction: Transaction = create_transaction_from_dto(transaction, user_id);
+        let mut transaction: Transaction = create_transaction_from_dto(transaction, user_id)?;
         let mut transactions = vec![transaction];
 
         //Maybe a cool thing would be to do something like .in_database_transaction to wrap a method around transaction
@@ -165,7 +168,7 @@ impl TransactionManagementService {
 
         self.db.commit_transaction().await?;
 
-        let dto = transaction.into_dto();
+        let dto = transaction.try_into_dto()?;
         Ok(dto)
     }
 

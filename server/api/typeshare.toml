@@ -1,4 +1,0 @@
-[typescript.type_mappings]
-"Uuid" = "string"
-"OffsetDateTime" = "string"
-"Decimal" = "number"

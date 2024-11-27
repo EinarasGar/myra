@@ -1,3 +1,4 @@
+use anyhow::Result;
 use dal::models::{
     transaction_models::AddTransactionModel, transaction_models::TransactionWithEntriesModel,
 };
@@ -9,8 +10,8 @@ use super::metadata::MetadataField;
 
 pub trait TransactionProcessor {
     #[allow(clippy::wrong_self_convention)]
-    fn into_dto(&self) -> TransactionDto;
-    fn from_dto(dto: TransactionDto, user_id: Uuid) -> Transaction
+    fn try_into_dto(&self) -> Result<TransactionDto>;
+    fn try_from_dto(dto: TransactionDto, user_id: Uuid) -> Result<Transaction>
     where
         Self: Sized;
     fn from_transaction_with_entries_models(
@@ -18,8 +19,17 @@ pub trait TransactionProcessor {
     ) -> Transaction
     where
         Self: Sized;
-    fn get_metadata_fields(&self) -> Vec<MetadataField>;
-    fn set_metadata_fields(&mut self, field: MetadataField);
+
+    fn get_metadata_fields(&self) -> Vec<MetadataField> {
+        vec![]
+    }
+
+    fn set_metadata_fields(&mut self, field: MetadataField) {
+        panic!(
+            "This Transaction type does not have {:?} metadata fields.",
+            field
+        )
+    }
     fn get_entries(&self) -> &Vec<Entry>;
     fn get_add_transaction_model(&self) -> AddTransactionModel;
     fn get_entries_mut(&mut self) -> &mut Vec<Entry>;

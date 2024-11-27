@@ -1,10 +1,10 @@
-use std::collections::HashMap;
-
+use anyhow::Result;
 use asset_purhcase::AssetPurchaseTransaction;
 use dal::{
     enums::transaction_types::DatabaseTransactionTypes,
     models::transaction_models::TransactionWithEntriesModel,
 };
+use std::collections::HashMap;
 use uuid::Uuid;
 
 use crate::dtos::transaction_dto::TransactionDto;
@@ -54,10 +54,10 @@ impl From<DatabaseTransactionTypes> for TransactionTypes {
 
 fn get_dto_constructor(
     choice: TransactionTypes,
-) -> &'static dyn Fn(TransactionDto, Uuid) -> Transaction {
+) -> &'static dyn Fn(TransactionDto, Uuid) -> Result<Transaction> {
     match choice {
-        TransactionTypes::RegularTransaction => &RegularTransaction::from_dto,
-        TransactionTypes::AssetPurchase => &AssetPurchaseTransaction::from_dto,
+        TransactionTypes::RegularTransaction => &RegularTransaction::try_from_dto,
+        TransactionTypes::AssetPurchase => &AssetPurchaseTransaction::try_from_dto,
         TransactionTypes::CashTransferOut => todo!(),
         TransactionTypes::CashTransferIn => todo!(),
         TransactionTypes::CashDividend => todo!(),
@@ -94,7 +94,7 @@ fn get_model_constructor(
     }
 }
 
-pub fn create_transaction_from_dto(value: TransactionDto, user_id: Uuid) -> Transaction {
+pub fn create_transaction_from_dto(value: TransactionDto, user_id: Uuid) -> Result<Transaction> {
     let constructor = get_dto_constructor(value.clone().transaction_type.into());
     constructor(value, user_id)
 }

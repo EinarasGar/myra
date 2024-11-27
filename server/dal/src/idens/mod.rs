@@ -6,6 +6,7 @@ pub mod entries_idens;
 pub(crate) mod transaction_idens;
 pub(crate) mod user_idens;
 
+#[allow(dead_code)]
 pub enum CommonsIden {
     Excluded,
 }

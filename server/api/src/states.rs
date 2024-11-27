@@ -12,52 +12,55 @@ use business::service_collection::{
     transaction_service::TransactionService, user_service::UsersService,
 };
 
+use paste::paste;
+
 #[derive(Clone)]
 pub(crate) struct AppState {
     pub(crate) services_collection: business::service_collection::Services,
 }
 
 macro_rules! service_state {
-    ($name:ident, $service:ty) => {
-        #[allow(dead_code)]
-        pub struct $name(pub $service);
+    ($service:ident) => {
+        paste! {
 
-        impl FromRef<AppState> for $service {
-            fn from_ref(state: &AppState) -> $service {
-                let db = state.services_collection.get_db_instance();
-                <$service>::new(db)
+            #[allow(dead_code)]
+            pub struct [<$service State>](pub $service);
+
+            impl FromRef<AppState> for $service {
+                fn from_ref(state: &AppState) -> $service {
+                    let db = state.services_collection.get_db_instance();
+                    <$service>::new(db)
+                }
             }
-        }
 
-        #[async_trait]
-        impl<S> FromRequestParts<S> for $name
-        where
-            $service: FromRef<S>,
-            S: Send + Sync,
-        {
-            type Rejection = (StatusCode, String);
+            #[async_trait]
+            impl<S> FromRequestParts<S> for [<$service State>]
+            where
+                $service: FromRef<S>,
+                S: Send + Sync,
+            {
+                type Rejection = (StatusCode, String);
 
-            async fn from_request_parts(
-                _parts: &mut Parts,
-                state: &S,
-            ) -> Result<Self, Self::Rejection> {
-                let conn = <$service>::from_ref(state);
-                Ok(Self(conn))
+                async fn from_request_parts(
+                    _parts: &mut Parts,
+                    state: &S,
+                ) -> Result<Self, Self::Rejection> {
+                    let conn = <$service>::from_ref(state);
+                    Ok(Self(conn))
+                }
             }
         }
     };
 }
 
-service_state!(UsersServiceState, UsersService);
-service_state!(AuthServiceState, AuthService);
-service_state!(TransactionServiceState, TransactionService);
-service_state!(
-    TransactionManagementServiceState,
-    TransactionManagementService
-);
-service_state!(PortfolioServiceState, PortfolioService);
-service_state!(AssetsServiceState, AssetsService);
-service_state!(AssetRatesServiceState, AssetRatesService);
-service_state!(PortfolioOverviewServiceState, PortfolioOverviewService);
-service_state!(EntriesServiceState, EntriesService);
-service_state!(AccountsServiceState, AccountsService);
+// Usage
+service_state!(UsersService);
+service_state!(AuthService);
+service_state!(TransactionService);
+service_state!(TransactionManagementService);
+service_state!(PortfolioService);
+service_state!(AssetsService);
+service_state!(AssetRatesService);
+service_state!(PortfolioOverviewService);
+service_state!(EntriesService);
+service_state!(AccountsService);

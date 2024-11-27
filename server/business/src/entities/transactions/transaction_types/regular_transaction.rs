@@ -1,99 +1,60 @@
-use dal::models::{
-    transaction_models::AddTransactionModel, transaction_models::TransactionWithEntriesModel,
+use dal::{
+    enums::transaction_types::DatabaseTransactionTypes,
+    models::transaction_models::{AddTransactionModel, TransactionWithEntriesModel},
 };
-use time::OffsetDateTime;
 use uuid::Uuid;
 
 use crate::{
-    dtos::{
-        entry_dto::EntryDto,
-        fee_entry_dto::FeeEntryDto,
-        transaction_dto::{RegularTransactionMetadataDto, TransactionDto, TransactionTypeDto},
-    },
-    dynamic_enums::{fee_categories::FeeCategories, DynamicEnum},
+    dtos::transaction_dto::{RegularTransactionMetadataDto, TransactionDto, TransactionTypeDto},
     entities::{
-        categories::fee_categories::is_fee_category,
         entries::entry::Entry,
-        transactions::{metadata::MetadataField, transaction::Transaction},
+        transactions::{
+            base_transaction::BaseTransaction, metadata::MetadataField, transaction::Transaction,
+        },
     },
 };
+use anyhow::Result;
 
 use super::TransactionProcessor;
 
 pub struct RegularTransaction {
-    user_id: Uuid,
-    transaction_id: Option<Uuid>,
-    date: OffsetDateTime,
+    base: BaseTransaction,
     description: Option<String>,
-    entries: Vec<Entry>,
 }
 
 impl TransactionProcessor for RegularTransaction {
     fn get_add_transaction_model(&self) -> AddTransactionModel {
-        AddTransactionModel {
-            user_id: self.user_id,
-            group_id: None,
-            date: self.date,
-            transaction_type_id: 1,
-        }
+        self.base
+            .get_add_transaction_model(DatabaseTransactionTypes::RegularTransaction)
     }
 
     fn set_transaction_id(&mut self, transaction_id: Uuid) {
-        self.transaction_id = Some(transaction_id);
+        self.base.set_transaction_id(transaction_id)
     }
 
     fn get_entries(&self) -> &Vec<Entry> {
-        &self.entries
+        &self.base.entries()
     }
 
     fn get_transaction_id(&self) -> Option<Uuid> {
-        self.transaction_id
+        self.base.transaction_id()
     }
 
     fn get_entries_mut(&mut self) -> &mut Vec<Entry> {
-        &mut self.entries
+        self.base.entries_mut()
     }
 
-    fn into_dto(&self) -> TransactionDto {
-        let main_entry = self
-            .entries
-            .iter()
-            .find(|x| !is_fee_category(x.category))
-            .unwrap();
+    fn try_into_dto(&self) -> Result<TransactionDto> {
+        //do i need to check if there are other entreies? idk
+        let main_entry = self.base.entry(|_| true)?;
 
-        let fee_entries: Vec<&Entry> = self
-            .entries
-            .iter()
-            .filter(|x| is_fee_category(x.category))
-            .collect();
+        let metadata = TransactionTypeDto::Regular(RegularTransactionMetadataDto {
+            description: self.description.clone(),
+            entry: main_entry.clone().into(),
+            category_id: main_entry.category,
+        });
 
-        TransactionDto {
-            transaction_id: self.transaction_id,
-            date: self.date,
-            transaction_type: TransactionTypeDto::Regular(RegularTransactionMetadataDto {
-                description: self.description.clone(),
-                entry: EntryDto {
-                    entry_id: main_entry.entry_id,
-                    asset_id: main_entry.asset_id,
-                    quantity: main_entry.quantity,
-                    account_id: main_entry.account_id,
-                },
-                category_id: main_entry.category,
-            }),
-            fee_entries: fee_entries
-                .iter()
-                .map(|x| FeeEntryDto {
-                    entry: EntryDto {
-                        entry_id: x.entry_id,
-                        asset_id: x.asset_id,
-                        quantity: x.quantity,
-                        account_id: x.account_id,
-                    },
-                    entry_type: FeeCategories::try_from_dynamic_enum(x.category)
-                        .expect("this should be handled tbh"),
-                })
-                .collect(),
-        }
+        self.base.try_into_dto(metadata)
     }
 
     fn get_metadata_fields(&self) -> Vec<MetadataField> {
@@ -108,62 +69,32 @@ impl TransactionProcessor for RegularTransaction {
         }
     }
 
-    fn from_dto(dto: TransactionDto, user_id: Uuid) -> Transaction {
+    fn try_from_dto(dto: TransactionDto, user_id: Uuid) -> Result<Transaction> {
         let metadata = match dto.transaction_type {
             TransactionTypeDto::Regular(metadata) => metadata,
             _ => panic!("Invalid transaction type"),
         };
-        Box::new(RegularTransaction {
-            transaction_id: dto.transaction_id,
-            date: dto.date,
+
+        let mut base = BaseTransaction::new(user_id, dto.transaction_id, dto.date, vec![]);
+        base.add_fee_entries_from_dtos(dto.fee_entries)?;
+
+        let entry = Entry::from_dto(metadata.entry, metadata.category_id);
+
+        base.add_entries(vec![entry]);
+
+        let ret = Box::new(RegularTransaction {
             description: metadata.description,
-            entries: {
-                let mut entries = Vec::new();
-                entries.push(Entry {
-                    entry_id: None,
-                    asset_id: metadata.entry.asset_id,
-                    quantity: metadata.entry.quantity,
-                    account_id: metadata.entry.account_id,
-                    category: metadata.category_id,
-                });
-                entries.append(
-                    &mut dto
-                        .fee_entries
-                        .into_iter()
-                        .map(|x| Entry {
-                            entry_id: None,
-                            asset_id: x.entry.asset_id,
-                            quantity: x.entry.quantity,
-                            account_id: x.entry.account_id,
-                            category: FeeCategories::try_into_dynamic_enum(x.entry_type)
-                                .expect("this should be handled tbh"),
-                        })
-                        .collect::<Vec<Entry>>(),
-                );
-                entries
-            },
-            user_id,
-        })
+            base,
+        });
+        Ok(ret)
     }
 
     fn from_transaction_with_entries_models(
         models: Vec<TransactionWithEntriesModel>,
     ) -> Transaction {
         Box::new(RegularTransaction {
-            transaction_id: Some(models[0].transaction_id),
-            date: models[0].date_transacted,
             description: None,
-            entries: models
-                .iter()
-                .map(|x| Entry {
-                    entry_id: Some(x.id),
-                    asset_id: x.asset_id,
-                    quantity: x.quantity,
-                    account_id: x.account_id,
-                    category: x.category_id,
-                })
-                .collect(),
-            user_id: models[0].user_id,
+            base: BaseTransaction::from_models(models),
         })
     }
 }
