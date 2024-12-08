@@ -1,6 +1,8 @@
 use business::{
     dtos::{asset_insert_dto::AssetInsertDto, asset_pair_rate_insert_dto::AssetPairRateInsertDto},
-    service_collection::{asset_service::AssetsService, Services},
+    service_collection::{
+        asset_rates_service::AssetRatesService, asset_service::AssetsService, Services,
+    },
 };
 use rust_decimal::{prelude::FromPrimitive, Decimal};
 use yahoo::time::{Duration, OffsetDateTime};
@@ -16,6 +18,7 @@ async fn main() {
 
     let services = Services::new().await.unwrap();
     let asset_service = AssetsService::new(services.get_db_instance());
+    let asset_rates_service = AssetRatesService::new(services.get_db_instance());
     let kkkk = asset_service
         .add_asset(AssetInsertDto {
             name: asset_name.to_string(),
@@ -41,8 +44,8 @@ async fn main() {
         let date =
             OffsetDateTime::from_unix_timestamp(quote.timestamp.try_into().unwrap()).unwrap();
         let price = quote.close;
-        asset_service
-            .insert_asset_pair_rate(AssetPairRateInsertDto {
+        asset_rates_service
+            .insert_pair_single(AssetPairRateInsertDto {
                 pair_id: kkkk.new_asset_pair_id.unwrap(),
                 rate: Decimal::from_f64(price).unwrap(),
                 date,

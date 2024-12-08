@@ -1,5 +1,10 @@
 #[mockall_double::double]
 use dal::database_context::MyraDb;
+use dal::models::portfolio_models::Holding;
+use dal::queries::entries_queries;
+use uuid::Uuid;
+
+use crate::dtos::portfolio::holding::HoldingDto;
 
 #[mockall_double::double]
 use super::asset_service::AssetsService;
@@ -20,6 +25,12 @@ impl PortfolioOverviewService {
             _transaction_service: TransactionService::new(db.clone()),
             _asset_service: AssetsService::new(db.clone()),
         }
+    }
+
+    pub async fn get_holdings(&self, user_id: Uuid) -> anyhow::Result<Vec<HoldingDto>> {
+        let query = entries_queries::get_holdings(user_id);
+        let ret = self.db.fetch_all::<Holding>(query).await?;
+        Ok(ret.into_iter().map(|h| h.into()).collect())
     }
 
     // pub async fn get_full_portfolio_overview(&self) -> anyhow::Result<PortfolioOverviewDto> {

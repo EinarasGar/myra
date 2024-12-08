@@ -4,7 +4,10 @@ use axum::{
     extract::{Path, Query},
     Json,
 };
-use business::dtos::paging_dto::PagingDto;
+use business::dtos::{
+    assets::{asset_id_dto::AssetIdDto, asset_pair_ids_dto::AssetPairIdsDto},
+    paging_dto::PagingDto,
+};
 
 use crate::{
     auth::AuthenticatedUserState,
@@ -156,7 +159,10 @@ pub async fn get_asset_pair(
 ) -> Result<Json<GetAssetPairResponseViewModel>, ApiError> {
     let (pair_dtos, latest_rate, shared_metadata) = tokio::try_join!(
         assets_service.get_asset_pair(id, reference_id),
-        asset_rates_service.get_asset_pair_latest_rate(id, reference_id),
+        asset_rates_service.get_pair_latest_direct(AssetPairIdsDto::new(
+            AssetIdDto(id),
+            AssetIdDto(reference_id)
+        )),
         assets_service.get_shared_asset_pair_metadata(id, reference_id)
     )?;
 
@@ -168,7 +174,7 @@ pub async fn get_asset_pair(
                 latest_rate: rate.rate,
                 last_updated: rate.date,
             }),
-            volume: shared_metadata.unwrap().volume,
+            volume: shared_metadata.map(|x| x.volume),
         },
     };
 
@@ -204,7 +210,10 @@ pub async fn get_asset_pair_rates(
 ) -> Result<Json<GetAssetPairRatesResponseViewModel>, ApiError> {
     let duration = parse_duration_string(query_params.range.clone())?;
     let rates = asset_rates_service
-        .get_asset_pair_rates_by_duration(id, reference_id, duration)
+        .get_pairs_by_duration_direct(
+            AssetPairIdsDto::new(AssetIdDto(id), AssetIdDto(reference_id)),
+            duration,
+        )
         .await?;
 
     let ret_rates: Vec<AssetRateViewModel> = rates.into_iter().map(Into::into).collect();

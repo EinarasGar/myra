@@ -1,6 +1,11 @@
 use business::{
-    dtos::asset_pair_rate_insert_dto::AssetPairRateInsertDto,
-    service_collection::{asset_service::AssetsService, Services},
+    dtos::{
+        asset_pair_rate_insert_dto::AssetPairRateInsertDto,
+        assets::{asset_id_dto::AssetIdDto, asset_pair_ids_dto::AssetPairIdsDto},
+    },
+    service_collection::{
+        asset_rates_service::AssetRatesService, asset_service::AssetsService, Services,
+    },
 };
 use rust_decimal::{prelude::FromPrimitive, Decimal};
 use yahoo::time::{Duration, OffsetDateTime};
@@ -10,6 +15,7 @@ use yahoo_finance_api as yahoo;
 async fn main() {
     let services = Services::new().await.unwrap();
     let asset_service = AssetsService::new(services.get_db_instance());
+    let asset_rates_service = AssetRatesService::new(services.get_db_instance());
     let assets = asset_service
         .get_all_assets_ticker_and_pair_ids()
         .await
@@ -18,12 +24,15 @@ async fn main() {
         if asset.base_id.is_none() {
             continue;
         }
-        let asset_rates = asset_service
-            .get_asset_pair_rates(asset.asset_id, asset.base_id.unwrap())
+        let asset_rates = asset_rates_service
+            .get_pair_latest_direct(AssetPairIdsDto::new(
+                AssetIdDto(asset.asset_id),
+                AssetIdDto(asset.base_id.unwrap()),
+            ))
             .await
             .unwrap();
 
-        let latest_date = asset_rates.first().unwrap().date;
+        let latest_date = asset_rates.unwrap().date;
 
         let provider = yahoo::YahooConnector::new().unwrap();
         let start = latest_date.checked_add(Duration::days(1)).unwrap();
@@ -55,8 +64,8 @@ async fn main() {
             let date =
                 OffsetDateTime::from_unix_timestamp(quote.timestamp.try_into().unwrap()).unwrap();
             let price = quote.close;
-            asset_service
-                .insert_asset_pair_rate(AssetPairRateInsertDto {
+            asset_rates_service
+                .insert_pair_single(AssetPairRateInsertDto {
                     pair_id,
                     rate: Decimal::from_f64(price).unwrap(),
                     date,

@@ -1,62 +1,108 @@
+use std::collections::HashSet;
+
 use axum::{
     extract::{Path, Query},
     Json,
 };
+use business::dtos::assets::{asset_id_dto::AssetIdDto, asset_pair_ids_dto::AssetPairIdsDto};
+use itertools::Itertools;
 use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
-    states::{AssetsServiceState, PortfolioServiceState, UsersServiceState},
-    view_models::portfolio::get_networth_history::{
-        GetNetWorthHistoryRequestParams, GetNetWorthHistoryResponseViewModel,
+    states::{
+        AccountsServiceState, AssetRatesServiceState, AssetsServiceState,
+        PortfolioOverviewServiceState, PortfolioServiceState, UsersServiceState,
+    },
+    view_models::portfolio::{
+        base_models::metadata_lookup::HoldingsMetadataLookupTables,
+        get_holdings::{GetHoldingsResponseViewModel, GetHoldingsResponseViewModelRow},
+        get_networth_history::{
+            GetNetWorthHistoryRequestParams, GetNetWorthHistoryResponseViewModel,
+        },
     },
 };
 
 #[derive(Deserialize, Debug)]
 pub struct GetPortfolioQueryParams {
-    _default_asset_id: Option<i32>,
+    default_asset_id: Option<i32>,
 }
 
-// /// Get portfolio
-// ///
-// /// Gets portfolio state at current this time.
-// #[utoipa::path(
-//     get,
-//     path = "/api/users/:user_id/portfolio",
-//     tag = "Portfolio",
-//     responses(
-//         (status = 200, description = "Portoflio retrieved successfully", body = PortfolioViewModel),
-//         (status = NOT_FOUND, description = "History was not found")
-//     ),
-//     params(
-//         ("user_id" = Uuid, Path, description = "User id for who to get portfolio for"),
-//         ("default_asset_id" = Option<i32>, Query, description = "Default asset id to use for getting porftolio reference.
-//          If not provided, the default asset id from the user will be used")
-//     )
-// )]
-// #[tracing::instrument(skip_all, err)]
-// pub async fn get_portfolio(
-//     Path(_user_id): Path<Uuid>,
-//     _query_params: Query<GetPortfolioQueryParams>,
-//     PortfolioServiceState(_portfolio_service): PortfolioServiceState,
-//     UsersServiceState(_user_service): UsersServiceState,
-//     AuthenticatedUserState(_auth): AuthenticatedUserState,
-// ) -> Result<Json<PortfolioViewModel>, ApiError> {
-//     unimplemented!()
-//     // let default_asset = match query_params.default_asset_id {
-//     //     Some(i) => i,
-//     //     None => user_service.get_full_user(user_id).await?.default_asset_id,
-//     // };
+/// Get Holdings
+///
+/// Returns a list of assets that user holds and their current value.
+#[utoipa::path(
+    get,
+    path = "/api/users/:user_id/portfolio/holdings",
+    tag = "Portfolio",
+    responses(
+        (status = 200, description = "Portoflio holdings returned", body = GetHoldingsResponseViewModel),
+    ),
+    params(
+        ("user_id" = Uuid, Path, description = "User id for who to retrieve holdings"),
+        ("default_asset_id" = Option<i32>, Query, description = "Default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used"),
+    )
+)]
+#[tracing::instrument(skip_all, err)]
+pub async fn get_holdings(
+    Path(user_id): Path<Uuid>,
+    query_params: Query<GetPortfolioQueryParams>,
+    PortfolioOverviewServiceState(portfolio_service): PortfolioOverviewServiceState,
+    AccountsServiceState(accounts_service): AccountsServiceState,
+    AssetsServiceState(asset_service): AssetsServiceState,
+    AssetRatesServiceState(asset_rates_service): AssetRatesServiceState,
+    UsersServiceState(user_service): UsersServiceState,
+    AuthenticatedUserState(_auth): AuthenticatedUserState,
+) -> Result<Json<GetHoldingsResponseViewModel>, ApiError> {
+    let default_asset = match query_params.default_asset_id {
+        Some(id) => id,
+        None => user_service.get_full_user(user_id).await?.default_asset_id,
+    };
 
-//     // let portfolio_assets_dto = portfolio_service
-//     //     .get_portfolio(user_id, default_asset)
-//     //     .await?;
-//     // let response: PortfolioViewModel = portfolio_assets_dto.into();
+    let holdings = portfolio_service.get_holdings(user_id).await?;
 
-//     // Ok(response.into())
-// }
+    let account_ids: HashSet<Uuid> = holdings.iter().map(|x| x.account_id).collect();
+    let asset_ids: HashSet<i32> = holdings.iter().map(|x| x.asset_id).collect();
+    let asset_ids2: HashSet<AssetIdDto> = holdings.iter().map(|x| AssetIdDto(x.asset_id)).collect();
+
+    let (assets, accounts, rates) = tokio::try_join!(
+        asset_service.get_assets(asset_ids),
+        accounts_service.get_accounts(account_ids),
+        asset_rates_service.get_pairs_latest_converted(asset_ids2, AssetIdDto(default_asset)),
+    )?;
+
+    tracing::info!("rates: {:?}", rates);
+
+    let response = GetHoldingsResponseViewModel {
+        holdings: holdings
+            .into_iter()
+            .map(|x| {
+                let rate = rates.get(&AssetPairIdsDto::new(
+                    AssetIdDto(x.asset_id),
+                    AssetIdDto(default_asset),
+                ));
+                tracing::info!(
+                    "assets: {:?}",
+                    AssetPairIdsDto::new(AssetIdDto(x.asset_id), AssetIdDto(default_asset),)
+                );
+                GetHoldingsResponseViewModelRow {
+                    account_id: x.account_id,
+                    asset_id: x.asset_id,
+                    units: x.units,
+                    value: rate.map(|rate| x.units * rate.rate),
+                }
+            })
+            .collect(),
+        lookup_tables: HoldingsMetadataLookupTables {
+            accounts: accounts.into_iter().map_into().collect(),
+            assets: assets.into_iter().map_into().collect(),
+        },
+    };
+
+    Ok(response.into())
+}
 
 /// Get Net Worth History
 ///

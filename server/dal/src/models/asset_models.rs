@@ -72,7 +72,7 @@ pub struct AssetPairRateOption {
     pub date: Option<OffsetDateTime>,
 }
 
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, Debug, Clone)]
 pub struct AssetPairRate {
     pub pair1: i32,
     pub pair2: i32,

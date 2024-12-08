@@ -10,7 +10,7 @@ pub struct SharedAssetPairMetadataViewModel {
     #[serde(flatten)]
     pub common_metadata: Option<AssetPairMetadataViewModel>,
 
-    #[serde(with = "rust_decimal::serde::arbitrary_precision")]
+    #[serde(with = "rust_decimal::serde::arbitrary_precision_option")]
     #[schema(example = json!(dec!(27681777)))]
-    pub volume: Decimal,
+    pub volume: Option<Decimal>,
 }

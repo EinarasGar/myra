@@ -22,6 +22,7 @@ pub mod fee_entry_dto;
 pub mod fee_entry_types_dto;
 pub mod page_of_results_dto;
 pub mod paging_dto;
+pub mod portfolio;
 pub mod transaction_dto;
 pub mod transaction_group_dto;
 pub mod user_full_dto;

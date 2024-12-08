@@ -168,29 +168,39 @@ pub fn get_rates(params: GetRatesParams) -> DbQueryWithValues {
         .column((AssetHistoryIden::Table, AssetHistoryIden::Rate))
         .column((AssetHistoryIden::Table, AssetHistoryIden::RecordedAt))
         .from(AssetHistoryIden::Table)
+        .join(
+            sea_query::JoinType::Join,
+            AssetPairsIden::Table,
+            Expr::col((AssetHistoryIden::Table, AssetHistoryIden::PairId))
+                .equals((AssetPairsIden::Table, AssetPairsIden::Id)),
+        )
         .to_owned();
 
     match params.search_type {
         GetRatesSeachType::ByPair(pair1, pair2) => {
             builder.and_where(
-                Expr::col(AssetHistoryIden::PairId).in_subquery(
-                    Query::select()
-                        .column(AssetPairsIden::Id)
-                        .from(AssetPairsIden::Table)
-                        .and_where(
-                            Expr::col(AssetPairsIden::Pair1)
-                                .eq(pair1)
-                                .and(Expr::col(AssetPairsIden::Pair2).eq(pair2)),
-                        )
-                        .to_owned(),
-                ),
+                Expr::tuple([
+                    Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair1)).into(),
+                    Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair2)).into(),
+                ])
+                .eq(Expr::tuple([Expr::value(pair1), Expr::value(pair2)])),
             );
         }
+        GetRatesSeachType::All => todo!(),
+        GetRatesSeachType::ByPairs(_hash_set) => todo!(),
+    }
+
+    if let Some(interval) = params.interval {
+        builder
+            .and_where(Expr::col(AssetHistoryIden::RecordedAt).lte(interval.end_date))
+            .and_where(Expr::col(AssetHistoryIden::RecordedAt).gte(interval.start_date));
+    }
+
+    if let Some(limit) = params.limit {
+        builder.limit(limit);
     }
 
     builder
-        .and_where(Expr::col(AssetHistoryIden::RecordedAt).lte(params.interval.end_date))
-        .and_where(Expr::col(AssetHistoryIden::RecordedAt).gte(params.interval.start_date))
         .order_by(AssetHistoryIden::RecordedAt, Order::Desc)
         .build_sqlx(PostgresQueryBuilder)
         .into()
@@ -264,6 +274,143 @@ pub fn get_pair_id(pair1: i32, pair2: i32) -> DbQueryWithValues {
         .into()
 }
 
+#[tracing::instrument(skip_all)]
+pub fn insert_pair_rates(rates: Vec<AssetPairRateInsert>) -> DbQueryWithValues {
+    let mut query_builder = Query::insert()
+        .into_table(AssetHistoryIden::Table)
+        .columns([
+            AssetHistoryIden::PairId,
+            AssetHistoryIden::Rate,
+            AssetHistoryIden::RecordedAt,
+        ])
+        .to_owned();
+
+    rates.into_iter().for_each(|rate| {
+        query_builder.values_panic([
+            rate.pair_id.into(),
+            rate.rate.into(),
+            rate.recorded_at.into(),
+        ]);
+    });
+
+    query_builder.build_sqlx(PostgresQueryBuilder).into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn inser_pair(pair: AssetPair) -> DbQueryWithValues {
+    Query::insert()
+        .into_table(AssetPairsIden::Table)
+        .columns([AssetPairsIden::Pair1, AssetPairsIden::Pair2])
+        .values_panic([pair.pair1.into(), pair.pair2.into()])
+        .returning_col(AssetPairsIden::Id)
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn insert_asset(asset: InsertAsset) -> DbQueryWithValues {
+    Query::insert()
+        .into_table(AssetsIden::Table)
+        .columns([
+            AssetsIden::AssetType,
+            AssetsIden::AssetName,
+            AssetsIden::Ticker,
+            AssetsIden::BasePairId,
+            AssetsIden::UserId,
+        ])
+        .values_panic([
+            asset.asset_type.into(),
+            asset.asset_name.into(),
+            asset.ticker.into(),
+            asset.base_pair_id.into(),
+            asset.user_id.into(),
+        ])
+        .returning_col(AssetsIden::Id)
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn asset_exists_by_id_and_user_id(asset_id: i32, user_id: Uuid) -> DbQueryWithValues {
+    Query::select()
+        .expr(Expr::exists(
+            Query::select()
+                .from(AssetsIden::Table)
+                .and_where(Expr::col(AssetsIden::Id).eq(asset_id))
+                .and_where(Expr::col(AssetsIden::UserId).eq(user_id))
+                .take(),
+        ))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn assets_count_by_ids_and_access(asset_ids: Vec<i32>, user_id: Uuid) -> DbQueryWithValues {
+    Query::select()
+        .expr(Expr::col(Asterisk).count())
+        .from(AssetsIden::Table)
+        .and_where(Expr::col(AssetsIden::Id).is_in(asset_ids))
+        .and_where(
+            Expr::col(AssetsIden::UserId)
+                .eq(user_id)
+                .or(Expr::col(AssetsIden::UserId).is_null()),
+        )
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn get_assets_raw() -> DbQueryWithValues {
+    Query::select()
+        .column((AssetsIden::Table, AssetsIden::Id))
+        .column((AssetsIden::Table, AssetsIden::AssetType))
+        .column((AssetsIden::Table, AssetsIden::AssetName))
+        .column((AssetsIden::Table, AssetsIden::Ticker))
+        .column((AssetsIden::Table, AssetsIden::BasePairId))
+        .column((AssetsIden::Table, AssetsIden::UserId))
+        .from(AssetsIden::Table)
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+/// This query finds either direct asset pair or fall back to base relationship pair
+/// And then gets the latest rate for that pair
+///
+/// ```sql
+/// SELECT "filtered"."pair1",
+///     "filtered"."pair2",
+///     "asset_history"."rate",
+///     "asset_history"."recorded_at"
+/// FROM (
+///         SELECT COALESCE("pairs"."pair1", "base_pairs"."pair1") AS "pair1",
+///             COALESCE("pairs"."pair2", "base_pairs"."pair2") AS "pair2",
+///             COALESCE("pairs"."id", "base_pairs"."id") AS "id"
+///         FROM (
+///                 SELECT "asset_pairs"."id",
+///                     "asset_pairs"."pair1",
+///                     "asset_pairs"."pair2"
+///                 FROM "asset_pairs"
+///                     JOIN "assets" ON "assets"."id" = "asset_pairs"."pair1"
+///                 WHERE "asset_pairs"."pair1" IN (5)
+///                     AND "asset_pairs"."pair2" = "assets"."base_pair_id"
+///             ) AS "base_pairs"
+///             FULL OUTER JOIN (
+///                 SELECT "asset_pairs"."id",
+///                     "asset_pairs"."pair1",
+///                     "asset_pairs"."pair2"
+///                 FROM "asset_pairs"
+///                 WHERE ("asset_pairs"."pair1", "asset_pairs"."pair2") IN ((5, 3))
+///             ) AS "pairs" ON "pairs"."pair1" = "base_pairs"."pair1"
+///     ) AS "filtered"
+///     JOIN LATERAL (
+///         SELECT "rate",
+///             "recorded_at"
+///         FROM "asset_history"
+///         WHERE "pair_id" = "filtered"."id"
+///         ORDER BY "recorded_at" DESC
+///         LIMIT 1
+///     ) AS "asset_history" ON TRUE
+/// ```
 #[tracing::instrument(skip_all)]
 pub fn get_latest_asset_pair_rates(
     pairs: Vec<AssetPair>,
@@ -383,129 +530,6 @@ pub fn get_latest_asset_pair_rates(
             AssetHistoryIden::Table,
             Expr::value(true),
         )
-        .build_sqlx(PostgresQueryBuilder)
-        .into()
-}
-
-#[tracing::instrument(skip_all)]
-pub fn get_pair_rates(pair1: i32, pair2: i32) -> DbQueryWithValues {
-    Query::select()
-        .column((AssetHistoryIden::Table, AssetHistoryIden::Rate))
-        .column((AssetHistoryIden::Table, AssetHistoryIden::RecordedAt))
-        .from(AssetHistoryIden::Table)
-        .and_where(
-            Expr::col(AssetHistoryIden::PairId).in_subquery(
-                Query::select()
-                    .column(AssetPairsIden::Id)
-                    .from(AssetPairsIden::Table)
-                    .and_where(
-                        Expr::col(AssetPairsIden::Pair1)
-                            .eq(pair1)
-                            .and(Expr::col(AssetPairsIden::Pair2).eq(pair2)),
-                    )
-                    .take(),
-            ),
-        )
-        .order_by(AssetHistoryIden::RecordedAt, Order::Desc)
-        .build_sqlx(PostgresQueryBuilder)
-        .into()
-}
-
-#[tracing::instrument(skip_all)]
-pub fn insert_pair_rates(rates: Vec<AssetPairRateInsert>) -> DbQueryWithValues {
-    let mut query_builder = Query::insert()
-        .into_table(AssetHistoryIden::Table)
-        .columns([
-            AssetHistoryIden::PairId,
-            AssetHistoryIden::Rate,
-            AssetHistoryIden::RecordedAt,
-        ])
-        .to_owned();
-
-    rates.into_iter().for_each(|rate| {
-        query_builder.values_panic([
-            rate.pair_id.into(),
-            rate.rate.into(),
-            rate.recorded_at.into(),
-        ]);
-    });
-
-    query_builder.build_sqlx(PostgresQueryBuilder).into()
-}
-
-#[tracing::instrument(skip_all)]
-pub fn inser_pair(pair: AssetPair) -> DbQueryWithValues {
-    Query::insert()
-        .into_table(AssetPairsIden::Table)
-        .columns([AssetPairsIden::Pair1, AssetPairsIden::Pair2])
-        .values_panic([pair.pair1.into(), pair.pair2.into()])
-        .returning_col(AssetPairsIden::Id)
-        .build_sqlx(PostgresQueryBuilder)
-        .into()
-}
-
-#[tracing::instrument(skip_all)]
-pub fn insert_asset(asset: InsertAsset) -> DbQueryWithValues {
-    Query::insert()
-        .into_table(AssetsIden::Table)
-        .columns([
-            AssetsIden::AssetType,
-            AssetsIden::AssetName,
-            AssetsIden::Ticker,
-            AssetsIden::BasePairId,
-            AssetsIden::UserId,
-        ])
-        .values_panic([
-            asset.asset_type.into(),
-            asset.asset_name.into(),
-            asset.ticker.into(),
-            asset.base_pair_id.into(),
-            asset.user_id.into(),
-        ])
-        .returning_col(AssetsIden::Id)
-        .build_sqlx(PostgresQueryBuilder)
-        .into()
-}
-
-#[tracing::instrument(skip_all)]
-pub fn asset_exists_by_id_and_user_id(asset_id: i32, user_id: Uuid) -> DbQueryWithValues {
-    Query::select()
-        .expr(Expr::exists(
-            Query::select()
-                .from(AssetsIden::Table)
-                .and_where(Expr::col(AssetsIden::Id).eq(asset_id))
-                .and_where(Expr::col(AssetsIden::UserId).eq(user_id))
-                .take(),
-        ))
-        .build_sqlx(PostgresQueryBuilder)
-        .into()
-}
-
-#[tracing::instrument(skip_all)]
-pub fn assets_count_by_ids_and_access(asset_ids: Vec<i32>, user_id: Uuid) -> DbQueryWithValues {
-    Query::select()
-        .expr(Expr::col(Asterisk).count())
-        .from(AssetsIden::Table)
-        .and_where(Expr::col(AssetsIden::Id).is_in(asset_ids))
-        .and_where(
-            Expr::col(AssetsIden::UserId)
-                .eq(user_id)
-                .or(Expr::col(AssetsIden::UserId).is_null()),
-        )
-        .build_sqlx(PostgresQueryBuilder)
-        .into()
-}
-
-#[tracing::instrument(skip_all)]
-pub fn get_assets_raw() -> DbQueryWithValues {
-    Query::select()
-        .column((AssetsIden::Table, AssetsIden::Id))
-        .column((AssetsIden::Table, AssetsIden::AssetType))
-        .column((AssetsIden::Table, AssetsIden::AssetName))
-        .column((AssetsIden::Table, AssetsIden::Ticker))
-        .column((AssetsIden::Table, AssetsIden::BasePairId))
-        .column((AssetsIden::Table, AssetsIden::UserId))
-        .from(AssetsIden::Table)
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }

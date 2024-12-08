@@ -142,7 +142,7 @@ CREATE TABLE IF NOT EXISTS entry (
     account_id UUID NOT NULL,
     quantity DECIMAL NOT NULL,
     category_id INT NOT NULL,
-    transaction_id UUID NULL,
+    transaction_id UUID NOT NULL,
     CONSTRAINT entry_pk PRIMARY KEY (id),
     CONSTRAINT entry_account_id_fkey FOREIGN KEY (account_id) REFERENCES account(id),
     CONSTRAINT entry_asset_id_fkey FOREIGN KEY (asset_id) REFERENCES assets(id),
