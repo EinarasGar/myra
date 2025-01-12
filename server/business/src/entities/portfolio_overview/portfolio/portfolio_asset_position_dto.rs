@@ -111,6 +111,7 @@ impl PortfolioAssetPosition {
         self.add_price
     }
 
+    #[allow(dead_code)]
     pub fn amount_sold(&self) -> Decimal {
         self.amount_sold
     }

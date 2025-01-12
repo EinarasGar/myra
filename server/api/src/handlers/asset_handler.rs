@@ -123,8 +123,8 @@ pub async fn get_asset(
     let ret = GetAssetResponseViewModel {
         asset: asset_dto.asset.into(),
         metadata: AssetMetadataViewModel {
-            base_asset_id: asset_dto.base_asset_id,
-            pairs: asset_dto.pairs.unwrap(),
+            base_asset_id: asset_dto.base_asset_id.0,
+            pairs: asset_dto.pairs.unwrap().iter().map(|x| x.0).collect(),
         },
     };
 

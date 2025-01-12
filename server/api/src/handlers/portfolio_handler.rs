@@ -4,7 +4,10 @@ use axum::{
     extract::{Path, Query},
     Json,
 };
-use business::dtos::assets::{asset_id_dto::AssetIdDto, asset_pair_ids_dto::AssetPairIdsDto};
+use business::dtos::{
+    assets::{asset_id_dto::AssetIdDto, asset_pair_ids_dto::AssetPairIdsDto},
+    net_worth::range_dto::RangeDto,
+};
 use itertools::Itertools;
 use serde::Deserialize;
 use uuid::Uuid;
@@ -116,33 +119,31 @@ pub async fn get_holdings(
     ),
     params(
         ("user_id" = Uuid, Path, description = "User id for who to retrieve net worth history"),
-        ("default_asset_id" = Option<i32>, Query, description = "Default asset id to use for retrieving net worth history. If not provided, the default asset id from the user will be used"),
         GetNetWorthHistoryRequestParams
     )
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_networth_history(
-    Path(_user_id): Path<Uuid>,
-    _query_params: Query<GetNetWorthHistoryRequestParams>,
-    PortfolioServiceState(_portfolio_service): PortfolioServiceState,
-    AssetsServiceState(_asset_service): AssetsServiceState,
-    UsersServiceState(_user_service): UsersServiceState,
+    Path(user_id): Path<Uuid>,
+    query_params: Query<GetNetWorthHistoryRequestParams>,
+    PortfolioServiceState(portfolio_service): PortfolioServiceState,
+    UsersServiceState(user_service): UsersServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetNetWorthHistoryResponseViewModel>, ApiError> {
-    unimplemented!()
-    // let default_asset: i32 = if query_params.default_asset_id.is_some() {
-    //     query_params.default_asset_id.unwrap()
-    // } else {
-    //     user_service.get_full_user(user_id).await?.default_asset_id
-    // };
+    let range = RangeDto::StringBased(query_params.range.clone());
+    let default_asset = AssetIdDto(match query_params.default_asset_id {
+        Some(id) => id,
+        None => user_service.get_full_user(user_id).await?.default_asset_id,
+    });
 
-    // let hisotry = portfolio_service
-    //     .get_full_portfolio_history(user_id, default_asset, Duration::hours(12))
-    //     .await?;
+    let hisotry = portfolio_service
+        .get_full_portfolio_history(user_id, default_asset, range)
+        .await?;
 
-    // let response = PortfolioHistoryViewModel {
-    //     sums: hisotry.into_iter().map(|x| x.into()).collect(),
-    // };
+    let response = GetNetWorthHistoryResponseViewModel {
+        sums: hisotry.into_iter().map_into().collect(),
+        range: query_params.range.to_string(),
+    };
 
-    // Ok(response.into())
+    Ok(response.into())
 }

@@ -18,6 +18,7 @@ impl Default for AccountCashPortfolio {
 }
 
 impl AccountCashPortfolio {
+    #[allow(dead_code)]
     pub fn new(units: Decimal, fees: Decimal, dividends: Decimal) -> Self {
         Self {
             units,
@@ -26,14 +27,17 @@ impl AccountCashPortfolio {
         }
     }
 
+    #[allow(dead_code)]
     pub fn units(&self) -> Decimal {
         self.units
     }
 
+    #[allow(dead_code)]
     pub fn fees(&self) -> Decimal {
         self.fees
     }
 
+    #[allow(dead_code)]
     pub fn dividends(&self) -> Decimal {
         self.dividends
     }

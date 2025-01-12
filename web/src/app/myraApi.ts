@@ -44,14 +44,15 @@ export const myraApi = createApi({
       query: (uuid) => `/users/${uuid}`,
     }),
     getPortfolio: builder.query<PortfolioViewModel, string>({
-      query: (uuid) => `/users/2396480f-0052-4cf0-81dc-8cedbde5ce13/portfolio`,
+      query: (uuid) =>
+        `/users/2396480f-0052-4cf0-81dc-8cedbde5ce13/portfolio/holdings`,
     }),
     getAssetPairRates: builder.query<AssetPairViewModel, string>({
       query: (uuid) => `/assets/5/2`,
     }),
     getPortfolioHistory: builder.query<PortfolioHistoryViewModel, string>({
       query: (uuid) =>
-        `/users/2396480f-0052-4cf0-81dc-8cedbde5ce13/portfolio/history`,
+        `/users/2396480f-0052-4cf0-81dc-8cedbde5ce13/portfolio/history?range=1w`,
     }),
     postAccount: builder.mutation<
       PortfolioAccountViewModel,

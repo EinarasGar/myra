@@ -20,6 +20,7 @@ pub mod auth_dto;
 pub mod entry_dto;
 pub mod fee_entry_dto;
 pub mod fee_entry_types_dto;
+pub mod net_worth;
 pub mod page_of_results_dto;
 pub mod paging_dto;
 pub mod portfolio;

@@ -54,7 +54,7 @@ impl From<AssetDto> for AssetViewModel {
 impl From<AssetDto> for IdentifiableAssetViewModel {
     fn from(value: AssetDto) -> Self {
         Self {
-            asset_id: value.id,
+            asset_id: value.id.0,
             asset: value.into(),
         }
     }

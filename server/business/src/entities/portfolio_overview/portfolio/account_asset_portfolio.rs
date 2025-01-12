@@ -150,18 +150,22 @@ impl AccountAssetPortfolio {
         removed_positions
     }
 
+    #[allow(dead_code)]
     pub fn units(&self) -> Decimal {
         self.positions.iter().map(|x| x.units()).sum()
     }
 
+    #[allow(dead_code)]
     pub fn total_fees(&self) -> Decimal {
         self.positions.iter().map(|x| x.total_fees()).sum()
     }
 
+    #[allow(dead_code)]
     pub fn realized_gains(&self) -> Decimal {
         self.positions.iter().map(|x| x.get_realized_gains()).sum()
     }
 
+    #[allow(dead_code)]
     pub fn unrealized_gains(&self, current_rate: Decimal) -> Decimal {
         self.positions
             .iter()
@@ -169,6 +173,7 @@ impl AccountAssetPortfolio {
             .sum()
     }
 
+    #[allow(dead_code)]
     pub fn total_gains(&self, current_rate: Decimal) -> Decimal {
         self.positions
             .iter()
@@ -176,6 +181,7 @@ impl AccountAssetPortfolio {
             .sum()
     }
 
+    #[allow(dead_code)]
     pub fn total_cost_basis(&self) -> Decimal {
         self.positions
             .iter()
@@ -183,10 +189,12 @@ impl AccountAssetPortfolio {
             .sum()
     }
 
+    #[allow(dead_code)]
     pub fn get_unit_cost_basis(&self) -> Decimal {
         self.positions.iter().map(|x| x.get_unit_cost_basis()).sum()
     }
 
+    #[allow(dead_code)]
     pub fn asset_dividends(&self) -> Decimal {
         self.positions
             .iter()
@@ -195,6 +203,7 @@ impl AccountAssetPortfolio {
             .sum()
     }
 
+    #[allow(dead_code)]
     pub fn asset_dividends_gains(&self, current_rate: Decimal) -> Decimal {
         self.positions
             .iter()
@@ -207,6 +216,7 @@ impl AccountAssetPortfolio {
         self.cash_dividends += cash_dividends;
     }
 
+    #[allow(dead_code)]
     pub fn cash_dividends(&self) -> Decimal {
         self.cash_dividends
     }

@@ -28,3 +28,9 @@ impl Iden for EntryIden {
         .unwrap();
     }
 }
+
+#[derive(Iden)]
+pub enum BinnedEntriesIden {
+    Sum,
+    StartTime,
+}

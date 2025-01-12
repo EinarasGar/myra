@@ -149,70 +149,70 @@ impl AssetRatesService {
         Ok(result)
     }
 
-    // #[tracing::instrument(skip_all, err)]
-    // pub async fn get_assets_rates_default_from_date(
-    //     &self,
-    //     default_asset_id: i32,
-    //     asset_ids: HashSet<i32>,
-    //     start_time: Option<time::OffsetDateTime>,
-    // ) -> anyhow::Result<HashMap<(i32, i32), VecDeque<AssetRateDto>>> {
-    //     let mut result: HashMap<(i32, i32), VecDeque<AssetRateDto>> = HashMap::new();
+    #[tracing::instrument(skip_all, err)]
+    pub async fn get_assets_rates_default_from_date(
+        &self,
+        default_asset_id: i32,
+        asset_ids: HashSet<i32>,
+        start_time: Option<time::OffsetDateTime>,
+    ) -> anyhow::Result<HashMap<(i32, i32), VecDeque<AssetRateDto>>> {
+        let mut result: HashMap<(i32, i32), VecDeque<AssetRateDto>> = HashMap::new();
 
-    //     let query = asset_queries::get_latest_asset_pair_rates(
-    //         asset_ids
-    //             .into_iter()
-    //             .map(|x| AssetPair {
-    //                 pair1: x,
-    //                 pair2: default_asset_id,
-    //             })
-    //             .collect(),
-    //         start_time,
-    //     );
-    //     let ret = self.db.fetch_all::<AssetPairRate>(query).await?;
+        let query = asset_queries::get_latest_asset_pair_rates(
+            asset_ids
+                .into_iter()
+                .map(|x| AssetPair {
+                    pair1: x,
+                    pair2: default_asset_id,
+                })
+                .collect(),
+            start_time,
+        );
+        let ret = self.db.fetch_all::<AssetPairRate>(query).await?;
 
-    //     for pair in ret {
-    //         result
-    //             .entry((pair.pair1, pair.pair2))
-    //             .or_default()
-    //             .push_back(AssetRateDto {
-    //                 rate: pair.rate,
-    //                 date: pair.recorded_at,
-    //             })
-    //     }
+        for pair in ret {
+            result
+                .entry((pair.pair1, pair.pair2))
+                .or_default()
+                .push_back(AssetRateDto {
+                    rate: pair.rate,
+                    date: pair.recorded_at,
+                })
+        }
 
-    //     let non_default_rates_pair1_ids: Vec<i32> = result
-    //         .keys()
-    //         .filter(|p| p.1 != default_asset_id)
-    //         .map(|p| p.1)
-    //         .collect();
+        let non_default_rates_pair1_ids: Vec<i32> = result
+            .keys()
+            .filter(|p| p.1 != default_asset_id)
+            .map(|p| p.1)
+            .collect();
 
-    //     if !non_default_rates_pair1_ids.is_empty() {
-    //         let query = asset_queries::get_latest_asset_pair_rates(
-    //             non_default_rates_pair1_ids
-    //                 .into_iter()
-    //                 .map(|x| AssetPair {
-    //                     pair1: x,
-    //                     pair2: default_asset_id,
-    //                 })
-    //                 .collect(),
-    //             start_time,
-    //         );
+        if !non_default_rates_pair1_ids.is_empty() {
+            let query = asset_queries::get_latest_asset_pair_rates(
+                non_default_rates_pair1_ids
+                    .into_iter()
+                    .map(|x| AssetPair {
+                        pair1: x,
+                        pair2: default_asset_id,
+                    })
+                    .collect(),
+                start_time,
+            );
 
-    //         let ret_bases = self.db.fetch_all::<AssetPairRate>(query).await?;
+            let ret_bases = self.db.fetch_all::<AssetPairRate>(query).await?;
 
-    //         for pair in ret_bases {
-    //             result
-    //                 .entry((pair.pair1, pair.pair2))
-    //                 .or_default()
-    //                 .push_back(AssetRateDto {
-    //                     rate: pair.rate,
-    //                     date: pair.recorded_at,
-    //                 })
-    //         }
-    //     }
+            for pair in ret_bases {
+                result
+                    .entry((pair.pair1, pair.pair2))
+                    .or_default()
+                    .push_back(AssetRateDto {
+                        rate: pair.rate,
+                        date: pair.recorded_at,
+                    })
+            }
+        }
 
-    //     Ok(result)
-    // }
+        Ok(result)
+    }
 
     #[tracing::instrument(skip_all, err)]
     pub async fn insert_pair_single(&self, rate: AssetPairRateInsertDto) -> anyhow::Result<()> {

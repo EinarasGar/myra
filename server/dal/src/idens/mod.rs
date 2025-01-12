@@ -1,4 +1,5 @@
-use sea_query::{Iden, Write};
+use sea_query::{Func, FunctionCall, Iden, IntoColumnRef, SimpleExpr, Write};
+use time::Duration;
 
 pub mod account_idens;
 pub mod asset_idens;
@@ -43,3 +44,22 @@ impl Iden for Over {
 #[derive(Iden)]
 #[iden = "ARRAY"]
 pub struct ArrayFunc;
+
+#[derive(Iden)]
+#[iden = "date_bin"]
+pub struct DateBin;
+
+pub struct CustomFunc {}
+
+impl CustomFunc {
+    pub fn date_bin<C>(duration: Duration, col: C) -> FunctionCall
+    where
+        C: IntoColumnRef,
+    {
+        Func::cust(DateBin).args(vec![
+            SimpleExpr::Custom(format!("interval '{} seconds'", duration.whole_seconds()).into()),
+            SimpleExpr::Column(col.into_column_ref()),
+            SimpleExpr::Custom("'epoch'".into()),
+        ])
+    }
+}

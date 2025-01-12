@@ -30,6 +30,7 @@ impl Portfolio {
         }
     }
 
+    #[allow(dead_code)]
     pub fn process_transactions(&mut self, mut transactions: Vec<Box<dyn PortfolioAction>>) {
         transactions.sort_by_key(|a| a.date());
 
@@ -85,6 +86,7 @@ impl Portfolio {
             .or_default()
     }
 
+    #[allow(dead_code)]
     pub fn account_portfolios(&self) -> &HashMap<Uuid, AccountPortfolio> {
         &self.account_portfolios
     }

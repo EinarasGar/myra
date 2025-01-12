@@ -1,12 +1,12 @@
 use dal::models::asset_models::Asset;
 
-use super::asset_type_dto::AssetTypeDto;
+use super::{asset_id_dto::AssetIdDto, asset_type_dto::AssetTypeDto};
 
 pub struct AssetDto {
     pub asset_type: AssetTypeDto,
     pub name: String,
     pub ticker: String,
-    pub id: i32,
+    pub id: AssetIdDto,
 }
 
 impl From<Asset> for AssetDto {
@@ -18,7 +18,7 @@ impl From<Asset> for AssetDto {
             },
             name: p.asset_name,
             ticker: p.ticker,
-            id: p.id,
+            id: AssetIdDto(p.id),
         }
     }
 }

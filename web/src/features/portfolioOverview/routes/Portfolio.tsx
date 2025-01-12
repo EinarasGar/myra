@@ -22,13 +22,15 @@ import {
 } from "@/app/myraApi";
 
 function Portfolio() {
-  const portfolioResp = useGetPortfolioQuery("asds");
-  const { data, error, isLoading } = useGetPortfolioHistoryQuery("asds");
+  const { data } = useGetPortfolioQuery("asds");
+  // console.log(portfolioResp.data);
+  console.log(data);
+  const { data: dataa, error, isLoading } = useGetPortfolioHistoryQuery("asds");
 
-  if (isLoading) return <span>Loading</span>;
-  if (portfolioResp.isLoading) return <span>Loading</span>;
+  // if (isLoading) return <span>Loading</span>;
+  // if (portfolioResp.isLoading) return <span>Loading</span>;
 
-  const rates = data?.sums.map((sum) => sum.rate) ?? [];
+  const rates = dataa?.sums.map((sum) => sum.rate) ?? [];
   const minRate = Math.min(...rates);
   const maxRate = Math.max(...rates);
   const rateRange = maxRate - minRate;
@@ -37,9 +39,9 @@ function Portfolio() {
   const yAxisDomain = [minRate - buffer, maxRate + buffer];
 
   // sort portfolioResp.data?.portfolio_entries by assets
-  let portfolioEntries = portfolioResp.data?.portfolio_entries ?? [];
-  // remove where sum is 0
-  portfolioEntries = portfolioEntries.filter((x) => x.sum !== 0);
+  // let portfolioEntries = portfolioResp.data?.portfolio_entries ?? [];
+  // // remove where sum is 0
+  // portfolioEntries = portfolioEntries.filter((x) => x.sum !== 0);
 
   // // hashmap of entries by asset id
   // const entriesByAssetId = new Map<number, PortfolioEntryViewModel[]>();
@@ -52,7 +54,12 @@ function Portfolio() {
   //   }
   // });
 
+  if (!data) {
+    return <>1</>;
+  }
+
   return (
+    // <>1</>
     // (portfolioResp.data?.portfolio_entries.map((x) => (
     //   <div key={x.account.id}>
     //     {x.asset.name} {x.account.name} {x.sum} {x.last_rate?.rate}{" "}
@@ -63,7 +70,7 @@ function Portfolio() {
       <div className=" h-96">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
-            data={data?.sums}
+            data={dataa?.sums}
             margin={{
               top: 5,
               right: 30,
@@ -90,25 +97,39 @@ function Portfolio() {
               <TableCell align="right">Account</TableCell>
               <TableCell align="right">Ticker</TableCell>
               <TableCell align="right">Quantity</TableCell>
-              <TableCell align="right">Worth Base</TableCell>
-              <TableCell align="right">Worth Reference</TableCell>
-              <TableCell align="right">PL</TableCell>
-              <TableCell align="right">Last updated</TableCell>
+              <TableCell align="right">Value</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {portfolioEntries.map((row) => (
+            {data.holdings.map((row) => (
               <TableRow
-                key={row.account.id + row.asset.id}
+                key={row.account_id + row.asset_id}
                 sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
               >
                 <TableCell component="th" scope="row">
-                  {row.asset.name}
+                  {
+                    data.lookup_tables.assets.find(
+                      (x) => x.asset_id == row.asset_id
+                    )?.name
+                  }
                 </TableCell>
-                <TableCell align="right">{row.account.name}</TableCell>
-                <TableCell align="right">{row.asset.ticker}</TableCell>
-                <TableCell align="right">{row.sum}</TableCell>
                 <TableCell align="right">
+                  {
+                    data.lookup_tables.accounts.find(
+                      (x) => x.account_id == row.account_id
+                    )?.name
+                  }
+                </TableCell>
+                <TableCell align="right">
+                  {
+                    data.lookup_tables.assets.find(
+                      (x) => x.asset_id == row.asset_id
+                    )?.ticker
+                  }
+                </TableCell>
+                <TableCell align="right">{row.units}</TableCell>
+                <TableCell align="right">{row.value}</TableCell>
+                {/* <TableCell align="right">
                   {row.base_asset
                     ? (row.sum * (row.last_rate?.rate ?? 0)).toLocaleString(
                         "en-US",
@@ -147,10 +168,10 @@ function Portfolio() {
                       new Date(row.last_rate.date),
                       new Date()
                     )} ago`}
-                </TableCell>
+                </TableCell> */}
               </TableRow>
             ))}
-            <TableRow
+            {/* <TableRow
               sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
             >
               <TableCell component="th" scope="row">
@@ -173,7 +194,7 @@ function Portfolio() {
                   })}
               </TableCell>
               <TableCell align="right">-</TableCell>
-            </TableRow>
+            </TableRow> */}
           </TableBody>
         </Table>
       </TableContainer>
