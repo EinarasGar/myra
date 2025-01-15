@@ -1,6 +1,6 @@
 use sqlx::types::Uuid;
 
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, Debug)]
 pub struct Account {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -8,7 +8,7 @@ pub struct Account {
     pub account_type: i32,
 }
 
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, Debug)]
 pub struct AccountWithMetadata {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -19,13 +19,13 @@ pub struct AccountWithMetadata {
     pub liquidity_type_name: String,
 }
 
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, Debug)]
 pub struct AccountTypeModel {
     pub id: i32,
     pub account_type_name: String,
 }
 
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, Debug)]
 pub struct AccountLiquidityTypeModel {
     pub id: i32,
     pub liquidity_type_name: String,

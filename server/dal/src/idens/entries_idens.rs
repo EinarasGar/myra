@@ -31,6 +31,7 @@ impl Iden for EntryIden {
 
 #[derive(Iden)]
 pub enum BinnedEntriesIden {
+    InitialSubquery,
     Sum,
     StartTime,
 }

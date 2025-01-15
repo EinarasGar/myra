@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 #[mockall_double::double]
 use dal::database_context::MyraDb;
 use uuid::Uuid;
@@ -38,16 +36,6 @@ impl PortfolioService {
 
         let mut net_worth_history = NetWorthHistory::new(reference_asset.clone(), range);
 
-        let start_time = range.start_time();
-
-        if let Some(start_time) = start_time {
-            let initial_sums = self
-                .entries_service
-                .get_entries_sums_at_timestamp(user_id, start_time)
-                .await?;
-            net_worth_history.add_initial_entries(initial_sums);
-        }
-
         let scoped_sums = self
             .entries_service
             .get_entries_interval_sums(user_id, range_dto)
@@ -60,16 +48,9 @@ impl PortfolioService {
         }
 
         let asset_first_occurances = net_worth_history.get_asset_first_occurance_dates();
-        //temp for now, later replace with variable start data
-        let lowest_date = asset_first_occurances.values().min().unwrap().clone();
-        let asset_ids = asset_first_occurances
-            .keys()
-            .map(|x| x.0)
-            .collect::<HashSet<i32>>();
-
         let asset_rate_queues = self
             .asset_rates_service
-            .get_assets_rates_default_from_date(reference_asset.0, asset_ids, Some(lowest_date))
+            .get_assets_rates_default_from_date(reference_asset, asset_first_occurances)
             .await?;
 
         net_worth_history.add_asset_rates(asset_rate_queues);

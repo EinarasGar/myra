@@ -9,6 +9,11 @@ pub enum AssetsAliasIden {
     BaseAssetTypeJoin,
     PairsDatesList,
     PairIdsDatesList,
+    DirectPairsSubquery,
+    CombinedPairsSubquery,
+    SecondaryPairsSubquery,
+    AllFilteredPairsSubquery,
+    InputSubquery,
 }
 
 #[allow(dead_code)]
@@ -60,6 +65,13 @@ pub enum AssetHistoryIden {
     RecordedAt,
 }
 
+#[derive(Iden)]
+pub enum AssetHistoryCalculationIden {
+    Date,
+    BinnedDate,
+    AvgRate,
+}
+
 impl Iden for AssetsAliasIden {
     fn unquoted(&self, s: &mut dyn std::fmt::Write) {
         write!(
@@ -73,6 +85,11 @@ impl Iden for AssetsAliasIden {
                 Self::BaseAssetTypeJoin => "base_assets_types",
                 Self::PairsDatesList => "pairs_dates_list",
                 Self::PairIdsDatesList => "pair_ids_dates_list",
+                Self::InputSubquery => "input",
+                Self::DirectPairsSubquery => "direct_pairs",
+                Self::CombinedPairsSubquery => "combined_pairs",
+                Self::SecondaryPairsSubquery => "secondary_pairs",
+                Self::AllFilteredPairsSubquery => "all_filtered_pairs",
             }
         )
         .unwrap();

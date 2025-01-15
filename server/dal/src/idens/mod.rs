@@ -1,5 +1,5 @@
 use sea_query::{Func, FunctionCall, Iden, IntoColumnRef, SimpleExpr, Write};
-use time::Duration;
+use time::{Duration, OffsetDateTime};
 
 pub mod account_idens;
 pub mod asset_idens;
@@ -52,14 +52,26 @@ pub struct DateBin;
 pub struct CustomFunc {}
 
 impl CustomFunc {
-    pub fn date_bin<C>(duration: Duration, col: C) -> FunctionCall
+    pub fn date_bin(duration: Duration, val: SimpleExpr) -> FunctionCall {
+        Func::cust(DateBin).args(vec![
+            CustomFunc::interval(duration),
+            val,
+            SimpleExpr::Custom("'epoch'".into()),
+        ])
+    }
+
+    pub fn date_bin_col<C>(duration: Duration, col: C) -> FunctionCall
     where
         C: IntoColumnRef,
     {
-        Func::cust(DateBin).args(vec![
-            SimpleExpr::Custom(format!("interval '{} seconds'", duration.whole_seconds()).into()),
-            SimpleExpr::Column(col.into_column_ref()),
-            SimpleExpr::Custom("'epoch'".into()),
-        ])
+        Self::date_bin(duration, SimpleExpr::Column(col.into_column_ref()))
+    }
+
+    pub fn date_bin_time(duration: Duration, time: OffsetDateTime) -> FunctionCall {
+        Self::date_bin(duration, SimpleExpr::Value(time.into()))
+    }
+
+    pub fn interval(duration: Duration) -> SimpleExpr {
+        SimpleExpr::Custom(format!("interval '{} seconds'", duration.whole_seconds()).into())
     }
 }

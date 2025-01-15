@@ -1,7 +1,6 @@
-use sea_query::{Alias, Expr, JoinType, PostgresQueryBuilder, Query};
+use sea_query::{Alias, Expr, ExprTrait, JoinType, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
 use sqlx::types::Uuid;
-use time::OffsetDateTime;
 
 use crate::{
     idens::{
@@ -65,11 +64,84 @@ pub fn get_holdings(user_id: Uuid) -> DbQueryWithValues {
         .into()
 }
 
+/// This query takes start time, interval and user id. It then queries the database
+/// for entries. It collects the sum of entries untill the starting point and places that in the first
+/// bin slot. Then it collects the sum of entries from the starting point and places that in the the rest of the bin slots
+///
+/// |start_time            |asset_id|sum    |notes                                                 |
+/// |----------------------|--------|-------|------------------------------------------------------|
+/// |2024-11-13 12:54:00+00|3       |1992   |This is collection of everything before timestamp bin |
+/// |2024-11-14 10:54:00+00|3       |-335.00|This is after the timestamp                           |
+/// |2024-11-14 10:54:00+00|5       |1286   |                                                      |
+/// |2024-11-14 16:54:00+00|3       |-1100  |                                                      |
+/// |2024-11-15 10:54:00+00|2       |-12.5  |                                                      |
+/// |2024-11-15 10:54:00+00|3       |-50    |                                                      |
+///
+/// ```sql
+/// SELECT "start_time",
+///     "asset_id",
+///     "sum"
+/// FROM (
+///         SELECT date_bin(interval '120 seconds', $1, 'epoch') AS "start_time",
+///             "entry"."asset_id",
+///             SUM("entry"."quantity") AS "sum"
+///         FROM "entry"
+///             JOIN "transaction" ON "entry"."transaction_id" = "transaction"."id"
+///         WHERE "transaction"."user_id" = $2
+///             AND "transaction"."date_transacted" < date_bin(interval '120 seconds', $1, 'epoch') + (interval '120 seconds')
+///         GROUP BY "entry"."asset_id"
+///     ) AS "initial_subquery"
+/// UNION ALL
+/// (
+///     SELECT date_bin(
+///             interval '120 seconds',
+///             "transaction"."date_transacted",
+///             'epoch'
+///         ) AS "start_time",
+///         "entry"."asset_id",
+///         SUM("entry"."quantity") AS "sum"
+///     FROM "entry"
+///         JOIN "transaction" ON "entry"."transaction_id" = "transaction"."id"
+///     WHERE "transaction"."user_id" = $2
+///         AND "transaction"."date_transacted" >= date_bin(interval '120 seconds', $1, 'epoch') + (interval '120 seconds')
+///     GROUP BY "entry"."asset_id",
+///         "start_time"
+/// )
+/// ORDER BY "start_time" ASC
+/// ```
 #[tracing::instrument(skip_all)]
 pub fn get_binned_entries(params: GetBinnedEntriesParams) -> DbQueryWithValues {
-    Query::select()
+    let intial_subquery = Query::select()
         .expr_as(
-            CustomFunc::date_bin(
+            CustomFunc::date_bin_time(params.interval, params.start_date.unwrap()),
+            BinnedEntriesIden::StartTime,
+        )
+        .column((EntryIden::Table, EntryIden::AssetId))
+        .expr_as(
+            Expr::sum(Expr::col((EntryIden::Table, EntryIden::Quantity))),
+            BinnedEntriesIden::Sum,
+        )
+        .from(EntryIden::Table)
+        .join(
+            JoinType::Join,
+            TransactionIden::Table,
+            Expr::col((EntryIden::Table, EntryIden::TransactionId))
+                .equals((TransactionIden::Table, TransactionIden::Id)),
+        )
+        .and_where(Expr::col((TransactionIden::Table, TransactionIden::UserId)).eq(params.user_id))
+        .and_where(
+            //TODO: Handle the case where start_date is None
+            Expr::col((TransactionIden::Table, TransactionIden::DateTransacted)).lt(
+                CustomFunc::date_bin_time(params.interval, params.start_date.unwrap())
+                    .add(CustomFunc::interval(params.interval)),
+            ),
+        )
+        .group_by_col((EntryIden::Table, EntryIden::AssetId))
+        .to_owned();
+
+    let scoped_subquery = Query::select()
+        .expr_as(
+            CustomFunc::date_bin_col(
                 params.interval,
                 (TransactionIden::Table, TransactionIden::DateTransacted),
             ),
@@ -88,36 +160,23 @@ pub fn get_binned_entries(params: GetBinnedEntriesParams) -> DbQueryWithValues {
                 .equals((TransactionIden::Table, TransactionIden::Id)),
         )
         .and_where(Expr::col((TransactionIden::Table, TransactionIden::UserId)).eq(params.user_id))
-        .and_where_option(params.start_date.map(|start_date| {
-            Expr::col((TransactionIden::Table, TransactionIden::DateTransacted)).gte(start_date)
-        }))
+        .and_where(
+            Expr::col((TransactionIden::Table, TransactionIden::DateTransacted)).gte(
+                CustomFunc::date_bin_time(params.interval, params.start_date.unwrap())
+                    .add(CustomFunc::interval(params.interval)),
+            ),
+        )
         .group_by_col((EntryIden::Table, EntryIden::AssetId))
         .group_by_col(BinnedEntriesIden::StartTime)
-        .order_by(BinnedEntriesIden::StartTime, sea_query::Order::Asc)
-        .build_sqlx(PostgresQueryBuilder)
-        .into()
-}
+        .to_owned();
 
-#[tracing::instrument(skip_all)]
-pub fn get_entris_sum_at_timestamp(user_id: Uuid, start_date: OffsetDateTime) -> DbQueryWithValues {
     Query::select()
-        .column((EntryIden::Table, EntryIden::AssetId))
-        .expr_as(
-            Expr::sum(Expr::col((EntryIden::Table, EntryIden::Quantity))),
-            BinnedEntriesIden::Sum,
-        )
-        .from(EntryIden::Table)
-        .join(
-            JoinType::Join,
-            TransactionIden::Table,
-            Expr::col((EntryIden::Table, EntryIden::TransactionId))
-                .equals((TransactionIden::Table, TransactionIden::Id)),
-        )
-        .and_where(Expr::col((TransactionIden::Table, TransactionIden::UserId)).eq(user_id))
-        .and_where(
-            Expr::col((TransactionIden::Table, TransactionIden::DateTransacted)).lt(start_date),
-        )
-        .group_by_col((EntryIden::Table, EntryIden::AssetId))
+        .column(BinnedEntriesIden::StartTime)
+        .column(EntryIden::AssetId)
+        .column(BinnedEntriesIden::Sum)
+        .from_subquery(intial_subquery, BinnedEntriesIden::InitialSubquery)
+        .union(sea_query::UnionType::All, scoped_subquery)
+        .order_by(BinnedEntriesIden::StartTime, sea_query::Order::Asc)
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }

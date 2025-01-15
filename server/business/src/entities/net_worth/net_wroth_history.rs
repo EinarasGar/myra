@@ -9,10 +9,8 @@ use time::{Duration, OffsetDateTime};
 use crate::{
     dtos::{
         asset_rate_dto::AssetRateDto,
-        assets::asset_id_dto::AssetIdDto,
-        net_worth::{
-            entries_interval_sum_dto::EntriesIntervalSumDto, entries_sum_dto::EntriesSumDto,
-        },
+        assets::{asset_id_dto::AssetIdDto, asset_pair_ids_dto::AssetPairIdsDto},
+        net_worth::entries_interval_sum_dto::EntriesIntervalSumDto,
     },
     entities::range::Range,
 };
@@ -64,27 +62,25 @@ impl NetWorthHistory {
         });
     }
 
-    pub fn add_initial_entries(&mut self, entries: impl Iterator<Item = EntriesSumDto>) {
-        let start_time = self.start_time.expect("start time should be set by now.");
-        self.add_entries(entries.map(|e| EntriesIntervalSumDto {
-            asset_id: e.asset_id,
-            quantity: e.quantity,
-            time: start_time,
-        }));
-    }
-
     pub fn entries_exist(&self) -> bool {
         !self.entries_queue.is_empty()
     }
 
-    pub fn add_asset_rates(&mut self, asset_rates: HashMap<(i32, i32), VecDeque<AssetRateDto>>) {
-        self.asset_pair_rates = asset_rates;
+    pub fn add_asset_rates(
+        &mut self,
+        asset_rates: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>>,
+    ) {
+        self.asset_pair_rates = asset_rates
+            .into_iter()
+            .map(|(k, v)| ((k.pair1.0, k.pair2.0), v))
+            .collect();
     }
 
-    pub fn get_asset_first_occurance_dates(&self) -> &HashMap<AssetIdDto, OffsetDateTime> {
-        &self.asset_first_occurances
+    pub fn get_asset_first_occurance_dates(&self) -> HashMap<AssetIdDto, OffsetDateTime> {
+        self.asset_first_occurances.clone()
     }
 
+    #[tracing::instrument(skip_all)]
     pub fn get_networth_history(&mut self) -> Vec<AssetRateDto> {
         let mut history: Vec<AssetRateDto> = Vec::new();
 
@@ -276,6 +272,10 @@ mod tests {
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
+        let asset_rate_queues: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>> = asset_rate_queues
+            .into_iter()
+            .map(|(k, v)| (AssetPairIdsDto::new(AssetIdDto(k.0), AssetIdDto(k.1)), v))
+            .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
         let result = net_worth_history.get_networth_history();
@@ -316,6 +316,10 @@ mod tests {
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
+        let asset_rate_queues: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>> = asset_rate_queues
+            .into_iter()
+            .map(|(k, v)| (AssetPairIdsDto::new(AssetIdDto(k.0), AssetIdDto(k.1)), v))
+            .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
         let result = net_worth_history.get_networth_history();
@@ -363,6 +367,10 @@ mod tests {
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
+        let asset_rate_queues: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>> = asset_rate_queues
+            .into_iter()
+            .map(|(k, v)| (AssetPairIdsDto::new(AssetIdDto(k.0), AssetIdDto(k.1)), v))
+            .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
         let result = net_worth_history.get_networth_history();
@@ -401,6 +409,10 @@ mod tests {
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
+        let asset_rate_queues: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>> = asset_rate_queues
+            .into_iter()
+            .map(|(k, v)| (AssetPairIdsDto::new(AssetIdDto(k.0), AssetIdDto(k.1)), v))
+            .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
         let result = net_worth_history.get_networth_history();
@@ -449,6 +461,10 @@ mod tests {
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
+        let asset_rate_queues: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>> = asset_rate_queues
+            .into_iter()
+            .map(|(k, v)| (AssetPairIdsDto::new(AssetIdDto(k.0), AssetIdDto(k.1)), v))
+            .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
         let result = net_worth_history.get_networth_history();
@@ -474,6 +490,10 @@ mod tests {
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
+        let asset_rate_queues: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>> = asset_rate_queues
+            .into_iter()
+            .map(|(k, v)| (AssetPairIdsDto::new(AssetIdDto(k.0), AssetIdDto(k.1)), v))
+            .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
         let result = net_worth_history.get_networth_history();
@@ -517,6 +537,10 @@ mod tests {
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
+        let asset_rate_queues: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>> = asset_rate_queues
+            .into_iter()
+            .map(|(k, v)| (AssetPairIdsDto::new(AssetIdDto(k.0), AssetIdDto(k.1)), v))
+            .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
         let result = net_worth_history.get_networth_history();
@@ -554,6 +578,10 @@ mod tests {
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
+        let asset_rate_queues: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>> = asset_rate_queues
+            .into_iter()
+            .map(|(k, v)| (AssetPairIdsDto::new(AssetIdDto(k.0), AssetIdDto(k.1)), v))
+            .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
         let result = net_worth_history.get_networth_history();
@@ -597,6 +625,10 @@ mod tests {
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
+        let asset_rate_queues: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>> = asset_rate_queues
+            .into_iter()
+            .map(|(k, v)| (AssetPairIdsDto::new(AssetIdDto(k.0), AssetIdDto(k.1)), v))
+            .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
         let result = net_worth_history.get_networth_history();
@@ -640,6 +672,10 @@ mod tests {
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
+        let asset_rate_queues: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>> = asset_rate_queues
+            .into_iter()
+            .map(|(k, v)| (AssetPairIdsDto::new(AssetIdDto(k.0), AssetIdDto(k.1)), v))
+            .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
         let result = net_worth_history.get_networth_history();
@@ -677,6 +713,10 @@ mod tests {
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
+        let asset_rate_queues: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>> = asset_rate_queues
+            .into_iter()
+            .map(|(k, v)| (AssetPairIdsDto::new(AssetIdDto(k.0), AssetIdDto(k.1)), v))
+            .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
         let result = net_worth_history.get_networth_history();
@@ -727,6 +767,10 @@ mod tests {
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
+        let asset_rate_queues: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>> = asset_rate_queues
+            .into_iter()
+            .map(|(k, v)| (AssetPairIdsDto::new(AssetIdDto(k.0), AssetIdDto(k.1)), v))
+            .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
         let result = net_worth_history.get_networth_history();
@@ -783,6 +827,10 @@ mod tests {
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
+        let asset_rate_queues: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>> = asset_rate_queues
+            .into_iter()
+            .map(|(k, v)| (AssetPairIdsDto::new(AssetIdDto(k.0), AssetIdDto(k.1)), v))
+            .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
         let result = net_worth_history.get_networth_history();
@@ -876,6 +924,10 @@ mod tests {
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
+        let asset_rate_queues: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>> = asset_rate_queues
+            .into_iter()
+            .map(|(k, v)| (AssetPairIdsDto::new(AssetIdDto(k.0), AssetIdDto(k.1)), v))
+            .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
         let result = net_worth_history.get_networth_history();
@@ -990,6 +1042,10 @@ mod tests {
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
+        let asset_rate_queues: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>> = asset_rate_queues
+            .into_iter()
+            .map(|(k, v)| (AssetPairIdsDto::new(AssetIdDto(k.0), AssetIdDto(k.1)), v))
+            .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
         let result = net_worth_history.get_networth_history();
@@ -1049,6 +1105,10 @@ mod tests {
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
+        let asset_rate_queues: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>> = asset_rate_queues
+            .into_iter()
+            .map(|(k, v)| (AssetPairIdsDto::new(AssetIdDto(k.0), AssetIdDto(k.1)), v))
+            .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
         let result = net_worth_history.get_networth_history();
@@ -1110,6 +1170,10 @@ mod tests {
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
+        let asset_rate_queues: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>> = asset_rate_queues
+            .into_iter()
+            .map(|(k, v)| (AssetPairIdsDto::new(AssetIdDto(k.0), AssetIdDto(k.1)), v))
+            .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
         let result = net_worth_history.get_networth_history();
@@ -1174,6 +1238,10 @@ mod tests {
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
+        let asset_rate_queues: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>> = asset_rate_queues
+            .into_iter()
+            .map(|(k, v)| (AssetPairIdsDto::new(AssetIdDto(k.0), AssetIdDto(k.1)), v))
+            .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
         let result = net_worth_history.get_networth_history();
@@ -1224,6 +1292,10 @@ mod tests {
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
+        let asset_rate_queues: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>> = asset_rate_queues
+            .into_iter()
+            .map(|(k, v)| (AssetPairIdsDto::new(AssetIdDto(k.0), AssetIdDto(k.1)), v))
+            .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
         let result = net_worth_history.get_networth_history();
@@ -1296,6 +1368,10 @@ mod tests {
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
+        let asset_rate_queues: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>> = asset_rate_queues
+            .into_iter()
+            .map(|(k, v)| (AssetPairIdsDto::new(AssetIdDto(k.0), AssetIdDto(k.1)), v))
+            .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
         let result = net_worth_history.get_networth_history();

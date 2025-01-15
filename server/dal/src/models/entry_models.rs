@@ -15,9 +15,3 @@ pub struct EntriesAssetIntervalSum {
     pub sum: Decimal,
     pub start_time: OffsetDateTime,
 }
-
-#[derive(Debug, sqlx::FromRow)]
-pub struct EntriesAssetSum {
-    pub asset_id: i32,
-    pub sum: Decimal,
-}

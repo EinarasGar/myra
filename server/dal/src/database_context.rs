@@ -3,6 +3,7 @@ use sqlx::{postgres::PgRow, FromRow, PgPool, Postgres, Transaction};
 
 use anyhow::Result;
 use std::sync::Arc;
+use tracing::Level;
 
 use tokio::sync::Mutex as AsyncMutex;
 
@@ -66,10 +67,10 @@ impl MyraDb {
         Ok(())
     }
 
-    #[tracing::instrument(skip(self), err)]
+    #[tracing::instrument(skip(self), err, ret(level = Level::TRACE))]
     pub async fn fetch_all<T>(&self, query: DbQueryWithValues) -> Result<Vec<T>, sqlx::Error>
     where
-        for<'r> T: FromRow<'r, PgRow> + Send + Unpin,
+        for<'r> T: FromRow<'r, PgRow> + Send + Unpin + std::fmt::Debug,
     {
         let mut tx_guard = self.transaction.lock().await;
         if let Some(ref mut tx) = &mut *tx_guard {

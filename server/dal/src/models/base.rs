@@ -10,7 +10,7 @@ pub struct Exsists {
     pub exists: bool,
 }
 
-#[derive(FromRow)]
+#[derive(FromRow, Debug)]
 pub struct TotalCount<T>
 where
     for<'r> T: FromRow<'r, PgRow>,

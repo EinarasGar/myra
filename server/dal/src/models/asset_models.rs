@@ -12,7 +12,7 @@ pub struct AssetWithMetadata {
     pub pairs: Option<Vec<i32>>,
 }
 
-#[derive(Clone, sqlx::FromRow)]
+#[derive(Clone, sqlx::FromRow, Debug)]
 pub struct Asset {
     pub id: i32,
     pub asset_name: String,
@@ -22,7 +22,7 @@ pub struct Asset {
     pub asset_type_name: String,
 }
 
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, Debug)]
 pub struct AssetRaw {
     pub ticker: String,
     pub asset_name: String,
@@ -32,7 +32,7 @@ pub struct AssetRaw {
     pub user_id: Option<Uuid>,
 }
 
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, Debug)]
 pub struct PublicAsset {
     pub ticker: String,
     pub asset_name: String,
@@ -64,7 +64,7 @@ pub struct AssetPairDate {
     pub date: OffsetDateTime,
 }
 
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, Debug)]
 pub struct AssetPairRateOption {
     pub pair1: i32,
     pub pair2: i32,
@@ -80,6 +80,14 @@ pub struct AssetPairRate {
     pub recorded_at: OffsetDateTime,
 }
 
+#[derive(sqlx::FromRow, Debug, Clone)]
+pub struct AssetPairRateDate {
+    pub pair1: i32,
+    pub pair2: i32,
+    pub avg_rate: Decimal,
+    pub binned_date: OffsetDateTime,
+}
+
 #[derive(sqlx::FromRow)]
 pub struct AssetPairSharedMetadata {
     pub volume: Decimal,
@@ -90,7 +98,7 @@ pub struct AssetPair {
     pub pair2: i32,
 }
 
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, Debug)]
 pub struct AssetRate {
     pub rate: Decimal,
     pub recorded_at: OffsetDateTime,

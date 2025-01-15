@@ -1,17 +1,20 @@
+use std::collections::HashMap;
+
 use sea_query::{
-    extension::postgres::PgExpr, Alias, Asterisk, Cond, Expr, Func, Order, PostgresQueryBuilder,
-    Query, SimpleExpr, Value, WindowStatement,
+    extension::postgres::PgExpr, Alias, Asterisk, CommonTableExpression, Cond, Expr, Func, Order,
+    PostgresQueryBuilder, Query, SimpleExpr, Value, WindowStatement, WithClause,
 };
 use sea_query_binder::SqlxBinder;
 use sqlx::types::{time::OffsetDateTime, Uuid};
+use time::Duration;
 
 use crate::{
     idens::{
         asset_idens::{
-            AssetHistoryIden, AssetPairSharedMetadataIden, AssetPairsIden, AssetTypesIden,
-            AssetsAliasIden, AssetsIden,
+            AssetHistoryCalculationIden, AssetHistoryIden, AssetPairSharedMetadataIden,
+            AssetPairsIden, AssetTypesIden, AssetsAliasIden, AssetsIden,
         },
-        ArrayFunc, Unnest,
+        ArrayFunc, CustomFunc, Unnest,
     },
     models::asset_models::{AssetPair, AssetPairDate, AssetPairRateInsert, InsertAsset},
     query_params::{
@@ -720,6 +723,424 @@ pub fn get_pair_prices_by_dates(pair_dates: Vec<AssetPairDate>) -> DbQueryWithVa
             history_query,
             AssetHistoryIden::Table,
             Expr::cust("TRUE"),
+        )
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+/// This query takes a list of asset ids and dates and a reference asset and interval
+/// It then queries the database to get asset rates from the date for that asset in intervals.
+/// If it doesn't find direct pair, it also queries base rate conversion
+///
+/// Executes the following query
+/// Returns response which can be mapped to `AssetPairRate`
+/// ```sql
+/// WITH "input" AS (
+///     SELECT unnest($1) AS "pair1",
+///         unnest($2) AS "date"
+/// ),
+/// "base_pairs" AS (
+///     SELECT "asset_pairs"."id",
+///         "asset_pairs"."pair1",
+///         "asset_pairs"."pair2"
+///     FROM "asset_pairs"
+///         JOIN "assets" ON "assets"."id" = "asset_pairs"."pair1"
+///         JOIN "input" ON "input"."pair1" = "asset_pairs"."pair1"
+///     WHERE "asset_pairs"."pair2" = "assets"."base_pair_id"
+/// ),
+/// "direct_pairs" AS (
+///     SELECT "asset_pairs"."id",
+///         "asset_pairs"."pair1",
+///         "asset_pairs"."pair2"
+///     FROM "asset_pairs"
+///         JOIN "input" ON "input"."pair1" = "asset_pairs"."pair1"
+///     WHERE "asset_pairs"."pair2" = $3
+/// ),
+/// "combined_pairs" AS (
+///     SELECT "input"."date" AS "date",
+///         COALESCE("direct_pairs"."pair1", "base_pairs"."pair1") AS "pair1",
+///         COALESCE("direct_pairs"."pair2", "base_pairs"."pair2") AS "pair2",
+///         COALESCE("direct_pairs"."id", "base_pairs"."id") AS "id"
+///     FROM "base_pairs"
+///         FULL OUTER JOIN "direct_pairs" ON "direct_pairs"."pair1" = "base_pairs"."pair1"
+///         JOIN "input" ON "input"."pair1" = "base_pairs"."pair1"
+/// ),
+/// "secondary_pairs" AS (
+///     SELECT MIN("combined_pairs"."date") AS "date",
+///         "asset_pairs"."id",
+///         "asset_pairs"."pair1",
+///         "asset_pairs"."pair2"
+///     FROM "asset_pairs"
+///         JOIN "combined_pairs" ON "combined_pairs"."pair2" = "asset_pairs"."pair1"
+///     WHERE "asset_pairs"."pair2" = $4
+///     GROUP BY "asset_pairs"."id",
+///         "asset_pairs"."pair1",
+///         "asset_pairs"."pair2"
+/// ),
+/// "all_filtered_pairs" AS (
+///     SELECT "combined_pairs"."date",
+///         "combined_pairs"."pair1",
+///         "combined_pairs"."pair2",
+///         "combined_pairs"."id"
+///     FROM "combined_pairs"
+///     UNION ALL
+///     (
+///         SELECT "secondary_pairs"."date",
+///             "secondary_pairs"."pair1",
+///             "secondary_pairs"."pair2",
+///             "secondary_pairs"."id"
+///         FROM "secondary_pairs"
+///     )
+/// )
+/// SELECT "all_filtered_pairs"."pair1",
+///     "all_filtered_pairs"."pair2",
+///     AVG("asset_history"."rate") AS "avg_rate",
+///     date_bin(
+///         interval '172800 seconds',
+///         "asset_history"."recorded_at",
+///         'epoch'
+///     ) AS "binned_date"
+/// FROM "all_filtered_pairs"
+///     JOIN LATERAL (
+///         SELECT "rate",
+///             "recorded_at"
+///         FROM (
+///                 SELECT "rate",
+///                     "recorded_at"
+///                 FROM "asset_history"
+///                 WHERE "pair_id" = "all_filtered_pairs"."id"
+///                     AND "recorded_at" > "all_filtered_pairs"."date"
+///                 UNION ALL
+///                 (
+///                     SELECT "rate",
+///                         "recorded_at"
+///                     FROM "asset_history"
+///                     WHERE "pair_id" = "all_filtered_pairs"."id"
+///                         AND "recorded_at" <= "all_filtered_pairs"."date"
+///                     ORDER BY "recorded_at" DESC
+///                     LIMIT $5
+///                 )
+///             ) AS "asset_history"
+///         ORDER BY "recorded_at" ASC
+///     ) AS "asset_history" ON TRUE
+/// GROUP BY "all_filtered_pairs"."pair1",
+///     "all_filtered_pairs"."pair2",
+///     "binned_date"
+/// ORDER BY "binned_date" ASC
+/// ```
+#[tracing::instrument(skip_all)]
+pub fn get_asset_pairs_rates_with_conversions(
+    reference_asset: i32,
+    asset_dates: HashMap<i32, OffsetDateTime>,
+) -> DbQueryWithValues {
+    let mut ids_vec = Vec::new();
+    let mut dates_vec = Vec::new();
+    asset_dates.into_iter().for_each(|(k, v)| {
+        ids_vec.push(k.into());
+        dates_vec.push(v.into());
+    });
+
+    let ids_array = Value::Array(sea_query::ArrayType::Int, Some(Box::new(ids_vec)));
+
+    let timestamp_array = Value::Array(
+        sea_query::ArrayType::TimeDateTimeWithTimeZone,
+        Some(Box::new(dates_vec)),
+    );
+
+    let input_cte = CommonTableExpression::new()
+        .query(
+            Query::select()
+                .expr_as(Func::cust(Unnest).arg(ids_array), AssetPairsIden::Pair1)
+                .expr_as(
+                    Func::cust(Unnest).arg(timestamp_array),
+                    AssetHistoryCalculationIden::Date,
+                )
+                .to_owned(),
+        )
+        .table_name(AssetsAliasIden::InputSubquery)
+        .to_owned();
+
+    let base_asset_pairs_cte = CommonTableExpression::new()
+        .query(
+            Query::select()
+                .column((AssetPairsIden::Table, AssetPairsIden::Id))
+                .column((AssetPairsIden::Table, AssetPairsIden::Pair1))
+                .column((AssetPairsIden::Table, AssetPairsIden::Pair2))
+                .from(AssetPairsIden::Table)
+                .join(
+                    sea_query::JoinType::Join,
+                    AssetsIden::Table,
+                    Expr::col((AssetsIden::Table, AssetsIden::Id))
+                        .equals((AssetPairsIden::Table, AssetPairsIden::Pair1)),
+                )
+                .join(
+                    sea_query::JoinType::Join,
+                    AssetsAliasIden::InputSubquery,
+                    Expr::col((AssetsAliasIden::InputSubquery, AssetPairsIden::Pair1))
+                        .equals((AssetPairsIden::Table, AssetPairsIden::Pair1)),
+                )
+                .and_where(
+                    Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair2))
+                        .equals((AssetsIden::Table, AssetsIden::BasePairId)),
+                )
+                .to_owned(),
+        )
+        .table_name(AssetsAliasIden::BasePairsSubquery)
+        .to_owned();
+
+    let direct_pairs_cte = CommonTableExpression::new()
+        .query(
+            Query::select()
+                .column((AssetPairsIden::Table, AssetPairsIden::Id))
+                .column((AssetPairsIden::Table, AssetPairsIden::Pair1))
+                .column((AssetPairsIden::Table, AssetPairsIden::Pair2))
+                .from(AssetPairsIden::Table)
+                .join(
+                    sea_query::JoinType::Join,
+                    AssetsAliasIden::InputSubquery,
+                    Expr::col((AssetsAliasIden::InputSubquery, AssetPairsIden::Pair1))
+                        .equals((AssetPairsIden::Table, AssetPairsIden::Pair1)),
+                )
+                .and_where(
+                    Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair2)).eq(reference_asset),
+                )
+                .to_owned(),
+        )
+        .table_name(AssetsAliasIden::DirectPairsSubquery)
+        .to_owned();
+
+    let combined_pairs_cte = CommonTableExpression::new()
+        .query(
+            Query::select()
+                .expr_as(
+                    Expr::col((
+                        AssetsAliasIden::InputSubquery,
+                        AssetHistoryCalculationIden::Date,
+                    )),
+                    AssetHistoryCalculationIden::Date,
+                )
+                .expr_as(
+                    Func::coalesce([
+                        Expr::col((AssetsAliasIden::DirectPairsSubquery, AssetPairsIden::Pair1))
+                            .into(),
+                        Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Pair1))
+                            .into(),
+                    ]),
+                    AssetPairsIden::Pair1,
+                )
+                .expr_as(
+                    Func::coalesce([
+                        Expr::col((AssetsAliasIden::DirectPairsSubquery, AssetPairsIden::Pair2))
+                            .into(),
+                        Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Pair2))
+                            .into(),
+                    ]),
+                    AssetPairsIden::Pair2,
+                )
+                .expr_as(
+                    Func::coalesce([
+                        Expr::col((AssetsAliasIden::DirectPairsSubquery, AssetPairsIden::Id))
+                            .into(),
+                        Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Id)).into(),
+                    ]),
+                    AssetPairsIden::Id,
+                )
+                .from(AssetsAliasIden::BasePairsSubquery)
+                .join(
+                    sea_query::JoinType::FullOuterJoin,
+                    AssetsAliasIden::DirectPairsSubquery,
+                    Expr::col((AssetsAliasIden::DirectPairsSubquery, AssetPairsIden::Pair1))
+                        .equals((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Pair1)),
+                )
+                .join(
+                    sea_query::JoinType::Join,
+                    AssetsAliasIden::InputSubquery,
+                    Expr::col((AssetsAliasIden::InputSubquery, AssetPairsIden::Pair1))
+                        .equals((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Pair1))
+                        .or(
+                            Expr::col((AssetsAliasIden::InputSubquery, AssetPairsIden::Pair1))
+                                .equals((
+                                    AssetsAliasIden::DirectPairsSubquery,
+                                    AssetPairsIden::Pair1,
+                                )),
+                        ),
+                )
+                .to_owned(),
+        )
+        .table_name(AssetsAliasIden::CombinedPairsSubquery)
+        .to_owned();
+
+    let secondary_pairs_cte = CommonTableExpression::new()
+        .query(
+            Query::select()
+                .expr_as(
+                    Func::min(Expr::col((
+                        AssetsAliasIden::CombinedPairsSubquery,
+                        AssetHistoryCalculationIden::Date,
+                    ))),
+                    AssetHistoryCalculationIden::Date,
+                )
+                .column((AssetPairsIden::Table, AssetPairsIden::Id))
+                .column((AssetPairsIden::Table, AssetPairsIden::Pair1))
+                .column((AssetPairsIden::Table, AssetPairsIden::Pair2))
+                .from(AssetPairsIden::Table)
+                .join(
+                    sea_query::JoinType::Join,
+                    AssetsAliasIden::CombinedPairsSubquery,
+                    Expr::col((
+                        AssetsAliasIden::CombinedPairsSubquery,
+                        AssetPairsIden::Pair2,
+                    ))
+                    .equals((AssetPairsIden::Table, AssetPairsIden::Pair1)),
+                )
+                .and_where(
+                    Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair2)).eq(reference_asset),
+                )
+                .group_by_columns([
+                    (AssetPairsIden::Table, AssetPairsIden::Id),
+                    (AssetPairsIden::Table, AssetPairsIden::Pair1),
+                    (AssetPairsIden::Table, AssetPairsIden::Pair2),
+                ])
+                .to_owned(),
+        )
+        .table_name(AssetsAliasIden::SecondaryPairsSubquery)
+        .to_owned();
+
+    let all_filtered_pairs_cte = CommonTableExpression::new()
+        .query(
+            Query::select()
+                .column((
+                    AssetsAliasIden::CombinedPairsSubquery,
+                    AssetHistoryCalculationIden::Date,
+                ))
+                .column((
+                    AssetsAliasIden::CombinedPairsSubquery,
+                    AssetPairsIden::Pair1,
+                ))
+                .column((
+                    AssetsAliasIden::CombinedPairsSubquery,
+                    AssetPairsIden::Pair2,
+                ))
+                .column((AssetsAliasIden::CombinedPairsSubquery, AssetPairsIden::Id))
+                .from(AssetsAliasIden::CombinedPairsSubquery)
+                .union(
+                    sea_query::UnionType::All,
+                    Query::select()
+                        .column((
+                            AssetsAliasIden::SecondaryPairsSubquery,
+                            AssetHistoryCalculationIden::Date,
+                        ))
+                        .column((
+                            AssetsAliasIden::SecondaryPairsSubquery,
+                            AssetPairsIden::Pair1,
+                        ))
+                        .column((
+                            AssetsAliasIden::SecondaryPairsSubquery,
+                            AssetPairsIden::Pair2,
+                        ))
+                        .column((AssetsAliasIden::SecondaryPairsSubquery, AssetPairsIden::Id))
+                        .from(AssetsAliasIden::SecondaryPairsSubquery)
+                        .to_owned(),
+                )
+                .to_owned(),
+        )
+        .table_name(AssetsAliasIden::AllFilteredPairsSubquery)
+        .to_owned();
+
+    let lateral_history_subquery = Query::select()
+        .columns([AssetHistoryIden::Rate, AssetHistoryIden::RecordedAt])
+        .from_subquery(
+            Query::select()
+                .columns([AssetHistoryIden::Rate, AssetHistoryIden::RecordedAt])
+                .from(AssetHistoryIden::Table)
+                .and_where(
+                    Expr::col(AssetHistoryIden::PairId)
+                        .equals((
+                            AssetsAliasIden::AllFilteredPairsSubquery,
+                            AssetPairsIden::Id,
+                        ))
+                        .and(Expr::col(AssetHistoryIden::RecordedAt).gt(Expr::col((
+                            AssetsAliasIden::AllFilteredPairsSubquery,
+                            AssetHistoryCalculationIden::Date,
+                        )))),
+                )
+                .union(
+                    sea_query::UnionType::All,
+                    Query::select()
+                        .columns([AssetHistoryIden::Rate, AssetHistoryIden::RecordedAt])
+                        .from(AssetHistoryIden::Table)
+                        .and_where(
+                            Expr::col(AssetHistoryIden::PairId)
+                                .equals((
+                                    AssetsAliasIden::AllFilteredPairsSubquery,
+                                    AssetPairsIden::Id,
+                                ))
+                                .and(Expr::col(AssetHistoryIden::RecordedAt).lte(Expr::col((
+                                    AssetsAliasIden::AllFilteredPairsSubquery,
+                                    AssetHistoryCalculationIden::Date,
+                                )))),
+                        )
+                        .order_by(AssetHistoryIden::RecordedAt, Order::Desc)
+                        .limit(1)
+                        .to_owned(),
+                )
+                .to_owned(),
+            AssetHistoryIden::Table,
+        )
+        .order_by(AssetHistoryIden::RecordedAt, Order::Asc)
+        .to_owned();
+
+    let main_query = Query::select()
+        .column((
+            AssetsAliasIden::AllFilteredPairsSubquery,
+            AssetPairsIden::Pair1,
+        ))
+        .column((
+            AssetsAliasIden::AllFilteredPairsSubquery,
+            AssetPairsIden::Pair2,
+        ))
+        .expr_as(
+            Func::avg(Expr::col((AssetHistoryIden::Table, AssetHistoryIden::Rate))),
+            AssetHistoryCalculationIden::AvgRate,
+        )
+        .expr_as(
+            CustomFunc::date_bin_col(
+                Duration::days(2),
+                (AssetHistoryIden::Table, AssetHistoryIden::RecordedAt),
+            ),
+            AssetHistoryCalculationIden::BinnedDate,
+        )
+        .from(AssetsAliasIden::AllFilteredPairsSubquery)
+        .join_lateral(
+            sea_query::JoinType::Join,
+            lateral_history_subquery,
+            AssetHistoryIden::Table,
+            Expr::cust("TRUE"),
+        )
+        .group_by_columns([
+            (
+                AssetsAliasIden::AllFilteredPairsSubquery,
+                AssetPairsIden::Pair1,
+            ),
+            (
+                AssetsAliasIden::AllFilteredPairsSubquery,
+                AssetPairsIden::Pair2,
+            ),
+        ])
+        .group_by_col(AssetHistoryCalculationIden::BinnedDate)
+        .order_by(AssetHistoryCalculationIden::BinnedDate, Order::Asc)
+        .to_owned();
+
+    main_query
+        .with(
+            WithClause::new()
+                .cte(input_cte)
+                .cte(base_asset_pairs_cte)
+                .cte(direct_pairs_cte)
+                .cte(combined_pairs_cte)
+                .cte(secondary_pairs_cte)
+                .cte(all_filtered_pairs_cte)
+                .to_owned(),
         )
         .build_sqlx(PostgresQueryBuilder)
         .into()

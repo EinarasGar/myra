@@ -19,19 +19,19 @@ pub struct AddTransactionDescriptionModel {
     pub description: String,
 }
 
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, Debug)]
 pub struct TransactionCategoryFeeEnumModel {
     pub enum_index: DatabaseFeeCategories,
     pub category_mapping: i32,
 }
 
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, Debug)]
 pub struct TransactionCategoryTransactionTypeEnumModel {
     pub enum_index: DatabaseTransactionTypeCategories,
     pub category_mapping: i32,
 }
 
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, Debug)]
 pub struct TransactionWithEntriesModel {
     pub id: i32,
     pub asset_id: i32,
@@ -44,7 +44,7 @@ pub struct TransactionWithEntriesModel {
     pub date_transacted: OffsetDateTime,
 }
 
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, Debug)]
 pub struct TransactionDescriptionModel {
     pub transaction_id: Uuid,
     pub description: String,

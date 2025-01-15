@@ -1,19 +1,15 @@
 #[mockall_double::double]
 use dal::database_context::MyraDb;
 use itertools::Itertools;
-use time::OffsetDateTime;
 use uuid::Uuid;
 
 use crate::{
-    dtos::net_worth::{
-        entries_interval_sum_dto::EntriesIntervalSumDto, entries_sum_dto::EntriesSumDto,
-        range_dto::RangeDto,
-    },
+    dtos::net_worth::{entries_interval_sum_dto::EntriesIntervalSumDto, range_dto::RangeDto},
     entities::{range::Range, transactions::transaction::Transaction},
 };
 use dal::{
-    models::entry_models::{EntriesAssetIntervalSum, EntriesAssetSum},
-    queries::entries_queries::{self, get_binned_entries, get_entris_sum_at_timestamp},
+    models::entry_models::EntriesAssetIntervalSum,
+    queries::entries_queries::{self, get_binned_entries},
     query_params::get_binned_entries_params::GetBinnedEntriesParams,
 };
 
@@ -27,6 +23,7 @@ impl EntriesService {
         Self { db: db.clone() }
     }
 
+    #[tracing::instrument(skip_all, err)]
     pub async fn add_transcation_entries(
         &self,
         transactions: &mut [Transaction],
@@ -61,6 +58,7 @@ impl EntriesService {
         Ok(())
     }
 
+    #[tracing::instrument(skip_all, err)]
     pub async fn get_entries_interval_sums(
         &self,
         user_id: Uuid,
@@ -76,17 +74,6 @@ impl EntriesService {
 
         let query = get_binned_entries(params);
         let results: Vec<EntriesAssetIntervalSum> = self.db.fetch_all(query).await?;
-        Ok(results.into_iter().map_into())
-    }
-
-    pub async fn get_entries_sums_at_timestamp(
-        &self,
-        user_id: Uuid,
-        timestamp: OffsetDateTime,
-    ) -> anyhow::Result<impl Iterator<Item = EntriesSumDto>> {
-        let query = get_entris_sum_at_timestamp(user_id, timestamp);
-        let results: Vec<EntriesAssetSum> = self.db.fetch_all(query).await?;
-
         Ok(results.into_iter().map_into())
     }
 }

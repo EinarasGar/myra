@@ -3,8 +3,10 @@ use std::collections::{HashMap, HashSet, VecDeque};
 #[mockall_double::double]
 use dal::database_context::MyraDb;
 use dal::{
-    models::asset_models::{AssetPair, AssetPairRate, AssetPairRateOption, AssetRate},
-    queries::asset_queries,
+    models::asset_models::{
+        AssetPair, AssetPairRate, AssetPairRateDate, AssetPairRateOption, AssetRate,
+    },
+    queries::asset_queries::{self, get_asset_pairs_rates_with_conversions},
     query_params::get_rates_params::{GetRatesParams, GetRatesSeachType, GetRatesTimeParams},
 };
 use mockall::automock;
@@ -17,6 +19,8 @@ use crate::dtos::{
     asset_rate_dto::AssetRateDto, assets::asset_id_dto::AssetIdDto,
     assets::asset_pair_ids_dto::AssetPairIdsDto,
 };
+
+use time::OffsetDateTime;
 
 pub struct AssetRatesService {
     db: MyraDb,
@@ -152,63 +156,28 @@ impl AssetRatesService {
     #[tracing::instrument(skip_all, err)]
     pub async fn get_assets_rates_default_from_date(
         &self,
-        default_asset_id: i32,
-        asset_ids: HashSet<i32>,
-        start_time: Option<time::OffsetDateTime>,
-    ) -> anyhow::Result<HashMap<(i32, i32), VecDeque<AssetRateDto>>> {
-        let mut result: HashMap<(i32, i32), VecDeque<AssetRateDto>> = HashMap::new();
+        default_asset_id: AssetIdDto,
+        assets: HashMap<AssetIdDto, OffsetDateTime>,
+    ) -> anyhow::Result<HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>>> {
+        let mut result: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>> = HashMap::new();
 
-        let query = asset_queries::get_latest_asset_pair_rates(
-            asset_ids
-                .into_iter()
-                .map(|x| AssetPair {
-                    pair1: x,
-                    pair2: default_asset_id,
-                })
-                .collect(),
-            start_time,
-        );
-        let ret = self.db.fetch_all::<AssetPairRate>(query).await?;
+        let assets: HashMap<i32, OffsetDateTime> =
+            assets.into_iter().map(|(k, v)| (k.0, v)).collect();
+
+        let query = get_asset_pairs_rates_with_conversions(default_asset_id.0, assets);
+        let ret = self.db.fetch_all::<AssetPairRateDate>(query).await?;
 
         for pair in ret {
             result
-                .entry((pair.pair1, pair.pair2))
+                .entry(AssetPairIdsDto::new(
+                    AssetIdDto(pair.pair1),
+                    AssetIdDto(pair.pair2),
+                ))
                 .or_default()
                 .push_back(AssetRateDto {
-                    rate: pair.rate,
-                    date: pair.recorded_at,
+                    rate: pair.avg_rate,
+                    date: pair.binned_date,
                 })
-        }
-
-        let non_default_rates_pair1_ids: Vec<i32> = result
-            .keys()
-            .filter(|p| p.1 != default_asset_id)
-            .map(|p| p.1)
-            .collect();
-
-        if !non_default_rates_pair1_ids.is_empty() {
-            let query = asset_queries::get_latest_asset_pair_rates(
-                non_default_rates_pair1_ids
-                    .into_iter()
-                    .map(|x| AssetPair {
-                        pair1: x,
-                        pair2: default_asset_id,
-                    })
-                    .collect(),
-                start_time,
-            );
-
-            let ret_bases = self.db.fetch_all::<AssetPairRate>(query).await?;
-
-            for pair in ret_bases {
-                result
-                    .entry((pair.pair1, pair.pair2))
-                    .or_default()
-                    .push_back(AssetRateDto {
-                        rate: pair.rate,
-                        date: pair.recorded_at,
-                    })
-            }
         }
 
         Ok(result)
