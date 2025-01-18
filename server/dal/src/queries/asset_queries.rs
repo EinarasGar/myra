@@ -832,6 +832,7 @@ pub fn get_pair_prices_by_dates(pair_dates: Vec<AssetPairDate>) -> DbQueryWithVa
 pub fn get_asset_pairs_rates_with_conversions(
     reference_asset: i32,
     asset_dates: HashMap<i32, OffsetDateTime>,
+    interval: Duration,
 ) -> DbQueryWithValues {
     let mut ids_vec = Vec::new();
     let mut dates_vec = Vec::new();
@@ -1105,7 +1106,7 @@ pub fn get_asset_pairs_rates_with_conversions(
         )
         .expr_as(
             CustomFunc::date_bin_col(
-                Duration::days(2),
+                interval,
                 (AssetHistoryIden::Table, AssetHistoryIden::RecordedAt),
             ),
             AssetHistoryCalculationIden::BinnedDate,

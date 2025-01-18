@@ -1,15 +1,16 @@
 #[mockall_double::double]
 use dal::database_context::MyraDb;
 use itertools::Itertools;
+use time::OffsetDateTime;
 use uuid::Uuid;
 
 use crate::{
-    dtos::net_worth::{entries_interval_sum_dto::EntriesIntervalSumDto, range_dto::RangeDto},
+    dtos::net_worth::entries_interval_sum_dto::EntriesIntervalSumDto,
     entities::{range::Range, transactions::transaction::Transaction},
 };
 use dal::{
     models::entry_models::EntriesAssetIntervalSum,
-    queries::entries_queries::{self, get_binned_entries},
+    queries::entries_queries::{self, get_binned_entries, get_oldest_entry_date},
     query_params::get_binned_entries_params::GetBinnedEntriesParams,
 };
 
@@ -59,21 +60,27 @@ impl EntriesService {
     }
 
     #[tracing::instrument(skip_all, err)]
-    pub async fn get_entries_interval_sums(
+    pub(crate) async fn get_entries_interval_sums(
         &self,
         user_id: Uuid,
-        range: RangeDto,
+        range: Range,
     ) -> anyhow::Result<impl Iterator<Item = EntriesIntervalSumDto>> {
-        let range_ent: Range = range.try_into()?;
+        let start_time_for_binned = (!range.infinite_start()).then(|| range.start_time());
 
         let params = GetBinnedEntriesParams {
-            interval: range_ent.interval(),
+            interval: range.interval(),
             user_id,
-            start_date: range_ent.start_time(),
+            start_date: start_time_for_binned,
         };
 
         let query = get_binned_entries(params);
         let results: Vec<EntriesAssetIntervalSum> = self.db.fetch_all(query).await?;
         Ok(results.into_iter().map_into())
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn get_oldest_entry_date(&self, user_id: Uuid) -> anyhow::Result<OffsetDateTime> {
+        let query = get_oldest_entry_date(user_id);
+        Ok(self.db.fetch_one_scalar(query).await?)
     }
 }

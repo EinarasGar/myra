@@ -124,10 +124,11 @@ impl MyraDb {
         }
     }
 
-    #[tracing::instrument(skip(self), err)]
+    #[tracing::instrument(skip(self), err, ret(level = Level::TRACE))]
     pub async fn fetch_one_scalar<T>(&self, query: DbQueryWithValues) -> Result<T, sqlx::Error>
     where
-        for<'r> T: Send + Unpin + sqlx::Decode<'r, Postgres> + sqlx::Type<Postgres>,
+        for<'r> T:
+            Send + Unpin + sqlx::Decode<'r, Postgres> + sqlx::Type<Postgres> + std::fmt::Debug,
     {
         let mut tx_guard = self.transaction.lock().await;
         if let Some(ref mut tx) = &mut *tx_guard {

@@ -24,7 +24,7 @@ impl TransactionService {
         }
     }
 
-    pub async fn add_transactions_info(
+    pub(crate) async fn add_transactions_info(
         &self,
         transactions: &mut [Transaction],
     ) -> anyhow::Result<()> {

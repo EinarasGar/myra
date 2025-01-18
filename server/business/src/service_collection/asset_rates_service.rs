@@ -158,13 +158,14 @@ impl AssetRatesService {
         &self,
         default_asset_id: AssetIdDto,
         assets: HashMap<AssetIdDto, OffsetDateTime>,
+        interval: Duration,
     ) -> anyhow::Result<HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>>> {
         let mut result: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>> = HashMap::new();
 
         let assets: HashMap<i32, OffsetDateTime> =
             assets.into_iter().map(|(k, v)| (k.0, v)).collect();
 
-        let query = get_asset_pairs_rates_with_conversions(default_asset_id.0, assets);
+        let query = get_asset_pairs_rates_with_conversions(default_asset_id.0, assets, interval);
         let ret = self.db.fetch_all::<AssetPairRateDate>(query).await?;
 
         for pair in ret {

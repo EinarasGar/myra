@@ -19,7 +19,7 @@ pub struct NetWorthHistory {
     reference_asset_id: AssetIdDto,
     interval: Duration,
 
-    start_time: Option<OffsetDateTime>,
+    start_time: OffsetDateTime,
     end_time: OffsetDateTime,
 
     asset_first_occurances: HashMap<AssetIdDto, OffsetDateTime>,
@@ -81,7 +81,7 @@ impl NetWorthHistory {
     }
 
     #[tracing::instrument(skip_all)]
-    pub fn get_networth_history(&mut self) -> Vec<AssetRateDto> {
+    pub fn calculate_networth_history(&mut self) -> Vec<AssetRateDto> {
         let mut history: Vec<AssetRateDto> = Vec::new();
 
         self.asset_pair_rates
@@ -95,8 +95,7 @@ impl NetWorthHistory {
 
         self.update_rates_with_base_rate();
 
-        let mut iter_date: OffsetDateTime =
-            self.start_time.expect("start time should be set by now.");
+        let mut iter_date: OffsetDateTime = self.start_time;
         while iter_date <= self.end_time {
             self.update_cumulative_asset_sum_for_today(iter_date);
             self.update_rates_for_new_tiemstamp(iter_date);
@@ -239,6 +238,8 @@ impl NetWorthHistory {
 
 #[cfg(test)]
 mod tests {
+    use crate::dtos::net_worth::range_dto::RangeDto;
+
     use super::*;
     use rust_decimal_macros::dec;
     use time::macros::datetime;
@@ -264,11 +265,13 @@ mod tests {
 
         let mut net_worth_history = NetWorthHistory::new(
             AssetIdDto(2),
-            Range::Custom(
-                datetime!(2023-03-22 11:59:00 UTC),
-                datetime!(2023-03-22 14:58:00 UTC),
-                Duration::hours(1),
-            ),
+            RangeDto::Custom(
+                Some(datetime!(2023-03-22 11:59:00 UTC)),
+                Some(datetime!(2023-03-22 14:58:00 UTC)),
+                Some(Duration::hours(1)),
+            )
+            .try_into()
+            .unwrap(),
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
@@ -278,7 +281,7 @@ mod tests {
             .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
-        let result = net_worth_history.get_networth_history();
+        let result = net_worth_history.calculate_networth_history();
 
         assert_eq!(result.len(), 4);
         assert_eq!(result[0].date, datetime!(2023-03-22 11:59:00 UTC));
@@ -308,11 +311,13 @@ mod tests {
 
         let mut net_worth_history = NetWorthHistory::new(
             AssetIdDto(2),
-            Range::Custom(
-                datetime!(2023-03-22 12:00:00 UTC),
-                datetime!(2023-03-22 13:00:00 UTC),
-                Duration::hours(1),
-            ),
+            RangeDto::Custom(
+                Some(datetime!(2023-03-22 12:00:00 UTC)),
+                Some(datetime!(2023-03-22 13:00:00 UTC)),
+                Some(Duration::hours(1)),
+            )
+            .try_into()
+            .unwrap(),
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
@@ -322,7 +327,7 @@ mod tests {
             .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
-        let result = net_worth_history.get_networth_history();
+        let result = net_worth_history.calculate_networth_history();
 
         assert_eq!(result.len(), 2);
         assert_eq!(result[0].rate, dec!(1.5));
@@ -359,11 +364,13 @@ mod tests {
 
         let mut net_worth_history = NetWorthHistory::new(
             AssetIdDto(3),
-            Range::Custom(
-                datetime!(2023-03-22 12:00:00 UTC),
-                datetime!(2023-03-22 13:00:00 UTC),
-                Duration::hours(1),
-            ),
+            RangeDto::Custom(
+                Some(datetime!(2023-03-22 12:00:00 UTC)),
+                Some(datetime!(2023-03-22 13:00:00 UTC)),
+                Some(Duration::hours(1)),
+            )
+            .try_into()
+            .unwrap(),
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
@@ -373,7 +380,7 @@ mod tests {
             .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
-        let result = net_worth_history.get_networth_history();
+        let result = net_worth_history.calculate_networth_history();
 
         assert_eq!(result.len(), 2);
         assert_eq!(result[0].rate, dec!(6));
@@ -401,11 +408,13 @@ mod tests {
 
         let mut net_worth_history = NetWorthHistory::new(
             AssetIdDto(2),
-            Range::Custom(
-                datetime!(2023-03-22 12:00:00 UTC),
-                datetime!(2023-03-22 14:00:00 UTC),
-                Duration::hours(1),
-            ),
+            RangeDto::Custom(
+                Some(datetime!(2023-03-22 12:00:00 UTC)),
+                Some(datetime!(2023-03-22 14:00:00 UTC)),
+                Some(Duration::hours(1)),
+            )
+            .try_into()
+            .unwrap(),
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
@@ -415,7 +424,7 @@ mod tests {
             .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
-        let result = net_worth_history.get_networth_history();
+        let result = net_worth_history.calculate_networth_history();
 
         assert_eq!(result.len(), 3);
         assert_eq!(result[0].rate, dec!(1.5));
@@ -453,11 +462,13 @@ mod tests {
 
         let mut net_worth_history = NetWorthHistory::new(
             AssetIdDto(3),
-            Range::Custom(
-                datetime!(2023-03-22 12:00:00 UTC),
-                datetime!(2023-03-22 14:00:00 UTC),
-                Duration::hours(1),
-            ),
+            RangeDto::Custom(
+                Some(datetime!(2023-03-22 12:00:00 UTC)),
+                Some(datetime!(2023-03-22 14:00:00 UTC)),
+                Some(Duration::hours(1)),
+            )
+            .try_into()
+            .unwrap(),
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
@@ -467,7 +478,7 @@ mod tests {
             .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
-        let result = net_worth_history.get_networth_history();
+        let result = net_worth_history.calculate_networth_history();
 
         assert_eq!(result.len(), 3);
         assert_eq!(result[0].rate, dec!(6));
@@ -482,11 +493,13 @@ mod tests {
 
         let mut net_worth_history = NetWorthHistory::new(
             AssetIdDto(2),
-            Range::Custom(
-                datetime!(2023-03-22 12:00:00 UTC),
-                datetime!(2023-03-22 13:00:00 UTC),
-                Duration::hours(1),
-            ),
+            RangeDto::Custom(
+                Some(datetime!(2023-03-22 12:00:00 UTC)),
+                Some(datetime!(2023-03-22 13:00:00 UTC)),
+                Some(Duration::hours(1)),
+            )
+            .try_into()
+            .unwrap(),
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
@@ -496,7 +509,7 @@ mod tests {
             .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
-        let result = net_worth_history.get_networth_history();
+        let result = net_worth_history.calculate_networth_history();
         assert_eq!(result.len(), 2);
         assert_eq!(result[0].rate, dec!(0));
         assert_eq!(result[1].rate, dec!(0));
@@ -529,11 +542,13 @@ mod tests {
 
         let mut net_worth_history = NetWorthHistory::new(
             AssetIdDto(2),
-            Range::Custom(
-                datetime!(2023-03-22 12:00:00 UTC),
-                datetime!(2023-03-22 13:00:00 UTC),
-                Duration::hours(1),
-            ),
+            RangeDto::Custom(
+                Some(datetime!(2023-03-22 12:00:00 UTC)),
+                Some(datetime!(2023-03-22 13:00:00 UTC)),
+                Some(Duration::hours(1)),
+            )
+            .try_into()
+            .unwrap(),
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
@@ -543,7 +558,7 @@ mod tests {
             .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
-        let result = net_worth_history.get_networth_history();
+        let result = net_worth_history.calculate_networth_history();
         assert_eq!(result.len(), 2);
         assert_eq!(result[0].rate, dec!(0));
         assert_eq!(result[1].rate, dec!(0));
@@ -570,11 +585,13 @@ mod tests {
 
         let mut net_worth_history = NetWorthHistory::new(
             AssetIdDto(2),
-            Range::Custom(
-                datetime!(2023-03-22 12:00:00 UTC),
-                datetime!(2023-03-22 13:00:00 UTC),
-                Duration::hours(1),
-            ),
+            RangeDto::Custom(
+                Some(datetime!(2023-03-22 12:00:00 UTC)),
+                Some(datetime!(2023-03-22 13:00:00 UTC)),
+                Some(Duration::hours(1)),
+            )
+            .try_into()
+            .unwrap(),
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
@@ -584,7 +601,7 @@ mod tests {
             .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
-        let result = net_worth_history.get_networth_history();
+        let result = net_worth_history.calculate_networth_history();
         assert_eq!(result.len(), 2);
         assert_eq!(result[0].rate, dec!(0));
         assert_eq!(result[1].rate, dec!(0));
@@ -617,11 +634,13 @@ mod tests {
 
         let mut net_worth_history = NetWorthHistory::new(
             AssetIdDto(2),
-            Range::Custom(
-                datetime!(2023-03-22 12:00:00 UTC),
-                datetime!(2023-03-22 12:30:00 UTC),
-                Duration::hours(1),
-            ),
+            RangeDto::Custom(
+                Some(datetime!(2023-03-22 12:00:00 UTC)),
+                Some(datetime!(2023-03-22 12:30:00 UTC)),
+                Some(Duration::hours(1)),
+            )
+            .try_into()
+            .unwrap(),
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
@@ -631,7 +650,7 @@ mod tests {
             .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
-        let result = net_worth_history.get_networth_history();
+        let result = net_worth_history.calculate_networth_history();
         assert_eq!(result.len(), 2);
         assert_eq!(result[0].rate, dec!(2));
         assert_eq!(result[1].rate, dec!(2));
@@ -664,11 +683,13 @@ mod tests {
 
         let mut net_worth_history = NetWorthHistory::new(
             AssetIdDto(2),
-            Range::Custom(
-                datetime!(2023-03-22 12:00:00 UTC),
-                datetime!(2023-03-22 13:00:00 UTC),
-                Duration::hours(1),
-            ),
+            RangeDto::Custom(
+                Some(datetime!(2023-03-22 12:00:00 UTC)),
+                Some(datetime!(2023-03-22 13:00:00 UTC)),
+                Some(Duration::hours(1)),
+            )
+            .try_into()
+            .unwrap(),
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
@@ -678,7 +699,7 @@ mod tests {
             .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
-        let result = net_worth_history.get_networth_history();
+        let result = net_worth_history.calculate_networth_history();
         assert_eq!(result.len(), 2);
         assert_eq!(result[0].rate, dec!(2));
         assert_eq!(result[1].rate, dec!(3));
@@ -705,11 +726,13 @@ mod tests {
 
         let mut net_worth_history = NetWorthHistory::new(
             AssetIdDto(2),
-            Range::Custom(
-                datetime!(2023-03-22 12:00:00 UTC),
-                datetime!(2023-03-22 12:00:00 UTC),
-                Duration::hours(1),
-            ),
+            RangeDto::Custom(
+                Some(datetime!(2023-03-22 12:00:00 UTC)),
+                Some(datetime!(2023-03-22 12:00:00 UTC)),
+                Some(Duration::hours(1)),
+            )
+            .try_into()
+            .unwrap(),
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
@@ -719,7 +742,7 @@ mod tests {
             .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
-        let result = net_worth_history.get_networth_history();
+        let result = net_worth_history.calculate_networth_history();
         assert_eq!(result.len(), 1);
         assert_eq!(result[0].rate, dec!(2));
         assert_eq!(result[0].date, datetime!(2023-03-22 12:00:00 UTC));
@@ -759,11 +782,13 @@ mod tests {
 
         let mut net_worth_history = NetWorthHistory::new(
             AssetIdDto(2),
-            Range::Custom(
-                datetime!(2023-03-22 12:00:00 UTC),
-                datetime!(2023-03-22 14:00:00 UTC),
-                Duration::hours(1),
-            ),
+            RangeDto::Custom(
+                Some(datetime!(2023-03-22 12:00:00 UTC)),
+                Some(datetime!(2023-03-22 14:00:00 UTC)),
+                Some(Duration::hours(1)),
+            )
+            .try_into()
+            .unwrap(),
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
@@ -773,7 +798,7 @@ mod tests {
             .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
-        let result = net_worth_history.get_networth_history();
+        let result = net_worth_history.calculate_networth_history();
 
         assert_eq!(result.len(), 3);
         assert_eq!(result[0].rate, dec!(2));
@@ -819,11 +844,13 @@ mod tests {
 
         let mut net_worth_history = NetWorthHistory::new(
             AssetIdDto(2),
-            Range::Custom(
-                datetime!(2023-03-22 12:00:00 UTC),
-                datetime!(2023-03-22 13:00:00 UTC),
-                Duration::hours(1),
-            ),
+            RangeDto::Custom(
+                Some(datetime!(2023-03-22 12:00:00 UTC)),
+                Some(datetime!(2023-03-22 13:00:00 UTC)),
+                Some(Duration::hours(1)),
+            )
+            .try_into()
+            .unwrap(),
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
@@ -833,7 +860,7 @@ mod tests {
             .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
-        let result = net_worth_history.get_networth_history();
+        let result = net_worth_history.calculate_networth_history();
 
         assert_eq!(result.len(), 2);
         assert_eq!(result[0].rate, dec!(8));
@@ -916,11 +943,13 @@ mod tests {
 
         let mut net_worth_history = NetWorthHistory::new(
             AssetIdDto(2),
-            Range::Custom(
-                datetime!(2023-03-22 12:00:00 UTC),
-                datetime!(2023-03-22 15:00:00 UTC),
-                Duration::hours(1),
-            ),
+            RangeDto::Custom(
+                Some(datetime!(2023-03-22 12:00:00 UTC)),
+                Some(datetime!(2023-03-22 15:00:00 UTC)),
+                Some(Duration::hours(1)),
+            )
+            .try_into()
+            .unwrap(),
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
@@ -930,7 +959,7 @@ mod tests {
             .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
-        let result = net_worth_history.get_networth_history();
+        let result = net_worth_history.calculate_networth_history();
 
         assert_eq!(result.len(), 4);
         assert_eq!(result[0].rate, dec!(1));
@@ -1034,11 +1063,13 @@ mod tests {
 
         let mut net_worth_history = NetWorthHistory::new(
             AssetIdDto(2),
-            Range::Custom(
-                datetime!(2023-03-22 12:00:00 UTC),
-                datetime!(2023-03-22 15:00:00 UTC),
-                Duration::hours(1),
-            ),
+            RangeDto::Custom(
+                Some(datetime!(2023-03-22 12:00:00 UTC)),
+                Some(datetime!(2023-03-22 15:00:00 UTC)),
+                Some(Duration::hours(1)),
+            )
+            .try_into()
+            .unwrap(),
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
@@ -1048,7 +1079,7 @@ mod tests {
             .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
-        let result = net_worth_history.get_networth_history();
+        let result = net_worth_history.calculate_networth_history();
 
         assert_eq!(result.len(), 4);
         assert_eq!(result[0].rate, dec!(5));
@@ -1097,11 +1128,13 @@ mod tests {
 
         let mut net_worth_history = NetWorthHistory::new(
             AssetIdDto(999),
-            Range::Custom(
-                datetime!(2023-03-22 12:00:00 UTC),
-                datetime!(2023-03-22 12:00:00 UTC),
-                Duration::hours(1),
-            ),
+            RangeDto::Custom(
+                Some(datetime!(2023-03-22 12:00:00 UTC)),
+                Some(datetime!(2023-03-22 12:00:00 UTC)),
+                Some(Duration::hours(1)),
+            )
+            .try_into()
+            .unwrap(),
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
@@ -1111,7 +1144,7 @@ mod tests {
             .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
-        let result = net_worth_history.get_networth_history();
+        let result = net_worth_history.calculate_networth_history();
 
         assert_eq!(result.len(), 1);
         assert_eq!(result[0].rate, dec!(8));
@@ -1162,11 +1195,13 @@ mod tests {
 
         let mut net_worth_history = NetWorthHistory::new(
             AssetIdDto(2),
-            Range::Custom(
-                datetime!(2023-03-22 12:00:00 UTC),
-                datetime!(2023-03-22 15:00:00 UTC),
-                Duration::hours(1),
-            ),
+            RangeDto::Custom(
+                Some(datetime!(2023-03-22 12:00:00 UTC)),
+                Some(datetime!(2023-03-22 15:00:00 UTC)),
+                Some(Duration::hours(1)),
+            )
+            .try_into()
+            .unwrap(),
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
@@ -1176,7 +1211,7 @@ mod tests {
             .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
-        let result = net_worth_history.get_networth_history();
+        let result = net_worth_history.calculate_networth_history();
 
         assert_eq!(result.len(), 4);
         assert_eq!(result[0].rate, dec!(2));
@@ -1230,11 +1265,13 @@ mod tests {
 
         let mut net_worth_history = NetWorthHistory::new(
             AssetIdDto(2),
-            Range::Custom(
-                datetime!(2023-03-22 12:00:00 UTC),
-                datetime!(2023-03-22 15:00:00 UTC),
-                Duration::hours(1),
-            ),
+            RangeDto::Custom(
+                Some(datetime!(2023-03-22 12:00:00 UTC)),
+                Some(datetime!(2023-03-22 15:00:00 UTC)),
+                Some(Duration::hours(1)),
+            )
+            .try_into()
+            .unwrap(),
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
@@ -1244,7 +1281,7 @@ mod tests {
             .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
-        let result = net_worth_history.get_networth_history();
+        let result = net_worth_history.calculate_networth_history();
 
         assert_eq!(result.len(), 4);
         assert_eq!(result[0].rate, dec!(2));
@@ -1284,11 +1321,13 @@ mod tests {
 
         let mut net_worth_history = NetWorthHistory::new(
             AssetIdDto(2),
-            Range::Custom(
-                datetime!(2023-03-22 12:00:00 UTC),
-                datetime!(2023-03-22 18:00:00 UTC),
-                Duration::hours(1),
-            ),
+            RangeDto::Custom(
+                Some(datetime!(2023-03-22 12:00:00 UTC)),
+                Some(datetime!(2023-03-22 18:00:00 UTC)),
+                Some(Duration::hours(1)),
+            )
+            .try_into()
+            .unwrap(),
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
@@ -1298,7 +1337,7 @@ mod tests {
             .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
-        let result = net_worth_history.get_networth_history();
+        let result = net_worth_history.calculate_networth_history();
         assert_eq!(result.len(), 7);
         assert_eq!(result[0].rate, dec!(1));
         assert_eq!(result[1].rate, dec!(2));
@@ -1360,11 +1399,13 @@ mod tests {
 
         let mut net_worth_history = NetWorthHistory::new(
             AssetIdDto(2),
-            Range::Custom(
-                datetime!(2023-03-22 12:00:00 UTC),
-                datetime!(2023-03-22 18:00:00 UTC),
-                Duration::hours(1),
-            ),
+            RangeDto::Custom(
+                Some(datetime!(2023-03-22 12:00:00 UTC)),
+                Some(datetime!(2023-03-22 18:00:00 UTC)),
+                Some(Duration::hours(1)),
+            )
+            .try_into()
+            .unwrap(),
         );
 
         net_worth_history.add_entries(transactions_queue.into_iter());
@@ -1374,7 +1415,7 @@ mod tests {
             .collect();
         net_worth_history.add_asset_rates(asset_rate_queues);
 
-        let result = net_worth_history.get_networth_history();
+        let result = net_worth_history.calculate_networth_history();
         assert_eq!(result.len(), 7);
         assert_eq!(result[0].rate, dec!(1));
         assert_eq!(result[1].rate, dec!(4));

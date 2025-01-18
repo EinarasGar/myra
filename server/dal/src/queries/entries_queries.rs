@@ -111,34 +111,6 @@ pub fn get_holdings(user_id: Uuid) -> DbQueryWithValues {
 /// ```
 #[tracing::instrument(skip_all)]
 pub fn get_binned_entries(params: GetBinnedEntriesParams) -> DbQueryWithValues {
-    let intial_subquery = Query::select()
-        .expr_as(
-            CustomFunc::date_bin_time(params.interval, params.start_date.unwrap()),
-            BinnedEntriesIden::StartTime,
-        )
-        .column((EntryIden::Table, EntryIden::AssetId))
-        .expr_as(
-            Expr::sum(Expr::col((EntryIden::Table, EntryIden::Quantity))),
-            BinnedEntriesIden::Sum,
-        )
-        .from(EntryIden::Table)
-        .join(
-            JoinType::Join,
-            TransactionIden::Table,
-            Expr::col((EntryIden::Table, EntryIden::TransactionId))
-                .equals((TransactionIden::Table, TransactionIden::Id)),
-        )
-        .and_where(Expr::col((TransactionIden::Table, TransactionIden::UserId)).eq(params.user_id))
-        .and_where(
-            //TODO: Handle the case where start_date is None
-            Expr::col((TransactionIden::Table, TransactionIden::DateTransacted)).lt(
-                CustomFunc::date_bin_time(params.interval, params.start_date.unwrap())
-                    .add(CustomFunc::interval(params.interval)),
-            ),
-        )
-        .group_by_col((EntryIden::Table, EntryIden::AssetId))
-        .to_owned();
-
     let scoped_subquery = Query::select()
         .expr_as(
             CustomFunc::date_bin_col(
@@ -160,12 +132,14 @@ pub fn get_binned_entries(params: GetBinnedEntriesParams) -> DbQueryWithValues {
                 .equals((TransactionIden::Table, TransactionIden::Id)),
         )
         .and_where(Expr::col((TransactionIden::Table, TransactionIden::UserId)).eq(params.user_id))
-        .and_where(
-            Expr::col((TransactionIden::Table, TransactionIden::DateTransacted)).gte(
-                CustomFunc::date_bin_time(params.interval, params.start_date.unwrap())
-                    .add(CustomFunc::interval(params.interval)),
-            ),
-        )
+        .apply_if(params.start_date, |q, v| {
+            q.and_where(
+                Expr::col((TransactionIden::Table, TransactionIden::DateTransacted)).gte(
+                    CustomFunc::date_bin_time(params.interval, v)
+                        .add(CustomFunc::interval(params.interval)),
+                ),
+            );
+        })
         .group_by_col((EntryIden::Table, EntryIden::AssetId))
         .group_by_col(BinnedEntriesIden::StartTime)
         .to_owned();
@@ -174,9 +148,48 @@ pub fn get_binned_entries(params: GetBinnedEntriesParams) -> DbQueryWithValues {
         .column(BinnedEntriesIden::StartTime)
         .column(EntryIden::AssetId)
         .column(BinnedEntriesIden::Sum)
-        .from_subquery(intial_subquery, BinnedEntriesIden::InitialSubquery)
-        .union(sea_query::UnionType::All, scoped_subquery)
+        .from_subquery(scoped_subquery, BinnedEntriesIden::ScopedSubquery)
+        .apply_if(params.start_date, |q, v| {
+            let intial_subquery = Query::select()
+                .expr_as(
+                    CustomFunc::date_bin_time(params.interval, v),
+                    BinnedEntriesIden::StartTime,
+                )
+                .column((EntryIden::Table, EntryIden::AssetId))
+                .expr_as(
+                    Expr::sum(Expr::col((EntryIden::Table, EntryIden::Quantity))),
+                    BinnedEntriesIden::Sum,
+                )
+                .from(EntryIden::Table)
+                .join(
+                    JoinType::Join,
+                    TransactionIden::Table,
+                    Expr::col((EntryIden::Table, EntryIden::TransactionId))
+                        .equals((TransactionIden::Table, TransactionIden::Id)),
+                )
+                .and_where(
+                    Expr::col((TransactionIden::Table, TransactionIden::UserId)).eq(params.user_id),
+                )
+                .and_where(
+                    Expr::col((TransactionIden::Table, TransactionIden::DateTransacted))
+                        .lt(CustomFunc::date_bin_time(params.interval, v)
+                            .add(CustomFunc::interval(params.interval))),
+                )
+                .group_by_col((EntryIden::Table, EntryIden::AssetId))
+                .to_owned();
+            q.union(sea_query::UnionType::All, intial_subquery);
+        })
         .order_by(BinnedEntriesIden::StartTime, sea_query::Order::Asc)
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn get_oldest_entry_date(user_id: Uuid) -> DbQueryWithValues {
+    Query::select()
+        .expr(Expr::min(Expr::col(TransactionIden::DateTransacted)))
+        .from(TransactionIden::Table)
+        .and_where(Expr::col((TransactionIden::Table, TransactionIden::UserId)).eq(user_id))
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }
