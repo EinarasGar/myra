@@ -30,3 +30,8 @@ rust_decimal_macros = "1.36.0"
 paste = "1.0.15"
 axum-extra = { version = "0.9.4", features = ["typed-header"] }
 itertools = "0.13.0"
+syntect = { optional = true, version = "5.2.0" }
+ 
+[features]
+default = ["color-sql"]
+color-sql = ["dep:syntect"]

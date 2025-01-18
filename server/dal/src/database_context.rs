@@ -86,10 +86,11 @@ impl MyraDb {
         }
     }
 
-    #[tracing::instrument(skip(self), err)]
+    #[tracing::instrument(skip(self), err, ret(level = Level::TRACE))]
     pub async fn fetch_all_scalar<T>(&self, query: DbQueryWithValues) -> Result<Vec<T>, sqlx::Error>
     where
-        for<'r> T: Send + Unpin + sqlx::Decode<'r, Postgres> + sqlx::Type<Postgres>,
+        for<'r> T:
+            Send + Unpin + sqlx::Decode<'r, Postgres> + sqlx::Type<Postgres> + std::fmt::Debug,
     {
         let mut tx_guard = self.transaction.lock().await;
         if let Some(ref mut tx) = &mut *tx_guard {
@@ -105,10 +106,10 @@ impl MyraDb {
         }
     }
 
-    #[tracing::instrument(skip(self), err)]
+    #[tracing::instrument(skip(self), err, ret(level = Level::TRACE))]
     pub async fn fetch_one<T>(&self, query: DbQueryWithValues) -> Result<T, sqlx::Error>
     where
-        for<'r> T: FromRow<'r, PgRow> + Send + Unpin,
+        for<'r> T: FromRow<'r, PgRow> + Send + Unpin + std::fmt::Debug,
     {
         let mut tx_guard = self.transaction.lock().await;
         if let Some(ref mut tx) = &mut *tx_guard {
@@ -144,13 +145,13 @@ impl MyraDb {
         }
     }
 
-    #[tracing::instrument(skip(self), err)]
+    #[tracing::instrument(skip(self), err, ret(level = Level::TRACE))]
     pub async fn fetch_optional<T>(
         &self,
         query: DbQueryWithValues,
     ) -> Result<Option<T>, sqlx::Error>
     where
-        for<'r> T: FromRow<'r, PgRow> + Send + Unpin,
+        for<'r> T: FromRow<'r, PgRow> + Send + Unpin + std::fmt::Debug,
     {
         let mut tx_guard = self.transaction.lock().await;
         if let Some(ref mut tx) = &mut *tx_guard {
@@ -164,7 +165,7 @@ impl MyraDb {
         }
     }
 
-    #[tracing::instrument(skip(self), err)]
+    #[tracing::instrument(skip(self), err, ret(level = Level::TRACE))]
     pub async fn execute(&self, query: DbQueryWithValues) -> Result<(), sqlx::Error> {
         let mut tx_guard = self.transaction.lock().await;
         if let Some(ref mut tx) = &mut *tx_guard {

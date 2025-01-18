@@ -1,6 +1,6 @@
 use sqlx::types::{time::OffsetDateTime, Decimal, Uuid};
 
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, Debug)]
 pub struct AssetWithMetadata {
     pub id: i32,
     pub asset_name: String,
@@ -48,12 +48,12 @@ pub struct InsertAsset {
     pub user_id: Option<Uuid>,
 }
 
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, Debug)]
 pub struct AssetId {
     pub id: i32,
 }
 
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, Debug)]
 pub struct AssetPairId {
     pub id: i32,
 }
@@ -88,7 +88,7 @@ pub struct AssetPairRateDate {
     pub binned_date: OffsetDateTime,
 }
 
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, Debug)]
 pub struct AssetPairSharedMetadata {
     pub volume: Decimal,
 }

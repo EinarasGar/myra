@@ -13,6 +13,9 @@ use tracing_subscriber::Layer;
 use tracing_subscriber::Registry;
 use tracing_subscriber::{prelude::*, EnvFilter};
 
+#[cfg(all(feature = "color-sql", debug_assertions))]
+pub(crate) mod sql_highlighter;
+
 pub fn initialize_tracing_subscriber() {
     Registry::default()
         .with(create_print_layer())
@@ -67,7 +70,12 @@ where
 }
 
 fn create_print_layer() -> Box<dyn Layer<Registry> + Send + Sync> {
-    tracing_subscriber::fmt::layer().pretty().boxed()
+    let layer = tracing_subscriber::fmt::layer().pretty();
+
+    #[cfg(all(feature = "color-sql", debug_assertions))]
+    let layer = layer.fmt_fields(sql_highlighter::create_tracing_formatter());
+
+    layer.boxed()
 }
 
 //Creates an env filter from RUST_LOG. If its invalid - panics. If its empty or unset - defaults to erros only
