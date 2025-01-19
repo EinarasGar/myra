@@ -6,5 +6,5 @@ members = [
   "api",
   "business",
   "dal",
-  "asset_aggregator",
+  "cli",
 ]
