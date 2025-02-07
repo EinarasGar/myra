@@ -17,7 +17,7 @@ import { router } from "@/router";
 export function LoginForm({
   className,
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+}: React.ComponentProps<"div">) {
   const { mutateAsync } = usePostAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -65,13 +65,13 @@ export function LoginForm({
                   Login with Google
                 </Button>
               </div>
-              <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-zinc-200 dark:after:border-zinc-800">
-                <span className="relative z-10 bg-white px-2 text-zinc-500 dark:bg-zinc-950 dark:text-zinc-400">
+              <div className="after:border-zinc-200 relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t dark:after:border-zinc-800">
+                <span className="bg-white text-zinc-500 relative z-10 px-2 dark:bg-zinc-950 dark:text-zinc-400">
                   Or continue with
                 </span>
               </div>
               <div className="grid gap-6">
-                <div className="grid gap-2">
+                <div className="grid gap-3">
                   <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
@@ -82,7 +82,7 @@ export function LoginForm({
                     required
                   />
                 </div>
-                <div className="grid gap-2">
+                <div className="grid gap-3">
                   <div className="flex items-center">
                     <Label htmlFor="password">Password</Label>
                     <a
@@ -114,8 +114,9 @@ export function LoginForm({
           </form>
         </CardContent>
       </Card>
-      <div className="text-balance text-center text-xs text-zinc-500 [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-zinc-900  dark:text-zinc-400 dark:[&_a]:hover:text-zinc-50">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
+      <div className="text-zinc-500 *:[a]:hover:text-zinc-900 text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4 dark:text-zinc-400 dark:*:[a]:hover:text-zinc-50">
+        By clicking continue, you agree to our <a href="#">Terms of Service</a>
+        {""}
         and <a href="#">Privacy Policy</a>.
       </div>
     </div>
