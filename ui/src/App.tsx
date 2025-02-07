@@ -1,14 +1,13 @@
-import { useState } from "react";
-import { Button } from "./components/ui/button";
+import { useAuth } from "./hooks/use-auth";
+import { router } from "./router";
+import { RouterProvider } from "@tanstack/react-router";
 
 function App() {
-  const [count, setCount] = useState(0);
+  const auth = useAuth();
 
   return (
     <>
-      <Button onClick={() => setCount((count) => count + 1)}>
-        count is {count}
-      </Button>
+      <RouterProvider router={router} context={{ auth }} />
     </>
   );
 }
