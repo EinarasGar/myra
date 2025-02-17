@@ -75,7 +75,7 @@ export interface AccountFeesViewModel {
    * @type {string}
    * @memberof AccountFeesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -100,7 +100,7 @@ export interface AccountFeesViewModelWithType {
    * @type {string}
    * @memberof AccountFeesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -139,7 +139,7 @@ export interface AccountFeesWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof AccountFeesWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -164,7 +164,7 @@ export interface AccountFeesWithIdentifiableEntriesViewModelWithType {
    * @type {string}
    * @memberof AccountFeesWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -436,7 +436,7 @@ export interface AddTransactionGroupRequestViewModel {
    * @type {string}
    * @memberof AddTransactionGroupRequestViewModel
    */
-  date: string;
+  date: number;
   /**
    * Overall description of whole group
    * @type {string}
@@ -486,7 +486,7 @@ export interface AssetBalanceTransferViewModel {
    * @type {string}
    * @memberof AssetBalanceTransferViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -517,7 +517,7 @@ export interface AssetBalanceTransferViewModelWithType {
    * @type {string}
    * @memberof AssetBalanceTransferViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -562,7 +562,7 @@ export interface AssetBalanceTransferWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof AssetBalanceTransferWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -593,7 +593,7 @@ export interface AssetBalanceTransferWithIdentifiableEntriesViewModelWithType {
    * @type {string}
    * @memberof AssetBalanceTransferWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -639,7 +639,7 @@ export interface AssetDividendViewModel {
    * @type {string}
    * @memberof AssetDividendViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -664,7 +664,7 @@ export interface AssetDividendViewModelWithType {
    * @type {string}
    * @memberof AssetDividendViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -703,7 +703,7 @@ export interface AssetDividendWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof AssetDividendWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -728,7 +728,7 @@ export interface AssetDividendWithIdentifiableEntriesViewModelWithType {
    * @type {string}
    * @memberof AssetDividendWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -818,7 +818,7 @@ export interface AssetPurchaseViewModel {
    * @type {string}
    * @memberof AssetPurchaseViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -849,7 +849,7 @@ export interface AssetPurchaseViewModelWithType {
    * @type {string}
    * @memberof AssetPurchaseViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -894,7 +894,7 @@ export interface AssetPurchaseWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof AssetPurchaseWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -925,7 +925,7 @@ export interface AssetPurchaseWithIdentifiableEntriesViewModelWithType {
    * @type {string}
    * @memberof AssetPurchaseWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -970,7 +970,7 @@ export interface AssetRateViewModel {
    * @type {string}
    * @memberof AssetRateViewModel
    */
-  date: string;
+  date: number;
   /**
    *
    * @type {number}
@@ -989,7 +989,7 @@ export interface AssetSaleViewModel {
    * @type {string}
    * @memberof AssetSaleViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -1020,7 +1020,7 @@ export interface AssetSaleViewModelWithType {
    * @type {string}
    * @memberof AssetSaleViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -1065,7 +1065,7 @@ export interface AssetSaleWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof AssetSaleWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -1096,7 +1096,7 @@ export interface AssetSaleWithIdentifiableEntriesViewModelWithType {
    * @type {string}
    * @memberof AssetSaleWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -1141,7 +1141,7 @@ export interface AssetTradeViewModel {
    * @type {string}
    * @memberof AssetTradeViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -1172,7 +1172,7 @@ export interface AssetTradeViewModelWithType {
    * @type {string}
    * @memberof AssetTradeViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -1217,7 +1217,7 @@ export interface AssetTradeWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof AssetTradeWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -1248,7 +1248,7 @@ export interface AssetTradeWithIdentifiableEntriesViewModelWithType {
    * @type {string}
    * @memberof AssetTradeWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -1293,7 +1293,7 @@ export interface AssetTransferInViewModel {
    * @type {string}
    * @memberof AssetTransferInViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -1318,7 +1318,7 @@ export interface AssetTransferInViewModelWithType {
    * @type {string}
    * @memberof AssetTransferInViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -1357,7 +1357,7 @@ export interface AssetTransferInWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof AssetTransferInWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -1382,7 +1382,7 @@ export interface AssetTransferInWithIdentifiableEntriesViewModelWithType {
    * @type {string}
    * @memberof AssetTransferInWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -1421,7 +1421,7 @@ export interface AssetTransferOutViewModel {
    * @type {string}
    * @memberof AssetTransferOutViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -1446,7 +1446,7 @@ export interface AssetTransferOutViewModelWithType {
    * @type {string}
    * @memberof AssetTransferOutViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -1485,7 +1485,7 @@ export interface AssetTransferOutWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof AssetTransferOutWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -1510,7 +1510,7 @@ export interface AssetTransferOutWithIdentifiableEntriesViewModelWithType {
    * @type {string}
    * @memberof AssetTransferOutWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -1579,7 +1579,7 @@ export interface CashDividendViewModel {
    * @type {string}
    * @memberof CashDividendViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -1610,7 +1610,7 @@ export interface CashDividendViewModelWithType {
    * @type {string}
    * @memberof CashDividendViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -1655,7 +1655,7 @@ export interface CashDividendWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof CashDividendWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -1686,7 +1686,7 @@ export interface CashDividendWithIdentifiableEntriesViewModelWithType {
    * @type {string}
    * @memberof CashDividendWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -1731,7 +1731,7 @@ export interface CashTransferInViewModel {
    * @type {string}
    * @memberof CashTransferInViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -1756,7 +1756,7 @@ export interface CashTransferInViewModelWithType {
    * @type {string}
    * @memberof CashTransferInViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -1795,7 +1795,7 @@ export interface CashTransferInWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof CashTransferInWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -1820,7 +1820,7 @@ export interface CashTransferInWithIdentifiableEntriesViewModelWithType {
    * @type {string}
    * @memberof CashTransferInWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -1859,7 +1859,7 @@ export interface CashTransferOutViewModel {
    * @type {string}
    * @memberof CashTransferOutViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -1884,7 +1884,7 @@ export interface CashTransferOutViewModelWithType {
    * @type {string}
    * @memberof CashTransferOutViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -1923,7 +1923,7 @@ export interface CashTransferOutWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof CashTransferOutWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -1948,7 +1948,7 @@ export interface CashTransferOutWithIdentifiableEntriesViewModelWithType {
    * @type {string}
    * @memberof CashTransferOutWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -2494,7 +2494,7 @@ export interface IdentifiableAccountFeesWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof IdentifiableAccountFeesWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -2525,7 +2525,7 @@ export interface IdentifiableAccountFeesWithIdentifiableEntriesViewModelWithType
    * @type {string}
    * @memberof IdentifiableAccountFeesWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -2634,7 +2634,7 @@ export interface IdentifiableAssetBalanceTransferWithIdentifiableEntriesViewMode
    * @type {string}
    * @memberof IdentifiableAssetBalanceTransferWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -2671,7 +2671,7 @@ export interface IdentifiableAssetBalanceTransferWithIdentifiableEntriesViewMode
    * @type {string}
    * @memberof IdentifiableAssetBalanceTransferWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -2723,7 +2723,7 @@ export interface IdentifiableAssetDividendWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof IdentifiableAssetDividendWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -2754,7 +2754,7 @@ export interface IdentifiableAssetDividendWithIdentifiableEntriesViewModelWithTy
    * @type {string}
    * @memberof IdentifiableAssetDividendWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -2800,7 +2800,7 @@ export interface IdentifiableAssetPurchaseWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof IdentifiableAssetPurchaseWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -2837,7 +2837,7 @@ export interface IdentifiableAssetPurchaseWithIdentifiableEntriesViewModelWithTy
    * @type {string}
    * @memberof IdentifiableAssetPurchaseWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -2889,7 +2889,7 @@ export interface IdentifiableAssetSaleWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof IdentifiableAssetSaleWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -2926,7 +2926,7 @@ export interface IdentifiableAssetSaleWithIdentifiableEntriesViewModelWithType {
    * @type {string}
    * @memberof IdentifiableAssetSaleWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -2978,7 +2978,7 @@ export interface IdentifiableAssetTradeWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof IdentifiableAssetTradeWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -3015,7 +3015,7 @@ export interface IdentifiableAssetTradeWithIdentifiableEntriesViewModelWithType 
    * @type {string}
    * @memberof IdentifiableAssetTradeWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -3067,7 +3067,7 @@ export interface IdentifiableAssetTransferInWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof IdentifiableAssetTransferInWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -3098,7 +3098,7 @@ export interface IdentifiableAssetTransferInWithIdentifiableEntriesViewModelWith
    * @type {string}
    * @memberof IdentifiableAssetTransferInWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -3144,7 +3144,7 @@ export interface IdentifiableAssetTransferOutWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof IdentifiableAssetTransferOutWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -3175,7 +3175,7 @@ export interface IdentifiableAssetTransferOutWithIdentifiableEntriesViewModelWit
    * @type {string}
    * @memberof IdentifiableAssetTransferOutWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -3271,7 +3271,7 @@ export interface IdentifiableCashDividendWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof IdentifiableCashDividendWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -3308,7 +3308,7 @@ export interface IdentifiableCashDividendWithIdentifiableEntriesViewModelWithTyp
    * @type {string}
    * @memberof IdentifiableCashDividendWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -3360,7 +3360,7 @@ export interface IdentifiableCashTransferInWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof IdentifiableCashTransferInWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -3391,7 +3391,7 @@ export interface IdentifiableCashTransferInWithIdentifiableEntriesViewModelWithT
    * @type {string}
    * @memberof IdentifiableCashTransferInWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -3437,7 +3437,7 @@ export interface IdentifiableCashTransferOutWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof IdentifiableCashTransferOutWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -3468,7 +3468,7 @@ export interface IdentifiableCashTransferOutWithIdentifiableEntriesViewModelWith
    * @type {string}
    * @memberof IdentifiableCashTransferOutWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -3570,7 +3570,7 @@ export interface IdentifiableRegularTransactionWithIdentifiableEntriesViewModel 
    * @type {string}
    * @memberof IdentifiableRegularTransactionWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -3613,7 +3613,7 @@ export interface IdentifiableRegularTransactionWithIdentifiableEntriesViewModelW
    * @type {string}
    * @memberof IdentifiableRegularTransactionWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -3671,7 +3671,7 @@ export interface IdentifiableTransactionBaseWithIdentifiableEntries {
    * @type {string}
    * @memberof IdentifiableTransactionBaseWithIdentifiableEntries
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -3795,7 +3795,7 @@ export interface MandatoryAccountFeesWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof MandatoryAccountFeesWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -3820,7 +3820,7 @@ export interface MandatoryAccountFeesWithIdentifiableEntriesViewModelWithType {
    * @type {string}
    * @memberof MandatoryAccountFeesWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -3860,7 +3860,7 @@ export interface MandatoryAssetBalanceTransferWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof MandatoryAssetBalanceTransferWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -3891,7 +3891,7 @@ export interface MandatoryAssetBalanceTransferWithIdentifiableEntriesViewModelWi
    * @type {string}
    * @memberof MandatoryAssetBalanceTransferWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -3937,7 +3937,7 @@ export interface MandatoryAssetDividendWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof MandatoryAssetDividendWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -3962,7 +3962,7 @@ export interface MandatoryAssetDividendWithIdentifiableEntriesViewModelWithType 
    * @type {string}
    * @memberof MandatoryAssetDividendWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -4002,7 +4002,7 @@ export interface MandatoryAssetPurchaseWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof MandatoryAssetPurchaseWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -4033,7 +4033,7 @@ export interface MandatoryAssetPurchaseWithIdentifiableEntriesViewModelWithType 
    * @type {string}
    * @memberof MandatoryAssetPurchaseWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -4079,7 +4079,7 @@ export interface MandatoryAssetSaleWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof MandatoryAssetSaleWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -4110,7 +4110,7 @@ export interface MandatoryAssetSaleWithIdentifiableEntriesViewModelWithType {
    * @type {string}
    * @memberof MandatoryAssetSaleWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -4156,7 +4156,7 @@ export interface MandatoryAssetTradeWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof MandatoryAssetTradeWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -4187,7 +4187,7 @@ export interface MandatoryAssetTradeWithIdentifiableEntriesViewModelWithType {
    * @type {string}
    * @memberof MandatoryAssetTradeWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -4233,7 +4233,7 @@ export interface MandatoryAssetTransferInWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof MandatoryAssetTransferInWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -4258,7 +4258,7 @@ export interface MandatoryAssetTransferInWithIdentifiableEntriesViewModelWithTyp
    * @type {string}
    * @memberof MandatoryAssetTransferInWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -4298,7 +4298,7 @@ export interface MandatoryAssetTransferOutWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof MandatoryAssetTransferOutWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -4323,7 +4323,7 @@ export interface MandatoryAssetTransferOutWithIdentifiableEntriesViewModelWithTy
    * @type {string}
    * @memberof MandatoryAssetTransferOutWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -4363,7 +4363,7 @@ export interface MandatoryCashDividendWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof MandatoryCashDividendWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -4394,7 +4394,7 @@ export interface MandatoryCashDividendWithIdentifiableEntriesViewModelWithType {
    * @type {string}
    * @memberof MandatoryCashDividendWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -4440,7 +4440,7 @@ export interface MandatoryCashTransferInWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof MandatoryCashTransferInWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -4465,7 +4465,7 @@ export interface MandatoryCashTransferInWithIdentifiableEntriesViewModelWithType
    * @type {string}
    * @memberof MandatoryCashTransferInWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -4505,7 +4505,7 @@ export interface MandatoryCashTransferOutWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof MandatoryCashTransferOutWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -4530,7 +4530,7 @@ export interface MandatoryCashTransferOutWithIdentifiableEntriesViewModelWithTyp
    * @type {string}
    * @memberof MandatoryCashTransferOutWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -4601,7 +4601,7 @@ export interface MandatoryIdentifiableAccountFeesWithIdentifiableEntriesViewMode
    * @type {string}
    * @memberof MandatoryIdentifiableAccountFeesWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -4678,7 +4678,7 @@ export interface MandatoryIdentifiableAssetBalanceTransferWithIdentifiableEntrie
    * @type {string}
    * @memberof MandatoryIdentifiableAssetBalanceTransferWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -4715,7 +4715,7 @@ export interface MandatoryIdentifiableAssetBalanceTransferWithIdentifiableEntrie
    * @type {string}
    * @memberof MandatoryIdentifiableAssetBalanceTransferWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -4767,7 +4767,7 @@ export interface MandatoryIdentifiableAssetDividendWithIdentifiableEntriesViewMo
    * @type {string}
    * @memberof MandatoryIdentifiableAssetDividendWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -4798,7 +4798,7 @@ export interface MandatoryIdentifiableAssetDividendWithIdentifiableEntriesViewMo
    * @type {string}
    * @memberof MandatoryIdentifiableAssetDividendWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -4844,7 +4844,7 @@ export interface MandatoryIdentifiableAssetPurchaseWithIdentifiableEntriesViewMo
    * @type {string}
    * @memberof MandatoryIdentifiableAssetPurchaseWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -4881,7 +4881,7 @@ export interface MandatoryIdentifiableAssetPurchaseWithIdentifiableEntriesViewMo
    * @type {string}
    * @memberof MandatoryIdentifiableAssetPurchaseWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -4933,7 +4933,7 @@ export interface MandatoryIdentifiableAssetSaleWithIdentifiableEntriesViewModel 
    * @type {string}
    * @memberof MandatoryIdentifiableAssetSaleWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -4970,7 +4970,7 @@ export interface MandatoryIdentifiableAssetSaleWithIdentifiableEntriesViewModelW
    * @type {string}
    * @memberof MandatoryIdentifiableAssetSaleWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -5022,7 +5022,7 @@ export interface MandatoryIdentifiableAssetTradeWithIdentifiableEntriesViewModel
    * @type {string}
    * @memberof MandatoryIdentifiableAssetTradeWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -5059,7 +5059,7 @@ export interface MandatoryIdentifiableAssetTradeWithIdentifiableEntriesViewModel
    * @type {string}
    * @memberof MandatoryIdentifiableAssetTradeWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -5111,7 +5111,7 @@ export interface MandatoryIdentifiableAssetTransferInWithIdentifiableEntriesView
    * @type {string}
    * @memberof MandatoryIdentifiableAssetTransferInWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -5142,7 +5142,7 @@ export interface MandatoryIdentifiableAssetTransferInWithIdentifiableEntriesView
    * @type {string}
    * @memberof MandatoryIdentifiableAssetTransferInWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -5188,7 +5188,7 @@ export interface MandatoryIdentifiableAssetTransferOutWithIdentifiableEntriesVie
    * @type {string}
    * @memberof MandatoryIdentifiableAssetTransferOutWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -5219,7 +5219,7 @@ export interface MandatoryIdentifiableAssetTransferOutWithIdentifiableEntriesVie
    * @type {string}
    * @memberof MandatoryIdentifiableAssetTransferOutWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -5265,7 +5265,7 @@ export interface MandatoryIdentifiableCashDividendWithIdentifiableEntriesViewMod
    * @type {string}
    * @memberof MandatoryIdentifiableCashDividendWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -5302,7 +5302,7 @@ export interface MandatoryIdentifiableCashDividendWithIdentifiableEntriesViewMod
    * @type {string}
    * @memberof MandatoryIdentifiableCashDividendWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -5354,7 +5354,7 @@ export interface MandatoryIdentifiableCashTransferInWithIdentifiableEntriesViewM
    * @type {string}
    * @memberof MandatoryIdentifiableCashTransferInWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -5385,7 +5385,7 @@ export interface MandatoryIdentifiableCashTransferInWithIdentifiableEntriesViewM
    * @type {string}
    * @memberof MandatoryIdentifiableCashTransferInWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -5431,7 +5431,7 @@ export interface MandatoryIdentifiableCashTransferOutWithIdentifiableEntriesView
    * @type {string}
    * @memberof MandatoryIdentifiableCashTransferOutWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -5462,7 +5462,7 @@ export interface MandatoryIdentifiableCashTransferOutWithIdentifiableEntriesView
    * @type {string}
    * @memberof MandatoryIdentifiableCashTransferOutWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -5508,7 +5508,7 @@ export interface MandatoryIdentifiableRegularTransactionWithIdentifiableEntriesV
    * @type {string}
    * @memberof MandatoryIdentifiableRegularTransactionWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -5551,7 +5551,7 @@ export interface MandatoryIdentifiableRegularTransactionWithIdentifiableEntriesV
    * @type {string}
    * @memberof MandatoryIdentifiableRegularTransactionWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -5609,7 +5609,7 @@ export interface MandatoryIdentifiableTransactionBaseWithIdentifiableEntries {
    * @type {string}
    * @memberof MandatoryIdentifiableTransactionBaseWithIdentifiableEntries
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -5678,7 +5678,7 @@ export interface MandatoryIdentifiableTransactionGroupViewModel {
    * @type {string}
    * @memberof MandatoryIdentifiableTransactionGroupViewModel
    */
-  date: string;
+  date: number;
   /**
    * Overall description of whole group
    * @type {string}
@@ -5751,7 +5751,7 @@ export interface MandatoryRegularTransactionWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof MandatoryRegularTransactionWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -5788,7 +5788,7 @@ export interface MandatoryRegularTransactionWithIdentifiableEntriesViewModelWith
    * @type {string}
    * @memberof MandatoryRegularTransactionWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -5840,7 +5840,7 @@ export interface MandatoryTransactionBaseWithIdentifiableEntries {
    * @type {string}
    * @memberof MandatoryTransactionBaseWithIdentifiableEntries
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<MandatoryIdentifiableTransactionFeeViewModel>}
@@ -5865,7 +5865,7 @@ export interface MandatoryTransactionGroupViewModel {
    * @type {string}
    * @memberof MandatoryTransactionGroupViewModel
    */
-  date: string;
+  date: number;
   /**
    * Overall description of whole group
    * @type {string}
@@ -6001,7 +6001,7 @@ export interface RegularTransactionViewModel {
    * @type {string}
    * @memberof RegularTransactionViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -6038,7 +6038,7 @@ export interface RegularTransactionViewModelWithType {
    * @type {string}
    * @memberof RegularTransactionViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -6089,7 +6089,7 @@ export interface RegularTransactionWithIdentifiableEntriesViewModel {
    * @type {string}
    * @memberof RegularTransactionWithIdentifiableEntriesViewModel
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -6126,7 +6126,7 @@ export interface RegularTransactionWithIdentifiableEntriesViewModelWithType {
    * @type {string}
    * @memberof RegularTransactionWithIdentifiableEntriesViewModelWithType
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -6203,7 +6203,7 @@ export interface TransactionBaseWithEntries {
    * @type {string}
    * @memberof TransactionBaseWithEntries
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeViewModel>}
@@ -6222,7 +6222,7 @@ export interface TransactionBaseWithIdentifiableEntries {
    * @type {string}
    * @memberof TransactionBaseWithIdentifiableEntries
    */
-  date: string;
+  date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<IdentifiableTransactionFeeViewModel>}
@@ -6293,7 +6293,7 @@ export interface TransactionGroupViewModel {
    * @type {string}
    * @memberof TransactionGroupViewModel
    */
-  date: string;
+  date: number;
   /**
    * Overall description of whole group
    * @type {string}
@@ -6324,7 +6324,7 @@ export interface TransactionGroupWithIdentifiableChildrenViewModel {
    * @type {string}
    * @memberof TransactionGroupWithIdentifiableChildrenViewModel
    */
-  date: string;
+  date: number;
   /**
    * Overall description of whole group
    * @type {string}
@@ -6564,7 +6564,7 @@ export interface UpdateTransactionGroupRequestViewModel {
    * @type {string}
    * @memberof UpdateTransactionGroupRequestViewModel
    */
-  date: string;
+  date: number;
   /**
    * Overall description of whole group
    * @type {string}

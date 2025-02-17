@@ -8,90 +8,15 @@ import {
 } from "@/components/ui/breadcrumb";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@radix-ui/react-separator";
-import { useReducer, useMemo, useState } from "react";
-import { ColumnDef, PaginationState } from "@tanstack/react-table";
-import useGetIndividualTransactions from "@/hooks/use-get-individual-transactions";
-import { MemoizedDataTable } from "@/components/ui/data-table";
-
-export type Transaction = {
-  type: string;
-  description: string;
-  date: number;
-  deltas: string;
-};
+import { useReducer, Suspense } from "react";
+import IndividialTransactionsTable, {
+  IndividialTransactionsTableSkeleton,
+} from "./individual-transactions-table";
+import { ErrorBoundary } from "react-error-boundary";
+import ErrorBoundaryFallback from "@/components/error-boundry-fallback";
 
 export default function IndividialTransactionsPage() {
   const rerender = useReducer(() => ({}), {})[1];
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
-  });
-
-  const dataQuery = useGetIndividualTransactions(
-    "2396480f-0052-4cf0-81dc-8cedbde5ce13",
-    pagination
-  );
-
-  console.log(dataQuery.data);
-
-  const tableData = useMemo(() => {
-    return (
-      dataQuery.data?.data.map((d) => {
-        return {
-          type: d.type,
-          description: d.description,
-          date: d.date,
-          deltas: "1 EUR",
-        } as Transaction;
-      }) ?? []
-    );
-  }, [dataQuery.data]);
-
-  const columns = useMemo<ColumnDef<Transaction>[]>(
-    () => [
-      {
-        header: "Name",
-        footer: (props) => props.column.id,
-        columns: [
-          {
-            accessorKey: "type",
-            cell: (info) => info.getValue(),
-            header: () => <span>Type</span>,
-            footer: (props) => props.column.id,
-          },
-          {
-            accessorFn: (row) => row.description,
-            id: "description",
-            cell: (info) => info.getValue(),
-            header: () => <span>Description</span>,
-            footer: (props) => props.column.id,
-          },
-          {
-            accessorKey: "date",
-            header: () => "Date",
-            footer: (props) => props.column.id,
-          },
-          {
-            accessorKey: "deltas",
-            header: () => <span>Deltas</span>,
-            footer: (props) => props.column.id,
-          },
-        ],
-      },
-    ],
-    []
-  );
-
-  const table = useMemo(
-    () => ({
-      data: tableData,
-      columns,
-      rowCount: dataQuery.data?.totalCount,
-      pagination,
-      setPagination,
-    }),
-    [tableData, columns, dataQuery.data?.totalCount, pagination]
-  );
 
   return (
     <>
@@ -116,7 +41,11 @@ export default function IndividialTransactionsPage() {
         </div>
       </header>
       <div className="m-4">
-        <MemoizedDataTable {...table}></MemoizedDataTable>
+        <ErrorBoundary fallback={<ErrorBoundaryFallback />}>
+          <Suspense fallback={<IndividialTransactionsTableSkeleton />}>
+            <IndividialTransactionsTable />
+          </Suspense>
+        </ErrorBoundary>
       </div>
       <button onClick={() => rerender()}>Force Rerender</button>
     </>

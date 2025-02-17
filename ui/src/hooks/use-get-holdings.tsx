@@ -1,6 +1,6 @@
 import { PortfolioApiFactory } from "@/api";
 import { QueryKeys } from "@/constants/query-keys";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useAssetStore } from "./use-asset-store";
 import { useAccountStore } from "./use-account-store";
 
@@ -21,18 +21,26 @@ export default function useGetPortfolioHoldings(
     );
     addAsset(
       data.data.lookup_tables.assets.map((asset) => {
-        return { id: asset.asset_id, ...asset };
+        return {
+          id: asset.asset_id,
+          asset_type_id: asset.asset_type,
+          ...asset,
+        };
       })
     );
     addAccount(
       data.data.lookup_tables.accounts.map((account) => {
-        return { id: account.account_id, ...account };
+        return {
+          id: account.account_id,
+          type_id: account.account_type,
+          ...account,
+        };
       })
     );
     return data.data.holdings;
   };
 
-  return useQuery({
+  return useSuspenseQuery({
     queryKey: [QueryKeys.PORTFOLIO_HOLDINGS],
     queryFn: () => getPortfolioHoldings(userId, defaultAssetId),
   });

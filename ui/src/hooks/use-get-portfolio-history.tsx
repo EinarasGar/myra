@@ -1,6 +1,6 @@
 import { PortfolioApiFactory } from "@/api";
 import { QueryKeys } from "@/constants/query-keys";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 const getPortfolioHistory = async (
   userId: string,
@@ -20,7 +20,7 @@ export default function useGetProtfolioHistory(
   range?: string,
   defaultAssetId?: number | null
 ) {
-  return useQuery({
+  return useSuspenseQuery({
     queryKey: [QueryKeys.PORTFOLIO_HISTORY],
     queryFn: () => getPortfolioHistory(userId, range, defaultAssetId),
   });

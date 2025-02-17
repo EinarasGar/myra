@@ -3,7 +3,7 @@ import {
   MandatoryIdentifiableTransactionWithIdentifiableEntries,
 } from "@/api";
 import { QueryKeys } from "@/constants/query-keys";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useAssetStore } from "./use-asset-store";
 import { useAccountStore } from "./use-account-store";
 import { PaginatedResponse } from "@/types/pagination";
@@ -29,16 +29,24 @@ export default function useGetIndividualTransactions(
         count,
         start
       );
-    // addAsset(
-    //   data.data.lookup_tables.assets.map((asset) => {
-    //     return { id: asset.asset_id, ...asset };
-    //   })
-    // );
-    // addAccount(
-    //   data.data.lookup_tables.accounts.map((account) => {
-    //     return { id: account.account_id, ...account };
-    //   })
-    // );
+    addAsset(
+      data.data.lookup_tables.assets.map((asset) => {
+        return {
+          id: asset.asset_id,
+          asset_type_id: asset.asset_type,
+          ...asset,
+        };
+      })
+    );
+    addAccount(
+      data.data.lookup_tables.accounts.map((account) => {
+        return {
+          id: account.account_id,
+          type_id: account.account_type,
+          ...account,
+        };
+      })
+    );
 
     return {
       totalCount: data.data.total_results,
@@ -54,7 +62,7 @@ export default function useGetIndividualTransactions(
     start = pagination.pageIndex * pagination.pageSize;
   }
 
-  return useQuery({
+  return useSuspenseQuery({
     queryKey: [QueryKeys.INDIVIDUAL_TRANSACTIONS, pagination],
     queryFn: () => getIndividualTransactions(userId, count, start),
   });
