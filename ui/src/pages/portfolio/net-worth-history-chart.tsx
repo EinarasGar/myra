@@ -1,5 +1,5 @@
 import { ChartConfig, ChartContainer } from "@/components/ui/chart";
-import useGetProtfolioHistory from "@/hooks/use-get-portfolio-history";
+import useGetProtfolioHistory from "@/hooks/api/use-get-portfolio-history";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
 import { ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";

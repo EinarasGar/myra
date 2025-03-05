@@ -1,5 +1,5 @@
-import { useAssetStore } from "@/hooks/use-asset-store";
-import { Transaction } from "./individual-transactions-table";
+import { useAssetStore } from "@/hooks/store/use-asset-store";
+import { Transaction } from "../pages/transactions/individual-transactions-table";
 
 interface TransactionConverterProps {
   type: string;

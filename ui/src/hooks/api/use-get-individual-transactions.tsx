@@ -4,8 +4,8 @@ import {
 } from "@/api";
 import { QueryKeys } from "@/constants/query-keys";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useAssetStore } from "./use-asset-store";
-import { useAccountStore } from "./use-account-store";
+import { useAssetStore } from "../store/use-asset-store";
+import { useAccountStore } from "../store/use-account-store";
 import { PaginatedResponse } from "@/types/pagination";
 import { PaginationState } from "@tanstack/react-table";
 

@@ -1,9 +1,9 @@
 import { useReducer, useMemo, useState } from "react";
 import { ColumnDef, PaginationState } from "@tanstack/react-table";
-import useGetIndividualTransactions from "@/hooks/use-get-individual-transactions";
+import useGetIndividualTransactions from "@/hooks/api/use-get-individual-transactions";
 import { MemoizedDataTable } from "@/components/ui/data-table";
 import { DataTableSkeleton } from "@/components/data-table-skeleton";
-import useTransactionViewModelConverter from "./converter";
+import useTransactionViewModelConverter from "../../hooks/use-transaction-converter";
 
 export type Transaction = {
   type: string;

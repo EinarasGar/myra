@@ -1,9 +1,9 @@
 import { DataTableSkeleton } from "@/components/data-table-skeleton";
 import { MemoizedDataTable } from "@/components/ui/data-table";
 
-import { useAccountStore } from "@/hooks/use-account-store";
-import { useAssetStore } from "@/hooks/use-asset-store";
-import useGetPortfolioHoldings from "@/hooks/use-get-holdings";
+import { useAccountStore } from "@/hooks/store/use-account-store";
+import { useAssetStore } from "@/hooks/store/use-asset-store";
+import useGetPortfolioHoldings from "@/hooks/api/use-get-holdings";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 export type Holding = {

@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import usePostAuth from "@/hooks/use-post-auth";
+import usePostAuth from "@/hooks/api/use-post-auth";
 import { useAuth } from "@/hooks/use-auth";
 import { router } from "@/router";
 

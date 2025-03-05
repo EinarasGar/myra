@@ -14,6 +14,7 @@ import IndividialTransactionsTable, {
 } from "./individual-transactions-table";
 import { ErrorBoundary } from "react-error-boundary";
 import ErrorBoundaryFallback from "@/components/error-boundry-fallback";
+import { AddIndividualTranscationDialog } from "./add-individual-transaction/add-indvidual-transaction-dialog";
 
 export default function IndividialTransactionsPage() {
   const rerender = useReducer(() => ({}), {})[1];
@@ -40,6 +41,7 @@ export default function IndividialTransactionsPage() {
           </Breadcrumb>
         </div>
       </header>
+      <AddIndividualTranscationDialog />
       <div className="m-4">
         <ErrorBoundary fallback={<ErrorBoundaryFallback />}>
           <Suspense fallback={<IndividialTransactionsTableSkeleton />}>

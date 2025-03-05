@@ -11,3 +11,16 @@ export function compareObjects(obj1: object, obj2: object) {
 }
 
 export const genericMemo: <T>(component: T) => T = memo;
+
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface Array<T> {
+    isNullOrEmpty(): boolean;
+  }
+}
+
+if (!Array.prototype.isNullOrEmpty) {
+  Array.prototype.isNullOrEmpty = function (): boolean {
+    return this === null || this === undefined || this.length === 0;
+  };
+}
