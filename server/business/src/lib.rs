@@ -1,3 +1,5 @@
+#![feature(trait_upcasting)]
+
 pub mod dtos;
 pub mod dynamic_enums;
 pub(crate) mod entities;

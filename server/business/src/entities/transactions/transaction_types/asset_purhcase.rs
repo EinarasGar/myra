@@ -16,7 +16,11 @@ use crate::{
     dynamic_enums::{transaction_type_categories::TransactionTypeCategories, DynamicEnum},
     entities::{
         entries::entry::Entry,
-        transactions::{base_transaction::BaseTransaction, transaction::Transaction},
+        portfolio_overview::investment_transaction::asset_purchase::AssetPurchase,
+        transactions::{
+            base_transaction::BaseTransaction,
+            transaction::{Transaction, TransactionPortfolioAction},
+        },
     },
 };
 
@@ -97,5 +101,28 @@ impl TransactionProcessor for AssetPurchaseTransaction {
         Box::new(AssetPurchaseTransaction {
             base: BaseTransaction::from_models(models),
         })
+    }
+
+    fn get_portfolio_action(&self) -> Result<TransactionPortfolioAction> {
+        let purchase_entry = self.base.entry(|x| x.quantity > dec!(0))?;
+        let sale_entry = self.base.entry(|x| x.quantity <= dec!(0))?;
+
+        tracing::trace!(
+            "Processing asset purchase transaction with purchase entry: {:?} and sale entry: {:?}",
+            purchase_entry,
+            sale_entry
+        );
+        Ok(TransactionPortfolioAction::Referential(Box::new(
+            AssetPurchase {
+                instrument_asset_id: purchase_entry.asset_id,
+                account_id: purchase_entry.account_id,
+                instrument_units: purchase_entry.quantity,
+                instrument_price: sale_entry.quantity.abs() / purchase_entry.quantity,
+                fees: dec!(0),
+                cash_asset_id: sale_entry.asset_id,
+                cash_units: sale_entry.quantity,
+                date: self.base.date(),
+            },
+        )))
     }
 }

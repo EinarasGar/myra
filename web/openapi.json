@@ -1,0 +1,6282 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "api",
+    "description": "",
+    "license": {
+      "name": ""
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/accounts/liquiditytypes": {
+      "get": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Get Account Liquidity Types",
+        "description": "Retrieves all available account liquidity types",
+        "operationId": "get_account_liquidity_types",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAccountLiquidityTypesResponseViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      }
+    },
+    "/api/accounts/types": {
+      "get": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Get Account Types",
+        "description": "Retrieves all available account types",
+        "operationId": "get_account_types",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAccountTypesResponseViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      }
+    },
+    "/api/assets": {
+      "get": {
+        "tags": [
+          "Assets"
+        ],
+        "summary": "Search assets",
+        "description": "Query to search shared assets. Returns a page of results.\nIf not query parameters are provided, returns results sorted by most popular.\nThe equivalent search endpoint for the user assets is not provided, as user\nassets can be retrieved in full due to it being a small subset.",
+        "operationId": "search_assets",
+        "parameters": [
+          {
+            "name": "count",
+            "in": "query",
+            "description": "How many items to return in a single page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "maximum": 100,
+              "minimum": 1
+            },
+            "example": 10
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "description": "The index in the list of the fist element of the page.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            },
+            "example": 30
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "description": "The search query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageOfAssetsResultsWithLookupViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      }
+    },
+    "/api/assets/:asset_id": {
+      "get": {
+        "tags": [
+          "Assets"
+        ],
+        "summary": "Get asset",
+        "description": "Gets a shared asset.",
+        "operationId": "get_asset",
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "description": "Id of the shared asset to retrieve.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAssetResponseViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      }
+    },
+    "/api/assets/:asset_id/:reference_id": {
+      "get": {
+        "tags": [
+          "Assets"
+        ],
+        "summary": "Get asset pair",
+        "description": "Gets asset pair and its metadata.",
+        "operationId": "get_asset_pair",
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "description": "Id of the shared asset to retrieve.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "reference_id",
+            "in": "path",
+            "description": "Id of the reference asset.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAssetPairResponseViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      }
+    },
+    "/api/assets/:asset_id/:reference_id/rates": {
+      "get": {
+        "tags": [
+          "Assets"
+        ],
+        "summary": "Get asset pair rates",
+        "description": "Gets asset pair rates based on provided query params",
+        "operationId": "get_asset_pair_rates",
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "description": "Id of the shared asset to retrieve.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "reference_id",
+            "in": "path",
+            "description": "Id of the reference asset.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "description": "The range time for which to retrieve the rates for",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "1d",
+              "pattern": "[1d, 1w, 1m, 3m, 6m, 1y, all]"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAssetPairRatesResponseViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      }
+    },
+    "/api/auth": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Authenticate",
+        "description": "Posting login details to this query will return an authentication token used in most of the requests.",
+        "operationId": "post_login_details",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDetailsViewModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthViewModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/:user_id/accounts": {
+      "post": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Add Account",
+        "description": "Adds a new account to the user.",
+        "operationId": "add_account",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "Unique Identifier of the user.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddAccountRequestViewModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddAccountResponseViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      }
+    },
+    "/api/users/:user_id/accounts/": {
+      "get": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Get Accounts",
+        "description": "Gets all accounts and its metadata associated with user",
+        "operationId": "get_accounts",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "Unique Identifier of the user.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAccountsResponseViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      }
+    },
+    "/api/users/:user_id/accounts/:account_id": {
+      "get": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Get Account",
+        "description": "Gets a specific account of the user with metadata.",
+        "operationId": "get_account",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "Unique Identifier of the user.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "account_id",
+            "in": "path",
+            "description": "Id of the account to retrieve.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAccountResponseViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Update Account",
+        "description": "Updates a specific account of the user with metadata.",
+        "operationId": "update_account",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "Unique Identifier of the user.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "account_id",
+            "in": "path",
+            "description": "Id of the account to update.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAccountViewModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateAccountViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Delete Account",
+        "description": "Marks account as inactive so that its unavailable anymore.",
+        "operationId": "delete_account",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "Unique Identifier of the user.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "account_id",
+            "in": "path",
+            "description": "Id of the account to delete.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Account marked as deactiavted."
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      }
+    },
+    "/api/users/:user_id/assets": {
+      "post": {
+        "tags": [
+          "User Assets"
+        ],
+        "summary": "Add user asset",
+        "description": "Adds a user defined asset.",
+        "operationId": "post_custom_asset",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id for which to add the asset to.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddAssetRequestViewModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "User asset added successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddAssetResponseViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      }
+    },
+    "/api/users/:user_id/assets/:asset_id": {
+      "get": {
+        "tags": [
+          "User Assets"
+        ],
+        "summary": "Get user asset",
+        "description": "Gets an custom asset added by user",
+        "operationId": "get_user_asset",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "Id of the user for which asset belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "asset_id",
+            "in": "path",
+            "description": "Id of the user asset to retrieve.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAssetResponseViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "User Assets"
+        ],
+        "summary": "Update user asset",
+        "description": "Update already existing user defined asset.",
+        "operationId": "put_custom_asset",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id for which to add the asset to.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "asset_id",
+            "in": "path",
+            "description": "User asset to update.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAssetRequestViewModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "User asset added successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateAssetResponseViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "User Assets"
+        ],
+        "summary": "Delete user asset",
+        "description": "Deletes manually added user asset along with all the related information about it.\nReturn an error if the asset is in use or other assets are dependent on it as base.",
+        "operationId": "delete_asset",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id for which the asset belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "asset_id",
+            "in": "path",
+            "description": "The Id of the asset to be deleted.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Asset deleted successfully."
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      }
+    },
+    "/api/users/:user_id/assets/:asset_id/:reference_id": {
+      "get": {
+        "tags": [
+          "User Assets"
+        ],
+        "summary": "Get user asset pair",
+        "description": "Gets metadata about user asset pair",
+        "operationId": "get_user_asset_pair",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "Id of the user for which asset belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "asset_id",
+            "in": "path",
+            "description": "Id of the user asset to retrieve.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "reference_id",
+            "in": "path",
+            "description": "Id of the reference asset.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetUserAssetPairResponseViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "User Assets"
+        ],
+        "summary": "Delete user asset pair",
+        "description": "Deletes user asset pair and its associated metadata.",
+        "operationId": "delete_asset_pair",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id for which the asset belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "asset_id",
+            "in": "path",
+            "description": "The Id of the user asset.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "reference_id",
+            "in": "path",
+            "description": "The Id of the reference asset.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Asset pair deleted successfully."
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      }
+    },
+    "/api/users/:user_id/assets/:asset_id/:reference_id/rates": {
+      "get": {
+        "tags": [
+          "User Assets"
+        ],
+        "summary": "Get user asset pair rates",
+        "description": "Gets user asset pair rates based on provided query params",
+        "operationId": "get_user_asset_pair_rates",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "Id of the user for which asset belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "asset_id",
+            "in": "path",
+            "description": "Id of the user asset to retrieve.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "reference_id",
+            "in": "path",
+            "description": "Id of the reference asset.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "description": "The range time for which to retrieve the rates for",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "1d",
+              "pattern": "[1d, 1w, 1m, 3m, 6m, 1y, all]"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAssetPairRatesResponseViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "User Assets"
+        ],
+        "summary": "Add user asset pair rates",
+        "description": "Adds a list of user asset pair rates. The list may contain one or many elements.\nIf the rate already exists, error will be returned.",
+        "operationId": "post_custom_asset_rates",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id for which the asset belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "asset_id",
+            "in": "path",
+            "description": "The Id of the user asset.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "reference_id",
+            "in": "path",
+            "description": "The Id of the reference asset.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddAssetPairRatesRequestViewModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "All asset pair rates added successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddAssetPairRatesResponseViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "User Assets"
+        ],
+        "summary": "Delete user asset pair rates",
+        "description": "Request with no parameters deletes all rates related to a user asset and its pair.\nIf the parameters are specified, it deletes only the subset of it.",
+        "operationId": "delete_asset_pair_rates",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id for which the asset belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "asset_id",
+            "in": "path",
+            "description": "The Id of the user asset.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "reference_id",
+            "in": "path",
+            "description": "The Id of the reference asset.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "start_timestamp",
+            "in": "query",
+            "description": "From which timestamp delete the rates inclusive.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end_timestamp",
+            "in": "query",
+            "description": "Until which timestamp delete the rates inclusive.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "All asset pair rates deleted successfully."
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      }
+    },
+    "/api/users/:user_id/assets/:asset_id/:reference_id/usermetadata": {
+      "put": {
+        "tags": [
+          "User Assets"
+        ],
+        "summary": "Update user asset pair metadata",
+        "description": "Change the metadata related to user asset pair.\nAs user asset pair is not uniquely identifiable we do not need a POST to create it.\nIt is created by default as you add rates, and this endpoint serves as a way to add or update metadata.",
+        "operationId": "put_custom_asset_pair",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id for which to add the asset to.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "asset_id",
+            "in": "path",
+            "description": "User asset to update.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "reference_id",
+            "in": "path",
+            "description": "User asset to update.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAssetPairRequestViewModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "User asset added successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateAssetPairResponseViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      }
+    },
+    "/api/users/:user_id/portfolio/history": {
+      "get": {
+        "tags": [
+          "Portfolio"
+        ],
+        "summary": "Get Net Worth History",
+        "description": "Returns a list of net worth of an user at specific points in time, depending on the range provided.",
+        "operationId": "get_networth_history",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id for who to retrieve net worth history",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "description": "The range time for which to retrieve the sums for",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "1d",
+              "pattern": "[1d, 1w, 1m, 3m, 6m, 1y, all]"
+            }
+          },
+          {
+            "name": "default_asset_id",
+            "in": "query",
+            "description": "The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": "From user settings.",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Portoflio hisotry calculated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetNetWorthHistoryResponseViewModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/:user_id/portfolio/holdings": {
+      "get": {
+        "tags": [
+          "Portfolio"
+        ],
+        "summary": "Get Holdings",
+        "description": "Returns a list of assets that user holds and their current value.",
+        "operationId": "get_holdings",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id for who to retrieve holdings",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "default_asset_id",
+            "in": "query",
+            "description": "Default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Portoflio holdings returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetHoldingsResponseViewModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/:user_id/portfolio/overview": {
+      "get": {
+        "tags": [
+          "Portfolio"
+        ],
+        "summary": "Get Portfolio Overview",
+        "description": "Retunrs information about the entire portfolio and statistics such as gains/losses",
+        "operationId": "get_portfolio_overview",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id for who to retrieve net worth history",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "default_asset_id",
+            "in": "query",
+            "description": "The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": "From user settings.",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Portfolio Overview",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetPortfolioOverviewViewModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/:user_id/transactions": {
+      "get": {
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "Get all",
+        "description": "Retrieves a list of all individual and grouped transactions",
+        "operationId": "get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id for which the transaction belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetTransactionsViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      }
+    },
+    "/api/users/:user_id/transactions/:transaction_id": {
+      "put": {
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "Update existing",
+        "description": "This is a generic update endpoint which does not assume whether transaction is individual or group.\nIt only updates the contents of the transaction without moving it.",
+        "operationId": "Update an existing transaction.",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id for which the transaction belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "transaction_id",
+            "in": "path",
+            "description": "The id of the specific transaction to be updated.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTransactionRequestViewModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Transaction updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateTransactionResponseViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "Delete existing",
+        "description": "Deleted any transaction, whether its individual or from a group.",
+        "operationId": "Delete an existing transaction.",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id for which the transaction belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "transaction_id",
+            "in": "path",
+            "description": "The id of the transaction to be deleted.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction deleted successfully."
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      }
+    },
+    "/api/users/:user_id/transactions/groups": {
+      "get": {
+        "tags": [
+          "Transaction Groups"
+        ],
+        "summary": "Get all",
+        "description": "Retrieves a list of all individual transactions",
+        "operationId": "get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id for which the transaction group belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetTransactionGroupsViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Transaction Groups"
+        ],
+        "summary": "Add new",
+        "description": "Adds a group of transactions with metadata related to all of them.",
+        "operationId": "add",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User Id for which to add the transaction group for.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddTransactionGroupRequestViewModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Transaction group added successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddTransactionGroupResponseViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      }
+    },
+    "/api/users/:user_id/transactions/groups/:group_id": {
+      "put": {
+        "tags": [
+          "Transaction Groups"
+        ],
+        "summary": "Update existing",
+        "description": "If the transactions array is updated with an existing transaction id, that transaction will\nbe moved from individual to a group.",
+        "operationId": "update",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id for which the transaction group belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "group_id",
+            "in": "path",
+            "description": "The id of the transaction group which is being updated.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTransactionGroupRequestViewModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Transaction group updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateTransactionGroupResponseViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Transaction Groups"
+        ],
+        "summary": "Delete existing",
+        "description": "Deletes the entire transaction group and associated transactions within it.",
+        "operationId": "Delete an existing transaction group.",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id for which the transaction group belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "group_id",
+            "in": "path",
+            "description": "The Id of the transaction group to be deleted.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction deleted successfully."
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      }
+    },
+    "/api/users/:user_id/transactions/individual": {
+      "get": {
+        "tags": [
+          "Individual Transactions"
+        ],
+        "summary": "Get all",
+        "description": "Retrieves a list of all individual transactions",
+        "operationId": "get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id for which the transactions group belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "count",
+            "in": "query",
+            "description": "How many items to return in a single page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "maximum": 100,
+              "minimum": 1
+            },
+            "example": 10
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "description": "The index in the list of the fist element of the page.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            },
+            "example": 30
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "description": "The search query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageOfIndividualTransactionsWithLookupViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Individual Transactions"
+        ],
+        "summary": "Add new",
+        "description": "Adds a new individual transaction.",
+        "operationId": "add",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User Id for which to add the individual transaction for.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddIndividualTransactionRequestViewModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Individual transaction added successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddIndividualTransactionResponseViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      }
+    },
+    "/api/users/:user_id/transactions/individual/:transaction_id": {
+      "get": {
+        "tags": [
+          "Individual Transactions"
+        ],
+        "summary": "Get Single",
+        "description": "Retrieves a single transaction by specified id",
+        "operationId": "get_single",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id for which the transactions group belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetIndividualTransactionViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Individual Transactions"
+        ],
+        "summary": "Update existing",
+        "description": "Performs an update of an individual transaction.\nIf the transaction provided is not individual, it will be moved to individual and removed from other group.",
+        "operationId": "Update an existing individual transaction.",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id for which the individual transaction belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "transaction_id",
+            "in": "path",
+            "description": "The id of the specific individual transaction which is being updated.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateIndividualTransactionRequestViewModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Individual transaction updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateIndividualTransactionResponseViewModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth_token": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AccountAssetEntryViewModel": {
+        "type": "object",
+        "required": [
+          "account_id",
+          "asset_id",
+          "amount"
+        ],
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The id of an account for which to the entry is related."
+          },
+          "amount": {
+            "type": "number",
+            "format": "double",
+            "description": "The number of units of the asset that were added or removed from the account."
+          },
+          "asset_id": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The id of an asset in the account for which the entry is related."
+          }
+        }
+      },
+      "AccountFeesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/AccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "AccountFeesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AccountFeesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "account_fees"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "AccountFeesWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "AccountFeesWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AccountFeesWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "account_fees"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "AccountMetadataLookupTables": {
+        "type": "object",
+        "required": [
+          "account_types",
+          "account_liquidity_types"
+        ],
+        "properties": {
+          "account_liquidity_types": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdentifiableAccountLiquidityTypeViewModel"
+            }
+          },
+          "account_types": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdentifiableAccountTypeViewModel"
+            }
+          }
+        }
+      },
+      "AccountTypeViewModel": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the Account type"
+          }
+        }
+      },
+      "AccountViewModel": {
+        "type": "object",
+        "required": [
+          "name",
+          "account_type"
+        ],
+        "properties": {
+          "account_type": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "AddAccountRequestViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AccountViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "liquidity_type"
+            ],
+            "properties": {
+              "liquidity_type": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        ]
+      },
+      "AddAccountResponseViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableAccountViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "liquidity_type"
+            ],
+            "properties": {
+              "liquidity_type": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        ]
+      },
+      "AddAssetPairRatesRequestViewModel": {
+        "type": "object",
+        "required": [
+          "rates"
+        ],
+        "properties": {
+          "rates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetRateViewModel"
+            }
+          }
+        }
+      },
+      "AddAssetPairRatesResponseViewModel": {
+        "type": "object",
+        "required": [
+          "rates"
+        ],
+        "properties": {
+          "rates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetRateViewModel"
+            }
+          }
+        }
+      },
+      "AddAssetRequestViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AssetViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "base_asset_id"
+            ],
+            "properties": {
+              "base_asset_id": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        ]
+      },
+      "AddAssetResponseViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableAssetViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "base_asset_id"
+            ],
+            "properties": {
+              "base_asset_id": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        ]
+      },
+      "AddIndividualTransactionRequestViewModel": {
+        "type": "object",
+        "required": [
+          "transaction"
+        ],
+        "properties": {
+          "transaction": {
+            "$ref": "#/components/schemas/TransactionWithEntries"
+          }
+        }
+      },
+      "AddIndividualTransactionResponseViewModel": {
+        "type": "object",
+        "required": [
+          "transaction"
+        ],
+        "properties": {
+          "transaction": {
+            "$ref": "#/components/schemas/MandatoryIdentifiableTransactionWithIdentifiableEntries"
+          }
+        }
+      },
+      "AddTransactionGroupRequestViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionGroupViewModel"
+          },
+          {
+            "type": "object"
+          }
+        ]
+      },
+      "AddTransactionGroupResponseViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MetadataLookupTables"
+          },
+          {
+            "type": "object",
+            "required": [
+              "group"
+            ],
+            "properties": {
+              "group": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableTransactionGroupViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "AssetBalanceTransferViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "outgoing_change",
+              "incoming_change"
+            ],
+            "properties": {
+              "incoming_change": {
+                "$ref": "#/components/schemas/AccountAssetEntryViewModel"
+              },
+              "outgoing_change": {
+                "$ref": "#/components/schemas/AccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "AssetBalanceTransferViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AssetBalanceTransferViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_balance_transfer"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "AssetBalanceTransferWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "outgoing_change",
+              "incoming_change"
+            ],
+            "properties": {
+              "incoming_change": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              },
+              "outgoing_change": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "AssetBalanceTransferWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AssetBalanceTransferWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_balance_transfer"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "AssetDividendViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/AccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "AssetDividendViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AssetDividendViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_dividend"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "AssetDividendWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "AssetDividendWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AssetDividendWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_dividend"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "AssetLookupTables": {
+        "type": "object",
+        "required": [
+          "asset_types"
+        ],
+        "properties": {
+          "asset_types": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdentifiableAssetTypeViewModel"
+            }
+          }
+        }
+      },
+      "AssetMetadataViewModel": {
+        "type": "object",
+        "required": [
+          "base_asset_id",
+          "pairs"
+        ],
+        "properties": {
+          "base_asset_id": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Id of the asset paired to this asset by default.",
+            "example": 2
+          },
+          "pairs": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": "Ids of available second assets paired to this asset.",
+            "example": [
+              2,
+              4
+            ]
+          }
+        }
+      },
+      "AssetPairMetadataViewModel": {
+        "type": "object",
+        "required": [
+          "latest_rate",
+          "last_updated"
+        ],
+        "properties": {
+          "last_updated": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "latest_rate": {
+            "type": "number",
+            "format": "double",
+            "example": "42.57"
+          }
+        }
+      },
+      "AssetPortfolioPositionViewModel": {
+        "type": "object",
+        "required": [
+          "add_price",
+          "quantity_added",
+          "add_date",
+          "fees",
+          "amount_sold",
+          "sale_proceeds",
+          "is_dividend",
+          "unit_cost_basis",
+          "total_cost_basis",
+          "realized_gains",
+          "unrealized_gains",
+          "total_gains",
+          "amount_left"
+        ],
+        "properties": {
+          "add_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "add_price": {
+            "type": "number",
+            "format": "double"
+          },
+          "amount_left": {
+            "type": "number",
+            "format": "double"
+          },
+          "amount_sold": {
+            "type": "number",
+            "format": "double"
+          },
+          "fees": {
+            "type": "number",
+            "format": "double"
+          },
+          "is_dividend": {
+            "type": "boolean"
+          },
+          "quantity_added": {
+            "type": "number",
+            "format": "double"
+          },
+          "realized_gains": {
+            "type": "number",
+            "format": "double"
+          },
+          "sale_proceeds": {
+            "type": "number",
+            "format": "double"
+          },
+          "total_cost_basis": {
+            "type": "number",
+            "format": "double"
+          },
+          "total_gains": {
+            "type": "number",
+            "format": "double"
+          },
+          "unit_cost_basis": {
+            "type": "number",
+            "format": "double"
+          },
+          "unrealized_gains": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "AssetPortfolioViewModel": {
+        "type": "object",
+        "required": [
+          "asset_id",
+          "account_id",
+          "positions",
+          "cash_dividends",
+          "total_units",
+          "total_fees",
+          "realized_gains",
+          "unrealized_gains",
+          "total_gains",
+          "total_cost_basis",
+          "unit_cost_basis"
+        ],
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "asset_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cash_dividends": {
+            "type": "number",
+            "format": "double"
+          },
+          "positions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetPortfolioPositionViewModel"
+            }
+          },
+          "realized_gains": {
+            "type": "number",
+            "format": "double"
+          },
+          "total_cost_basis": {
+            "type": "number",
+            "format": "double"
+          },
+          "total_fees": {
+            "type": "number",
+            "format": "double"
+          },
+          "total_gains": {
+            "type": "number",
+            "format": "double"
+          },
+          "total_units": {
+            "type": "number",
+            "format": "double"
+          },
+          "unit_cost_basis": {
+            "type": "number",
+            "format": "double"
+          },
+          "unrealized_gains": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "AssetPurchaseViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "purchase_change",
+              "cash_outgoings_change"
+            ],
+            "properties": {
+              "cash_outgoings_change": {
+                "$ref": "#/components/schemas/AccountAssetEntryViewModel"
+              },
+              "purchase_change": {
+                "$ref": "#/components/schemas/AccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "AssetPurchaseViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AssetPurchaseViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_purchase"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "AssetPurchaseWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "purchase_change",
+              "cash_outgoings_change"
+            ],
+            "properties": {
+              "cash_outgoings_change": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              },
+              "purchase_change": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "AssetPurchaseWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AssetPurchaseWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_purchase"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "AssetRateViewModel": {
+        "type": "object",
+        "required": [
+          "date",
+          "rate"
+        ],
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rate": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "example": {
+          "date": "2000-03-22T23:00:00Z",
+          "rate": "12709.75"
+        }
+      },
+      "AssetSaleViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "sale_entry",
+              "proceeds_entry"
+            ],
+            "properties": {
+              "proceeds_entry": {
+                "$ref": "#/components/schemas/AccountAssetEntryViewModel"
+              },
+              "sale_entry": {
+                "$ref": "#/components/schemas/AccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "AssetSaleViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AssetSaleViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_sale"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "AssetSaleWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "sale_entry",
+              "proceeds_entry"
+            ],
+            "properties": {
+              "proceeds_entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              },
+              "sale_entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "AssetSaleWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AssetSaleWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_sale"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "AssetTradeViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "outgoing_entry",
+              "incoming_entry"
+            ],
+            "properties": {
+              "incoming_entry": {
+                "$ref": "#/components/schemas/AccountAssetEntryViewModel"
+              },
+              "outgoing_entry": {
+                "$ref": "#/components/schemas/AccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "AssetTradeViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AssetTradeViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_trade"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "AssetTradeWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "outgoing_entry",
+              "incoming_entry"
+            ],
+            "properties": {
+              "incoming_entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              },
+              "outgoing_entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "AssetTradeWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AssetTradeWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_trade"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "AssetTransferInViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/AccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "AssetTransferInViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AssetTransferInViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_transfer_in"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "AssetTransferInWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "AssetTransferInWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AssetTransferInWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_transfer_in"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "AssetTransferOutViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/AccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "AssetTransferOutViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AssetTransferOutViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_transfer_out"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "AssetTransferOutWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "AssetTransferOutWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AssetTransferOutWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_transfer_out"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "AssetViewModel": {
+        "type": "object",
+        "required": [
+          "ticker",
+          "name",
+          "asset_type"
+        ],
+        "properties": {
+          "asset_type": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "example": "Intel"
+          },
+          "ticker": {
+            "type": "string",
+            "example": "INTC"
+          }
+        }
+      },
+      "AuthViewModel": {
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The JWT bearer authentication token."
+          }
+        },
+        "example": {
+          "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyMzk2NDgwZi0wMDUyLTRjZjAtODFkYy04Y2VkYmRlNWNlMTMiLCJyb2xlIjoiQWRtaW4iLCJleHAiOjE3MDg4MTYxNzV9.bMzXp5J-_xEmOZE63Ffo0KsCIa4cqDw7Ry4fhWpWyRw"
+        }
+      },
+      "CashDividendViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry",
+              "origin_asset_id"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/AccountAssetEntryViewModel"
+              },
+              "origin_asset_id": {
+                "type": "integer",
+                "format": "int32",
+                "description": "An id of a cash asset for which the dividends were paid for."
+              }
+            }
+          }
+        ]
+      },
+      "CashDividendViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CashDividendViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "cash_dividend"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "CashDividendWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry",
+              "origin_asset_id"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              },
+              "origin_asset_id": {
+                "type": "integer",
+                "format": "int32",
+                "description": "An id of a cash asset for which the dividends were paid for."
+              }
+            }
+          }
+        ]
+      },
+      "CashDividendWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CashDividendWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "cash_dividend"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "CashPortfolioViewModel": {
+        "type": "object",
+        "required": [
+          "asset_id",
+          "account_id",
+          "units",
+          "fees",
+          "dividends"
+        ],
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "asset_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dividends": {
+            "type": "number",
+            "format": "double"
+          },
+          "fees": {
+            "type": "number",
+            "format": "double"
+          },
+          "units": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "CashTransferInViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/AccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "CashTransferInViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CashTransferInViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "cash_transfer_in"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "CashTransferInWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "CashTransferInWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CashTransferInWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "cash_transfer_in"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "CashTransferOutViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/AccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "CashTransferOutViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CashTransferOutViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "cash_transfer_out"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "CashTransferOutWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "CashTransferOutWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CashTransferOutWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "cash_transfer_out"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "ExpandedAccountViewModel": {
+        "type": "object",
+        "required": [
+          "name",
+          "account_type"
+        ],
+        "properties": {
+          "account_type": {
+            "$ref": "#/components/schemas/IdentifiableAccountTypeViewModel"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "ExpandedAssetViewModel": {
+        "type": "object",
+        "required": [
+          "ticker",
+          "name",
+          "asset_type"
+        ],
+        "properties": {
+          "asset_type": {
+            "$ref": "#/components/schemas/IdentifiableAssetTypeViewModel"
+          },
+          "name": {
+            "type": "string",
+            "example": "Intel"
+          },
+          "ticker": {
+            "type": "string",
+            "example": "INTC"
+          }
+        }
+      },
+      "GetAccountLiquidityTypesResponseViewModel": {
+        "type": "object",
+        "required": [
+          "account_liquidity_types"
+        ],
+        "properties": {
+          "account_liquidity_types": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdentifiableAccountLiquidityTypeViewModel"
+            }
+          }
+        }
+      },
+      "GetAccountResponseViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ExpandedAccountViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "liquidity_type"
+            ],
+            "properties": {
+              "liquidity_type": {
+                "$ref": "#/components/schemas/IdentifiableAccountLiquidityTypeViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "GetAccountTypesResponseViewModel": {
+        "type": "object",
+        "required": [
+          "account_types"
+        ],
+        "properties": {
+          "account_types": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdentifiableAccountTypeViewModel"
+            }
+          }
+        }
+      },
+      "GetAccountsResponseViewModel": {
+        "type": "object",
+        "required": [
+          "accounts",
+          "lookup_tables"
+        ],
+        "properties": {
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetAccountsResponseViewModelRow"
+            }
+          },
+          "lookup_tables": {
+            "$ref": "#/components/schemas/AccountMetadataLookupTables"
+          }
+        }
+      },
+      "GetAccountsResponseViewModelRow": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableAccountViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "liquidity_type"
+            ],
+            "properties": {
+              "liquidity_type": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        ]
+      },
+      "GetAssetPairRatesResponseViewModel": {
+        "type": "object",
+        "required": [
+          "rates",
+          "range"
+        ],
+        "properties": {
+          "range": {
+            "type": "string",
+            "example": "1d"
+          },
+          "rates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetRateViewModel"
+            }
+          }
+        }
+      },
+      "GetAssetPairResponseViewModel": {
+        "type": "object",
+        "required": [
+          "main_asset",
+          "reference_asset",
+          "metadata"
+        ],
+        "properties": {
+          "main_asset": {
+            "$ref": "#/components/schemas/ExpandedAssetViewModel"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/SharedAssetPairMetadataViewModel"
+          },
+          "reference_asset": {
+            "$ref": "#/components/schemas/ExpandedAssetViewModel"
+          }
+        }
+      },
+      "GetAssetResponseViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ExpandedAssetViewModel"
+          },
+          {
+            "$ref": "#/components/schemas/AssetMetadataViewModel"
+          },
+          {
+            "type": "object"
+          }
+        ]
+      },
+      "GetAssetsLineResponseViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableAssetViewModel"
+          },
+          {
+            "type": "object"
+          }
+        ]
+      },
+      "GetHoldingsResponseViewModel": {
+        "type": "object",
+        "required": [
+          "holdings",
+          "lookup_tables"
+        ],
+        "properties": {
+          "holdings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetHoldingsResponseViewModelRow"
+            }
+          },
+          "lookup_tables": {
+            "$ref": "#/components/schemas/HoldingsMetadataLookupTables"
+          }
+        }
+      },
+      "GetHoldingsResponseViewModelRow": {
+        "type": "object",
+        "required": [
+          "account_id",
+          "asset_id",
+          "units"
+        ],
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "asset_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "units": {
+            "type": "number",
+            "format": "double"
+          },
+          "value": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        }
+      },
+      "GetIndividualTransactionViewModel": {
+        "type": "object",
+        "required": [
+          "transaction",
+          "lookup_tables"
+        ],
+        "properties": {
+          "lookup_tables": {
+            "$ref": "#/components/schemas/MetadataLookupTables"
+          },
+          "transaction": {
+            "$ref": "#/components/schemas/MandatoryTransactionWithIdentifiableEntries"
+          }
+        }
+      },
+      "GetIndividualTransactionsViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MetadataLookupTables"
+          },
+          {
+            "type": "object",
+            "required": [
+              "transactions"
+            ],
+            "properties": {
+              "transactions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MandatoryIdentifiableTransactionWithIdentifiableEntries"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "GetNetWorthHistoryResponseViewModel": {
+        "type": "object",
+        "required": [
+          "range",
+          "sums"
+        ],
+        "properties": {
+          "range": {
+            "type": "string",
+            "example": "1d"
+          },
+          "sums": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetRateViewModel"
+            }
+          }
+        }
+      },
+      "GetPortfolioOverviewViewModel": {
+        "type": "object",
+        "required": [
+          "portfolios",
+          "lookup_tables"
+        ],
+        "properties": {
+          "lookup_tables": {
+            "$ref": "#/components/schemas/HoldingsMetadataLookupTables"
+          },
+          "portfolios": {
+            "$ref": "#/components/schemas/PortfolioOverviewViewModel"
+          }
+        }
+      },
+      "GetTransactionGroupsViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MetadataLookupTables"
+          },
+          {
+            "type": "object",
+            "required": [
+              "groups"
+            ],
+            "properties": {
+              "groups": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MandatoryIdentifiableTransactionGroupViewModel"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "GetTransactionsViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MetadataLookupTables"
+          },
+          {
+            "type": "object",
+            "required": [
+              "individual_transactions",
+              "transaction_groups"
+            ],
+            "properties": {
+              "individual_transactions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MandatoryIdentifiableTransactionWithIdentifiableEntries"
+                }
+              },
+              "transaction_groups": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MandatoryIdentifiableTransactionGroupViewModel"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "GetUserAssetPairResponseViewModel": {
+        "type": "object",
+        "required": [
+          "main_asset",
+          "reference_asset",
+          "metadata",
+          "user_metadata"
+        ],
+        "properties": {
+          "main_asset": {
+            "$ref": "#/components/schemas/ExpandedAssetViewModel"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/AssetPairMetadataViewModel"
+          },
+          "reference_asset": {
+            "$ref": "#/components/schemas/ExpandedAssetViewModel"
+          },
+          "user_metadata": {
+            "$ref": "#/components/schemas/UserAssetPairMetadataViewModel"
+          }
+        }
+      },
+      "HoldingsMetadataLookupTables": {
+        "type": "object",
+        "required": [
+          "accounts",
+          "assets"
+        ],
+        "properties": {
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdentifiableAccountViewModel"
+            }
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdentifiableAssetViewModel"
+            }
+          }
+        }
+      },
+      "IdentifiableAccountAssetEntryViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AccountAssetEntryViewModel"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "entry_id": {
+                "type": "integer",
+                "format": "int32",
+                "description": "Id representing a single entry in a transaction.",
+                "nullable": true
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableAccountFeesWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableAccountFeesWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableAccountFeesWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "account_fees"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableAccountLiquidityTypeViewModel": {
+        "type": "object",
+        "required": [
+          "name",
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The id of the Account type"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the Account type"
+          }
+        }
+      },
+      "IdentifiableAccountTypeViewModel": {
+        "type": "object",
+        "required": [
+          "name",
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The id of the Account type"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the Account type"
+          }
+        }
+      },
+      "IdentifiableAccountViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AccountViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "account_id"
+            ],
+            "properties": {
+              "account_id": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableAssetBalanceTransferWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "outgoing_change",
+              "incoming_change"
+            ],
+            "properties": {
+              "incoming_change": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              },
+              "outgoing_change": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableAssetBalanceTransferWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableAssetBalanceTransferWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_balance_transfer"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableAssetDividendWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableAssetDividendWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableAssetDividendWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_dividend"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableAssetPurchaseWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "purchase_change",
+              "cash_outgoings_change"
+            ],
+            "properties": {
+              "cash_outgoings_change": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              },
+              "purchase_change": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableAssetPurchaseWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableAssetPurchaseWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_purchase"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableAssetSaleWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "sale_entry",
+              "proceeds_entry"
+            ],
+            "properties": {
+              "proceeds_entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              },
+              "sale_entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableAssetSaleWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableAssetSaleWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_sale"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableAssetTradeWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "outgoing_entry",
+              "incoming_entry"
+            ],
+            "properties": {
+              "incoming_entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              },
+              "outgoing_entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableAssetTradeWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableAssetTradeWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_trade"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableAssetTransferInWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableAssetTransferInWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableAssetTransferInWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_transfer_in"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableAssetTransferOutWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableAssetTransferOutWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableAssetTransferOutWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_transfer_out"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableAssetTypeViewModel": {
+        "type": "object",
+        "required": [
+          "name",
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The id of the asset type",
+            "example": 3
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the asset type",
+            "example": "Stocks"
+          }
+        }
+      },
+      "IdentifiableAssetViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AssetViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "asset_id"
+            ],
+            "properties": {
+              "asset_id": {
+                "type": "integer",
+                "format": "int32",
+                "example": 1
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableCashDividendWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry",
+              "origin_asset_id"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              },
+              "origin_asset_id": {
+                "type": "integer",
+                "format": "int32",
+                "description": "An id of a cash asset for which the dividends were paid for."
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableCashDividendWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableCashDividendWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "cash_dividend"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableCashTransferInWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableCashTransferInWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableCashTransferInWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "cash_transfer_in"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableCashTransferOutWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableCashTransferOutWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableCashTransferOutWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "cash_transfer_out"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableExpandedAccountViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ExpandedAccountViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "account_id"
+            ],
+            "properties": {
+              "account_id": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableExpandedAssetViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ExpandedAssetViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "asset_id"
+            ],
+            "properties": {
+              "asset_id": {
+                "type": "integer",
+                "format": "int32",
+                "example": 1
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableRegularTransactionWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry",
+              "category_id"
+            ],
+            "properties": {
+              "category_id": {
+                "type": "integer",
+                "format": "int32",
+                "description": "Specific bespoke category id."
+              },
+              "description": {
+                "type": "string",
+                "description": "Description of the transaction.",
+                "nullable": true
+              },
+              "entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableRegularTransactionWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableRegularTransactionWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "regular_transaction"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableTransactionBaseWithIdentifiableEntries": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "transaction_id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Id representing the full transaction.",
+                "nullable": true
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableTransactionFeeViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "fee_type"
+            ],
+            "properties": {
+              "fee_type": {
+                "$ref": "#/components/schemas/TransactionFeeType"
+              }
+            }
+          }
+        ]
+      },
+      "IdentifiableTransactionWithIdentifiableEntries": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/IdentifiableRegularTransactionWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/IdentifiableCashTransferOutWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/IdentifiableCashTransferInWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/IdentifiableCashDividendWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/IdentifiableAssetTransferOutWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/IdentifiableAssetTransferInWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/IdentifiableAssetTradeWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/IdentifiableAssetSaleWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/IdentifiableAssetPurchaseWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/IdentifiableAssetDividendWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/IdentifiableAssetBalanceTransferWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/IdentifiableAccountFeesWithIdentifiableEntriesViewModelWithType"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "account_fees": "#/components/schemas/IdentifiableAccountFeesWithIdentifiableEntriesViewModelWithType",
+            "asset_balance_transfer": "#/components/schemas/IdentifiableAssetBalanceTransferWithIdentifiableEntriesViewModelWithType",
+            "asset_dividend": "#/components/schemas/IdentifiableAssetDividendWithIdentifiableEntriesViewModelWithType",
+            "asset_purchase": "#/components/schemas/IdentifiableAssetPurchaseWithIdentifiableEntriesViewModelWithType",
+            "asset_sale": "#/components/schemas/IdentifiableAssetSaleWithIdentifiableEntriesViewModelWithType",
+            "asset_trade": "#/components/schemas/IdentifiableAssetTradeWithIdentifiableEntriesViewModelWithType",
+            "asset_transfer_in": "#/components/schemas/IdentifiableAssetTransferInWithIdentifiableEntriesViewModelWithType",
+            "asset_transfer_out": "#/components/schemas/IdentifiableAssetTransferOutWithIdentifiableEntriesViewModelWithType",
+            "cash_dividend": "#/components/schemas/IdentifiableCashDividendWithIdentifiableEntriesViewModelWithType",
+            "cash_transfer_in": "#/components/schemas/IdentifiableCashTransferInWithIdentifiableEntriesViewModelWithType",
+            "cash_transfer_out": "#/components/schemas/IdentifiableCashTransferOutWithIdentifiableEntriesViewModelWithType",
+            "regular_transaction": "#/components/schemas/IdentifiableRegularTransactionWithIdentifiableEntriesViewModelWithType"
+          }
+        }
+      },
+      "LoginDetailsViewModel": {
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "properties": {
+          "password": {
+            "type": "string",
+            "description": "Password."
+          },
+          "username": {
+            "type": "string",
+            "description": "Username."
+          }
+        },
+        "example": {
+          "password": "BestP4ssword!",
+          "username": "Einaras"
+        }
+      },
+      "MandatoryAccountFeesWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryAccountFeesWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryAccountFeesWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "account_fees"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryAssetBalanceTransferWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "outgoing_change",
+              "incoming_change"
+            ],
+            "properties": {
+              "incoming_change": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              },
+              "outgoing_change": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryAssetBalanceTransferWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryAssetBalanceTransferWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_balance_transfer"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryAssetDividendWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryAssetDividendWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryAssetDividendWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_dividend"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryAssetPurchaseWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "purchase_change",
+              "cash_outgoings_change"
+            ],
+            "properties": {
+              "cash_outgoings_change": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              },
+              "purchase_change": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryAssetPurchaseWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryAssetPurchaseWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_purchase"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryAssetSaleWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "sale_entry",
+              "proceeds_entry"
+            ],
+            "properties": {
+              "proceeds_entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              },
+              "sale_entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryAssetSaleWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryAssetSaleWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_sale"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryAssetTradeWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "outgoing_entry",
+              "incoming_entry"
+            ],
+            "properties": {
+              "incoming_entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              },
+              "outgoing_entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryAssetTradeWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryAssetTradeWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_trade"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryAssetTransferInWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryAssetTransferInWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryAssetTransferInWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_transfer_in"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryAssetTransferOutWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryAssetTransferOutWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryAssetTransferOutWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_transfer_out"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryCashDividendWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry",
+              "origin_asset_id"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              },
+              "origin_asset_id": {
+                "type": "integer",
+                "format": "int32",
+                "description": "An id of a cash asset for which the dividends were paid for."
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryCashDividendWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryCashDividendWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "cash_dividend"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryCashTransferInWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryCashTransferInWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryCashTransferInWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "cash_transfer_in"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryCashTransferOutWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryCashTransferOutWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryCashTransferOutWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "cash_transfer_out"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableAccountAssetEntryViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AccountAssetEntryViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry_id"
+            ],
+            "properties": {
+              "entry_id": {
+                "type": "integer",
+                "format": "int32",
+                "description": "Id representing a single entry in a transaction."
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableAccountFeesWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableAccountFeesWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableAccountFeesWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "account_fees"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableAssetBalanceTransferWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "outgoing_change",
+              "incoming_change"
+            ],
+            "properties": {
+              "incoming_change": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              },
+              "outgoing_change": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableAssetBalanceTransferWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableAssetBalanceTransferWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_balance_transfer"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableAssetDividendWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableAssetDividendWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableAssetDividendWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_dividend"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableAssetPurchaseWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "purchase_change",
+              "cash_outgoings_change"
+            ],
+            "properties": {
+              "cash_outgoings_change": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              },
+              "purchase_change": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableAssetPurchaseWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableAssetPurchaseWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_purchase"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableAssetSaleWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "sale_entry",
+              "proceeds_entry"
+            ],
+            "properties": {
+              "proceeds_entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              },
+              "sale_entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableAssetSaleWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableAssetSaleWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_sale"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableAssetTradeWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "outgoing_entry",
+              "incoming_entry"
+            ],
+            "properties": {
+              "incoming_entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              },
+              "outgoing_entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableAssetTradeWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableAssetTradeWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_trade"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableAssetTransferInWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableAssetTransferInWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableAssetTransferInWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_transfer_in"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableAssetTransferOutWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableAssetTransferOutWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableAssetTransferOutWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "asset_transfer_out"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableCashDividendWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry",
+              "origin_asset_id"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              },
+              "origin_asset_id": {
+                "type": "integer",
+                "format": "int32",
+                "description": "An id of a cash asset for which the dividends were paid for."
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableCashDividendWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableCashDividendWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "cash_dividend"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableCashTransferInWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableCashTransferInWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableCashTransferInWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "cash_transfer_in"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableCashTransferOutWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry"
+            ],
+            "properties": {
+              "entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableCashTransferOutWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableCashTransferOutWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "cash_transfer_out"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableRegularTransactionWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry",
+              "category_id"
+            ],
+            "properties": {
+              "category_id": {
+                "type": "integer",
+                "format": "int32",
+                "description": "Specific bespoke category id."
+              },
+              "description": {
+                "type": "string",
+                "description": "Description of the transaction.",
+                "nullable": true
+              },
+              "entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableRegularTransactionWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableRegularTransactionWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "regular_transaction"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableTransactionBaseWithIdentifiableEntries": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryTransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "transaction_id"
+            ],
+            "properties": {
+              "transaction_id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Id representing the full transaction."
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableTransactionFeeViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "fee_type"
+            ],
+            "properties": {
+              "fee_type": {
+                "$ref": "#/components/schemas/TransactionFeeType"
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableTransactionGroupViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryTransactionGroupViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "group_id"
+            ],
+            "properties": {
+              "group_id": {
+                "type": "integer",
+                "format": "int32",
+                "description": "Id representing a single entry in a transaction."
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryIdentifiableTransactionWithIdentifiableEntries": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableRegularTransactionWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableCashTransferOutWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableCashTransferInWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableCashDividendWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableAssetTransferOutWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableAssetTransferInWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableAssetTradeWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableAssetSaleWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableAssetPurchaseWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableAssetDividendWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableAssetBalanceTransferWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/MandatoryIdentifiableAccountFeesWithIdentifiableEntriesViewModelWithType"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "account_fees": "#/components/schemas/MandatoryIdentifiableAccountFeesWithIdentifiableEntriesViewModelWithType",
+            "asset_balance_transfer": "#/components/schemas/MandatoryIdentifiableAssetBalanceTransferWithIdentifiableEntriesViewModelWithType",
+            "asset_dividend": "#/components/schemas/MandatoryIdentifiableAssetDividendWithIdentifiableEntriesViewModelWithType",
+            "asset_purchase": "#/components/schemas/MandatoryIdentifiableAssetPurchaseWithIdentifiableEntriesViewModelWithType",
+            "asset_sale": "#/components/schemas/MandatoryIdentifiableAssetSaleWithIdentifiableEntriesViewModelWithType",
+            "asset_trade": "#/components/schemas/MandatoryIdentifiableAssetTradeWithIdentifiableEntriesViewModelWithType",
+            "asset_transfer_in": "#/components/schemas/MandatoryIdentifiableAssetTransferInWithIdentifiableEntriesViewModelWithType",
+            "asset_transfer_out": "#/components/schemas/MandatoryIdentifiableAssetTransferOutWithIdentifiableEntriesViewModelWithType",
+            "cash_dividend": "#/components/schemas/MandatoryIdentifiableCashDividendWithIdentifiableEntriesViewModelWithType",
+            "cash_transfer_in": "#/components/schemas/MandatoryIdentifiableCashTransferInWithIdentifiableEntriesViewModelWithType",
+            "cash_transfer_out": "#/components/schemas/MandatoryIdentifiableCashTransferOutWithIdentifiableEntriesViewModelWithType",
+            "regular_transaction": "#/components/schemas/MandatoryIdentifiableRegularTransactionWithIdentifiableEntriesViewModelWithType"
+          }
+        }
+      },
+      "MandatoryRegularTransactionWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry",
+              "category_id"
+            ],
+            "properties": {
+              "category_id": {
+                "type": "integer",
+                "format": "int32",
+                "description": "Specific bespoke category id."
+              },
+              "description": {
+                "type": "string",
+                "description": "Description of the transaction.",
+                "nullable": true
+              },
+              "entry": {
+                "$ref": "#/components/schemas/MandatoryIdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryRegularTransactionWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryRegularTransactionWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "regular_transaction"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "MandatoryTransactionBaseWithIdentifiableEntries": {
+        "type": "object",
+        "required": [
+          "date"
+        ],
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date when the transaction occured."
+          },
+          "fees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MandatoryIdentifiableTransactionFeeViewModel"
+            },
+            "description": "Any other fees related to the transaction, such as transfer or conversion fees.",
+            "nullable": true
+          }
+        }
+      },
+      "MandatoryTransactionGroupViewModel": {
+        "type": "object",
+        "required": [
+          "transactions",
+          "description",
+          "category_id",
+          "date"
+        ],
+        "properties": {
+          "category_id": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Overall category of whole group"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Unrelated to individual transactions date which represent when the collection of transactions occurred"
+          },
+          "description": {
+            "type": "string",
+            "description": "Overall description of whole group"
+          },
+          "transactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MandatoryIdentifiableTransactionWithIdentifiableEntries"
+            },
+            "description": "All subtractions grouped into this group"
+          }
+        }
+      },
+      "MandatoryTransactionWithIdentifiableEntries": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/MandatoryRegularTransactionWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/MandatoryCashTransferOutWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/MandatoryCashTransferInWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/MandatoryCashDividendWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/MandatoryAssetTransferOutWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/MandatoryAssetTransferInWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/MandatoryAssetTradeWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/MandatoryAssetSaleWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/MandatoryAssetPurchaseWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/MandatoryAssetDividendWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/MandatoryAssetBalanceTransferWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/MandatoryAccountFeesWithIdentifiableEntriesViewModelWithType"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "account_fees": "#/components/schemas/MandatoryAccountFeesWithIdentifiableEntriesViewModelWithType",
+            "asset_balance_transfer": "#/components/schemas/MandatoryAssetBalanceTransferWithIdentifiableEntriesViewModelWithType",
+            "asset_dividend": "#/components/schemas/MandatoryAssetDividendWithIdentifiableEntriesViewModelWithType",
+            "asset_purchase": "#/components/schemas/MandatoryAssetPurchaseWithIdentifiableEntriesViewModelWithType",
+            "asset_sale": "#/components/schemas/MandatoryAssetSaleWithIdentifiableEntriesViewModelWithType",
+            "asset_trade": "#/components/schemas/MandatoryAssetTradeWithIdentifiableEntriesViewModelWithType",
+            "asset_transfer_in": "#/components/schemas/MandatoryAssetTransferInWithIdentifiableEntriesViewModelWithType",
+            "asset_transfer_out": "#/components/schemas/MandatoryAssetTransferOutWithIdentifiableEntriesViewModelWithType",
+            "cash_dividend": "#/components/schemas/MandatoryCashDividendWithIdentifiableEntriesViewModelWithType",
+            "cash_transfer_in": "#/components/schemas/MandatoryCashTransferInWithIdentifiableEntriesViewModelWithType",
+            "cash_transfer_out": "#/components/schemas/MandatoryCashTransferOutWithIdentifiableEntriesViewModelWithType",
+            "regular_transaction": "#/components/schemas/MandatoryRegularTransactionWithIdentifiableEntriesViewModelWithType"
+          }
+        }
+      },
+      "MetadataLookupTables": {
+        "type": "object",
+        "required": [
+          "accounts",
+          "assets"
+        ],
+        "properties": {
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdentifiableAccountViewModel"
+            }
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdentifiableAssetViewModel"
+            }
+          }
+        }
+      },
+      "PageOfAssetsResultsWithLookupViewModel": {
+        "type": "object",
+        "required": [
+          "results",
+          "total_results",
+          "lookup_tables"
+        ],
+        "properties": {
+          "lookup_tables": {
+            "$ref": "#/components/schemas/AssetLookupTables"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetAssetsLineResponseViewModel"
+            },
+            "description": "One page of results"
+          },
+          "total_results": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The total number of results available",
+            "example": 2203
+          }
+        }
+      },
+      "PageOfIndividualTransactionsWithLookupViewModel": {
+        "type": "object",
+        "required": [
+          "results",
+          "total_results",
+          "lookup_tables"
+        ],
+        "properties": {
+          "lookup_tables": {
+            "$ref": "#/components/schemas/MetadataLookupTables"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MandatoryIdentifiableTransactionWithIdentifiableEntries"
+            },
+            "description": "One page of results"
+          },
+          "total_results": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The total number of results available",
+            "example": 2203
+          }
+        }
+      },
+      "PortfolioOverviewViewModel": {
+        "type": "object",
+        "required": [
+          "cash_portfolios",
+          "asset_portfolios"
+        ],
+        "properties": {
+          "asset_portfolios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetPortfolioViewModel"
+            }
+          },
+          "cash_portfolios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CashPortfolioViewModel"
+            }
+          }
+        }
+      },
+      "RegularTransactionViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry",
+              "category_id"
+            ],
+            "properties": {
+              "category_id": {
+                "type": "integer",
+                "format": "int32",
+                "description": "Specific bespoke category id."
+              },
+              "description": {
+                "type": "string",
+                "description": "Description of the transaction.",
+                "nullable": true
+              },
+              "entry": {
+                "$ref": "#/components/schemas/AccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "RegularTransactionViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RegularTransactionViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "regular_transaction"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "RegularTransactionWithIdentifiableEntriesViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionBaseWithIdentifiableEntries"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entry",
+              "category_id"
+            ],
+            "properties": {
+              "category_id": {
+                "type": "integer",
+                "format": "int32",
+                "description": "Specific bespoke category id."
+              },
+              "description": {
+                "type": "string",
+                "description": "Description of the transaction.",
+                "nullable": true
+              },
+              "entry": {
+                "$ref": "#/components/schemas/IdentifiableAccountAssetEntryViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "RegularTransactionWithIdentifiableEntriesViewModelWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RegularTransactionWithIdentifiableEntriesViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "regular_transaction"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "SharedAssetPairMetadataViewModel": {
+        "allOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssetPairMetadataViewModel"
+              }
+            ],
+            "nullable": true
+          },
+          {
+            "type": "object",
+            "properties": {
+              "volume": {
+                "type": "number",
+                "format": "double",
+                "example": "27681777",
+                "nullable": true
+              }
+            }
+          }
+        ]
+      },
+      "TransactionBaseWithEntries": {
+        "type": "object",
+        "required": [
+          "date"
+        ],
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date when the transaction occured."
+          },
+          "fees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TransactionFeeViewModel"
+            },
+            "description": "Any other fees related to the transaction, such as transfer or conversion fees.",
+            "nullable": true
+          }
+        }
+      },
+      "TransactionBaseWithIdentifiableEntries": {
+        "type": "object",
+        "required": [
+          "date"
+        ],
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date when the transaction occured."
+          },
+          "fees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdentifiableTransactionFeeViewModel"
+            },
+            "description": "Any other fees related to the transaction, such as transfer or conversion fees.",
+            "nullable": true
+          }
+        }
+      },
+      "TransactionFeeType": {
+        "type": "string",
+        "enum": [
+          "transaction",
+          "exchange"
+        ]
+      },
+      "TransactionFeeViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AccountAssetEntryViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "fee_type"
+            ],
+            "properties": {
+              "fee_type": {
+                "$ref": "#/components/schemas/TransactionFeeType"
+              }
+            }
+          }
+        ]
+      },
+      "TransactionGroupViewModel": {
+        "type": "object",
+        "required": [
+          "transactions",
+          "description",
+          "category_id",
+          "date"
+        ],
+        "properties": {
+          "category_id": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Overall category of whole group"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Unrelated to individual transactions date which represent when the collection of transactions occurred"
+          },
+          "description": {
+            "type": "string",
+            "description": "Overall description of whole group"
+          },
+          "transactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TransactionWithEntries"
+            },
+            "description": "All subtractions grouped into this group"
+          }
+        }
+      },
+      "TransactionGroupWithIdentifiableChildrenViewModel": {
+        "type": "object",
+        "required": [
+          "transactions",
+          "description",
+          "category_id",
+          "date"
+        ],
+        "properties": {
+          "category_id": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Overall category of whole group"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Unrelated to individual transactions date which represent when the collection of transactions occurred"
+          },
+          "description": {
+            "type": "string",
+            "description": "Overall description of whole group"
+          },
+          "transactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdentifiableTransactionWithIdentifiableEntries"
+            },
+            "description": "All subtractions grouped into this group"
+          }
+        }
+      },
+      "TransactionWithEntries": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/RegularTransactionViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/CashTransferOutViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/CashTransferInViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/CashDividendViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/AssetTransferOutViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/AssetTransferInViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/AssetTradeViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/AssetSaleViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/AssetPurchaseViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/AssetDividendViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/AssetBalanceTransferViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/AccountFeesViewModelWithType"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "account_fees": "#/components/schemas/AccountFeesViewModelWithType",
+            "asset_balance_transfer": "#/components/schemas/AssetBalanceTransferViewModelWithType",
+            "asset_dividend": "#/components/schemas/AssetDividendViewModelWithType",
+            "asset_purchase": "#/components/schemas/AssetPurchaseViewModelWithType",
+            "asset_sale": "#/components/schemas/AssetSaleViewModelWithType",
+            "asset_trade": "#/components/schemas/AssetTradeViewModelWithType",
+            "asset_transfer_in": "#/components/schemas/AssetTransferInViewModelWithType",
+            "asset_transfer_out": "#/components/schemas/AssetTransferOutViewModelWithType",
+            "cash_dividend": "#/components/schemas/CashDividendViewModelWithType",
+            "cash_transfer_in": "#/components/schemas/CashTransferInViewModelWithType",
+            "cash_transfer_out": "#/components/schemas/CashTransferOutViewModelWithType",
+            "regular_transaction": "#/components/schemas/RegularTransactionViewModelWithType"
+          }
+        }
+      },
+      "TransactionWithIdentifiableEntries": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/RegularTransactionWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/CashTransferOutWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/CashTransferInWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/CashDividendWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/AssetTransferOutWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/AssetTransferInWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/AssetTradeWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/AssetSaleWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/AssetPurchaseWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/AssetDividendWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/AssetBalanceTransferWithIdentifiableEntriesViewModelWithType"
+          },
+          {
+            "$ref": "#/components/schemas/AccountFeesWithIdentifiableEntriesViewModelWithType"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "account_fees": "#/components/schemas/AccountFeesWithIdentifiableEntriesViewModelWithType",
+            "asset_balance_transfer": "#/components/schemas/AssetBalanceTransferWithIdentifiableEntriesViewModelWithType",
+            "asset_dividend": "#/components/schemas/AssetDividendWithIdentifiableEntriesViewModelWithType",
+            "asset_purchase": "#/components/schemas/AssetPurchaseWithIdentifiableEntriesViewModelWithType",
+            "asset_sale": "#/components/schemas/AssetSaleWithIdentifiableEntriesViewModelWithType",
+            "asset_trade": "#/components/schemas/AssetTradeWithIdentifiableEntriesViewModelWithType",
+            "asset_transfer_in": "#/components/schemas/AssetTransferInWithIdentifiableEntriesViewModelWithType",
+            "asset_transfer_out": "#/components/schemas/AssetTransferOutWithIdentifiableEntriesViewModelWithType",
+            "cash_dividend": "#/components/schemas/CashDividendWithIdentifiableEntriesViewModelWithType",
+            "cash_transfer_in": "#/components/schemas/CashTransferInWithIdentifiableEntriesViewModelWithType",
+            "cash_transfer_out": "#/components/schemas/CashTransferOutWithIdentifiableEntriesViewModelWithType",
+            "regular_transaction": "#/components/schemas/RegularTransactionWithIdentifiableEntriesViewModelWithType"
+          }
+        }
+      },
+      "UpdateAccountViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AccountViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "liquidity_type"
+            ],
+            "properties": {
+              "liquidity_type": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        ]
+      },
+      "UpdateAssetPairRequestViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/UserAssetPairMetadataViewModel"
+          },
+          {
+            "type": "object"
+          }
+        ]
+      },
+      "UpdateAssetPairResponseViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/UserAssetPairMetadataViewModel"
+          },
+          {
+            "type": "object"
+          }
+        ]
+      },
+      "UpdateAssetRequestViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AssetViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "base_asset_id"
+            ],
+            "properties": {
+              "base_asset_id": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        ]
+      },
+      "UpdateAssetResponseViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AssetViewModel"
+          },
+          {
+            "type": "object",
+            "required": [
+              "base_asset_id"
+            ],
+            "properties": {
+              "base_asset_id": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        ]
+      },
+      "UpdateIndividualTransactionRequestViewModel": {
+        "type": "object",
+        "required": [
+          "transaction"
+        ],
+        "properties": {
+          "transaction": {
+            "$ref": "#/components/schemas/TransactionWithIdentifiableEntries"
+          }
+        }
+      },
+      "UpdateIndividualTransactionResponseViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MetadataLookupTables"
+          },
+          {
+            "type": "object",
+            "required": [
+              "transaction"
+            ],
+            "properties": {
+              "transaction": {
+                "$ref": "#/components/schemas/MandatoryTransactionWithIdentifiableEntries"
+              }
+            }
+          }
+        ]
+      },
+      "UpdateTransactionGroupRequestViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionGroupWithIdentifiableChildrenViewModel"
+          },
+          {
+            "type": "object"
+          }
+        ]
+      },
+      "UpdateTransactionGroupResponseViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MetadataLookupTables"
+          },
+          {
+            "type": "object",
+            "required": [
+              "group"
+            ],
+            "properties": {
+              "group": {
+                "$ref": "#/components/schemas/MandatoryTransactionGroupViewModel"
+              }
+            }
+          }
+        ]
+      },
+      "UpdateTransactionRequestViewModel": {
+        "type": "object",
+        "required": [
+          "transaction"
+        ],
+        "properties": {
+          "transaction": {
+            "$ref": "#/components/schemas/TransactionWithIdentifiableEntries"
+          }
+        }
+      },
+      "UpdateTransactionResponseViewModel": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MetadataLookupTables"
+          },
+          {
+            "type": "object",
+            "required": [
+              "transaction"
+            ],
+            "properties": {
+              "transaction": {
+                "$ref": "#/components/schemas/MandatoryTransactionWithIdentifiableEntries"
+              }
+            }
+          }
+        ]
+      },
+      "UserAssetPairMetadataViewModel": {
+        "type": "object",
+        "required": [
+          "exchange"
+        ],
+        "properties": {
+          "exchange": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "auth_token": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Myra",
+      "description": "# What is Myra?\nsomethings something financial tracking tool\n\n# Authentication\nsomething something authentication\n\n# API Design principles\nThe API design _tries_ to follow the same design principles across all contracts.\n\n## Object relationships\n### Identification\nEach entity has an identification, whether or not it is returned in response object is determined by the use case.\n- If we are querying a list of entities, the identification is always returned.\n- If we are querying a single entity, the is identification for the entity not returned in the response object, as it is used in query path. However, the identification for related entities is returned.\n- If we are creating a new entity using POST - the identification the entity and all its relationships is returned in response object.\n- If we are updating a single entity  the is identification for the entity not returned in the response object, as it is used in query path. However, the identification for related entities is returned.\n\n### Input data\nIf we are querying an endpoint which has some object relationships, for input data (Request body, params or path), we provide only the `id` of the related object. \n\nThis is because in order to update or fetch something related, the assumption is that for the correct decision, the client mut have already up to date data about the related objects.\n\nExample of this would be that if we want to update an asset to a different category, we would pass the category `id` and not the whole category object, as we would have known it before hand.\n\n### Response contracts\nFor the relationships in response contracts, there are multiple approaches:\n- For responses which contain many objects with some kind of relationship, a lookup table is provided as part of the root response.\nFor example, if we are querying a lot of arbitrary transactions, the response would contain a `metadata` object which would contain the `account` and `asset` lookup tables. This is to avoid duplication of the same object in the response.\n```js\nGET /api/assets\n{\n    list: [\n        {\n            id: 1,\n            name: \"name\",\n            relationship: 5,\n        }\n    ],\n    lookup_tables: {\n        relationship: [\n               { id: 5, name: \"relationship_name\"}\n            ]\n        }\n    }\n}\n```\n- For queries, where only a single entity is returned without nested objects of array type, the relationship is expanded inplace.\nFor example, if we query for a specific asset, the asset type would be returned as an object instead of the `id`.\nThis is because the consumer could not know the necessary metadata beforehand and providing a lookup table for a single entity is not gud.\n```js\nGET /api/assets/1\n{\n    id: 1,\n    name: \"name\",\n    relationship: {\n        id: 5,\n        name: \"relationship_name\"\n    }\n}\n```\n- For queries where we are adding or updating data, we do not provide any lookup or expansion. The reason is the same as for input data - the client should have the necessary data to make the correct decision beforehand, so returning the same metadata is irrelevant.\n```js\nPOST /api/assets\n{\n    id: 1,\n    name: \"name\",\n    relationship: 5,\n}\n```\n- For queries that have recursion, lookup or expansion is not provided. This is to avoid ambiguity caused by recursion. \nFor example, if we query the asset entity, we get a list of related assets. If we were to expand the related assets, it would cause ambiguity for the client \nas to how the rest of the objects are expanded.\n```js\nGET /api/assets/1\n{\n    id: 1,\n    name: \"name\",\n    related_asset: 2\n}\n```\n\n\n\n\n"
+    }
+  ]
+}

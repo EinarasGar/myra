@@ -56,6 +56,12 @@ use crate::view_models::{
         base_models::metadata_lookup::HoldingsMetadataLookupTables,
         get_holdings::{GetHoldingsResponseViewModel, GetHoldingsResponseViewModelRow},
         get_networth_history::GetNetWorthHistoryResponseViewModel,
+        get_overview::{
+            asset_portfolio::AssetPortfolioViewModel,
+            asset_portfolio_position::AssetPortfolioPositionViewModel,
+            cash_portfolio::CashPortfolioViewModel, portfolio_overview::PortfolioOverviewViewModel,
+            GetPortfolioOverviewViewModel,
+        },
     },
     transactions::{
         add_individual_transaction::{
@@ -206,6 +212,7 @@ use crate::view_models::{
         super::handlers::accounts_handler::get_account_liquidity_types,
         super::handlers::portfolio_handler::get_networth_history,
         super::handlers::portfolio_handler::get_holdings,
+        super::handlers::portfolio_handler::get_portfolio_overview,
         // search common assets
         // get user asset pair rates
         // get common asset pair rates
@@ -345,6 +352,11 @@ use crate::view_models::{
         schemas(GetHoldingsResponseViewModelRow),
         schemas(GetHoldingsResponseViewModel),
         schemas(HoldingsMetadataLookupTables),
+        schemas(GetPortfolioOverviewViewModel),
+        schemas(CashPortfolioViewModel),
+        schemas(AssetPortfolioViewModel),
+        schemas(AssetPortfolioPositionViewModel),
+        schemas(PortfolioOverviewViewModel)
 
     ),
     modifiers(

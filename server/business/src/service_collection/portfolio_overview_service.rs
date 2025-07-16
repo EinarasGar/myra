@@ -1,11 +1,28 @@
+use std::collections::{HashMap, HashSet, VecDeque};
+
 #[mockall_double::double]
 use dal::database_context::MyraDb;
 use dal::models::portfolio_models::Holding;
-use dal::queries::entries_queries;
+use dal::models::transaction_models::TransactionWithEntriesModel;
+use dal::queries::{entries_queries, transaction_queries};
+use dal::query_params::get_transaction_with_entries_params::GetTransactionWithEntriesParams;
+use rust_decimal::Decimal;
 use uuid::Uuid;
 
+use crate::dtos::asset_id_date_dto::AssetIdDateDto;
+use crate::dtos::asset_pair_date_dto::AssetPairDateDto;
+use crate::dtos::asset_pair_rate_dto::AssetPairRateDto;
+use crate::dtos::assets::asset_id_dto::AssetIdDto;
 use crate::dtos::portfolio::holding::HoldingDto;
+use crate::dtos::portfolio::overview::PortfolioOverviewDto;
+use crate::entities::portfolio_overview::portfolio::{
+    Portfolio, PortfolioAction, ReferentialPortfolioAction,
+};
+use crate::entities::transactions::transaction::{Transaction, TransactionPortfolioAction};
+use crate::entities::transactions::transaction_types::create_transactions_from_transaction_with_entries_models;
 
+#[mockall_double::double]
+use super::asset_rates_service::AssetRatesService;
 #[mockall_double::double]
 use super::asset_service::AssetsService;
 #[mockall_double::double]
@@ -15,7 +32,8 @@ pub struct PortfolioOverviewService {
     #[allow(dead_code)]
     db: MyraDb,
     _transaction_service: TransactionService,
-    _asset_service: AssetsService,
+    asset_rates_service: AssetRatesService,
+    asset_service: AssetsService,
 }
 
 impl PortfolioOverviewService {
@@ -23,7 +41,8 @@ impl PortfolioOverviewService {
         Self {
             db: db.clone(),
             _transaction_service: TransactionService::new(db.clone()),
-            _asset_service: AssetsService::new(db.clone()),
+            asset_rates_service: AssetRatesService::new(db.clone()),
+            asset_service: AssetsService::new(db.clone()),
         }
     }
 
@@ -33,129 +52,122 @@ impl PortfolioOverviewService {
         Ok(ret.into_iter().map(|h| h.into()).collect())
     }
 
-    // pub async fn get_full_portfolio_overview(&self) -> anyhow::Result<PortfolioOverviewDto> {
-    //     let mut portfolio = Portfolio::new();
-    //     let account_id = Uuid::new_v4();
+    pub async fn get_portfolio_overview(
+        &self,
+        reference_asset_id: AssetIdDto,
+        user_id: Uuid,
+    ) -> anyhow::Result<PortfolioOverviewDto> {
+        //let reference_asset_id = AssetIdDto(3);
+        let query_params = GetTransactionWithEntriesParams::by_user_id(user_id);
 
-    //     let input: Vec<Box<dyn PortfolioAction>> = vec![
-    //         Box::new(CashTransferIn {
-    //             asset_id: 10,
-    //             account_id,
-    //             fees: dec!(0),
-    //             units: dec!(20),
-    //             date: datetime!(2000-03-22 00:00:00 UTC),
-    //         }),
-    //         Box::new(AssetPurchase {
-    //             instrument_asset_id: 1,
-    //             account_id,
-    //             instrument_units: dec!(1),
-    //             instrument_reference_price: dec!(1),
-    //             fees: dec!(1),
-    //             cash_asset_id: 10,
-    //             cash_units: dec!(15),
-    //             date: datetime!(2000-03-22 00:00:00 UTC),
-    //         }),
-    //     ];
+        let query = transaction_queries::get_transaction_with_entries(query_params);
+        let models = self
+            .db
+            .fetch_all::<TransactionWithEntriesModel>(query)
+            .await?;
 
-    //     portfolio.process_transactions(input);
-    //     Ok(portfolio.into())
-    // }
+        tracing::trace!("Got transactions: {:#?}", models);
+        let transcations: Vec<Transaction> =
+            create_transactions_from_transaction_with_entries_models(models)?;
 
-    // pub async fn get_portfolio_asset_overview(
-    //     &self,
-    //     user_id: Uuid,
-    //     asset_id: i32,
-    //     reference_asset_id: i32,
-    // ) -> anyhow::Result<Vec<i32>> {
-    //     unimplemented!()
-    // let transactions = self
-    //     .transaction_service
-    //     .get_investment_transactions_with_links(user_id, Some(asset_id))
-    //     .await?;
+        let mut portfolio = Portfolio::new();
 
-    // let mut data_for_asset_query: Vec<AssetIdDateDto> = Vec::new();
-    // transactions.iter().for_each(|trans| {
-    //     if trans.asset_id != reference_asset_id {
-    //         data_for_asset_query.push(AssetIdDateDto {
-    //             asset_id: trans.asset_id,
-    //             date: trans.date,
-    //         })
-    //     }
-    // });
+        let mut regular_actions: Vec<Box<dyn PortfolioAction>> = Vec::new();
+        let mut refferential_actions: Vec<Box<dyn ReferentialPortfolioAction>> = Vec::new();
 
-    // let mut prices: VecDeque<Option<AssetPairRateDto>> = self
-    //     .asset_service
-    //     .get_asset_refrence_price_by_dates(data_for_asset_query, reference_asset_id)
-    //     .await?
-    //     .into_iter()
-    //     .collect();
+        for transaction in transcations {
+            let portfolio_action = transaction.get_portfolio_action()?;
+            match portfolio_action {
+                TransactionPortfolioAction::None => {}
+                TransactionPortfolioAction::Regular(portfolio_action) => {
+                    regular_actions.push(portfolio_action)
+                }
+                TransactionPortfolioAction::Referential(referential_portfolio_action) => {
+                    refferential_actions.push(referential_portfolio_action)
+                }
+            }
+        }
 
-    // println!("{:#?}", prices);
+        let mut asset_id_dates: Vec<AssetIdDateDto> = Vec::new();
+        refferential_actions.iter().for_each(|action| {
+            asset_id_dates.push(AssetIdDateDto {
+                asset_id: action.get_asset_id().0,
+                date: action.date(),
+            })
+        });
 
-    // let trans_with_prices: Vec<(Decimal, InvestmentDetailModel)> = transactions
-    //     .into_iter()
-    //     .map(|trans| {
-    //         if trans.asset_id != reference_asset_id {
-    //             if let Some(Some(price)) = prices.pop_front() {
-    //                 (price.rate, trans)
-    //             } else {
-    //                 (dec!(0), trans)
-    //             }
-    //         } else {
-    //             (dec!(1), trans)
-    //         }
-    //     })
-    //     .collect();
+        let asset_id_hashset: HashSet<i32> = asset_id_dates.iter().map(|a| a.asset_id).collect();
+        let base_pair_ids = self
+            .asset_service
+            .get_assets_base_pairs(asset_id_hashset)
+            .await?;
 
-    // println!("{:#?}", trans_with_prices);
+        let mut asset_pairs: Vec<AssetPairDateDto> = Vec::new();
+        refferential_actions.iter().for_each(|action| {
+            let base_pair_id = *base_pair_ids.get(&action.get_asset_id().0).unwrap();
+            if base_pair_id == reference_asset_id.0 {
+                return;
+            }
+            asset_pairs.push(AssetPairDateDto {
+                asset1_id: base_pair_id,
+                asset2_id: reference_asset_id.0,
+                date: action.date(),
+            })
+        });
 
-    // //negerai bus nes jei assetas nera linke tai jis nebus reflectinamas
+        let rates = self
+            .asset_rates_service
+            .get_pair_prices_by_dates(asset_pairs.clone())
+            .await?;
 
-    // let mut grouped_results_full: HashMap<Uuid, Vec<(Decimal, InvestmentDetailModel)>> =
-    //     HashMap::new();
-    // trans_with_prices.into_iter().for_each(|model| {
-    //     let entry = grouped_results_full
-    //         .entry(model.1.link_id)
-    //         .or_insert(Vec::new());
-    //     entry.push(model);
-    // });
+        let mut rates: VecDeque<Option<AssetPairRateDto>> = rates.into_iter().collect();
 
-    // //The fuck of a monstrosity did i write here
-    // let asset_rate = self
-    //     .asset_service
-    //     .get_assets_rates_default_latest(
-    //         vec![(asset_id, reference_asset_id)].into_iter().collect(),
-    //     )
-    //     .await?
-    //     .into_iter()
-    //     .next()
-    //     .unwrap()
-    //     .1
-    //     .rate;
+        refferential_actions.iter_mut().for_each(|action| {
+            let base_pair_id = *base_pair_ids.get(&action.get_asset_id().0).unwrap();
+            if base_pair_id == reference_asset_id.0 {
+                return;
+            }
+            let rate = rates.pop_front().unwrap().unwrap();
+            action.apply_refferential_price(rate.rate);
+            tracing::trace!(
+                "Dates: {:#?} {:#?}, {:#?} to {:?}",
+                rate.date,
+                action.date(),
+                rate.rate,
+                action
+            );
+        });
 
-    // let mut ret: Vec<InvestmentRowDto> = vec![];
-    // grouped_results_full.into_iter().for_each(|(link_id, v)| {
-    //     let mut main_transaction: Option<InvestmentDetailModel> = None;
-    //     //let mut price
-    //     v.into_iter().for_each(|(rate, trans)| {
-    //         if trans.asset_id == asset_id {
-    //             main_transaction = Some(trans.clone());
-    //         }
-    //     });
+        let mut final_vec: Vec<Box<dyn PortfolioAction>> = Vec::new();
+        for action in regular_actions {
+            final_vec.push(action);
+        }
+        for action in refferential_actions {
+            final_vec.push(action);
+        }
 
-    //     let main_transaction = main_transaction.unwrap();
-    //     ret.push(InvestmentRowDto {
-    //         action: if main_transaction.quantity < dec!(0) {
-    //             InvestmentAction::Sell
-    //         } else {
-    //             InvestmentAction::Buy
-    //         },
-    //         date: main_transaction.date,
-    //         units: main_transaction.quantity,
-    //         fees: dec!(1),
-    //         price: dec!(1),
-    //     })
-    // });
-    // Ok(ret)
-    // }
+        tracing::trace!("final_vec: {:#?}", final_vec);
+        portfolio.process_transactions(final_vec);
+
+        let mut asdasd: HashSet<AssetIdDto> = HashSet::new();
+        portfolio.account_portfolios().iter().for_each(|a| {
+            a.1.asset_portfolios.iter().for_each(|b| {
+                asdasd.insert(AssetIdDto(*b.0));
+            });
+        });
+
+        let current_rates = self
+            .asset_rates_service
+            .get_pairs_latest_converted(asdasd, reference_asset_id.clone())
+            .await?;
+
+        let current_rates: HashMap<AssetIdDto, Decimal> = current_rates
+            .into_iter()
+            .filter(|(ids, _)| ids.pair2 == reference_asset_id)
+            .map(|(ids, rate)| (ids.pair1, rate.rate))
+            .collect();
+
+        let dto = portfolio.try_into_dto(current_rates)?;
+        Ok(dto)
+    }
 }

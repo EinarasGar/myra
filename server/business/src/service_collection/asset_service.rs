@@ -3,12 +3,10 @@ use std::collections::HashSet;
 use dal::{
     models::{
         asset_models::{
-            Asset, AssetId, AssetPair, AssetPairId, AssetPairSharedMetadata, AssetRaw,
-            AssetWithMetadata, PublicAsset,
+            Asset, AssetBasePair, AssetId, AssetPair, AssetPairId, AssetPairSharedMetadata,
+            AssetRaw, AssetWithMetadata, PublicAsset,
         },
-        base::Count,
-        base::Exsists,
-        base::TotalCount,
+        base::{Count, Exsists, TotalCount},
     },
     queries::asset_queries,
     query_params::get_assets_params::GetAssetsParams,
@@ -297,5 +295,19 @@ impl AssetsService {
         let query = asset_queries::inser_pair(pair_dto.into());
         let asset_pair_id = self.db.fetch_one::<AssetPairId>(query).await?;
         Ok(asset_pair_id.id)
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn get_assets_base_pairs(
+        &self,
+        ids: HashSet<i32>,
+    ) -> anyhow::Result<std::collections::HashMap<i32, i32>> {
+        let query = asset_queries::get_assets_base_pair_ids(ids);
+        let asset_base_pair_ids = self.db.fetch_all::<AssetBasePair>(query).await?;
+        let mut base_pairs_map = std::collections::HashMap::new();
+        for asset_base_pair in asset_base_pair_ids {
+            base_pairs_map.insert(asset_base_pair.id, asset_base_pair.base_pair_id);
+        }
+        Ok(base_pairs_map)
     }
 }

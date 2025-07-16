@@ -18,14 +18,18 @@ import PortfolioCard from "../components/PortfolioCard";
 import { PortfolioEntryViewModel } from "@/models";
 import {
   useGetPortfolioHistoryQuery,
+  useGetPortfolioOverviewQuery,
   useGetPortfolioQuery,
 } from "@/app/myraApi";
+import { Card } from "@mui/material";
 
 function Portfolio() {
   const { data } = useGetPortfolioQuery("asds");
   // console.log(portfolioResp.data);
   console.log(data);
   const { data: dataa, error, isLoading } = useGetPortfolioHistoryQuery("asds");
+
+  const { data: portfolioOverviewData } = useGetPortfolioOverviewQuery("asds");
 
   // if (isLoading) return <span>Loading</span>;
   // if (portfolioResp.isLoading) return <span>Loading</span>;
@@ -58,14 +62,12 @@ function Portfolio() {
     return <>1</>;
   }
 
+  if (!portfolioOverviewData) {
+    return <>1</>;
+  }
+
+  console.log(portfolioOverviewData);
   return (
-    // <>1</>
-    // (portfolioResp.data?.portfolio_entries.map((x) => (
-    //   <div key={x.account.id}>
-    //     {x.asset.name} {x.account.name} {x.sum} {x.last_rate?.rate}{" "}
-    //     {x.last_rate?.rate * x.sum} {x.last_rate?.date}
-    //   </div>
-    // ))
     <>
       <div className=" h-96">
         <ResponsiveContainer width="100%" height="100%">
@@ -86,9 +88,6 @@ function Portfolio() {
           </LineChart>
         </ResponsiveContainer>
       </div>
-      {/* {Array.from(entriesByAssetId.values()).map((entry) =>
-        entry.map((x) => <PortfolioCard key={x.asset.id} entries={entry} />)
-      )} */}
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 650 }} aria-label="simple table">
           <TableHead>
@@ -129,75 +128,31 @@ function Portfolio() {
                 </TableCell>
                 <TableCell align="right">{row.units}</TableCell>
                 <TableCell align="right">{row.value}</TableCell>
-                {/* <TableCell align="right">
-                  {row.base_asset
-                    ? (row.sum * (row.last_rate?.rate ?? 0)).toLocaleString(
-                        "en-US",
-                        { style: "currency", currency: row.base_asset.ticker }
-                      )
-                    : "-"}
-                </TableCell>
-                <TableCell align="right">
-                  {(
-                    row.sum * (row.last_reference_rate?.rate ?? 0)
-                  ).toLocaleString("en-US", {
-                    style: "currency",
-                    currency: portfolioResp.data?.reference_asset?.ticker,
-                  })}
-                </TableCell>
-                <TableCell align="right">
-                  {row.sum_of_costs
-                    ? `${(
-                        row.sum * (row.last_reference_rate?.rate ?? 0) -
-                        row.sum_of_costs
-                      ).toLocaleString("en-US", {
-                        style: "currency",
-                        currency: portfolioResp.data?.reference_asset?.ticker,
-                      })} (${(
-                        ((row.sum * (row.last_reference_rate?.rate ?? 0) -
-                          row.sum_of_costs) /
-                          row.sum_of_costs) *
-                        100
-                      ).toFixed(2)}%)`
-                    : "-"}
-                </TableCell>
-
-                <TableCell align="right">
-                  {row.last_rate?.date &&
-                    `${formatDistance(
-                      new Date(row.last_rate.date),
-                      new Date()
-                    )} ago`}
-                </TableCell> */}
               </TableRow>
             ))}
-            {/* <TableRow
-              sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-            >
-              <TableCell component="th" scope="row">
-                Total
-              </TableCell>
-              <TableCell align="right">-</TableCell>
-              <TableCell align="right">-</TableCell>
-              <TableCell align="right">-</TableCell>
-              <TableCell align="right">-</TableCell>
-              <TableCell align="right">
-                {portfolioResp.data?.portfolio_entries
-                  .reduce(
-                    (acc, x) =>
-                      acc + x.sum * (x.last_reference_rate?.rate ?? 0),
-                    0
-                  )
-                  .toLocaleString("en-US", {
-                    style: "currency",
-                    currency: portfolioResp.data?.reference_asset?.ticker,
-                  })}
-              </TableCell>
-              <TableCell align="right">-</TableCell>
-            </TableRow> */}
           </TableBody>
         </Table>
       </TableContainer>
+      <br></br>
+      <Card>Portfolios</Card>
+      <br></br>
+      <Card>Asset Portfolios</Card>
+      <Card>
+        {portfolioOverviewData.portfolios.asset_portfolios.map((entry) => (
+          <Card key={String(entry.asset_id) + entry.account_id}>
+            <p>account_id: {entry.account_id}</p>
+            <p>asset_id: {entry.asset_id}</p>
+            <p>cash_dividends: {entry.cash_dividends}</p>
+            <p>realized_gains: {entry.realized_gains}</p>
+            <p>total_cost_basis: {entry.total_cost_basis}</p>
+            <p>total_fees: {entry.total_fees}</p>
+            <p>total_gains: {entry.total_gains}</p>
+            <p>total_units: {entry.total_units}</p>
+            <p>unit_cost_basis: {entry.unit_cost_basis}</p>
+            <p>unrealized_gains: {entry.unrealized_gains}</p>
+          </Card>
+        ))}
+      </Card>
     </>
   );
 }

@@ -230,7 +230,7 @@ impl AssetRatesService {
                         asset1_id: x.pair1,
                         asset2_id: x.pair2,
                         rate: x.rate.unwrap(),
-                        date: x.date.unwrap(),
+                        date: x.recorded_at.unwrap(),
                     })
                 } else {
                     None
@@ -250,11 +250,13 @@ impl AssetRatesService {
     pub async fn get_pairs_by_dates_converted(
         &self,
         asset_id_dates: Vec<AssetIdDateDto>,
-        reference_asset_id: i32,
+        reference_asset_id: AssetIdDto,
     ) -> anyhow::Result<Vec<Option<AssetPairRateDto>>> {
         if asset_id_dates.is_empty() {
             return Ok(vec![]);
         }
+
+        let reference_asset_id = reference_asset_id.0;
 
         let initial_pair_dates: Vec<AssetPairDateDto> = asset_id_dates
             .into_iter()

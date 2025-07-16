@@ -11,6 +11,7 @@ import {
   AddTransactionGroupViewModel,
   UpdateTransactionGroupViewModel,
   PortfolioViewModel,
+  PortfolioOverviewViewModel,
 } from "@/models";
 import { RootState } from "@/app/store";
 import { AssetPairViewModel } from "@/models/assetPairViewModel";
@@ -52,7 +53,11 @@ export const myraApi = createApi({
     }),
     getPortfolioHistory: builder.query<PortfolioHistoryViewModel, string>({
       query: (uuid) =>
-        `/users/2396480f-0052-4cf0-81dc-8cedbde5ce13/portfolio/history?range=1w`,
+        `/users/2396480f-0052-4cf0-81dc-8cedbde5ce13/portfolio/history?range=all`,
+    }),
+    getPortfolioOverview: builder.query<PortfolioOverviewViewModel, string>({
+      query: (uuid) =>
+        `/users/2396480f-0052-4cf0-81dc-8cedbde5ce13/portfolio/overview`,
     }),
     postAccount: builder.mutation<
       PortfolioAccountViewModel,
@@ -133,4 +138,5 @@ export const {
   useGetPortfolioQuery,
   useGetAssetPairRatesQuery,
   useGetPortfolioHistoryQuery,
+  useGetPortfolioOverviewQuery,
 } = myraApi;

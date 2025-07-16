@@ -2,6 +2,7 @@ use business::loader::StartupLoader;
 use tracing::info;
 
 use crate::states::AppState;
+use color_eyre::eyre::Result;
 
 pub mod auth;
 pub mod converters;
@@ -16,7 +17,9 @@ pub(crate) mod states;
 pub(crate) mod view_models;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
+    color_eyre::install()?;
+
     //Initialize logging and OpenTelemetry
     observability::initialize_tracing_subscriber();
 
@@ -35,4 +38,6 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind("0.0.0.0:5000").await.unwrap();
     info!("Starting web server on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
+
+    Ok(())
 }

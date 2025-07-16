@@ -136,18 +136,15 @@ async fn update_currency_prices() {
         let asset1 = assets.iter().find(|a| a.asset_id == permutation.0).unwrap();
         let asset2 = assets.iter().find(|a| a.asset_id == permutation.1).unwrap();
 
-        if asset_rates.is_none() {
-            println!(
-                "Couldnt get latest rate for {:?}/{:?} from database",
-                asset1.ticker, asset2.ticker
-            );
-            continue;
+        let pair_id = assets_service()
+            .get_asset_pair_id(asset1.asset_id, asset2.asset_id)
+            .await;
+
+        if pair_id.is_ok() {
+            let latest_date = asset_rates.map(|r| r.date);
+            let ticker = format!("{}{}=X", asset1.ticker, asset2.ticker);
+            insert_quotes(latest_date, ticker, asset1.asset_id, asset2.asset_id).await;
         }
-
-        let latest_date = Some(asset_rates.unwrap().date);
-        let ticker = format!("{}{}=X", asset1.ticker, asset2.ticker);
-
-        insert_quotes(latest_date, ticker, asset1.asset_id, asset2.asset_id).await;
     }
 }
 

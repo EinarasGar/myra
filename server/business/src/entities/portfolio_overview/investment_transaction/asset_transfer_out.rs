@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::entities::portfolio_overview::portfolio::{Portfolio, PortfolioAction};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AssetTransferOut {
     pub date: OffsetDateTime,
     pub asset_id: i32,
@@ -47,7 +47,7 @@ mod tests {
                 instrument_asset_id: 1,
                 account_id,
                 instrument_units: dec!(2),
-                instrument_reference_price: dec!(1),
+                instrument_price: dec!(1),
                 fees: dec!(1),
                 cash_asset_id: 10,
                 cash_units: dec!(1),
@@ -128,7 +128,7 @@ mod tests {
                 instrument_asset_id: 1,
                 account_id,
                 instrument_units: dec!(2),
-                instrument_reference_price: dec!(1),
+                instrument_price: dec!(1),
                 fees: dec!(1),
                 cash_asset_id: 10,
                 cash_units: dec!(1),
@@ -138,7 +138,7 @@ mod tests {
                 instrument_asset_id: 2,
                 account_id,
                 instrument_units: dec!(2),
-                instrument_reference_price: dec!(1),
+                instrument_price: dec!(1),
                 fees: dec!(1),
                 cash_asset_id: 10,
                 cash_units: dec!(1),
@@ -178,7 +178,7 @@ mod tests {
                 instrument_asset_id: 1,
                 account_id,
                 instrument_units: dec!(2),
-                instrument_reference_price: dec!(1),
+                instrument_price: dec!(1),
                 fees: dec!(1),
                 cash_asset_id: 10,
                 cash_units: dec!(1),
@@ -188,7 +188,7 @@ mod tests {
                 instrument_asset_id: 1,
                 account_id,
                 instrument_units: dec!(2),
-                instrument_reference_price: dec!(1),
+                instrument_price: dec!(1),
                 fees: dec!(1),
                 cash_asset_id: 10,
                 cash_units: dec!(1),

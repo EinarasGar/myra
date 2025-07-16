@@ -4,9 +4,21 @@ use dal::models::{
 };
 use uuid::Uuid;
 
-use crate::{dtos::transaction_dto::TransactionDto, entities::entries::entry::Entry};
+use crate::{
+    dtos::transaction_dto::TransactionDto,
+    entities::{
+        entries::entry::Entry,
+        portfolio_overview::portfolio::{PortfolioAction, ReferentialPortfolioAction},
+    },
+};
 
 use super::metadata::MetadataField;
+
+pub enum TransactionPortfolioAction {
+    None,
+    Regular(Box<dyn PortfolioAction>),
+    Referential(Box<dyn ReferentialPortfolioAction>),
+}
 
 pub trait TransactionProcessor {
     #[allow(clippy::wrong_self_convention)]
@@ -30,6 +42,10 @@ pub trait TransactionProcessor {
             field
         )
     }
+    fn get_portfolio_action(&self) -> anyhow::Result<TransactionPortfolioAction> {
+        Ok(TransactionPortfolioAction::None)
+    }
+
     fn get_entries(&self) -> &Vec<Entry>;
     fn get_add_transaction_model(&self) -> AddTransactionModel;
     fn get_entries_mut(&mut self) -> &mut Vec<Entry>;
