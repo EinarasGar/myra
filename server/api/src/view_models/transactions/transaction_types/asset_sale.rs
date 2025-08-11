@@ -1,27 +1,42 @@
 use business::dtos::transaction_dto::TransactionDto;
+use macros::type_tag;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::view_models::transactions::base_models::{
     account_asset_entry::{
         AccountAssetEntryViewModel, IdentifiableAccountAssetEntryViewModel,
-        MandatoryIdentifiableAccountAssetEntryViewModel,
+        RequiredIdentifiableAccountAssetEntryViewModel,
     },
     transaction_base::{
         IdentifiableTransactionBaseWithIdentifiableEntries,
-        MandatoryIdentifiableTransactionBaseWithIdentifiableEntries, TransactionBaseWithEntries,
+        RequiredIdentifiableTransactionBaseWithIdentifiableEntries, TransactionBaseWithEntries,
         TransactionBaseWithIdentifiableEntries,
     },
 };
 
+pub type AssetSaleViewModel = AssetSale<TransactionBaseWithEntries, AccountAssetEntryViewModel>;
+#[allow(dead_code)]
+pub type AssetSaleWithIdentifiableEntriesViewModel =
+    AssetSale<TransactionBaseWithIdentifiableEntries, IdentifiableAccountAssetEntryViewModel>;
+#[allow(dead_code)]
+pub type RequiredAssetSaleWithIdentifiableEntriesViewModel = AssetSale<
+    TransactionBaseWithIdentifiableEntries,
+    RequiredIdentifiableAccountAssetEntryViewModel,
+>;
+#[allow(dead_code)]
+pub type IdentifiableAssetSaleWithIdentifiableEntriesViewModel = AssetSale<
+    IdentifiableTransactionBaseWithIdentifiableEntries,
+    IdentifiableAccountAssetEntryViewModel,
+>;
+#[allow(dead_code)]
+pub type RequiredIdentifiableAssetSaleWithIdentifiableEntriesViewModel = AssetSale<
+    RequiredIdentifiableTransactionBaseWithIdentifiableEntries,
+    RequiredIdentifiableAccountAssetEntryViewModel,
+>;
+
+#[type_tag(value = "asset_sale")]
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-#[aliases(
-    AssetSaleViewModel = AssetSale<TransactionBaseWithEntries, AccountAssetEntryViewModel>,
-    AssetSaleWithIdentifiableEntriesViewModel = AssetSale<TransactionBaseWithIdentifiableEntries, IdentifiableAccountAssetEntryViewModel>,
-    MandatoryAssetSaleWithIdentifiableEntriesViewModel = AssetSale<TransactionBaseWithIdentifiableEntries, MandatoryIdentifiableAccountAssetEntryViewModel>,
-    IdentifiableAssetSaleWithIdentifiableEntriesViewModel = AssetSale<IdentifiableTransactionBaseWithIdentifiableEntries, IdentifiableAccountAssetEntryViewModel>,
-    MandatoryIdentifiableAssetSaleWithIdentifiableEntriesViewModel = AssetSale<MandatoryIdentifiableTransactionBaseWithIdentifiableEntries, MandatoryIdentifiableAccountAssetEntryViewModel>,
-)]
 pub struct AssetSale<B, E> {
     #[serde(flatten)]
     pub base: B,

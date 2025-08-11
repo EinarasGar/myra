@@ -5,23 +5,33 @@ use crate::view_models::{
     assets::{base_models::lookup::AssetLookupTables, get_assets::GetAssetsLineResponseViewModel},
     transactions::{
         base_models::metadata_lookup::MetadataLookupTables,
-        transaction_types::MandatoryIdentifiableTransactionWithIdentifiableEntries,
+        get_transaction_group::GetTransactionGroupLineResponseViewModel,
+        get_transactions::GetTransactionsResultsViewModel,
+        transaction_types::RequiredIdentifiableTransactionWithIdentifiableEntries,
     },
 };
 
+pub type PageOfAssetsResultsWithLookupViewModel =
+    PageOfResults<GetAssetsLineResponseViewModel, AssetLookupTables>;
+pub type PageOfIndividualTransactionsWithLookupViewModel =
+    PageOfResults<RequiredIdentifiableTransactionWithIdentifiableEntries, MetadataLookupTables>;
+pub type PageOfTransactionGroupsWithLookupViewModel =
+    PageOfResults<GetTransactionGroupLineResponseViewModel, MetadataLookupTables>;
+pub type PageOfTransactionsWithLookupViewModel =
+    PageOfResults<GetTransactionsResultsViewModel, MetadataLookupTables>;
+
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-#[aliases(
-    PageOfAssetsResultsWithLookupViewModel = PageOfResults<GetAssetsLineResponseViewModel, AssetLookupTables>,
-    PageOfIndividualTransactionsWithLookupViewModel = PageOfResults<MandatoryIdentifiableTransactionWithIdentifiableEntries, MetadataLookupTables>
-)]
 pub struct PageOfResults<T, L> {
     /// One page of results
+    #[schema(inline = false)]
     pub results: Vec<T>,
 
     /// The total number of results available
     #[schema(example = 2203)]
     pub total_results: i32,
 
+    /// The lookup tables for the results
+    #[schema(inline = false)]
     pub lookup_tables: L,
 }
 

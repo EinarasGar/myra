@@ -1,7 +1,6 @@
 use opentelemetry::trace::TracerProvider;
-use opentelemetry::KeyValue;
 use opentelemetry_otlp::WithExportConfig;
-use opentelemetry_sdk::trace::{Config, Tracer};
+use opentelemetry_sdk::trace::Tracer;
 use opentelemetry_sdk::Resource;
 use tower_http::classify::{ServerErrorsAsFailures, SharedClassifier};
 use tower_http::trace::{DefaultMakeSpan, TraceLayer};
@@ -32,22 +31,24 @@ where
     let otlp_endpoint = std::env::var("OTLP_ENDPOINT");
     match otlp_endpoint {
         Ok(endpoint) => {
-            match opentelemetry_otlp::new_pipeline()
-                .tracing()
-                .with_exporter(
-                    opentelemetry_otlp::new_exporter()
-                        .tonic()
-                        .with_endpoint(endpoint),
-                )
-                .with_trace_config(Config::default().with_resource(Resource::new(vec![
-                    KeyValue::new("service.name", "myra_api"),
-                ])))
-                // Previously used install_simple, but after updating it started to hang. Found this
-                // https://github.com/open-telemetry/opentelemetry-rust/issues/2071
-                .install_batch(opentelemetry_sdk::runtime::Tokio)
-            {
-                Ok(tracer) => {
-                    let telemetry = OpenTelemetryLayer::new(tracer.tracer("myra_api"));
+            let exporter = opentelemetry_otlp::SpanExporter::builder()
+                .with_tonic()
+                .with_endpoint(endpoint)
+                .build();
+            
+            match exporter {
+                Ok(exporter) => {
+                    let resource = Resource::builder()
+                        .with_service_name("myra_api")
+                        .build();
+                    
+                    let tracer_provider = opentelemetry_sdk::trace::SdkTracerProvider::builder()
+                        .with_batch_exporter(exporter)
+                        .with_resource(resource)
+                        .build();
+                    
+                    opentelemetry::global::set_tracer_provider(tracer_provider.clone());
+                    let telemetry = OpenTelemetryLayer::new(tracer_provider.tracer("myra_api"));
                     Some(telemetry)
                 }
                 Err(err) => {

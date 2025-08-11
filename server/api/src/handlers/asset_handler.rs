@@ -12,14 +12,18 @@ use business::dtos::{
 use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
+    view_models::errors::GetResponses,
     parsers::parse_duration_string,
     states::{AssetRatesServiceState, AssetsServiceState},
     view_models::{
         assets::{
             base_models::{
+                asset_id::RequiredAssetId,
                 asset_metadata::AssetMetadataViewModel,
                 asset_pair_metadata::AssetPairMetadataViewModel,
-                asset_type::IdentifiableAssetTypeViewModel, lookup::AssetLookupTables,
+                asset_type::IdentifiableAssetTypeViewModel,
+                asset_type_id::RequiredAssetTypeId,
+                lookup::AssetLookupTables,
                 rate::AssetRateViewModel,
                 shared_asset_pair_metadata::SharedAssetPairMetadataViewModel,
             },
@@ -30,14 +34,16 @@ use crate::{
             },
             get_assets::GetAssetsLineResponseViewModel,
         },
-        base_models::search::{PageOfAssetsResultsWithLookupViewModel, PaginatedSearchQuery},
+        base_models::search::{
+            PageOfAssetsResultsWithLookupViewModel, PageOfResults, PaginatedSearchQuery,
+        },
     },
 };
 
 /// Search assets
 ///
 /// Query to search shared assets. Returns a page of results.
-/// If not query parameters are provided, returns results sorted by most popular.
+/// If no query parameters are provided, returns results sorted by most popular.
 /// The equivalent search endpoint for the user assets is not provided, as user
 /// assets can be retrieved in full due to it being a small subset.
 #[utoipa::path(
@@ -46,7 +52,8 @@ use crate::{
     tag = "Assets",
     params(PaginatedSearchQuery),
     responses(
-        (status = 200,  body = PageOfAssetsResultsWithLookupViewModel),
+        (status = 200, description = "Assets retrieved successfully.", body = PageOfResults<GetAssetsLineResponseViewModel, AssetLookupTables>),
+        GetResponses
     ),
     security(
         ("auth_token" = [])
@@ -58,7 +65,7 @@ pub async fn search_assets(
     query_params: Query<PaginatedSearchQuery>,
     AssetsServiceState(assets_service): AssetsServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-) -> Result<Json<PageOfAssetsResultsWithLookupViewModel>, ApiError> {
+) -> Result<Json<PageOfResults<GetAssetsLineResponseViewModel, AssetLookupTables>>, ApiError> {
     let paging_dto = PagingDto {
         start: query_params.start,
         count: query_params.count,
@@ -73,7 +80,7 @@ pub async fn search_assets(
         map.entry(x.asset_type.id)
             .or_insert_with(|| IdentifiableAssetTypeViewModel {
                 name: x.asset_type.name.clone(),
-                id: x.asset_type.id,
+                id: RequiredAssetTypeId(x.asset_type.id),
             });
     }
     let metadata: Vec<IdentifiableAssetTypeViewModel> = map.into_values().collect();
@@ -99,13 +106,14 @@ pub async fn search_assets(
 /// Gets a shared asset.
 #[utoipa::path(
     get,
-    path = "/api/assets/:asset_id",
+    path = "/api/assets/{asset_id}",
     tag = "Assets",
     params(
         ("asset_id" = i32, Path, description = "Id of the shared asset to retrieve.")
     ),
     responses(
-        (status = 200,  body = GetAssetResponseViewModel),
+        (status = 200, description = "Asset retrieved successfully.", body = GetAssetResponseViewModel),
+        GetResponses
     ),
     security(
         ("auth_token" = [])
@@ -123,8 +131,8 @@ pub async fn get_asset(
     let ret = GetAssetResponseViewModel {
         asset: asset_dto.asset.into(),
         metadata: AssetMetadataViewModel {
-            base_asset_id: asset_dto.base_asset_id.0,
-            pairs: asset_dto.pairs.unwrap().iter().map(|x| x.0).collect(),
+            base_asset_id: RequiredAssetId(asset_dto.base_asset_id.0),
+            pairs: asset_dto.pairs.unwrap().iter().map(|x| RequiredAssetId(x.0)).collect(),
         },
     };
 
@@ -136,14 +144,15 @@ pub async fn get_asset(
 /// Gets asset pair and its metadata.
 #[utoipa::path(
     get,
-    path = "/api/assets/:asset_id/:reference_id",
+    path = "/api/assets/{asset_id}/{reference_id}",
     tag = "Assets",
     params(
         ("asset_id" = i32, Path, description = "Id of the shared asset to retrieve."),
         ("reference_id" = i32, Path, description = "Id of the reference asset.")
     ),
     responses(
-        (status = 200,  body = GetAssetPairResponseViewModel),
+        (status = 200, description = "Asset pair retrieved successfully.", body = GetAssetPairResponseViewModel),
+        GetResponses
     ),
     security(
         ("auth_token" = [])
@@ -186,7 +195,7 @@ pub async fn get_asset_pair(
 /// Gets asset pair rates based on provided query params
 #[utoipa::path(
     get,
-    path = "/api/assets/:asset_id/:reference_id/rates",
+    path = "/api/assets/{asset_id}/{reference_id}/rates",
     tag = "Assets",
     params(
         ("asset_id" = i32, Path, description = "Id of the shared asset to retrieve."),
@@ -194,7 +203,8 @@ pub async fn get_asset_pair(
         GetAssetPairRatesRequestParams
     ),
     responses(
-        (status = 200,  body = GetAssetPairRatesResponseViewModel),
+        (status = 200, description = "Asset pair rates retrieved successfully.", body = GetAssetPairRatesResponseViewModel),
+        GetResponses
     ),
     security(
         ("auth_token" = [])

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::transaction_types::{
-    MandatoryIdentifiableTransactionWithIdentifiableEntries, TransactionWithEntries,
+    RequiredIdentifiableTransactionWithIdentifiableEntries, TransactionWithEntries,
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
@@ -13,5 +13,5 @@ pub struct AddIndividualTransactionRequestViewModel {
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct AddIndividualTransactionResponseViewModel {
-    pub transaction: MandatoryIdentifiableTransactionWithIdentifiableEntries,
+    pub transaction: RequiredIdentifiableTransactionWithIdentifiableEntries,
 }

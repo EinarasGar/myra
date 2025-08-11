@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use axum::{
-    async_trait,
     extract::{FromRef, FromRequestParts, Path},
     http::request::Parts,
     RequestPartsExt,
@@ -28,7 +27,6 @@ pub struct AuthenticatedUser {
     pub user_id: Uuid,
 }
 
-#[async_trait]
 impl<S> FromRequestParts<S> for AuthenticatedUserState
 where
     AuthService: FromRef<S>,

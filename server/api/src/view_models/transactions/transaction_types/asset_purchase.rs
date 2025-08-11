@@ -2,29 +2,45 @@ use business::dtos::{
     entry_dto::EntryDto,
     transaction_dto::{AssetPurchaseMetadataDto, TransactionDto, TransactionTypeDto},
 };
+use macros::type_tag;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::view_models::transactions::base_models::{
     account_asset_entry::{
         AccountAssetEntryViewModel, IdentifiableAccountAssetEntryViewModel,
-        MandatoryIdentifiableAccountAssetEntryViewModel,
+        RequiredIdentifiableAccountAssetEntryViewModel,
     },
     transaction_base::{
         IdentifiableTransactionBaseWithIdentifiableEntries,
-        MandatoryIdentifiableTransactionBaseWithIdentifiableEntries, TransactionBaseWithEntries,
+        RequiredIdentifiableTransactionBaseWithIdentifiableEntries, TransactionBaseWithEntries,
         TransactionBaseWithIdentifiableEntries,
     },
 };
 
+pub type AssetPurchaseViewModel =
+    AssetPurchase<TransactionBaseWithEntries, AccountAssetEntryViewModel>;
+#[allow(dead_code)]
+pub type AssetPurchaseWithIdentifiableEntriesViewModel =
+    AssetPurchase<TransactionBaseWithIdentifiableEntries, IdentifiableAccountAssetEntryViewModel>;
+#[allow(dead_code)]
+pub type RequiredAssetPurchaseWithIdentifiableEntriesViewModel = AssetPurchase<
+    TransactionBaseWithIdentifiableEntries,
+    RequiredIdentifiableAccountAssetEntryViewModel,
+>;
+#[allow(dead_code)]
+pub type IdentifiableAssetPurchaseWithIdentifiableEntriesViewModel = AssetPurchase<
+    IdentifiableTransactionBaseWithIdentifiableEntries,
+    IdentifiableAccountAssetEntryViewModel,
+>;
+#[allow(dead_code)]
+pub type RequiredIdentifiableAssetPurchaseWithIdentifiableEntriesViewModel = AssetPurchase<
+    RequiredIdentifiableTransactionBaseWithIdentifiableEntries,
+    RequiredIdentifiableAccountAssetEntryViewModel,
+>;
+
+#[type_tag(value = "asset_purchase")]
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-#[aliases(
-    AssetPurchaseViewModel = AssetPurchase<TransactionBaseWithEntries, AccountAssetEntryViewModel>,
-    AssetPurchaseWithIdentifiableEntriesViewModel = AssetPurchase<TransactionBaseWithIdentifiableEntries, IdentifiableAccountAssetEntryViewModel>,
-    MandatoryAssetPurchaseWithIdentifiableEntriesViewModel = AssetPurchase<TransactionBaseWithIdentifiableEntries, MandatoryIdentifiableAccountAssetEntryViewModel>,
-    IdentifiableAssetPurchaseWithIdentifiableEntriesViewModel = AssetPurchase<IdentifiableTransactionBaseWithIdentifiableEntries, IdentifiableAccountAssetEntryViewModel>,
-    MandatoryIdentifiableAssetPurchaseWithIdentifiableEntriesViewModel = AssetPurchase<MandatoryIdentifiableTransactionBaseWithIdentifiableEntries, MandatoryIdentifiableAccountAssetEntryViewModel>,
-)]
 pub struct AssetPurchase<B, E> {
     #[serde(flatten)]
     pub base: B,
@@ -59,6 +75,7 @@ where
     fn from(value: TransactionDto) -> Self {
         if let TransactionTypeDto::AssetPurchase(r) = value.clone().transaction_type {
             AssetPurchase {
+                r#type: Default::default(),
                 purchase_change: r.purchase.into(),
                 cash_outgoings_change: r.sale.into(),
                 base: value.into(),

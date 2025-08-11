@@ -10,11 +10,24 @@ pub mod cash_dividend;
 pub mod cash_transfer_in;
 pub mod cash_transfer_out;
 pub mod regular_transaction;
+use crate::view_models::transactions::base_models::account_asset_entry::IdentifiableAccountAssetEntry;
+use crate::view_models::transactions::base_models::entry_id::{EntryId, RequiredEntryId};
+use crate::view_models::transactions::base_models::transaction_fee::TransactionFee;
+use crate::view_models::transactions::base_models::transaction_id::{
+    RequiredTransactionId, TransactionId,
+};
 use business::dtos::transaction_dto::{TransactionDto, TransactionTypeDto};
 use paste::paste;
 
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+
+use crate::view_models::transactions::base_models::account_asset_entry::{
+    AccountAssetEntryViewModel, RequiredIdentifiableAccountAssetEntryViewModel,
+};
+use crate::view_models::transactions::base_models::transaction_base::{
+    IdentifiableTransactionBase, TransactionBase,
+};
 
 use self::{
     account_fees::*, asset_balance_transfer::*, asset_dividend::*, asset_purchase::*,
@@ -27,10 +40,16 @@ macro_rules! generate_transaction_type_enums {
 
         paste! {
             #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-            #[serde(tag = "type", rename_all = "snake_case")]
+            #[serde(rename_all = "snake_case", untagged)]
+            #[schema(discriminator = "type")]
             pub enum TransactionWithEntries {
                 $(
-                    $name([<$name ViewModel>]),
+                    $name(
+                        [<$name>]<
+                            TransactionBase<TransactionFee<AccountAssetEntryViewModel>>,
+                            AccountAssetEntryViewModel,
+                        >
+                    ),
                 )*
             }
 
@@ -45,34 +64,64 @@ macro_rules! generate_transaction_type_enums {
             }
 
             #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-            #[serde(tag = "type", rename_all = "snake_case")]
+            #[serde(rename_all = "snake_case", untagged)]
+            #[schema(discriminator = "type")]
             pub enum IdentifiableTransactionWithIdentifiableEntries {
                 $(
-                    $name([<Identifiable $name WithIdentifiableEntriesViewModel>]),
+                    $name(
+                        [<$name>]<
+                            IdentifiableTransactionBase<
+                                TransactionBase<TransactionFee<IdentifiableAccountAssetEntry<EntryId>>>,
+                                TransactionId,
+                            >,
+                            IdentifiableAccountAssetEntry<EntryId>,
+                        >,
+                    ),
                 )*
             }
 
             #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-            #[serde(tag = "type", rename_all = "snake_case")]
-            pub enum MandatoryTransactionWithIdentifiableEntries {
+            #[serde(rename_all = "snake_case", untagged)]
+            #[schema(discriminator = "type")]
+            pub enum RequiredTransactionWithIdentifiableEntries {
                 $(
-                    $name([<Mandatory $name WithIdentifiableEntriesViewModel>]),
+                    $name(
+                        [<$name>]<
+                            TransactionBase<TransactionFee<IdentifiableAccountAssetEntry<EntryId>>>,
+                            IdentifiableAccountAssetEntry<RequiredEntryId>,
+                        >,
+                    ),
                 )*
             }
 
             #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-            #[serde(tag = "type", rename_all = "snake_case")]
-            pub enum MandatoryIdentifiableTransactionWithIdentifiableEntries {
+            #[serde(rename_all = "snake_case", untagged)]
+            #[schema(discriminator = "type")]
+            pub enum RequiredIdentifiableTransactionWithIdentifiableEntries {
                 $(
-                    $name([<MandatoryIdentifiable $name WithIdentifiableEntriesViewModel>]),
+                    $name(
+                        [<$name>]<
+                            IdentifiableTransactionBase<
+                                TransactionBase<TransactionFee<IdentifiableAccountAssetEntry<RequiredEntryId>>>,
+                                RequiredTransactionId,
+                            >,
+                            RequiredIdentifiableAccountAssetEntryViewModel,
+                        >
+                    ),
                 )*
             }
 
             #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-            #[serde(tag = "type", rename_all = "snake_case")]
+            #[serde(rename_all = "snake_case", untagged)]
+            #[schema(discriminator = "type")]
             pub enum TransactionWithIdentifiableEntries {
                 $(
-                    $name([<$name WithIdentifiableEntriesViewModel>]),
+                    $name(
+                        [<$name>]<
+                            TransactionBase<TransactionFee<IdentifiableAccountAssetEntry<EntryId>>>,
+                            IdentifiableAccountAssetEntry<EntryId>,
+                        >,
+                    ),
                 )*
             }
         }
@@ -94,36 +143,36 @@ generate_transaction_type_enums!(
     AccountFees
 );
 
-impl From<TransactionDto> for MandatoryIdentifiableTransactionWithIdentifiableEntries {
+impl From<TransactionDto> for RequiredIdentifiableTransactionWithIdentifiableEntries {
     fn from(value: TransactionDto) -> Self {
         match value.transaction_type {
             TransactionTypeDto::Regular(_) => {
-                MandatoryIdentifiableTransactionWithIdentifiableEntries::RegularTransaction(
-                    MandatoryIdentifiableRegularTransactionWithIdentifiableEntriesViewModel::from(
+                RequiredIdentifiableTransactionWithIdentifiableEntries::RegularTransaction(
+                    RequiredIdentifiableRegularTransactionWithIdentifiableEntriesViewModel::from(
                         value,
                     ),
                 )
             }
             TransactionTypeDto::AssetPurchase(_) => {
-                MandatoryIdentifiableTransactionWithIdentifiableEntries::AssetPurchase(
-                    MandatoryIdentifiableAssetPurchaseWithIdentifiableEntriesViewModel::from(value),
+                RequiredIdentifiableTransactionWithIdentifiableEntries::AssetPurchase(
+                    RequiredIdentifiableAssetPurchaseWithIdentifiableEntriesViewModel::from(value),
                 )
             }
         }
     }
 }
 
-impl From<TransactionDto> for MandatoryTransactionWithIdentifiableEntries {
+impl From<TransactionDto> for RequiredTransactionWithIdentifiableEntries {
     fn from(value: TransactionDto) -> Self {
         match value.transaction_type {
             TransactionTypeDto::Regular(_) => {
-                MandatoryTransactionWithIdentifiableEntries::RegularTransaction(
-                    MandatoryRegularTransactionWithIdentifiableEntriesViewModel::from(value),
+                RequiredTransactionWithIdentifiableEntries::RegularTransaction(
+                    RequiredRegularTransactionWithIdentifiableEntriesViewModel::from(value),
                 )
             }
             TransactionTypeDto::AssetPurchase(_) => {
-                MandatoryTransactionWithIdentifiableEntries::AssetPurchase(
-                    MandatoryAssetPurchaseWithIdentifiableEntriesViewModel::from(value),
+                RequiredTransactionWithIdentifiableEntries::AssetPurchase(
+                    RequiredAssetPurchaseWithIdentifiableEntriesViewModel::from(value),
                 )
             }
         }

@@ -1,19 +1,12 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use super::{
-    base_models::{
-        metadata_lookup::MetadataLookupTables,
-        transaction_group::MandatoryIdentifiableTransactionGroupViewModel,
-    },
-    transaction_types::MandatoryIdentifiableTransactionWithIdentifiableEntries,
-};
+use crate::view_models::transactions::get_transaction_group::GetTransactionGroupLineResponseViewModel;
+
+use super::transaction_types::RequiredIdentifiableTransactionWithIdentifiableEntries;
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-pub struct GetTransactionsViewModel {
-    pub individual_transactions: Vec<MandatoryIdentifiableTransactionWithIdentifiableEntries>,
-    pub transaction_groups: Vec<MandatoryIdentifiableTransactionGroupViewModel>,
-
-    #[serde(flatten)]
-    pub metadata: MetadataLookupTables,
+pub struct GetTransactionsResultsViewModel {
+    pub individual_transactions: Vec<RequiredIdentifiableTransactionWithIdentifiableEntries>,
+    pub transaction_groups: Vec<GetTransactionGroupLineResponseViewModel>,
 }

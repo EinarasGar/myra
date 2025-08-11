@@ -13,6 +13,7 @@ use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
     states::AssetsServiceState,
+    view_models::errors::{CreateResponses, DeleteResponses, GetResponses, UpdateResponses},
     view_models::assets::{
         add_asset::{AddAssetRequestViewModel, AddAssetResponseViewModel},
         add_asset_pair_rates::{
@@ -31,14 +32,15 @@ use crate::{
 /// Gets an custom asset added by user
 #[utoipa::path(
     get,
-    path = "/api/users/:user_id/assets/:asset_id",
+    path = "/api/users/{user_id}/assets/{asset_id}",
     tag = "User Assets",
     params(
         ("user_id" = Uuid, Path, description = "Id of the user for which asset belongs to."),
         ("asset_id" = i32, Path, description = "Id of the user asset to retrieve."),
     ),
     responses(
-        (status = 200,  body = GetAssetResponseViewModel),
+        (status = 200, description = "User asset retrieved successfully.", body = GetAssetResponseViewModel),
+        GetResponses
     ),
     security(
         ("auth_token" = [])
@@ -64,7 +66,7 @@ pub async fn get_user_asset(
 /// Gets metadata about user asset pair
 #[utoipa::path(
     get,
-    path = "/api/users/:user_id/assets/:asset_id/:reference_id",
+    path = "/api/users/{user_id}/assets/{asset_id}/{reference_id}",
     tag = "User Assets",
     params(
         ("user_id" = Uuid, Path, description = "Id of the user for which asset belongs to."),
@@ -72,7 +74,8 @@ pub async fn get_user_asset(
         ("reference_id" = i32, Path, description = "Id of the reference asset."),
     ),
     responses(
-        (status = 200,  body = GetUserAssetPairResponseViewModel),
+        (status = 200, description = "User asset pair retrieved successfully.", body = GetUserAssetPairResponseViewModel),
+        GetResponses
     ),
     security(
         ("auth_token" = [])
@@ -109,7 +112,7 @@ pub async fn get_user_asset_pair(
 /// Gets user asset pair rates based on provided query params
 #[utoipa::path(
     get,
-    path = "/api/users/:user_id/assets/:asset_id/:reference_id/rates",
+    path = "/api/users/{user_id}/assets/{asset_id}/{reference_id}/rates",
     tag = "User Assets",
     params(
         ("user_id" = Uuid, Path, description = "Id of the user for which asset belongs to."),
@@ -118,7 +121,8 @@ pub async fn get_user_asset_pair(
         GetAssetPairRatesRequestParams
     ),
     responses(
-        (status = 200,  body = GetAssetPairRatesResponseViewModel),
+        (status = 200, description = "User asset pair rates retrieved successfully.", body = GetAssetPairRatesResponseViewModel),
+        GetResponses
     ),
     security(
         ("auth_token" = [])
@@ -182,7 +186,7 @@ pub async fn get_user_asset_pair_rates(
 /// Update already existing user defined asset.
 #[utoipa::path(
     put,
-    path = "/api/users/:user_id/assets/:asset_id",
+    path = "/api/users/{user_id}/assets/{asset_id}",
     tag = "User Assets",
     params(
         ("user_id" = Uuid, Path, description = "User id for which to add the asset to."),
@@ -192,7 +196,8 @@ pub async fn get_user_asset_pair_rates(
         content = UpdateAssetRequestViewModel,
     ),
     responses(
-        (status = 200, description = "User asset added successfully.", body = UpdateAssetResponseViewModel),
+        (status = 200, description = "User asset updated successfully.", body = UpdateAssetResponseViewModel),
+        UpdateResponses
     ),
     security(
         ("auth_token" = [])
@@ -227,7 +232,7 @@ pub async fn put_custom_asset(
 /// It is created by default as you add rates, and this endpoint serves as a way to add or update metadata.
 #[utoipa::path(
     put,
-    path = "/api/users/:user_id/assets/:asset_id/:reference_id/usermetadata",
+    path = "/api/users/{user_id}/assets/{asset_id}/{reference_id}/usermetadata",
     tag = "User Assets",
     params(
         ("user_id" = Uuid, Path, description = "User id for which to add the asset to."),
@@ -238,7 +243,8 @@ pub async fn put_custom_asset(
         content = UpdateAssetPairRequestViewModel,
     ),
     responses(
-        (status = 200, description = "User asset added successfully.", body = UpdateAssetPairResponseViewModel),
+        (status = 200, description = "User asset pair updated successfully.", body = UpdateAssetPairResponseViewModel),
+        UpdateResponses
     ),
     security(
         ("auth_token" = [])
@@ -260,7 +266,7 @@ pub async fn put_custom_asset_pair(
 /// Adds a user defined asset.
 #[utoipa::path(
     post,
-    path = "/api/users/:user_id/assets",
+    path = "/api/users/{user_id}/assets",
     tag = "User Assets",
     params(
         ("user_id" = Uuid, Path, description = "User id for which to add the asset to."),
@@ -269,7 +275,8 @@ pub async fn put_custom_asset_pair(
         content = AddAssetRequestViewModel,
     ),
     responses(
-        (status = 200, description = "User asset added successfully.", body = AddAssetResponseViewModel),
+        (status = 201, description = "User asset created successfully.", body = AddAssetResponseViewModel),
+        CreateResponses
     ),
     security(
         ("auth_token" = [])
@@ -303,7 +310,7 @@ pub async fn post_custom_asset(
 /// If the rate already exists, error will be returned.
 #[utoipa::path(
     post,
-    path = "/api/users/:user_id/assets/:asset_id/:reference_id/rates",
+    path = "/api/users/{user_id}/assets/{asset_id}/{reference_id}/rates",
     tag = "User Assets",
     params(
         ("user_id" = Uuid, Path, description = "User id for which the asset belongs to."),
@@ -314,7 +321,8 @@ pub async fn post_custom_asset(
         content = AddAssetPairRatesRequestViewModel,
     ),
     responses(
-        (status = 200, description = "All asset pair rates added successfully.", body = AddAssetPairRatesResponseViewModel),
+        (status = 201, description = "Asset pair rates created successfully.", body = AddAssetPairRatesResponseViewModel),
+        CreateResponses
     ),
     security(
         ("auth_token" = [])
@@ -360,7 +368,7 @@ pub async fn post_custom_asset_rates(
 /// If the parameters are specified, it deletes only the subset of it.
 #[utoipa::path(
     delete,
-    path = "/api/users/:user_id/assets/:asset_id/:reference_id/rates",
+    path = "/api/users/{user_id}/assets/{asset_id}/{reference_id}/rates",
     tag = "User Assets",
     params(
         ("user_id" = Uuid, Path, description = "User id for which the asset belongs to."),
@@ -370,6 +378,7 @@ pub async fn post_custom_asset_rates(
     ),
     responses(
         (status = 200, description = "All asset pair rates deleted successfully."),
+        DeleteResponses
     ),
     security(
         ("auth_token" = [])
@@ -389,7 +398,7 @@ pub async fn delete_asset_pair_rates(
 /// Deletes user asset pair and its associated metadata.
 #[utoipa::path(
     delete,
-    path = "/api/users/:user_id/assets/:asset_id/:reference_id",
+    path = "/api/users/{user_id}/assets/{asset_id}/{reference_id}",
     tag = "User Assets",
     params(
         ("user_id" = Uuid, Path, description = "User id for which the asset belongs to."),
@@ -398,6 +407,7 @@ pub async fn delete_asset_pair_rates(
     ),
     responses(
         (status = 200, description = "Asset pair deleted successfully."),
+        DeleteResponses
     ),
     security(
         ("auth_token" = [])
@@ -417,7 +427,7 @@ pub async fn delete_asset_pair(
 /// Return an error if the asset is in use or other assets are dependent on it as base.
 #[utoipa::path(
     delete,
-    path = "/api/users/:user_id/assets/:asset_id",
+    path = "/api/users/{user_id}/assets/{asset_id}",
     tag = "User Assets",
     params(
         ("user_id" = Uuid, Path, description = "User id for which the asset belongs to."),
@@ -425,6 +435,7 @@ pub async fn delete_asset_pair(
     ),
     responses(
         (status = 200, description = "Asset deleted successfully."),
+        DeleteResponses
     ),
     security(
         ("auth_token" = [])

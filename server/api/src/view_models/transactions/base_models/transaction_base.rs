@@ -2,22 +2,27 @@ use business::dtos::{fee_entry_dto::FeeEntryDto, transaction_dto::TransactionDto
 use serde::{Deserialize, Serialize};
 use time::{serde::timestamp, OffsetDateTime};
 use utoipa::ToSchema;
-use uuid::Uuid;
+
+use crate::view_models::transactions::base_models::transaction_id::{
+    RequiredTransactionId, TransactionId,
+};
 
 use super::transaction_fee::{
-    IdentifiableTransactionFeeViewModel, MandatoryIdentifiableTransactionFeeViewModel,
+    IdentifiableTransactionFeeViewModel, RequiredIdentifiableTransactionFeeViewModel,
     TransactionFeeViewModel,
 };
 
+pub type TransactionBaseWithEntries = TransactionBase<TransactionFeeViewModel>;
+pub type TransactionBaseWithIdentifiableEntries =
+    TransactionBase<IdentifiableTransactionFeeViewModel>;
+pub type RequiredTransactionBaseWithIdentifiableEntries =
+    TransactionBase<RequiredIdentifiableTransactionFeeViewModel>;
+
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-#[aliases(
-    TransactionBaseWithEntries = TransactionBase<TransactionFeeViewModel>,
-    TransactionBaseWithIdentifiableEntries = TransactionBase<IdentifiableTransactionFeeViewModel>,
-    MandatoryTransactionBaseWithIdentifiableEntries = TransactionBase<MandatoryIdentifiableTransactionFeeViewModel>
-)]
 pub struct TransactionBase<F> {
     /// Date when the transaction occured.
     #[serde(with = "timestamp")]
+    #[schema(value_type = i32)]
     pub date: OffsetDateTime,
 
     /// Any other fees related to the transaction, such as transfer or conversion fees.
@@ -40,13 +45,17 @@ where
     }
 }
 
+pub type IdentifiableTransactionBaseWithIdentifiableEntries =
+    IdentifiableTransactionBase<TransactionBaseWithIdentifiableEntries, TransactionId>;
+pub type RequiredIdentifiableTransactionBaseWithIdentifiableEntries = IdentifiableTransactionBase<
+    RequiredTransactionBaseWithIdentifiableEntries,
+    RequiredTransactionId,
+>;
+
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-#[aliases(
-    IdentifiableTransactionBaseWithIdentifiableEntries = IdentifiableTransactionBase<TransactionBaseWithIdentifiableEntries, Option<Uuid>>,
-    MandatoryIdentifiableTransactionBaseWithIdentifiableEntries = IdentifiableTransactionBase<MandatoryTransactionBaseWithIdentifiableEntries, Uuid>
-)]
 pub struct IdentifiableTransactionBase<B, I> {
     /// Id representing the full transaction.
+    #[schema(inline = false)]
     pub transaction_id: I,
 
     /// Date when the transaction occured.
@@ -54,12 +63,14 @@ pub struct IdentifiableTransactionBase<B, I> {
     pub base: B,
 }
 
-impl From<TransactionDto> for MandatoryIdentifiableTransactionBaseWithIdentifiableEntries {
+impl From<TransactionDto> for RequiredIdentifiableTransactionBaseWithIdentifiableEntries {
     fn from(value: TransactionDto) -> Self {
         Self {
-            transaction_id: value
-                .transaction_id
-                .expect("Transaction Id mut not be None"),
+            transaction_id: RequiredTransactionId(
+                value
+                    .transaction_id
+                    .expect("Transaction Id mut not be None"),
+            ),
             base: value.into(),
         }
     }
@@ -68,7 +79,7 @@ impl From<TransactionDto> for MandatoryIdentifiableTransactionBaseWithIdentifiab
 impl From<TransactionDto> for IdentifiableTransactionBaseWithIdentifiableEntries {
     fn from(value: TransactionDto) -> Self {
         Self {
-            transaction_id: value.transaction_id,
+            transaction_id: TransactionId(value.transaction_id),
             base: value.into(),
         }
     }

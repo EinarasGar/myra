@@ -1,14 +1,14 @@
 use dal::models::asset_models::AssetPairRate;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use time::{serde::iso8601, OffsetDateTime};
+use time::{serde::timestamp, OffsetDateTime};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AssetPairRateDto {
     pub asset1_id: i32,
     pub asset2_id: i32,
     pub rate: Decimal,
-    #[serde(with = "iso8601")]
+    #[serde(with = "timestamp")]
     pub date: OffsetDateTime,
 }
 

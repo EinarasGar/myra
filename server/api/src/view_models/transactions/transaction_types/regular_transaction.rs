@@ -2,29 +2,49 @@ use business::dtos::{
     entry_dto::EntryDto,
     transaction_dto::{RegularTransactionMetadataDto, TransactionDto, TransactionTypeDto},
 };
+use macros::type_tag;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+use crate::view_models::transactions::base_models::category_id::RequiredCategoryId;
 use crate::view_models::transactions::base_models::{
     account_asset_entry::{
         AccountAssetEntryViewModel, IdentifiableAccountAssetEntryViewModel,
-        MandatoryIdentifiableAccountAssetEntryViewModel,
+        RequiredIdentifiableAccountAssetEntryViewModel,
     },
     transaction_base::{
         IdentifiableTransactionBaseWithIdentifiableEntries,
-        MandatoryIdentifiableTransactionBaseWithIdentifiableEntries, TransactionBaseWithEntries,
+        RequiredIdentifiableTransactionBaseWithIdentifiableEntries, TransactionBaseWithEntries,
         TransactionBaseWithIdentifiableEntries,
     },
 };
 
+pub type RegularTransactionViewModel =
+    RegularTransaction<TransactionBaseWithEntries, AccountAssetEntryViewModel>;
+#[allow(dead_code)]
+pub type RegularTransactionWithIdentifiableEntriesViewModel = RegularTransaction<
+    TransactionBaseWithIdentifiableEntries,
+    IdentifiableAccountAssetEntryViewModel,
+>;
+#[allow(dead_code)]
+pub type RequiredRegularTransactionWithIdentifiableEntriesViewModel = RegularTransaction<
+    TransactionBaseWithIdentifiableEntries,
+    RequiredIdentifiableAccountAssetEntryViewModel,
+>;
+#[allow(dead_code)]
+pub type IdentifiableRegularTransactionWithIdentifiableEntriesViewModel = RegularTransaction<
+    IdentifiableTransactionBaseWithIdentifiableEntries,
+    IdentifiableAccountAssetEntryViewModel,
+>;
+#[allow(dead_code)]
+pub type RequiredIdentifiableRegularTransactionWithIdentifiableEntriesViewModel =
+    RegularTransaction<
+        RequiredIdentifiableTransactionBaseWithIdentifiableEntries,
+        RequiredIdentifiableAccountAssetEntryViewModel,
+    >;
+
+#[type_tag(value = "regular")]
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-#[aliases(
-    RegularTransactionViewModel = RegularTransaction<TransactionBaseWithEntries, AccountAssetEntryViewModel>,
-    RegularTransactionWithIdentifiableEntriesViewModel = RegularTransaction<TransactionBaseWithIdentifiableEntries, IdentifiableAccountAssetEntryViewModel>,
-    MandatoryRegularTransactionWithIdentifiableEntriesViewModel = RegularTransaction<TransactionBaseWithIdentifiableEntries, MandatoryIdentifiableAccountAssetEntryViewModel>,
-    IdentifiableRegularTransactionWithIdentifiableEntriesViewModel = RegularTransaction<IdentifiableTransactionBaseWithIdentifiableEntries, IdentifiableAccountAssetEntryViewModel>,
-    MandatoryIdentifiableRegularTransactionWithIdentifiableEntriesViewModel = RegularTransaction<MandatoryIdentifiableTransactionBaseWithIdentifiableEntries, MandatoryIdentifiableAccountAssetEntryViewModel>,
-)]
 pub struct RegularTransaction<B, E> {
     #[serde(flatten)]
     pub base: B,
@@ -33,7 +53,7 @@ pub struct RegularTransaction<B, E> {
     pub entry: E,
 
     /// Specific bespoke category id.
-    pub category_id: i32,
+    pub category_id: RequiredCategoryId,
 
     /// Description of the transaction.
     pub description: Option<String>,
@@ -51,7 +71,7 @@ impl From<RegularTransactionViewModel> for TransactionDto {
             transaction_type: TransactionTypeDto::Regular(RegularTransactionMetadataDto {
                 description: trans.description,
                 entry: trans.entry.into(),
-                category_id: trans.category_id,
+                category_id: trans.category_id.0,
             }),
         }
     }
@@ -65,13 +85,14 @@ where
     fn from(value: TransactionDto) -> Self {
         if let TransactionTypeDto::Regular(r) = value.clone().transaction_type {
             Self {
+                r#type: Default::default(),
                 base: value.into(),
                 entry: r.entry.into(),
-                category_id: r.category_id,
+                category_id: RequiredCategoryId(r.category_id),
                 description: r.description,
             }
         } else {
-            panic!("Can not convert TransactionDto into MandatoryIdentifiableRegularTransactionWithIdentifiableEntriesViewModel as the type is not Regular")
+            panic!("Can not convert TransactionDto into RequiredIdentifiableRegularTransactionWithIdentifiableEntriesViewModel as the type is not Regular")
         }
     }
 }

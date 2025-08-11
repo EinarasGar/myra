@@ -2,6 +2,7 @@ use business::dtos::accounts::full_account_dto::FullAccountDto;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+use super::base_models::liquidity_type_id::RequiredLiquidityTypeId;
 use super::base_models::{
     account::IdentifiableAccountViewModel, metadata_lookup::AccountMetadataLookupTables,
 };
@@ -10,7 +11,7 @@ use super::base_models::{
 pub struct GetAccountsResponseViewModelRow {
     #[serde(flatten)]
     pub account: IdentifiableAccountViewModel,
-    pub liquidity_type: i32,
+    pub liquidity_type: RequiredLiquidityTypeId,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
@@ -22,7 +23,7 @@ pub struct GetAccountsResponseViewModel {
 impl From<FullAccountDto> for GetAccountsResponseViewModelRow {
     fn from(account: FullAccountDto) -> Self {
         Self {
-            liquidity_type: account.liquidity_type.id,
+            liquidity_type: RequiredLiquidityTypeId(account.liquidity_type.id),
             account: account.into(),
         }
     }

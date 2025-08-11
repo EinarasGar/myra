@@ -2,185 +2,58 @@ use std::collections::BTreeMap;
 
 use utoipa::{
     openapi::{
-        schema::AdditionalProperties,
+        schema::{AnyOf, ArrayItems},
         security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
-        Components, Discriminator, OneOfBuilder, Ref, RefOr, Response, Schema,
+        RefOr, Schema,
     },
     Modify, OpenApi,
 };
 
 use crate::view_models::{
-    accounts::{
-        add_account::{AddAccountRequestViewModel, AddAccountResponseViewModel},
-        base_models::{
-            account::{
-                AccountViewModel, ExpandedAccountViewModel, IdentifiableAccountViewModel,
-                IdentifiableExpandedAccountViewModel,
-            },
-            account_liquidity_type::IdentifiableAccountLiquidityTypeViewModel,
-            account_type::{AccountTypeViewModel, IdentifiableAccountTypeViewModel},
-            metadata_lookup::AccountMetadataLookupTables,
-        },
-        get_account::GetAccountResponseViewModel,
-        get_account_liquidity_types::GetAccountLiquidityTypesResponseViewModel,
-        get_account_types::GetAccountTypesResponseViewModel,
-        get_accounts::{GetAccountsResponseViewModel, GetAccountsResponseViewModelRow},
-        update_account::UpdateAccountViewModel,
+    accounts::base_models::{
+        account_id::{AccountId, RequiredAccountId},
+        account_type_id::AccountTypeId,
+        liquidity_type_id::{LiquidityTypeId, RequiredLiquidityTypeId},
     },
-    assets::{
-        add_asset::{AddAssetRequestViewModel, AddAssetResponseViewModel},
-        add_asset_pair_rates::{
-            AddAssetPairRatesRequestViewModel, AddAssetPairRatesResponseViewModel,
-        },
-        base_models::{
-            asset::{AssetViewModel, IdentifiableAssetViewModel},
-            asset_metadata::AssetMetadataViewModel,
-            asset_pair_metadata::AssetPairMetadataViewModel,
-            asset_type::IdentifiableAssetTypeViewModel,
-            lookup::AssetLookupTables,
-            rate::AssetRateViewModel,
-            shared_asset_pair_metadata::SharedAssetPairMetadataViewModel,
-            user_asset_pair_metadata::UserAssetPairMetadataViewModel,
-        },
-        get_asset::GetAssetResponseViewModel,
-        get_asset_pair::GetAssetPairResponseViewModel,
-        get_asset_pair_rates::GetAssetPairRatesResponseViewModel,
-        get_assets::GetAssetsLineResponseViewModel,
-        get_user_asset_pair::GetUserAssetPairResponseViewModel,
-        update_asset::{UpdateAssetRequestViewModel, UpdateAssetResponseViewModel},
-        update_asset_pair::{UpdateAssetPairRequestViewModel, UpdateAssetPairResponseViewModel},
+    assets::base_models::{
+        asset_id::{AssetId, RequiredAssetId},
+        asset_type_id::{AssetTypeId, RequiredAssetTypeId},
     },
-    authentication::{auth::AuthViewModel, login_details::LoginDetailsViewModel},
-    base_models::search::PageOfAssetsResultsWithLookupViewModel,
-    portfolio::{
-        base_models::metadata_lookup::HoldingsMetadataLookupTables,
-        get_holdings::{GetHoldingsResponseViewModel, GetHoldingsResponseViewModelRow},
-        get_networth_history::GetNetWorthHistoryResponseViewModel,
+    errors::{ApiErrorResponse, AuthErrorResponse, ValidationError, ValidationErrorResponse},
+    transactions::base_models::{
+        category_id::{CategoryId, RequiredCategoryId},
+        entry_id::{EntryId, RequiredEntryId},
+        transaction_group_id::TransactionGroupId,
+        transaction_id::{RequiredTransactionId, TransactionId},
     },
-    transactions::{
-        add_individual_transaction::{
-            AddIndividualTransactionRequestViewModel, AddIndividualTransactionResponseViewModel,
-        },
-        add_transaction_group::{
-            AddTransactionGroupRequestViewModel, AddTransactionGroupResponseViewModel,
-        },
-        base_models::{
-            account_asset_entry::{
-                AccountAssetEntryViewModel, IdentifiableAccountAssetEntryViewModel,
-                MandatoryIdentifiableAccountAssetEntryViewModel,
-            },
-            metadata_lookup::MetadataLookupTables,
-            transaction_base::{
-                IdentifiableTransactionBaseWithIdentifiableEntries,
-                MandatoryIdentifiableTransactionBaseWithIdentifiableEntries,
-                MandatoryTransactionBaseWithIdentifiableEntries,
-                TransactionBaseWithIdentifiableEntries,
-            },
-            transaction_fee::{
-                IdentifiableTransactionFeeViewModel, TransactionFeeType, TransactionFeeViewModel,
-            },
-            transaction_group::{
-                MandatoryIdentifiableTransactionGroupViewModel,
-                TransactionGroupWithIdentifiableChildrenViewModel,
-            },
-        },
-        get_individual_transaction::GetIndividualTransactionViewModel,
-        get_individual_transactions::GetIndividualTransactionsViewModel,
-        get_transaction_groups::GetTransactionGroupsViewModel,
-        get_transactions::GetTransactionsViewModel,
-        transaction_types::{
-            account_fees::{
-                AccountFeesViewModel, AccountFeesWithIdentifiableEntriesViewModel,
-                IdentifiableAccountFeesWithIdentifiableEntriesViewModel,
-                MandatoryAccountFeesWithIdentifiableEntriesViewModel,
-            },
-            asset_balance_transfer::{
-                AssetBalanceTransferViewModel,
-                AssetBalanceTransferWithIdentifiableEntriesViewModel,
-                IdentifiableAssetBalanceTransferWithIdentifiableEntriesViewModel,
-                MandatoryAssetBalanceTransferWithIdentifiableEntriesViewModel,
-            },
-            asset_dividend::{
-                AssetDividendViewModel, AssetDividendWithIdentifiableEntriesViewModel,
-                IdentifiableAssetDividendWithIdentifiableEntriesViewModel,
-                MandatoryAssetDividendWithIdentifiableEntriesViewModel,
-            },
-            asset_purchase::{
-                AssetPurchaseViewModel, AssetPurchaseWithIdentifiableEntriesViewModel,
-                IdentifiableAssetPurchaseWithIdentifiableEntriesViewModel,
-                MandatoryAssetPurchaseWithIdentifiableEntriesViewModel,
-            },
-            asset_sale::{
-                AssetSaleViewModel, AssetSaleWithIdentifiableEntriesViewModel,
-                IdentifiableAssetSaleWithIdentifiableEntriesViewModel,
-                MandatoryAssetSaleWithIdentifiableEntriesViewModel,
-            },
-            asset_trade::{
-                AssetTradeViewModel, AssetTradeWithIdentifiableEntriesViewModel,
-                IdentifiableAssetTradeWithIdentifiableEntriesViewModel,
-                MandatoryAssetTradeWithIdentifiableEntriesViewModel,
-            },
-            asset_transfer_in::{
-                AssetTransferInViewModel, AssetTransferInWithIdentifiableEntriesViewModel,
-                IdentifiableAssetTransferInWithIdentifiableEntriesViewModel,
-                MandatoryAssetTransferInWithIdentifiableEntriesViewModel,
-            },
-            asset_transfer_out::{
-                AssetTransferOutViewModel, AssetTransferOutWithIdentifiableEntriesViewModel,
-                IdentifiableAssetTransferOutWithIdentifiableEntriesViewModel,
-                MandatoryAssetTransferOutWithIdentifiableEntriesViewModel,
-            },
-            cash_dividend::{
-                CashDividendViewModel, CashDividendWithIdentifiableEntriesViewModel,
-                IdentifiableCashDividendWithIdentifiableEntriesViewModel,
-                MandatoryCashDividendWithIdentifiableEntriesViewModel,
-            },
-            cash_transfer_in::{
-                CashTransferInViewModel, CashTransferInWithIdentifiableEntriesViewModel,
-                IdentifiableCashTransferInWithIdentifiableEntriesViewModel,
-                MandatoryCashTransferInWithIdentifiableEntriesViewModel,
-            },
-            cash_transfer_out::{
-                CashTransferOutViewModel, CashTransferOutWithIdentifiableEntriesViewModel,
-                IdentifiableCashTransferOutWithIdentifiableEntriesViewModel,
-                MandatoryCashTransferOutWithIdentifiableEntriesViewModel,
-            },
-            regular_transaction::{
-                IdentifiableRegularTransactionWithIdentifiableEntriesViewModel,
-                MandatoryRegularTransactionWithIdentifiableEntriesViewModel,
-                RegularTransactionViewModel, RegularTransactionWithIdentifiableEntriesViewModel,
-            },
-            IdentifiableTransactionWithIdentifiableEntries,
-            MandatoryIdentifiableTransactionWithIdentifiableEntries,
-            MandatoryTransactionWithIdentifiableEntries, TransactionWithEntries,
-            TransactionWithIdentifiableEntries,
-        },
-        update_individual_transaction::{
-            UpdateIndividualTransactionRequestViewModel,
-            UpdateIndividualTransactionResponseViewModel,
-        },
-        update_transaction::{
-            UpdateTransactionRequestViewModel, UpdateTransactionResponseViewModel,
-        },
-        update_transaction_group::{
-            UpdateTransactionGroupRequestViewModel, UpdateTransactionGroupResponseViewModel,
-        },
-    },
+    users::base_models::user_id::{RequiredUserId, UserId},
 };
 
 #[derive(OpenApi)]
 #[openapi(
+    info(
+        title = "Myra Personal Finance API",
+        description = "A comprehensive personal finance management API for tracking investments, expenses, and net worth over time. Features include transaction management, portfolio tracking, asset management, and detailed financial reporting.",
+        version = "1.0.0",
+        contact(
+            name = "API Support",
+            email = "einaras.garbasauskas@gmail.com"
+        )
+    ),
+    servers(
+        (url = "http://localhost:5000", description = "Local development server")
+    ),
     paths(
-        super::handlers::transaction_groups::add,
-        super::handlers::transaction_groups::update,
-        super::handlers::transaction_groups::delete,
-        super::handlers::transaction_groups::get,
-        super::handlers::transactions::update,
-        super::handlers::transactions::delete,
-        super::handlers::transactions::get,
-        super::handlers::individual_transactions::add,
-        super::handlers::individual_transactions::update,
-        super::handlers::individual_transactions::get,
+        super::handlers::transaction_groups::add_transaction_group,
+        super::handlers::transaction_groups::update_transaction_group,
+        super::handlers::transaction_groups::delete_transaction_group,
+        super::handlers::transaction_groups::get_transaction_groups,
+        super::handlers::transactions::update_transaction,
+        super::handlers::transactions::delete_transaction,
+        super::handlers::transactions::get_transactions,
+        super::handlers::individual_transactions::add_individual_transaction,
+        super::handlers::individual_transactions::update_individual_transaction,
+        super::handlers::individual_transactions::get_individual_transactions,
         super::handlers::individual_transactions::get_single,
         super::handlers::auth_handler::post_login_details,
         super::handlers::user_asset_handler::delete_asset,
@@ -206,160 +79,73 @@ use crate::view_models::{
         super::handlers::accounts_handler::get_account_liquidity_types,
         super::handlers::portfolio_handler::get_networth_history,
         super::handlers::portfolio_handler::get_holdings,
-        // search common assets
-        // get user asset pair rates
-        // get common asset pair rates
     ),
     components(
-        // Transaction schemas
-        schemas(AccountAssetEntryViewModel),
-        schemas(AddIndividualTransactionRequestViewModel),
-        schemas(AddIndividualTransactionResponseViewModel),
-        schemas(AddTransactionGroupResponseViewModel),
-        schemas(AddTransactionGroupRequestViewModel),
-        schemas(GetIndividualTransactionsViewModel),
-        schemas(GetTransactionGroupsViewModel),
-        schemas(GetTransactionsViewModel),
-        schemas(IdentifiableAccountAssetEntryViewModel),
-        schemas(MandatoryIdentifiableAccountAssetEntryViewModel),
-        schemas(MandatoryIdentifiableTransactionBaseWithIdentifiableEntries),
-        schemas(IdentifiableRegularTransactionWithIdentifiableEntriesViewModel),
-        schemas(IdentifiableTransactionBaseWithIdentifiableEntries),
-        schemas(IdentifiableTransactionFeeViewModel),
-        schemas(IdentifiableTransactionWithIdentifiableEntries),
-        schemas(RegularTransactionViewModel),
-        schemas(RegularTransactionWithIdentifiableEntriesViewModel),
-        schemas(TransactionBaseWithIdentifiableEntries),
-        schemas(TransactionFeeType),
-        schemas(TransactionFeeViewModel),
-        schemas(TransactionWithEntries),
-        schemas(TransactionWithIdentifiableEntries),
-        schemas(UpdateIndividualTransactionRequestViewModel),
-        schemas(UpdateIndividualTransactionResponseViewModel),
-        schemas(UpdateTransactionGroupRequestViewModel),
-        schemas(UpdateTransactionGroupResponseViewModel),
-        schemas(UpdateTransactionRequestViewModel),
-        schemas(UpdateTransactionResponseViewModel),
-        schemas(MetadataLookupTables),
-        schemas(MandatoryIdentifiableTransactionWithIdentifiableEntries),
-        schemas(MandatoryRegularTransactionWithIdentifiableEntriesViewModel),
-        schemas(MandatoryTransactionWithIdentifiableEntries),
-        schemas(TransactionGroupWithIdentifiableChildrenViewModel),
-        schemas(MandatoryIdentifiableTransactionGroupViewModel),
-        schemas(MandatoryTransactionBaseWithIdentifiableEntries),
-        schemas(IdentifiableCashTransferOutWithIdentifiableEntriesViewModel),
-        schemas(CashTransferOutViewModel),
-        schemas(CashTransferOutWithIdentifiableEntriesViewModel),
-        schemas(MandatoryCashTransferOutWithIdentifiableEntriesViewModel),
-        schemas(IdentifiableCashTransferInWithIdentifiableEntriesViewModel),
-        schemas(CashTransferInViewModel),
-        schemas(CashTransferInWithIdentifiableEntriesViewModel),
-        schemas(MandatoryCashTransferInWithIdentifiableEntriesViewModel),
-        schemas(IdentifiableAssetSaleWithIdentifiableEntriesViewModel),
-        schemas(AssetSaleViewModel),
-        schemas(AssetSaleWithIdentifiableEntriesViewModel),
-        schemas(MandatoryAssetSaleWithIdentifiableEntriesViewModel),
-        schemas(IdentifiableCashDividendWithIdentifiableEntriesViewModel),
-        schemas(CashDividendViewModel),
-        schemas(CashDividendWithIdentifiableEntriesViewModel),
-        schemas(MandatoryCashDividendWithIdentifiableEntriesViewModel),
-        schemas(IdentifiableAssetTransferOutWithIdentifiableEntriesViewModel),
-        schemas(AssetTransferOutViewModel),
-        schemas(AssetTransferOutWithIdentifiableEntriesViewModel),
-        schemas(MandatoryAssetTransferOutWithIdentifiableEntriesViewModel),
-        schemas(IdentifiableAssetTransferInWithIdentifiableEntriesViewModel),
-        schemas(AssetTransferInViewModel),
-        schemas(AssetTransferInWithIdentifiableEntriesViewModel),
-        schemas(MandatoryAssetTransferInWithIdentifiableEntriesViewModel),
-        schemas(IdentifiableAssetTradeWithIdentifiableEntriesViewModel),
-        schemas(AssetTradeViewModel),
-        schemas(AssetTradeWithIdentifiableEntriesViewModel),
-        schemas(MandatoryAssetTradeWithIdentifiableEntriesViewModel),
-        schemas(IdentifiableAssetPurchaseWithIdentifiableEntriesViewModel),
-        schemas(AssetPurchaseViewModel),
-        schemas(AssetPurchaseWithIdentifiableEntriesViewModel),
-        schemas(MandatoryAssetPurchaseWithIdentifiableEntriesViewModel),
-        schemas(IdentifiableAssetDividendWithIdentifiableEntriesViewModel),
-        schemas(AssetDividendViewModel),
-        schemas(AssetDividendWithIdentifiableEntriesViewModel),
-        schemas(MandatoryAssetDividendWithIdentifiableEntriesViewModel),
-        schemas(IdentifiableAssetBalanceTransferWithIdentifiableEntriesViewModel),
-        schemas(AssetBalanceTransferViewModel),
-        schemas(AssetBalanceTransferWithIdentifiableEntriesViewModel),
-        schemas(MandatoryAssetBalanceTransferWithIdentifiableEntriesViewModel),
-        schemas(IdentifiableAccountFeesWithIdentifiableEntriesViewModel),
-        schemas(AccountFeesViewModel),
-        schemas(AccountFeesWithIdentifiableEntriesViewModel),
-        schemas(MandatoryAccountFeesWithIdentifiableEntriesViewModel),
-        schemas(GetIndividualTransactionViewModel),
-
-        // Authentication schemas
-        schemas(AuthViewModel),
-        schemas(LoginDetailsViewModel),
-
-        //Assets
-        schemas(IdentifiableAssetViewModel),
-        schemas(AssetViewModel),
-        schemas(AssetRateViewModel),
-        schemas(AddAssetPairRatesRequestViewModel),
-        schemas(AddAssetPairRatesResponseViewModel),
-        schemas(AddAssetRequestViewModel),
-        schemas(AddAssetResponseViewModel),
-        schemas(UpdateAssetRequestViewModel),
-        schemas(UpdateAssetResponseViewModel),
-        schemas(GetAssetResponseViewModel),
-        schemas(GetAssetPairResponseViewModel),
-        schemas(GetAssetPairRatesResponseViewModel),
-        schemas(UpdateAssetPairRequestViewModel),
-        schemas(UpdateAssetPairResponseViewModel),
-        schemas(PageOfAssetsResultsWithLookupViewModel),
-        schemas(IdentifiableAssetTypeViewModel),
-        schemas(AssetMetadataViewModel),
-        schemas(AssetLookupTables),
-        schemas(GetAssetsLineResponseViewModel),
-        schemas(SharedAssetPairMetadataViewModel),
-        schemas(UserAssetPairMetadataViewModel),
-        schemas(GetUserAssetPairResponseViewModel),
-        schemas(AssetPairMetadataViewModel),
-
-        // Accounts
-        schemas(GetAccountResponseViewModel),
-        schemas(GetAccountsResponseViewModel),
-        schemas(IdentifiableAccountViewModel),
-        schemas(IdentifiableExpandedAccountViewModel),
-        schemas(ExpandedAccountViewModel),
-        schemas(AccountViewModel),
-        schemas(AccountTypeViewModel),
-        schemas(IdentifiableAccountTypeViewModel),
-        schemas(GetAccountsResponseViewModelRow),
-        schemas(AccountMetadataLookupTables),
-        schemas(IdentifiableAccountLiquidityTypeViewModel),
-        schemas(AddAccountRequestViewModel),
-        schemas(AddAccountResponseViewModel),
-        schemas(UpdateAccountViewModel),
-        schemas(GetAccountTypesResponseViewModel),
-        schemas(GetAccountLiquidityTypesResponseViewModel),
-
-        // Portfolio
-        schemas(GetNetWorthHistoryResponseViewModel),
-        schemas(GetHoldingsResponseViewModelRow),
-        schemas(GetHoldingsResponseViewModel),
-        schemas(HoldingsMetadataLookupTables),
-
+        schemas(RequiredEntryId),
+        schemas(EntryId),
+        schemas(RequiredTransactionId),
+        schemas(TransactionId),
+        schemas(TransactionGroupId),
+        schemas(AccountTypeId),
+        schemas(RequiredAccountId),
+        schemas(AccountId),
+        schemas(RequiredLiquidityTypeId),
+        schemas(LiquidityTypeId),
+        schemas(RequiredAssetId),
+        schemas(AssetId),
+        schemas(RequiredAssetTypeId),
+        schemas(AssetTypeId),
+        schemas(RequiredCategoryId),
+        schemas(CategoryId),
+        schemas(RequiredUserId),
+        schemas(UserId),
+        schemas(ApiErrorResponse),
+        schemas(ValidationErrorResponse),
+        schemas(ValidationError),
+        schemas(AuthErrorResponse),
     ),
     modifiers(
-        &TransformSchemasWithTag,
-        &SecurityAddon
+        // &TransformSchemasWithTag,
+        &SecurityAddon,
+        &DeriveDiscriminatorMapping,
+        &OneOfToAnyOfTransformer,
+        &NullableTypeReferenceTransformer,
     ),
     tags(
-        (name = "Myra", description = 
-r#"# What is Myra?
-somethings something financial tracking tool
+        (name = "Myra Personal Finance API", description = 
+r#"# Myra Personal Finance API
 
-# Authentication
-something something authentication
+A comprehensive REST API for personal finance management, enabling users to track investments, expenses, transactions, and monitor net worth over time.
 
-# API Design principles
+## Key Features
+
+- **Transaction Management**: Record and categorize financial transactions with support for various transaction types including purchases, sales, dividends, and transfers
+- **Portfolio Tracking**: Monitor investment holdings and performance across multiple accounts
+- **Asset Management**: Manage assets, asset pairs, and exchange rates for accurate portfolio valuation
+- **Account Management**: Organize finances across different account types with varying liquidity levels
+- **Net Worth Tracking**: Historical net worth calculations and trend analysis
+
+## Authentication
+
+This API uses JWT (JSON Web Token) authentication. To access protected endpoints:
+
+1. **Login**: POST `/api/auth` with username and password
+2. **Authorization**: Include the JWT token in the `Authorization: Bearer <token>` header for all subsequent requests
+3. **Token Format**: Bearer tokens are in JWT format with configurable expiration
+
+### Example Authentication Flow
+```bash
+# Get JWT token
+curl -X POST /api/auth \\
+  -H "Content-Type: application/json" \\
+  -d '{"username": "your_username", "password": "your_password"}'
+
+# Use token in requests
+curl -H "Authorization: Bearer <your_jwt_token>" \\
+  /api/users/{user_id}/accounts
+```
+
+# API Design Principles
 The API design _tries_ to follow the same design principles across all contracts.
 
 ## Object relationships
@@ -442,155 +228,6 @@ GET /api/assets/1
 )]
 pub struct ApiDoc;
 
-// Code copied from https://github.com/geo-engine/geoengine/blob/main/services/src/util/apidoc.rs
-pub struct TransformSchemasWithTag;
-
-impl TransformSchemasWithTag {
-    fn get_variant_tag<'a>(schema: &'a Schema, discriminator: &String) -> Option<&'a str> {
-        match schema {
-            Schema::Object(obj) => {
-                obj.properties
-                    .get(discriminator)
-                    .and_then(|ref_or| match ref_or {
-                        RefOr::T(Schema::Object(prop)) => {
-                            prop.enum_values.as_ref().and_then(|enum_values| {
-                                enum_values.first().and_then(serde_json::Value::as_str)
-                            })
-                        }
-                        _ => None,
-                    })
-            }
-            Schema::AllOf(ao) => ao.items.iter().find_map(|item| match item {
-                RefOr::Ref(_) => None,
-                RefOr::T(concrete) => Self::get_variant_tag(concrete, discriminator),
-            }),
-            _ => None,
-        }
-    }
-
-    fn trim_ref_location(reference: &Ref) -> &str {
-        const SCHEMA_REF_PREFIX_LEN: usize = "#/components/schemas/".len();
-        &reference.ref_location[SCHEMA_REF_PREFIX_LEN..]
-    }
-
-    fn get_base_type_name(schema: &Schema) -> Option<&str> {
-        match schema {
-            Schema::AllOf(ao) => ao.items.iter().find_map(|item| match item {
-                RefOr::Ref(reference) => Some(Self::trim_ref_location(reference)),
-                RefOr::T(_) => None,
-            }),
-            _ => None,
-        }
-    }
-
-    fn uppercase_first_letter(s: &str) -> String {
-        let mut chars = s.chars();
-        match chars.next() {
-            None => String::new(),
-            Some(c1) => c1.to_uppercase().collect::<String>() + chars.as_str(),
-        }
-    }
-
-    fn flatten_allof(
-        schema: &Schema,
-        all_schemas: &BTreeMap<String, RefOr<Schema>>,
-    ) -> Option<Schema> {
-        match schema {
-            Schema::AllOf(ao) => {
-                let reference = Self::get_base_type_name(schema)?;
-                let Some(RefOr::T(Schema::Object(referenced_object))) = all_schemas.get(reference)
-                else {
-                    return None;
-                };
-                let mut obj_with_discrimator_prop =
-                    ao.items.iter().find_map(|item| match item {
-                        RefOr::T(Schema::Object(concrete)) => Some(concrete.clone()),
-                        _ => None,
-                    })?;
-                let mut final_obj = referenced_object.clone();
-                final_obj
-                    .properties
-                    .append(&mut obj_with_discrimator_prop.properties);
-                final_obj
-                    .required
-                    .append(&mut obj_with_discrimator_prop.required);
-                Some(Schema::Object(final_obj))
-            }
-            _ => None,
-        }
-    }
-}
-
-impl Modify for TransformSchemasWithTag {
-    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
-        let old_components = openapi.components.as_ref().unwrap();
-        let old_schemas = &old_components.schemas;
-        let mut new_schemas = old_schemas.clone();
-
-        'outer: for (schema_name, ref_or) in old_schemas {
-            let RefOr::T(schema) = ref_or else {
-                continue;
-            };
-            let Schema::OneOf(one_of) = schema else {
-                continue;
-            };
-            let Some(Discriminator {
-                property_name: discriminator,
-                ..
-            }) = &one_of.discriminator
-            else {
-                continue;
-            };
-            let mut items: Vec<&Schema> = Vec::new();
-
-            for item in &one_of.items {
-                match item {
-                    RefOr::Ref(_) => continue 'outer,
-                    RefOr::T(concrete) => items.push(concrete),
-                }
-            }
-            let mut new_discriminator = Discriminator::new(discriminator.clone());
-            let mut one_of_builder = OneOfBuilder::new();
-
-            for item in items {
-                let Some(variant_tag) = Self::get_variant_tag(item, discriminator) else {
-                    continue 'outer;
-                };
-                let variant_schema_name = match Self::get_base_type_name(item) {
-                    Some(base_type) => format!(
-                        "{}With{}",
-                        base_type,
-                        Self::uppercase_first_letter(discriminator),
-                    ),
-                    None => format!(
-                        "{}{}",
-                        Self::uppercase_first_letter(variant_tag),
-                        schema_name
-                    ),
-                };
-
-                if let Some(flattened) = Self::flatten_allof(item, old_schemas) {
-                    new_schemas.insert(variant_schema_name.clone(), flattened.into());
-                } else {
-                    new_schemas.insert(variant_schema_name.clone(), item.clone().into());
-                }
-
-                let reference = Ref::from_schema_name(variant_schema_name.clone());
-                new_discriminator
-                    .mapping
-                    .insert(variant_tag.to_string(), reference.ref_location.clone());
-                one_of_builder = one_of_builder.item(reference);
-            }
-            one_of_builder = one_of_builder.discriminator(Some(new_discriminator));
-
-            new_schemas.insert(schema_name.clone(), one_of_builder.into());
-        }
-        let mut new_components = old_components.clone();
-        new_components.schemas = new_schemas;
-        openapi.components = Some(new_components);
-    }
-}
-
 struct SecurityAddon;
 
 impl Modify for SecurityAddon {
@@ -602,6 +239,7 @@ impl Modify for SecurityAddon {
                     HttpBuilder::new()
                         .scheme(HttpAuthScheme::Bearer)
                         .bearer_format("JWT")
+                        .description(Some("JWT Bearer token obtained from the /api/auth endpoint. Include as 'Authorization: Bearer <token>' header.".to_string()))
                         .build(),
                 ),
             )
@@ -609,135 +247,324 @@ impl Modify for SecurityAddon {
     }
 }
 
-/// Recursively checks that schemas referenced in the given schema object exist in the provided map.
-fn can_resolve_schema(schema: &RefOr<Schema>, components: &Components) {
-    match schema {
-        RefOr::Ref(reference) => {
-            can_resolve_reference(reference, components);
-        }
-        RefOr::T(concrete) => match concrete {
-            Schema::Array(arr) => {
-                can_resolve_schema(arr.items.as_ref(), components);
+pub struct DeriveDiscriminatorMapping;
+
+impl Modify for DeriveDiscriminatorMapping {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        let Some(components) = openapi.components.as_mut() else {
+            return; // no components -> nothing to do
+        };
+
+        let mut schemas_to_update = BTreeMap::new();
+
+        for (name, schema) in &components.schemas {
+            let RefOr::T(Schema::OneOf(schema)) = schema else {
+                continue; // only interested in oneOf schemas
+            };
+
+            let mut schema = schema.clone();
+            let Some(discriminator) = schema.discriminator.as_mut() else {
+                continue; // no discriminator -> nothing to do
+            };
+
+            if !discriminator.mapping.is_empty() {
+                continue; // values already present
             }
-            Schema::Object(obj) => {
-                for property in obj.properties.values() {
-                    can_resolve_schema(property, components);
+
+            for child in &schema.items {
+                let Some((child_schema, ref_or_title)) =
+                    Self::child_schema(&components.schemas, child, None)
+                else {
+                    continue; // unable to lookup child schema
+                };
+                let Some(tag_name) =
+                    Self::discriminator_tag_of_child(child_schema, &discriminator.property_name)
+                else {
+                    continue; // no tag name found -> we have to skip this child
+                };
+                // println!("tag_name: {:?}", tag_name);
+                // println!("ref_or_title: {:?}", ref_or_title);
+
+                discriminator.mapping.insert(tag_name, ref_or_title);
+            }
+
+            schemas_to_update.insert(name.clone(), RefOr::T(Schema::OneOf(schema)));
+        }
+
+        components.schemas.extend(schemas_to_update);
+    }
+}
+
+impl DeriveDiscriminatorMapping {
+    fn child_schema<'s>(
+        schemas: &'s BTreeMap<String, RefOr<Schema>>,
+        child: &'s RefOr<Schema>,
+        ref_string: Option<String>,
+    ) -> Option<(&'s Schema, String)> {
+        match child {
+            RefOr::T(schema) => {
+                if let Some(ref_string) = ref_string {
+                    return Some((schema, ref_string));
                 }
-                if let Some(additional_properties) = &obj.additional_properties {
-                    if let AdditionalProperties::RefOr(properties_schema) =
-                        additional_properties.as_ref()
+
+                let title = match schema {
+                    Schema::Array(o) => o.title.as_ref(),
+                    Schema::Object(o) => o.title.as_ref(),
+                    Schema::OneOf(o) => o.title.as_ref(),
+                    Schema::AllOf(o) => o.title.as_ref(),
+                    Schema::AnyOf(_) | _ => return None,
+                }?
+                .clone();
+                // println!("child_schema: {:#?}", title);
+
+                Some((schema, title))
+            }
+            RefOr::Ref(schema_ref) => {
+                let (_, item_name) = schema_ref.ref_location.rsplit_once('/')?;
+
+                let new_child = schemas.get(item_name)?;
+
+                Self::child_schema(schemas, new_child, Some(schema_ref.ref_location.clone()))
+            }
+        }
+    }
+    fn discriminator_tag_of_child(item: &Schema, discriminator_field: &str) -> Option<String> {
+        // get first object
+        let child_properties = match item {
+            Schema::Object(object) => Some(&object.properties),
+            Schema::AllOf(allof) => {
+                for item in &allof.items {
+                    let RefOr::T(Schema::Object(object)) = item else {
+                        continue;
+                    };
+                    if object.properties.contains_key(discriminator_field) {
+                        let property = object.properties.get(discriminator_field)?;
+                        let RefOr::T(Schema::Object(property)) = property else {
+                            return None; // tags are always inlined as objects
+                        };
+                        let Some(enum_values) = &property.enum_values else {
+                            return None; // no enum values -> we have to skip this child
+                        };
+                        let serde_json::Value::String(first_enum_value) = enum_values.first()?
+                        else {
+                            return None; // our expectation is to have exactly one enum value and it is a string
+                        };
+                        return Some(first_enum_value.clone());
+                    }
+                }
+                None
+            }
+            Schema::AnyOf(_) | Schema::Array(_) | Schema::OneOf(_) | _ => None,
+        }?;
+
+        let property = child_properties.get(discriminator_field)?;
+
+        let RefOr::T(Schema::Object(property)) = property else {
+            return None; // tags are always inlined as objects
+        };
+
+        let Some(enum_values) = &property.enum_values else {
+            return None; // no enum values -> we have to skip this child
+        };
+
+        let serde_json::Value::String(first_enum_value) = enum_values.first()? else {
+            return None; // our expectation is to have exactly one enum value and it is a string
+        };
+
+        Some(first_enum_value.clone())
+    }
+}
+
+pub struct OneOfToAnyOfTransformer;
+
+/// This transformer converts OneOf schemas to AnyOf schemas.
+/// This is due to a bug in redoc which fails to parse OneOf schema discriminator.
+/// https://github.com/Redocly/redoc/issues/2252
+impl Modify for OneOfToAnyOfTransformer {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        let Some(components) = openapi.components.as_mut() else {
+            return;
+        };
+
+        let mut schemas_to_update = BTreeMap::new();
+
+        for (name, schema) in &components.schemas {
+            let RefOr::T(Schema::OneOf(one_of_schema)) = schema else {
+                continue;
+            };
+
+            let any_of = Schema::AnyOf(AnyOf {
+                items: one_of_schema.items.clone(),
+                schema_type: one_of_schema.schema_type.clone(),
+                description: one_of_schema.description.clone(),
+                default: one_of_schema.default.clone(),
+                example: one_of_schema.example.clone(),
+                examples: one_of_schema.examples.clone(),
+                discriminator: one_of_schema.discriminator.clone(),
+                extensions: one_of_schema.extensions.clone(),
+            });
+
+            schemas_to_update.insert(name.clone(), RefOr::T(any_of));
+        }
+
+        components.schemas.extend(schemas_to_update);
+    }
+}
+
+pub struct NullableTypeReferenceTransformer;
+
+impl Modify for NullableTypeReferenceTransformer {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        let Some(components) = openapi.components.as_mut() else {
+            return;
+        };
+
+        let mut schemas_to_update = BTreeMap::new();
+
+        for (schema_name, schema) in &components.schemas {
+            if let Some(updated_schema) =
+                Self::fix_nullable_required_fields(schema, &components.schemas)
+            {
+                schemas_to_update.insert(schema_name.clone(), updated_schema);
+            }
+        }
+
+        components.schemas.extend(schemas_to_update);
+    }
+}
+
+impl NullableTypeReferenceTransformer {
+    fn fix_nullable_required_fields(
+        schema: &RefOr<Schema>,
+        all_schemas: &BTreeMap<String, RefOr<Schema>>,
+    ) -> Option<RefOr<Schema>> {
+        match schema {
+            RefOr::T(Schema::Object(obj)) => Self::process_object(obj, all_schemas),
+            RefOr::T(Schema::AllOf(allof)) => {
+                Self::process_schema_collection(&allof.items, all_schemas).map(|items| {
+                    let mut new_allof = allof.clone();
+                    new_allof.items = items;
+                    RefOr::T(Schema::AllOf(new_allof))
+                })
+            }
+            RefOr::T(Schema::OneOf(oneof)) => {
+                Self::process_schema_collection(&oneof.items, all_schemas).map(|items| {
+                    let mut new_oneof = oneof.clone();
+                    new_oneof.items = items;
+                    RefOr::T(Schema::OneOf(new_oneof))
+                })
+            }
+            RefOr::T(Schema::AnyOf(anyof)) => {
+                Self::process_schema_collection(&anyof.items, all_schemas).map(|items| {
+                    let mut new_anyof = anyof.clone();
+                    new_anyof.items = items;
+                    RefOr::T(Schema::AnyOf(new_anyof))
+                })
+            }
+            RefOr::T(Schema::Array(array)) => Self::process_array(array, all_schemas),
+            _ => None,
+        }
+    }
+
+    fn process_schema_collection(
+        items: &[RefOr<Schema>],
+        all_schemas: &BTreeMap<String, RefOr<Schema>>,
+    ) -> Option<Vec<RefOr<Schema>>> {
+        let mut new_items = Vec::new();
+        let mut updated = false;
+
+        for item in items {
+            if let Some(fixed_item) = Self::fix_nullable_required_fields(item, all_schemas) {
+                new_items.push(fixed_item);
+                updated = true;
+            } else {
+                new_items.push(item.clone());
+            }
+        }
+
+        updated.then_some(new_items)
+    }
+
+    fn process_object(
+        object_schema: &utoipa::openapi::schema::Object,
+        all_schemas: &BTreeMap<String, RefOr<Schema>>,
+    ) -> Option<RefOr<Schema>> {
+        let mut new_required = object_schema.required.clone();
+        let mut new_properties = object_schema.properties.clone();
+        let mut updated = false;
+
+        for (prop_name, prop_schema) in &object_schema.properties {
+            match prop_schema {
+                RefOr::Ref(schema_ref) => {
+                    if Self::should_remove_required_field(
+                        schema_ref,
+                        &object_schema.required,
+                        prop_name,
+                        all_schemas,
+                    ) {
+                        new_required.retain(|x| x != prop_name);
+                        updated = true;
+                    }
+                }
+                RefOr::T(_) => {
+                    if let Some(fixed_prop) =
+                        Self::fix_nullable_required_fields(prop_schema, all_schemas)
                     {
-                        can_resolve_schema(properties_schema, components);
-                    }
-                }
-            }
-            Schema::OneOf(oo) => {
-                for item in &oo.items {
-                    can_resolve_schema(item, components);
-                }
-            }
-            Schema::AllOf(ao) => {
-                for item in &ao.items {
-                    can_resolve_schema(item, components);
-                }
-            }
-            _ => panic!("Unknown schema type"),
-        },
-    }
-}
-
-/// Recursively checks that schemas referenced in the given response object exist in the provided map.
-fn can_resolve_response(response: &RefOr<Response>, components: &Components) {
-    match response {
-        RefOr::Ref(reference) => {
-            can_resolve_reference(reference, components);
-        }
-        RefOr::T(concrete) => {
-            for content in concrete.content.values() {
-                can_resolve_schema(&content.schema, components);
-            }
-        }
-    }
-}
-
-/// Checks that the given reference can be resolved using the provided map.
-fn can_resolve_reference(reference: &Ref, components: &Components) {
-    const SCHEMA_REF_PREFIX: &str = "#/components/schemas/";
-    const RESPONSE_REF_PREFIX: &str = "#/components/responses/";
-
-    if reference.ref_location.starts_with(SCHEMA_REF_PREFIX) {
-        let schema_name = &reference.ref_location[SCHEMA_REF_PREFIX.len()..];
-
-        match components.schemas.get(schema_name) {
-            None => assert!(
-                components.schemas.contains_key(schema_name),
-                "Referenced the unknown schema `{schema_name}`"
-            ),
-            Some(resolved) => can_resolve_schema(resolved, components),
-        }
-    } else if reference.ref_location.starts_with(RESPONSE_REF_PREFIX) {
-        let response_name = &reference.ref_location[RESPONSE_REF_PREFIX.len()..];
-
-        match components.responses.get(response_name) {
-            None => assert!(
-                components.responses.contains_key(response_name),
-                "Referenced the unknown response `{response_name}`"
-            ),
-            Some(resolved) => can_resolve_response(resolved, components),
-        }
-    } else {
-        panic!("Invalid reference type");
-    }
-}
-
-/// Loops through all registered HTTP handlers and ensures that the referenced schemas
-/// (inside of request bodies, parameters or responses) exist and can be resolved.
-///
-/// # Panics
-///
-/// Panics if a referenced schema cannot be resolved.
-///
-pub fn can_resolve_api(api: utoipa::openapi::OpenApi) {
-    let components = api.components.expect("api has at least one component");
-
-    for path_item in api.paths.paths.into_values() {
-        for operation in path_item.operations.into_values() {
-            if let Some(request_body) = operation.request_body {
-                for content in request_body.content.into_values() {
-                    can_resolve_schema(&content.schema, &components);
-                }
-            }
-
-            if let Some(parameters) = operation.parameters {
-                for parameter in parameters {
-                    if let Some(schema) = parameter.schema {
-                        can_resolve_schema(&schema, &components);
-                    }
-                }
-            }
-
-            for response in operation.responses.responses.into_values() {
-                match response {
-                    RefOr::Ref(reference) => {
-                        can_resolve_reference(&reference, &components);
-                    }
-                    RefOr::T(concrete) => {
-                        for content in concrete.content.into_values() {
-                            can_resolve_schema(&content.schema, &components);
-                        }
+                        new_properties.insert(prop_name.clone(), fixed_prop);
+                        updated = true;
                     }
                 }
             }
         }
+
+        updated.then(|| {
+            let mut new_object = object_schema.clone();
+            new_object.required = new_required;
+            new_object.properties = new_properties;
+            RefOr::T(Schema::Object(new_object))
+        })
     }
-}
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+    fn should_remove_required_field(
+        schema_ref: &utoipa::openapi::Ref,
+        required_fields: &[String],
+        prop_name: &str,
+        all_schemas: &BTreeMap<String, RefOr<Schema>>,
+    ) -> bool {
+        required_fields.contains(&prop_name.to_string())
+            && schema_ref
+                .ref_location
+                .rsplit_once('/')
+                .and_then(|(_, item_name)| all_schemas.get(item_name))
+                .is_some_and(|schema| matches!(schema, RefOr::T(s) if Self::is_schema_nullable(s)))
+    }
 
-    #[test]
-    fn can_resolve_api() {
-        crate::openapi::can_resolve_api(ApiDoc::openapi());
+    fn process_array(
+        array_schema: &utoipa::openapi::schema::Array,
+        all_schemas: &BTreeMap<String, RefOr<Schema>>,
+    ) -> Option<RefOr<Schema>> {
+        match &array_schema.items {
+            ArrayItems::RefOrSchema(ref_or_schema) => {
+                Self::fix_nullable_required_fields(ref_or_schema, all_schemas).map(|fixed_items| {
+                    let mut new_array = array_schema.clone();
+                    new_array.items = ArrayItems::RefOrSchema(Box::new(fixed_items));
+                    RefOr::T(Schema::Array(new_array))
+                })
+            }
+            _ => None,
+        }
+    }
+
+    fn is_schema_nullable(schema: &Schema) -> bool {
+        if let Ok(json_value) = serde_json::to_value(schema) {
+            if let Some(type_field) = json_value.get("type") {
+                if let Some(type_array) = type_field.as_array() {
+                    let has_null = type_array.iter().any(|t| t.as_str() == Some("null"));
+                    let has_concrete_type = type_array.iter().any(|t| t.as_str() != Some("null"));
+                    return has_null && has_concrete_type;
+                }
+            }
+        }
+        false
     }
 }

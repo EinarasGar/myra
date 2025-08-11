@@ -1,16 +1,26 @@
-use axum::{extract::Path, Json};
+use axum::{
+    extract::{Path, Query},
+    Json,
+};
 use uuid::Uuid;
 
 use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
-    view_models::transactions::{
-        add_transaction_group::{
-            AddTransactionGroupRequestViewModel, AddTransactionGroupResponseViewModel,
+    view_models::errors::{CreateResponses, UpdateResponses, DeleteResponses, GetResponses},
+    view_models::{
+        base_models::search::{
+            PageOfResults, PageOfTransactionGroupsWithLookupViewModel, PaginatedSearchQuery,
         },
-        get_transaction_groups::GetTransactionGroupsViewModel,
-        update_transaction_group::{
-            UpdateTransactionGroupRequestViewModel, UpdateTransactionGroupResponseViewModel,
+        transactions::{
+            add_transaction_group::{
+                AddTransactionGroupRequestViewModel, AddTransactionGroupResponseViewModel,
+            },
+            base_models::metadata_lookup::MetadataLookupTables,
+            get_transaction_group::GetTransactionGroupLineResponseViewModel,
+            update_transaction_group::{
+                UpdateTransactionGroupRequestViewModel, UpdateTransactionGroupResponseViewModel,
+            },
         },
     },
 };
@@ -20,13 +30,14 @@ use crate::{
 /// Adds a group of transactions with metadata related to all of them.
 #[utoipa::path(
     post,
-    path = "/api/users/:user_id/transactions/groups",
+    path = "/api/users/{user_id}/transactions/groups",
     tag = "Transaction Groups",
     request_body (
       content = AddTransactionGroupRequestViewModel,
     ),
     responses(
-        (status = 200, description = "Transaction group added successfully.", body = AddTransactionGroupResponseViewModel)
+        (status = 201, description = "Transaction group created successfully.", body = AddTransactionGroupResponseViewModel),
+        CreateResponses
     ),
     params(
         ("user_id" = Uuid, Path, description = "User Id for which to add the transaction group for."),
@@ -37,7 +48,7 @@ use crate::{
 
 )]
 #[tracing::instrument(skip_all, err)]
-pub async fn add(
+pub async fn add_transaction_group(
     Path(_user_id): Path<Uuid>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
     Json(_params): Json<AddTransactionGroupRequestViewModel>,
@@ -51,13 +62,14 @@ pub async fn add(
 /// be moved from individual to a group.
 #[utoipa::path(
     put,
-    path = "/api/users/:user_id/transactions/groups/:group_id",
+    path = "/api/users/{user_id}/transactions/groups/{group_id}",
     tag = "Transaction Groups",
     request_body (
       content = UpdateTransactionGroupRequestViewModel,
     ),
     responses(
-        (status = 200, description = "Transaction group updated successfully.", body = UpdateTransactionGroupResponseViewModel)
+        (status = 200, description = "Transaction group updated successfully.", body = UpdateTransactionGroupResponseViewModel),
+        UpdateResponses
     ),
     params(
         ("user_id" = Uuid, Path, description = "User id for which the transaction group belongs to."),
@@ -69,7 +81,7 @@ pub async fn add(
 
 )]
 #[tracing::instrument(skip_all, err)]
-pub async fn update(
+pub async fn update_transaction_group(
     Path((_user_id, _group_id)): Path<(Uuid, i32)>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
     Json(_params): Json<UpdateTransactionGroupRequestViewModel>,
@@ -82,7 +94,7 @@ pub async fn update(
 /// Deletes the entire transaction group and associated transactions within it.
 #[utoipa::path(
     delete,
-    path = "/api/users/:user_id/transactions/groups/:group_id",
+    path = "/api/users/{user_id}/transactions/groups/{group_id}",
     tag = "Transaction Groups",
     operation_id = "Delete an existing transaction group.",
     params(
@@ -90,7 +102,8 @@ pub async fn update(
         ("group_id" = i32, Path, description = "The Id of the transaction group to be deleted."),
     ),
     responses(
-        (status = 200, description = "Transaction deleted successfully."),
+        (status = 200, description = "Transaction group deleted successfully."),
+        DeleteResponses
     ),
     security(
         ("auth_token" = [])
@@ -98,7 +111,7 @@ pub async fn update(
 
 )]
 #[tracing::instrument(skip_all, err)]
-pub async fn delete(
+pub async fn delete_transaction_group(
     Path((_user_id, _group_id)): Path<(Uuid, i32)>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<(), ApiError> {
@@ -107,16 +120,18 @@ pub async fn delete(
 
 /// Get all
 ///
-/// Retrieves a list of all individual transactions
+/// Retrieves a paginated list of transaction groups
 #[utoipa::path(
     get,
-    path = "/api/users/:user_id/transactions/groups",
+    path = "/api/users/{user_id}/transactions/groups",
     tag = "Transaction Groups",
     responses(
-        (status = 200, body = GetTransactionGroupsViewModel)
+        (status = 200, description = "Transaction groups retrieved successfully.", body = PageOfResults<GetTransactionGroupLineResponseViewModel, MetadataLookupTables>),
+        GetResponses
     ),
     params(
-        ("user_id" = Uuid, Path, description = "User id for which the transaction group belongs to.")
+        ("user_id" = Uuid, Path, description = "User id for which the transaction group belongs to."),
+        PaginatedSearchQuery
     ),
     security(
         ("auth_token" = [])
@@ -124,9 +139,10 @@ pub async fn delete(
 
 )]
 #[tracing::instrument(skip_all, err)]
-pub async fn get(
+pub async fn get_transaction_groups(
     Path(_user_id): Path<Uuid>,
+    _query_params: Query<PaginatedSearchQuery>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-) -> Result<Json<GetTransactionGroupsViewModel>, ApiError> {
+) -> Result<Json<PageOfTransactionGroupsWithLookupViewModel>, ApiError> {
     unimplemented!();
 }

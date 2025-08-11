@@ -15,15 +15,20 @@ use uuid::Uuid;
 use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
+    view_models::errors::GetResponses,
     states::{
         AccountsServiceState, AssetRatesServiceState, AssetsServiceState,
         PortfolioOverviewServiceState, PortfolioServiceState, UsersServiceState,
     },
-    view_models::portfolio::{
-        base_models::metadata_lookup::HoldingsMetadataLookupTables,
-        get_holdings::{GetHoldingsResponseViewModel, GetHoldingsResponseViewModelRow},
-        get_networth_history::{
-            GetNetWorthHistoryRequestParams, GetNetWorthHistoryResponseViewModel,
+    view_models::{
+        accounts::base_models::account_id::RequiredAccountId,
+        assets::base_models::asset_id::RequiredAssetId,
+        portfolio::{
+            base_models::metadata_lookup::HoldingsMetadataLookupTables,
+            get_holdings::{GetHoldingsResponseViewModel, GetHoldingsResponseViewModelRow},
+            get_networth_history::{
+                GetNetWorthHistoryRequestParams, GetNetWorthHistoryResponseViewModel,
+            },
         },
     },
 };
@@ -38,10 +43,11 @@ pub struct GetPortfolioQueryParams {
 /// Returns a list of assets that user holds and their current value.
 #[utoipa::path(
     get,
-    path = "/api/users/:user_id/portfolio/holdings",
+    path = "/api/users/{user_id}/portfolio/holdings",
     tag = "Portfolio",
     responses(
-        (status = 200, description = "Portoflio holdings returned", body = GetHoldingsResponseViewModel),
+        (status = 200, description = "Portfolio holdings returned", body = GetHoldingsResponseViewModel),
+        GetResponses
     ),
     params(
         ("user_id" = Uuid, Path, description = "User id for who to retrieve holdings"),
@@ -91,8 +97,8 @@ pub async fn get_holdings(
                     AssetPairIdsDto::new(AssetIdDto(x.asset_id), AssetIdDto(default_asset),)
                 );
                 GetHoldingsResponseViewModelRow {
-                    account_id: x.account_id,
-                    asset_id: x.asset_id,
+                    account_id: RequiredAccountId(x.account_id),
+                    asset_id: RequiredAssetId(x.asset_id),
                     units: x.units,
                     value: rate.map(|rate| x.units * rate.rate),
                 }
@@ -112,10 +118,11 @@ pub async fn get_holdings(
 /// Returns a list of net worth of an user at specific points in time, depending on the range provided.
 #[utoipa::path(
     get,
-    path = "/api/users/:user_id/portfolio/history",
+    path = "/api/users/{user_id}/portfolio/history",
     tag = "Portfolio",
     responses(
-        (status = 200, description = "Portoflio hisotry calculated successfully", body = GetNetWorthHistoryResponseViewModel),
+        (status = 200, description = "Portfolio history calculated successfully", body = GetNetWorthHistoryResponseViewModel),
+        GetResponses
     ),
     params(
         ("user_id" = Uuid, Path, description = "User id for who to retrieve net worth history"),
@@ -131,17 +138,17 @@ pub async fn get_networth_history(
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetNetWorthHistoryResponseViewModel>, ApiError> {
     let range = RangeDto::StringBased(query_params.range.clone());
-    let default_asset = AssetIdDto(match query_params.default_asset_id {
-        Some(id) => id,
+    let default_asset = AssetIdDto(match &query_params.default_asset_id {
+        Some(id) => id.0,
         None => user_service.get_full_user(user_id).await?.default_asset_id,
     });
 
-    let hisotry = portfolio_service
+    let history = portfolio_service
         .get_full_portfolio_history(user_id, default_asset, range)
         .await?;
 
     let response = GetNetWorthHistoryResponseViewModel {
-        sums: hisotry.into_iter().map_into().collect(),
+        sums: history.into_iter().map_into().collect(),
         range: query_params.range.to_string(),
     };
 

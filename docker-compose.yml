@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  database:
+    image: postgres:latest
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    volumes:
+      - myra-postgres-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=myradev
+      - POSTGRES_PASSWORD=devpassword
+      - POSTGRES_DB=myra
+      - POSTGRES_HOSTNAME=localhost
+      - POSTGRES_PORT=5432
+  flyway:
+    image: flyway/flyway:latest
+    environment:
+      - FLYWAY_URL=jdbc:postgresql://database/myra
+      - FLYWAY_SCHEMAS=public
+      - FLYWAY_USER=myradev
+      - FLYWAY_PASSWORD=devpassword
+      - FLYWAY_CONNECT_RETRIES=5
+    command: migrate
+    volumes:
+      - ./database:/flyway/sql
+    depends_on:
+      - database
+  jaeger:
+    image: jaegertracing/all-in-one
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - 16686:16686
+      - 4317:4317
+      - 4318:4318
+
+volumes:
+  myra-postgres-data:

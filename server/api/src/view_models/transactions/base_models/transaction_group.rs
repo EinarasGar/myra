@@ -1,39 +1,47 @@
 use serde::{Deserialize, Serialize};
-use time::{serde::iso8601, OffsetDateTime};
+use time::{serde::timestamp, OffsetDateTime};
 use utoipa::ToSchema;
 
-use crate::view_models::transactions::transaction_types::{
-    IdentifiableTransactionWithIdentifiableEntries,
-    MandatoryIdentifiableTransactionWithIdentifiableEntries, TransactionWithEntries,
+use crate::view_models::transactions::base_models::category_id::RequiredCategoryId;
+use crate::view_models::transactions::{
+    base_models::transaction_group_id::TransactionGroupId,
+    transaction_types::{
+        IdentifiableTransactionWithIdentifiableEntries,
+        RequiredIdentifiableTransactionWithIdentifiableEntries, TransactionWithEntries,
+    },
 };
 
+pub type TransactionGroupViewModel = TransactionGroup<TransactionWithEntries>;
+pub type TransactionGroupWithIdentifiableChildrenViewModel =
+    TransactionGroup<IdentifiableTransactionWithIdentifiableEntries>;
+pub type RequiredTransactionGroupViewModel =
+    TransactionGroup<RequiredIdentifiableTransactionWithIdentifiableEntries>;
+
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-#[aliases(
-    TransactionGroupViewModel = TransactionGroup<TransactionWithEntries>,
-    TransactionGroupWithIdentifiableChildrenViewModel = TransactionGroup<IdentifiableTransactionWithIdentifiableEntries>,
-    MandatoryTransactionGroupViewModel = TransactionGroup<MandatoryIdentifiableTransactionWithIdentifiableEntries>
-)]
 pub struct TransactionGroup<T> {
     /// All subtractions grouped into this group
+    #[schema(inline = false)]
     pub transactions: Vec<T>,
 
     /// Overall description of whole group
     pub description: String,
 
     /// Overall category of whole group
-    pub category_id: i32,
+    pub category_id: RequiredCategoryId,
 
     /// Unrelated to individual transactions date which represent when the collection of transactions occurred
-    #[serde(with = "iso8601")]
+    #[serde(with = "timestamp")]
+    #[schema(value_type = i32)]
     pub date: OffsetDateTime,
 }
 
+pub type RequiredIdentifiableTransactionGroupViewModel =
+    IdentifiableTransactionGroup<TransactionGroupId, RequiredTransactionGroupViewModel>;
+
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-#[aliases(
-    MandatoryIdentifiableTransactionGroupViewModel = IdentifiableTransactionGroup<i32, MandatoryTransactionGroupViewModel>
-)]
 pub struct IdentifiableTransactionGroup<I, G> {
     /// Id representing a single entry in a transaction.
+    #[schema(inline = false)]
     pub group_id: I,
 
     #[serde(flatten)]

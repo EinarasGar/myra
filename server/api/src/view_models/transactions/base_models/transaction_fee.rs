@@ -6,15 +6,16 @@ use utoipa::ToSchema;
 
 use super::account_asset_entry::{
     AccountAssetEntryViewModel, IdentifiableAccountAssetEntryViewModel,
-    MandatoryIdentifiableAccountAssetEntryViewModel,
+    RequiredIdentifiableAccountAssetEntryViewModel,
 };
 
+pub type TransactionFeeViewModel = TransactionFee<AccountAssetEntryViewModel>;
+pub type IdentifiableTransactionFeeViewModel =
+    TransactionFee<IdentifiableAccountAssetEntryViewModel>;
+pub type RequiredIdentifiableTransactionFeeViewModel =
+    TransactionFee<RequiredIdentifiableAccountAssetEntryViewModel>;
+
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-#[aliases(
-    TransactionFeeViewModel = TransactionFee<AccountAssetEntryViewModel>,
-    IdentifiableTransactionFeeViewModel = TransactionFee<IdentifiableAccountAssetEntryViewModel>,
-    MandatoryIdentifiableTransactionFeeViewModel = TransactionFee<MandatoryIdentifiableAccountAssetEntryViewModel>
-)]
 pub struct TransactionFee<E> {
     #[serde(flatten)]
     pub entry: E,

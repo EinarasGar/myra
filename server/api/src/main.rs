@@ -1,4 +1,5 @@
 use business::loader::StartupLoader;
+use std::env;
 use tracing::info;
 
 use crate::states::AppState;
@@ -32,7 +33,15 @@ async fn main() {
     let app = routes::create_router(shared_state).fallback(fallback::handler_404);
 
     // Run the WebServer
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:5000").await.unwrap();
+    let port = env::var("SERVER_PORT")
+        .unwrap_or_else(|_| "5000".to_string())
+        .parse::<u16>()
+        .unwrap_or(5000);
+    
+    let bind_address = format!("127.0.0.1:{}", port);
+    let listener = tokio::net::TcpListener::bind(&bind_address)
+        .await
+        .unwrap();
     info!("Starting web server on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
 }

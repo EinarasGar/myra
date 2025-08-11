@@ -6,24 +6,33 @@ use uuid::Uuid;
 use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
-    view_models::transactions::{
-        base_models::{
-            account_asset_entry::{
-                AccountAssetEntryViewModel, MandatoryIdentifiableAccountAssetEntryViewModel,
+    view_models::{
+        errors::{DeleteResponses, GetResponses, UpdateResponses},
+        accounts::base_models::account_id::RequiredAccountId,
+        assets::base_models::asset_id::RequiredAssetId,
+        base_models::search::{PageOfResults, PageOfTransactionsWithLookupViewModel},
+        transactions::{
+            base_models::{
+                account_asset_entry::{
+                    AccountAssetEntryViewModel, RequiredIdentifiableAccountAssetEntryViewModel,
+                },
+                category_id::RequiredCategoryId,
+                entry_id::RequiredEntryId,
+                metadata_lookup::MetadataLookupTables,
+                transaction_base::{
+                    RequiredIdentifiableTransactionBaseWithIdentifiableEntries,
+                    RequiredTransactionBaseWithIdentifiableEntries,
+                },
+                transaction_id::RequiredTransactionId,
             },
-            metadata_lookup::MetadataLookupTables,
-            transaction_base::{
-                MandatoryIdentifiableTransactionBaseWithIdentifiableEntries,
-                MandatoryTransactionBaseWithIdentifiableEntries,
+            get_transactions::GetTransactionsResultsViewModel,
+            transaction_types::{
+                regular_transaction::RequiredIdentifiableRegularTransactionWithIdentifiableEntriesViewModel,
+                RequiredIdentifiableTransactionWithIdentifiableEntries,
             },
-        },
-        get_transactions::GetTransactionsViewModel,
-        transaction_types::{
-            regular_transaction::MandatoryIdentifiableRegularTransactionWithIdentifiableEntriesViewModel,
-            MandatoryIdentifiableTransactionWithIdentifiableEntries,
-        },
-        update_transaction::{
-            UpdateTransactionRequestViewModel, UpdateTransactionResponseViewModel,
+            update_transaction::{
+                UpdateTransactionRequestViewModel, UpdateTransactionResponseViewModel,
+            },
         },
     },
 };
@@ -34,14 +43,15 @@ use crate::{
 /// It only updates the contents of the transaction without moving it.
 #[utoipa::path(
     put,
-    path = "/api/users/:user_id/transactions/:transaction_id",
+    path = "/api/users/{user_id}/transactions/{transaction_id}",
     tag = "Transactions",
     operation_id = "Update an existing transaction.",
     request_body (
       content = UpdateTransactionRequestViewModel,
     ),
     responses(
-        (status = 200, description = "Transaction updated successfully.", body = UpdateTransactionResponseViewModel)
+        (status = 200, description = "Transaction updated successfully.", body = UpdateTransactionResponseViewModel),
+        UpdateResponses
     ),
     params(
         ("user_id" = Uuid, Path, description = "User id for which the transaction belongs to."),
@@ -53,7 +63,7 @@ use crate::{
 
 )]
 #[tracing::instrument(skip_all, err)]
-pub async fn update(
+pub async fn update_transaction(
     Path((_user_id, _transaction_id)): Path<(Uuid, Uuid)>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
     Json(_params): Json<UpdateTransactionRequestViewModel>,
@@ -67,7 +77,7 @@ pub async fn update(
 /// Deleted any transaction, whether its individual or from a group.
 #[utoipa::path(
     delete,
-    path = "/api/users/:user_id/transactions/:transaction_id",
+    path = "/api/users/{user_id}/transactions/{transaction_id}",
     tag = "Transactions",
     operation_id = "Delete an existing transaction.",
     params(
@@ -76,6 +86,7 @@ pub async fn update(
     ),
     responses(
         (status = 200, description = "Transaction deleted successfully."),
+        DeleteResponses
     ),
     security(
         ("auth_token" = [])
@@ -83,7 +94,7 @@ pub async fn update(
 
 )]
 #[tracing::instrument(skip_all, err)]
-pub async fn delete(
+pub async fn delete_transaction(
     Path((_user_id, _transaction_id)): Path<(Uuid, Uuid)>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<(), ApiError> {
@@ -95,10 +106,11 @@ pub async fn delete(
 /// Retrieves a list of all individual and grouped transactions
 #[utoipa::path(
     get,
-    path = "/api/users/:user_id/transactions",
+    path = "/api/users/{user_id}/transactions",
     tag = "Transactions",
     responses(
-        (status = 200, description = "Transaction updated successfully.", body = GetTransactionsViewModel)
+        (status = 200, description = "Transactions retrieved successfully.", body = PageOfResults<GetTransactionsResultsViewModel, MetadataLookupTables>),
+        GetResponses
     ),
     params(
         ("user_id" = Uuid, Path, description = "User id for which the transaction belongs to.")
@@ -109,36 +121,40 @@ pub async fn delete(
 
 )]
 #[tracing::instrument(skip_all, err)]
-pub async fn get(
+pub async fn get_transactions(
     Path(_user_id): Path<Uuid>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-) -> Result<Json<GetTransactionsViewModel>, ApiError> {
-    let model = GetTransactionsViewModel {
-        individual_transactions: vec![
-            MandatoryIdentifiableTransactionWithIdentifiableEntries::RegularTransaction(
-                MandatoryIdentifiableRegularTransactionWithIdentifiableEntriesViewModel {
-                    category_id: 3,
-                    description: None,
-                    entry: MandatoryIdentifiableAccountAssetEntryViewModel {
-                        entry_id: 1,
-                        entry: AccountAssetEntryViewModel {
-                            account_id: Uuid::new_v4(),
-                            asset_id: 1,
-                            amount: dec!(100.0),
+) -> Result<Json<PageOfTransactionsWithLookupViewModel>, ApiError> {
+    let model = PageOfTransactionsWithLookupViewModel {
+        results: vec![GetTransactionsResultsViewModel {
+            individual_transactions: vec![
+                RequiredIdentifiableTransactionWithIdentifiableEntries::RegularTransaction(
+                    RequiredIdentifiableRegularTransactionWithIdentifiableEntriesViewModel {
+                        r#type: Default::default(),
+                        category_id: RequiredCategoryId(3),
+                        description: None,
+                        entry: RequiredIdentifiableAccountAssetEntryViewModel {
+                            entry_id: RequiredEntryId(1),
+                            entry: AccountAssetEntryViewModel {
+                                account_id: RequiredAccountId(Uuid::new_v4()),
+                                asset_id: RequiredAssetId(1),
+                                amount: dec!(100.0),
+                            },
+                        },
+                        base: RequiredIdentifiableTransactionBaseWithIdentifiableEntries {
+                            transaction_id: RequiredTransactionId(Uuid::new_v4()),
+                            base: RequiredTransactionBaseWithIdentifiableEntries {
+                                date: datetime!(2000-03-22 00:00:00 UTC),
+                                fees: None,
+                            },
                         },
                     },
-                    base: MandatoryIdentifiableTransactionBaseWithIdentifiableEntries {
-                        transaction_id: Uuid::new_v4(),
-                        base: MandatoryTransactionBaseWithIdentifiableEntries {
-                            date: datetime!(2000-03-22 00:00:00 UTC),
-                            fees: None,
-                        },
-                    },
-                },
-            ),
-        ],
-        transaction_groups: vec![],
-        metadata: MetadataLookupTables {
+                ),
+            ],
+            transaction_groups: vec![],
+        }],
+        total_results: 1,
+        lookup_tables: MetadataLookupTables {
             assets: vec![],
             accounts: vec![],
         },

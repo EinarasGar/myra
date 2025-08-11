@@ -9,12 +9,15 @@ use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
     states::AccountsServiceState,
+    view_models::errors::{CreateResponses, DeleteResponses, GetResponses, UpdateResponses},
     view_models::accounts::{
         add_account::{AddAccountRequestViewModel, AddAccountResponseViewModel},
         base_models::{
             account::IdentifiableAccount,
+            account_id::RequiredAccountId,
             account_liquidity_type::IdentifiableAccountLiquidityTypeViewModel,
-            account_type::IdentifiableAccountTypeViewModel,
+            account_type::IdentifiableAccountTypeViewModel, account_type_id::AccountTypeId,
+            liquidity_type_id::RequiredLiquidityTypeId,
             metadata_lookup::AccountMetadataLookupTables,
         },
         get_account::GetAccountResponseViewModel,
@@ -30,10 +33,11 @@ use crate::{
 /// Gets a specific account of the user with metadata.
 #[utoipa::path(
     get,
-    path = "/api/users/:user_id/accounts/:account_id",
+    path = "/api/users/{user_id}/accounts/{account_id}",
     tag = "Accounts",
     responses(
-        (status = 200,  body = GetAccountResponseViewModel),
+        (status = 200, description = "Account retrieved successfully.", body = GetAccountResponseViewModel),
+        GetResponses
     ),
     params(
         ("user_id" = Uuid, Path, description = "Unique Identifier of the user."),
@@ -67,10 +71,11 @@ pub async fn get_account(
 /// Gets all accounts and its metadata associated with user
 #[utoipa::path(
     get,
-    path = "/api/users/:user_id/accounts/",
+    path = "/api/users/{user_id}/accounts/",
     tag = "Accounts",
     responses(
-        (status = 200,  body = GetAccountsResponseViewModel),
+        (status = 200, description = "Accounts retrieved successfully.", body = GetAccountsResponseViewModel),
+        GetResponses
     ),
     params(
         ("user_id" = Uuid, Path, description = "Unique Identifier of the user."),
@@ -101,14 +106,14 @@ pub async fn get_accounts(
             .entry(x.account_type.id)
             .or_insert_with(|| IdentifiableAccountTypeViewModel {
                 name: x.account_type.name.clone(),
-                id: x.account_type.id,
+                id: AccountTypeId(x.account_type.id),
             });
 
         account_liquidity_types_hashmap
             .entry(x.liquidity_type.id)
             .or_insert_with(|| IdentifiableAccountLiquidityTypeViewModel {
                 name: x.liquidity_type.name.clone(),
-                id: x.liquidity_type.id,
+                id: RequiredLiquidityTypeId(x.liquidity_type.id),
             });
     });
 
@@ -128,10 +133,11 @@ pub async fn get_accounts(
 /// Updates a specific account of the user with metadata.
 #[utoipa::path(
     put,
-    path = "/api/users/:user_id/accounts/:account_id",
+    path = "/api/users/{user_id}/accounts/{account_id}",
     tag = "Accounts",
     responses(
-        (status = 200,  body = UpdateAccountViewModel),
+        (status = 200, description = "Account updated successfully.", body = UpdateAccountViewModel),
+        UpdateResponses
     ),
     params(
         ("user_id" = Uuid, Path, description = "Unique Identifier of the user."),
@@ -154,8 +160,8 @@ pub async fn update_account(
 ) -> Result<Json<UpdateAccountViewModel>, ApiError> {
     let dto = AccountAmendmentDto {
         account_name: body.account.name.clone(),
-        account_type: body.account.account_type,
-        account_liquidity_type: body.liquidity_type,
+        account_type: body.account.account_type.0,
+        account_liquidity_type: body.liquidity_type.0,
     };
 
     account_service
@@ -170,10 +176,11 @@ pub async fn update_account(
 /// Adds a new account to the user.
 #[utoipa::path(
     post,
-    path = "/api/users/:user_id/accounts",
+    path = "/api/users/{user_id}/accounts",
     tag = "Accounts",
     responses(
-        (status = 200,  body = AddAccountResponseViewModel),
+        (status = 201, description = "Account created successfully.", body = AddAccountResponseViewModel),
+        CreateResponses
     ),
     params(
         ("user_id" = Uuid, Path, description = "Unique Identifier of the user."),
@@ -195,8 +202,8 @@ pub async fn add_account(
 ) -> Result<Json<AddAccountResponseViewModel>, ApiError> {
     let dto = AccountAmendmentDto {
         account_name: body.account.name.clone(),
-        account_type: body.account.account_type,
-        account_liquidity_type: body.liquidity_type,
+        account_type: body.account.account_type.0,
+        account_liquidity_type: body.liquidity_type.0,
     };
 
     let new_id = account_service.add_user_account(user_id, dto).await?;
@@ -204,7 +211,7 @@ pub async fn add_account(
     let ret = AddAccountResponseViewModel {
         liquidity_type: body.liquidity_type,
         account: IdentifiableAccount {
-            account_id: new_id,
+            account_id: RequiredAccountId(new_id),
             account: body.account,
         },
     };
@@ -217,10 +224,11 @@ pub async fn add_account(
 /// Marks account as inactive so that its unavailable anymore.
 #[utoipa::path(
     delete,
-    path = "/api/users/:user_id/accounts/:account_id",
+    path = "/api/users/{user_id}/accounts/{account_id}",
     tag = "Accounts",
     responses(
-        (status = 200, description = "Account marked as deactiavted."),
+        (status = 200, description = "Account marked as deactivated."),
+        DeleteResponses
     ),
     params(
         ("user_id" = Uuid, Path, description = "Unique Identifier of the user."),
@@ -251,10 +259,8 @@ pub async fn delete_account(
     path = "/api/accounts/types",
     tag = "Accounts",
     responses(
-        (status = 200),
-    ),
-    responses(
-        (status = 200,  body = GetAccountTypesResponseViewModel),
+        (status = 200, description = "List of available account types.", body = GetAccountTypesResponseViewModel),
+        GetResponses
     ),
     security(
         ("auth_token" = [])
@@ -277,13 +283,11 @@ pub async fn get_account_types(
 /// Retrieves all available account liquidity types
 #[utoipa::path(
     get,
-    path = "/api/accounts/liquiditytypes",
+    path = "/api/accounts/liquidity-types",
     tag = "Accounts",
     responses(
-        (status = 200),
-    ),
-    responses(
-        (status = 200,  body = GetAccountLiquidityTypesResponseViewModel),
+        (status = 200, description = "List of available account liquidity types.", body = GetAccountLiquidityTypesResponseViewModel),
+        GetResponses
     ),
     security(
         ("auth_token" = [])

@@ -6,9 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = { version = "4.5.26", features = ["derive"] }
-tokio = { version = "1.40.0", features = ["full"] }
+clap = { version = "4.5.41", features = ["derive"] }
+tokio = { version = "1.46.1", features = ["full"] }
 business = {path="../business"}
-yahoo_finance_api = "2.3.0"
-rust_decimal = "1.36.0"
+yahoo_finance_api = "4.0.0"
+rust_decimal = "1.37.2"
 lazy_static = "1.5.0"

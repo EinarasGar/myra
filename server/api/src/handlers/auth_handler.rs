@@ -4,6 +4,7 @@ use crate::errors::ApiError;
 use crate::states::AuthServiceState;
 use crate::view_models::authentication::auth::AuthViewModel;
 use crate::view_models::authentication::login_details::LoginDetailsViewModel;
+use crate::view_models::errors::AuthResponses;
 
 /// Authenticate
 ///
@@ -16,7 +17,8 @@ use crate::view_models::authentication::login_details::LoginDetailsViewModel;
       content = LoginDetailsViewModel,
     ),
     responses(
-        (status = 200, description = "Authentication successful.", body = AuthViewModel)
+        (status = 200, description = "Authentication successful.", body = AuthViewModel),
+        AuthResponses
     )
 )]
 #[tracing::instrument(skip_all, err)]

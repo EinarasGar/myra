@@ -11,6 +11,6 @@ pub struct AssetPairMetadataViewModel {
     pub latest_rate: Decimal,
 
     #[serde(with = "timestamp")]
-    //#[schema(example = json!(datetime!(2023-03-22 13:00:00 UTC)))]
+    #[schema(value_type = i32)]
     pub last_updated: OffsetDateTime,
 }

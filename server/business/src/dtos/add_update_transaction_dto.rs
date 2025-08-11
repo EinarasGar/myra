@@ -1,6 +1,6 @@
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use time::{serde::iso8601, OffsetDateTime};
+use time::{serde::timestamp, OffsetDateTime};
 use uuid::Uuid;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -9,7 +9,7 @@ pub struct AddUpdateTransactonDto {
     pub asset_id: i32,
     pub quantity: Decimal,
     pub category: i32,
-    #[serde(with = "iso8601")]
+    #[serde(with = "timestamp")]
     pub date: OffsetDateTime,
     pub account_id: Option<Uuid>,
     pub description: Option<String>,

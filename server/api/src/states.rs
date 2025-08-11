@@ -1,5 +1,4 @@
 use axum::{
-    async_trait,
     extract::{FromRef, FromRequestParts},
     http::{request::Parts, StatusCode},
 };
@@ -33,7 +32,6 @@ macro_rules! service_state {
                 }
             }
 
-            #[async_trait]
             impl<S> FromRequestParts<S> for [<$service State>]
             where
                 $service: FromRef<S>,

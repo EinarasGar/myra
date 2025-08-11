@@ -7,6 +7,7 @@ use crate::entities::portfolio_overview::portfolio::{Portfolio, PortfolioAction}
 #[derive(Clone)]
 pub struct CashDividend {
     pub date: OffsetDateTime,
+    #[allow(dead_code)]
     pub origin_asset_id: i32,
     pub asset_id: i32,
     pub account_id: Uuid,

@@ -11,9 +11,10 @@ use crate::{
     converters::{transaction_dtos_to_account_ids_hashset, transaction_dtos_to_asset_ids_hashset},
     errors::ApiError,
     states::{AccountsServiceState, AssetsServiceState, TransactionManagementServiceState},
+    view_models::errors::{CreateResponses, GetResponses, UpdateResponses},
     view_models::{
         base_models::search::{
-            PageOfIndividualTransactionsWithLookupViewModel, PaginatedSearchQuery,
+            PageOfIndividualTransactionsWithLookupViewModel, PageOfResults, PaginatedSearchQuery,
         },
         transactions::{
             add_individual_transaction::{
@@ -21,6 +22,7 @@ use crate::{
             },
             base_models::metadata_lookup::MetadataLookupTables,
             get_individual_transaction::GetIndividualTransactionViewModel,
+            transaction_types::RequiredIdentifiableTransactionWithIdentifiableEntries,
             update_individual_transaction::{
                 UpdateIndividualTransactionRequestViewModel,
                 UpdateIndividualTransactionResponseViewModel,
@@ -34,13 +36,14 @@ use crate::{
 /// Adds a new individual transaction.
 #[utoipa::path(
     post,
-    path = "/api/users/:user_id/transactions/individual",
+    path = "/api/users/{user_id}/transactions/individual",
     tag = "Individual Transactions",
     request_body (
       content = AddIndividualTransactionRequestViewModel,
     ),
     responses(
-        (status = 200, description = "Individual transaction added successfully.", body = AddIndividualTransactionResponseViewModel)
+        (status = 201, description = "Individual transaction created successfully.", body = AddIndividualTransactionResponseViewModel),
+        CreateResponses
     ),
     params(
         ("user_id" = Uuid, Path, description = "User Id for which to add the individual transaction for."),
@@ -51,7 +54,7 @@ use crate::{
 
 )]
 #[tracing::instrument(skip_all, err)]
-pub async fn add(
+pub async fn add_individual_transaction(
     Path(user_id): Path<Uuid>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
     TransactionManagementServiceState(transaction_service): TransactionManagementServiceState,
@@ -78,14 +81,15 @@ pub async fn add(
 /// If the transaction provided is not individual, it will be moved to individual and removed from other group.
 #[utoipa::path(
     put,
-    path = "/api/users/:user_id/transactions/individual/:transaction_id",
+    path = "/api/users/{user_id}/transactions/individual/{transaction_id}",
     tag = "Individual Transactions",
     operation_id = "Update an existing individual transaction.",
     request_body (
       content = UpdateIndividualTransactionRequestViewModel,
     ),
     responses(
-        (status = 200, description = "Individual transaction updated successfully.", body = UpdateIndividualTransactionResponseViewModel)
+        (status = 200, description = "Individual transaction updated successfully.", body = UpdateIndividualTransactionResponseViewModel),
+        UpdateResponses
     ),
     params(
         ("user_id" = Uuid, Path, description = "User id for which the individual transaction belongs to."),
@@ -97,7 +101,7 @@ pub async fn add(
 
 )]
 #[tracing::instrument(skip_all, err)]
-pub async fn update(
+pub async fn update_individual_transaction(
     Path((_user_id, _transaction_id)): Path<(Uuid, Uuid)>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
     Json(_params): Json<UpdateIndividualTransactionRequestViewModel>,
@@ -110,10 +114,11 @@ pub async fn update(
 /// Retrieves a list of all individual transactions
 #[utoipa::path(
     get,
-    path = "/api/users/:user_id/transactions/individual",
+    path = "/api/users/{user_id}/transactions/individual",
     tag = "Individual Transactions",
     responses(
-        (status = 200, body = PageOfIndividualTransactionsWithLookupViewModel)
+        (status = 200, description = "Individual transactions retrieved successfully.", body = PageOfResults<RequiredIdentifiableTransactionWithIdentifiableEntries, MetadataLookupTables>),
+        GetResponses
     ),
     params(
         ("user_id" = Uuid, Path, description = "User id for which the transactions group belongs to."),
@@ -125,7 +130,7 @@ pub async fn update(
 
 )]
 #[tracing::instrument(skip_all, err)]
-pub async fn get(
+pub async fn get_individual_transactions(
     Path(user_id): Path<Uuid>,
     query_params: Query<PaginatedSearchQuery>,
     AssetsServiceState(asset_service): AssetsServiceState,
@@ -168,10 +173,11 @@ pub async fn get(
 /// Retrieves a single transaction by specified id
 #[utoipa::path(
     get,
-    path = "/api/users/:user_id/transactions/individual/:transaction_id",
+    path = "/api/users/{user_id}/transactions/individual/{transaction_id}",
     tag = "Individual Transactions",
     responses(
-        (status = 200, body = GetIndividualTransactionViewModel)
+        (status = 200, description = "Individual transaction retrieved successfully.", body = GetIndividualTransactionViewModel),
+        GetResponses
     ),
     params(
         ("user_id" = Uuid, Path, description = "User id for which the transactions group belongs to.")

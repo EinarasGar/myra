@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use time::{serde::iso8601, OffsetDateTime};
+use time::{serde::timestamp, OffsetDateTime};
 use uuid::Uuid;
 
 use super::add_update_transaction_dto::AddUpdateTransactonDto;
@@ -10,6 +10,6 @@ pub struct AddUpdateTransactionGroupDto {
     pub transactions: Vec<AddUpdateTransactonDto>,
     pub description: String,
     pub category: i32,
-    #[serde(with = "iso8601")]
+    #[serde(with = "timestamp")]
     pub date: OffsetDateTime,
 }

@@ -4,7 +4,7 @@ use utoipa::ToSchema;
 use super::base_models::{
     metadata_lookup::MetadataLookupTables,
     transaction_group::{
-        MandatoryTransactionGroupViewModel, TransactionGroupWithIdentifiableChildrenViewModel,
+        RequiredTransactionGroupViewModel, TransactionGroupWithIdentifiableChildrenViewModel,
     },
 };
 
@@ -16,7 +16,7 @@ pub struct UpdateTransactionGroupRequestViewModel {
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct UpdateTransactionGroupResponseViewModel {
-    pub group: MandatoryTransactionGroupViewModel,
+    pub group: RequiredTransactionGroupViewModel,
 
     #[serde(flatten)]
     pub metadata: MetadataLookupTables,

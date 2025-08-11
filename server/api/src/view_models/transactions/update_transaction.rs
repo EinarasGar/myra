@@ -4,7 +4,7 @@ use utoipa::ToSchema;
 use super::{
     base_models::metadata_lookup::MetadataLookupTables,
     transaction_types::{
-        MandatoryTransactionWithIdentifiableEntries, TransactionWithIdentifiableEntries,
+        RequiredTransactionWithIdentifiableEntries, TransactionWithIdentifiableEntries,
     },
 };
 
@@ -15,7 +15,7 @@ pub struct UpdateTransactionRequestViewModel {
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct UpdateTransactionResponseViewModel {
-    pub transaction: MandatoryTransactionWithIdentifiableEntries,
+    pub transaction: RequiredTransactionWithIdentifiableEntries,
 
     #[serde(flatten)]
     pub metadata: MetadataLookupTables,
