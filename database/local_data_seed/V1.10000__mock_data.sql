@@ -86,6 +86,10 @@ VALUES (1, 'Regular'),
 INSERT INTO public.asset_pairs (pair1, pair2)
 VALUES (4, 1),
     (4, 2),
-    (5, 3);
+    (5, 3),
+    (1, 3),
+    (2, 3),
+    (3, 1),
+    (3, 2);
 INSERT INTO public.asset_pairs_shared_metadata (pair_id, volume)
 VALUES (1, 76249821);

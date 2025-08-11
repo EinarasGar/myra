@@ -119,6 +119,10 @@ impl PortfolioAssetPosition {
     pub fn is_dividend(&self) -> bool {
         self.is_dividend
     }
+
+    pub fn sale_proceeds(&self) -> Decimal {
+        self.sale_proceeds
+    }
 }
 
 impl std::fmt::Debug for PortfolioAssetPosition {

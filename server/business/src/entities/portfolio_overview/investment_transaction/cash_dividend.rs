@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::entities::portfolio_overview::portfolio::{Portfolio, PortfolioAction};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct CashDividend {
     pub date: OffsetDateTime,
     #[allow(dead_code)]

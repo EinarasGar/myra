@@ -7,6 +7,7 @@ use axum::{
 use business::dtos::{
     assets::{asset_id_dto::AssetIdDto, asset_pair_ids_dto::AssetPairIdsDto},
     net_worth::range_dto::RangeDto,
+    portfolio::overview::PortfolioOverviewType,
 };
 use itertools::Itertools;
 use serde::Deserialize;
@@ -15,7 +16,6 @@ use uuid::Uuid;
 use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
-    view_models::errors::GetResponses,
     states::{
         AccountsServiceState, AssetRatesServiceState, AssetsServiceState,
         PortfolioOverviewServiceState, PortfolioServiceState, UsersServiceState,
@@ -23,12 +23,14 @@ use crate::{
     view_models::{
         accounts::base_models::account_id::RequiredAccountId,
         assets::base_models::asset_id::RequiredAssetId,
+        errors::GetResponses,
         portfolio::{
             base_models::metadata_lookup::HoldingsMetadataLookupTables,
             get_holdings::{GetHoldingsResponseViewModel, GetHoldingsResponseViewModelRow},
             get_networth_history::{
                 GetNetWorthHistoryRequestParams, GetNetWorthHistoryResponseViewModel,
             },
+            get_overview::{GetPortfolioOverviewQueryParams, GetPortfolioOverviewViewModel},
         },
     },
 };
@@ -150,6 +152,75 @@ pub async fn get_networth_history(
     let response = GetNetWorthHistoryResponseViewModel {
         sums: history.into_iter().map_into().collect(),
         range: query_params.range.to_string(),
+    };
+
+    Ok(response.into())
+}
+
+/// Get Portfolio Overview
+///
+/// Retunrs information about the entire portfolio and statistics such as gains/losses
+#[utoipa::path(
+    get,
+    path = "/api/users/{user_id}/portfolio/overview",
+    tag = "Portfolio",
+    responses(
+        (status = 200, description = "Portfolio Overview", body = GetPortfolioOverviewViewModel),
+        GetResponses
+    ),
+    params(
+        ("user_id" = Uuid, Path, description = "User id for who to retrieve net worth history"),
+        GetPortfolioOverviewQueryParams
+    )
+)]
+#[tracing::instrument(skip_all, err)]
+pub async fn get_portfolio_overview(
+    Path(user_id): Path<Uuid>,
+    _query_params: Query<GetPortfolioOverviewQueryParams>,
+    PortfolioOverviewServiceState(portfolio_service): PortfolioOverviewServiceState,
+    UsersServiceState(_user_service): UsersServiceState,
+    AccountsServiceState(accounts_service): AccountsServiceState,
+    AssetsServiceState(asset_service): AssetsServiceState,
+    AuthenticatedUserState(_auth): AuthenticatedUserState,
+) -> Result<Json<GetPortfolioOverviewViewModel>, ApiError> {
+    let default_asset = match _query_params.default_asset_id.0 {
+        Some(id) => AssetIdDto(id),
+        None => AssetIdDto(0),
+    };
+
+    let overview = portfolio_service
+        .get_portfolio_overview(default_asset, user_id)
+        .await?;
+
+    let account_ids = overview
+        .portfolios
+        .iter()
+        .map(|x| match x {
+            PortfolioOverviewType::Asset(a) => a.account_id,
+            PortfolioOverviewType::Cash(c) => c.account_id,
+        })
+        .collect::<HashSet<Uuid>>();
+
+    let asset_ids = overview
+        .portfolios
+        .iter()
+        .map(|x| match x {
+            PortfolioOverviewType::Asset(a) => a.asset_id,
+            PortfolioOverviewType::Cash(c) => c.asset_id,
+        })
+        .collect::<HashSet<i32>>();
+
+    let (assets, accounts) = tokio::try_join!(
+        asset_service.get_assets(asset_ids),
+        accounts_service.get_accounts(account_ids),
+    )?;
+
+    let response = GetPortfolioOverviewViewModel {
+        portfolios: overview.into(),
+        lookup_tables: HoldingsMetadataLookupTables {
+            accounts: accounts.into_iter().map_into().collect(),
+            assets: assets.into_iter().map_into().collect(),
+        },
     };
 
     Ok(response.into())

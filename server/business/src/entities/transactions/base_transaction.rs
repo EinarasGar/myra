@@ -117,4 +117,8 @@ impl BaseTransaction {
         );
         Ok(())
     }
+
+    pub fn date(&self) -> OffsetDateTime {
+        self.date
+    }
 }

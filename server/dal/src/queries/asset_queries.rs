@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use sea_query::{
     extension::postgres::PgExpr, Alias, Asterisk, CommonTableExpression, Cond, Expr, Func, Order,
@@ -1143,6 +1143,17 @@ pub fn get_asset_pairs_rates_with_conversions(
                 .cte(all_filtered_pairs_cte)
                 .to_owned(),
         )
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn get_assets_base_pair_ids(ids: HashSet<i32>) -> DbQueryWithValues {
+    Query::select()
+        .column(AssetsIden::Id)
+        .column(AssetsIden::BasePairId)
+        .from(AssetsIden::Table)
+        .and_where(Expr::col(AssetsIden::Id).is_in(ids))
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }

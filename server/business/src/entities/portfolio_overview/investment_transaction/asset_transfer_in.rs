@@ -6,7 +6,7 @@ use crate::entities::portfolio_overview::portfolio::{
     portfolio_asset_position_dto::PortfolioAssetPosition, Portfolio, PortfolioAction,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AssetTransferIn {
     pub date: OffsetDateTime,
     pub asset_id: i32,
@@ -78,7 +78,7 @@ mod tests {
                 instrument_asset_id: 1,
                 account_id,
                 instrument_units: dec!(1),
-                instrument_reference_price: dec!(1),
+                instrument_price: dec!(1),
                 fees: dec!(1),
                 cash_asset_id: 10,
                 cash_units: dec!(1),
@@ -119,7 +119,7 @@ mod tests {
                 instrument_asset_id: 1,
                 account_id,
                 instrument_units: dec!(1),
-                instrument_reference_price: dec!(1),
+                instrument_price: dec!(1),
                 fees: dec!(1),
                 cash_asset_id: 10,
                 cash_units: dec!(1),
@@ -129,7 +129,7 @@ mod tests {
                 instrument_asset_id: 1,
                 account_id,
                 instrument_units: dec!(1),
-                instrument_reference_price: dec!(1),
+                instrument_price: dec!(1),
                 fees: dec!(1),
                 cash_asset_id: 10,
                 cash_units: dec!(1),

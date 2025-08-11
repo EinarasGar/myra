@@ -2,17 +2,21 @@ use rust_decimal::Decimal;
 use time::OffsetDateTime;
 use uuid::Uuid;
 
-use crate::entities::portfolio_overview::portfolio::{
-    portfolio_asset_position_dto::PortfolioAssetPosition, Portfolio, PortfolioAction,
+use crate::{
+    dtos::assets::asset_id_dto::AssetIdDto,
+    entities::portfolio_overview::portfolio::{
+        portfolio_asset_position_dto::PortfolioAssetPosition, Portfolio, PortfolioAction,
+        ReferentialPortfolioAction,
+    },
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AssetPurchase {
     pub date: OffsetDateTime,
     pub account_id: Uuid,
     pub instrument_asset_id: i32,
     pub instrument_units: Decimal,
-    pub instrument_reference_price: Decimal,
+    pub instrument_price: Decimal,
     pub cash_asset_id: i32,
     pub cash_units: Decimal,
     pub fees: Decimal,
@@ -21,7 +25,7 @@ pub struct AssetPurchase {
 impl PortfolioAction for AssetPurchase {
     fn update_porfolio(&self, portfolio: &mut Portfolio) {
         let position = PortfolioAssetPosition::new(
-            self.instrument_reference_price,
+            self.instrument_price,
             self.instrument_units,
             self.date,
             self.fees,
@@ -38,6 +42,16 @@ impl PortfolioAction for AssetPurchase {
 
     fn date(&self) -> OffsetDateTime {
         self.date
+    }
+}
+
+impl ReferentialPortfolioAction for AssetPurchase {
+    fn apply_refferential_price(&mut self, price: Decimal) {
+        self.instrument_price = self.instrument_price * price;
+    }
+
+    fn get_asset_id(&self) -> AssetIdDto {
+        AssetIdDto(self.instrument_asset_id)
     }
 }
 
@@ -60,7 +74,7 @@ mod tests {
                 instrument_asset_id: 1,
                 account_id,
                 instrument_units: dec!(1),
-                instrument_reference_price: dec!(1),
+                instrument_price: dec!(1),
                 fees: dec!(1),
                 cash_asset_id: 10,
                 cash_units: dec!(1),
@@ -70,7 +84,7 @@ mod tests {
                 instrument_asset_id: 1,
                 account_id,
                 instrument_units: dec!(1),
-                instrument_reference_price: dec!(1),
+                instrument_price: dec!(1),
                 fees: dec!(1),
                 cash_asset_id: 10,
                 cash_units: dec!(1),
@@ -105,7 +119,7 @@ mod tests {
                 instrument_asset_id: 1,
                 account_id: account_id_1,
                 instrument_units: dec!(1),
-                instrument_reference_price: dec!(1),
+                instrument_price: dec!(1),
                 fees: dec!(1),
                 cash_asset_id: 10,
                 cash_units: dec!(1),
@@ -115,7 +129,7 @@ mod tests {
                 instrument_asset_id: 1,
                 account_id: account_id_2,
                 instrument_units: dec!(1),
-                instrument_reference_price: dec!(1),
+                instrument_price: dec!(1),
                 fees: dec!(1),
                 cash_asset_id: 10,
                 cash_units: dec!(1),
@@ -155,7 +169,7 @@ mod tests {
                 instrument_asset_id: 1,
                 account_id,
                 instrument_units: dec!(1),
-                instrument_reference_price: dec!(1),
+                instrument_price: dec!(1),
                 fees: dec!(1),
                 cash_asset_id: 10,
                 cash_units: dec!(15),

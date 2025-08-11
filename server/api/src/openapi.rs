@@ -79,6 +79,7 @@ use crate::view_models::{
         super::handlers::accounts_handler::get_account_liquidity_types,
         super::handlers::portfolio_handler::get_networth_history,
         super::handlers::portfolio_handler::get_holdings,
+        super::handlers::portfolio_handler::get_portfolio_overview,
     ),
     components(
         schemas(RequiredEntryId),

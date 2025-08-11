@@ -3,9 +3,19 @@ pub mod account_cash_portfolio;
 pub mod account_portfolio;
 pub mod portfolio_asset_position_dto;
 
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Debug};
 
+use rust_decimal::Decimal;
 use uuid::Uuid;
+
+use crate::dtos::{
+    assets::asset_id_dto::AssetIdDto,
+    portfolio::overview::{
+        asset_overview_dto::PortfolioAssetOverviewDto,
+        asset_position_overview_dto::PortfolioAssetOverviewPositionDto,
+        cash_overview_dto::PortfolioCashOverviewDto, PortfolioOverviewDto, PortfolioOverviewType,
+    },
+};
 
 use self::{
     account_asset_portfolio::AccountAssetPortfolio, account_cash_portfolio::AccountCashPortfolio,
@@ -90,9 +100,76 @@ impl Portfolio {
     pub fn account_portfolios(&self) -> &HashMap<Uuid, AccountPortfolio> {
         &self.account_portfolios
     }
+
+    pub fn try_into_dto(
+        &self,
+        current_rates: HashMap<AssetIdDto, Decimal>,
+    ) -> anyhow::Result<PortfolioOverviewDto> {
+        let mut portfolios = Vec::new();
+        self.account_portfolios()
+            .iter()
+            .for_each(|(account_id, account_portfolio)| {
+                account_portfolio.asset_portfolios.iter().for_each(
+                    |(asset_id, asset_portfolio)| {
+                        let current_rate = current_rates.get(&AssetIdDto(*asset_id)).unwrap();
+                        portfolios.push(PortfolioOverviewType::Asset(PortfolioAssetOverviewDto {
+                            asset_id: *asset_id,
+                            account_id: *account_id,
+                            positions: asset_portfolio
+                                .positions
+                                .iter()
+                                .map(|p| PortfolioAssetOverviewPositionDto {
+                                    add_price: p.add_price(),
+                                    quantity_added: p.units(),
+                                    add_date: p.add_date(),
+                                    fees: p.total_fees(),
+                                    amount_sold: p.amount_sold(),
+                                    sale_proceeds: p.sale_proceeds(),
+                                    is_dividend: p.is_dividend(),
+                                    unit_cost_basis: p.get_unit_cost_basis(),
+                                    total_cost_basis: p.get_total_cost_basis(),
+                                    realized_gains: p.get_realized_gains(),
+                                    unrealized_gains: p.get_unrealized_gains(*current_rate),
+                                    total_gains: p.get_total_gains(*current_rate),
+                                    amount_left: p.get_amount_left(),
+                                })
+                                .collect(),
+                            cash_dividends: asset_portfolio.cash_dividends(),
+                            total_units: asset_portfolio.units(),
+                            total_fees: asset_portfolio.total_fees(),
+                            realized_gains: asset_portfolio.realized_gains(),
+                            unrealized_gains: asset_portfolio.unrealized_gains(*current_rate),
+                            total_gains: asset_portfolio.total_gains(*current_rate),
+                            total_cost_basis: asset_portfolio.total_cost_basis(),
+                            unit_cost_basis: asset_portfolio.get_unit_cost_basis(),
+                        }));
+                    },
+                );
+                account_portfolio
+                    .cash_portfolios
+                    .iter()
+                    .for_each(|(asset_id, cash_portfolio)| {
+                        portfolios.push(PortfolioOverviewType::Cash(PortfolioCashOverviewDto {
+                            asset_id: *asset_id,
+                            account_id: *account_id,
+                            units: cash_portfolio.units(),
+                            fees: cash_portfolio.fees(),
+                            dividends: cash_portfolio.dividends(),
+                        }));
+                    });
+            });
+        Ok(PortfolioOverviewDto {
+            portfolios: portfolios,
+        })
+    }
 }
 
-pub trait PortfolioAction {
+pub trait PortfolioAction: Debug + Send {
     fn update_porfolio(&self, portfolio: &mut Portfolio);
     fn date(&self) -> time::OffsetDateTime;
+}
+
+pub trait ReferentialPortfolioAction: PortfolioAction {
+    fn apply_refferential_price(&mut self, price: Decimal);
+    fn get_asset_id(&self) -> AssetIdDto;
 }

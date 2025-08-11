@@ -3,6 +3,7 @@ use std::env;
 use tracing::info;
 
 use crate::states::AppState;
+use color_eyre::eyre::Result;
 
 pub mod auth;
 pub mod converters;
@@ -17,7 +18,9 @@ pub(crate) mod states;
 pub(crate) mod view_models;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
+    color_eyre::install()?;
+
     //Initialize logging and OpenTelemetry
     observability::initialize_tracing_subscriber();
 
@@ -37,11 +40,11 @@ async fn main() {
         .unwrap_or_else(|_| "5000".to_string())
         .parse::<u16>()
         .unwrap_or(5000);
-    
+
     let bind_address = format!("127.0.0.1:{}", port);
-    let listener = tokio::net::TcpListener::bind(&bind_address)
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind(&bind_address).await.unwrap();
     info!("Starting web server on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
+
+    Ok(())
 }

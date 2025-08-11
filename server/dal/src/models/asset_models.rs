@@ -69,7 +69,7 @@ pub struct AssetPairRateOption {
     pub pair1: i32,
     pub pair2: i32,
     pub rate: Option<Decimal>,
-    pub date: Option<OffsetDateTime>,
+    pub recorded_at: Option<OffsetDateTime>,
 }
 
 #[derive(sqlx::FromRow, Debug, Clone)]
@@ -96,6 +96,12 @@ pub struct AssetPairSharedMetadata {
 pub struct AssetPair {
     pub pair1: i32,
     pub pair2: i32,
+}
+
+#[derive(sqlx::FromRow, Debug)]
+pub struct AssetBasePair {
+    pub id: i32,
+    pub base_pair_id: i32,
 }
 
 #[derive(sqlx::FromRow, Debug)]
