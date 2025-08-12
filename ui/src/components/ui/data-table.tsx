@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import {
   ColumnDef,
   flexRender,
@@ -17,7 +18,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DataTablePagination } from "./data-table-pagination";
-import React, { Dispatch } from "react";
 import { genericMemo } from "@/lib/utils";
 
 interface DataTableProps<TData> {
@@ -25,7 +25,7 @@ interface DataTableProps<TData> {
   columns: ColumnDef<TData>[];
   rowCount?: number;
   pagination?: PaginationState;
-  setPagination?: Dispatch<React.SetStateAction<PaginationState>>;
+  setPagination?: React.Dispatch<React.SetStateAction<PaginationState>>;
 }
 
 export const MemoizedDataTable = genericMemo(DataTable);
