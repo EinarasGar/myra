@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/use-auth";
 import { router } from "@/router";
+import { ThemeSwitcher } from "./theme-switcher";
 
 export function NavUser({
   user,
@@ -105,6 +106,10 @@ export function NavUser({
                 Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <div className="px-2 py-1.5">
+              <ThemeSwitcher />
+            </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logoutHandler}>
               <LogOut />
