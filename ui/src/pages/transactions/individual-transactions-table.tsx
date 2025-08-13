@@ -64,7 +64,7 @@ export default function IndividialTransactionsTable() {
 
   const dataQuery = useGetIndividualTransactions(
     "2396480f-0052-4cf0-81dc-8cedbde5ce13",
-    pagination
+    pagination,
   );
 
   const tableData = useTransactionViewModelConverter(dataQuery.data.data);
@@ -77,7 +77,7 @@ export default function IndividialTransactionsTable() {
       pagination,
       setPagination,
     }),
-    [tableData, dataQuery.data?.totalCount, pagination]
+    [tableData, dataQuery.data?.totalCount, pagination],
   );
 
   return (

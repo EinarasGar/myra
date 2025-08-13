@@ -11,7 +11,7 @@ import { PaginationState } from "@tanstack/react-table";
 
 export default function useGetIndividualTransactions(
   userId: string,
-  pagination?: PaginationState
+  pagination?: PaginationState,
 ) {
   const addAsset = useAssetStore((state) => state.add);
   const addAccount = useAccountStore((state) => state.add);
@@ -19,7 +19,7 @@ export default function useGetIndividualTransactions(
   const getIndividualTransactions = async (
     userId: string,
     count?: number,
-    start?: number
+    start?: number,
   ): Promise<
     PaginatedResponse<MandatoryIdentifiableTransactionWithIdentifiableEntries>
   > => {
@@ -27,7 +27,7 @@ export default function useGetIndividualTransactions(
       await IndividualTransactionsApiFactory().getIndividualTransactions(
         userId,
         count,
-        start
+        start,
       );
     addAsset(
       data.data.lookup_tables.assets.map((asset) => {
@@ -36,7 +36,7 @@ export default function useGetIndividualTransactions(
           asset_type_id: asset.asset_type,
           ...asset,
         };
-      })
+      }),
     );
     addAccount(
       data.data.lookup_tables.accounts.map((account) => {
@@ -45,7 +45,7 @@ export default function useGetIndividualTransactions(
           type_id: account.account_type,
           ...account,
         };
-      })
+      }),
     );
 
     return {

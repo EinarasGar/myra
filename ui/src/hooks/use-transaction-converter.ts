@@ -20,7 +20,7 @@ interface TransactionConverterProps {
 }
 
 export default function useTransactionViewModelConverter(
-  viewModels: TransactionConverterProps[]
+  viewModels: TransactionConverterProps[],
 ): Transaction[] {
   const assets = useAssetStore((state) => state.assets);
 
@@ -36,10 +36,10 @@ export default function useTransactionViewModelConverter(
 
     if (viewModel.type === "asset_purchase") {
       const pruchase_asset = assets.find(
-        (a) => a.id === viewModel.purchase_change?.asset_id
+        (a) => a.id === viewModel.purchase_change?.asset_id,
       );
       const sale_asset = assets.find(
-        (a) => a.id === viewModel.cash_outgoings_change?.asset_id
+        (a) => a.id === viewModel.cash_outgoings_change?.asset_id,
       );
       description = `Purchased ${viewModel.purchase_change?.amount} units of ${pruchase_asset?.ticker}`;
       delta = `${viewModel.cash_outgoings_change?.amount} ${sale_asset?.ticker} -> ${viewModel.purchase_change?.amount} ${pruchase_asset?.ticker} `;

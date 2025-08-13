@@ -6,18 +6,18 @@ import { useAccountStore } from "../store/use-account-store";
 
 export default function useGetPortfolioHoldings(
   userId: string,
-  defaultAssetId?: number | null
+  defaultAssetId?: number | null,
 ) {
   const addAsset = useAssetStore((state) => state.add);
   const addAccount = useAccountStore((state) => state.add);
 
   const getPortfolioHoldings = async (
     userId: string,
-    defaultAssetId?: number | null
+    defaultAssetId?: number | null,
   ) => {
     const data = await PortfolioApiFactory().getHoldings(
       userId,
-      defaultAssetId
+      defaultAssetId,
     );
     addAsset(
       data.data.lookup_tables.assets.map((asset) => {
@@ -26,7 +26,7 @@ export default function useGetPortfolioHoldings(
           asset_type_id: asset.asset_type,
           ...asset,
         };
-      })
+      }),
     );
     addAccount(
       data.data.lookup_tables.accounts.map((account) => {
@@ -35,7 +35,7 @@ export default function useGetPortfolioHoldings(
           type_id: account.account_type,
           ...account,
         };
-      })
+      }),
     );
     return data.data.holdings;
   };

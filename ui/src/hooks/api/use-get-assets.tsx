@@ -12,7 +12,7 @@ export default function useSearchAssets(query: string | null) {
     count?: number,
     start?: number,
     query?: string,
-    signal?: AbortSignal
+    signal?: AbortSignal,
   ): Promise<PaginatedResponse<GetAssetsLineResponseViewModel>> => {
     const data = await AssetsApiFactory().searchAssets(count, start, query, {
       signal,
@@ -24,7 +24,7 @@ export default function useSearchAssets(query: string | null) {
           asset_type_id: asset.asset_type,
           ...asset,
         };
-      })
+      }),
     );
     addAssetType(
       data.data.lookup_tables.asset_types.map((assetType) => {
@@ -32,7 +32,7 @@ export default function useSearchAssets(query: string | null) {
           id: assetType.id,
           name: assetType.name,
         };
-      })
+      }),
     );
     return {
       totalCount: data.data.total_results,

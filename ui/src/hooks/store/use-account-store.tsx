@@ -15,7 +15,7 @@ export const useAccountStore = create<AccountsState>((set) => ({
         ...state.accounts,
         ...newAccounts.filter(
           (newAccount) =>
-            !state.accounts.some((account) => account.id === newAccount.id)
+            !state.accounts.some((account) => account.id === newAccount.id),
         ),
       ],
     })),

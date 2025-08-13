@@ -20,7 +20,7 @@ export const useAssetStore = create<AssetsState>((set) => ({
       assets: [
         ...state.assets,
         ...newAssets.filter(
-          (newAsset) => !state.assets.some((asset) => asset.id === newAsset.id)
+          (newAsset) => !state.assets.some((asset) => asset.id === newAsset.id),
         ),
       ],
     })),
@@ -31,7 +31,7 @@ export const useAssetStore = create<AssetsState>((set) => ({
         ...state.assetTypes,
         ...newAssetTypes.filter(
           (newAsset) =>
-            !state.assetTypes.some((asset) => asset.id === newAsset.id)
+            !state.assetTypes.some((asset) => asset.id === newAsset.id),
         ),
       ],
     })),
@@ -39,7 +39,7 @@ export const useAssetStore = create<AssetsState>((set) => ({
 
 export const useExpandedAssets = () => {
   const [assets, assetTypes] = useAssetStore(
-    useShallow((state) => [state.assets, state.assetTypes])
+    useShallow((state) => [state.assets, state.assetTypes]),
   );
 
   return useMemo(
@@ -51,9 +51,9 @@ export const useExpandedAssets = () => {
             ticker: asset.ticker,
             name: asset.name,
             type: assetTypes.find((t) => t.id === asset.asset_type_id),
-          }) as ExpandedAsset
+          }) as ExpandedAsset,
       );
     },
-    [assets, assetTypes] // Only recompute when these change
+    [assets, assetTypes], // Only recompute when these change
   );
 };

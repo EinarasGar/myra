@@ -51,7 +51,7 @@ export function ComboBoxPopover<T extends ComboBoxElement>({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<T | null>(
-    defaultValue ?? null
+    defaultValue ?? null,
   );
 
   const currentValue = value ?? selectedStatus;
@@ -71,7 +71,7 @@ export function ComboBoxPopover<T extends ComboBoxElement>({
         groups[groupKey].push(option);
         return [groups, ungroups];
       },
-      [{}, []]
+      [{}, []],
     );
   }, [options]);
 
@@ -83,7 +83,7 @@ export function ComboBoxPopover<T extends ComboBoxElement>({
       setOpen(false);
       onSelect?.(option);
     },
-    [value, onSelect]
+    [value, onSelect],
   );
 
   return (

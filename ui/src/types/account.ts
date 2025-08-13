@@ -7,7 +7,7 @@ export interface Account {
 }
 
 export const mapAccountComboBoxProps = (
-  category: Account
+  category: Account,
 ): Account & ComboBoxElement => ({
   ...category,
   getLabel: () => category.name,

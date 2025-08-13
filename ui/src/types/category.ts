@@ -8,7 +8,7 @@ export type Category = {
 };
 
 export const mapCategoryComboBoxProps = (
-  category: Category
+  category: Category,
 ): Category & ComboBoxElement => ({
   ...category,
   getLabel: () => category.name,

@@ -50,7 +50,7 @@ export const HoldingsTableSkeleton = () => (
 
 export default function HoldingsTable() {
   const { data: holdingData } = useGetPortfolioHoldings(
-    "2396480f-0052-4cf0-81dc-8cedbde5ce13"
+    "2396480f-0052-4cf0-81dc-8cedbde5ce13",
   );
   const assets = useAssetStore((state) => state.assets);
   const accounts = useAccountStore((state) => state.accounts);
@@ -76,7 +76,7 @@ export default function HoldingsTable() {
       data: tableData,
       columns,
     }),
-    [tableData]
+    [tableData],
   );
 
   return <MemoizedDataTable {...table}></MemoizedDataTable>;

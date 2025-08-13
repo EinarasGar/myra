@@ -20,7 +20,7 @@ export interface ExpandedAsset {
 }
 
 export const mapAssetComboBoxProps = (
-  category: ExpandedAsset
+  category: ExpandedAsset,
 ): ExpandedAsset & ComboBoxElement => ({
   ...category,
   getLabel: () => category.name,

@@ -17,19 +17,19 @@ const ErrorBoundaryFallback: React.FC<ErrorBoundaryFallbackProps> = ({
     <div
       className={cn(
         "w-full h-[200px] flex flex-col items-center justify-center rounded-lg p-4",
-        className
+        className,
       )}
     >
       <AlertTriangle
         className={cn(
           "w-12 h-12 mb-4 text-zinc-500 dark:text-zinc-400",
-          iconClassName
+          iconClassName,
         )}
       />
       <h2
         className={cn(
           "text-zinc-500 dark:text-zinc-400 text-xl font-semibold mb-2",
-          messageClassName
+          messageClassName,
         )}
       >
         Oops! Something went wrong.
@@ -37,7 +37,7 @@ const ErrorBoundaryFallback: React.FC<ErrorBoundaryFallbackProps> = ({
       <p
         className={cn(
           "text-zinc-500 text-sm dark:text-zinc-400 text-center",
-          messageClassName
+          messageClassName,
         )}
       >
         We're sorry, but an error occurred. Please try again later.

@@ -21,7 +21,7 @@ const chartConfig = {
 export default function NetWorthHistoryChart() {
   const { data } = useGetProtfolioHistory(
     "2396480f-0052-4cf0-81dc-8cedbde5ce13",
-    "1w"
+    "1w",
   );
 
   // const filteredData = chartData.filter((item) => {

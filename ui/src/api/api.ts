@@ -6660,7 +6660,7 @@ export interface UserAssetPairMetadataViewModel {
  * @export
  */
 export const AccountsApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -6674,7 +6674,7 @@ export const AccountsApiAxiosParamCreator = function (
     addAccount: async (
       userId: string,
       addAccountRequestViewModel: AddAccountRequestViewModel,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("addAccount", "userId", userId);
@@ -6682,11 +6682,11 @@ export const AccountsApiAxiosParamCreator = function (
       assertParamExists(
         "addAccount",
         "addAccountRequestViewModel",
-        addAccountRequestViewModel
+        addAccountRequestViewModel,
       );
       const localVarPath = `/api/users/{user_id}/accounts`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId))
+        encodeURIComponent(String(userId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -6720,7 +6720,7 @@ export const AccountsApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         addAccountRequestViewModel,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -6739,7 +6739,7 @@ export const AccountsApiAxiosParamCreator = function (
     deleteAccount: async (
       userId: string,
       accountId: string,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("deleteAccount", "userId", userId);
@@ -6792,7 +6792,7 @@ export const AccountsApiAxiosParamCreator = function (
     getAccount: async (
       userId: string,
       accountId: string,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("getAccount", "userId", userId);
@@ -6841,7 +6841,7 @@ export const AccountsApiAxiosParamCreator = function (
      * @throws {RequiredError}
      */
     getAccountLiquidityTypes: async (
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/api/accounts/liquiditytypes`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -6884,7 +6884,7 @@ export const AccountsApiAxiosParamCreator = function (
      * @throws {RequiredError}
      */
     getAccountTypes: async (
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/api/accounts/types`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -6929,13 +6929,13 @@ export const AccountsApiAxiosParamCreator = function (
      */
     getAccounts: async (
       userId: string,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("getAccounts", "userId", userId);
       const localVarPath = `/api/users/{user_id}/accounts/`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId))
+        encodeURIComponent(String(userId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -6983,7 +6983,7 @@ export const AccountsApiAxiosParamCreator = function (
       userId: string,
       accountId: string,
       updateAccountViewModel: UpdateAccountViewModel,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("updateAccount", "userId", userId);
@@ -6993,7 +6993,7 @@ export const AccountsApiAxiosParamCreator = function (
       assertParamExists(
         "updateAccount",
         "updateAccountViewModel",
-        updateAccountViewModel
+        updateAccountViewModel,
       );
       const localVarPath = `/api/users/{user_id}/accounts/:account_id`
         .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
@@ -7030,7 +7030,7 @@ export const AccountsApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         updateAccountViewModel,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -7059,17 +7059,17 @@ export const AccountsApiFp = function (configuration?: Configuration) {
     async addAccount(
       userId: string,
       addAccountRequestViewModel: AddAccountRequestViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<AddAccountResponseViewModel>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.addAccount(
         userId,
         addAccountRequestViewModel,
-        options
+        options,
       );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -7081,7 +7081,7 @@ export const AccountsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -7095,14 +7095,14 @@ export const AccountsApiFp = function (configuration?: Configuration) {
     async deleteAccount(
       userId: string,
       accountId: string,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.deleteAccount(
         userId,
         accountId,
-        options
+        options,
       );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -7114,7 +7114,7 @@ export const AccountsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -7128,17 +7128,17 @@ export const AccountsApiFp = function (configuration?: Configuration) {
     async getAccount(
       userId: string,
       accountId: string,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<GetAccountResponseViewModel>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getAccount(
         userId,
         accountId,
-        options
+        options,
       );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -7150,7 +7150,7 @@ export const AccountsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -7160,11 +7160,11 @@ export const AccountsApiFp = function (configuration?: Configuration) {
      * @throws {RequiredError}
      */
     async getAccountLiquidityTypes(
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<GetAccountLiquidityTypesResponseViewModel>
     > {
       const localVarAxiosArgs =
@@ -7179,7 +7179,7 @@ export const AccountsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -7189,11 +7189,11 @@ export const AccountsApiFp = function (configuration?: Configuration) {
      * @throws {RequiredError}
      */
     async getAccountTypes(
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<GetAccountTypesResponseViewModel>
     > {
       const localVarAxiosArgs =
@@ -7208,7 +7208,7 @@ export const AccountsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -7220,16 +7220,16 @@ export const AccountsApiFp = function (configuration?: Configuration) {
      */
     async getAccounts(
       userId: string,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<GetAccountsResponseViewModel>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getAccounts(
         userId,
-        options
+        options,
       );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -7241,7 +7241,7 @@ export const AccountsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -7257,18 +7257,18 @@ export const AccountsApiFp = function (configuration?: Configuration) {
       userId: string,
       accountId: string,
       updateAccountViewModel: UpdateAccountViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<UpdateAccountViewModel>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.updateAccount(
         userId,
         accountId,
         updateAccountViewModel,
-        options
+        options,
       );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -7280,7 +7280,7 @@ export const AccountsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
   };
@@ -7293,7 +7293,7 @@ export const AccountsApiFp = function (configuration?: Configuration) {
 export const AccountsApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance
+  axios?: AxiosInstance,
 ) {
   const localVarFp = AccountsApiFp(configuration);
   return {
@@ -7308,7 +7308,7 @@ export const AccountsApiFactory = function (
     addAccount(
       userId: string,
       addAccountRequestViewModel: AddAccountRequestViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<AddAccountResponseViewModel> {
       return localVarFp
         .addAccount(userId, addAccountRequestViewModel, options)
@@ -7325,7 +7325,7 @@ export const AccountsApiFactory = function (
     deleteAccount(
       userId: string,
       accountId: string,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<void> {
       return localVarFp
         .deleteAccount(userId, accountId, options)
@@ -7342,7 +7342,7 @@ export const AccountsApiFactory = function (
     getAccount(
       userId: string,
       accountId: string,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<GetAccountResponseViewModel> {
       return localVarFp
         .getAccount(userId, accountId, options)
@@ -7355,7 +7355,7 @@ export const AccountsApiFactory = function (
      * @throws {RequiredError}
      */
     getAccountLiquidityTypes(
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<GetAccountLiquidityTypesResponseViewModel> {
       return localVarFp
         .getAccountLiquidityTypes(options)
@@ -7368,7 +7368,7 @@ export const AccountsApiFactory = function (
      * @throws {RequiredError}
      */
     getAccountTypes(
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<GetAccountTypesResponseViewModel> {
       return localVarFp
         .getAccountTypes(options)
@@ -7383,7 +7383,7 @@ export const AccountsApiFactory = function (
      */
     getAccounts(
       userId: string,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<GetAccountsResponseViewModel> {
       return localVarFp
         .getAccounts(userId, options)
@@ -7402,7 +7402,7 @@ export const AccountsApiFactory = function (
       userId: string,
       accountId: string,
       updateAccountViewModel: UpdateAccountViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<UpdateAccountViewModel> {
       return localVarFp
         .updateAccount(userId, accountId, updateAccountViewModel, options)
@@ -7430,7 +7430,7 @@ export class AccountsApi extends BaseAPI {
   public addAccount(
     userId: string,
     addAccountRequestViewModel: AddAccountRequestViewModel,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return AccountsApiFp(this.configuration)
       .addAccount(userId, addAccountRequestViewModel, options)
@@ -7449,7 +7449,7 @@ export class AccountsApi extends BaseAPI {
   public deleteAccount(
     userId: string,
     accountId: string,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return AccountsApiFp(this.configuration)
       .deleteAccount(userId, accountId, options)
@@ -7468,7 +7468,7 @@ export class AccountsApi extends BaseAPI {
   public getAccount(
     userId: string,
     accountId: string,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return AccountsApiFp(this.configuration)
       .getAccount(userId, accountId, options)
@@ -7529,7 +7529,7 @@ export class AccountsApi extends BaseAPI {
     userId: string,
     accountId: string,
     updateAccountViewModel: UpdateAccountViewModel,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return AccountsApiFp(this.configuration)
       .updateAccount(userId, accountId, updateAccountViewModel, options)
@@ -7542,7 +7542,7 @@ export class AccountsApi extends BaseAPI {
  * @export
  */
 export const AssetsApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -7554,13 +7554,13 @@ export const AssetsApiAxiosParamCreator = function (
      */
     getAsset: async (
       assetId: number,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'assetId' is not null or undefined
       assertParamExists("getAsset", "assetId", assetId);
       const localVarPath = `/api/assets/:asset_id`.replace(
         `{${"asset_id"}}`,
-        encodeURIComponent(String(assetId))
+        encodeURIComponent(String(assetId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -7606,7 +7606,7 @@ export const AssetsApiAxiosParamCreator = function (
     getAssetPair: async (
       assetId: number,
       referenceId: number,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'assetId' is not null or undefined
       assertParamExists("getAssetPair", "assetId", assetId);
@@ -7616,7 +7616,7 @@ export const AssetsApiAxiosParamCreator = function (
         .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
         .replace(
           `{${"reference_id"}}`,
-          encodeURIComponent(String(referenceId))
+          encodeURIComponent(String(referenceId)),
         );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -7664,7 +7664,7 @@ export const AssetsApiAxiosParamCreator = function (
       assetId: number,
       referenceId: number,
       range?: string,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'assetId' is not null or undefined
       assertParamExists("getAssetPairRates", "assetId", assetId);
@@ -7674,7 +7674,7 @@ export const AssetsApiAxiosParamCreator = function (
         .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
         .replace(
           `{${"reference_id"}}`,
-          encodeURIComponent(String(referenceId))
+          encodeURIComponent(String(referenceId)),
         );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -7726,7 +7726,7 @@ export const AssetsApiAxiosParamCreator = function (
       count?: number,
       start?: number,
       query?: string | null,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/api/assets`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -7793,16 +7793,16 @@ export const AssetsApiFp = function (configuration?: Configuration) {
      */
     async getAsset(
       assetId: number,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<GetAssetResponseViewModel>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getAsset(
         assetId,
-        options
+        options,
       );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -7813,7 +7813,7 @@ export const AssetsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -7827,17 +7827,17 @@ export const AssetsApiFp = function (configuration?: Configuration) {
     async getAssetPair(
       assetId: number,
       referenceId: number,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<GetAssetPairResponseViewModel>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getAssetPair(
         assetId,
         referenceId,
-        options
+        options,
       );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -7849,7 +7849,7 @@ export const AssetsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -7865,11 +7865,11 @@ export const AssetsApiFp = function (configuration?: Configuration) {
       assetId: number,
       referenceId: number,
       range?: string,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<GetAssetPairRatesResponseViewModel>
     > {
       const localVarAxiosArgs =
@@ -7877,7 +7877,7 @@ export const AssetsApiFp = function (configuration?: Configuration) {
           assetId,
           referenceId,
           range,
-          options
+          options,
         );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -7889,7 +7889,7 @@ export const AssetsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -7905,18 +7905,18 @@ export const AssetsApiFp = function (configuration?: Configuration) {
       count?: number,
       start?: number,
       query?: string | null,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<PageOfAssetsResultsWithLookupViewModel>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.searchAssets(
         count,
         start,
         query,
-        options
+        options,
       );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -7928,7 +7928,7 @@ export const AssetsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
   };
@@ -7941,7 +7941,7 @@ export const AssetsApiFp = function (configuration?: Configuration) {
 export const AssetsApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance
+  axios?: AxiosInstance,
 ) {
   const localVarFp = AssetsApiFp(configuration);
   return {
@@ -7954,7 +7954,7 @@ export const AssetsApiFactory = function (
      */
     getAsset(
       assetId: number,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<GetAssetResponseViewModel> {
       return localVarFp
         .getAsset(assetId, options)
@@ -7971,7 +7971,7 @@ export const AssetsApiFactory = function (
     getAssetPair(
       assetId: number,
       referenceId: number,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<GetAssetPairResponseViewModel> {
       return localVarFp
         .getAssetPair(assetId, referenceId, options)
@@ -7990,7 +7990,7 @@ export const AssetsApiFactory = function (
       assetId: number,
       referenceId: number,
       range?: string,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<GetAssetPairRatesResponseViewModel> {
       return localVarFp
         .getAssetPairRates(assetId, referenceId, range, options)
@@ -8009,7 +8009,7 @@ export const AssetsApiFactory = function (
       count?: number,
       start?: number,
       query?: string | null,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<PageOfAssetsResultsWithLookupViewModel> {
       return localVarFp
         .searchAssets(count, start, query, options)
@@ -8051,7 +8051,7 @@ export class AssetsApi extends BaseAPI {
   public getAssetPair(
     assetId: number,
     referenceId: number,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return AssetsApiFp(this.configuration)
       .getAssetPair(assetId, referenceId, options)
@@ -8072,7 +8072,7 @@ export class AssetsApi extends BaseAPI {
     assetId: number,
     referenceId: number,
     range?: string,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return AssetsApiFp(this.configuration)
       .getAssetPairRates(assetId, referenceId, range, options)
@@ -8093,7 +8093,7 @@ export class AssetsApi extends BaseAPI {
     count?: number,
     start?: number,
     query?: string | null,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return AssetsApiFp(this.configuration)
       .searchAssets(count, start, query, options)
@@ -8106,7 +8106,7 @@ export class AssetsApi extends BaseAPI {
  * @export
  */
 export const AuthenticationApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -8118,13 +8118,13 @@ export const AuthenticationApiAxiosParamCreator = function (
      */
     postLoginDetails: async (
       loginDetailsViewModel: LoginDetailsViewModel,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'loginDetailsViewModel' is not null or undefined
       assertParamExists(
         "postLoginDetails",
         "loginDetailsViewModel",
-        loginDetailsViewModel
+        loginDetailsViewModel,
       );
       const localVarPath = `/api/auth`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -8155,7 +8155,7 @@ export const AuthenticationApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         loginDetailsViewModel,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -8183,14 +8183,14 @@ export const AuthenticationApiFp = function (configuration?: Configuration) {
      */
     async postLoginDetails(
       loginDetailsViewModel: LoginDetailsViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<AuthViewModel>
     > {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.postLoginDetails(
           loginDetailsViewModel,
-          options
+          options,
         );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -8202,7 +8202,7 @@ export const AuthenticationApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
   };
@@ -8215,7 +8215,7 @@ export const AuthenticationApiFp = function (configuration?: Configuration) {
 export const AuthenticationApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance
+  axios?: AxiosInstance,
 ) {
   const localVarFp = AuthenticationApiFp(configuration);
   return {
@@ -8228,7 +8228,7 @@ export const AuthenticationApiFactory = function (
      */
     postLoginDetails(
       loginDetailsViewModel: LoginDetailsViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<AuthViewModel> {
       return localVarFp
         .postLoginDetails(loginDetailsViewModel, options)
@@ -8254,7 +8254,7 @@ export class AuthenticationApi extends BaseAPI {
    */
   public postLoginDetails(
     loginDetailsViewModel: LoginDetailsViewModel,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return AuthenticationApiFp(this.configuration)
       .postLoginDetails(loginDetailsViewModel, options)
@@ -8267,7 +8267,7 @@ export class AuthenticationApi extends BaseAPI {
  * @export
  */
 export const IndividualTransactionsApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -8281,7 +8281,7 @@ export const IndividualTransactionsApiAxiosParamCreator = function (
     addIndividualTransaction: async (
       userId: string,
       addIndividualTransactionRequestViewModel: AddIndividualTransactionRequestViewModel,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("addIndividualTransaction", "userId", userId);
@@ -8289,12 +8289,12 @@ export const IndividualTransactionsApiAxiosParamCreator = function (
       assertParamExists(
         "addIndividualTransaction",
         "addIndividualTransactionRequestViewModel",
-        addIndividualTransactionRequestViewModel
+        addIndividualTransactionRequestViewModel,
       );
       const localVarPath =
         `/api/users/{user_id}/transactions/individual`.replace(
           `{${"user_id"}}`,
-          encodeURIComponent(String(userId))
+          encodeURIComponent(String(userId)),
         );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -8328,7 +8328,7 @@ export const IndividualTransactionsApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         addIndividualTransactionRequestViewModel,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -8351,14 +8351,14 @@ export const IndividualTransactionsApiAxiosParamCreator = function (
       count?: number,
       start?: number,
       query?: string | null,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("getIndividualTransactions", "userId", userId);
       const localVarPath =
         `/api/users/{user_id}/transactions/individual`.replace(
           `{${"user_id"}}`,
-          encodeURIComponent(String(userId))
+          encodeURIComponent(String(userId)),
         );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -8414,14 +8414,14 @@ export const IndividualTransactionsApiAxiosParamCreator = function (
      */
     getSingle: async (
       userId: string,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("getSingle", "userId", userId);
       const localVarPath =
         `/api/users/{user_id}/transactions/individual/:transaction_id`.replace(
           `{${"user_id"}}`,
-          encodeURIComponent(String(userId))
+          encodeURIComponent(String(userId)),
         );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -8469,32 +8469,32 @@ export const IndividualTransactionsApiAxiosParamCreator = function (
       userId: string,
       transactionId: string,
       updateIndividualTransactionRequestViewModel: UpdateIndividualTransactionRequestViewModel,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists(
         "updateAnExistingIndividualTransaction",
         "userId",
-        userId
+        userId,
       );
       // verify required parameter 'transactionId' is not null or undefined
       assertParamExists(
         "updateAnExistingIndividualTransaction",
         "transactionId",
-        transactionId
+        transactionId,
       );
       // verify required parameter 'updateIndividualTransactionRequestViewModel' is not null or undefined
       assertParamExists(
         "updateAnExistingIndividualTransaction",
         "updateIndividualTransactionRequestViewModel",
-        updateIndividualTransactionRequestViewModel
+        updateIndividualTransactionRequestViewModel,
       );
       const localVarPath =
         `/api/users/{user_id}/transactions/individual/:transaction_id`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
           .replace(
             `{${"transaction_id"}}`,
-            encodeURIComponent(String(transactionId))
+            encodeURIComponent(String(transactionId)),
           );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -8528,7 +8528,7 @@ export const IndividualTransactionsApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         updateIndividualTransactionRequestViewModel,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -8544,7 +8544,7 @@ export const IndividualTransactionsApiAxiosParamCreator = function (
  * @export
  */
 export const IndividualTransactionsApiFp = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   const localVarAxiosParamCreator =
     IndividualTransactionsApiAxiosParamCreator(configuration);
@@ -8560,18 +8560,18 @@ export const IndividualTransactionsApiFp = function (
     async addIndividualTransaction(
       userId: string,
       addIndividualTransactionRequestViewModel: AddIndividualTransactionRequestViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<AddIndividualTransactionResponseViewModel>
     > {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.addIndividualTransaction(
           userId,
           addIndividualTransactionRequestViewModel,
-          options
+          options,
         );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -8583,7 +8583,7 @@ export const IndividualTransactionsApiFp = function (
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -8601,11 +8601,11 @@ export const IndividualTransactionsApiFp = function (
       count?: number,
       start?: number,
       query?: string | null,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<PageOfIndividualTransactionsWithLookupViewModel>
     > {
       const localVarAxiosArgs =
@@ -8614,7 +8614,7 @@ export const IndividualTransactionsApiFp = function (
           count,
           start,
           query,
-          options
+          options,
         );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -8626,7 +8626,7 @@ export const IndividualTransactionsApiFp = function (
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -8638,16 +8638,16 @@ export const IndividualTransactionsApiFp = function (
      */
     async getSingle(
       userId: string,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<GetIndividualTransactionViewModel>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getSingle(
         userId,
-        options
+        options,
       );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -8659,7 +8659,7 @@ export const IndividualTransactionsApiFp = function (
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -8675,11 +8675,11 @@ export const IndividualTransactionsApiFp = function (
       userId: string,
       transactionId: string,
       updateIndividualTransactionRequestViewModel: UpdateIndividualTransactionRequestViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<UpdateIndividualTransactionResponseViewModel>
     > {
       const localVarAxiosArgs =
@@ -8687,7 +8687,7 @@ export const IndividualTransactionsApiFp = function (
           userId,
           transactionId,
           updateIndividualTransactionRequestViewModel,
-          options
+          options,
         );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -8699,7 +8699,7 @@ export const IndividualTransactionsApiFp = function (
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
   };
@@ -8712,7 +8712,7 @@ export const IndividualTransactionsApiFp = function (
 export const IndividualTransactionsApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance
+  axios?: AxiosInstance,
 ) {
   const localVarFp = IndividualTransactionsApiFp(configuration);
   return {
@@ -8727,13 +8727,13 @@ export const IndividualTransactionsApiFactory = function (
     addIndividualTransaction(
       userId: string,
       addIndividualTransactionRequestViewModel: AddIndividualTransactionRequestViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<AddIndividualTransactionResponseViewModel> {
       return localVarFp
         .addIndividualTransaction(
           userId,
           addIndividualTransactionRequestViewModel,
-          options
+          options,
         )
         .then((request) => request(axios, basePath));
     },
@@ -8752,7 +8752,7 @@ export const IndividualTransactionsApiFactory = function (
       count?: number,
       start?: number,
       query?: string | null,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<PageOfIndividualTransactionsWithLookupViewModel> {
       return localVarFp
         .getIndividualTransactions(userId, count, start, query, options)
@@ -8767,7 +8767,7 @@ export const IndividualTransactionsApiFactory = function (
      */
     getSingle(
       userId: string,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<GetIndividualTransactionViewModel> {
       return localVarFp
         .getSingle(userId, options)
@@ -8786,14 +8786,14 @@ export const IndividualTransactionsApiFactory = function (
       userId: string,
       transactionId: string,
       updateIndividualTransactionRequestViewModel: UpdateIndividualTransactionRequestViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<UpdateIndividualTransactionResponseViewModel> {
       return localVarFp
         .updateAnExistingIndividualTransaction(
           userId,
           transactionId,
           updateIndividualTransactionRequestViewModel,
-          options
+          options,
         )
         .then((request) => request(axios, basePath));
     },
@@ -8819,13 +8819,13 @@ export class IndividualTransactionsApi extends BaseAPI {
   public addIndividualTransaction(
     userId: string,
     addIndividualTransactionRequestViewModel: AddIndividualTransactionRequestViewModel,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return IndividualTransactionsApiFp(this.configuration)
       .addIndividualTransaction(
         userId,
         addIndividualTransactionRequestViewModel,
-        options
+        options,
       )
       .then((request) => request(this.axios, this.basePath));
   }
@@ -8846,7 +8846,7 @@ export class IndividualTransactionsApi extends BaseAPI {
     count?: number,
     start?: number,
     query?: string | null,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return IndividualTransactionsApiFp(this.configuration)
       .getIndividualTransactions(userId, count, start, query, options)
@@ -8881,14 +8881,14 @@ export class IndividualTransactionsApi extends BaseAPI {
     userId: string,
     transactionId: string,
     updateIndividualTransactionRequestViewModel: UpdateIndividualTransactionRequestViewModel,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return IndividualTransactionsApiFp(this.configuration)
       .updateAnExistingIndividualTransaction(
         userId,
         transactionId,
         updateIndividualTransactionRequestViewModel,
-        options
+        options,
       )
       .then((request) => request(this.axios, this.basePath));
   }
@@ -8899,7 +8899,7 @@ export class IndividualTransactionsApi extends BaseAPI {
  * @export
  */
 export const PortfolioApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -8913,13 +8913,13 @@ export const PortfolioApiAxiosParamCreator = function (
     getHoldings: async (
       userId: string,
       defaultAssetId?: number | null,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("getHoldings", "userId", userId);
       const localVarPath = `/api/users/{user_id}/portfolio/holdings`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId))
+        encodeURIComponent(String(userId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -8967,13 +8967,13 @@ export const PortfolioApiAxiosParamCreator = function (
       userId: string,
       range?: string,
       defaultAssetId?: number | null,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("getNetworthHistory", "userId", userId);
       const localVarPath = `/api/users/{user_id}/portfolio/history`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId))
+        encodeURIComponent(String(userId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -9034,17 +9034,17 @@ export const PortfolioApiFp = function (configuration?: Configuration) {
     async getHoldings(
       userId: string,
       defaultAssetId?: number | null,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<GetHoldingsResponseViewModel>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getHoldings(
         userId,
         defaultAssetId,
-        options
+        options,
       );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -9056,7 +9056,7 @@ export const PortfolioApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -9072,11 +9072,11 @@ export const PortfolioApiFp = function (configuration?: Configuration) {
       userId: string,
       range?: string,
       defaultAssetId?: number | null,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<GetNetWorthHistoryResponseViewModel>
     > {
       const localVarAxiosArgs =
@@ -9084,7 +9084,7 @@ export const PortfolioApiFp = function (configuration?: Configuration) {
           userId,
           range,
           defaultAssetId,
-          options
+          options,
         );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -9096,7 +9096,7 @@ export const PortfolioApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
   };
@@ -9109,7 +9109,7 @@ export const PortfolioApiFp = function (configuration?: Configuration) {
 export const PortfolioApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance
+  axios?: AxiosInstance,
 ) {
   const localVarFp = PortfolioApiFp(configuration);
   return {
@@ -9124,7 +9124,7 @@ export const PortfolioApiFactory = function (
     getHoldings(
       userId: string,
       defaultAssetId?: number | null,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<GetHoldingsResponseViewModel> {
       return localVarFp
         .getHoldings(userId, defaultAssetId, options)
@@ -9143,7 +9143,7 @@ export const PortfolioApiFactory = function (
       userId: string,
       range?: string,
       defaultAssetId?: number | null,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<GetNetWorthHistoryResponseViewModel> {
       return localVarFp
         .getNetworthHistory(userId, range, defaultAssetId, options)
@@ -9171,7 +9171,7 @@ export class PortfolioApi extends BaseAPI {
   public getHoldings(
     userId: string,
     defaultAssetId?: number | null,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return PortfolioApiFp(this.configuration)
       .getHoldings(userId, defaultAssetId, options)
@@ -9192,7 +9192,7 @@ export class PortfolioApi extends BaseAPI {
     userId: string,
     range?: string,
     defaultAssetId?: number | null,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return PortfolioApiFp(this.configuration)
       .getNetworthHistory(userId, range, defaultAssetId, options)
@@ -9205,7 +9205,7 @@ export class PortfolioApi extends BaseAPI {
  * @export
  */
 export const TransactionGroupsApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -9219,7 +9219,7 @@ export const TransactionGroupsApiAxiosParamCreator = function (
     addTransactionGroup: async (
       userId: string,
       addTransactionGroupRequestViewModel: AddTransactionGroupRequestViewModel,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("addTransactionGroup", "userId", userId);
@@ -9227,11 +9227,11 @@ export const TransactionGroupsApiAxiosParamCreator = function (
       assertParamExists(
         "addTransactionGroup",
         "addTransactionGroupRequestViewModel",
-        addTransactionGroupRequestViewModel
+        addTransactionGroupRequestViewModel,
       );
       const localVarPath = `/api/users/{user_id}/transactions/groups`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId))
+        encodeURIComponent(String(userId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -9265,7 +9265,7 @@ export const TransactionGroupsApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         addTransactionGroupRequestViewModel,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -9284,7 +9284,7 @@ export const TransactionGroupsApiAxiosParamCreator = function (
     deleteAnExistingTransactionGroup: async (
       userId: string,
       groupId: number,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("deleteAnExistingTransactionGroup", "userId", userId);
@@ -9335,13 +9335,13 @@ export const TransactionGroupsApiAxiosParamCreator = function (
      */
     getTransactionGroups: async (
       userId: string,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("getTransactionGroups", "userId", userId);
       const localVarPath = `/api/users/{user_id}/transactions/groups`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId))
+        encodeURIComponent(String(userId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -9389,7 +9389,7 @@ export const TransactionGroupsApiAxiosParamCreator = function (
       userId: string,
       groupId: number,
       updateTransactionGroupRequestViewModel: UpdateTransactionGroupRequestViewModel,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("updateTransactionGroup", "userId", userId);
@@ -9399,7 +9399,7 @@ export const TransactionGroupsApiAxiosParamCreator = function (
       assertParamExists(
         "updateTransactionGroup",
         "updateTransactionGroupRequestViewModel",
-        updateTransactionGroupRequestViewModel
+        updateTransactionGroupRequestViewModel,
       );
       const localVarPath = `/api/users/{user_id}/transactions/groups/:group_id`
         .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
@@ -9436,7 +9436,7 @@ export const TransactionGroupsApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         updateTransactionGroupRequestViewModel,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -9466,18 +9466,18 @@ export const TransactionGroupsApiFp = function (configuration?: Configuration) {
     async addTransactionGroup(
       userId: string,
       addTransactionGroupRequestViewModel: AddTransactionGroupRequestViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<AddTransactionGroupResponseViewModel>
     > {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.addTransactionGroup(
           userId,
           addTransactionGroupRequestViewModel,
-          options
+          options,
         );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -9489,7 +9489,7 @@ export const TransactionGroupsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -9503,7 +9503,7 @@ export const TransactionGroupsApiFp = function (configuration?: Configuration) {
     async deleteAnExistingTransactionGroup(
       userId: string,
       groupId: number,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
@@ -9511,7 +9511,7 @@ export const TransactionGroupsApiFp = function (configuration?: Configuration) {
         await localVarAxiosParamCreator.deleteAnExistingTransactionGroup(
           userId,
           groupId,
-          options
+          options,
         );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -9523,7 +9523,7 @@ export const TransactionGroupsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -9535,11 +9535,11 @@ export const TransactionGroupsApiFp = function (configuration?: Configuration) {
      */
     async getTransactionGroups(
       userId: string,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<GetTransactionGroupsViewModel>
     > {
       const localVarAxiosArgs =
@@ -9554,7 +9554,7 @@ export const TransactionGroupsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -9570,11 +9570,11 @@ export const TransactionGroupsApiFp = function (configuration?: Configuration) {
       userId: string,
       groupId: number,
       updateTransactionGroupRequestViewModel: UpdateTransactionGroupRequestViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<UpdateTransactionGroupResponseViewModel>
     > {
       const localVarAxiosArgs =
@@ -9582,7 +9582,7 @@ export const TransactionGroupsApiFp = function (configuration?: Configuration) {
           userId,
           groupId,
           updateTransactionGroupRequestViewModel,
-          options
+          options,
         );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -9594,7 +9594,7 @@ export const TransactionGroupsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
   };
@@ -9607,7 +9607,7 @@ export const TransactionGroupsApiFp = function (configuration?: Configuration) {
 export const TransactionGroupsApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance
+  axios?: AxiosInstance,
 ) {
   const localVarFp = TransactionGroupsApiFp(configuration);
   return {
@@ -9622,13 +9622,13 @@ export const TransactionGroupsApiFactory = function (
     addTransactionGroup(
       userId: string,
       addTransactionGroupRequestViewModel: AddTransactionGroupRequestViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<AddTransactionGroupResponseViewModel> {
       return localVarFp
         .addTransactionGroup(
           userId,
           addTransactionGroupRequestViewModel,
-          options
+          options,
         )
         .then((request) => request(axios, basePath));
     },
@@ -9643,7 +9643,7 @@ export const TransactionGroupsApiFactory = function (
     deleteAnExistingTransactionGroup(
       userId: string,
       groupId: number,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<void> {
       return localVarFp
         .deleteAnExistingTransactionGroup(userId, groupId, options)
@@ -9658,7 +9658,7 @@ export const TransactionGroupsApiFactory = function (
      */
     getTransactionGroups(
       userId: string,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<GetTransactionGroupsViewModel> {
       return localVarFp
         .getTransactionGroups(userId, options)
@@ -9677,14 +9677,14 @@ export const TransactionGroupsApiFactory = function (
       userId: string,
       groupId: number,
       updateTransactionGroupRequestViewModel: UpdateTransactionGroupRequestViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<UpdateTransactionGroupResponseViewModel> {
       return localVarFp
         .updateTransactionGroup(
           userId,
           groupId,
           updateTransactionGroupRequestViewModel,
-          options
+          options,
         )
         .then((request) => request(axios, basePath));
     },
@@ -9710,7 +9710,7 @@ export class TransactionGroupsApi extends BaseAPI {
   public addTransactionGroup(
     userId: string,
     addTransactionGroupRequestViewModel: AddTransactionGroupRequestViewModel,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return TransactionGroupsApiFp(this.configuration)
       .addTransactionGroup(userId, addTransactionGroupRequestViewModel, options)
@@ -9729,7 +9729,7 @@ export class TransactionGroupsApi extends BaseAPI {
   public deleteAnExistingTransactionGroup(
     userId: string,
     groupId: number,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return TransactionGroupsApiFp(this.configuration)
       .deleteAnExistingTransactionGroup(userId, groupId, options)
@@ -9764,14 +9764,14 @@ export class TransactionGroupsApi extends BaseAPI {
     userId: string,
     groupId: number,
     updateTransactionGroupRequestViewModel: UpdateTransactionGroupRequestViewModel,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return TransactionGroupsApiFp(this.configuration)
       .updateTransactionGroup(
         userId,
         groupId,
         updateTransactionGroupRequestViewModel,
-        options
+        options,
       )
       .then((request) => request(this.axios, this.basePath));
   }
@@ -9782,7 +9782,7 @@ export class TransactionGroupsApi extends BaseAPI {
  * @export
  */
 export const TransactionsApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -9796,7 +9796,7 @@ export const TransactionsApiAxiosParamCreator = function (
     deleteAnExistingTransaction: async (
       userId: string,
       transactionId: string,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("deleteAnExistingTransaction", "userId", userId);
@@ -9804,13 +9804,13 @@ export const TransactionsApiAxiosParamCreator = function (
       assertParamExists(
         "deleteAnExistingTransaction",
         "transactionId",
-        transactionId
+        transactionId,
       );
       const localVarPath = `/api/users/{user_id}/transactions/:transaction_id`
         .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
         .replace(
           `{${"transaction_id"}}`,
-          encodeURIComponent(String(transactionId))
+          encodeURIComponent(String(transactionId)),
         );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -9854,13 +9854,13 @@ export const TransactionsApiAxiosParamCreator = function (
      */
     get: async (
       userId: string,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("get", "userId", userId);
       const localVarPath = `/api/users/{user_id}/transactions`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId))
+        encodeURIComponent(String(userId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -9908,7 +9908,7 @@ export const TransactionsApiAxiosParamCreator = function (
       userId: string,
       transactionId: string,
       updateTransactionRequestViewModel: UpdateTransactionRequestViewModel,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("updateAnExistingTransaction", "userId", userId);
@@ -9916,19 +9916,19 @@ export const TransactionsApiAxiosParamCreator = function (
       assertParamExists(
         "updateAnExistingTransaction",
         "transactionId",
-        transactionId
+        transactionId,
       );
       // verify required parameter 'updateTransactionRequestViewModel' is not null or undefined
       assertParamExists(
         "updateAnExistingTransaction",
         "updateTransactionRequestViewModel",
-        updateTransactionRequestViewModel
+        updateTransactionRequestViewModel,
       );
       const localVarPath = `/api/users/{user_id}/transactions/:transaction_id`
         .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
         .replace(
           `{${"transaction_id"}}`,
-          encodeURIComponent(String(transactionId))
+          encodeURIComponent(String(transactionId)),
         );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -9962,7 +9962,7 @@ export const TransactionsApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         updateTransactionRequestViewModel,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -9992,7 +9992,7 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
     async deleteAnExistingTransaction(
       userId: string,
       transactionId: string,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
@@ -10000,7 +10000,7 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
         await localVarAxiosParamCreator.deleteAnExistingTransaction(
           userId,
           transactionId,
-          options
+          options,
         );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -10012,7 +10012,7 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -10024,16 +10024,16 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
      */
     async get(
       userId: string,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<GetTransactionsViewModel>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.get(
         userId,
-        options
+        options,
       );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -10045,7 +10045,7 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -10061,11 +10061,11 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
       userId: string,
       transactionId: string,
       updateTransactionRequestViewModel: UpdateTransactionRequestViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<UpdateTransactionResponseViewModel>
     > {
       const localVarAxiosArgs =
@@ -10073,7 +10073,7 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
           userId,
           transactionId,
           updateTransactionRequestViewModel,
-          options
+          options,
         );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -10085,7 +10085,7 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
   };
@@ -10098,7 +10098,7 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
 export const TransactionsApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance
+  axios?: AxiosInstance,
 ) {
   const localVarFp = TransactionsApiFp(configuration);
   return {
@@ -10113,7 +10113,7 @@ export const TransactionsApiFactory = function (
     deleteAnExistingTransaction(
       userId: string,
       transactionId: string,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<void> {
       return localVarFp
         .deleteAnExistingTransaction(userId, transactionId, options)
@@ -10128,7 +10128,7 @@ export const TransactionsApiFactory = function (
      */
     get(
       userId: string,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<GetTransactionsViewModel> {
       return localVarFp
         .get(userId, options)
@@ -10147,14 +10147,14 @@ export const TransactionsApiFactory = function (
       userId: string,
       transactionId: string,
       updateTransactionRequestViewModel: UpdateTransactionRequestViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<UpdateTransactionResponseViewModel> {
       return localVarFp
         .updateAnExistingTransaction(
           userId,
           transactionId,
           updateTransactionRequestViewModel,
-          options
+          options,
         )
         .then((request) => request(axios, basePath));
     },
@@ -10180,7 +10180,7 @@ export class TransactionsApi extends BaseAPI {
   public deleteAnExistingTransaction(
     userId: string,
     transactionId: string,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return TransactionsApiFp(this.configuration)
       .deleteAnExistingTransaction(userId, transactionId, options)
@@ -10215,14 +10215,14 @@ export class TransactionsApi extends BaseAPI {
     userId: string,
     transactionId: string,
     updateTransactionRequestViewModel: UpdateTransactionRequestViewModel,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return TransactionsApiFp(this.configuration)
       .updateAnExistingTransaction(
         userId,
         transactionId,
         updateTransactionRequestViewModel,
-        options
+        options,
       )
       .then((request) => request(this.axios, this.basePath));
   }
@@ -10233,7 +10233,7 @@ export class TransactionsApi extends BaseAPI {
  * @export
  */
 export const UserAssetsApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -10247,7 +10247,7 @@ export const UserAssetsApiAxiosParamCreator = function (
     deleteAsset: async (
       userId: string,
       assetId: number,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("deleteAsset", "userId", userId);
@@ -10302,7 +10302,7 @@ export const UserAssetsApiAxiosParamCreator = function (
       userId: string,
       assetId: number,
       referenceId: number,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("deleteAssetPair", "userId", userId);
@@ -10315,7 +10315,7 @@ export const UserAssetsApiAxiosParamCreator = function (
         .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
         .replace(
           `{${"reference_id"}}`,
-          encodeURIComponent(String(referenceId))
+          encodeURIComponent(String(referenceId)),
         );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -10367,7 +10367,7 @@ export const UserAssetsApiAxiosParamCreator = function (
       referenceId: number,
       startTimestamp: string,
       endTimestamp: string,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("deleteAssetPairRates", "userId", userId);
@@ -10379,7 +10379,7 @@ export const UserAssetsApiAxiosParamCreator = function (
       assertParamExists(
         "deleteAssetPairRates",
         "startTimestamp",
-        startTimestamp
+        startTimestamp,
       );
       // verify required parameter 'endTimestamp' is not null or undefined
       assertParamExists("deleteAssetPairRates", "endTimestamp", endTimestamp);
@@ -10389,7 +10389,7 @@ export const UserAssetsApiAxiosParamCreator = function (
           .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
           .replace(
             `{${"reference_id"}}`,
-            encodeURIComponent(String(referenceId))
+            encodeURIComponent(String(referenceId)),
           );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -10449,7 +10449,7 @@ export const UserAssetsApiAxiosParamCreator = function (
     getUserAsset: async (
       userId: string,
       assetId: number,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("getUserAsset", "userId", userId);
@@ -10504,7 +10504,7 @@ export const UserAssetsApiAxiosParamCreator = function (
       userId: string,
       assetId: number,
       referenceId: number,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("getUserAssetPair", "userId", userId);
@@ -10517,7 +10517,7 @@ export const UserAssetsApiAxiosParamCreator = function (
         .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
         .replace(
           `{${"reference_id"}}`,
-          encodeURIComponent(String(referenceId))
+          encodeURIComponent(String(referenceId)),
         );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -10567,7 +10567,7 @@ export const UserAssetsApiAxiosParamCreator = function (
       assetId: number,
       referenceId: number,
       range?: string,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("getUserAssetPairRates", "userId", userId);
@@ -10581,7 +10581,7 @@ export const UserAssetsApiAxiosParamCreator = function (
           .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
           .replace(
             `{${"reference_id"}}`,
-            encodeURIComponent(String(referenceId))
+            encodeURIComponent(String(referenceId)),
           );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -10631,7 +10631,7 @@ export const UserAssetsApiAxiosParamCreator = function (
     postCustomAsset: async (
       userId: string,
       addAssetRequestViewModel: AddAssetRequestViewModel,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("postCustomAsset", "userId", userId);
@@ -10639,11 +10639,11 @@ export const UserAssetsApiAxiosParamCreator = function (
       assertParamExists(
         "postCustomAsset",
         "addAssetRequestViewModel",
-        addAssetRequestViewModel
+        addAssetRequestViewModel,
       );
       const localVarPath = `/api/users/{user_id}/assets`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId))
+        encodeURIComponent(String(userId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -10677,7 +10677,7 @@ export const UserAssetsApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         addAssetRequestViewModel,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -10700,7 +10700,7 @@ export const UserAssetsApiAxiosParamCreator = function (
       assetId: number,
       referenceId: number,
       addAssetPairRatesRequestViewModel: AddAssetPairRatesRequestViewModel,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("postCustomAssetRates", "userId", userId);
@@ -10712,7 +10712,7 @@ export const UserAssetsApiAxiosParamCreator = function (
       assertParamExists(
         "postCustomAssetRates",
         "addAssetPairRatesRequestViewModel",
-        addAssetPairRatesRequestViewModel
+        addAssetPairRatesRequestViewModel,
       );
       const localVarPath =
         `/api/users/{user_id}/assets/:asset_id/:reference_id/rates`
@@ -10720,7 +10720,7 @@ export const UserAssetsApiAxiosParamCreator = function (
           .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
           .replace(
             `{${"reference_id"}}`,
-            encodeURIComponent(String(referenceId))
+            encodeURIComponent(String(referenceId)),
           );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -10754,7 +10754,7 @@ export const UserAssetsApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         addAssetPairRatesRequestViewModel,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -10775,7 +10775,7 @@ export const UserAssetsApiAxiosParamCreator = function (
       userId: string,
       assetId: number,
       updateAssetRequestViewModel: UpdateAssetRequestViewModel,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("putCustomAsset", "userId", userId);
@@ -10785,7 +10785,7 @@ export const UserAssetsApiAxiosParamCreator = function (
       assertParamExists(
         "putCustomAsset",
         "updateAssetRequestViewModel",
-        updateAssetRequestViewModel
+        updateAssetRequestViewModel,
       );
       const localVarPath = `/api/users/{user_id}/assets/:asset_id`
         .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
@@ -10822,7 +10822,7 @@ export const UserAssetsApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         updateAssetRequestViewModel,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -10845,7 +10845,7 @@ export const UserAssetsApiAxiosParamCreator = function (
       assetId: number,
       referenceId: number,
       updateAssetPairRequestViewModel: UpdateAssetPairRequestViewModel,
-      options: RawAxiosRequestConfig = {}
+      options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("putCustomAssetPair", "userId", userId);
@@ -10857,7 +10857,7 @@ export const UserAssetsApiAxiosParamCreator = function (
       assertParamExists(
         "putCustomAssetPair",
         "updateAssetPairRequestViewModel",
-        updateAssetPairRequestViewModel
+        updateAssetPairRequestViewModel,
       );
       const localVarPath =
         `/api/users/{user_id}/assets/:asset_id/:reference_id/usermetadata`
@@ -10865,7 +10865,7 @@ export const UserAssetsApiAxiosParamCreator = function (
           .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
           .replace(
             `{${"reference_id"}}`,
-            encodeURIComponent(String(referenceId))
+            encodeURIComponent(String(referenceId)),
           );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -10899,7 +10899,7 @@ export const UserAssetsApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         updateAssetPairRequestViewModel,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -10929,14 +10929,14 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
     async deleteAsset(
       userId: string,
       assetId: number,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.deleteAsset(
         userId,
         assetId,
-        options
+        options,
       );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -10948,7 +10948,7 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -10964,7 +10964,7 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
       userId: string,
       assetId: number,
       referenceId: number,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
@@ -10972,7 +10972,7 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
         userId,
         assetId,
         referenceId,
-        options
+        options,
       );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -10984,7 +10984,7 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -11004,7 +11004,7 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
       referenceId: number,
       startTimestamp: string,
       endTimestamp: string,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
@@ -11015,7 +11015,7 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
           referenceId,
           startTimestamp,
           endTimestamp,
-          options
+          options,
         );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -11027,7 +11027,7 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -11041,17 +11041,17 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
     async getUserAsset(
       userId: string,
       assetId: number,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<GetAssetResponseViewModel>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getUserAsset(
         userId,
         assetId,
-        options
+        options,
       );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -11063,7 +11063,7 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -11079,11 +11079,11 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
       userId: string,
       assetId: number,
       referenceId: number,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<GetUserAssetPairResponseViewModel>
     > {
       const localVarAxiosArgs =
@@ -11091,7 +11091,7 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
           userId,
           assetId,
           referenceId,
-          options
+          options,
         );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -11103,7 +11103,7 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -11121,11 +11121,11 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
       assetId: number,
       referenceId: number,
       range?: string,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<GetAssetPairRatesResponseViewModel>
     > {
       const localVarAxiosArgs =
@@ -11134,7 +11134,7 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
           assetId,
           referenceId,
           range,
-          options
+          options,
         );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -11146,7 +11146,7 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -11160,17 +11160,17 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
     async postCustomAsset(
       userId: string,
       addAssetRequestViewModel: AddAssetRequestViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<AddAssetResponseViewModel>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.postCustomAsset(
         userId,
         addAssetRequestViewModel,
-        options
+        options,
       );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -11182,7 +11182,7 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -11200,11 +11200,11 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
       assetId: number,
       referenceId: number,
       addAssetPairRatesRequestViewModel: AddAssetPairRatesRequestViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<AddAssetPairRatesResponseViewModel>
     > {
       const localVarAxiosArgs =
@@ -11213,7 +11213,7 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
           assetId,
           referenceId,
           addAssetPairRatesRequestViewModel,
-          options
+          options,
         );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -11225,7 +11225,7 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -11241,18 +11241,18 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
       userId: string,
       assetId: number,
       updateAssetRequestViewModel: UpdateAssetRequestViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<UpdateAssetResponseViewModel>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.putCustomAsset(
         userId,
         assetId,
         updateAssetRequestViewModel,
-        options
+        options,
       );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -11264,7 +11264,7 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
@@ -11282,11 +11282,11 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
       assetId: number,
       referenceId: number,
       updateAssetPairRequestViewModel: UpdateAssetPairRequestViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string
+        basePath?: string,
       ) => AxiosPromise<UpdateAssetPairResponseViewModel>
     > {
       const localVarAxiosArgs =
@@ -11295,7 +11295,7 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
           assetId,
           referenceId,
           updateAssetPairRequestViewModel,
-          options
+          options,
         );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
@@ -11307,7 +11307,7 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration
+          configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
   };
@@ -11320,7 +11320,7 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
 export const UserAssetsApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance
+  axios?: AxiosInstance,
 ) {
   const localVarFp = UserAssetsApiFp(configuration);
   return {
@@ -11335,7 +11335,7 @@ export const UserAssetsApiFactory = function (
     deleteAsset(
       userId: string,
       assetId: number,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<void> {
       return localVarFp
         .deleteAsset(userId, assetId, options)
@@ -11354,7 +11354,7 @@ export const UserAssetsApiFactory = function (
       userId: string,
       assetId: number,
       referenceId: number,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<void> {
       return localVarFp
         .deleteAssetPair(userId, assetId, referenceId, options)
@@ -11377,7 +11377,7 @@ export const UserAssetsApiFactory = function (
       referenceId: number,
       startTimestamp: string,
       endTimestamp: string,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<void> {
       return localVarFp
         .deleteAssetPairRates(
@@ -11386,7 +11386,7 @@ export const UserAssetsApiFactory = function (
           referenceId,
           startTimestamp,
           endTimestamp,
-          options
+          options,
         )
         .then((request) => request(axios, basePath));
     },
@@ -11401,7 +11401,7 @@ export const UserAssetsApiFactory = function (
     getUserAsset(
       userId: string,
       assetId: number,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<GetAssetResponseViewModel> {
       return localVarFp
         .getUserAsset(userId, assetId, options)
@@ -11420,7 +11420,7 @@ export const UserAssetsApiFactory = function (
       userId: string,
       assetId: number,
       referenceId: number,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<GetUserAssetPairResponseViewModel> {
       return localVarFp
         .getUserAssetPair(userId, assetId, referenceId, options)
@@ -11441,7 +11441,7 @@ export const UserAssetsApiFactory = function (
       assetId: number,
       referenceId: number,
       range?: string,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<GetAssetPairRatesResponseViewModel> {
       return localVarFp
         .getUserAssetPairRates(userId, assetId, referenceId, range, options)
@@ -11458,7 +11458,7 @@ export const UserAssetsApiFactory = function (
     postCustomAsset(
       userId: string,
       addAssetRequestViewModel: AddAssetRequestViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<AddAssetResponseViewModel> {
       return localVarFp
         .postCustomAsset(userId, addAssetRequestViewModel, options)
@@ -11479,7 +11479,7 @@ export const UserAssetsApiFactory = function (
       assetId: number,
       referenceId: number,
       addAssetPairRatesRequestViewModel: AddAssetPairRatesRequestViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<AddAssetPairRatesResponseViewModel> {
       return localVarFp
         .postCustomAssetRates(
@@ -11487,7 +11487,7 @@ export const UserAssetsApiFactory = function (
           assetId,
           referenceId,
           addAssetPairRatesRequestViewModel,
-          options
+          options,
         )
         .then((request) => request(axios, basePath));
     },
@@ -11504,7 +11504,7 @@ export const UserAssetsApiFactory = function (
       userId: string,
       assetId: number,
       updateAssetRequestViewModel: UpdateAssetRequestViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<UpdateAssetResponseViewModel> {
       return localVarFp
         .putCustomAsset(userId, assetId, updateAssetRequestViewModel, options)
@@ -11525,7 +11525,7 @@ export const UserAssetsApiFactory = function (
       assetId: number,
       referenceId: number,
       updateAssetPairRequestViewModel: UpdateAssetPairRequestViewModel,
-      options?: RawAxiosRequestConfig
+      options?: RawAxiosRequestConfig,
     ): AxiosPromise<UpdateAssetPairResponseViewModel> {
       return localVarFp
         .putCustomAssetPair(
@@ -11533,7 +11533,7 @@ export const UserAssetsApiFactory = function (
           assetId,
           referenceId,
           updateAssetPairRequestViewModel,
-          options
+          options,
         )
         .then((request) => request(axios, basePath));
     },
@@ -11559,7 +11559,7 @@ export class UserAssetsApi extends BaseAPI {
   public deleteAsset(
     userId: string,
     assetId: number,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return UserAssetsApiFp(this.configuration)
       .deleteAsset(userId, assetId, options)
@@ -11580,7 +11580,7 @@ export class UserAssetsApi extends BaseAPI {
     userId: string,
     assetId: number,
     referenceId: number,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return UserAssetsApiFp(this.configuration)
       .deleteAssetPair(userId, assetId, referenceId, options)
@@ -11605,7 +11605,7 @@ export class UserAssetsApi extends BaseAPI {
     referenceId: number,
     startTimestamp: string,
     endTimestamp: string,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return UserAssetsApiFp(this.configuration)
       .deleteAssetPairRates(
@@ -11614,7 +11614,7 @@ export class UserAssetsApi extends BaseAPI {
         referenceId,
         startTimestamp,
         endTimestamp,
-        options
+        options,
       )
       .then((request) => request(this.axios, this.basePath));
   }
@@ -11631,7 +11631,7 @@ export class UserAssetsApi extends BaseAPI {
   public getUserAsset(
     userId: string,
     assetId: number,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return UserAssetsApiFp(this.configuration)
       .getUserAsset(userId, assetId, options)
@@ -11652,7 +11652,7 @@ export class UserAssetsApi extends BaseAPI {
     userId: string,
     assetId: number,
     referenceId: number,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return UserAssetsApiFp(this.configuration)
       .getUserAssetPair(userId, assetId, referenceId, options)
@@ -11675,7 +11675,7 @@ export class UserAssetsApi extends BaseAPI {
     assetId: number,
     referenceId: number,
     range?: string,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return UserAssetsApiFp(this.configuration)
       .getUserAssetPairRates(userId, assetId, referenceId, range, options)
@@ -11694,7 +11694,7 @@ export class UserAssetsApi extends BaseAPI {
   public postCustomAsset(
     userId: string,
     addAssetRequestViewModel: AddAssetRequestViewModel,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return UserAssetsApiFp(this.configuration)
       .postCustomAsset(userId, addAssetRequestViewModel, options)
@@ -11717,7 +11717,7 @@ export class UserAssetsApi extends BaseAPI {
     assetId: number,
     referenceId: number,
     addAssetPairRatesRequestViewModel: AddAssetPairRatesRequestViewModel,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return UserAssetsApiFp(this.configuration)
       .postCustomAssetRates(
@@ -11725,7 +11725,7 @@ export class UserAssetsApi extends BaseAPI {
         assetId,
         referenceId,
         addAssetPairRatesRequestViewModel,
-        options
+        options,
       )
       .then((request) => request(this.axios, this.basePath));
   }
@@ -11744,7 +11744,7 @@ export class UserAssetsApi extends BaseAPI {
     userId: string,
     assetId: number,
     updateAssetRequestViewModel: UpdateAssetRequestViewModel,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return UserAssetsApiFp(this.configuration)
       .putCustomAsset(userId, assetId, updateAssetRequestViewModel, options)
@@ -11767,7 +11767,7 @@ export class UserAssetsApi extends BaseAPI {
     assetId: number,
     referenceId: number,
     updateAssetPairRequestViewModel: UpdateAssetPairRequestViewModel,
-    options?: RawAxiosRequestConfig
+    options?: RawAxiosRequestConfig,
   ) {
     return UserAssetsApiFp(this.configuration)
       .putCustomAssetPair(
@@ -11775,7 +11775,7 @@ export class UserAssetsApi extends BaseAPI {
         assetId,
         referenceId,
         updateAssetPairRequestViewModel,
-        options
+        options,
       )
       .then((request) => request(this.axios, this.basePath));
   }

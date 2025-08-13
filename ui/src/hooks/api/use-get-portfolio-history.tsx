@@ -5,12 +5,12 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 const getPortfolioHistory = async (
   userId: string,
   range?: string,
-  defaultAssetId?: number | null
+  defaultAssetId?: number | null,
 ) => {
   const data = await PortfolioApiFactory().getNetworthHistory(
     userId,
     range,
-    defaultAssetId
+    defaultAssetId,
   );
   return data;
 };
@@ -18,7 +18,7 @@ const getPortfolioHistory = async (
 export default function useGetProtfolioHistory(
   userId: string,
   range?: string,
-  defaultAssetId?: number | null
+  defaultAssetId?: number | null,
 ) {
   return useSuspenseQuery({
     queryKey: [QueryKeys.PORTFOLIO_HISTORY],

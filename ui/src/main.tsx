@@ -19,6 +19,6 @@ if (!rootElement.innerHTML) {
           <ReactQueryDevtools initialIsOpen={false} />
         </QueryClientProvider>
       </AuthProvider>
-    </StrictMode>
+    </StrictMode>,
   );
 }
