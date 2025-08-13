@@ -96,6 +96,29 @@ clean-full: clean ## Clean everything including dependencies
 reset: clean-full install ## Clean and reinstall dependencies
 	@echo "$(GREEN)Reset complete!$(NC)"
 
+# API Generation
+.PHONY: generate-api
+generate-api: ## Generate TypeScript API client from OpenAPI spec
+	@echo "$(GREEN)Downloading OpenAPI spec from localhost:5000...$(NC)"
+	@TEMP_FILE=$$(mktemp /tmp/openapi.XXXXXX.json); \
+	if curl -f -s http://localhost:5000/api-docs/openapi.json -o $$TEMP_FILE; then \
+		echo "$(GREEN)OpenAPI spec downloaded successfully$(NC)"; \
+		echo "$(YELLOW)Converting anyOf to oneOf...$(NC)"; \
+		sed -i '' 's/"anyOf"/"oneOf"/g' $$TEMP_FILE; \
+		echo "$(GREEN)Generating API client...$(NC)"; \
+		npx @openapitools/openapi-generator-cli generate -i $$TEMP_FILE -g typescript-axios --skip-validate-spec -o src/api --additional-properties=withInterfaces=true,legacyDiscriminatorBehavior=true,supportsES6=true; \
+		echo "$(YELLOW)Cleaning up generated files...$(NC)"; \
+		rm -rf src/api/.openapi-generator src/api/.gitignore src/api/.npmignore src/api/.openapi-generator-ignore src/api/git_push.sh; \
+		echo "$(YELLOW)Removing temporary file...$(NC)"; \
+		rm -f $$TEMP_FILE; \
+		echo "$(GREEN)API client generated successfully!$(NC)"; \
+	else \
+		echo "$(RED)Error: Cannot download OpenAPI spec from http://localhost:5000/api-docs/openapi.json$(NC)"; \
+		echo "$(RED)Make sure the web server is running on port 5000$(NC)"; \
+		rm -f $$TEMP_FILE; \
+		exit 1; \
+	fi
+
 # All-in-one commands
 .PHONY: qa
 qa: lint type-check ## Run all quality assurance checks
