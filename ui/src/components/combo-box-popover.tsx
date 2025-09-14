@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/popover";
 import { ComboBoxElement } from "@/interfaces/combo-box-element";
 import { DynamicIcon } from "lucide-react/dynamic";
+import { cn } from "@/lib/utils";
 
 interface AutocompleteProps<T extends ComboBoxElement> {
   options: T[];
@@ -41,6 +42,7 @@ export function ComboBoxPopover<T extends ComboBoxElement>({
   onSearchValueChange,
   placeholder = "Select...",
   isFetching,
+  className,
   value,
   defaultValue,
   error,
@@ -91,17 +93,23 @@ export function ComboBoxPopover<T extends ComboBoxElement>({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className={`w-[150px] justify-start ${error ? "border-red-500" : ""}`}
+          className={cn(
+            "w-full max-w-[200px] justify-start overflow-hidden",
+            error && "border-red-500",
+            className
+          )}
           disabled={disabled}
           aria-label={ariaLabel}
           aria-required={required}
           aria-invalid={!!error}
         >
-          {currentValue ? (
-            <>{currentValue.getLabel()}</>
-          ) : (
-            <span className="text-muted-foreground">{placeholder}</span>
-          )}
+          <span className="truncate">
+            {currentValue ? (
+              currentValue.getLabel()
+            ) : (
+              <span className="text-muted-foreground">{placeholder}</span>
+            )}
+          </span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="p-0" side="bottom" align="start">

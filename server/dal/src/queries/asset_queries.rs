@@ -155,7 +155,15 @@ pub fn get_asset_with_metadata(params: GetAssetsParams) -> DbQueryWithValues {
             );
         }
         GetAssetsParamsSeachType::All => {}
-        GetAssetsParamsSeachType::ByQuery(_query) => todo!(),
+        GetAssetsParamsSeachType::ByQuery(_query) => {
+            //Temporary logic to enable frontend development
+            get_assets_builder.and_where(
+                Expr::col((AssetsIden::Table, AssetsIden::AssetName))
+                    .ilike(format!("%{}%", _query))
+                    .or(Expr::col((AssetsIden::Table, AssetsIden::Ticker))
+                        .ilike(format!("%{}%", _query))),
+            );
+        }
     };
 
     if let Some(paging) = params.paging {

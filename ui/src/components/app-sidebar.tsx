@@ -129,8 +129,8 @@ const data = {
   ],
   projects: [
     {
-      name: "Design Engineering",
-      url: "#",
+      name: "COMPONENT TESTING",
+      url: "component-testing",
       icon: Frame,
     },
     {

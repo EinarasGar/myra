@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as AuthIndexRouteImport } from './routes/_auth.index'
 import { Route as AuthTransactionsRouteImport } from './routes/_auth.transactions'
 import { Route as AuthPortfolioRouteImport } from './routes/_auth.portfolio'
+import { Route as AuthComponentTestingRouteImport } from './routes/_auth.component-testing'
 import { Route as AuthTransactionsIndividualRouteImport } from './routes/_auth.transactions.individual'
 
 const LoginRoute = LoginRouteImport.update({
@@ -46,6 +47,11 @@ const AuthPortfolioRoute = AuthPortfolioRouteImport.update({
   path: '/portfolio',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthComponentTestingRoute = AuthComponentTestingRouteImport.update({
+  id: '/component-testing',
+  path: '/component-testing',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthTransactionsIndividualRoute =
   AuthTransactionsIndividualRouteImport.update({
     id: '/individual',
@@ -56,6 +62,7 @@ const AuthTransactionsIndividualRoute =
 export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/login': typeof LoginRoute
+  '/component-testing': typeof AuthComponentTestingRoute
   '/portfolio': typeof AuthPortfolioRoute
   '/transactions': typeof AuthTransactionsRouteWithChildren
   '/': typeof AuthIndexRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/login': typeof LoginRoute
+  '/component-testing': typeof AuthComponentTestingRoute
   '/portfolio': typeof AuthPortfolioRoute
   '/transactions': typeof AuthTransactionsRouteWithChildren
   '/': typeof AuthIndexRoute
@@ -74,6 +82,7 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteWithChildren
   '/about': typeof AboutRoute
   '/login': typeof LoginRoute
+  '/_auth/component-testing': typeof AuthComponentTestingRoute
   '/_auth/portfolio': typeof AuthPortfolioRoute
   '/_auth/transactions': typeof AuthTransactionsRouteWithChildren
   '/_auth/': typeof AuthIndexRoute
@@ -84,6 +93,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/about'
     | '/login'
+    | '/component-testing'
     | '/portfolio'
     | '/transactions'
     | '/'
@@ -92,6 +102,7 @@ export interface FileRouteTypes {
   to:
     | '/about'
     | '/login'
+    | '/component-testing'
     | '/portfolio'
     | '/transactions'
     | '/'
@@ -101,6 +112,7 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/about'
     | '/login'
+    | '/_auth/component-testing'
     | '/_auth/portfolio'
     | '/_auth/transactions'
     | '/_auth/'
@@ -157,6 +169,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthPortfolioRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/component-testing': {
+      id: '/_auth/component-testing'
+      path: '/component-testing'
+      fullPath: '/component-testing'
+      preLoaderRoute: typeof AuthComponentTestingRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/transactions/individual': {
       id: '/_auth/transactions/individual'
       path: '/individual'
@@ -179,12 +198,14 @@ const AuthTransactionsRouteWithChildren =
   AuthTransactionsRoute._addFileChildren(AuthTransactionsRouteChildren)
 
 interface AuthRouteChildren {
+  AuthComponentTestingRoute: typeof AuthComponentTestingRoute
   AuthPortfolioRoute: typeof AuthPortfolioRoute
   AuthTransactionsRoute: typeof AuthTransactionsRouteWithChildren
   AuthIndexRoute: typeof AuthIndexRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
+  AuthComponentTestingRoute: AuthComponentTestingRoute,
   AuthPortfolioRoute: AuthPortfolioRoute,
   AuthTransactionsRoute: AuthTransactionsRouteWithChildren,
   AuthIndexRoute: AuthIndexRoute,

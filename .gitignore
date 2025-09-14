@@ -4,3 +4,5 @@ notes.md
 database/scratchpad/*
 CLAUDE.md
 .claude/*
+
+.playwright-mcp/

@@ -6,6 +6,7 @@ interface AddTransactionFormProps {
   type: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export default function AddTransactionForm({ type }: AddTransactionFormProps) {
   return (
     <>

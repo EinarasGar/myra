@@ -82,7 +82,7 @@ function CustomTooltip() {
   );
 }
 
-function CustomDot(props: any) {
+function CustomDot(props: { cx?: number; cy?: number }) {
   const { cx, cy } = props;
   return (
     <circle
