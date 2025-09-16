@@ -31,10 +31,10 @@ export default function AssetAmountInput({
   required,
 }: AssetAmountInputProps) {
   const [localAsset, setLocalAsset] = useState<ExpandedAsset | null>(
-    value?.asset ?? null
+    value?.asset ?? null,
   );
   const [localAmount, setLocalAmount] = useState<string>(
-    value?.amount?.toString() ?? ""
+    value?.amount?.toString() ?? "",
   );
 
   const currentAsset = value?.asset ?? localAsset;
@@ -49,7 +49,7 @@ export default function AssetAmountInput({
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
-    
+
     // Allow empty string, numbers, and decimal points
     if (newValue === "" || /^\d*\.?\d*$/.test(newValue)) {
       if (!value?.amount) {
@@ -84,7 +84,7 @@ export default function AssetAmountInput({
           className={cn(
             "rounded-l-none flex-1 -ml-px",
             error && "border-red-500",
-            !currentAsset && "bg-muted/50"
+            !currentAsset && "bg-muted/50",
           )}
           aria-label="Amount"
         />

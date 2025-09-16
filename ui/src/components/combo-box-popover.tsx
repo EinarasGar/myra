@@ -94,9 +94,9 @@ export function ComboBoxPopover<T extends ComboBoxElement>({
         <Button
           variant="outline"
           className={cn(
-            "w-full max-w-[200px] justify-start overflow-hidden",
+            "w-full justify-start overflow-hidden",
             error && "border-red-500",
-            className
+            className,
           )}
           disabled={disabled}
           aria-label={ariaLabel}

@@ -57,7 +57,8 @@ export default function AssetPicker({
     if (!currentValue) return null;
     return {
       ...mapAssetComboBoxProps(currentValue),
-      getLabel: () => assetDisplay === "ticker" ? currentValue.ticker : currentValue.name,
+      getLabel: () =>
+        assetDisplay === "ticker" ? currentValue.ticker : currentValue.name,
     };
   }, [currentValue, assetDisplay]);
 

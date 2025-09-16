@@ -2,29 +2,41 @@ import { ComboBoxPopover } from "./combo-box-popover";
 import { useMemo } from "react";
 import { useAccountStore } from "@/hooks/store/use-account-store";
 import { mapAccountComboBoxProps } from "@/types/account";
+import type { Account } from "@/api";
 
-export default function AccountPicker() {
+interface AccountPickerProps {
+  value?: Account | null;
+  onChange?: (account: Account | null) => void;
+}
+
+export default function AccountPicker({ value, onChange }: AccountPickerProps) {
   const accounts = useAccountStore((state) => state.accounts);
 
   const options = useMemo(() => {
     return accounts.map(mapAccountComboBoxProps);
   }, [accounts]);
 
+  const selectedOption = useMemo(() => {
+    if (!value) return null;
+    return mapAccountComboBoxProps(value);
+  }, [value]);
+
   return (
-    <div className="flex items-center space-x-4">
-      <p className="text-sm text-muted-foreground">Account</p>
+    <div className="w-full">
       <ComboBoxPopover
         options={options}
         placeholder="Select an account..."
+        value={selectedOption}
         onSelect={(selectedItem) => {
-          console.log("Selected:", selectedItem);
+          const account = selectedItem
+            ? accounts.find((a) => a.id === selectedItem.getKey())
+            : null;
+          onChange?.(account || null);
         }}
         onSearchValueChange={(searchValue) => {
-          //setSearchValue(searchValue);
           console.log("Search value:", searchValue);
         }}
-        error="This is an error"
-        //isFetching={isFetching}
+        className="w-full"
       />
     </div>
   );
