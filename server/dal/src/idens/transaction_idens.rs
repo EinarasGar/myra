@@ -16,6 +16,7 @@ pub enum TransactionCategoriesIden {
     Category,
     Icon,
     CategoryType,
+    UserId,
 }
 
 #[allow(dead_code)]
@@ -31,6 +32,14 @@ pub enum TransactionDescriptionsIden {
     Table,
     TransactionId,
     Description,
+}
+
+#[allow(dead_code)]
+pub enum TransactionCategoryTypeIden {
+    Table,
+    Id,
+    CategoryTypeName,
+    UserId,
 }
 
 #[allow(dead_code)]
@@ -71,6 +80,7 @@ impl Iden for TransactionCategoriesIden {
                 Self::Category => "category",
                 Self::Icon => "icon",
                 Self::CategoryType => "category_type",
+                Self::UserId => "user_id",
             }
         )
         .unwrap();
@@ -102,6 +112,22 @@ impl Iden for TransactionDescriptionsIden {
                 Self::Table => "transaction_descriptions",
                 Self::TransactionId => "transaction_id",
                 Self::Description => "description",
+            }
+        )
+        .unwrap();
+    }
+}
+
+impl Iden for TransactionCategoryTypeIden {
+    fn unquoted(&self, s: &mut dyn std::fmt::Write) {
+        write!(
+            s,
+            "{}",
+            match self {
+                Self::Table => "transaction_category_type",
+                Self::Id => "id",
+                Self::CategoryTypeName => "category_type_name",
+                Self::UserId => "user_id",
             }
         )
         .unwrap();

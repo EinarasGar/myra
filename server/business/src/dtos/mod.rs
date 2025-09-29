@@ -17,6 +17,7 @@ pub mod asset_rate_dto;
 pub mod asset_ticker_pair_ids_dto;
 pub mod assets;
 pub mod auth_dto;
+pub mod categories;
 pub mod entry_dto;
 pub mod fee_entry_dto;
 pub mod fee_entry_types_dto;

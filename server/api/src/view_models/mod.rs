@@ -2,6 +2,7 @@ pub mod accounts;
 pub mod assets;
 pub mod authentication;
 pub mod base_models;
+pub mod categories;
 pub mod errors;
 pub mod portfolio;
 pub mod transactions;

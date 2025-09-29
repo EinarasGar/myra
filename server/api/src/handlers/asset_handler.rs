@@ -12,19 +12,16 @@ use business::dtos::{
 use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
-    view_models::errors::GetResponses,
     parsers::parse_duration_string,
     states::{AssetRatesServiceState, AssetsServiceState},
+    view_models::errors::GetResponses,
     view_models::{
         assets::{
             base_models::{
-                asset_id::RequiredAssetId,
-                asset_metadata::AssetMetadataViewModel,
+                asset_id::RequiredAssetId, asset_metadata::AssetMetadataViewModel,
                 asset_pair_metadata::AssetPairMetadataViewModel,
-                asset_type::IdentifiableAssetTypeViewModel,
-                asset_type_id::RequiredAssetTypeId,
-                lookup::AssetLookupTables,
-                rate::AssetRateViewModel,
+                asset_type::IdentifiableAssetTypeViewModel, asset_type_id::RequiredAssetTypeId,
+                lookup::AssetLookupTables, rate::AssetRateViewModel,
                 shared_asset_pair_metadata::SharedAssetPairMetadataViewModel,
             },
             get_asset::GetAssetResponseViewModel,
@@ -132,7 +129,12 @@ pub async fn get_asset(
         asset: asset_dto.asset.into(),
         metadata: AssetMetadataViewModel {
             base_asset_id: RequiredAssetId(asset_dto.base_asset_id.0),
-            pairs: asset_dto.pairs.unwrap().iter().map(|x| RequiredAssetId(x.0)).collect(),
+            pairs: asset_dto
+                .pairs
+                .unwrap()
+                .iter()
+                .map(|x| RequiredAssetId(x.0))
+                .collect(),
         },
     };
 

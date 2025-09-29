@@ -13,7 +13,6 @@ use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
     states::AssetsServiceState,
-    view_models::errors::{CreateResponses, DeleteResponses, GetResponses, UpdateResponses},
     view_models::assets::{
         add_asset::{AddAssetRequestViewModel, AddAssetResponseViewModel},
         add_asset_pair_rates::{
@@ -25,6 +24,7 @@ use crate::{
         update_asset::{UpdateAssetRequestViewModel, UpdateAssetResponseViewModel},
         update_asset_pair::{UpdateAssetPairRequestViewModel, UpdateAssetPairResponseViewModel},
     },
+    view_models::errors::{CreateResponses, DeleteResponses, GetResponses, UpdateResponses},
 };
 
 /// Get user asset

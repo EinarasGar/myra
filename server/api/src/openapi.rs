@@ -19,6 +19,7 @@ use crate::view_models::{
         asset_id::{AssetId, RequiredAssetId},
         asset_type_id::{AssetTypeId, RequiredAssetTypeId},
     },
+    categories::base_models::category_type_id::RequiredCategoryTypeId,
     errors::{ApiErrorResponse, AuthErrorResponse, ValidationError, ValidationErrorResponse},
     transactions::base_models::{
         category_id::{CategoryId, RequiredCategoryId},
@@ -80,6 +81,15 @@ use crate::view_models::{
         super::handlers::portfolio_handler::get_networth_history,
         super::handlers::portfolio_handler::get_holdings,
         super::handlers::portfolio_handler::get_portfolio_overview,
+        super::handlers::category_handler::search_categories,
+        super::handlers::category_handler::get_category,
+        super::handlers::category_handler::create_category,
+        super::handlers::category_handler::update_category,
+        super::handlers::category_handler::delete_category,
+        super::handlers::category_handler::get_category_types,
+        super::handlers::category_handler::create_category_type,
+        super::handlers::category_handler::update_category_type,
+        super::handlers::category_handler::delete_category_type,
     ),
     components(
         schemas(RequiredEntryId),
@@ -104,6 +114,7 @@ use crate::view_models::{
         schemas(ValidationErrorResponse),
         schemas(ValidationError),
         schemas(AuthErrorResponse),
+        schemas(RequiredCategoryTypeId)
     ),
     modifiers(
         // &TransformSchemasWithTag,

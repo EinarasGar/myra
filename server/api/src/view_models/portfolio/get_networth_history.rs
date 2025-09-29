@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::view_models::assets::base_models::{asset_id::RequiredAssetId, rate::AssetRateViewModel};
+use crate::view_models::assets::base_models::{
+    asset_id::RequiredAssetId, rate::AssetRateViewModel,
+};
 
 #[derive(Clone, Debug, Serialize, Deserialize, IntoParams)]
 #[serde(default)]

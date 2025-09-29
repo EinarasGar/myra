@@ -3,11 +3,11 @@ docker run --network host \
     --rm -it schemacrawler/schemacrawler \
     /opt/schemacrawler/bin/schemacrawler.sh \
     --server postgresql \
-    --host ${POSTGRES_HOSTNAME} \
-    --port ${POSTGRES_PORT} \
-    --user ${POSTGRES_USER} \
-    --password ${POSTGRES_PASSWORD} \
-    --database ${POSTGRES_DB} \
+    --host localhost \
+    --port 5432 \
+    --user myradev \
+    --password devpassword \
+    --database myra \
     --info-level=standard \
     --command script \
     --script-language python \

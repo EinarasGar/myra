@@ -8,8 +8,10 @@ fn main() {
         .alias_for("AssetViewModel", "crate::view_models::assets::base_models::asset::Asset<crate::view_models::assets::base_models::asset_type_id::RequiredAssetTypeId>")
         .alias_for("ExpandedAssetViewModel", "crate::view_models::assets::base_models::asset::Asset<crate::view_models::assets::base_models::asset_type::IdentifiableAssetTypeViewModel>")
         .alias_for("IdentifiableAssetViewModel", "crate::view_models::assets::base_models::asset::IdentifiableAsset<crate::view_models::assets::base_models::asset::Asset<crate::view_models::assets::base_models::asset_type_id::RequiredAssetTypeId>>")
-        
-        // Transaction Groups
+        .alias_for("ExpandedCategoryViewModel", "crate::view_models::categories::base_models::category::Category<crate::view_models::categories::base_models::category_type::IdentifiableCategoryTypeViewModel>")
+        .alias_for("CategoryViewModel", "crate::view_models::categories::base_models::category::Category<RequiredCategoryTypeId>")
+        .alias_for("IdentifiableCategoryViewModel", "crate::view_models::categories::base_models::category::IdentifiableCategory<crate::view_models::categories::base_models::category_type_id::RequiredCategoryTypeId>")
+        .alias_for("IdentifiableExpandedCategoryViewModel", "crate::view_models::categories::base_models::category::IdentifiableCategory<crate::view_models::categories::base_models::category_type::IdentifiableCategoryTypeViewModel>")
         .alias_for("TransactionGroupViewModel", "crate::view_models::transactions::base_models::transaction_group::TransactionGroup<crate::view_models::transactions::transaction_types::TransactionWithEntries>")
         .alias_for("TransactionGroupWithIdentifiableChildrenViewModel", "crate::view_models::transactions::base_models::transaction_group::TransactionGroup<crate::view_models::transactions::transaction_types::IdentifiableTransactionWithIdentifiableEntries>")
         .alias_for("RequiredTransactionGroupViewModel", "crate::view_models::transactions::base_models::transaction_group::TransactionGroup<crate::view_models::transactions::transaction_types::RequiredIdentifiableTransactionWithIdentifiableEntries>")

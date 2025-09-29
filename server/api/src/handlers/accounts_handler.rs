@@ -9,12 +9,10 @@ use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
     states::AccountsServiceState,
-    view_models::errors::{CreateResponses, DeleteResponses, GetResponses, UpdateResponses},
     view_models::accounts::{
         add_account::{AddAccountRequestViewModel, AddAccountResponseViewModel},
         base_models::{
-            account::IdentifiableAccount,
-            account_id::RequiredAccountId,
+            account::IdentifiableAccount, account_id::RequiredAccountId,
             account_liquidity_type::IdentifiableAccountLiquidityTypeViewModel,
             account_type::IdentifiableAccountTypeViewModel, account_type_id::AccountTypeId,
             liquidity_type_id::RequiredLiquidityTypeId,
@@ -26,6 +24,7 @@ use crate::{
         get_accounts::GetAccountsResponseViewModel,
         update_account::UpdateAccountViewModel,
     },
+    view_models::errors::{CreateResponses, DeleteResponses, GetResponses, UpdateResponses},
 };
 
 /// Get Account

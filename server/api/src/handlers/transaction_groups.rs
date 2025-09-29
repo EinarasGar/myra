@@ -7,7 +7,7 @@ use uuid::Uuid;
 use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
-    view_models::errors::{CreateResponses, UpdateResponses, DeleteResponses, GetResponses},
+    view_models::errors::{CreateResponses, DeleteResponses, GetResponses, UpdateResponses},
     view_models::{
         base_models::search::{
             PageOfResults, PageOfTransactionGroupsWithLookupViewModel, PaginatedSearchQuery,

@@ -4,6 +4,8 @@ use sea_query_binder::SqlxValues;
 
 pub mod account_queries;
 pub mod asset_queries;
+pub mod category_queries;
+pub mod category_type_queries;
 pub mod entries_queries;
 pub mod transaction_categories_queries;
 pub mod transaction_data_queries;

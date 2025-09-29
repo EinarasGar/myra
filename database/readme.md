@@ -79,6 +79,7 @@ erDiagram
     text category
     text icon
     int4 category_type FK
+    uuid user_id FK
   }
 
   transaction_categories_static_mapping {
@@ -90,6 +91,7 @@ erDiagram
   transaction_category_type {
     serial id PK
     text category_type_name
+    uuid user_id FK
   }
 
   transaction_descriptions {
@@ -151,5 +153,6 @@ erDiagram
   users ||--o{ account : ""
   users ||--o{ assets : ""
   users ||--o{ transaction : ""
-
+  users ||--o{ transaction_categories : ""
+  users ||--o{ transaction_category_type : ""
 ```

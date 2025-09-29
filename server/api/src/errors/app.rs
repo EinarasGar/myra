@@ -1,5 +1,6 @@
 use std::fmt::{Debug, Display};
 
+use anyhow;
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
@@ -10,6 +11,12 @@ use super::ApiError;
 impl From<anyhow::Error> for ApiError {
     fn from(error: anyhow::Error) -> Self {
         ApiError::AppError(AppError(error))
+    }
+}
+
+impl From<validator::ValidationErrors> for ApiError {
+    fn from(errors: validator::ValidationErrors) -> Self {
+        ApiError::AppError(AppError(anyhow::anyhow!("Validation failed: {}", errors)))
     }
 }
 

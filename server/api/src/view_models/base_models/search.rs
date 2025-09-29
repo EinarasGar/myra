@@ -3,6 +3,9 @@ use utoipa::{IntoParams, ToSchema};
 
 use crate::view_models::{
     assets::{base_models::lookup::AssetLookupTables, get_assets::GetAssetsLineResponseViewModel},
+    categories::base_models::{
+        category::IdentifiableCategoryViewModel, metadata_lookup::CategoryMetadataLookupTables,
+    },
     transactions::{
         base_models::metadata_lookup::MetadataLookupTables,
         get_transaction_group::GetTransactionGroupLineResponseViewModel,
@@ -19,6 +22,8 @@ pub type PageOfTransactionGroupsWithLookupViewModel =
     PageOfResults<GetTransactionGroupLineResponseViewModel, MetadataLookupTables>;
 pub type PageOfTransactionsWithLookupViewModel =
     PageOfResults<GetTransactionsResultsViewModel, MetadataLookupTables>;
+pub type SearchCategoriesResponseViewModel =
+    PageOfResults<IdentifiableCategoryViewModel, CategoryMetadataLookupTables>;
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct PageOfResults<T, L> {

@@ -35,18 +35,16 @@ where
                 .with_tonic()
                 .with_endpoint(endpoint)
                 .build();
-            
+
             match exporter {
                 Ok(exporter) => {
-                    let resource = Resource::builder()
-                        .with_service_name("myra_api")
-                        .build();
-                    
+                    let resource = Resource::builder().with_service_name("myra_api").build();
+
                     let tracer_provider = opentelemetry_sdk::trace::SdkTracerProvider::builder()
                         .with_batch_exporter(exporter)
                         .with_resource(resource)
                         .build();
-                    
+
                     opentelemetry::global::set_tracer_provider(tracer_provider.clone());
                     let telemetry = OpenTelemetryLayer::new(tracer_provider.tracer("myra_api"));
                     Some(telemetry)
