@@ -1,5 +1,6 @@
 import axios from "axios";
 import * as React from "react";
+import { getUserIdFromToken } from "@/lib/jwt";
 
 export interface AuthContext {
   isAuthenticated: boolean;
@@ -59,4 +60,20 @@ export function useAuth() {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
+}
+
+export function useAuthUserId(): string {
+  const context = React.useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  if (!context.user) {
+    throw new Error("User is not available");
+  }
+  const userId = getUserIdFromToken(context.user);
+  if (!userId) {
+    throw new Error("Failed to extract user ID from token");
+  }
+
+  return userId;
 }

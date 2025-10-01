@@ -160,8 +160,17 @@ export function ComboBoxPopover<T extends ComboBoxElement>({
                     keywords={option.getKeyWords?.()}
                     onSelect={() => handleSelect(option)}
                   >
-                    <DynamicIcon name={option.getIcon?.()} />
-                    {option.getLabel()}
+                    {option.getIcon?.() && (
+                      <DynamicIcon name={option.getIcon?.()} />
+                    )}
+
+                    <span className="flex-1">{option.getLabel()}</span>
+                    {option.getSuffixIcon?.() && (
+                      <DynamicIcon
+                        name={option.getSuffixIcon()}
+                        className="ml-auto h-4 w-4 text-muted-foreground"
+                      />
+                    )}
                   </CommandItem>
                 ))}
               </CommandGroup>

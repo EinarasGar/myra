@@ -1,15 +1,33 @@
 import { ComboBoxElement } from "@/interfaces/combo-box-element";
 
-export interface Account {
-  id: string;
-  type_id: number;
+export interface AccountType {
+  id: number;
   name: string;
 }
 
+export interface LiquidityType {
+  id: number;
+  name: string;
+}
+
+export interface Account {
+  id: string;
+  account_type_id: number;
+  liquidity_type_id: number;
+  name: string;
+}
+
+export interface ExpandedAccount {
+  id: string;
+  name: string;
+  accountType?: AccountType;
+  liquidityType?: LiquidityType;
+}
+
 export const mapAccountComboBoxProps = (
-  category: Account,
-): Account & ComboBoxElement => ({
-  ...category,
-  getLabel: () => category.name,
-  getKey: () => category.id.toString(),
+  account: Account | ExpandedAccount,
+): (Account | ExpandedAccount) & ComboBoxElement => ({
+  ...account,
+  getLabel: () => account.name,
+  getKey: () => account.id.toString(),
 });

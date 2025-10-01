@@ -1,9 +1,12 @@
 import { ComboBoxPopover } from "./combo-box-popover";
-import { useMemo } from "react";
-import { useCategoryStore } from "@/hooks/store/use-category-store";
-import useGetCategories from "@/hooks/api/use-get-categories";
+import { useMemo, useState } from "react";
+import { useExpandedCategories } from "@/hooks/store/use-category-store";
+import useSearchCategories from "@/hooks/api/use-get-categories";
 import { mapCategoryComboBoxProps } from "@/types/category";
 import type { TransactionCategory } from "@/types/categories";
+import { useAuthUserId } from "@/hooks/use-auth";
+import useDebounce from "@/hooks/use-debounce";
+import type { ComboBoxElement } from "@/interfaces/combo-box-element";
 
 interface CategoryPickerProps {
   value?: TransactionCategory | null;
@@ -14,17 +17,35 @@ export default function CategoryPicker({
   value,
   onChange,
 }: CategoryPickerProps) {
-  const categories = useCategoryStore((state) => state.categorys);
-  const { isFetching } = useGetCategories();
+  const userId = useAuthUserId();
+  const categories = useExpandedCategories();
+  const [searchValue, setSearchValue] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] =
+    useState<TransactionCategory | null>(value ?? null);
+  const debouncedSearchValue = useDebounce(searchValue, 500);
+  const { isFetching } = useSearchCategories(userId, debouncedSearchValue);
+
+  const currentValue = value ?? selectedCategory;
 
   const options = useMemo(() => {
-    return categories.map(mapCategoryComboBoxProps);
+    return categories
+      .filter((category) => !category.isSystem)
+      .map(mapCategoryComboBoxProps);
   }, [categories]);
 
+  const handleSelect = (
+    category: (TransactionCategory & ComboBoxElement) | null,
+  ) => {
+    if (!value) {
+      setSelectedCategory(category);
+    }
+    onChange?.(category);
+  };
+
   const selectedOption = useMemo(() => {
-    if (!value) return null;
-    return mapCategoryComboBoxProps(value);
-  }, [value]);
+    if (!currentValue) return null;
+    return mapCategoryComboBoxProps(currentValue);
+  }, [currentValue]);
 
   return (
     <div className="w-full">
@@ -32,11 +53,9 @@ export default function CategoryPicker({
         options={options}
         placeholder="Select a category..."
         value={selectedOption}
-        onSelect={(selectedItem) => {
-          const category = selectedItem
-            ? categories.find((c) => c.id === selectedItem.getKey())
-            : null;
-          onChange?.(category || null);
+        onSelect={handleSelect}
+        onSearchValueChange={(searchValue) => {
+          setSearchValue(searchValue);
         }}
         isFetching={isFetching}
         className="w-full"

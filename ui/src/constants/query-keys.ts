@@ -4,4 +4,5 @@ export const QueryKeys = {
   ASSETS: "assets",
   CATEGORIES: "categories",
   INDIVIDUAL_TRANSACTIONS: "individual-transactions",
+  ACCOUNTS: "accounts",
 };

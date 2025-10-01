@@ -1,25 +1,43 @@
 import { ComboBoxPopover } from "./combo-box-popover";
-import { useMemo } from "react";
-import { useAccountStore } from "@/hooks/store/use-account-store";
+import { useMemo, useState } from "react";
+import { useExpandedAccounts } from "@/hooks/store/use-account-store";
+import useGetAccounts from "@/hooks/api/use-get-accounts";
 import { mapAccountComboBoxProps } from "@/types/account";
-import type { Account } from "@/api";
+import type { ExpandedAccount } from "@/types/account";
+import type { ComboBoxElement } from "@/interfaces/combo-box-element";
+import { useAuthUserId } from "@/hooks/use-auth";
 
 interface AccountPickerProps {
-  value?: Account | null;
-  onChange?: (account: Account | null) => void;
+  value?: ExpandedAccount | null;
+  onChange?: (account: ExpandedAccount | null) => void;
 }
 
 export default function AccountPicker({ value, onChange }: AccountPickerProps) {
-  const accounts = useAccountStore((state) => state.accounts);
+  const userId = useAuthUserId();
+  const accounts = useExpandedAccounts();
+  const [selectedAccount, setSelectedAccount] =
+    useState<ExpandedAccount | null>(value ?? null);
+  const { isFetching } = useGetAccounts(userId);
+
+  const currentValue = value ?? selectedAccount;
 
   const options = useMemo(() => {
     return accounts.map(mapAccountComboBoxProps);
   }, [accounts]);
 
+  const handleSelect = (
+    account: (ExpandedAccount & ComboBoxElement) | null,
+  ) => {
+    if (!value) {
+      setSelectedAccount(account);
+    }
+    onChange?.(account);
+  };
+
   const selectedOption = useMemo(() => {
-    if (!value) return null;
-    return mapAccountComboBoxProps(value);
-  }, [value]);
+    if (!currentValue) return null;
+    return mapAccountComboBoxProps(currentValue);
+  }, [currentValue]);
 
   return (
     <div className="w-full">
@@ -27,15 +45,11 @@ export default function AccountPicker({ value, onChange }: AccountPickerProps) {
         options={options}
         placeholder="Select an account..."
         value={selectedOption}
-        onSelect={(selectedItem) => {
-          const account = selectedItem
-            ? accounts.find((a) => a.id === selectedItem.getKey())
-            : null;
-          onChange?.(account || null);
-        }}
+        onSelect={handleSelect}
         onSearchValueChange={(searchValue) => {
           console.log("Search value:", searchValue);
         }}
+        isFetching={isFetching}
         className="w-full"
       />
     </div>

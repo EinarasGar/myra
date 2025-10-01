@@ -5,6 +5,8 @@ export type Category = {
   icon: string;
   name: string;
   type: CategoryType;
+  isSystem?: boolean;
+  isGlobal?: boolean;
 };
 
 export const mapCategoryComboBoxProps = (
@@ -16,6 +18,7 @@ export const mapCategoryComboBoxProps = (
   getIcon: () => category.icon,
   getGroupKey: () => category.type.id.toString(),
   getGroupLabel: () => category.type.name,
+  getSuffixIcon: () => (category.isGlobal ? null : "user"),
 });
 
 export interface CategoryType {

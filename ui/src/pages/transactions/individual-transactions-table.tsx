@@ -4,6 +4,7 @@ import useGetIndividualTransactions from "@/hooks/api/use-get-individual-transac
 import { MemoizedDataTable } from "@/components/ui/data-table";
 import { DataTableSkeleton } from "@/components/data-table-skeleton";
 import useTransactionViewModelConverter from "../../hooks/use-transaction-converter";
+import { useAuthUserId } from "@/hooks/use-auth";
 
 export type Transaction = {
   type: string;
@@ -56,16 +57,14 @@ export const IndividialTransactionsTableSkeleton = () => (
 );
 
 export default function IndividialTransactionsTable() {
+  const userId = useAuthUserId();
   const rerender = useReducer(() => ({}), {})[1];
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   });
 
-  const dataQuery = useGetIndividualTransactions(
-    "2396480f-0052-4cf0-81dc-8cedbde5ce13",
-    pagination,
-  );
+  const dataQuery = useGetIndividualTransactions(userId, pagination);
 
   const tableData = useTransactionViewModelConverter(dataQuery.data.data);
 

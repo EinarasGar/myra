@@ -1,6 +1,7 @@
 import { ChartConfig, ChartContainer } from "@/components/ui/chart";
 import useGetProtfolioHistory from "@/hooks/api/use-get-portfolio-history";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+import { useAuthUserId } from "@/hooks/use-auth";
 
 import { ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
@@ -19,10 +20,8 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export default function NetWorthHistoryChart() {
-  const { data } = useGetProtfolioHistory(
-    "2396480f-0052-4cf0-81dc-8cedbde5ce13",
-    "1w",
-  );
+  const userId = useAuthUserId();
+  const { data } = useGetProtfolioHistory(userId, "1w");
 
   // const filteredData = chartData.filter((item) => {
   //   const date = new Date(item.date);

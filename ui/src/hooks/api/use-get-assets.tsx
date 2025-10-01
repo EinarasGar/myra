@@ -4,19 +4,24 @@ import { useQuery } from "@tanstack/react-query";
 import { PaginatedResponse } from "@/types/pagination";
 import { useAssetStore } from "../store/use-asset-store";
 
-export default function useSearchAssets(query: string | null) {
+export default function useSearchAssets(query?: string | null) {
   const addAsset = useAssetStore((state) => state.add);
   const addAssetType = useAssetStore((state) => state.addType);
 
   const searchAssets = async (
     count?: number,
     start?: number,
-    query?: string,
+    query?: string | null,
     signal?: AbortSignal,
   ): Promise<PaginatedResponse<GetAssetsLineResponseViewModel>> => {
-    const data = await AssetsApiFactory().searchAssets(count, start, query, {
-      signal,
-    });
+    const data = await AssetsApiFactory().searchAssets(
+      count,
+      start,
+      query || undefined,
+      {
+        signal,
+      },
+    );
     addAsset(
       data.data.results.map((asset) => {
         return {
@@ -43,16 +48,8 @@ export default function useSearchAssets(query: string | null) {
   return useQuery({
     queryKey: [QueryKeys.ASSETS, query],
     queryFn: ({ signal }) => {
-      if (!query) {
-        throw new Error("Query cannot be null");
-      }
-      return searchAssets(2, 0, query, signal);
+      return searchAssets(20, 0, query, signal);
     },
-    enabled: !!query,
-    placeholderData: {
-      totalCount: 0,
-      data: [],
-    } as PaginatedResponse<GetAssetsLineResponseViewModel>,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }

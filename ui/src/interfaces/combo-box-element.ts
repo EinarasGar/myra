@@ -5,4 +5,5 @@ export interface ComboBoxElement {
   getIcon?: () => string;
   getGroupKey?: () => string | null;
   getGroupLabel?: () => string | null;
+  getSuffixIcon?: () => string | null;
 }

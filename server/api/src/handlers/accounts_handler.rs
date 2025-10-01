@@ -70,7 +70,7 @@ pub async fn get_account(
 /// Gets all accounts and its metadata associated with user
 #[utoipa::path(
     get,
-    path = "/api/users/{user_id}/accounts/",
+    path = "/api/users/{user_id}/accounts",
     tag = "Accounts",
     responses(
         (status = 200, description = "Accounts retrieved successfully.", body = GetAccountsResponseViewModel),
