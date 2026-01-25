@@ -27,7 +27,7 @@ impl CategoryValidationService {
 
         if global_count.0 > 0 {
             if let Some(id) = exclude_id {
-                let params = GetCategoriesParams::by_id(user_id, id);
+                let params = GetCategoriesParams::user_by_id(user_id, id);
                 let check_query = category_queries::get_categories(params);
                 let existing = self
                     .db

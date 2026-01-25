@@ -4,6 +4,7 @@ use dal::models::base::TotalCount;
 use dal::models::category_models::CategoryWithTypeModel;
 use dal::queries::category_queries;
 use dal::query_params::get_categories_params::GetCategoriesParams;
+use itertools::Itertools;
 use uuid::Uuid;
 
 use super::category_validation_service::CategoryValidationService;
@@ -25,9 +26,8 @@ impl CategoryService {
         }
     }
 
-    pub async fn get_categories(
+    pub async fn search_categories(
         &self,
-        user_id: Uuid,
         offset: u64,
         limit: u64,
         search: Option<String>,
@@ -35,11 +35,11 @@ impl CategoryService {
     ) -> anyhow::Result<PageOfResultsDto<CategoryDto>> {
         let params = match (search, type_id) {
             (Some(query), Some(type_id)) => {
-                GetCategoriesParams::by_query_and_type(user_id, query, type_id, offset, limit)
+                GetCategoriesParams::shared_by_query_and_type(query, type_id, offset, limit)
             }
-            (Some(query), None) => GetCategoriesParams::by_query(user_id, query, offset, limit),
-            (None, Some(type_id)) => GetCategoriesParams::by_type(user_id, type_id, offset, limit),
-            (None, None) => GetCategoriesParams::all(user_id, offset, limit),
+            (Some(query), None) => GetCategoriesParams::shared_by_query(query, offset, limit),
+            (None, Some(type_id)) => GetCategoriesParams::shared_by_type(type_id, offset, limit),
+            (None, None) => GetCategoriesParams::shared_all(offset, limit),
         };
 
         let query = category_queries::get_categories(params);
@@ -65,12 +65,26 @@ impl CategoryService {
         }
     }
 
+    pub async fn get_all_user_categories(&self, user_id: Uuid) -> anyhow::Result<Vec<CategoryDto>> {
+        let params = GetCategoriesParams::user_all(user_id);
+
+        let query = category_queries::get_categories(params);
+
+        let models = self
+            .db
+            .fetch_all::<CategoryWithTypeModel>(query)
+            .await
+            .context("Failed to fetch categories")?;
+
+        Ok(models.into_iter().map_into().collect())
+    }
+
     pub async fn get_category(
         &self,
         category_id: i32,
         user_id: Uuid,
     ) -> anyhow::Result<CategoryDto> {
-        let params = GetCategoriesParams::by_id(user_id, category_id);
+        let params = GetCategoriesParams::user_by_id(user_id, category_id);
         let query = category_queries::get_categories(params);
         let model = self
             .db

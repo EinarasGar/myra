@@ -7,4 +7,5 @@ pub mod portfolio_handler;
 pub mod transaction_groups;
 pub mod transactions;
 pub mod user_asset_handler;
+pub mod user_category_handler;
 pub mod user_handler;

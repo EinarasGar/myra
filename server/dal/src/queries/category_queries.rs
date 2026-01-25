@@ -101,18 +101,23 @@ pub fn get_categories(params: GetCategoriesParams) -> DbQueryWithValues {
         )),
     );
 
-    query.and_where(
-        Expr::col((
-            TransactionCategoriesIden::Table,
-            TransactionCategoriesIden::UserId,
-        ))
-        .is_null()
-        .or(Expr::col((
-            TransactionCategoriesIden::Table,
-            TransactionCategoriesIden::UserId,
-        ))
-        .eq(params.user_id)),
-    );
+    if let Some(user_id) = params.user_id {
+        query.and_where(
+            Expr::col((
+                TransactionCategoriesIden::Table,
+                TransactionCategoriesIden::UserId,
+            ))
+            .eq(user_id),
+        );
+    } else {
+        query.and_where(
+            Expr::col((
+                TransactionCategoriesIden::Table,
+                TransactionCategoriesIden::UserId,
+            ))
+            .is_null(),
+        );
+    }
 
     match params.search_type {
         GetCategoriesParamsSearchType::ById(category_id) => {

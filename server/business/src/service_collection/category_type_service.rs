@@ -26,9 +26,24 @@ impl CategoryTypeService {
 
     pub async fn get_category_types(
         &self,
+    ) -> anyhow::Result<impl Iterator<Item = CategoryTypeDto>> {
+        let params = GetCategoryTypesParams::all();
+
+        let query = category_type_queries::get_category_types(params);
+        let types: Vec<CategoryTypeModel> = self
+            .db
+            .fetch_all(query)
+            .await
+            .context("Failed to fetch category types")?;
+
+        Ok(types.into_iter().map_into())
+    }
+
+    pub async fn get_user_category_types(
+        &self,
         user_id: Uuid,
     ) -> anyhow::Result<impl Iterator<Item = CategoryTypeDto>> {
-        let params = GetCategoryTypesParams::all(user_id);
+        let params = GetCategoryTypesParams::all_user(user_id);
 
         let query = category_type_queries::get_category_types(params);
         let types: Vec<CategoryTypeModel> = self

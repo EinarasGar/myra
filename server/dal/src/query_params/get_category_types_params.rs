@@ -1,22 +1,22 @@
 use sqlx::types::Uuid;
 
 pub struct GetCategoryTypesParams {
-    pub user_id: Uuid,
+    pub user_id: Option<Uuid>,
     pub search_type: GetCategoryTypesParamsSearchType,
 }
 
 impl GetCategoryTypesParams {
-    pub fn all(user_id: Uuid) -> Self {
+    pub fn all_user(user_id: Uuid) -> Self {
         Self {
-            user_id,
+            user_id: Some(user_id),
             search_type: GetCategoryTypesParamsSearchType::All,
         }
     }
 
-    pub fn by_query(user_id: Uuid, query: String) -> Self {
+    pub fn all() -> Self {
         Self {
-            user_id,
-            search_type: GetCategoryTypesParamsSearchType::ByQuery(query),
+            user_id: None,
+            search_type: GetCategoryTypesParamsSearchType::All,
         }
     }
 }

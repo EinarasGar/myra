@@ -33,18 +33,23 @@ pub fn get_category_types(params: GetCategoryTypesParams) -> DbQueryWithValues {
         ])
         .from(TransactionCategoryTypeIden::Table);
 
-    query.and_where(
-        Expr::col((
-            TransactionCategoryTypeIden::Table,
-            TransactionCategoryTypeIden::UserId,
-        ))
-        .is_null()
-        .or(Expr::col((
-            TransactionCategoryTypeIden::Table,
-            TransactionCategoryTypeIden::UserId,
-        ))
-        .eq(params.user_id)),
-    );
+    if let Some(user_id) = params.user_id {
+        query.and_where(
+            Expr::col((
+                TransactionCategoryTypeIden::Table,
+                TransactionCategoryTypeIden::UserId,
+            ))
+            .eq(user_id),
+        );
+    } else {
+        query.and_where(
+            Expr::col((
+                TransactionCategoryTypeIden::Table,
+                TransactionCategoryTypeIden::UserId,
+            ))
+            .is_null(),
+        );
+    }
 
     match params.search_type {
         GetCategoryTypesParamsSearchType::All => {}
