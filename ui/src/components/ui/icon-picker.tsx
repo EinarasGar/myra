@@ -383,19 +383,19 @@ const IconPicker = React.forwardRef<
 
   return (
     <Popover open={open ?? isOpen} onOpenChange={handleOpenChange} modal={modal}>
-      <PopoverTrigger ref={ref} asChild {...props}>
-        {children || (
-          <Button variant="outline">
-            {(value || selectedIcon) ? (
-              <>
-                <Icon name={(value || selectedIcon)!} /> {value || selectedIcon}
-              </>
-            ) : (
-              triggerPlaceholder
-            )}
-          </Button>
-        )}
-      </PopoverTrigger>
+      {children ? (
+        <PopoverTrigger ref={ref} render={children} {...props} />
+      ) : (
+        <PopoverTrigger ref={ref} render={<Button variant="outline" />} {...props}>
+          {(value || selectedIcon) ? (
+            <>
+              <Icon name={(value || selectedIcon)!} /> {value || selectedIcon}
+            </>
+          ) : (
+            triggerPlaceholder
+          )}
+        </PopoverTrigger>
+      )}
       <PopoverContent className="w-64 p-2">
         {searchable && (
           <Input

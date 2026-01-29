@@ -90,35 +90,37 @@ export function ComboBoxPopover<T extends ComboBoxElement>({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          className={cn(
-            "w-full justify-start overflow-hidden",
-            error && "border-red-500",
-            className,
-          )}
-          disabled={disabled}
-          aria-label={ariaLabel}
-          aria-required={required}
-          aria-invalid={!!error}
-        >
-          {currentValue ? (
-            <>
-              <span className="truncate">{currentValue.getLabel()}</span>
-              {currentValue.getSuffixIcon?.() && (
-                <DynamicIcon
-                  name={currentValue.getSuffixIcon()}
-                  className="ml-auto h-4 w-4 shrink-0 text-muted-foreground"
-                />
-              )}
-            </>
-          ) : (
-            <span className="truncate text-muted-foreground">
-              {placeholder}
-            </span>
-          )}
-        </Button>
+      <PopoverTrigger
+        render={
+          <Button
+            variant="outline"
+            className={cn(
+              "w-full justify-start overflow-hidden",
+              error && "border-red-500",
+              className,
+            )}
+            disabled={disabled}
+            aria-label={ariaLabel}
+            aria-required={required}
+            aria-invalid={!!error}
+          />
+        }
+      >
+        {currentValue ? (
+          <>
+            <span className="truncate">{currentValue.getLabel()}</span>
+            {currentValue.getSuffixIcon?.() && (
+              <DynamicIcon
+                name={currentValue.getSuffixIcon()}
+                className="ml-auto h-4 w-4 shrink-0 text-muted-foreground"
+              />
+            )}
+          </>
+        ) : (
+          <span className="truncate text-muted-foreground">
+            {placeholder}
+          </span>
+        )}
       </PopoverTrigger>
       <PopoverContent className="p-0" side="bottom" align="start">
         <Command

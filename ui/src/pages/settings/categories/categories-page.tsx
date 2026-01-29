@@ -7,9 +7,9 @@ import {
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Separator } from "@radix-ui/react-separator";
 import { CategoriesCard } from "./categories-card";
 import { CategoryTypesCard } from "./category-types-card";
+import { Separator } from "@/components/ui/separator";
 
 export default function CategoriesPage() {
   return (

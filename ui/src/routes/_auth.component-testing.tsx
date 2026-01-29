@@ -10,12 +10,12 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Separator } from "@radix-ui/react-separator";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import type { ExpandedAsset } from "@/types/assets";
 import type { Account } from "@/types/account";
 import type { Category } from "@/types/category";
+import { Separator } from "@/components/ui/separator";
 
 export const Route = createFileRoute("/_auth/component-testing")({
   component: RouteComponent,

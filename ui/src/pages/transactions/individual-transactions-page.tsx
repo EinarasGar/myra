@@ -7,7 +7,6 @@ import {
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Separator } from "@radix-ui/react-separator";
 import { useReducer, Suspense } from "react";
 import IndividialTransactionsTable, {
   IndividialTransactionsTableSkeleton,
@@ -15,6 +14,7 @@ import IndividialTransactionsTable, {
 import { ErrorBoundary } from "react-error-boundary";
 import ErrorBoundaryFallback from "@/components/error-boundary-fallback";
 import { AddIndividualTranscationDialog } from "./add-individual-transaction/add-indvidual-transaction-dialog";
+import { Separator } from "@/components/ui/separator";
 
 export default function IndividialTransactionsPage() {
   const rerender = useReducer(() => ({}), {})[1];

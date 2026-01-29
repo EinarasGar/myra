@@ -16,8 +16,8 @@ export function AddIndividualTranscationDialog() {
 
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline">Edit Profile</Button>
+      <DialogTrigger render={<Button variant="outline" />}>
+        Edit Profile
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>

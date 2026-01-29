@@ -103,7 +103,7 @@ export function DateTimeLanguagePicker({
           value={value}
           onChange={handleInputChange}
           placeholder="Tomorrow at 3pm, next Monday, in 2 hours..."
-          className="pr-10"
+          className="pr-9"
           onKeyDown={(e) => {
             if (e.key === "ArrowDown") {
               e.preventDefault();
@@ -112,15 +112,17 @@ export function DateTimeLanguagePicker({
           }}
         />
         <Popover open={isOpen} onOpenChange={setIsOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-0 h-full px-3 hover:bg-transparent"
-            >
-              <CalendarIcon className="h-4 w-4" />
-              <span className="sr-only">Open date time picker</span>
-            </Button>
+          <PopoverTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-px top-px h-[calc(100%-2px)] rounded-l-none rounded-r-[calc(var(--radius)-1px)] px-2.5 hover:bg-transparent"
+              />
+            }
+          >
+            <CalendarIcon className="h-4 w-4" />
+            <span className="sr-only">Open date time picker</span>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="end">
             <div className="sm:flex">
