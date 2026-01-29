@@ -1,7 +1,10 @@
 import { ComboBoxPopover } from "./combo-box-popover";
 import { useMemo, useState } from "react";
 import { useGetCategoryTypes } from "@/hooks/api/use-user-category-api";
-import { mapCategoryTypeComboBoxProps, type CategoryType } from "@/types/category";
+import {
+  mapCategoryTypeComboBoxProps,
+  type CategoryType,
+} from "@/types/category";
 import { useAuthUserId } from "@/hooks/use-auth";
 import type { ComboBoxElement } from "@/interfaces/combo-box-element";
 

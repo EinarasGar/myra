@@ -7,8 +7,9 @@ interface AddTransactionFormProps {
   type: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function AddTransactionForm({ type }: AddTransactionFormProps) {
+export default function AddTransactionForm({
+  type: _type,
+}: AddTransactionFormProps) {
   return (
     <>
       <DateTimeLanguagePicker></DateTimeLanguagePicker>

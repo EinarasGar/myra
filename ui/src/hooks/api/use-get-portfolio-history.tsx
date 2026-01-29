@@ -10,7 +10,7 @@ const getPortfolioHistory = async (
   const data = await PortfolioApiFactory().getNetworthHistory(
     userId,
     range,
-    defaultAssetId,
+    defaultAssetId ?? undefined,
   );
   return data;
 };

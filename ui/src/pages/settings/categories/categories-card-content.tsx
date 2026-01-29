@@ -9,7 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import CategoryTypePicker from "@/components/category-type-picker";
 import { type Category, type CategoryType } from "@/types/category";
-import { Pencil, Trash2, User, Check, X, Loader2, CircleDashed } from "lucide-react";
+import {
+  Pencil,
+  Trash2,
+  User,
+  Check,
+  X,
+  Loader2,
+  CircleDashed,
+} from "lucide-react";
 import { DynamicIcon, IconName } from "lucide-react/dynamic";
 import { IconPicker } from "@/components/ui/icon-picker";
 import { DeleteCategoryDialog } from "./delete-category-dialog";
@@ -67,7 +75,12 @@ export function CategoriesCardContent({
   };
 
   const handleUpdate = async () => {
-    if (!editing.id || !editing.icon.trim() || !editing.name.trim() || !editing.categoryType) {
+    if (
+      !editing.id ||
+      !editing.icon.trim() ||
+      !editing.name.trim() ||
+      !editing.categoryType
+    ) {
       return;
     }
     await updateCategory.mutateAsync({
@@ -87,7 +100,11 @@ export function CategoriesCardContent({
   };
 
   const handleAdd = async () => {
-    if (!addingForm.icon.trim() || !addingForm.name.trim() || !addingForm.categoryType) {
+    if (
+      !addingForm.icon.trim() ||
+      !addingForm.name.trim() ||
+      !addingForm.categoryType
+    ) {
       return;
     }
     await createCategory.mutateAsync({
@@ -115,13 +132,22 @@ export function CategoriesCardContent({
         {isAdding && (
           <div className="flex items-center gap-2 p-2 rounded-md border bg-muted/50">
             <IconPicker
-              value={addingForm.icon?.replace(/_/g, "-") as IconName || undefined}
+              value={
+                (addingForm.icon?.replace(/_/g, "-") as IconName) || undefined
+              }
               onValueChange={(icon) =>
-                setAddingForm((prev) => ({ ...prev, icon: icon.replace(/-/g, "_") }))
+                setAddingForm((prev) => ({
+                  ...prev,
+                  icon: icon.replace(/-/g, "_"),
+                }))
               }
               modal={true}
             >
-              <Button variant="outline" size="icon" className="h-8 w-8 shrink-0">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+              >
                 {addingForm.icon ? (
                   <DynamicIcon
                     name={addingForm.icon.replace(/_/g, "-") as IconName}
@@ -148,7 +174,11 @@ export function CategoriesCardContent({
               }}
             />
 
-            <Suspense fallback={<div className="h-8 w-36 shrink-0 animate-pulse bg-muted rounded" />}>
+            <Suspense
+              fallback={
+                <div className="h-8 w-36 shrink-0 animate-pulse bg-muted rounded" />
+              }
+            >
               <CategoryTypePicker
                 value={addingForm.categoryType}
                 onChange={(type) =>
@@ -187,7 +217,10 @@ export function CategoriesCardContent({
         {categories?.map((category) => {
           const isEditing = editing.id === category.id;
           const isEditable = !category.isGlobal && !category.isSystem;
-          const iconName = (category.icon as string)?.replace(/_/g, "-") as IconName;
+          const iconName = (category.icon as string)?.replace(
+            /_/g,
+            "-",
+          ) as IconName;
 
           return (
             <div
@@ -198,13 +231,23 @@ export function CategoriesCardContent({
                 // Edit mode
                 <>
                   <IconPicker
-                    value={editing.icon?.replace(/_/g, "-") as IconName || undefined}
+                    value={
+                      (editing.icon?.replace(/_/g, "-") as IconName) ||
+                      undefined
+                    }
                     onValueChange={(icon) =>
-                      setEditing((prev) => ({ ...prev, icon: icon.replace(/-/g, "_") }))
+                      setEditing((prev) => ({
+                        ...prev,
+                        icon: icon.replace(/-/g, "_"),
+                      }))
                     }
                     modal={true}
                   >
-                    <Button variant="outline" size="icon" className="h-8 w-8 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                    >
                       {editing.icon ? (
                         <DynamicIcon
                           name={editing.icon.replace(/_/g, "-") as IconName}
@@ -230,7 +273,11 @@ export function CategoriesCardContent({
                     }}
                   />
 
-                  <Suspense fallback={<div className="h-8 w-36 shrink-0 animate-pulse bg-muted rounded" />}>
+                  <Suspense
+                    fallback={
+                      <div className="h-8 w-36 shrink-0 animate-pulse bg-muted rounded" />
+                    }
+                  >
                     <CategoryTypePicker
                       value={editing.categoryType}
                       onChange={(type) =>
@@ -267,16 +314,16 @@ export function CategoriesCardContent({
                 // View mode
                 <>
                   <div className="w-8 h-8 flex items-center justify-center shrink-0">
-                    {iconName && <DynamicIcon name={iconName} className="h-5 w-5" />}
+                    {iconName && (
+                      <DynamicIcon name={iconName} className="h-5 w-5" />
+                    )}
                   </div>
 
                   <span className="text-sm flex-1">{category.name}</span>
 
                   <div className="flex items-center gap-1 text-sm text-muted-foreground shrink-0">
                     <span>{category.type.name}</span>
-                    {!category.type.is_global && (
-                      <User className="h-3 w-3" />
-                    )}
+                    {!category.type.is_global && <User className="h-3 w-3" />}
                   </div>
 
                   {isEditable ? (
@@ -299,7 +346,9 @@ export function CategoriesCardContent({
                       </Button>
                     </div>
                   ) : (
-                    <span className="text-xs text-muted-foreground shrink-0">Read-only</span>
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      Read-only
+                    </span>
                   )}
                 </>
               )}

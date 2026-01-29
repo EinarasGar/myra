@@ -31,7 +31,7 @@ export default function NetWorthHistory() {
               Showing total net worth for the last 3 months
             </CardDescription>
           </div>
-          <Select value={timeRange} onValueChange={setTimeRange}>
+          <Select value={timeRange} onValueChange={(v) => v && setTimeRange(v)}>
             <SelectTrigger
               className="w-[160px] rounded-lg sm:ml-auto"
               aria-label="Select a value"

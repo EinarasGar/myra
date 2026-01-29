@@ -8,7 +8,10 @@ import {
   CardAction,
 } from "@/components/ui/card";
 import { Plus } from "lucide-react";
-import { AsyncBoundary, useAsyncBoundaryState } from "@/components/async-boundary";
+import {
+  AsyncBoundary,
+  useAsyncBoundaryState,
+} from "@/components/async-boundary";
 import { CategoriesCardContent } from "./categories-card-content";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -56,7 +59,10 @@ export function CategoriesCard() {
           fallback={<CategoriesTableSkeleton />}
           onStateChange={setBoundaryState}
         >
-          <CategoriesCardContent isAdding={isAdding} setIsAdding={setIsAdding} />
+          <CategoriesCardContent
+            isAdding={isAdding}
+            setIsAdding={setIsAdding}
+          />
         </AsyncBoundary>
       </CardContent>
     </Card>

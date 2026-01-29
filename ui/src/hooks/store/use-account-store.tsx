@@ -70,22 +70,19 @@ export const useExpandedAccounts = () => {
     ]),
   );
 
-  return useMemo(
-    () => {
-      return accounts.map(
-        (account) =>
-          ({
-            id: account.id,
-            name: account.name,
-            accountType: accountTypes.find(
-              (t) => t.id === account.account_type_id,
-            ),
-            liquidityType: liquidityTypes.find(
-              (t) => t.id === account.liquidity_type_id,
-            ),
-          }) as ExpandedAccount,
-      );
-    },
-    [accounts, accountTypes, liquidityTypes],
-  );
+  return useMemo(() => {
+    return accounts.map(
+      (account) =>
+        ({
+          id: account.id,
+          name: account.name,
+          accountType: accountTypes.find(
+            (t) => t.id === account.account_type_id,
+          ),
+          liquidityType: liquidityTypes.find(
+            (t) => t.id === account.liquidity_type_id,
+          ),
+        }) as ExpandedAccount,
+    );
+  }, [accounts, accountTypes, liquidityTypes]);
 };

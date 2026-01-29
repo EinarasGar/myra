@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import {
   ReactNode,
   Suspense,
@@ -134,7 +135,7 @@ export function AsyncBoundary({
       errorFallback ??
       ((props: FallbackProps) => (
         <ErrorBoundaryFallback
-          error={props.error}
+          error={props.error as Error}
           resetErrorBoundary={props.resetErrorBoundary}
         />
       )),

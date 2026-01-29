@@ -17,7 +17,7 @@ export default function useGetPortfolioHoldings(
   ) => {
     const data = await PortfolioApiFactory().getHoldings(
       userId,
-      defaultAssetId,
+      defaultAssetId ?? undefined,
     );
     addAsset(
       data.data.lookup_tables.assets.map((asset) => {
@@ -32,7 +32,8 @@ export default function useGetPortfolioHoldings(
       data.data.lookup_tables.accounts.map((account) => {
         return {
           id: account.account_id,
-          type_id: account.account_type,
+          account_type_id: account.account_type,
+          liquidity_type_id: 0,
           ...account,
         };
       }),

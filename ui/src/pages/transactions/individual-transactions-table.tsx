@@ -31,7 +31,7 @@ const columns: ColumnDef<Transaction>[] = [
     id: "date",
     header: () => "Date",
     cell: (info) => {
-      const date = new Date(info.getValue() * 1000);
+      const date = new Date((info.getValue() as number) * 1000);
       return date.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",

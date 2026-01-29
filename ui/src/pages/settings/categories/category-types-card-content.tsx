@@ -25,14 +25,17 @@ export function CategoryTypesCardContent({
   // Filter to only show user-created category types
   const categoryTypes = useMemo(
     () => allCategoryTypes?.filter((type) => !type.is_global),
-    [allCategoryTypes]
+    [allCategoryTypes],
   );
   const createCategoryType = useCreateCategoryType(userId);
   const updateCategoryType = useUpdateCategoryType(userId);
   const deleteCategoryType = useDeleteCategoryType(userId);
 
   const [addingName, setAddingName] = useState("");
-  const [editing, setEditing] = useState<{ id: number | null; name: string }>({ id: null, name: "" });
+  const [editing, setEditing] = useState<{ id: number | null; name: string }>({
+    id: null,
+    name: "",
+  });
 
   const handleAdd = async () => {
     if (!addingName.trim()) return;
@@ -69,7 +72,8 @@ export function CategoryTypesCardContent({
     setAddingName("");
   };
 
-  const isValid = (name: string) => name.trim().length >= 1 && name.trim().length <= 50;
+  const isValid = (name: string) =>
+    name.trim().length >= 1 && name.trim().length <= 50;
 
   return (
     <div className="space-y-2 max-h-[500px] overflow-auto">

@@ -14,7 +14,7 @@ export function LineChartSkeleton() {
   // Generate placeholder data with some variation
   const data = Array.from({ length: 7 }, (_, i) => ({
     name: `Day ${i + 1}`,
-    value: Math.floor(Math.random() * 50) + 25, // Random value between 25 and 75
+    value: ((i * 37 + 13) % 50) + 25,
   }));
 
   // Chart configuration

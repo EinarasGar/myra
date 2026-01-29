@@ -8,7 +8,10 @@ import {
   CardAction,
 } from "@/components/ui/card";
 import { Plus } from "lucide-react";
-import { AsyncBoundary, useAsyncBoundaryState } from "@/components/async-boundary";
+import {
+  AsyncBoundary,
+  useAsyncBoundaryState,
+} from "@/components/async-boundary";
 import { CategoryTypesCardContent } from "./category-types-card-content";
 import { Skeleton } from "@/components/ui/skeleton";
 

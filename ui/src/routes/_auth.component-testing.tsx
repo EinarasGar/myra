@@ -13,7 +13,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import type { ExpandedAsset } from "@/types/assets";
-import type { Account } from "@/types/account";
+import type { ExpandedAccount } from "@/types/account";
 import type { Category } from "@/types/category";
 import { Separator } from "@/components/ui/separator";
 
@@ -27,7 +27,8 @@ function RouteComponent() {
     amount: number | string | null;
   }>({ asset: null, amount: null });
   const [selectedDate, setSelectedDate] = useState<Date>();
-  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+  const [selectedAccount, setSelectedAccount] =
+    useState<ExpandedAccount | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
     null,
   );

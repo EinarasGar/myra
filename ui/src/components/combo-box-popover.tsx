@@ -14,7 +14,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ComboBoxElement } from "@/interfaces/combo-box-element";
-import { DynamicIcon } from "lucide-react/dynamic";
+import { DynamicIcon, type IconName } from "lucide-react/dynamic";
 import { cn } from "@/lib/utils";
 
 interface AutocompleteProps<T extends ComboBoxElement> {
@@ -111,15 +111,13 @@ export function ComboBoxPopover<T extends ComboBoxElement>({
             <span className="truncate">{currentValue.getLabel()}</span>
             {currentValue.getSuffixIcon?.() && (
               <DynamicIcon
-                name={currentValue.getSuffixIcon()}
+                name={currentValue.getSuffixIcon() as IconName}
                 className="ml-auto h-4 w-4 shrink-0 text-muted-foreground"
               />
             )}
           </>
         ) : (
-          <span className="truncate text-muted-foreground">
-            {placeholder}
-          </span>
+          <span className="truncate text-muted-foreground">{placeholder}</span>
         )}
       </PopoverTrigger>
       <PopoverContent className="p-0" side="bottom" align="start">
@@ -138,7 +136,6 @@ export function ComboBoxPopover<T extends ComboBoxElement>({
               onSearchValueChange?.(val || null);
             }}
             placeholder={placeholder}
-            loading={isFetching}
           />
           <CommandList>
             <CommandEmpty>
@@ -154,13 +151,13 @@ export function ComboBoxPopover<T extends ComboBoxElement>({
                     onSelect={() => handleSelect(option)}
                   >
                     {option.getIcon?.() && (
-                      <DynamicIcon name={option.getIcon?.()} />
+                      <DynamicIcon name={option.getIcon?.() as IconName} />
                     )}
 
                     <span className="flex-1">{option.getLabel()}</span>
                     {option.getSuffixIcon?.() && (
                       <DynamicIcon
-                        name={option.getSuffixIcon()}
+                        name={option.getSuffixIcon() as IconName}
                         className="ml-auto h-4 w-4 text-muted-foreground"
                       />
                     )}
@@ -181,13 +178,13 @@ export function ComboBoxPopover<T extends ComboBoxElement>({
                     onSelect={() => handleSelect(option)}
                   >
                     {option.getIcon?.() && (
-                      <DynamicIcon name={option.getIcon?.()} />
+                      <DynamicIcon name={option.getIcon?.() as IconName} />
                     )}
 
                     <span className="flex-1">{option.getLabel()}</span>
                     {option.getSuffixIcon?.() && (
                       <DynamicIcon
-                        name={option.getSuffixIcon()}
+                        name={option.getSuffixIcon() as IconName}
                         className="ml-auto h-4 w-4 text-muted-foreground"
                       />
                     )}

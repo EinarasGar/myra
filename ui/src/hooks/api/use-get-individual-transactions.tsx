@@ -1,6 +1,6 @@
 import {
   IndividualTransactionsApiFactory,
-  MandatoryIdentifiableTransactionWithIdentifiableEntries,
+  RequiredIdentifiableTransactionWithIdentifiableEntries,
 } from "@/api";
 import { QueryKeys } from "@/constants/query-keys";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -21,7 +21,7 @@ export default function useGetIndividualTransactions(
     count?: number,
     start?: number,
   ): Promise<
-    PaginatedResponse<MandatoryIdentifiableTransactionWithIdentifiableEntries>
+    PaginatedResponse<RequiredIdentifiableTransactionWithIdentifiableEntries>
   > => {
     const data =
       await IndividualTransactionsApiFactory().getIndividualTransactions(
@@ -42,7 +42,8 @@ export default function useGetIndividualTransactions(
       data.data.lookup_tables.accounts.map((account) => {
         return {
           id: account.account_id,
-          type_id: account.account_type,
+          account_type_id: account.account_type,
+          liquidity_type_id: 0,
           ...account,
         };
       }),
