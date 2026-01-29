@@ -103,13 +103,21 @@ export function ComboBoxPopover<T extends ComboBoxElement>({
           aria-required={required}
           aria-invalid={!!error}
         >
-          <span className="truncate">
-            {currentValue ? (
-              currentValue.getLabel()
-            ) : (
-              <span className="text-muted-foreground">{placeholder}</span>
-            )}
-          </span>
+          {currentValue ? (
+            <>
+              <span className="truncate">{currentValue.getLabel()}</span>
+              {currentValue.getSuffixIcon?.() && (
+                <DynamicIcon
+                  name={currentValue.getSuffixIcon()}
+                  className="ml-auto h-4 w-4 shrink-0 text-muted-foreground"
+                />
+              )}
+            </>
+          ) : (
+            <span className="truncate text-muted-foreground">
+              {placeholder}
+            </span>
+          )}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="p-0" side="bottom" align="start">
@@ -143,7 +151,17 @@ export function ComboBoxPopover<T extends ComboBoxElement>({
                     keywords={option.getKeyWords?.()}
                     onSelect={() => handleSelect(option)}
                   >
-                    {option.getLabel()}
+                    {option.getIcon?.() && (
+                      <DynamicIcon name={option.getIcon?.()} />
+                    )}
+
+                    <span className="flex-1">{option.getLabel()}</span>
+                    {option.getSuffixIcon?.() && (
+                      <DynamicIcon
+                        name={option.getSuffixIcon()}
+                        className="ml-auto h-4 w-4 text-muted-foreground"
+                      />
+                    )}
                   </CommandItem>
                 ))}
               </CommandGroup>

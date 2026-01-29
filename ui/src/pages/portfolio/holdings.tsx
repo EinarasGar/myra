@@ -16,7 +16,7 @@ import {
 import HoldingsTable, { HoldingsTableSkeleton } from "./holdings-table";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import ErrorBoundaryFallback from "@/components/error-boundry-fallback";
+import ErrorBoundaryFallback from "@/components/error-boundary-fallback";
 
 export function HoldingsFallback() {
   return (

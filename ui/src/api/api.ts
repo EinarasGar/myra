@@ -6714,6 +6714,25 @@ export interface GetAssetsLineResponseViewModel {
 /**
  *
  * @export
+ * @interface GetCategoriesResponseViewModel
+ */
+export interface GetCategoriesResponseViewModel {
+  /**
+   *
+   * @type {Array<IdentifiableCategoryRequiredCategoryTypeId>}
+   * @memberof GetCategoriesResponseViewModel
+   */
+  categories: Array<IdentifiableCategoryRequiredCategoryTypeId>;
+  /**
+   *
+   * @type {CategoryMetadataLookupTables}
+   * @memberof GetCategoriesResponseViewModel
+   */
+  lookup_tables: CategoryMetadataLookupTables;
+}
+/**
+ *
+ * @export
  * @interface GetCategoryResponseViewModel
  */
 export interface GetCategoryResponseViewModel {
@@ -7176,6 +7195,49 @@ export interface IdentifiableCategoryIdentifiableCategoryTypeViewModel {
    *
    * @type {number}
    * @memberof IdentifiableCategoryIdentifiableCategoryTypeViewModel
+   */
+  id: number;
+}
+/**
+ *
+ * @export
+ * @interface IdentifiableCategoryRequiredCategoryTypeId
+ */
+export interface IdentifiableCategoryRequiredCategoryTypeId {
+  /**
+   * Category name
+   * @type {string}
+   * @memberof IdentifiableCategoryRequiredCategoryTypeId
+   */
+  category: string;
+  /**
+   *
+   * @type {number}
+   * @memberof IdentifiableCategoryRequiredCategoryTypeId
+   */
+  category_type: number;
+  /**
+   * Icon identifier for the category
+   * @type {string}
+   * @memberof IdentifiableCategoryRequiredCategoryTypeId
+   */
+  icon: string;
+  /**
+   * Whether this is a global category available to all users
+   * @type {boolean}
+   * @memberof IdentifiableCategoryRequiredCategoryTypeId
+   */
+  is_global: boolean;
+  /**
+   * Whether this is a system category that cannot be modified
+   * @type {boolean}
+   * @memberof IdentifiableCategoryRequiredCategoryTypeId
+   */
+  is_system: boolean;
+  /**
+   *
+   * @type {number}
+   * @memberof IdentifiableCategoryRequiredCategoryTypeId
    */
   id: number;
 }
@@ -10484,311 +10546,15 @@ export const CategoriesApiAxiosParamCreator = function (
 ) {
   return {
     /**
-     * Creates a new user-specific category. Category name must be unique (case-insensitive) across global and user categories. Users are limited to 100 custom categories.
-     * @summary Create Category
-     * @param {string} userId User ID
-     * @param {CreateCategoryRequestViewModel} createCategoryRequestViewModel
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    createCategory: async (
-      userId: string,
-      createCategoryRequestViewModel: CreateCategoryRequestViewModel,
-      options: RawAxiosRequestConfig = {},
-    ): Promise<RequestArgs> => {
-      // verify required parameter 'userId' is not null or undefined
-      assertParamExists("createCategory", "userId", userId);
-      // verify required parameter 'createCategoryRequestViewModel' is not null or undefined
-      assertParamExists(
-        "createCategory",
-        "createCategoryRequestViewModel",
-        createCategoryRequestViewModel,
-      );
-      const localVarPath = `/api/users/{user_id}/categories`.replace(
-        `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
-      // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
-      if (configuration) {
-        baseOptions = configuration.baseOptions;
-      }
-
-      const localVarRequestOptions = {
-        method: "POST",
-        ...baseOptions,
-        ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
-
-      // authentication auth_token required
-      // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
-
-      localVarHeaderParameter["Content-Type"] = "application/json";
-
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
-      let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
-      localVarRequestOptions.headers = {
-        ...localVarHeaderParameter,
-        ...headersFromBaseOptions,
-        ...options.headers,
-      };
-      localVarRequestOptions.data = serializeDataIfNeeded(
-        createCategoryRequestViewModel,
-        localVarRequestOptions,
-        configuration,
-      );
-
-      return {
-        url: toPathString(localVarUrlObj),
-        options: localVarRequestOptions,
-      };
-    },
-    /**
-     * Creates a new user-specific category type. Type name must be unique across global and user types. Users are limited to 20 custom types.
-     * @summary Create Category Type
-     * @param {string} userId User ID
-     * @param {CreateCategoryTypeRequestViewModel} createCategoryTypeRequestViewModel
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    createCategoryType: async (
-      userId: string,
-      createCategoryTypeRequestViewModel: CreateCategoryTypeRequestViewModel,
-      options: RawAxiosRequestConfig = {},
-    ): Promise<RequestArgs> => {
-      // verify required parameter 'userId' is not null or undefined
-      assertParamExists("createCategoryType", "userId", userId);
-      // verify required parameter 'createCategoryTypeRequestViewModel' is not null or undefined
-      assertParamExists(
-        "createCategoryType",
-        "createCategoryTypeRequestViewModel",
-        createCategoryTypeRequestViewModel,
-      );
-      const localVarPath = `/api/users/{user_id}/categories/types`.replace(
-        `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
-      // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
-      if (configuration) {
-        baseOptions = configuration.baseOptions;
-      }
-
-      const localVarRequestOptions = {
-        method: "POST",
-        ...baseOptions,
-        ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
-
-      // authentication auth_token required
-      // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
-
-      localVarHeaderParameter["Content-Type"] = "application/json";
-
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
-      let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
-      localVarRequestOptions.headers = {
-        ...localVarHeaderParameter,
-        ...headersFromBaseOptions,
-        ...options.headers,
-      };
-      localVarRequestOptions.data = serializeDataIfNeeded(
-        createCategoryTypeRequestViewModel,
-        localVarRequestOptions,
-        configuration,
-      );
-
-      return {
-        url: toPathString(localVarUrlObj),
-        options: localVarRequestOptions,
-      };
-    },
-    /**
-     * Deletes a user-specific category. Cannot delete global, system categories, or categories with transaction dependencies.
-     * @summary Delete Category
-     * @param {string} userId User ID
-     * @param {number} categoryId Category ID
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    deleteCategory: async (
-      userId: string,
-      categoryId: number,
-      options: RawAxiosRequestConfig = {},
-    ): Promise<RequestArgs> => {
-      // verify required parameter 'userId' is not null or undefined
-      assertParamExists("deleteCategory", "userId", userId);
-      // verify required parameter 'categoryId' is not null or undefined
-      assertParamExists("deleteCategory", "categoryId", categoryId);
-      const localVarPath = `/api/users/{user_id}/categories/{category_id}`
-        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-        .replace(`{${"category_id"}}`, encodeURIComponent(String(categoryId)));
-      // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
-      if (configuration) {
-        baseOptions = configuration.baseOptions;
-      }
-
-      const localVarRequestOptions = {
-        method: "DELETE",
-        ...baseOptions,
-        ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
-
-      // authentication auth_token required
-      // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
-
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
-      let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
-      localVarRequestOptions.headers = {
-        ...localVarHeaderParameter,
-        ...headersFromBaseOptions,
-        ...options.headers,
-      };
-
-      return {
-        url: toPathString(localVarUrlObj),
-        options: localVarRequestOptions,
-      };
-    },
-    /**
-     * Deletes a user-specific category type. Cannot delete global types or types with category dependencies.
-     * @summary Delete Category Type
-     * @param {string} userId User ID
-     * @param {number} typeId Category type ID
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    deleteCategoryType: async (
-      userId: string,
-      typeId: number,
-      options: RawAxiosRequestConfig = {},
-    ): Promise<RequestArgs> => {
-      // verify required parameter 'userId' is not null or undefined
-      assertParamExists("deleteCategoryType", "userId", userId);
-      // verify required parameter 'typeId' is not null or undefined
-      assertParamExists("deleteCategoryType", "typeId", typeId);
-      const localVarPath = `/api/users/{user_id}/categories/types/{type_id}`
-        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-        .replace(`{${"type_id"}}`, encodeURIComponent(String(typeId)));
-      // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
-      if (configuration) {
-        baseOptions = configuration.baseOptions;
-      }
-
-      const localVarRequestOptions = {
-        method: "DELETE",
-        ...baseOptions,
-        ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
-
-      // authentication auth_token required
-      // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
-
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
-      let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
-      localVarRequestOptions.headers = {
-        ...localVarHeaderParameter,
-        ...headersFromBaseOptions,
-        ...options.headers,
-      };
-
-      return {
-        url: toPathString(localVarUrlObj),
-        options: localVarRequestOptions,
-      };
-    },
-    /**
-     * Retrieves details of a specific category. User can only access global categories or their own categories.
-     * @summary Get Category
-     * @param {string} userId User ID
-     * @param {number} categoryId Category ID
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    getCategory: async (
-      userId: string,
-      categoryId: number,
-      options: RawAxiosRequestConfig = {},
-    ): Promise<RequestArgs> => {
-      // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getCategory", "userId", userId);
-      // verify required parameter 'categoryId' is not null or undefined
-      assertParamExists("getCategory", "categoryId", categoryId);
-      const localVarPath = `/api/users/{user_id}/categories/{category_id}`
-        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-        .replace(`{${"category_id"}}`, encodeURIComponent(String(categoryId)));
-      // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
-      if (configuration) {
-        baseOptions = configuration.baseOptions;
-      }
-
-      const localVarRequestOptions = {
-        method: "GET",
-        ...baseOptions,
-        ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
-
-      // authentication auth_token required
-      // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
-
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
-      let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
-      localVarRequestOptions.headers = {
-        ...localVarHeaderParameter,
-        ...headersFromBaseOptions,
-        ...options.headers,
-      };
-
-      return {
-        url: toPathString(localVarUrlObj),
-        options: localVarRequestOptions,
-      };
-    },
-    /**
-     * Retrieves all category types accessible to the user. Includes both global types and user-specific types.
+     * Retrieves all shared category types. Does not include user-specific category types.
      * @summary Get Category Types
-     * @param {string} userId User ID
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     getCategoryTypes: async (
-      userId: string,
       options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
-      // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getCategoryTypes", "userId", userId);
-      const localVarPath = `/api/users/{user_id}/categories/types`.replace(
-        `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+      const localVarPath = `/api/categories/types`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
       let baseOptions;
@@ -10825,7 +10591,6 @@ export const CategoriesApiAxiosParamCreator = function (
     /**
      * Retrieves a paginated list of categories accessible to the user. Includes both global categories and user-specific categories. Supports searching by category name or type name, and filtering by type ID.
      * @summary Search Categories
-     * @param {string} userId User ID
      * @param {number} [count] How many items to return in a single page
      * @param {number} [start] The index in the list of the fist element of the page.
      * @param {string | null} [query] The search query
@@ -10834,19 +10599,13 @@ export const CategoriesApiAxiosParamCreator = function (
      * @throws {RequiredError}
      */
     searchCategories: async (
-      userId: string,
       count?: number,
       start?: number,
       query?: string | null,
       typeId?: number | null,
       options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
-      // verify required parameter 'userId' is not null or undefined
-      assertParamExists("searchCategories", "userId", userId);
-      const localVarPath = `/api/users/{user_id}/categories`.replace(
-        `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+      const localVarPath = `/api/categories`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
       let baseOptions;
@@ -10896,142 +10655,6 @@ export const CategoriesApiAxiosParamCreator = function (
         options: localVarRequestOptions,
       };
     },
-    /**
-     * Updates an existing user-specific category. Cannot update global or system categories. Category name must remain unique if changed.
-     * @summary Update Category
-     * @param {string} userId User ID
-     * @param {number} categoryId Category ID
-     * @param {UpdateCategoryRequestViewModel} updateCategoryRequestViewModel
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    updateCategory: async (
-      userId: string,
-      categoryId: number,
-      updateCategoryRequestViewModel: UpdateCategoryRequestViewModel,
-      options: RawAxiosRequestConfig = {},
-    ): Promise<RequestArgs> => {
-      // verify required parameter 'userId' is not null or undefined
-      assertParamExists("updateCategory", "userId", userId);
-      // verify required parameter 'categoryId' is not null or undefined
-      assertParamExists("updateCategory", "categoryId", categoryId);
-      // verify required parameter 'updateCategoryRequestViewModel' is not null or undefined
-      assertParamExists(
-        "updateCategory",
-        "updateCategoryRequestViewModel",
-        updateCategoryRequestViewModel,
-      );
-      const localVarPath = `/api/users/{user_id}/categories/{category_id}`
-        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-        .replace(`{${"category_id"}}`, encodeURIComponent(String(categoryId)));
-      // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
-      if (configuration) {
-        baseOptions = configuration.baseOptions;
-      }
-
-      const localVarRequestOptions = {
-        method: "PUT",
-        ...baseOptions,
-        ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
-
-      // authentication auth_token required
-      // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
-
-      localVarHeaderParameter["Content-Type"] = "application/json";
-
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
-      let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
-      localVarRequestOptions.headers = {
-        ...localVarHeaderParameter,
-        ...headersFromBaseOptions,
-        ...options.headers,
-      };
-      localVarRequestOptions.data = serializeDataIfNeeded(
-        updateCategoryRequestViewModel,
-        localVarRequestOptions,
-        configuration,
-      );
-
-      return {
-        url: toPathString(localVarUrlObj),
-        options: localVarRequestOptions,
-      };
-    },
-    /**
-     * Updates an existing user-specific category type. Cannot update global types.
-     * @summary Update Category Type
-     * @param {string} userId User ID
-     * @param {number} typeId Category type ID
-     * @param {UpdateCategoryTypeRequestViewModel} updateCategoryTypeRequestViewModel
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    updateCategoryType: async (
-      userId: string,
-      typeId: number,
-      updateCategoryTypeRequestViewModel: UpdateCategoryTypeRequestViewModel,
-      options: RawAxiosRequestConfig = {},
-    ): Promise<RequestArgs> => {
-      // verify required parameter 'userId' is not null or undefined
-      assertParamExists("updateCategoryType", "userId", userId);
-      // verify required parameter 'typeId' is not null or undefined
-      assertParamExists("updateCategoryType", "typeId", typeId);
-      // verify required parameter 'updateCategoryTypeRequestViewModel' is not null or undefined
-      assertParamExists(
-        "updateCategoryType",
-        "updateCategoryTypeRequestViewModel",
-        updateCategoryTypeRequestViewModel,
-      );
-      const localVarPath = `/api/users/{user_id}/categories/types/{type_id}`
-        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-        .replace(`{${"type_id"}}`, encodeURIComponent(String(typeId)));
-      // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
-      if (configuration) {
-        baseOptions = configuration.baseOptions;
-      }
-
-      const localVarRequestOptions = {
-        method: "PUT",
-        ...baseOptions,
-        ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
-
-      // authentication auth_token required
-      // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
-
-      localVarHeaderParameter["Content-Type"] = "application/json";
-
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
-      let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
-      localVarRequestOptions.headers = {
-        ...localVarHeaderParameter,
-        ...headersFromBaseOptions,
-        ...options.headers,
-      };
-      localVarRequestOptions.data = serializeDataIfNeeded(
-        updateCategoryTypeRequestViewModel,
-        localVarRequestOptions,
-        configuration,
-      );
-
-      return {
-        url: toPathString(localVarUrlObj),
-        options: localVarRequestOptions,
-      };
-    },
   };
 };
 
@@ -11044,190 +10667,12 @@ export const CategoriesApiFp = function (configuration?: Configuration) {
     CategoriesApiAxiosParamCreator(configuration);
   return {
     /**
-     * Creates a new user-specific category. Category name must be unique (case-insensitive) across global and user categories. Users are limited to 100 custom categories.
-     * @summary Create Category
-     * @param {string} userId User ID
-     * @param {CreateCategoryRequestViewModel} createCategoryRequestViewModel
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    async createCategory(
-      userId: string,
-      createCategoryRequestViewModel: CreateCategoryRequestViewModel,
-      options?: RawAxiosRequestConfig,
-    ): Promise<
-      (
-        axios?: AxiosInstance,
-        basePath?: string,
-      ) => AxiosPromise<CreateCategoryResponseViewModel>
-    > {
-      const localVarAxiosArgs = await localVarAxiosParamCreator.createCategory(
-        userId,
-        createCategoryRequestViewModel,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-      const localVarOperationServerBasePath =
-        operationServerMap["CategoriesApi.createCategory"]?.[
-          localVarOperationServerIndex
-        ]?.url;
-      return (axios, basePath) =>
-        createRequestFunction(
-          localVarAxiosArgs,
-          globalAxios,
-          BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
-    },
-    /**
-     * Creates a new user-specific category type. Type name must be unique across global and user types. Users are limited to 20 custom types.
-     * @summary Create Category Type
-     * @param {string} userId User ID
-     * @param {CreateCategoryTypeRequestViewModel} createCategoryTypeRequestViewModel
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    async createCategoryType(
-      userId: string,
-      createCategoryTypeRequestViewModel: CreateCategoryTypeRequestViewModel,
-      options?: RawAxiosRequestConfig,
-    ): Promise<
-      (
-        axios?: AxiosInstance,
-        basePath?: string,
-      ) => AxiosPromise<CreateCategoryTypeResponseViewModel>
-    > {
-      const localVarAxiosArgs =
-        await localVarAxiosParamCreator.createCategoryType(
-          userId,
-          createCategoryTypeRequestViewModel,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-      const localVarOperationServerBasePath =
-        operationServerMap["CategoriesApi.createCategoryType"]?.[
-          localVarOperationServerIndex
-        ]?.url;
-      return (axios, basePath) =>
-        createRequestFunction(
-          localVarAxiosArgs,
-          globalAxios,
-          BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
-    },
-    /**
-     * Deletes a user-specific category. Cannot delete global, system categories, or categories with transaction dependencies.
-     * @summary Delete Category
-     * @param {string} userId User ID
-     * @param {number} categoryId Category ID
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    async deleteCategory(
-      userId: string,
-      categoryId: number,
-      options?: RawAxiosRequestConfig,
-    ): Promise<
-      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
-    > {
-      const localVarAxiosArgs = await localVarAxiosParamCreator.deleteCategory(
-        userId,
-        categoryId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-      const localVarOperationServerBasePath =
-        operationServerMap["CategoriesApi.deleteCategory"]?.[
-          localVarOperationServerIndex
-        ]?.url;
-      return (axios, basePath) =>
-        createRequestFunction(
-          localVarAxiosArgs,
-          globalAxios,
-          BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
-    },
-    /**
-     * Deletes a user-specific category type. Cannot delete global types or types with category dependencies.
-     * @summary Delete Category Type
-     * @param {string} userId User ID
-     * @param {number} typeId Category type ID
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    async deleteCategoryType(
-      userId: string,
-      typeId: number,
-      options?: RawAxiosRequestConfig,
-    ): Promise<
-      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
-    > {
-      const localVarAxiosArgs =
-        await localVarAxiosParamCreator.deleteCategoryType(
-          userId,
-          typeId,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-      const localVarOperationServerBasePath =
-        operationServerMap["CategoriesApi.deleteCategoryType"]?.[
-          localVarOperationServerIndex
-        ]?.url;
-      return (axios, basePath) =>
-        createRequestFunction(
-          localVarAxiosArgs,
-          globalAxios,
-          BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
-    },
-    /**
-     * Retrieves details of a specific category. User can only access global categories or their own categories.
-     * @summary Get Category
-     * @param {string} userId User ID
-     * @param {number} categoryId Category ID
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    async getCategory(
-      userId: string,
-      categoryId: number,
-      options?: RawAxiosRequestConfig,
-    ): Promise<
-      (
-        axios?: AxiosInstance,
-        basePath?: string,
-      ) => AxiosPromise<GetCategoryResponseViewModel>
-    > {
-      const localVarAxiosArgs = await localVarAxiosParamCreator.getCategory(
-        userId,
-        categoryId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-      const localVarOperationServerBasePath =
-        operationServerMap["CategoriesApi.getCategory"]?.[
-          localVarOperationServerIndex
-        ]?.url;
-      return (axios, basePath) =>
-        createRequestFunction(
-          localVarAxiosArgs,
-          globalAxios,
-          BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
-    },
-    /**
-     * Retrieves all category types accessible to the user. Includes both global types and user-specific types.
+     * Retrieves all shared category types. Does not include user-specific category types.
      * @summary Get Category Types
-     * @param {string} userId User ID
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     async getCategoryTypes(
-      userId: string,
       options?: RawAxiosRequestConfig,
     ): Promise<
       (
@@ -11236,7 +10681,7 @@ export const CategoriesApiFp = function (configuration?: Configuration) {
       ) => AxiosPromise<GetCategoryTypesResponseViewModel>
     > {
       const localVarAxiosArgs =
-        await localVarAxiosParamCreator.getCategoryTypes(userId, options);
+        await localVarAxiosParamCreator.getCategoryTypes(options);
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
         operationServerMap["CategoriesApi.getCategoryTypes"]?.[
@@ -11253,7 +10698,6 @@ export const CategoriesApiFp = function (configuration?: Configuration) {
     /**
      * Retrieves a paginated list of categories accessible to the user. Includes both global categories and user-specific categories. Supports searching by category name or type name, and filtering by type ID.
      * @summary Search Categories
-     * @param {string} userId User ID
      * @param {number} [count] How many items to return in a single page
      * @param {number} [start] The index in the list of the fist element of the page.
      * @param {string | null} [query] The search query
@@ -11262,7 +10706,6 @@ export const CategoriesApiFp = function (configuration?: Configuration) {
      * @throws {RequiredError}
      */
     async searchCategories(
-      userId: string,
       count?: number,
       start?: number,
       query?: string | null,
@@ -11273,7 +10716,6 @@ export const CategoriesApiFp = function (configuration?: Configuration) {
     > {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.searchCategories(
-          userId,
           count,
           start,
           query,
@@ -11283,85 +10725,6 @@ export const CategoriesApiFp = function (configuration?: Configuration) {
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
         operationServerMap["CategoriesApi.searchCategories"]?.[
-          localVarOperationServerIndex
-        ]?.url;
-      return (axios, basePath) =>
-        createRequestFunction(
-          localVarAxiosArgs,
-          globalAxios,
-          BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
-    },
-    /**
-     * Updates an existing user-specific category. Cannot update global or system categories. Category name must remain unique if changed.
-     * @summary Update Category
-     * @param {string} userId User ID
-     * @param {number} categoryId Category ID
-     * @param {UpdateCategoryRequestViewModel} updateCategoryRequestViewModel
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    async updateCategory(
-      userId: string,
-      categoryId: number,
-      updateCategoryRequestViewModel: UpdateCategoryRequestViewModel,
-      options?: RawAxiosRequestConfig,
-    ): Promise<
-      (
-        axios?: AxiosInstance,
-        basePath?: string,
-      ) => AxiosPromise<UpdateCategoryResponseViewModel>
-    > {
-      const localVarAxiosArgs = await localVarAxiosParamCreator.updateCategory(
-        userId,
-        categoryId,
-        updateCategoryRequestViewModel,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-      const localVarOperationServerBasePath =
-        operationServerMap["CategoriesApi.updateCategory"]?.[
-          localVarOperationServerIndex
-        ]?.url;
-      return (axios, basePath) =>
-        createRequestFunction(
-          localVarAxiosArgs,
-          globalAxios,
-          BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
-    },
-    /**
-     * Updates an existing user-specific category type. Cannot update global types.
-     * @summary Update Category Type
-     * @param {string} userId User ID
-     * @param {number} typeId Category type ID
-     * @param {UpdateCategoryTypeRequestViewModel} updateCategoryTypeRequestViewModel
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    async updateCategoryType(
-      userId: string,
-      typeId: number,
-      updateCategoryTypeRequestViewModel: UpdateCategoryTypeRequestViewModel,
-      options?: RawAxiosRequestConfig,
-    ): Promise<
-      (
-        axios?: AxiosInstance,
-        basePath?: string,
-      ) => AxiosPromise<UpdateCategoryTypeResponseViewModel>
-    > {
-      const localVarAxiosArgs =
-        await localVarAxiosParamCreator.updateCategoryType(
-          userId,
-          typeId,
-          updateCategoryTypeRequestViewModel,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-      const localVarOperationServerBasePath =
-        operationServerMap["CategoriesApi.updateCategoryType"]?.[
           localVarOperationServerIndex
         ]?.url;
       return (axios, basePath) =>
@@ -11387,109 +10750,21 @@ export const CategoriesApiFactory = function (
   const localVarFp = CategoriesApiFp(configuration);
   return {
     /**
-     * Creates a new user-specific category. Category name must be unique (case-insensitive) across global and user categories. Users are limited to 100 custom categories.
-     * @summary Create Category
-     * @param {string} userId User ID
-     * @param {CreateCategoryRequestViewModel} createCategoryRequestViewModel
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    createCategory(
-      userId: string,
-      createCategoryRequestViewModel: CreateCategoryRequestViewModel,
-      options?: RawAxiosRequestConfig,
-    ): AxiosPromise<CreateCategoryResponseViewModel> {
-      return localVarFp
-        .createCategory(userId, createCategoryRequestViewModel, options)
-        .then((request) => request(axios, basePath));
-    },
-    /**
-     * Creates a new user-specific category type. Type name must be unique across global and user types. Users are limited to 20 custom types.
-     * @summary Create Category Type
-     * @param {string} userId User ID
-     * @param {CreateCategoryTypeRequestViewModel} createCategoryTypeRequestViewModel
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    createCategoryType(
-      userId: string,
-      createCategoryTypeRequestViewModel: CreateCategoryTypeRequestViewModel,
-      options?: RawAxiosRequestConfig,
-    ): AxiosPromise<CreateCategoryTypeResponseViewModel> {
-      return localVarFp
-        .createCategoryType(userId, createCategoryTypeRequestViewModel, options)
-        .then((request) => request(axios, basePath));
-    },
-    /**
-     * Deletes a user-specific category. Cannot delete global, system categories, or categories with transaction dependencies.
-     * @summary Delete Category
-     * @param {string} userId User ID
-     * @param {number} categoryId Category ID
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    deleteCategory(
-      userId: string,
-      categoryId: number,
-      options?: RawAxiosRequestConfig,
-    ): AxiosPromise<void> {
-      return localVarFp
-        .deleteCategory(userId, categoryId, options)
-        .then((request) => request(axios, basePath));
-    },
-    /**
-     * Deletes a user-specific category type. Cannot delete global types or types with category dependencies.
-     * @summary Delete Category Type
-     * @param {string} userId User ID
-     * @param {number} typeId Category type ID
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    deleteCategoryType(
-      userId: string,
-      typeId: number,
-      options?: RawAxiosRequestConfig,
-    ): AxiosPromise<void> {
-      return localVarFp
-        .deleteCategoryType(userId, typeId, options)
-        .then((request) => request(axios, basePath));
-    },
-    /**
-     * Retrieves details of a specific category. User can only access global categories or their own categories.
-     * @summary Get Category
-     * @param {string} userId User ID
-     * @param {number} categoryId Category ID
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    getCategory(
-      userId: string,
-      categoryId: number,
-      options?: RawAxiosRequestConfig,
-    ): AxiosPromise<GetCategoryResponseViewModel> {
-      return localVarFp
-        .getCategory(userId, categoryId, options)
-        .then((request) => request(axios, basePath));
-    },
-    /**
-     * Retrieves all category types accessible to the user. Includes both global types and user-specific types.
+     * Retrieves all shared category types. Does not include user-specific category types.
      * @summary Get Category Types
-     * @param {string} userId User ID
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     getCategoryTypes(
-      userId: string,
       options?: RawAxiosRequestConfig,
     ): AxiosPromise<GetCategoryTypesResponseViewModel> {
       return localVarFp
-        .getCategoryTypes(userId, options)
+        .getCategoryTypes(options)
         .then((request) => request(axios, basePath));
     },
     /**
      * Retrieves a paginated list of categories accessible to the user. Includes both global categories and user-specific categories. Supports searching by category name or type name, and filtering by type ID.
      * @summary Search Categories
-     * @param {string} userId User ID
      * @param {number} [count] How many items to return in a single page
      * @param {number} [start] The index in the list of the fist element of the page.
      * @param {string | null} [query] The search query
@@ -11498,7 +10773,6 @@ export const CategoriesApiFactory = function (
      * @throws {RequiredError}
      */
     searchCategories(
-      userId: string,
       count?: number,
       start?: number,
       query?: string | null,
@@ -11506,55 +10780,7 @@ export const CategoriesApiFactory = function (
       options?: RawAxiosRequestConfig,
     ): AxiosPromise<PageOfResults> {
       return localVarFp
-        .searchCategories(userId, count, start, query, typeId, options)
-        .then((request) => request(axios, basePath));
-    },
-    /**
-     * Updates an existing user-specific category. Cannot update global or system categories. Category name must remain unique if changed.
-     * @summary Update Category
-     * @param {string} userId User ID
-     * @param {number} categoryId Category ID
-     * @param {UpdateCategoryRequestViewModel} updateCategoryRequestViewModel
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    updateCategory(
-      userId: string,
-      categoryId: number,
-      updateCategoryRequestViewModel: UpdateCategoryRequestViewModel,
-      options?: RawAxiosRequestConfig,
-    ): AxiosPromise<UpdateCategoryResponseViewModel> {
-      return localVarFp
-        .updateCategory(
-          userId,
-          categoryId,
-          updateCategoryRequestViewModel,
-          options,
-        )
-        .then((request) => request(axios, basePath));
-    },
-    /**
-     * Updates an existing user-specific category type. Cannot update global types.
-     * @summary Update Category Type
-     * @param {string} userId User ID
-     * @param {number} typeId Category type ID
-     * @param {UpdateCategoryTypeRequestViewModel} updateCategoryTypeRequestViewModel
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    updateCategoryType(
-      userId: string,
-      typeId: number,
-      updateCategoryTypeRequestViewModel: UpdateCategoryTypeRequestViewModel,
-      options?: RawAxiosRequestConfig,
-    ): AxiosPromise<UpdateCategoryTypeResponseViewModel> {
-      return localVarFp
-        .updateCategoryType(
-          userId,
-          typeId,
-          updateCategoryTypeRequestViewModel,
-          options,
-        )
+        .searchCategories(count, start, query, typeId, options)
         .then((request) => request(axios, basePath));
     },
   };
@@ -11567,97 +10793,19 @@ export const CategoriesApiFactory = function (
  */
 export interface CategoriesApiInterface {
   /**
-   * Creates a new user-specific category. Category name must be unique (case-insensitive) across global and user categories. Users are limited to 100 custom categories.
-   * @summary Create Category
-   * @param {string} userId User ID
-   * @param {CreateCategoryRequestViewModel} createCategoryRequestViewModel
-   * @param {*} [options] Override http request option.
-   * @throws {RequiredError}
-   * @memberof CategoriesApiInterface
-   */
-  createCategory(
-    userId: string,
-    createCategoryRequestViewModel: CreateCategoryRequestViewModel,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<CreateCategoryResponseViewModel>;
-
-  /**
-   * Creates a new user-specific category type. Type name must be unique across global and user types. Users are limited to 20 custom types.
-   * @summary Create Category Type
-   * @param {string} userId User ID
-   * @param {CreateCategoryTypeRequestViewModel} createCategoryTypeRequestViewModel
-   * @param {*} [options] Override http request option.
-   * @throws {RequiredError}
-   * @memberof CategoriesApiInterface
-   */
-  createCategoryType(
-    userId: string,
-    createCategoryTypeRequestViewModel: CreateCategoryTypeRequestViewModel,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<CreateCategoryTypeResponseViewModel>;
-
-  /**
-   * Deletes a user-specific category. Cannot delete global, system categories, or categories with transaction dependencies.
-   * @summary Delete Category
-   * @param {string} userId User ID
-   * @param {number} categoryId Category ID
-   * @param {*} [options] Override http request option.
-   * @throws {RequiredError}
-   * @memberof CategoriesApiInterface
-   */
-  deleteCategory(
-    userId: string,
-    categoryId: number,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<void>;
-
-  /**
-   * Deletes a user-specific category type. Cannot delete global types or types with category dependencies.
-   * @summary Delete Category Type
-   * @param {string} userId User ID
-   * @param {number} typeId Category type ID
-   * @param {*} [options] Override http request option.
-   * @throws {RequiredError}
-   * @memberof CategoriesApiInterface
-   */
-  deleteCategoryType(
-    userId: string,
-    typeId: number,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<void>;
-
-  /**
-   * Retrieves details of a specific category. User can only access global categories or their own categories.
-   * @summary Get Category
-   * @param {string} userId User ID
-   * @param {number} categoryId Category ID
-   * @param {*} [options] Override http request option.
-   * @throws {RequiredError}
-   * @memberof CategoriesApiInterface
-   */
-  getCategory(
-    userId: string,
-    categoryId: number,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetCategoryResponseViewModel>;
-
-  /**
-   * Retrieves all category types accessible to the user. Includes both global types and user-specific types.
+   * Retrieves all shared category types. Does not include user-specific category types.
    * @summary Get Category Types
-   * @param {string} userId User ID
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    * @memberof CategoriesApiInterface
    */
   getCategoryTypes(
-    userId: string,
     options?: RawAxiosRequestConfig,
   ): AxiosPromise<GetCategoryTypesResponseViewModel>;
 
   /**
    * Retrieves a paginated list of categories accessible to the user. Includes both global categories and user-specific categories. Supports searching by category name or type name, and filtering by type ID.
    * @summary Search Categories
-   * @param {string} userId User ID
    * @param {number} [count] How many items to return in a single page
    * @param {number} [start] The index in the list of the fist element of the page.
    * @param {string | null} [query] The search query
@@ -11667,47 +10815,12 @@ export interface CategoriesApiInterface {
    * @memberof CategoriesApiInterface
    */
   searchCategories(
-    userId: string,
     count?: number,
     start?: number,
     query?: string | null,
     typeId?: number | null,
     options?: RawAxiosRequestConfig,
   ): AxiosPromise<PageOfResults>;
-
-  /**
-   * Updates an existing user-specific category. Cannot update global or system categories. Category name must remain unique if changed.
-   * @summary Update Category
-   * @param {string} userId User ID
-   * @param {number} categoryId Category ID
-   * @param {UpdateCategoryRequestViewModel} updateCategoryRequestViewModel
-   * @param {*} [options] Override http request option.
-   * @throws {RequiredError}
-   * @memberof CategoriesApiInterface
-   */
-  updateCategory(
-    userId: string,
-    categoryId: number,
-    updateCategoryRequestViewModel: UpdateCategoryRequestViewModel,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<UpdateCategoryResponseViewModel>;
-
-  /**
-   * Updates an existing user-specific category type. Cannot update global types.
-   * @summary Update Category Type
-   * @param {string} userId User ID
-   * @param {number} typeId Category type ID
-   * @param {UpdateCategoryTypeRequestViewModel} updateCategoryTypeRequestViewModel
-   * @param {*} [options] Override http request option.
-   * @throws {RequiredError}
-   * @memberof CategoriesApiInterface
-   */
-  updateCategoryType(
-    userId: string,
-    typeId: number,
-    updateCategoryTypeRequestViewModel: UpdateCategoryTypeRequestViewModel,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<UpdateCategoryTypeResponseViewModel>;
 }
 
 /**
@@ -11718,118 +10831,21 @@ export interface CategoriesApiInterface {
  */
 export class CategoriesApi extends BaseAPI implements CategoriesApiInterface {
   /**
-   * Creates a new user-specific category. Category name must be unique (case-insensitive) across global and user categories. Users are limited to 100 custom categories.
-   * @summary Create Category
-   * @param {string} userId User ID
-   * @param {CreateCategoryRequestViewModel} createCategoryRequestViewModel
-   * @param {*} [options] Override http request option.
-   * @throws {RequiredError}
-   * @memberof CategoriesApi
-   */
-  public createCategory(
-    userId: string,
-    createCategoryRequestViewModel: CreateCategoryRequestViewModel,
-    options?: RawAxiosRequestConfig,
-  ) {
-    return CategoriesApiFp(this.configuration)
-      .createCategory(userId, createCategoryRequestViewModel, options)
-      .then((request) => request(this.axios, this.basePath));
-  }
-
-  /**
-   * Creates a new user-specific category type. Type name must be unique across global and user types. Users are limited to 20 custom types.
-   * @summary Create Category Type
-   * @param {string} userId User ID
-   * @param {CreateCategoryTypeRequestViewModel} createCategoryTypeRequestViewModel
-   * @param {*} [options] Override http request option.
-   * @throws {RequiredError}
-   * @memberof CategoriesApi
-   */
-  public createCategoryType(
-    userId: string,
-    createCategoryTypeRequestViewModel: CreateCategoryTypeRequestViewModel,
-    options?: RawAxiosRequestConfig,
-  ) {
-    return CategoriesApiFp(this.configuration)
-      .createCategoryType(userId, createCategoryTypeRequestViewModel, options)
-      .then((request) => request(this.axios, this.basePath));
-  }
-
-  /**
-   * Deletes a user-specific category. Cannot delete global, system categories, or categories with transaction dependencies.
-   * @summary Delete Category
-   * @param {string} userId User ID
-   * @param {number} categoryId Category ID
-   * @param {*} [options] Override http request option.
-   * @throws {RequiredError}
-   * @memberof CategoriesApi
-   */
-  public deleteCategory(
-    userId: string,
-    categoryId: number,
-    options?: RawAxiosRequestConfig,
-  ) {
-    return CategoriesApiFp(this.configuration)
-      .deleteCategory(userId, categoryId, options)
-      .then((request) => request(this.axios, this.basePath));
-  }
-
-  /**
-   * Deletes a user-specific category type. Cannot delete global types or types with category dependencies.
-   * @summary Delete Category Type
-   * @param {string} userId User ID
-   * @param {number} typeId Category type ID
-   * @param {*} [options] Override http request option.
-   * @throws {RequiredError}
-   * @memberof CategoriesApi
-   */
-  public deleteCategoryType(
-    userId: string,
-    typeId: number,
-    options?: RawAxiosRequestConfig,
-  ) {
-    return CategoriesApiFp(this.configuration)
-      .deleteCategoryType(userId, typeId, options)
-      .then((request) => request(this.axios, this.basePath));
-  }
-
-  /**
-   * Retrieves details of a specific category. User can only access global categories or their own categories.
-   * @summary Get Category
-   * @param {string} userId User ID
-   * @param {number} categoryId Category ID
-   * @param {*} [options] Override http request option.
-   * @throws {RequiredError}
-   * @memberof CategoriesApi
-   */
-  public getCategory(
-    userId: string,
-    categoryId: number,
-    options?: RawAxiosRequestConfig,
-  ) {
-    return CategoriesApiFp(this.configuration)
-      .getCategory(userId, categoryId, options)
-      .then((request) => request(this.axios, this.basePath));
-  }
-
-  /**
-   * Retrieves all category types accessible to the user. Includes both global types and user-specific types.
+   * Retrieves all shared category types. Does not include user-specific category types.
    * @summary Get Category Types
-   * @param {string} userId User ID
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    * @memberof CategoriesApi
    */
-  public getCategoryTypes(userId: string, options?: RawAxiosRequestConfig) {
+  public getCategoryTypes(options?: RawAxiosRequestConfig) {
     return CategoriesApiFp(this.configuration)
-      .getCategoryTypes(userId, options)
+      .getCategoryTypes(options)
       .then((request) => request(this.axios, this.basePath));
   }
 
   /**
    * Retrieves a paginated list of categories accessible to the user. Includes both global categories and user-specific categories. Supports searching by category name or type name, and filtering by type ID.
    * @summary Search Categories
-   * @param {string} userId User ID
    * @param {number} [count] How many items to return in a single page
    * @param {number} [start] The index in the list of the fist element of the page.
    * @param {string | null} [query] The search query
@@ -11839,7 +10855,6 @@ export class CategoriesApi extends BaseAPI implements CategoriesApiInterface {
    * @memberof CategoriesApi
    */
   public searchCategories(
-    userId: string,
     count?: number,
     start?: number,
     query?: string | null,
@@ -11847,59 +10862,7 @@ export class CategoriesApi extends BaseAPI implements CategoriesApiInterface {
     options?: RawAxiosRequestConfig,
   ) {
     return CategoriesApiFp(this.configuration)
-      .searchCategories(userId, count, start, query, typeId, options)
-      .then((request) => request(this.axios, this.basePath));
-  }
-
-  /**
-   * Updates an existing user-specific category. Cannot update global or system categories. Category name must remain unique if changed.
-   * @summary Update Category
-   * @param {string} userId User ID
-   * @param {number} categoryId Category ID
-   * @param {UpdateCategoryRequestViewModel} updateCategoryRequestViewModel
-   * @param {*} [options] Override http request option.
-   * @throws {RequiredError}
-   * @memberof CategoriesApi
-   */
-  public updateCategory(
-    userId: string,
-    categoryId: number,
-    updateCategoryRequestViewModel: UpdateCategoryRequestViewModel,
-    options?: RawAxiosRequestConfig,
-  ) {
-    return CategoriesApiFp(this.configuration)
-      .updateCategory(
-        userId,
-        categoryId,
-        updateCategoryRequestViewModel,
-        options,
-      )
-      .then((request) => request(this.axios, this.basePath));
-  }
-
-  /**
-   * Updates an existing user-specific category type. Cannot update global types.
-   * @summary Update Category Type
-   * @param {string} userId User ID
-   * @param {number} typeId Category type ID
-   * @param {UpdateCategoryTypeRequestViewModel} updateCategoryTypeRequestViewModel
-   * @param {*} [options] Override http request option.
-   * @throws {RequiredError}
-   * @memberof CategoriesApi
-   */
-  public updateCategoryType(
-    userId: string,
-    typeId: number,
-    updateCategoryTypeRequestViewModel: UpdateCategoryTypeRequestViewModel,
-    options?: RawAxiosRequestConfig,
-  ) {
-    return CategoriesApiFp(this.configuration)
-      .updateCategoryType(
-        userId,
-        typeId,
-        updateCategoryTypeRequestViewModel,
-        options,
-      )
+      .searchCategories(count, start, query, typeId, options)
       .then((request) => request(this.axios, this.basePath));
   }
 }
@@ -16049,6 +15012,1383 @@ export class UserAssetsApi extends BaseAPI implements UserAssetsApiInterface {
         assetId,
         referenceId,
         updateAssetPairRequestViewModel,
+        options,
+      )
+      .then((request) => request(this.axios, this.basePath));
+  }
+}
+
+/**
+ * UserCategoriesApi - axios parameter creator
+ * @export
+ */
+export const UserCategoriesApiAxiosParamCreator = function (
+  configuration?: Configuration,
+) {
+  return {
+    /**
+     * Deletes a user-specific category. Cannot delete global, system categories, or categories with transaction dependencies.
+     * @summary Delete Category
+     * @param {string} userId User ID
+     * @param {number} categoryId Category ID
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    deleteUserCategory: async (
+      userId: string,
+      categoryId: number,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("deleteUserCategory", "userId", userId);
+      // verify required parameter 'categoryId' is not null or undefined
+      assertParamExists("deleteUserCategory", "categoryId", categoryId);
+      const localVarPath = `/api/users/{user_id}/categories/{category_id}`
+        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+        .replace(`{${"category_id"}}`, encodeURIComponent(String(categoryId)));
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "DELETE",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Deletes a user-specific category type. Cannot delete global types or types with category dependencies.
+     * @summary Delete Category Type
+     * @param {string} userId User ID
+     * @param {number} typeId Category type ID
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    deleteUserCategoryType: async (
+      userId: string,
+      typeId: number,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("deleteUserCategoryType", "userId", userId);
+      // verify required parameter 'typeId' is not null or undefined
+      assertParamExists("deleteUserCategoryType", "typeId", typeId);
+      const localVarPath = `/api/users/{user_id}/categories/types/{type_id}`
+        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+        .replace(`{${"type_id"}}`, encodeURIComponent(String(typeId)));
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "DELETE",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Retrieves full list of custom user categories. Does not include global categories.
+     * @summary Get Categories
+     * @param {string} userId User ID
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getCategories: async (
+      userId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("getCategories", "userId", userId);
+      const localVarPath = `/api/users/{user_id}/categories`.replace(
+        `{${"user_id"}}`,
+        encodeURIComponent(String(userId)),
+      );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Retrieves details of a specific category. User can only access global categories or their own categories.
+     * @summary Get Category
+     * @param {string} userId User ID
+     * @param {number} categoryId Category ID
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getUserCategory: async (
+      userId: string,
+      categoryId: number,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("getUserCategory", "userId", userId);
+      // verify required parameter 'categoryId' is not null or undefined
+      assertParamExists("getUserCategory", "categoryId", categoryId);
+      const localVarPath = `/api/users/{user_id}/categories/{category_id}`
+        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+        .replace(`{${"category_id"}}`, encodeURIComponent(String(categoryId)));
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Retrieves all category types accessible to the user. Includes both global types and user-specific types.
+     * @summary Get Category Types
+     * @param {string} userId User ID
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getUserCategoryTypes: async (
+      userId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("getUserCategoryTypes", "userId", userId);
+      const localVarPath = `/api/users/{user_id}/categories/types`.replace(
+        `{${"user_id"}}`,
+        encodeURIComponent(String(userId)),
+      );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Creates a new user-specific category. Category name must be unique (case-insensitive) across global and user categories. Users are limited to 100 custom categories.
+     * @summary Create Category
+     * @param {string} userId User ID
+     * @param {CreateCategoryRequestViewModel} createCategoryRequestViewModel
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    postUserCategory: async (
+      userId: string,
+      createCategoryRequestViewModel: CreateCategoryRequestViewModel,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("postUserCategory", "userId", userId);
+      // verify required parameter 'createCategoryRequestViewModel' is not null or undefined
+      assertParamExists(
+        "postUserCategory",
+        "createCategoryRequestViewModel",
+        createCategoryRequestViewModel,
+      );
+      const localVarPath = `/api/users/{user_id}/categories`.replace(
+        `{${"user_id"}}`,
+        encodeURIComponent(String(userId)),
+      );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "POST",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        createCategoryRequestViewModel,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Creates a new user-specific category type. Type name must be unique across global and user types. Users are limited to 20 custom types.
+     * @summary Create Category Type
+     * @param {string} userId User ID
+     * @param {CreateCategoryTypeRequestViewModel} createCategoryTypeRequestViewModel
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    postUserCategoryType: async (
+      userId: string,
+      createCategoryTypeRequestViewModel: CreateCategoryTypeRequestViewModel,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("postUserCategoryType", "userId", userId);
+      // verify required parameter 'createCategoryTypeRequestViewModel' is not null or undefined
+      assertParamExists(
+        "postUserCategoryType",
+        "createCategoryTypeRequestViewModel",
+        createCategoryTypeRequestViewModel,
+      );
+      const localVarPath = `/api/users/{user_id}/categories/types`.replace(
+        `{${"user_id"}}`,
+        encodeURIComponent(String(userId)),
+      );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "POST",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        createCategoryTypeRequestViewModel,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Updates an existing user-specific category. Cannot update global or system categories. Category name must remain unique if changed.
+     * @summary Update Category
+     * @param {string} userId User ID
+     * @param {number} categoryId Category ID
+     * @param {UpdateCategoryRequestViewModel} updateCategoryRequestViewModel
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    putUserCategory: async (
+      userId: string,
+      categoryId: number,
+      updateCategoryRequestViewModel: UpdateCategoryRequestViewModel,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("putUserCategory", "userId", userId);
+      // verify required parameter 'categoryId' is not null or undefined
+      assertParamExists("putUserCategory", "categoryId", categoryId);
+      // verify required parameter 'updateCategoryRequestViewModel' is not null or undefined
+      assertParamExists(
+        "putUserCategory",
+        "updateCategoryRequestViewModel",
+        updateCategoryRequestViewModel,
+      );
+      const localVarPath = `/api/users/{user_id}/categories/{category_id}`
+        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+        .replace(`{${"category_id"}}`, encodeURIComponent(String(categoryId)));
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "PUT",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        updateCategoryRequestViewModel,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Updates an existing user-specific category type. Cannot update global types.
+     * @summary Update Category Type
+     * @param {string} userId User ID
+     * @param {number} typeId Category type ID
+     * @param {UpdateCategoryTypeRequestViewModel} updateCategoryTypeRequestViewModel
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    putUserCategoryType: async (
+      userId: string,
+      typeId: number,
+      updateCategoryTypeRequestViewModel: UpdateCategoryTypeRequestViewModel,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("putUserCategoryType", "userId", userId);
+      // verify required parameter 'typeId' is not null or undefined
+      assertParamExists("putUserCategoryType", "typeId", typeId);
+      // verify required parameter 'updateCategoryTypeRequestViewModel' is not null or undefined
+      assertParamExists(
+        "putUserCategoryType",
+        "updateCategoryTypeRequestViewModel",
+        updateCategoryTypeRequestViewModel,
+      );
+      const localVarPath = `/api/users/{user_id}/categories/types/{type_id}`
+        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+        .replace(`{${"type_id"}}`, encodeURIComponent(String(typeId)));
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "PUT",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        updateCategoryTypeRequestViewModel,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+  };
+};
+
+/**
+ * UserCategoriesApi - functional programming interface
+ * @export
+ */
+export const UserCategoriesApiFp = function (configuration?: Configuration) {
+  const localVarAxiosParamCreator =
+    UserCategoriesApiAxiosParamCreator(configuration);
+  return {
+    /**
+     * Deletes a user-specific category. Cannot delete global, system categories, or categories with transaction dependencies.
+     * @summary Delete Category
+     * @param {string} userId User ID
+     * @param {number} categoryId Category ID
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async deleteUserCategory(
+      userId: string,
+      categoryId: number,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.deleteUserCategory(
+          userId,
+          categoryId,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["UserCategoriesApi.deleteUserCategory"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Deletes a user-specific category type. Cannot delete global types or types with category dependencies.
+     * @summary Delete Category Type
+     * @param {string} userId User ID
+     * @param {number} typeId Category type ID
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async deleteUserCategoryType(
+      userId: string,
+      typeId: number,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.deleteUserCategoryType(
+          userId,
+          typeId,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["UserCategoriesApi.deleteUserCategoryType"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Retrieves full list of custom user categories. Does not include global categories.
+     * @summary Get Categories
+     * @param {string} userId User ID
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getCategories(
+      userId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<GetCategoriesResponseViewModel>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.getCategories(
+        userId,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["UserCategoriesApi.getCategories"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Retrieves details of a specific category. User can only access global categories or their own categories.
+     * @summary Get Category
+     * @param {string} userId User ID
+     * @param {number} categoryId Category ID
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getUserCategory(
+      userId: string,
+      categoryId: number,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<GetCategoryResponseViewModel>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.getUserCategory(
+        userId,
+        categoryId,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["UserCategoriesApi.getUserCategory"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Retrieves all category types accessible to the user. Includes both global types and user-specific types.
+     * @summary Get Category Types
+     * @param {string} userId User ID
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getUserCategoryTypes(
+      userId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<GetCategoryTypesResponseViewModel>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.getUserCategoryTypes(userId, options);
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["UserCategoriesApi.getUserCategoryTypes"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Creates a new user-specific category. Category name must be unique (case-insensitive) across global and user categories. Users are limited to 100 custom categories.
+     * @summary Create Category
+     * @param {string} userId User ID
+     * @param {CreateCategoryRequestViewModel} createCategoryRequestViewModel
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async postUserCategory(
+      userId: string,
+      createCategoryRequestViewModel: CreateCategoryRequestViewModel,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<CreateCategoryResponseViewModel>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.postUserCategory(
+          userId,
+          createCategoryRequestViewModel,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["UserCategoriesApi.postUserCategory"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Creates a new user-specific category type. Type name must be unique across global and user types. Users are limited to 20 custom types.
+     * @summary Create Category Type
+     * @param {string} userId User ID
+     * @param {CreateCategoryTypeRequestViewModel} createCategoryTypeRequestViewModel
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async postUserCategoryType(
+      userId: string,
+      createCategoryTypeRequestViewModel: CreateCategoryTypeRequestViewModel,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<CreateCategoryTypeResponseViewModel>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.postUserCategoryType(
+          userId,
+          createCategoryTypeRequestViewModel,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["UserCategoriesApi.postUserCategoryType"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Updates an existing user-specific category. Cannot update global or system categories. Category name must remain unique if changed.
+     * @summary Update Category
+     * @param {string} userId User ID
+     * @param {number} categoryId Category ID
+     * @param {UpdateCategoryRequestViewModel} updateCategoryRequestViewModel
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async putUserCategory(
+      userId: string,
+      categoryId: number,
+      updateCategoryRequestViewModel: UpdateCategoryRequestViewModel,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<UpdateCategoryResponseViewModel>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.putUserCategory(
+        userId,
+        categoryId,
+        updateCategoryRequestViewModel,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["UserCategoriesApi.putUserCategory"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Updates an existing user-specific category type. Cannot update global types.
+     * @summary Update Category Type
+     * @param {string} userId User ID
+     * @param {number} typeId Category type ID
+     * @param {UpdateCategoryTypeRequestViewModel} updateCategoryTypeRequestViewModel
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async putUserCategoryType(
+      userId: string,
+      typeId: number,
+      updateCategoryTypeRequestViewModel: UpdateCategoryTypeRequestViewModel,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<UpdateCategoryTypeResponseViewModel>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.putUserCategoryType(
+          userId,
+          typeId,
+          updateCategoryTypeRequestViewModel,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["UserCategoriesApi.putUserCategoryType"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+  };
+};
+
+/**
+ * UserCategoriesApi - factory interface
+ * @export
+ */
+export const UserCategoriesApiFactory = function (
+  configuration?: Configuration,
+  basePath?: string,
+  axios?: AxiosInstance,
+) {
+  const localVarFp = UserCategoriesApiFp(configuration);
+  return {
+    /**
+     * Deletes a user-specific category. Cannot delete global, system categories, or categories with transaction dependencies.
+     * @summary Delete Category
+     * @param {string} userId User ID
+     * @param {number} categoryId Category ID
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    deleteUserCategory(
+      userId: string,
+      categoryId: number,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<void> {
+      return localVarFp
+        .deleteUserCategory(userId, categoryId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Deletes a user-specific category type. Cannot delete global types or types with category dependencies.
+     * @summary Delete Category Type
+     * @param {string} userId User ID
+     * @param {number} typeId Category type ID
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    deleteUserCategoryType(
+      userId: string,
+      typeId: number,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<void> {
+      return localVarFp
+        .deleteUserCategoryType(userId, typeId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Retrieves full list of custom user categories. Does not include global categories.
+     * @summary Get Categories
+     * @param {string} userId User ID
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getCategories(
+      userId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<GetCategoriesResponseViewModel> {
+      return localVarFp
+        .getCategories(userId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Retrieves details of a specific category. User can only access global categories or their own categories.
+     * @summary Get Category
+     * @param {string} userId User ID
+     * @param {number} categoryId Category ID
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getUserCategory(
+      userId: string,
+      categoryId: number,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<GetCategoryResponseViewModel> {
+      return localVarFp
+        .getUserCategory(userId, categoryId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Retrieves all category types accessible to the user. Includes both global types and user-specific types.
+     * @summary Get Category Types
+     * @param {string} userId User ID
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getUserCategoryTypes(
+      userId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<GetCategoryTypesResponseViewModel> {
+      return localVarFp
+        .getUserCategoryTypes(userId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Creates a new user-specific category. Category name must be unique (case-insensitive) across global and user categories. Users are limited to 100 custom categories.
+     * @summary Create Category
+     * @param {string} userId User ID
+     * @param {CreateCategoryRequestViewModel} createCategoryRequestViewModel
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    postUserCategory(
+      userId: string,
+      createCategoryRequestViewModel: CreateCategoryRequestViewModel,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<CreateCategoryResponseViewModel> {
+      return localVarFp
+        .postUserCategory(userId, createCategoryRequestViewModel, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Creates a new user-specific category type. Type name must be unique across global and user types. Users are limited to 20 custom types.
+     * @summary Create Category Type
+     * @param {string} userId User ID
+     * @param {CreateCategoryTypeRequestViewModel} createCategoryTypeRequestViewModel
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    postUserCategoryType(
+      userId: string,
+      createCategoryTypeRequestViewModel: CreateCategoryTypeRequestViewModel,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<CreateCategoryTypeResponseViewModel> {
+      return localVarFp
+        .postUserCategoryType(
+          userId,
+          createCategoryTypeRequestViewModel,
+          options,
+        )
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Updates an existing user-specific category. Cannot update global or system categories. Category name must remain unique if changed.
+     * @summary Update Category
+     * @param {string} userId User ID
+     * @param {number} categoryId Category ID
+     * @param {UpdateCategoryRequestViewModel} updateCategoryRequestViewModel
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    putUserCategory(
+      userId: string,
+      categoryId: number,
+      updateCategoryRequestViewModel: UpdateCategoryRequestViewModel,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<UpdateCategoryResponseViewModel> {
+      return localVarFp
+        .putUserCategory(
+          userId,
+          categoryId,
+          updateCategoryRequestViewModel,
+          options,
+        )
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Updates an existing user-specific category type. Cannot update global types.
+     * @summary Update Category Type
+     * @param {string} userId User ID
+     * @param {number} typeId Category type ID
+     * @param {UpdateCategoryTypeRequestViewModel} updateCategoryTypeRequestViewModel
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    putUserCategoryType(
+      userId: string,
+      typeId: number,
+      updateCategoryTypeRequestViewModel: UpdateCategoryTypeRequestViewModel,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<UpdateCategoryTypeResponseViewModel> {
+      return localVarFp
+        .putUserCategoryType(
+          userId,
+          typeId,
+          updateCategoryTypeRequestViewModel,
+          options,
+        )
+        .then((request) => request(axios, basePath));
+    },
+  };
+};
+
+/**
+ * UserCategoriesApi - interface
+ * @export
+ * @interface UserCategoriesApi
+ */
+export interface UserCategoriesApiInterface {
+  /**
+   * Deletes a user-specific category. Cannot delete global, system categories, or categories with transaction dependencies.
+   * @summary Delete Category
+   * @param {string} userId User ID
+   * @param {number} categoryId Category ID
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserCategoriesApiInterface
+   */
+  deleteUserCategory(
+    userId: string,
+    categoryId: number,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<void>;
+
+  /**
+   * Deletes a user-specific category type. Cannot delete global types or types with category dependencies.
+   * @summary Delete Category Type
+   * @param {string} userId User ID
+   * @param {number} typeId Category type ID
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserCategoriesApiInterface
+   */
+  deleteUserCategoryType(
+    userId: string,
+    typeId: number,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<void>;
+
+  /**
+   * Retrieves full list of custom user categories. Does not include global categories.
+   * @summary Get Categories
+   * @param {string} userId User ID
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserCategoriesApiInterface
+   */
+  getCategories(
+    userId: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<GetCategoriesResponseViewModel>;
+
+  /**
+   * Retrieves details of a specific category. User can only access global categories or their own categories.
+   * @summary Get Category
+   * @param {string} userId User ID
+   * @param {number} categoryId Category ID
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserCategoriesApiInterface
+   */
+  getUserCategory(
+    userId: string,
+    categoryId: number,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<GetCategoryResponseViewModel>;
+
+  /**
+   * Retrieves all category types accessible to the user. Includes both global types and user-specific types.
+   * @summary Get Category Types
+   * @param {string} userId User ID
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserCategoriesApiInterface
+   */
+  getUserCategoryTypes(
+    userId: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<GetCategoryTypesResponseViewModel>;
+
+  /**
+   * Creates a new user-specific category. Category name must be unique (case-insensitive) across global and user categories. Users are limited to 100 custom categories.
+   * @summary Create Category
+   * @param {string} userId User ID
+   * @param {CreateCategoryRequestViewModel} createCategoryRequestViewModel
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserCategoriesApiInterface
+   */
+  postUserCategory(
+    userId: string,
+    createCategoryRequestViewModel: CreateCategoryRequestViewModel,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<CreateCategoryResponseViewModel>;
+
+  /**
+   * Creates a new user-specific category type. Type name must be unique across global and user types. Users are limited to 20 custom types.
+   * @summary Create Category Type
+   * @param {string} userId User ID
+   * @param {CreateCategoryTypeRequestViewModel} createCategoryTypeRequestViewModel
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserCategoriesApiInterface
+   */
+  postUserCategoryType(
+    userId: string,
+    createCategoryTypeRequestViewModel: CreateCategoryTypeRequestViewModel,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<CreateCategoryTypeResponseViewModel>;
+
+  /**
+   * Updates an existing user-specific category. Cannot update global or system categories. Category name must remain unique if changed.
+   * @summary Update Category
+   * @param {string} userId User ID
+   * @param {number} categoryId Category ID
+   * @param {UpdateCategoryRequestViewModel} updateCategoryRequestViewModel
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserCategoriesApiInterface
+   */
+  putUserCategory(
+    userId: string,
+    categoryId: number,
+    updateCategoryRequestViewModel: UpdateCategoryRequestViewModel,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<UpdateCategoryResponseViewModel>;
+
+  /**
+   * Updates an existing user-specific category type. Cannot update global types.
+   * @summary Update Category Type
+   * @param {string} userId User ID
+   * @param {number} typeId Category type ID
+   * @param {UpdateCategoryTypeRequestViewModel} updateCategoryTypeRequestViewModel
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserCategoriesApiInterface
+   */
+  putUserCategoryType(
+    userId: string,
+    typeId: number,
+    updateCategoryTypeRequestViewModel: UpdateCategoryTypeRequestViewModel,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<UpdateCategoryTypeResponseViewModel>;
+}
+
+/**
+ * UserCategoriesApi - object-oriented interface
+ * @export
+ * @class UserCategoriesApi
+ * @extends {BaseAPI}
+ */
+export class UserCategoriesApi
+  extends BaseAPI
+  implements UserCategoriesApiInterface
+{
+  /**
+   * Deletes a user-specific category. Cannot delete global, system categories, or categories with transaction dependencies.
+   * @summary Delete Category
+   * @param {string} userId User ID
+   * @param {number} categoryId Category ID
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserCategoriesApi
+   */
+  public deleteUserCategory(
+    userId: string,
+    categoryId: number,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return UserCategoriesApiFp(this.configuration)
+      .deleteUserCategory(userId, categoryId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Deletes a user-specific category type. Cannot delete global types or types with category dependencies.
+   * @summary Delete Category Type
+   * @param {string} userId User ID
+   * @param {number} typeId Category type ID
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserCategoriesApi
+   */
+  public deleteUserCategoryType(
+    userId: string,
+    typeId: number,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return UserCategoriesApiFp(this.configuration)
+      .deleteUserCategoryType(userId, typeId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Retrieves full list of custom user categories. Does not include global categories.
+   * @summary Get Categories
+   * @param {string} userId User ID
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserCategoriesApi
+   */
+  public getCategories(userId: string, options?: RawAxiosRequestConfig) {
+    return UserCategoriesApiFp(this.configuration)
+      .getCategories(userId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Retrieves details of a specific category. User can only access global categories or their own categories.
+   * @summary Get Category
+   * @param {string} userId User ID
+   * @param {number} categoryId Category ID
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserCategoriesApi
+   */
+  public getUserCategory(
+    userId: string,
+    categoryId: number,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return UserCategoriesApiFp(this.configuration)
+      .getUserCategory(userId, categoryId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Retrieves all category types accessible to the user. Includes both global types and user-specific types.
+   * @summary Get Category Types
+   * @param {string} userId User ID
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserCategoriesApi
+   */
+  public getUserCategoryTypes(userId: string, options?: RawAxiosRequestConfig) {
+    return UserCategoriesApiFp(this.configuration)
+      .getUserCategoryTypes(userId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Creates a new user-specific category. Category name must be unique (case-insensitive) across global and user categories. Users are limited to 100 custom categories.
+   * @summary Create Category
+   * @param {string} userId User ID
+   * @param {CreateCategoryRequestViewModel} createCategoryRequestViewModel
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserCategoriesApi
+   */
+  public postUserCategory(
+    userId: string,
+    createCategoryRequestViewModel: CreateCategoryRequestViewModel,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return UserCategoriesApiFp(this.configuration)
+      .postUserCategory(userId, createCategoryRequestViewModel, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Creates a new user-specific category type. Type name must be unique across global and user types. Users are limited to 20 custom types.
+   * @summary Create Category Type
+   * @param {string} userId User ID
+   * @param {CreateCategoryTypeRequestViewModel} createCategoryTypeRequestViewModel
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserCategoriesApi
+   */
+  public postUserCategoryType(
+    userId: string,
+    createCategoryTypeRequestViewModel: CreateCategoryTypeRequestViewModel,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return UserCategoriesApiFp(this.configuration)
+      .postUserCategoryType(userId, createCategoryTypeRequestViewModel, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Updates an existing user-specific category. Cannot update global or system categories. Category name must remain unique if changed.
+   * @summary Update Category
+   * @param {string} userId User ID
+   * @param {number} categoryId Category ID
+   * @param {UpdateCategoryRequestViewModel} updateCategoryRequestViewModel
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserCategoriesApi
+   */
+  public putUserCategory(
+    userId: string,
+    categoryId: number,
+    updateCategoryRequestViewModel: UpdateCategoryRequestViewModel,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return UserCategoriesApiFp(this.configuration)
+      .putUserCategory(
+        userId,
+        categoryId,
+        updateCategoryRequestViewModel,
+        options,
+      )
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Updates an existing user-specific category type. Cannot update global types.
+   * @summary Update Category Type
+   * @param {string} userId User ID
+   * @param {number} typeId Category type ID
+   * @param {UpdateCategoryTypeRequestViewModel} updateCategoryTypeRequestViewModel
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserCategoriesApi
+   */
+  public putUserCategoryType(
+    userId: string,
+    typeId: number,
+    updateCategoryTypeRequestViewModel: UpdateCategoryTypeRequestViewModel,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return UserCategoriesApiFp(this.configuration)
+      .putUserCategoryType(
+        userId,
+        typeId,
+        updateCategoryTypeRequestViewModel,
         options,
       )
       .then((request) => request(this.axios, this.basePath));

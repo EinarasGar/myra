@@ -71,7 +71,7 @@ pub async fn search_categories(
                 id: RequiredCategoryTypeId(category.category_type),
                 category_type: CategoryTypeViewModel {
                     name: category.category_type_name.clone(),
-                    is_global: category.is_global,
+                    is_global: category.category_type_is_global,
                 },
             });
     }

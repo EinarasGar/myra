@@ -51,17 +51,17 @@ const data = {
   navMain: [
     {
       title: "Transactions",
-      url: "transactions",
+      url: "/transactions",
       icon: SquareTerminal,
       isActive: true,
       items: [
         {
           title: "All Transactions",
-          url: "transactions",
+          url: "/transactions",
         },
         {
           title: "Individual Transactions",
-          url: "transactions/individual",
+          url: "/transactions/individual",
         },
       ],
     },
@@ -72,7 +72,7 @@ const data = {
       items: [
         {
           title: "Hisotry",
-          url: "portfolio",
+          url: "/portfolio",
         },
         {
           title: "Accounts",
@@ -105,9 +105,13 @@ const data = {
     },
     {
       title: "Settings",
-      url: "#",
+      url: "/settings/categories",
       icon: Settings2,
       items: [
+        {
+          title: "Categories",
+          url: "/settings/categories",
+        },
         {
           title: "General",
           url: "#",
@@ -130,7 +134,7 @@ const data = {
   projects: [
     {
       name: "COMPONENT TESTING",
-      url: "component-testing",
+      url: "/component-testing",
       icon: Frame,
     },
     {

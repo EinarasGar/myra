@@ -39,7 +39,12 @@ pub fn get_category_types(params: GetCategoryTypesParams) -> DbQueryWithValues {
                 TransactionCategoryTypeIden::Table,
                 TransactionCategoryTypeIden::UserId,
             ))
-            .eq(user_id),
+            .eq(user_id)
+            .or(Expr::col((
+                TransactionCategoryTypeIden::Table,
+                TransactionCategoryTypeIden::UserId,
+            ))
+            .is_null()),
         );
     } else {
         query.and_where(

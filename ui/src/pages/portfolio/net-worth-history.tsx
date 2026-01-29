@@ -15,7 +15,7 @@ import {
 import { Suspense, useState } from "react";
 import NetWorthHistoryChart from "./net-worth-history-chart";
 import { ErrorBoundary } from "react-error-boundary";
-import ErrorBoundaryFallback from "@/components/error-boundry-fallback";
+import ErrorBoundaryFallback from "@/components/error-boundary-fallback";
 import { LineChartSkeleton } from "@/components/line-chart-skeleton";
 
 export default function NetWorthHistory() {

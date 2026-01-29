@@ -14,8 +14,8 @@ import { Separator } from "@radix-ui/react-separator";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import type { ExpandedAsset } from "@/types/assets";
-import type { Account } from "@/api";
-import type { TransactionCategory } from "@/types/categories";
+import type { Account } from "@/types/account";
+import type { Category } from "@/types/category";
 
 export const Route = createFileRoute("/_auth/component-testing")({
   component: RouteComponent,
@@ -28,8 +28,9 @@ function RouteComponent() {
   }>({ asset: null, amount: null });
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
-  const [selectedCategory, setSelectedCategory] =
-    useState<TransactionCategory | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    null,
+  );
 
   const handleTestClick = () => {
     console.log("=== Component Values ===");

@@ -47,7 +47,7 @@ use itertools::Itertools;
         ("user_id" = Uuid, Path, description = "User ID"),
     ),
     responses(
-        (status = 200, description = "Categories retrieved successfully", body = SearchCategoriesResponseViewModel),
+        (status = 200, description = "Categories retrieved successfully", body = GetCategoriesResponseViewModel),
         GetResponses
     ),
     security(
@@ -70,7 +70,7 @@ pub async fn get_categories(
                 id: RequiredCategoryTypeId(category.category_type),
                 category_type: CategoryTypeViewModel {
                     name: category.category_type_name.clone(),
-                    is_global: category.is_global,
+                    is_global: category.category_type_is_global,
                 },
             });
     }

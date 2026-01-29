@@ -8,17 +8,10 @@ import {
 } from "@/components/ui/breadcrumb";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@radix-ui/react-separator";
-import { useReducer, Suspense } from "react";
-import IndividialTransactionsTable, {
-  IndividialTransactionsTableSkeleton,
-} from "./individual-transactions-table";
-import { ErrorBoundary } from "react-error-boundary";
-import ErrorBoundaryFallback from "@/components/error-boundary-fallback";
-import { AddIndividualTranscationDialog } from "./add-individual-transaction/add-indvidual-transaction-dialog";
+import { CategoriesCard } from "./categories-card";
+import { CategoryTypesCard } from "./category-types-card";
 
-export default function IndividialTransactionsPage() {
-  const rerender = useReducer(() => ({}), {})[1];
-
+export default function CategoriesPage() {
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
@@ -31,25 +24,22 @@ export default function IndividialTransactionsPage() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="#">Transactions</BreadcrumbLink>
+                <BreadcrumbLink href="#">Settings</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
-                <BreadcrumbPage>Individual</BreadcrumbPage>
+                <BreadcrumbPage>Categories</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
         </div>
       </header>
-      <AddIndividualTranscationDialog />
-      <div className="m-4">
-        <ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-          <Suspense fallback={<IndividialTransactionsTableSkeleton />}>
-            <IndividialTransactionsTable />
-          </Suspense>
-        </ErrorBoundary>
+      <div className="p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <CategoriesCard />
+          <CategoryTypesCard />
+        </div>
       </div>
-      <button onClick={() => rerender()}>Force Rerender</button>
     </>
   );
 }

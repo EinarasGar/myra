@@ -24,4 +24,15 @@ export const mapCategoryComboBoxProps = (
 export interface CategoryType {
   id: number;
   name: string;
+  is_global?: boolean;
 }
+
+export const mapCategoryTypeComboBoxProps = (
+  type: CategoryType,
+): CategoryType & ComboBoxElement => ({
+  ...type,
+  getKey: () => type.id.toString(),
+  getLabel: () => type.name,
+  getKeyWords: () => [type.name.toLowerCase()],
+  getSuffixIcon: () => (type.is_global ? null : "user"),
+});
