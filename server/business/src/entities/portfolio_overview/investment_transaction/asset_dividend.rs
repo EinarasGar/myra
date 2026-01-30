@@ -6,6 +6,7 @@ use crate::entities::portfolio_overview::portfolio::{
     portfolio_asset_position_dto::PortfolioAssetPosition, Portfolio, PortfolioAction,
 };
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub struct AssetDividend {
     pub date: OffsetDateTime,

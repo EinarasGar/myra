@@ -73,122 +73,87 @@ pub enum AssetHistoryCalculationIden {
 }
 
 impl Iden for AssetsAliasIden {
-    fn unquoted(&self, s: &mut dyn std::fmt::Write) {
-        write!(
-            s,
-            "{}",
-            match self {
-                Self::BasePairsSubquery => "base_pairs",
-                Self::PairsSubquery => "pairs",
-                Self::FilteredPairsSubquery => "filtered",
-                Self::BaseAssetJoin => "base_assets",
-                Self::BaseAssetTypeJoin => "base_assets_types",
-                Self::PairsDatesList => "pairs_dates_list",
-                Self::PairIdsDatesList => "pair_ids_dates_list",
-                Self::InputSubquery => "input",
-                Self::DirectPairsSubquery => "direct_pairs",
-                Self::CombinedPairsSubquery => "combined_pairs",
-                Self::SecondaryPairsSubquery => "secondary_pairs",
-                Self::AllFilteredPairsSubquery => "all_filtered_pairs",
-            }
-        )
-        .unwrap();
+    fn unquoted(&self) -> &str {
+        match self {
+            Self::BasePairsSubquery => "base_pairs",
+            Self::PairsSubquery => "pairs",
+            Self::FilteredPairsSubquery => "filtered",
+            Self::BaseAssetJoin => "base_assets",
+            Self::BaseAssetTypeJoin => "base_assets_types",
+            Self::PairsDatesList => "pairs_dates_list",
+            Self::PairIdsDatesList => "pair_ids_dates_list",
+            Self::InputSubquery => "input",
+            Self::DirectPairsSubquery => "direct_pairs",
+            Self::CombinedPairsSubquery => "combined_pairs",
+            Self::SecondaryPairsSubquery => "secondary_pairs",
+            Self::AllFilteredPairsSubquery => "all_filtered_pairs",
+        }
     }
 }
 
 impl Iden for AssetsIden {
-    fn unquoted(&self, s: &mut dyn std::fmt::Write) {
-        write!(
-            s,
-            "{}",
-            match self {
-                Self::Table => "assets",
-                Self::Id => "id",
-                Self::AssetType => "asset_type",
-                Self::AssetName => "asset_name",
-                Self::Ticker => "ticker",
-                Self::BasePairId => "base_pair_id",
-                Self::UserId => "user_id",
-            }
-        )
-        .unwrap();
+    fn unquoted(&self) -> &str {
+        match self {
+            Self::Table => "assets",
+            Self::Id => "id",
+            Self::AssetType => "asset_type",
+            Self::AssetName => "asset_name",
+            Self::Ticker => "ticker",
+            Self::BasePairId => "base_pair_id",
+            Self::UserId => "user_id",
+        }
     }
 }
 
 impl Iden for AssetTypesIden {
-    fn unquoted(&self, s: &mut dyn std::fmt::Write) {
-        write!(
-            s,
-            "{}",
-            match self {
-                Self::Table => "asset_types",
-                Self::Id => "id",
-                Self::AssetTypeName => "asset_type_name",
-            }
-        )
-        .unwrap();
+    fn unquoted(&self) -> &str {
+        match self {
+            Self::Table => "asset_types",
+            Self::Id => "id",
+            Self::AssetTypeName => "asset_type_name",
+        }
     }
 }
 
 impl Iden for AssetPairsIden {
-    fn unquoted(&self, s: &mut dyn std::fmt::Write) {
-        write!(
-            s,
-            "{}",
-            match self {
-                Self::Table => "asset_pairs",
-                Self::Id => "id",
-                Self::Pair1 => "pair1",
-                Self::Pair2 => "pair2",
-            }
-        )
-        .unwrap();
+    fn unquoted(&self) -> &str {
+        match self {
+            Self::Table => "asset_pairs",
+            Self::Id => "id",
+            Self::Pair1 => "pair1",
+            Self::Pair2 => "pair2",
+        }
     }
 }
 
 impl Iden for AssetHistoryIden {
-    fn unquoted(&self, s: &mut dyn std::fmt::Write) {
-        write!(
-            s,
-            "{}",
-            match self {
-                Self::Table => "asset_history",
-                Self::Id => "id",
-                Self::PairId => "pair_id",
-                Self::Rate => "rate",
-                Self::RecordedAt => "recorded_at",
-            }
-        )
-        .unwrap();
+    fn unquoted(&self) -> &str {
+        match self {
+            Self::Table => "asset_history",
+            Self::Id => "id",
+            Self::PairId => "pair_id",
+            Self::Rate => "rate",
+            Self::RecordedAt => "recorded_at",
+        }
     }
 }
 
 impl Iden for AssetPairSharedMetadataIden {
-    fn unquoted(&self, s: &mut dyn std::fmt::Write) {
-        write!(
-            s,
-            "{}",
-            match self {
-                Self::Table => "asset_pairs_shared_metadata",
-                Self::Id => "pair_id",
-                Self::Volume => "volume",
-            }
-        )
-        .unwrap();
+    fn unquoted(&self) -> &str {
+        match self {
+            Self::Table => "asset_pairs_shared_metadata",
+            Self::Id => "pair_id",
+            Self::Volume => "volume",
+        }
     }
 }
 
 impl Iden for AssetPairUserMetadataIden {
-    fn unquoted(&self, s: &mut dyn std::fmt::Write) {
-        write!(
-            s,
-            "{}",
-            match self {
-                Self::Table => "asset_pair_user_metadata",
-                Self::Id => "id",
-                Self::Exchange => "exchange",
-            }
-        )
-        .unwrap();
+    fn unquoted(&self) -> &str {
+        match self {
+            Self::Table => "asset_pair_user_metadata",
+            Self::Id => "id",
+            Self::Exchange => "exchange",
+        }
     }
 }

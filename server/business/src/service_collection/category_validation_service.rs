@@ -55,7 +55,7 @@ impl CategoryValidationService {
         let user_query = category_queries::check_duplicate_category_name(name, Some(user_id));
         let user_count: (i64,) = self.db.fetch_one(user_query).await?;
 
-        if user_count.0 > 0 && (exclude_id.is_none() || true) {
+        if user_count.0 > 0 {
             return Err(anyhow::anyhow!(CategoryError::DuplicateName(
                 name.to_string()
             )));

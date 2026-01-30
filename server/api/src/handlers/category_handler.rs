@@ -1,10 +1,6 @@
-use axum::{
-    extract::{Path, Query},
-    Json,
-};
+use axum::{extract::Query, Json};
 use itertools::Itertools;
 use std::collections::HashMap;
-use uuid::Uuid;
 
 use crate::{
     auth::AuthenticatedUserState,

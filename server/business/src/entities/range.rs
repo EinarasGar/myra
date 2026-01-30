@@ -31,23 +31,23 @@ impl TryFrom<RangeDto> for Range {
     fn try_from(dto: RangeDto) -> Result<Self, RangeError> {
         match dto {
             RangeDto::StringBased(range) => match range.as_str() {
-                "all" => return Err(RangeError::StartDateNotSpecified),
-                _ => return Self::parse_string_range(range.as_str()),
+                "all" => Err(RangeError::StartDateNotSpecified),
+                _ => Self::parse_string_range(range.as_str()),
             },
             RangeDto::Custom(start, end, duration) => {
                 let start_time = start.ok_or(RangeError::StartDateNotSpecified)?;
                 let infinite_end = end.is_none();
                 let end_time = end.unwrap_or(OffsetDateTime::now_utc());
                 let interval = duration.unwrap_or_else(|| {
-                    Range::calculate_interval(start_time.clone(), end_time.clone())
+                    Range::calculate_interval(start_time, end_time)
                 });
-                return Ok(Range {
+                Ok(Range {
                     start_time,
                     end_time,
                     interval,
                     infinite_start: false,
                     infinite_end,
-                });
+                })
             }
         }
     }
@@ -84,7 +84,7 @@ impl Range {
                 return range;
             }
         }
-        return dto.try_into();
+        dto.try_into()
     }
 
     fn parse_string_range(range: &str) -> Result<Self, RangeError> {
@@ -115,8 +115,6 @@ impl Range {
             Duration::minutes(10)
         } else if end_time - start_time <= Duration::days(30) {
             Duration::hours(1)
-        } else if end_time - start_time <= Duration::days(180) {
-            Duration::days(1)
         } else if end_time - start_time <= Duration::days(365) {
             Duration::days(1)
         } else {

@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use sea_query_binder::SqlxValues;
+use sea_query_sqlx::SqlxValues;
 
 pub mod account_queries;
 pub mod asset_queries;

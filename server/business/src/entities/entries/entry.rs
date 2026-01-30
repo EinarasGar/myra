@@ -59,7 +59,7 @@ impl Entry {
             asset_id: dto.asset_id,
             quantity: dto.quantity,
             account_id: dto.account_id,
-            category: category,
+            category,
         }
     }
 }

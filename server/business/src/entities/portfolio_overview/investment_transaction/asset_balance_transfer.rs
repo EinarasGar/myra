@@ -4,6 +4,7 @@ use uuid::Uuid;
 
 use crate::entities::portfolio_overview::portfolio::{Portfolio, PortfolioAction};
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub struct AssetBalanceTransfer {
     pub date: OffsetDateTime,

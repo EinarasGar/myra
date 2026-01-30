@@ -1,6 +1,7 @@
 use crate::entities::portfolio_overview::portfolio::{Portfolio, PortfolioAction};
 use time::OffsetDateTime;
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub struct AssetTrade {
     pub date: OffsetDateTime,

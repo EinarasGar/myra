@@ -1,5 +1,5 @@
 use sea_query::{Alias, Expr, ExprTrait, Func, Order, PostgresQueryBuilder, Query};
-use sea_query_binder::SqlxBinder;
+use sea_query_sqlx::SqlxBinder;
 use sqlx::types::Uuid;
 
 use crate::{

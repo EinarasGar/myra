@@ -1,10 +1,11 @@
 use std::collections::{HashMap, HashSet};
 
 use sea_query::{
-    extension::postgres::PgExpr, Alias, Asterisk, CommonTableExpression, Cond, Expr, Func, Order,
-    PostgresQueryBuilder, Query, SimpleExpr, Value, WindowStatement, WithClause,
+    extension::postgres::PgExpr, Alias, Asterisk, CommonTableExpression, Cond, Expr, ExprTrait,
+    Func, Order, PostgresQueryBuilder, Query, QueryStatementBuilder, SimpleExpr, Value,
+    WindowStatement, WithClause,
 };
-use sea_query_binder::SqlxBinder;
+use sea_query_sqlx::SqlxBinder;
 use sqlx::types::{time::OffsetDateTime, Uuid};
 use time::Duration;
 
@@ -191,8 +192,8 @@ pub fn get_rates(params: GetRatesParams) -> DbQueryWithValues {
         GetRatesSeachType::ByPair(pair1, pair2) => {
             builder.and_where(
                 Expr::tuple([
-                    Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair1)).into(),
-                    Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair2)).into(),
+                    Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair1)),
+                    Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair2)),
                 ])
                 .eq(Expr::tuple([Expr::value(pair1), Expr::value(pair2)])),
             );
@@ -242,8 +243,8 @@ pub fn get_shared_asset_pair_metadata(pairs: Vec<AssetPair>) -> DbQueryWithValue
         )
         .and_where(
             Expr::tuple([
-                Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair1)).into(),
-                Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair2)).into(),
+                Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair1)),
+                Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair2)),
             ])
             .in_tuples(tuples),
         )
@@ -455,8 +456,8 @@ pub fn get_latest_asset_pair_rates(
         .from(AssetPairsIden::Table)
         .and_where(
             Expr::tuple([
-                Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair1)).into(),
-                Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair2)).into(),
+                Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair1)),
+                Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair2)),
             ])
             .in_tuples(tuples),
         )
@@ -465,22 +466,22 @@ pub fn get_latest_asset_pair_rates(
     let filtered_query = Query::select()
         .expr_as(
             Func::coalesce([
-                Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Pair1)).into(),
-                Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Pair1)).into(),
+                Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Pair1)),
+                Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Pair1)),
             ]),
             AssetPairsIden::Pair1,
         )
         .expr_as(
             Func::coalesce([
-                Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Pair2)).into(),
-                Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Pair2)).into(),
+                Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Pair2)),
+                Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Pair2)),
             ]),
             AssetPairsIden::Pair2,
         )
         .expr_as(
             Func::coalesce([
-                Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Id)).into(),
-                Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Id)).into(),
+                Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Id)),
+                Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Id)),
             ]),
             AssetPairsIden::Id,
         )
@@ -659,22 +660,22 @@ pub fn get_pair_prices_by_dates(pair_dates: Vec<AssetPairDate>) -> DbQueryWithVa
     let paior_ids_dates_query = Query::select()
         .expr_as(
             Func::coalesce([
-                Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Pair1)).into(),
-                Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Pair1)).into(),
+                Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Pair1)),
+                Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Pair1)),
             ]),
             AssetPairsIden::Pair1,
         )
         .expr_as(
             Func::coalesce([
-                Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Pair2)).into(),
-                Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Pair2)).into(),
+                Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Pair2)),
+                Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Pair2)),
             ]),
             AssetPairsIden::Pair2,
         )
         .expr_as(
             Func::coalesce([
-                Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Id)).into(),
-                Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Id)).into(),
+                Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Id)),
+                Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Id)),
             ]),
             AssetPairsIden::Id,
         )
@@ -688,12 +689,12 @@ pub fn get_pair_prices_by_dates(pair_dates: Vec<AssetPairDate>) -> DbQueryWithVa
             pairs_query,
             AssetsAliasIden::PairsSubquery,
             Expr::tuple([
-                Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Pair1)).into(),
-                Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Pair2)).into(),
+                Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Pair1)),
+                Expr::col((AssetsAliasIden::PairsSubquery, AssetPairsIden::Pair2)),
             ])
             .eq(Expr::tuple([
-                Expr::col((AssetsAliasIden::PairsDatesList, AssetPairsIden::Pair1)).into(),
-                Expr::col((AssetsAliasIden::PairsDatesList, AssetPairsIden::Pair2)).into(),
+                Expr::col((AssetsAliasIden::PairsDatesList, AssetPairsIden::Pair1)),
+                Expr::col((AssetsAliasIden::PairsDatesList, AssetPairsIden::Pair2)),
             ])),
         )
         .join_subquery(
@@ -930,27 +931,22 @@ pub fn get_asset_pairs_rates_with_conversions(
                 )
                 .expr_as(
                     Func::coalesce([
-                        Expr::col((AssetsAliasIden::DirectPairsSubquery, AssetPairsIden::Pair1))
-                            .into(),
-                        Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Pair1))
-                            .into(),
+                        Expr::col((AssetsAliasIden::DirectPairsSubquery, AssetPairsIden::Pair1)),
+                        Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Pair1)),
                     ]),
                     AssetPairsIden::Pair1,
                 )
                 .expr_as(
                     Func::coalesce([
-                        Expr::col((AssetsAliasIden::DirectPairsSubquery, AssetPairsIden::Pair2))
-                            .into(),
-                        Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Pair2))
-                            .into(),
+                        Expr::col((AssetsAliasIden::DirectPairsSubquery, AssetPairsIden::Pair2)),
+                        Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Pair2)),
                     ]),
                     AssetPairsIden::Pair2,
                 )
                 .expr_as(
                     Func::coalesce([
-                        Expr::col((AssetsAliasIden::DirectPairsSubquery, AssetPairsIden::Id))
-                            .into(),
-                        Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Id)).into(),
+                        Expr::col((AssetsAliasIden::DirectPairsSubquery, AssetPairsIden::Id)),
+                        Expr::col((AssetsAliasIden::BasePairsSubquery, AssetPairsIden::Id)),
                     ]),
                     AssetPairsIden::Id,
                 )

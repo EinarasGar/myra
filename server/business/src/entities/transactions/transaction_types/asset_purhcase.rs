@@ -53,7 +53,7 @@ impl TransactionProcessor for AssetPurchaseTransaction {
     }
 
     fn get_entries(&self) -> &Vec<Entry> {
-        &self.base.entries()
+        self.base.entries()
     }
 
     fn get_transaction_id(&self) -> Option<Uuid> {

@@ -51,7 +51,7 @@ impl NetWorthHistory {
     /// Arguments
     ///
     /// * `entries`: Iterator containing sum of entries for a specific asset over a specific time interval.
-    /// This method assumes that the entries are sorted by time from oldest to newest.
+    ///   This method assumes that the entries are sorted by time from oldest to newest.
     pub fn add_entries(&mut self, entries: impl Iterator<Item = EntriesIntervalSumDto>) {
         entries.for_each(|e| {
             self.asset_first_occurances
@@ -90,7 +90,7 @@ impl NetWorthHistory {
                 *self
                     .last_rates
                     .entry(*asset_id)
-                    .or_insert(AssetRateDto::default()) = rate_queue.front().unwrap().clone();
+                    .or_default() = rate_queue.front().unwrap().clone();
             });
 
         self.update_rates_with_base_rate();
@@ -130,7 +130,7 @@ impl NetWorthHistory {
                     *self
                         .last_rates
                         .entry((asset_id_pair.0, self.reference_asset_id.0))
-                        .or_insert(AssetRateDto::default()) = AssetRateDto {
+                        .or_default() = AssetRateDto {
                         date: primary_rate.date,
                         rate: primary_rate.rate * secondary_rate.rate,
                     }
@@ -171,7 +171,7 @@ impl NetWorthHistory {
                     *self
                         .last_rates
                         .entry(*asset_id)
-                        .or_insert(AssetRateDto::default()) = rate;
+                        .or_default() = rate;
                     continue;
                 }
                 break;
@@ -208,7 +208,7 @@ impl NetWorthHistory {
                                 *self
                                     .last_rates
                                     .entry(*asset_id_pair)
-                                    .or_insert(AssetRateDto::default()) = AssetRateDto {
+                                    .or_default() = AssetRateDto {
                                     date: current_timestamp,
                                     rate: interpolated_rate,
                                 }

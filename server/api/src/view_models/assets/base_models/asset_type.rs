@@ -4,6 +4,7 @@ use utoipa::ToSchema;
 
 use super::asset_type_id::RequiredAssetTypeId;
 
+#[allow(dead_code)]
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct AssetTypeViewModel {
     /// The name of the asset type

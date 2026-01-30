@@ -1,7 +1,7 @@
 use sea_query::{
     Alias, Asterisk, Expr, ExprTrait, Func, Order, PostgresQueryBuilder, Query, WindowStatement,
 };
-use sea_query_binder::SqlxBinder;
+use sea_query_sqlx::SqlxBinder;
 use sqlx::types::Uuid;
 
 use crate::{

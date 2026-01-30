@@ -223,10 +223,10 @@ impl AssetsService {
     pub async fn add_asset(&self, rate: AssetInsertDto) -> anyhow::Result<InsertAssetResultDto> {
         self.db.start_transaction().await?;
         let asset_id = self.insert_asset(rate.clone()).await?;
-        if rate.base_pair_id.is_some() {
+        if let Some(base_pair_id) = rate.base_pair_id {
             let pair = AssetPairInsertDto {
                 pair1: asset_id,
-                pair2: rate.base_pair_id.unwrap(),
+                pair2: base_pair_id,
             };
             let asset_pair_id = self.insert_asset_pair(pair).await?;
             self.db.commit_transaction().await?;

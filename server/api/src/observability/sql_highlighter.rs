@@ -66,16 +66,16 @@ pub fn create_tracing_formatter() -> impl for<'writer> FormatFields<'writer> {
             let highlighter = SqlHighlighter::get();
             let query = format!("{:?}", value);
             let highlighted_query = highlighter.highlight_sql(&query);
-            return write!(writer, "{}: {}", field, highlighted_query);
+            write!(writer, "{}: {}", field, highlighted_query)
         } else {
-            return write!(writer, "{}: {:?}", field, value);
+            write!(writer, "{}: {:?}", field, value)
         }
     })
     .delimited(", ")
 }
 
 /// Formats the styled fragments using only foreground 24-bit color terminal escape codes.
-fn as_terminal_escaped_no_bg<'a>(ranges: &'a [(Style, &str)]) -> String {
+fn as_terminal_escaped_no_bg(ranges: &[(Style, &str)]) -> String {
     ranges
         .iter()
         .map(|(style, text)| {

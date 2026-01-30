@@ -80,8 +80,8 @@ async fn main() {
         return;
     }
 
-    match cli.command {
-        Some(subcommand) => match subcommand {
+    if let Some(subcommand) = cli.command {
+        match subcommand {
             Commands::UpdateAssets {
                 skip_assets,
                 skip_currencies,
@@ -98,7 +98,6 @@ async fn main() {
             } => {
                 add_asset::add_asset(ticker, name, category, base_pair, initialize_base_pair).await;
             }
-        },
-        None => {}
+        }
     }
 }

@@ -1,5 +1,5 @@
-use sea_query::{Expr, PostgresQueryBuilder, Query};
-use sea_query_binder::SqlxBinder;
+use sea_query::{Expr, ExprTrait, PostgresQueryBuilder, Query};
+use sea_query_sqlx::SqlxBinder;
 
 use crate::{
     enums::DatabaseCategoryEnumTypes,

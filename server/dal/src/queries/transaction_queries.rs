@@ -1,5 +1,5 @@
-use sea_query::{Alias, Asterisk, Expr, PostgresQueryBuilder, Query, WindowStatement};
-use sea_query_binder::SqlxBinder;
+use sea_query::{Alias, Asterisk, Expr, ExprTrait, PostgresQueryBuilder, Query, WindowStatement};
+use sea_query_sqlx::SqlxBinder;
 
 use crate::{
     idens::{entries_idens::EntryIden, transaction_idens::TransactionIden},

@@ -177,7 +177,7 @@ pub(crate) async fn insert_quotes(
 
     for quote in quotes {
         let date =
-            OffsetDateTime::from_unix_timestamp(quote.timestamp.try_into().unwrap()).unwrap();
+            OffsetDateTime::from_unix_timestamp(quote.timestamp).unwrap();
         let price = quote.close;
         asset_rates_service()
             .insert_pair_single(AssetPairRateInsertDto {

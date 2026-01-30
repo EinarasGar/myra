@@ -4,6 +4,7 @@ use utoipa::ToSchema;
 
 use crate::view_models::accounts::base_models::account_type_id::AccountTypeId;
 
+#[allow(dead_code)]
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct AccountTypeViewModel {
     /// The name of the Account type

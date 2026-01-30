@@ -56,6 +56,7 @@ pub struct GetPortfolioQueryParams {
         ("default_asset_id" = Option<i32>, Query, description = "Default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used"),
     )
 )]
+#[allow(clippy::too_many_arguments)]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_holdings(
     Path(user_id): Path<Uuid>,

@@ -1,4 +1,4 @@
-use sea_query::{Func, FunctionCall, Iden, IntoColumnRef, SimpleExpr, Write};
+use sea_query::{Func, FunctionCall, Iden, IntoColumnRef, SimpleExpr};
 use time::{Duration, OffsetDateTime};
 
 pub mod account_idens;
@@ -13,31 +13,27 @@ pub enum CommonsIden {
 }
 
 impl Iden for CommonsIden {
-    fn unquoted(&self, s: &mut dyn std::fmt::Write) {
-        write!(
-            s,
-            "{}",
-            match self {
-                Self::Excluded => "excluded",
-            }
-        )
-        .unwrap();
+    fn unquoted(&self) -> &str {
+        match self {
+            Self::Excluded => "excluded",
+        }
     }
 }
 
 pub struct Unnest;
 
 impl Iden for Unnest {
-    fn unquoted(&self, s: &mut dyn Write) {
-        write!(s, "unnest").unwrap();
+    fn unquoted(&self) -> &str {
+        "unnest"
     }
 }
 
+#[allow(dead_code)]
 pub struct Over;
 
 impl Iden for Over {
-    fn unquoted(&self, s: &mut dyn Write) {
-        write!(s, "over").unwrap();
+    fn unquoted(&self) -> &str {
+        "over"
     }
 }
 

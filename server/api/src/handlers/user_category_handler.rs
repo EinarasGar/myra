@@ -9,7 +9,6 @@ use crate::{
     errors::ApiError,
     states::{CategoryServiceState, CategoryTypeServiceState},
     view_models::{
-        base_models::search::SearchCategoriesResponseViewModel,
         categories::{
             base_models::{
                 category::IdentifiableCategoryViewModel,

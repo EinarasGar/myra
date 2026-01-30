@@ -47,7 +47,7 @@ impl PortfolioAction for AssetPurchase {
 
 impl ReferentialPortfolioAction for AssetPurchase {
     fn apply_refferential_price(&mut self, price: Decimal) {
-        self.instrument_price = self.instrument_price * price;
+        self.instrument_price *= price;
     }
 
     fn get_asset_id(&self) -> AssetIdDto {

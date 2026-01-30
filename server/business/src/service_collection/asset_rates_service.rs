@@ -225,16 +225,12 @@ impl AssetRatesService {
             .into_iter()
             .rev()
             .map(|x| {
-                if x.rate.is_some() {
-                    Some(AssetPairRateDto {
-                        asset1_id: x.pair1,
-                        asset2_id: x.pair2,
-                        rate: x.rate.unwrap(),
-                        date: x.recorded_at.unwrap(),
-                    })
-                } else {
-                    None
-                }
+                x.rate.map(|rate| AssetPairRateDto {
+                    asset1_id: x.pair1,
+                    asset2_id: x.pair2,
+                    rate,
+                    date: x.recorded_at.unwrap(),
+                })
             })
             .collect())
     }

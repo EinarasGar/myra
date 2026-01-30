@@ -1,5 +1,5 @@
 use sea_query::*;
-use sea_query_binder::SqlxBinder;
+use sea_query_sqlx::SqlxBinder;
 use sqlx::types::Uuid;
 
 use crate::{
