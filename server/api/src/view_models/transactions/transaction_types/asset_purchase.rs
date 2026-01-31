@@ -57,7 +57,7 @@ impl From<AssetPurchaseViewModel> for TransactionDto {
             date: value.base.date,
             fee_entries: match value.base.fees {
                 Some(f) => f.into_iter().map(|x| x.into()).collect(),
-                None => todo!(),
+                None => [].into(),
             },
             transaction_type: TransactionTypeDto::AssetPurchase(AssetPurchaseMetadataDto {
                 purchase: value.purchase_change.into(),

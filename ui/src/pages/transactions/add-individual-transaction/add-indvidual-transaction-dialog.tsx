@@ -10,6 +10,7 @@ import {
 import { TransactionTypeSelector } from "./transaction-type-selector";
 import { useState } from "react";
 import AddTransactionForm from "./add-transaction-from";
+import AddAssetPurchaseForm from "./add-asset-purchase-form";
 
 export function AddIndividualTranscationDialog() {
   const [open, setOpen] = useState(false);
@@ -37,7 +38,12 @@ export function AddIndividualTranscationDialog() {
             onSelected={(type) => setSelectedType(type)}
           />
         )}
-        {selectedType && (
+        {selectedType === "asset_purchase" && (
+          <AddAssetPurchaseForm
+            onSuccess={() => handleOpenChange(false)}
+          />
+        )}
+        {selectedType && selectedType !== "asset_purchase" && (
           <AddTransactionForm
             type={selectedType}
             onSuccess={() => handleOpenChange(false)}
