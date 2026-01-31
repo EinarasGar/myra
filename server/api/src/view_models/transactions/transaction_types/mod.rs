@@ -158,6 +158,16 @@ impl From<TransactionDto> for RequiredIdentifiableTransactionWithIdentifiableEnt
                     RequiredIdentifiableAssetPurchaseWithIdentifiableEntriesViewModel::from(value),
                 )
             }
+            TransactionTypeDto::AssetSale(_) => {
+                RequiredIdentifiableTransactionWithIdentifiableEntries::AssetSale(
+                    RequiredIdentifiableAssetSaleWithIdentifiableEntriesViewModel::from(value),
+                )
+            }
+            TransactionTypeDto::CashTransferIn(_) => {
+                RequiredIdentifiableTransactionWithIdentifiableEntries::CashTransferIn(
+                    RequiredIdentifiableCashTransferInWithIdentifiableEntriesViewModel::from(value),
+                )
+            }
         }
     }
 }
@@ -173,6 +183,16 @@ impl From<TransactionDto> for RequiredTransactionWithIdentifiableEntries {
             TransactionTypeDto::AssetPurchase(_) => {
                 RequiredTransactionWithIdentifiableEntries::AssetPurchase(
                     RequiredAssetPurchaseWithIdentifiableEntriesViewModel::from(value),
+                )
+            }
+            TransactionTypeDto::AssetSale(_) => {
+                RequiredTransactionWithIdentifiableEntries::AssetSale(
+                    RequiredAssetSaleWithIdentifiableEntriesViewModel::from(value),
+                )
+            }
+            TransactionTypeDto::CashTransferIn(_) => {
+                RequiredTransactionWithIdentifiableEntries::CashTransferIn(
+                    RequiredCashTransferInWithIdentifiableEntriesViewModel::from(value),
                 )
             }
         }

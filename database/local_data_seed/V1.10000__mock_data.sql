@@ -40,7 +40,9 @@ VALUES ('Income', 'attach_money', 1),
     ('Fuel', 'local_gas_station', 2),
     ('Exchange Fees', 'money_off', 4),
     ('Transaction Fees', 'money_off', 4),
-    ('Asset Purchase', 'money_off', 3);
+    ('Asset Purchase', 'money_off', 3),
+    ('Asset Sale', 'money_off', 3),
+    ('Cash Transfer In', 'money_off', 3);
 INSERT INTO users (
         id,
         username,
@@ -79,10 +81,14 @@ VALUES (
 INSERT INTO public.transaction_categories_static_mapping (enum_id, enum_index, category_mapping)
 VALUES (1, 1, 12),
     (1, 2, 11),
-    (2, 1, 13);
+    (2, 1, 13),
+    (2, 2, 14),
+    (2, 3, 15);
 INSERT INTO transaction_types (id, transaction_type_name)
 VALUES (1, 'Regular'),
-    (9, 'Asset Purchase');
+    (8, 'Asset Sale'),
+    (9, 'Asset Purchase'),
+    (3, 'Cash Transfer In');
 INSERT INTO public.asset_pairs (pair1, pair2)
 VALUES (4, 1),
     (4, 2),

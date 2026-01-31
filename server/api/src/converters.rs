@@ -13,6 +13,8 @@ pub fn transaction_dtos_to_asset_ids_hashset(transactions: &[&TransactionDto]) -
                 asset_ids.insert(regular_transaction_metadata.entry.asset_id);
             }
             TransactionTypeDto::AssetPurchase(_) => {}
+            TransactionTypeDto::AssetSale(_) => {}
+            TransactionTypeDto::CashTransferIn(_) => {}
         }
     }
     asset_ids
@@ -29,6 +31,8 @@ pub fn transaction_dtos_to_account_ids_hashset(transactions: &[&TransactionDto])
                 account_ids.insert(regular_transaction_metadata.entry.account_id);
             }
             TransactionTypeDto::AssetPurchase(_) => {}
+            TransactionTypeDto::AssetSale(_) => {}
+            TransactionTypeDto::CashTransferIn(_) => {}
         }
     }
     account_ids

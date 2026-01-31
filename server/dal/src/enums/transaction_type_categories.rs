@@ -4,6 +4,8 @@ use strum::EnumCount;
 #[repr(i32)]
 pub enum DatabaseTransactionTypeCategories {
     AssetPurchase = 1,
+    AssetSale = 2,
+    CashTransferIn = 3,
 }
 
 impl DatabaseTransactionTypeCategories {

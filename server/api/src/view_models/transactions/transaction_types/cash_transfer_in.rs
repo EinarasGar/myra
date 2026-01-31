@@ -1,4 +1,7 @@
-use business::dtos::transaction_dto::TransactionDto;
+use business::dtos::{
+    entry_dto::EntryDto,
+    transaction_dto::{CashTransferInMetadataDto, TransactionDto, TransactionTypeDto},
+};
 use macros::type_tag;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -42,12 +45,40 @@ pub struct CashTransferIn<B, E> {
     #[serde(flatten)]
     pub base: B,
 
-    /// How much cash is being transferred out
+    /// How much cash is being transferred in
     pub entry: E,
 }
 
 impl From<CashTransferInViewModel> for TransactionDto {
-    fn from(_trans: CashTransferInViewModel) -> Self {
-        todo!()
+    fn from(value: CashTransferInViewModel) -> Self {
+        TransactionDto {
+            transaction_id: None,
+            date: value.base.date,
+            fee_entries: match value.base.fees {
+                Some(f) => f.into_iter().map(|x| x.into()).collect(),
+                None => [].into(),
+            },
+            transaction_type: TransactionTypeDto::CashTransferIn(CashTransferInMetadataDto {
+                entry: value.entry.into(),
+            }),
+        }
+    }
+}
+
+impl<B, E> From<TransactionDto> for CashTransferIn<B, E>
+where
+    E: From<EntryDto>,
+    B: From<TransactionDto>,
+{
+    fn from(value: TransactionDto) -> Self {
+        if let TransactionTypeDto::CashTransferIn(r) = value.clone().transaction_type {
+            CashTransferIn {
+                r#type: Default::default(),
+                entry: r.entry.into(),
+                base: value.into(),
+            }
+        } else {
+            panic!("Can not convert TransactionDto into CashTransferIn as the type is not CashTransferIn")
+        }
     }
 }

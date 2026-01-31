@@ -1,4 +1,7 @@
-use business::dtos::transaction_dto::TransactionDto;
+use business::dtos::{
+    entry_dto::EntryDto,
+    transaction_dto::{AssetSaleMetadataDto, TransactionDto, TransactionTypeDto},
+};
 use macros::type_tag;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -47,7 +50,37 @@ pub struct AssetSale<B, E> {
 }
 
 impl From<AssetSaleViewModel> for TransactionDto {
-    fn from(_trans: AssetSaleViewModel) -> Self {
-        todo!()
+    fn from(value: AssetSaleViewModel) -> Self {
+        TransactionDto {
+            transaction_id: None,
+            date: value.base.date,
+            fee_entries: match value.base.fees {
+                Some(f) => f.into_iter().map(|x| x.into()).collect(),
+                None => [].into(),
+            },
+            transaction_type: TransactionTypeDto::AssetSale(AssetSaleMetadataDto {
+                sale: value.sale_entry.into(),
+                proceeds: value.proceeds_entry.into(),
+            }),
+        }
+    }
+}
+
+impl<B, E> From<TransactionDto> for AssetSale<B, E>
+where
+    E: From<EntryDto>,
+    B: From<TransactionDto>,
+{
+    fn from(value: TransactionDto) -> Self {
+        if let TransactionTypeDto::AssetSale(r) = value.clone().transaction_type {
+            AssetSale {
+                r#type: Default::default(),
+                sale_entry: r.sale.into(),
+                proceeds_entry: r.proceeds.into(),
+                base: value.into(),
+            }
+        } else {
+            panic!("Can not convert TransactionDto into AssetSale as the type is not AssetSale")
+        }
     }
 }
