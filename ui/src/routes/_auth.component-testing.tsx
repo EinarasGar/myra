@@ -1,7 +1,7 @@
-import AccountPicker from "@/components/account-picker";
-import AssetAmountInput from "@/components/asset-amount-input";
-import CategoryPicker from "@/components/category-picker";
-import { DateTimeLanguagePicker } from "@/components/date-time-language-picker";
+import AccountPicker from "@/components/feature/account-picker";
+import AssetAmountInput from "@/components/feature/asset-amount-input";
+import CategoryPicker from "@/components/feature/category-picker";
+import { DateTimeLanguagePicker } from "@/components/feature/date-time-language-picker";
 import {
   Breadcrumb,
   BreadcrumbList,

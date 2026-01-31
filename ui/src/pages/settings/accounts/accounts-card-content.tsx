@@ -11,8 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ExpandedAccount, AccountType, LiquidityType } from "@/types/account";
 import { Pencil, Trash2, Check, X, Loader2 } from "lucide-react";
 import { DeleteAccountDialog } from "./delete-account-dialog";
-import AccountTypePicker from "@/components/account-type-picker";
-import AccountLiquidityTypePicker from "@/components/account-liquidity-type-picker";
+import AccountTypePicker from "@/components/feature/account-type-picker";
+import AccountLiquidityTypePicker from "@/components/feature/account-liquidity-type-picker";
 
 interface FormState {
   id: string | null;

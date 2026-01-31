@@ -1,4 +1,4 @@
-import { SelectCombobox } from "./select-combobox";
+import { SelectCombobox } from "@/components/select-combobox";
 import { useMemo, useState } from "react";
 import { useExpandedAccounts } from "@/hooks/store/use-account-store";
 import useGetAccounts from "@/hooks/api/use-get-accounts";

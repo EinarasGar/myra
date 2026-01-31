@@ -1,5 +1,5 @@
 import { useExpandedAssets } from "@/hooks/store/use-asset-store";
-import { SelectCombobox } from "./select-combobox";
+import { SelectCombobox } from "@/components/select-combobox";
 import { useMemo, useState } from "react";
 import useSearchAssets from "@/hooks/api/use-get-assets";
 import useDebounce from "@/hooks/use-debounce";

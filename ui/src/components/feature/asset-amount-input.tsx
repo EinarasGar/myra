@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { type ExpandedAsset } from "@/types/assets";
-import { Input } from "./ui/input";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import AssetPicker from "./asset-picker";
 

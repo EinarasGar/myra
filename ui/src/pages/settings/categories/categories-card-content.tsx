@@ -7,7 +7,7 @@ import {
 } from "@/hooks/api/use-user-category-api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import CategoryTypePicker from "@/components/category-type-picker";
+import CategoryTypePicker from "@/components/feature/category-type-picker";
 import { type Category, type CategoryType } from "@/types/category";
 import {
   Pencil,

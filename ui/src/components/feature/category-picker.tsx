@@ -1,4 +1,4 @@
-import { SelectCombobox } from "./select-combobox";
+import { SelectCombobox } from "@/components/select-combobox";
 import { useMemo, useState } from "react";
 import { useExpandedCategories } from "@/hooks/store/use-category-store";
 import { useSearchGlobalCategories } from "@/hooks/api/use-get-categories";

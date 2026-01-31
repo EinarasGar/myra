@@ -1,8 +1,8 @@
 import { useState } from "react";
-import AccountPicker from "@/components/account-picker";
-import AssetAmountInput from "@/components/asset-amount-input";
-import CategoryPicker from "@/components/category-picker";
-import { DateTimeLanguagePicker } from "@/components/date-time-language-picker";
+import AccountPicker from "@/components/feature/account-picker";
+import AssetAmountInput from "@/components/feature/asset-amount-input";
+import CategoryPicker from "@/components/feature/category-picker";
+import { DateTimeLanguagePicker } from "@/components/feature/date-time-language-picker";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAddIndividualTransaction } from "@/hooks/api/use-add-individual-transaction";
