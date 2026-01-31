@@ -1,5 +1,5 @@
 import { useExpandedAssets } from "@/hooks/store/use-asset-store";
-import { ComboBoxPopover } from "./combo-box-popover";
+import { SelectCombobox } from "./select-combobox";
 import { useMemo, useState } from "react";
 import useSearchAssets from "@/hooks/api/use-get-assets";
 import useDebounce from "@/hooks/use-debounce";
@@ -65,7 +65,7 @@ export default function AssetPicker({
   return (
     <div className={showLabel ? "flex items-center space-x-4" : ""}>
       {showLabel && <p className="text-sm text-muted-foreground">Asset</p>}
-      <ComboBoxPopover
+      <SelectCombobox
         options={options}
         placeholder={placeholder}
         value={currentValueWithDisplay}

@@ -7,4 +7,7 @@ export const QueryKeys = {
   GLOBAL_CATEGORIES: "global-categories",
   INDIVIDUAL_TRANSACTIONS: "individual-transactions",
   ACCOUNTS: "accounts",
+  USER_ACCOUNTS: "user-accounts",
+  ACCOUNT_TYPES: "account-types",
+  ACCOUNT_LIQUIDITY_TYPES: "account-liquidity-types",
 };

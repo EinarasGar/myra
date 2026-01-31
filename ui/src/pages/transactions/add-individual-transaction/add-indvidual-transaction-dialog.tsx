@@ -12,10 +12,18 @@ import { useState } from "react";
 import AddTransactionForm from "./add-transaction-from";
 
 export function AddIndividualTranscationDialog() {
+  const [open, setOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<string | null>(null);
 
+  const handleOpenChange = (value: boolean) => {
+    setOpen(value);
+    if (!value) {
+      setSelectedType(null);
+    }
+  };
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={<Button variant="outline" />}>
         Edit Profile
       </DialogTrigger>
@@ -29,10 +37,12 @@ export function AddIndividualTranscationDialog() {
             onSelected={(type) => setSelectedType(type)}
           />
         )}
-        {selectedType && <AddTransactionForm type={selectedType} />}
-        {/* <DialogFooter>
-          <Button type="submit">Save changes</Button>
-        </DialogFooter> */}
+        {selectedType && (
+          <AddTransactionForm
+            type={selectedType}
+            onSuccess={() => handleOpenChange(false)}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

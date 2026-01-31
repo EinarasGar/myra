@@ -431,7 +431,11 @@ const IconPicker = React.forwardRef<
         modal={modal}
       >
         {children ? (
-          <PopoverTrigger ref={ref} render={children as React.ReactElement} {...props} />
+          <PopoverTrigger
+            ref={ref}
+            render={children as React.ReactElement}
+            {...props}
+          />
         ) : (
           <PopoverTrigger
             ref={ref}

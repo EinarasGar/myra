@@ -109,6 +109,10 @@ const data = {
           url: "/settings/categories",
         },
         {
+          title: "Accounts",
+          url: "/settings/accounts",
+        },
+        {
           title: "General",
           url: "#",
         },

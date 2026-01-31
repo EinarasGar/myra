@@ -1,4 +1,4 @@
-import { ComboBoxPopover } from "./combo-box-popover";
+import { SelectCombobox } from "./select-combobox";
 import { useMemo, useState } from "react";
 import { useExpandedAccounts } from "@/hooks/store/use-account-store";
 import useGetAccounts from "@/hooks/api/use-get-accounts";
@@ -41,7 +41,7 @@ export default function AccountPicker({ value, onChange }: AccountPickerProps) {
 
   return (
     <div className="w-full">
-      <ComboBoxPopover
+      <SelectCombobox
         options={options}
         placeholder="Select an account..."
         value={selectedOption}

@@ -66,7 +66,7 @@ impl From<RegularTransactionViewModel> for TransactionDto {
             date: trans.base.date,
             fee_entries: match trans.base.fees {
                 Some(f) => f.into_iter().map(|x| x.into()).collect(),
-                None => todo!(),
+                None => [].into(),
             },
             transaction_type: TransactionTypeDto::Regular(RegularTransactionMetadataDto {
                 description: trans.description,

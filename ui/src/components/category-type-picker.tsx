@@ -1,4 +1,4 @@
-import { ComboBoxPopover } from "./combo-box-popover";
+import { SelectCombobox } from "./select-combobox";
 import { useMemo, useState } from "react";
 import { useGetCategoryTypes } from "@/hooks/api/use-user-category-api";
 import {
@@ -44,7 +44,7 @@ export default function CategoryTypePicker({
   }, [currentValue]);
 
   return (
-    <ComboBoxPopover
+    <SelectCombobox
       options={options}
       placeholder="Select type..."
       value={selectedOption}

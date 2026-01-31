@@ -1,4 +1,4 @@
-import { ComboBoxPopover } from "./combo-box-popover";
+import { SelectCombobox } from "./select-combobox";
 import { useMemo, useState } from "react";
 import { useExpandedCategories } from "@/hooks/store/use-category-store";
 import { useSearchGlobalCategories } from "@/hooks/api/use-get-categories";
@@ -56,7 +56,7 @@ export default function CategoryPicker({
 
   return (
     <div className="w-full">
-      <ComboBoxPopover
+      <SelectCombobox
         options={options}
         placeholder="Select a category..."
         value={selectedOption}

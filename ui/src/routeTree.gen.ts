@@ -19,6 +19,7 @@ import { Route as AuthPortfolioRouteImport } from './routes/_auth.portfolio'
 import { Route as AuthComponentTestingRouteImport } from './routes/_auth.component-testing'
 import { Route as AuthTransactionsIndividualRouteImport } from './routes/_auth.transactions.individual'
 import { Route as AuthSettingsCategoriesRouteImport } from './routes/_auth.settings.categories'
+import { Route as AuthSettingsAccountsRouteImport } from './routes/_auth.settings.accounts'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -70,6 +71,11 @@ const AuthSettingsCategoriesRoute = AuthSettingsCategoriesRouteImport.update({
   path: '/categories',
   getParentRoute: () => AuthSettingsRoute,
 } as any)
+const AuthSettingsAccountsRoute = AuthSettingsAccountsRouteImport.update({
+  id: '/accounts',
+  path: '/accounts',
+  getParentRoute: () => AuthSettingsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthIndexRoute
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/portfolio': typeof AuthPortfolioRoute
   '/settings': typeof AuthSettingsRouteWithChildren
   '/transactions': typeof AuthTransactionsRouteWithChildren
+  '/settings/accounts': typeof AuthSettingsAccountsRoute
   '/settings/categories': typeof AuthSettingsCategoriesRoute
   '/transactions/individual': typeof AuthTransactionsIndividualRoute
 }
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthSettingsRouteWithChildren
   '/transactions': typeof AuthTransactionsRouteWithChildren
   '/': typeof AuthIndexRoute
+  '/settings/accounts': typeof AuthSettingsAccountsRoute
   '/settings/categories': typeof AuthSettingsCategoriesRoute
   '/transactions/individual': typeof AuthTransactionsIndividualRoute
 }
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/_auth/settings': typeof AuthSettingsRouteWithChildren
   '/_auth/transactions': typeof AuthTransactionsRouteWithChildren
   '/_auth/': typeof AuthIndexRoute
+  '/_auth/settings/accounts': typeof AuthSettingsAccountsRoute
   '/_auth/settings/categories': typeof AuthSettingsCategoriesRoute
   '/_auth/transactions/individual': typeof AuthTransactionsIndividualRoute
 }
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
     | '/portfolio'
     | '/settings'
     | '/transactions'
+    | '/settings/accounts'
     | '/settings/categories'
     | '/transactions/individual'
   fileRoutesByTo: FileRoutesByTo
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/transactions'
     | '/'
+    | '/settings/accounts'
     | '/settings/categories'
     | '/transactions/individual'
   id:
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/_auth/settings'
     | '/_auth/transactions'
     | '/_auth/'
+    | '/_auth/settings/accounts'
     | '/_auth/settings/categories'
     | '/_auth/transactions/individual'
   fileRoutesById: FileRoutesById
@@ -221,14 +233,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSettingsCategoriesRouteImport
       parentRoute: typeof AuthSettingsRoute
     }
+    '/_auth/settings/accounts': {
+      id: '/_auth/settings/accounts'
+      path: '/accounts'
+      fullPath: '/settings/accounts'
+      preLoaderRoute: typeof AuthSettingsAccountsRouteImport
+      parentRoute: typeof AuthSettingsRoute
+    }
   }
 }
 
 interface AuthSettingsRouteChildren {
+  AuthSettingsAccountsRoute: typeof AuthSettingsAccountsRoute
   AuthSettingsCategoriesRoute: typeof AuthSettingsCategoriesRoute
 }
 
 const AuthSettingsRouteChildren: AuthSettingsRouteChildren = {
+  AuthSettingsAccountsRoute: AuthSettingsAccountsRoute,
   AuthSettingsCategoriesRoute: AuthSettingsCategoriesRoute,
 }
 
