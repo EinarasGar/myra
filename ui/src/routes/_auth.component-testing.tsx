@@ -26,6 +26,14 @@ function RouteComponent() {
     asset: ExpandedAsset | null;
     amount: number | string | null;
   }>({ asset: null, amount: null });
+  const [assetAmountNeg, setAssetAmountNeg] = useState<{
+    asset: ExpandedAsset | null;
+    amount: number | string | null;
+  }>({ asset: null, amount: null });
+  const [assetAmountPos, setAssetAmountPos] = useState<{
+    asset: ExpandedAsset | null;
+    amount: number | string | null;
+  }>({ asset: null, amount: null });
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedAccount, setSelectedAccount] =
     useState<ExpandedAccount | null>(null);
@@ -73,6 +81,26 @@ function RouteComponent() {
             onAmountChange={(amount) =>
               setAssetAmount((prev) => ({ ...prev, amount }))
             }
+          />
+          <AssetAmountInput
+            value={assetAmountNeg}
+            onAssetChange={(asset) =>
+              setAssetAmountNeg((prev) => ({ ...prev, asset }))
+            }
+            onAmountChange={(amount) =>
+              setAssetAmountNeg((prev) => ({ ...prev, amount }))
+            }
+            defaultSign="negative"
+          />
+          <AssetAmountInput
+            value={assetAmountPos}
+            onAssetChange={(asset) =>
+              setAssetAmountPos((prev) => ({ ...prev, asset }))
+            }
+            onAmountChange={(amount) =>
+              setAssetAmountPos((prev) => ({ ...prev, amount }))
+            }
+            defaultSign="positive"
           />
           <DateTimeLanguagePicker
             value={selectedDate}
