@@ -71,6 +71,10 @@ const data = {
           url: "/portfolio",
         },
         {
+          title: "Overview",
+          url: "/portfolio-overview",
+        },
+        {
           title: "Accounts",
           url: "#",
         },

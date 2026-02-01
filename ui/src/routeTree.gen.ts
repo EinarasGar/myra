@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as AuthIndexRouteImport } from './routes/_auth.index'
 import { Route as AuthTransactionsRouteImport } from './routes/_auth.transactions'
 import { Route as AuthSettingsRouteImport } from './routes/_auth.settings'
+import { Route as AuthPortfolioOverviewRouteImport } from './routes/_auth.portfolio-overview'
 import { Route as AuthPortfolioRouteImport } from './routes/_auth.portfolio'
 import { Route as AuthComponentTestingRouteImport } from './routes/_auth.component-testing'
 import { Route as AuthTransactionsIndividualRouteImport } from './routes/_auth.transactions.individual'
@@ -50,6 +51,11 @@ const AuthSettingsRoute = AuthSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthPortfolioOverviewRoute = AuthPortfolioOverviewRouteImport.update({
+  id: '/portfolio-overview',
+  path: '/portfolio-overview',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthPortfolioRoute = AuthPortfolioRouteImport.update({
   id: '/portfolio',
   path: '/portfolio',
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/component-testing': typeof AuthComponentTestingRoute
   '/portfolio': typeof AuthPortfolioRoute
+  '/portfolio-overview': typeof AuthPortfolioOverviewRoute
   '/settings': typeof AuthSettingsRouteWithChildren
   '/transactions': typeof AuthTransactionsRouteWithChildren
   '/settings/accounts': typeof AuthSettingsAccountsRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/component-testing': typeof AuthComponentTestingRoute
   '/portfolio': typeof AuthPortfolioRoute
+  '/portfolio-overview': typeof AuthPortfolioOverviewRoute
   '/settings': typeof AuthSettingsRouteWithChildren
   '/transactions': typeof AuthTransactionsRouteWithChildren
   '/': typeof AuthIndexRoute
@@ -108,6 +116,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_auth/component-testing': typeof AuthComponentTestingRoute
   '/_auth/portfolio': typeof AuthPortfolioRoute
+  '/_auth/portfolio-overview': typeof AuthPortfolioOverviewRoute
   '/_auth/settings': typeof AuthSettingsRouteWithChildren
   '/_auth/transactions': typeof AuthTransactionsRouteWithChildren
   '/_auth/': typeof AuthIndexRoute
@@ -123,6 +132,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/component-testing'
     | '/portfolio'
+    | '/portfolio-overview'
     | '/settings'
     | '/transactions'
     | '/settings/accounts'
@@ -134,6 +144,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/component-testing'
     | '/portfolio'
+    | '/portfolio-overview'
     | '/settings'
     | '/transactions'
     | '/'
@@ -147,6 +158,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_auth/component-testing'
     | '/_auth/portfolio'
+    | '/_auth/portfolio-overview'
     | '/_auth/settings'
     | '/_auth/transactions'
     | '/_auth/'
@@ -203,6 +215,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AuthSettingsRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/portfolio-overview': {
+      id: '/_auth/portfolio-overview'
+      path: '/portfolio-overview'
+      fullPath: '/portfolio-overview'
+      preLoaderRoute: typeof AuthPortfolioOverviewRouteImport
       parentRoute: typeof AuthRoute
     }
     '/_auth/portfolio': {
@@ -271,6 +290,7 @@ const AuthTransactionsRouteWithChildren =
 interface AuthRouteChildren {
   AuthComponentTestingRoute: typeof AuthComponentTestingRoute
   AuthPortfolioRoute: typeof AuthPortfolioRoute
+  AuthPortfolioOverviewRoute: typeof AuthPortfolioOverviewRoute
   AuthSettingsRoute: typeof AuthSettingsRouteWithChildren
   AuthTransactionsRoute: typeof AuthTransactionsRouteWithChildren
   AuthIndexRoute: typeof AuthIndexRoute
@@ -279,6 +299,7 @@ interface AuthRouteChildren {
 const AuthRouteChildren: AuthRouteChildren = {
   AuthComponentTestingRoute: AuthComponentTestingRoute,
   AuthPortfolioRoute: AuthPortfolioRoute,
+  AuthPortfolioOverviewRoute: AuthPortfolioOverviewRoute,
   AuthSettingsRoute: AuthSettingsRouteWithChildren,
   AuthTransactionsRoute: AuthTransactionsRouteWithChildren,
   AuthIndexRoute: AuthIndexRoute,

@@ -112,15 +112,17 @@ impl TransactionProcessor for AssetPurchaseTransaction {
             purchase_entry,
             sale_entry
         );
+        let fee_total = self.base.fee_entries_total();
+        let cash_units = sale_entry.quantity.abs() - fee_total;
         Ok(TransactionPortfolioAction::Referential(Box::new(
             AssetPurchase {
                 instrument_asset_id: purchase_entry.asset_id,
                 account_id: purchase_entry.account_id,
                 instrument_units: purchase_entry.quantity,
                 instrument_price: sale_entry.quantity.abs() / purchase_entry.quantity,
-                fees: dec!(0),
+                fees: fee_total.abs(),
                 cash_asset_id: sale_entry.asset_id,
-                cash_units: sale_entry.quantity,
+                cash_units,
                 date: self.base.date(),
             },
         )))

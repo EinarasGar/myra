@@ -4,6 +4,7 @@ use dal::{
     enums::transaction_types::DatabaseTransactionTypes,
     models::transaction_models::{AddTransactionModel, TransactionWithEntriesModel},
 };
+use rust_decimal::Decimal;
 use time::OffsetDateTime;
 use uuid::Uuid;
 
@@ -116,6 +117,14 @@ impl BaseTransaction {
                 .collect::<Result<Vec<Entry>>>()?,
         );
         Ok(())
+    }
+
+    pub fn fee_entries_total(&self) -> Decimal {
+        self.entries
+            .iter()
+            .filter(|x| x.is_fee())
+            .map(|x| x.quantity)
+            .sum()
     }
 
     pub fn date(&self) -> OffsetDateTime {

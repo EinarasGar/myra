@@ -2,7 +2,12 @@ use rust_decimal::Decimal;
 use time::OffsetDateTime;
 use uuid::Uuid;
 
-use crate::entities::portfolio_overview::portfolio::{Portfolio, PortfolioAction};
+use crate::{
+    dtos::assets::asset_id_dto::AssetIdDto,
+    entities::portfolio_overview::portfolio::{
+        Portfolio, PortfolioAction, ReferentialPortfolioAction,
+    },
+};
 
 #[allow(dead_code)]
 #[derive(Clone, Debug)]
@@ -15,6 +20,17 @@ pub struct AssetSale {
     pub cash_asset_id: i32,
     pub cash_units: Decimal,
     pub fees: Decimal,
+}
+
+impl ReferentialPortfolioAction for AssetSale {
+    fn apply_referential_price(&mut self, price: Decimal) {
+        self.instrument_reference_price *= price;
+        self.fees *= price;
+    }
+
+    fn get_cash_asset_id(&self) -> AssetIdDto {
+        AssetIdDto(self.cash_asset_id)
+    }
 }
 
 impl PortfolioAction for AssetSale {

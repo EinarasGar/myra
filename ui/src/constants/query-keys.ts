@@ -10,4 +10,5 @@ export const QueryKeys = {
   USER_ACCOUNTS: "user-accounts",
   ACCOUNT_TYPES: "account-types",
   ACCOUNT_LIQUIDITY_TYPES: "account-liquidity-types",
+  PORTFOLIO_OVERVIEW: "portfolio-overview",
 };

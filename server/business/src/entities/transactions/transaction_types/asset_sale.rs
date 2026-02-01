@@ -112,15 +112,19 @@ impl TransactionProcessor for AssetSaleTransaction {
             sale_entry,
             proceeds_entry
         );
-        Ok(TransactionPortfolioAction::Regular(Box::new(AssetSale {
-            instrument_asset_id: sale_entry.asset_id,
-            account_id: sale_entry.account_id,
-            instrument_units: sale_entry.quantity.abs(),
-            instrument_reference_price: proceeds_entry.quantity / sale_entry.quantity.abs(),
-            fees: dec!(0),
-            cash_asset_id: proceeds_entry.asset_id,
-            cash_units: proceeds_entry.quantity,
-            date: self.base.date(),
-        })))
+        let fee_total = self.base.fee_entries_total();
+        let cash_units = proceeds_entry.quantity + fee_total;
+        Ok(TransactionPortfolioAction::Referential(Box::new(
+            AssetSale {
+                instrument_asset_id: sale_entry.asset_id,
+                account_id: sale_entry.account_id,
+                instrument_units: sale_entry.quantity.abs(),
+                instrument_reference_price: proceeds_entry.quantity / sale_entry.quantity.abs(),
+                fees: fee_total.abs(),
+                cash_asset_id: proceeds_entry.asset_id,
+                cash_units,
+                date: self.base.date(),
+            },
+        )))
     }
 }
