@@ -42,7 +42,10 @@ VALUES ('Income', 'attach_money', 1),
     ('Transaction Fees', 'money_off', 4),
     ('Asset Purchase', 'money_off', 3),
     ('Asset Sale', 'money_off', 3),
-    ('Cash Transfer In', 'money_off', 3);
+    ('Cash Transfer In', 'money_off', 3),
+    ('Cash Dividend', 'money_off', 3),
+    ('Asset Dividend', 'money_off', 3),
+    ('Withholding Tax', 'money_off', 4);
 INSERT INTO users (
         id,
         username,
@@ -81,21 +84,29 @@ VALUES (
 INSERT INTO public.transaction_categories_static_mapping (enum_id, enum_index, category_mapping)
 VALUES (1, 1, 12),
     (1, 2, 11),
+    (1, 3, 18),
     (2, 1, 13),
     (2, 2, 14),
-    (2, 3, 15);
+    (2, 3, 15),
+    (2, 4, 16),
+    (2, 5, 17);
 INSERT INTO transaction_types (id, transaction_type_name)
 VALUES (1, 'Regular'),
     (8, 'Asset Sale'),
     (9, 'Asset Purchase'),
-    (3, 'Cash Transfer In');
+    (3, 'Cash Transfer In'),
+    (4, 'Cash Dividend'),
+    (10, 'Asset Dividend');
 INSERT INTO public.asset_pairs (pair1, pair2)
 VALUES (4, 1),
-    (4, 2),
     (5, 3),
+    (1, 2),
     (1, 3),
+    (2, 1),
     (2, 3),
     (3, 1),
     (3, 2);
 INSERT INTO public.asset_pairs_shared_metadata (pair_id, volume)
 VALUES (1, 76249821);
+
+-- CREATE INDEX ON asset_history (pair_id, date DESC INCLUDE (rate));

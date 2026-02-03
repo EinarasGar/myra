@@ -170,6 +170,6 @@ pub trait PortfolioAction: Debug + Send {
 }
 
 pub trait ReferentialPortfolioAction: PortfolioAction {
-    fn apply_referential_price(&mut self, price: Decimal);
-    fn get_cash_asset_id(&self) -> AssetIdDto;
+    fn apply_conversion_rate(&mut self, price: Decimal);
+    fn get_conversion_asset_id(&self) -> AssetIdDto;
 }

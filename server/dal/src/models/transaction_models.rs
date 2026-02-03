@@ -49,3 +49,15 @@ pub struct TransactionDescriptionModel {
     pub transaction_id: Uuid,
     pub description: String,
 }
+
+#[derive(Clone)]
+pub struct AddTransactionDividendModel {
+    pub transaction_id: Uuid,
+    pub source_asset_id: i32,
+}
+
+#[derive(sqlx::FromRow, Debug)]
+pub struct TransactionDividendModel {
+    pub transaction_id: Uuid,
+    pub source_asset_id: i32,
+}

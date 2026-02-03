@@ -6,6 +6,8 @@ pub enum DatabaseTransactionTypeCategories {
     AssetPurchase = 1,
     AssetSale = 2,
     CashTransferIn = 3,
+    CashDividend = 4,
+    AssetDividend = 5,
 }
 
 impl DatabaseTransactionTypeCategories {

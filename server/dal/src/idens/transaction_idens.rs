@@ -51,6 +51,23 @@ pub enum TransactionGroupIden {
     DateAdded,
 }
 
+#[allow(dead_code)]
+pub enum TransactionDividendsIden {
+    Table,
+    TransactionId,
+    SourceAssetId,
+}
+
+impl Iden for TransactionDividendsIden {
+    fn unquoted(&self) -> &str {
+        match self {
+            Self::Table => "transaction_dividends",
+            Self::TransactionId => "transaction_id",
+            Self::SourceAssetId => "source_asset_id",
+        }
+    }
+}
+
 impl Iden for TransactionIden {
     fn unquoted(&self) -> &str {
         match self {

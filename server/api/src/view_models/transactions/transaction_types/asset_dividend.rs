@@ -1,4 +1,7 @@
-use business::dtos::transaction_dto::TransactionDto;
+use business::dtos::{
+    entry_dto::EntryDto,
+    transaction_dto::{AssetDividendMetadataDto, TransactionDto, TransactionTypeDto},
+};
 use macros::type_tag;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -47,7 +50,35 @@ pub struct AssetDividend<B, E> {
 }
 
 impl From<AssetDividendViewModel> for TransactionDto {
-    fn from(_trans: AssetDividendViewModel) -> Self {
-        todo!()
+    fn from(value: AssetDividendViewModel) -> Self {
+        TransactionDto {
+            transaction_id: None,
+            date: value.base.date,
+            fee_entries: match value.base.fees {
+                Some(f) => f.into_iter().map(|x| x.into()).collect(),
+                None => [].into(),
+            },
+            transaction_type: TransactionTypeDto::AssetDividend(AssetDividendMetadataDto {
+                entry: value.entry.into(),
+            }),
+        }
+    }
+}
+
+impl<B, E> From<TransactionDto> for AssetDividend<B, E>
+where
+    E: From<EntryDto>,
+    B: From<TransactionDto>,
+{
+    fn from(value: TransactionDto) -> Self {
+        if let TransactionTypeDto::AssetDividend(r) = value.clone().transaction_type {
+            AssetDividend {
+                r#type: Default::default(),
+                entry: r.entry.into(),
+                base: value.into(),
+            }
+        } else {
+            panic!("Can not convert TransactionDto into AssetDividend as the type is not AssetDividend")
+        }
     }
 }

@@ -72,8 +72,9 @@ pub async fn search_categories(
             });
     }
 
-    let categories: Vec<IdentifiableCategoryViewModel> =
+    let mut categories: Vec<IdentifiableCategoryViewModel> =
         result.results.into_iter().map_into().collect();
+    categories.sort_by(|a, b| b.id.0.cmp(&a.id.0));
 
     let response = SearchCategoriesResponseViewModel {
         results: categories,
@@ -109,9 +110,10 @@ pub async fn get_category_types(
 ) -> Result<Json<GetCategoryTypesResponseViewModel>, ApiError> {
     let types = category_type_service.get_category_types().await?;
 
-    let response = GetCategoryTypesResponseViewModel {
-        category_types: types.map_into().collect(),
-    };
+    let mut category_types: Vec<IdentifiableCategoryTypeViewModel> = types.map_into().collect();
+    category_types.sort_by(|a, b| b.id.0.cmp(&a.id.0));
+
+    let response = GetCategoryTypesResponseViewModel { category_types };
 
     Ok(Json(response))
 }

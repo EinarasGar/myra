@@ -5,6 +5,7 @@ use strum::EnumCount;
 pub enum DatabaseFeeCategories {
     Transaction = 1,
     Exchange = 2,
+    WithholdingTax = 3,
 }
 
 impl DatabaseFeeCategories {

@@ -223,7 +223,6 @@ impl AssetRatesService {
 
         Ok(ret
             .into_iter()
-            .rev()
             .map(|x| {
                 x.rate.map(|rate| AssetPairRateDto {
                     asset1_id: x.pair1,

@@ -26,7 +26,7 @@ services:
     depends_on:
       - database
   jaeger:
-    image: jaegertracing/all-in-one
+    image: jaegertracing/all-in-one:1.75.0
     environment:
       - COLLECTOR_OTLP_ENABLED=true
     ports:

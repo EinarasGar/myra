@@ -29,6 +29,7 @@ pub struct TransactionFee<E> {
 pub enum TransactionFeeType {
     Transaction,
     Exchange,
+    WithholdingTax,
 }
 
 impl From<TransactionFeeType> for FeeEntryTypesDto {
@@ -36,6 +37,7 @@ impl From<TransactionFeeType> for FeeEntryTypesDto {
         match value {
             TransactionFeeType::Transaction => FeeEntryTypesDto::Transaction,
             TransactionFeeType::Exchange => FeeEntryTypesDto::Exchange,
+            TransactionFeeType::WithholdingTax => FeeEntryTypesDto::WithholdingTax,
         }
     }
 }
@@ -45,6 +47,7 @@ impl From<FeeEntryTypesDto> for TransactionFeeType {
         match value {
             FeeEntryTypesDto::Transaction => TransactionFeeType::Transaction,
             FeeEntryTypesDto::Exchange => TransactionFeeType::Exchange,
+            FeeEntryTypesDto::WithholdingTax => TransactionFeeType::WithholdingTax,
         }
     }
 }

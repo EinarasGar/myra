@@ -20,6 +20,12 @@ impl From<PortfolioOverviewDto> for PortfolioOverviewViewModel {
                 PortfolioOverviewType::Cash(cash) => cash_portfolios.push(cash.into()),
             }
         }
+        asset_portfolios.sort_by(|a: &AssetPortfolioViewModel, b: &AssetPortfolioViewModel| {
+            let a_max = a.positions.iter().map(|p| p.add_date).max();
+            let b_max = b.positions.iter().map(|p| p.add_date).max();
+            b_max.cmp(&a_max)
+        });
+
         Self {
             cash_portfolios,
             asset_portfolios,

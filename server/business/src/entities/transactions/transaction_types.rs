@@ -1,6 +1,8 @@
 use anyhow::Result;
+use asset_dividend::AssetDividendTransaction;
 use asset_purhcase::AssetPurchaseTransaction;
 use asset_sale::AssetSaleTransaction;
+use cash_dividend::CashDividendTransaction;
 use cash_transfer_in::CashTransferInTransaction;
 use dal::{
     enums::transaction_types::DatabaseTransactionTypes,
@@ -15,8 +17,10 @@ use self::regular_transaction::RegularTransaction;
 
 use super::transaction::{Transaction, TransactionProcessor};
 
+pub mod asset_dividend;
 pub mod asset_purhcase;
 pub mod asset_sale;
+pub mod cash_dividend;
 pub mod cash_transfer_in;
 pub mod regular_transaction;
 
@@ -64,12 +68,12 @@ fn get_dto_constructor(
         TransactionTypes::AssetPurchase => &AssetPurchaseTransaction::try_from_dto,
         TransactionTypes::CashTransferOut => todo!(),
         TransactionTypes::CashTransferIn => &CashTransferInTransaction::try_from_dto,
-        TransactionTypes::CashDividend => todo!(),
+        TransactionTypes::CashDividend => &CashDividendTransaction::try_from_dto,
         TransactionTypes::AssetTransferOut => todo!(),
         TransactionTypes::AssetTransferIn => todo!(),
         TransactionTypes::AssetTrade => todo!(),
         TransactionTypes::AssetSale => &AssetSaleTransaction::try_from_dto,
-        TransactionTypes::AssetDividend => todo!(),
+        TransactionTypes::AssetDividend => &AssetDividendTransaction::try_from_dto,
         TransactionTypes::AssetBalanceTransfer => todo!(),
         TransactionTypes::AccountFees => todo!(),
     }
@@ -89,14 +93,18 @@ fn get_model_constructor(
         TransactionTypes::CashTransferIn => {
             &CashTransferInTransaction::from_transaction_with_entries_models
         }
-        TransactionTypes::CashDividend => todo!(),
+        TransactionTypes::CashDividend => {
+            &CashDividendTransaction::from_transaction_with_entries_models
+        }
         TransactionTypes::AssetTransferOut => todo!(),
         TransactionTypes::AssetTransferIn => todo!(),
         TransactionTypes::AssetTrade => todo!(),
         TransactionTypes::AssetSale => {
             &AssetSaleTransaction::from_transaction_with_entries_models
         }
-        TransactionTypes::AssetDividend => todo!(),
+        TransactionTypes::AssetDividend => {
+            &AssetDividendTransaction::from_transaction_with_entries_models
+        }
         TransactionTypes::AssetBalanceTransfer => todo!(),
         TransactionTypes::AccountFees => todo!(),
     }

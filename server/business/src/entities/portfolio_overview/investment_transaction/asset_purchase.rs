@@ -46,12 +46,12 @@ impl PortfolioAction for AssetPurchase {
 }
 
 impl ReferentialPortfolioAction for AssetPurchase {
-    fn apply_referential_price(&mut self, price: Decimal) {
+    fn apply_conversion_rate(&mut self, price: Decimal) {
         self.instrument_price *= price;
         self.fees *= price;
     }
 
-    fn get_cash_asset_id(&self) -> AssetIdDto {
+    fn get_conversion_asset_id(&self) -> AssetIdDto {
         AssetIdDto(self.cash_asset_id)
     }
 }

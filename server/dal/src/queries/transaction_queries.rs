@@ -44,6 +44,9 @@ pub fn get_transaction_with_entries(params: GetTransactionWithEntriesParams) -> 
             .and_where(Expr::col((TransactionIden::Table, TransactionIden::UserId)).eq(uuid)),
     };
 
+    eligible_transactions_builder
+        .order_by(TransactionIden::DateTransacted, sea_query::Order::Desc);
+
     let is_paged = params.paging.is_some();
     if let Some(paging) = params.paging {
         eligible_transactions_builder

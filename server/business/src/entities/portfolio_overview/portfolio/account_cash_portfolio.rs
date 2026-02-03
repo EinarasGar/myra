@@ -47,6 +47,10 @@ impl AccountCashPortfolio {
         self.units += units;
     }
 
+    pub fn add_dividends(&mut self, dividends: Decimal) {
+        self.dividends += dividends;
+    }
+
     pub fn add_fees(&mut self, fees: Decimal) {
         self.fees += fees;
     }

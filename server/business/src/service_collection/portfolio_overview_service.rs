@@ -9,7 +9,7 @@ use dal::query_params::get_transaction_with_entries_params::GetTransactionWithEn
 use rust_decimal::Decimal;
 use uuid::Uuid;
 
-use crate::dtos::asset_pair_date_dto::AssetPairDateDto;
+use crate::dtos::asset_id_date_dto::AssetIdDateDto;
 use crate::dtos::assets::asset_id_dto::AssetIdDto;
 use crate::dtos::portfolio::holding::HoldingDto;
 use crate::dtos::portfolio::overview::PortfolioOverviewDto;
@@ -21,8 +21,7 @@ use crate::entities::transactions::transaction_types::create_transactions_from_t
 
 #[mockall_double::double]
 use super::asset_rates_service::AssetRatesService;
-#[mockall_double::double]
-use super::asset_service::AssetsService;
+use super::transaction_metadata_service::TransactionMetadataService;
 #[mockall_double::double]
 use super::transaction_service::TransactionService;
 
@@ -31,7 +30,7 @@ pub struct PortfolioOverviewService {
     db: MyraDb,
     _transaction_service: TransactionService,
     asset_rates_service: AssetRatesService,
-    asset_service: AssetsService,
+    transaction_metadata_service: TransactionMetadataService,
 }
 
 impl PortfolioOverviewService {
@@ -40,7 +39,7 @@ impl PortfolioOverviewService {
             db: db.clone(),
             _transaction_service: TransactionService::new(db.clone()),
             asset_rates_service: AssetRatesService::new(db.clone()),
-            asset_service: AssetsService::new(db.clone()),
+            transaction_metadata_service: TransactionMetadataService::new(db.clone()),
         }
     }
 
@@ -64,8 +63,12 @@ impl PortfolioOverviewService {
             .await?;
 
         tracing::trace!("Got transactions: {:#?}", models);
-        let transactions: Vec<Transaction> =
+        let mut transactions: Vec<Transaction> =
             create_transactions_from_transaction_with_entries_models(models)?;
+
+        self.transaction_metadata_service
+            .load_metadata(&mut transactions)
+            .await?;
 
         let mut portfolio = Portfolio::new();
 
@@ -85,16 +88,15 @@ impl PortfolioOverviewService {
             }
         }
 
-        let asset_pairs: Vec<AssetPairDateDto> = referential_actions
+        let asset_id_dates: Vec<AssetIdDateDto> = referential_actions
             .iter()
             .filter_map(|action| {
-                let cash_asset_id = action.get_cash_asset_id().0;
+                let cash_asset_id = action.get_conversion_asset_id().0;
                 if cash_asset_id == reference_asset_id.0 {
                     return None;
                 }
-                Some(AssetPairDateDto {
-                    asset1_id: cash_asset_id,
-                    asset2_id: reference_asset_id.0,
+                Some(AssetIdDateDto {
+                    asset_id: cash_asset_id,
                     date: action.date(),
                 })
             })
@@ -102,17 +104,17 @@ impl PortfolioOverviewService {
 
         let rates = self
             .asset_rates_service
-            .get_pair_prices_by_dates(asset_pairs.clone())
+            .get_pairs_by_dates_converted(asset_id_dates, reference_asset_id.clone())
             .await?;
 
         let mut rate_iter = rates.into_iter();
         for action in &mut referential_actions {
-            let cash_asset_id = action.get_cash_asset_id().0;
+            let cash_asset_id = action.get_conversion_asset_id().0;
             if cash_asset_id == reference_asset_id.0 {
                 continue;
             }
             let rate = rate_iter.next().unwrap().unwrap();
-            action.apply_referential_price(rate.rate);
+            action.apply_conversion_rate(rate.rate);
             tracing::trace!(
                 "Dates: {:#?} {:#?}, {:#?} to {:?}",
                 rate.date,
@@ -135,7 +137,7 @@ impl PortfolioOverviewService {
         let held_asset_ids: HashSet<AssetIdDto> = portfolio
             .account_portfolios()
             .iter()
-            .flat_map(|(_, ap)| ap.asset_portfolios.iter().map(|(id, _)| AssetIdDto(*id)))
+            .flat_map(|(_, ap)| ap.asset_portfolios.keys().map(|id| AssetIdDto(*id)))
             .collect();
 
         let current_rates = self

@@ -72,6 +72,11 @@ pub enum AssetHistoryCalculationIden {
     AvgRate,
 }
 
+#[derive(Iden)]
+pub enum OrdinalIden {
+    Ord,
+}
+
 impl Iden for AssetsAliasIden {
     fn unquoted(&self) -> &str {
         match self {

@@ -74,7 +74,8 @@ pub async fn get_categories(
             });
     }
 
-    let categories: Vec<IdentifiableCategoryViewModel> = result.into_iter().map_into().collect();
+    let mut categories: Vec<IdentifiableCategoryViewModel> = result.into_iter().map_into().collect();
+    categories.sort_by(|a, b| b.id.0.cmp(&a.id.0));
     let response = GetCategoriesResponseViewModel {
         categories,
         lookup_tables: CategoryMetadataLookupTables {
@@ -261,9 +262,10 @@ pub async fn get_user_category_types(
         .get_user_category_types(user_id)
         .await?;
 
-    let response = GetCategoryTypesResponseViewModel {
-        category_types: types.map_into().collect(),
-    };
+    let mut category_types: Vec<IdentifiableCategoryTypeViewModel> = types.map_into().collect();
+    category_types.sort_by(|a, b| b.id.0.cmp(&a.id.0));
+
+    let response = GetCategoryTypesResponseViewModel { category_types };
 
     Ok(Json(response))
 }

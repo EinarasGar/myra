@@ -13,8 +13,10 @@ import AddTransactionForm from "./add-transaction-from";
 import AddAssetPurchaseForm from "./add-asset-purchase-form";
 import AddAssetSaleForm from "./add-asset-sale-form";
 import AddCashTransferInForm from "./add-cash-transfer-in-form";
+import AddCashDividendForm from "./add-cash-dividend-form";
+import AddAssetDividendForm from "./add-asset-dividend-form";
 
-const SPECIALIZED_TYPES = ["asset_purchase", "asset_sale", "cash_transfer_in"];
+const SPECIALIZED_TYPES = ["asset_purchase", "asset_sale", "cash_transfer_in", "cash_dividend", "asset_dividend"];
 
 export function AddIndividualTranscationDialog() {
   const [open, setOpen] = useState(false);
@@ -54,6 +56,16 @@ export function AddIndividualTranscationDialog() {
         )}
         {selectedType === "cash_transfer_in" && (
           <AddCashTransferInForm
+            onSuccess={() => handleOpenChange(false)}
+          />
+        )}
+        {selectedType === "cash_dividend" && (
+          <AddCashDividendForm
+            onSuccess={() => handleOpenChange(false)}
+          />
+        )}
+        {selectedType === "asset_dividend" && (
+          <AddAssetDividendForm
             onSuccess={() => handleOpenChange(false)}
           />
         )}

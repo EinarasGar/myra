@@ -13,7 +13,7 @@ use crate::{
     idens::{
         asset_idens::{
             AssetHistoryCalculationIden, AssetHistoryIden, AssetPairSharedMetadataIden,
-            AssetPairsIden, AssetTypesIden, AssetsAliasIden, AssetsIden,
+            AssetPairsIden, AssetTypesIden, AssetsAliasIden, AssetsIden, OrdinalIden,
         },
         ArrayFunc, CustomFunc, Unnest,
     },
@@ -552,6 +552,7 @@ pub fn get_latest_asset_pair_rates(
 /// For each passed element in array retruns a row with the latest price for that pair (or that base pair)
 /// If price is not found, it returns null for the price and date.
 /// If pair is not found, it returns null for all elements in the row.
+/// Results are ordered by the input order using an ordinal column.
 ///
 /// Executes the following query
 /// Returns response which can be mapped to `AssetPairRate`
@@ -564,12 +565,14 @@ pub fn get_latest_asset_pair_rates(
 ///         SELECT COALESCE("pairs"."pair1", "base_pairs"."pair1") AS "pair1",
 ///             COALESCE("pairs"."pair2", "base_pairs"."pair2") AS "pair2",
 ///             COALESCE("pairs"."id", "base_pairs"."id") AS "id",
-///             "pairs_dates_list"."date"
+///             "pairs_dates_list"."date",
+///             "pairs_dates_list"."ord"
 ///         FROM (
 ///                 SELECT unnest(ARRAY [5, ...]) AS "pair1",
 ///                     unnest(ARRAY [2, ...]) AS "pair2",
 ///                     unnest(ARRAY ['2003-01-01 12:00:00'::timestamp, ...]
-///                     ) AS "date"
+///                     ) AS "date",
+///                     unnest(ARRAY [1, 2, ...]) AS "ord"
 ///             ) AS "pairs_dates_list"
 ///             LEFT JOIN (
 ///                 SELECT "asset_pairs"."id",
@@ -598,9 +601,11 @@ pub fn get_latest_asset_pair_rates(
 ///         ORDER BY "date" DESC
 ///         LIMIT 1
 ///     ) AS "asset_history" ON TRUE
+/// ORDER BY "pair_ids_dates_list"."ord"
 /// ```
 #[tracing::instrument(skip_all)]
 pub fn get_pair_prices_by_dates(pair_dates: Vec<AssetPairDate>) -> DbQueryWithValues {
+    let len = pair_dates.len() as i32;
     let assets_1_array = Value::Array(
         sea_query::ArrayType::Int,
         Some(Box::new(
@@ -617,6 +622,10 @@ pub fn get_pair_prices_by_dates(pair_dates: Vec<AssetPairDate>) -> DbQueryWithVa
         sea_query::ArrayType::TimeDateTimeWithTimeZone,
         Some(Box::new(pair_dates.iter().map(|x| x.date.into()).collect())),
     );
+    let ord_array = Value::Array(
+        sea_query::ArrayType::Int,
+        Some(Box::new((1..=len).map(|i| i.into()).collect())),
+    );
 
     let asset_pairs_dates = Query::select()
         .expr_as(
@@ -630,6 +639,10 @@ pub fn get_pair_prices_by_dates(pair_dates: Vec<AssetPairDate>) -> DbQueryWithVa
         .expr_as(
             Func::cust(Unnest).arg(target_date_array),
             AssetHistoryIden::RecordedAt,
+        )
+        .expr_as(
+            Func::cust(Unnest).arg(ord_array),
+            OrdinalIden::Ord,
         )
         .to_owned();
 
@@ -683,6 +696,10 @@ pub fn get_pair_prices_by_dates(pair_dates: Vec<AssetPairDate>) -> DbQueryWithVa
             AssetsAliasIden::PairsDatesList,
             AssetHistoryIden::RecordedAt,
         ))
+        .column((
+            AssetsAliasIden::PairsDatesList,
+            OrdinalIden::Ord,
+        ))
         .from_subquery(asset_pairs_dates, AssetsAliasIden::PairsDatesList)
         .join_subquery(
             sea_query::JoinType::LeftJoin,
@@ -732,6 +749,10 @@ pub fn get_pair_prices_by_dates(pair_dates: Vec<AssetPairDate>) -> DbQueryWithVa
             history_query,
             AssetHistoryIden::Table,
             Expr::cust("TRUE"),
+        )
+        .order_by(
+            (AssetsAliasIden::PairIdsDatesList, OrdinalIden::Ord),
+            Order::Asc,
         )
         .build_sqlx(PostgresQueryBuilder)
         .into()
