@@ -1,3 +1,4 @@
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -10,5 +11,6 @@ use super::base_models::{
 pub struct GetAccountResponseViewModel {
     #[serde(flatten)]
     pub account: ExpandedAccountViewModel,
+    pub ownership_share: Decimal,
     pub liquidity_type: IdentifiableAccountLiquidityTypeViewModel,
 }

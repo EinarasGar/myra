@@ -19,23 +19,9 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export default function NetWorthHistoryChart() {
+export default function NetWorthHistoryChart({ range }: { range: string }) {
   const userId = useAuthUserId();
-  const { data } = useGetProtfolioHistory(userId, "1w");
-
-  // const filteredData = chartData.filter((item) => {
-  //   const date = new Date(item.date);
-  //   const referenceDate = new Date("2024-06-30");
-  //   let daysToSubtract = 90;
-  //   if (timeRange === "30d") {
-  //     daysToSubtract = 30;
-  //   } else if (timeRange === "7d") {
-  //     daysToSubtract = 7;
-  //   }
-  //   const startDate = new Date(referenceDate);
-  //   startDate.setDate(startDate.getDate() - daysToSubtract);
-  //   return date >= startDate;
-  // });
+  const { data } = useGetProtfolioHistory(userId, range);
 
   const rates = data?.data.sums.map((sum) => sum.rate) ?? [];
   const minRate = Math.min(...rates);
@@ -81,17 +67,11 @@ export default function NetWorthHistoryChart() {
           content={
             <ChartTooltipContent
               className="w-[150px]"
-              // labelKey="date"
-              // labelFormatter={(label) => {
-              //   console.log(label);
-              //   return "aa";
-              // console.log(label);
-              // return new Date(label).toLocaleDateString("en-US", {
-              //   month: "short",
-              //   day: "numeric",
-              //   year: "numeric",
-              // });
-              // }}
+              labelFormatter={(_: string, payload: { payload?: { date: number } }[]) => {
+                const date = new Date((payload[0]?.payload?.date ?? 0) * 1000);
+                const pad = (n: number) => n.toString().padStart(2, "0");
+                return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+              }}
             />
           }
         />

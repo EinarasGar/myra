@@ -59,6 +59,7 @@ pub async fn get_account(
 
     let ret = GetAccountResponseViewModel {
         liquidity_type: account.liquidity_type.clone().into(),
+        ownership_share: account.ownership_share,
         account: account.into(),
     };
 
@@ -161,6 +162,7 @@ pub async fn update_account(
         account_name: body.account.name.clone(),
         account_type: body.account.account_type.0,
         account_liquidity_type: body.liquidity_type.0,
+        ownership_share: body.ownership_share,
     };
 
     account_service
@@ -203,11 +205,13 @@ pub async fn add_account(
         account_name: body.account.name.clone(),
         account_type: body.account.account_type.0,
         account_liquidity_type: body.liquidity_type.0,
+        ownership_share: body.ownership_share,
     };
 
     let new_id = account_service.add_user_account(user_id, dto).await?;
 
     let ret = AddAccountResponseViewModel {
+        ownership_share: body.ownership_share,
         liquidity_type: body.liquidity_type,
         account: IdentifiableAccount {
             account_id: RequiredAccountId(new_id),

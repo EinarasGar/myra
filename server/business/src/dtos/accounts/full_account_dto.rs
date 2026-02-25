@@ -1,4 +1,5 @@
 use dal::models::account_models::AccountWithMetadata;
+use rust_decimal::Decimal;
 use uuid::Uuid;
 
 use super::{
@@ -11,6 +12,7 @@ pub struct FullAccountDto {
     pub account_name: String,
     pub account_type: AccountTypeDto,
     pub liquidity_type: AccountLiquidityTypeDto,
+    pub ownership_share: Decimal,
 }
 
 impl From<AccountWithMetadata> for FullAccountDto {
@@ -27,6 +29,7 @@ impl From<AccountWithMetadata> for FullAccountDto {
                 id: account.liquidity_type,
                 name: account.liquidity_type_name,
             },
+            ownership_share: account.ownership_share,
         }
     }
 }

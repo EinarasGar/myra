@@ -618,6 +618,12 @@ export interface AddAccountRequestViewModel {
    * @memberof AddAccountRequestViewModel
    */
   liquidity_type: number;
+  /**
+   *
+   * @type {number}
+   * @memberof AddAccountRequestViewModel
+   */
+  ownership_share: number;
 }
 /**
  *
@@ -649,6 +655,12 @@ export interface AddAccountResponseViewModel {
    * @memberof AddAccountResponseViewModel
    */
   liquidity_type: number;
+  /**
+   *
+   * @type {number}
+   * @memberof AddAccountResponseViewModel
+   */
+  ownership_share: number;
 }
 /**
  *
@@ -6539,6 +6551,12 @@ export interface GetAccountResponseViewModel {
    * @memberof GetAccountResponseViewModel
    */
   liquidity_type: IdentifiableAccountLiquidityTypeViewModel;
+  /**
+   *
+   * @type {number}
+   * @memberof GetAccountResponseViewModel
+   */
+  ownership_share: number;
 }
 /**
  *
@@ -6602,6 +6620,12 @@ export interface GetAccountsResponseViewModelRow {
    * @memberof GetAccountsResponseViewModelRow
    */
   liquidity_type: number;
+  /**
+   *
+   * @type {number}
+   * @memberof GetAccountsResponseViewModelRow
+   */
+  ownership_share: number;
 }
 /**
  *
@@ -8153,6 +8177,7 @@ export interface SharedAssetPairMetadataViewModel {
 export const TransactionFeeType = {
   Transaction: "transaction",
   Exchange: "exchange",
+  WithholdingTax: "withholding_tax",
 } as const;
 
 export type TransactionFeeType =
@@ -8359,6 +8384,12 @@ export interface UpdateAccountViewModel {
    * @memberof UpdateAccountViewModel
    */
   liquidity_type: number;
+  /**
+   *
+   * @type {number}
+   * @memberof UpdateAccountViewModel
+   */
+  ownership_share: number;
 }
 /**
  *

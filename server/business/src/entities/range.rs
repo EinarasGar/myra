@@ -93,6 +93,7 @@ impl Range {
             "1d" => Ok((now - Duration::days(1), Duration::minutes(2))),
             "1w" => Ok((now - Duration::weeks(1), Duration::minutes(10))),
             "1m" => Ok((now - Duration::days(30), Duration::hours(1))),
+            "3m" => Ok((now - Duration::days(90), Duration::days(1))),
             "6m" => Ok((now - Duration::days(180), Duration::days(1))),
             "1y" => Ok((now - Duration::days(365), Duration::days(1))),
             "5y" => Ok((now - Duration::days(365 * 5), Duration::weeks(1))),

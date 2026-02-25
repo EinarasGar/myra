@@ -5,6 +5,7 @@ use super::paging_params::PagingParams;
 pub struct GetTransactionWithEntriesParams {
     pub search_type: GetTransactionWithEntriesParamsSeachType,
     pub paging: Option<PagingParams>,
+    pub apply_ownership_share: bool,
 }
 
 impl GetTransactionWithEntriesParams {
@@ -12,6 +13,7 @@ impl GetTransactionWithEntriesParams {
         Self {
             search_type: GetTransactionWithEntriesParamsSeachType::ByTransactionId(transaction_id),
             paging: None,
+            apply_ownership_share: false,
         }
     }
 
@@ -21,6 +23,7 @@ impl GetTransactionWithEntriesParams {
                 transaction_ids,
             ),
             paging: None,
+            apply_ownership_share: false,
         }
     }
 
@@ -28,6 +31,7 @@ impl GetTransactionWithEntriesParams {
         Self {
             search_type: GetTransactionWithEntriesParamsSeachType::ByUserId(user_id),
             paging: None,
+            apply_ownership_share: false,
         }
     }
 
@@ -35,6 +39,15 @@ impl GetTransactionWithEntriesParams {
         Self {
             search_type: GetTransactionWithEntriesParamsSeachType::ByUserId(user_id),
             paging: Some(paging_params),
+            apply_ownership_share: false,
+        }
+    }
+
+    pub fn by_user_id_with_ownership(user_id: Uuid) -> Self {
+        Self {
+            search_type: GetTransactionWithEntriesParamsSeachType::ByUserId(user_id),
+            paging: None,
+            apply_ownership_share: true,
         }
     }
 }

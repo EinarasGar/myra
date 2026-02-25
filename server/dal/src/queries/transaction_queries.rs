@@ -2,7 +2,7 @@ use sea_query::{Alias, Asterisk, Expr, ExprTrait, PostgresQueryBuilder, Query, W
 use sea_query_sqlx::SqlxBinder;
 
 use crate::{
-    idens::{entries_idens::EntryIden, transaction_idens::TransactionIden},
+    idens::{account_idens::AccountIden, entries_idens::EntryIden, transaction_idens::TransactionIden},
     query_params::get_transaction_with_entries_params::{
         GetTransactionWithEntriesParams, GetTransactionWithEntriesParamsSeachType,
     },
@@ -12,6 +12,7 @@ use super::DbQueryWithValues;
 
 #[tracing::instrument(skip_all)]
 pub fn get_transaction_with_entries(params: GetTransactionWithEntriesParams) -> DbQueryWithValues {
+    let apply_ownership_share = params.apply_ownership_share;
     let mut eligible_transactions_builder = Query::select()
         .column(TransactionIden::Id)
         .column(TransactionIden::UserId)
@@ -54,11 +55,23 @@ pub fn get_transaction_with_entries(params: GetTransactionWithEntriesParams) -> 
             .offset(paging.start);
     }
 
-    Query::select()
+    let mut outer_query = Query::select()
         .column((EntryIden::Table, EntryIden::Id))
         .column((EntryIden::Table, EntryIden::AssetId))
         .column((EntryIden::Table, EntryIden::AccountId))
-        .column((EntryIden::Table, EntryIden::Quantity))
+        .conditions(
+            apply_ownership_share,
+            |q| {
+                q.expr_as(
+                    Expr::col((EntryIden::Table, EntryIden::Quantity))
+                        .mul(Expr::col((AccountIden::Table, AccountIden::OwnershipShare))),
+                    Alias::new("quantity"),
+                );
+            },
+            |q| {
+                q.column((EntryIden::Table, EntryIden::Quantity));
+            },
+        )
         .column((EntryIden::Table, EntryIden::CategoryId))
         .column((EntryIden::Table, EntryIden::TransactionId))
         .column((TransactionIden::Table, TransactionIden::UserId))
@@ -79,6 +92,16 @@ pub fn get_transaction_with_entries(params: GetTransactionWithEntriesParams) -> 
             Expr::col((EntryIden::Table, EntryIden::TransactionId))
                 .equals((TransactionIden::Table, TransactionIden::Id)),
         )
-        .build_sqlx(PostgresQueryBuilder)
-        .into()
+        .to_owned();
+
+    if apply_ownership_share {
+        outer_query.join(
+            sea_query::JoinType::InnerJoin,
+            AccountIden::Table,
+            Expr::col((EntryIden::Table, EntryIden::AccountId))
+                .equals((AccountIden::Table, AccountIden::Id)),
+        );
+    }
+
+    outer_query.build_sqlx(PostgresQueryBuilder).into()
 }

@@ -16,6 +16,7 @@ pub fn get_accounts(params: GetAccountsParams) -> DbQueryWithValues {
         .column((AccountIden::Table, AccountIden::UserId))
         .column((AccountIden::Table, AccountIden::AccountName))
         .column((AccountIden::Table, AccountIden::AccountType))
+        .column((AccountIden::Table, AccountIden::OwnershipShare))
         .conditions(
             params.include_metadata,
             |q| {
@@ -76,6 +77,7 @@ pub fn update_account(model: AccountUpdateModel) -> DbQueryWithValues {
         .value(AccountIden::AccountName, model.account_name)
         .value(AccountIden::AccountType, model.account_type)
         .value(AccountIden::LiquidityType, model.liquidity_type)
+        .value(AccountIden::OwnershipShare, model.ownership_share)
         .and_where(Expr::col(AccountIden::Id).eq(model.account_id))
         .and_where(Expr::col(AccountIden::UserId).eq(model.user_id))
         .and_where(Expr::col(AccountIden::Active).eq(true))
@@ -92,6 +94,7 @@ pub fn insert_account(model: AccountCreationModel) -> DbQueryWithValues {
             AccountIden::AccountType,
             AccountIden::LiquidityType,
             AccountIden::Active,
+            AccountIden::OwnershipShare,
         ])
         .values_panic([
             model.user_id.into(),
@@ -99,6 +102,7 @@ pub fn insert_account(model: AccountCreationModel) -> DbQueryWithValues {
             model.account_type.into(),
             model.liquidity_type.into(),
             true.into(),
+            model.ownership_share.into(),
         ])
         .returning_col(AccountIden::Id)
         .build_sqlx(PostgresQueryBuilder)

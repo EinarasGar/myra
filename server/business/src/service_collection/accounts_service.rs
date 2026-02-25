@@ -75,6 +75,7 @@ impl AccountsService {
             account_name: amendment.account_name,
             account_type: amendment.account_type,
             liquidity_type: amendment.account_liquidity_type,
+            ownership_share: amendment.ownership_share,
         };
 
         let query = account_queries::update_account(model);
@@ -93,6 +94,7 @@ impl AccountsService {
             account_name: amendment.account_name,
             account_type: amendment.account_type,
             liquidity_type: amendment.account_liquidity_type,
+            ownership_share: amendment.ownership_share,
         };
 
         let query = account_queries::insert_account(model);

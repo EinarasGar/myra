@@ -1,3 +1,4 @@
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -8,5 +9,6 @@ use super::base_models::liquidity_type_id::RequiredLiquidityTypeId;
 pub struct UpdateAccountViewModel {
     #[serde(flatten)]
     pub account: AccountViewModel,
+    pub ownership_share: Decimal,
     pub liquidity_type: RequiredLiquidityTypeId,
 }

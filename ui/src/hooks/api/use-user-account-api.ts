@@ -34,6 +34,7 @@ export function useGetUserAccounts(userId: string) {
           liquidityType: liquidityType
             ? { id: liquidityType.id, name: liquidityType.name }
             : undefined,
+          ownershipShare: acc.ownership_share ?? 1,
         };
       });
 
@@ -123,6 +124,8 @@ export function useUpdateAccount(userId: string) {
                             (t) => t.id === data.liquidity_type,
                           ) ?? acc.liquidityType)
                         : acc.liquidityType,
+                      ownershipShare:
+                        data.ownership_share ?? acc.ownershipShare,
                     }
                   : acc,
               )

@@ -9,6 +9,7 @@ pub enum AccountIden {
     LiquidityType,
     AccountType,
     Active,
+    OwnershipShare,
 }
 
 impl Iden for AccountIden {
@@ -21,6 +22,7 @@ impl Iden for AccountIden {
             Self::AccountType => "account_type",
             Self::LiquidityType => "liquidity_type",
             Self::Active => "active",
+            Self::OwnershipShare => "ownership_share",
         }
     }
 }

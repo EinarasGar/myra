@@ -21,7 +21,7 @@ export default function useGetProtfolioHistory(
   defaultAssetId?: number | null,
 ) {
   return useSuspenseQuery({
-    queryKey: [QueryKeys.PORTFOLIO_HISTORY],
+    queryKey: [QueryKeys.PORTFOLIO_HISTORY, range],
     queryFn: () => getPortfolioHistory(userId, range, defaultAssetId),
   });
 }

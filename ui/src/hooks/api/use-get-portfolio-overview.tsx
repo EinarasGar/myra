@@ -15,9 +15,10 @@ export default function useGetPortfolioOverview(
     userId: string,
     defaultAssetId?: number | null,
   ) => {
-    const data = await PortfolioApiFactory().getPortfolioOverview(userId, {
-      default_asset_id: defaultAssetId ?? 2,
-    } as unknown as number);
+    const data = await PortfolioApiFactory().getPortfolioOverview(
+      userId,
+      { default_asset_id: defaultAssetId ?? 3 } as unknown as number,
+    );
     addAsset(
       data.data.lookup_tables.assets.map((asset) => {
         return {

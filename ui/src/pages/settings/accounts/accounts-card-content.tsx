@@ -19,6 +19,7 @@ interface FormState {
   name: string;
   accountType: AccountType | null;
   liquidityType: LiquidityType | null;
+  ownershipShare: number;
 }
 
 const INITIAL_FORM_STATE: FormState = {
@@ -26,6 +27,7 @@ const INITIAL_FORM_STATE: FormState = {
   name: "",
   accountType: null,
   liquidityType: null,
+  ownershipShare: 100,
 };
 
 interface AccountsCardContentProps {
@@ -57,6 +59,7 @@ export function AccountsCardContent({
       name: account.name,
       accountType: account.accountType ?? null,
       liquidityType: account.liquidityType ?? null,
+      ownershipShare: (account.ownershipShare ?? 1) * 100,
     });
   };
 
@@ -79,6 +82,7 @@ export function AccountsCardContent({
         name: editing.name.trim(),
         account_type: editing.accountType.id,
         liquidity_type: editing.liquidityType.id,
+        ownership_share: editing.ownershipShare / 100,
       },
     });
     cancelEditing();
@@ -101,6 +105,7 @@ export function AccountsCardContent({
       name: addingForm.name.trim(),
       account_type: addingForm.accountType.id,
       liquidity_type: addingForm.liquidityType.id,
+      ownership_share: addingForm.ownershipShare / 100,
     });
     cancelAdding();
   };
@@ -155,6 +160,23 @@ export function AccountsCardContent({
                 className="w-36 shrink-0"
               />
             </Suspense>
+
+            <div className="flex items-center gap-1 w-20 shrink-0">
+              <Input
+                type="number"
+                min={1}
+                max={100}
+                value={addingForm.ownershipShare}
+                onChange={(e) =>
+                  setAddingForm((prev) => ({
+                    ...prev,
+                    ownershipShare: Number(e.target.value),
+                  }))
+                }
+                className="h-8"
+              />
+              <span className="text-sm text-muted-foreground">%</span>
+            </div>
 
             <Button
               variant="ghost"
@@ -230,6 +252,23 @@ export function AccountsCardContent({
                     />
                   </Suspense>
 
+                  <div className="flex items-center gap-1 w-20 shrink-0">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={100}
+                      value={editing.ownershipShare}
+                      onChange={(e) =>
+                        setEditing((prev) => ({
+                          ...prev,
+                          ownershipShare: Number(e.target.value),
+                        }))
+                      }
+                      className="h-8"
+                    />
+                    <span className="text-sm text-muted-foreground">%</span>
+                  </div>
+
                   <Button
                     variant="ghost"
                     size="icon"
@@ -264,6 +303,12 @@ export function AccountsCardContent({
                   <span className="text-sm text-muted-foreground shrink-0">
                     {account.liquidityType?.name}
                   </span>
+
+                  {account.ownershipShare < 1 && (
+                    <span className="text-sm text-muted-foreground shrink-0">
+                      {Math.round(account.ownershipShare * 100)}%
+                    </span>
+                  )}
 
                   <div className="flex items-center gap-1 shrink-0">
                     <Button

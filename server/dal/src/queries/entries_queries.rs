@@ -46,7 +46,10 @@ pub fn get_holdings(user_id: Uuid) -> DbQueryWithValues {
         .column((EntryIden::Table, EntryIden::AssetId))
         .column((EntryIden::Table, EntryIden::AccountId))
         .expr_as(
-            Expr::sum(Expr::col((EntryIden::Table, EntryIden::Quantity))),
+            Expr::sum(
+                Expr::col((EntryIden::Table, EntryIden::Quantity))
+                    .mul(Expr::col((AccountIden::Table, AccountIden::OwnershipShare))),
+            ),
             Alias::new("total_quantity"),
         )
         .from(EntryIden::Table)
@@ -59,7 +62,13 @@ pub fn get_holdings(user_id: Uuid) -> DbQueryWithValues {
         .and_where(Expr::col((AccountIden::Table, AccountIden::UserId)).eq(user_id))
         .group_by_col((EntryIden::Table, EntryIden::AccountId))
         .group_by_col((EntryIden::Table, EntryIden::AssetId))
-        .and_having(Expr::sum(Expr::col((EntryIden::Table, EntryIden::Quantity))).ne(0))
+        .and_having(
+            Expr::sum(
+                Expr::col((EntryIden::Table, EntryIden::Quantity))
+                    .mul(Expr::col((AccountIden::Table, AccountIden::OwnershipShare))),
+            )
+            .ne(0),
+        )
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }
@@ -121,7 +130,10 @@ pub fn get_binned_entries(params: GetBinnedEntriesParams) -> DbQueryWithValues {
         )
         .column((EntryIden::Table, EntryIden::AssetId))
         .expr_as(
-            Expr::sum(Expr::col((EntryIden::Table, EntryIden::Quantity))),
+            Expr::sum(
+                Expr::col((EntryIden::Table, EntryIden::Quantity))
+                    .mul(Expr::col((AccountIden::Table, AccountIden::OwnershipShare))),
+            ),
             BinnedEntriesIden::Sum,
         )
         .from(EntryIden::Table)
@@ -130,6 +142,12 @@ pub fn get_binned_entries(params: GetBinnedEntriesParams) -> DbQueryWithValues {
             TransactionIden::Table,
             Expr::col((EntryIden::Table, EntryIden::TransactionId))
                 .equals((TransactionIden::Table, TransactionIden::Id)),
+        )
+        .join(
+            JoinType::Join,
+            AccountIden::Table,
+            Expr::col((EntryIden::Table, EntryIden::AccountId))
+                .equals((AccountIden::Table, AccountIden::Id)),
         )
         .and_where(Expr::col((TransactionIden::Table, TransactionIden::UserId)).eq(params.user_id))
         .apply_if(params.start_date, |q, v| {
@@ -157,7 +175,10 @@ pub fn get_binned_entries(params: GetBinnedEntriesParams) -> DbQueryWithValues {
                 )
                 .column((EntryIden::Table, EntryIden::AssetId))
                 .expr_as(
-                    Expr::sum(Expr::col((EntryIden::Table, EntryIden::Quantity))),
+                    Expr::sum(
+                        Expr::col((EntryIden::Table, EntryIden::Quantity))
+                            .mul(Expr::col((AccountIden::Table, AccountIden::OwnershipShare))),
+                    ),
                     BinnedEntriesIden::Sum,
                 )
                 .from(EntryIden::Table)
@@ -166,6 +187,12 @@ pub fn get_binned_entries(params: GetBinnedEntriesParams) -> DbQueryWithValues {
                     TransactionIden::Table,
                     Expr::col((EntryIden::Table, EntryIden::TransactionId))
                         .equals((TransactionIden::Table, TransactionIden::Id)),
+                )
+                .join(
+                    JoinType::Join,
+                    AccountIden::Table,
+                    Expr::col((EntryIden::Table, EntryIden::AccountId))
+                        .equals((AccountIden::Table, AccountIden::Id)),
                 )
                 .and_where(
                     Expr::col((TransactionIden::Table, TransactionIden::UserId)).eq(params.user_id),

@@ -1,4 +1,4 @@
-use sqlx::types::Uuid;
+use sqlx::types::{Decimal, Uuid};
 
 #[derive(sqlx::FromRow, Debug)]
 pub struct Account {
@@ -6,6 +6,7 @@ pub struct Account {
     pub user_id: Uuid,
     pub account_name: String,
     pub account_type: i32,
+    pub ownership_share: Decimal,
 }
 
 #[derive(sqlx::FromRow, Debug)]
@@ -17,6 +18,7 @@ pub struct AccountWithMetadata {
     pub account_type_name: String,
     pub liquidity_type: i32,
     pub liquidity_type_name: String,
+    pub ownership_share: Decimal,
 }
 
 #[derive(sqlx::FromRow, Debug)]
@@ -37,6 +39,7 @@ pub struct AccountUpdateModel {
     pub account_name: String,
     pub account_type: i32,
     pub liquidity_type: i32,
+    pub ownership_share: Decimal,
 }
 
 pub struct AccountCreationModel {
@@ -44,4 +47,5 @@ pub struct AccountCreationModel {
     pub account_name: String,
     pub account_type: i32,
     pub liquidity_type: i32,
+    pub ownership_share: Decimal,
 }
