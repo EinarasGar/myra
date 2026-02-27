@@ -201,6 +201,18 @@ impl AssetRatesService {
         Ok(())
     }
 
+    #[tracing::instrument(skip_all, err)]
+    pub async fn delete_rates_in_range(
+        &self,
+        pair_id: i32,
+        start: OffsetDateTime,
+        end: OffsetDateTime,
+    ) -> anyhow::Result<()> {
+        let query = asset_queries::delete_asset_pair_rates_in_range(pair_id, start, end);
+        self.db.execute(query).await?;
+        Ok(())
+    }
+
     /// This method takes a list of asset pairs and dates
     /// It then queries the database to find prices for those pairs
     /// If the pair for the two provided ids is found, the price for it is returned

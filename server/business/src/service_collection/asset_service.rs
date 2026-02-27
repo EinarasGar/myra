@@ -4,7 +4,7 @@ use dal::{
     models::{
         asset_models::{
             Asset, AssetBasePair, AssetId, AssetPair, AssetPairId, AssetPairSharedMetadata,
-            AssetRaw, AssetWithMetadata, PublicAsset,
+            AssetPairUserMetadata, AssetRaw, AssetWithMetadata, PublicAsset,
         },
         base::{Count, Exsists, TotalCount},
     },
@@ -29,6 +29,7 @@ use crate::dtos::{
     assets::{
         asset_dto, full_asset_dto::FullAssetDto,
         shared_asset_pair_metadata_dto::SharedAssetPairMetadataDto,
+        update_asset_dto::UpdateAssetDto,
     },
     page_of_results_dto::PageOfResultsDto,
     paging_dto::PagingDto,
@@ -309,5 +310,103 @@ impl AssetsService {
             base_pairs_map.insert(asset_base_pair.id, asset_base_pair.base_pair_id);
         }
         Ok(base_pairs_map)
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn update_asset(&self, dto: UpdateAssetDto) -> anyhow::Result<()> {
+        let query = asset_queries::update_asset(
+            dto.asset_id,
+            dto.name,
+            dto.ticker,
+            dto.asset_type,
+            dto.base_pair_id,
+            dto.user_id,
+        );
+        self.db.execute(query).await?;
+        Ok(())
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn get_asset_pair_user_metadata(
+        &self,
+        pair_id: i32,
+    ) -> anyhow::Result<Option<String>> {
+        let query = asset_queries::get_asset_pair_user_metadata(pair_id);
+        let result = self
+            .db
+            .fetch_optional::<AssetPairUserMetadata>(query)
+            .await?;
+        Ok(result.and_then(|m| m.exchange))
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn upsert_asset_pair_user_metadata(
+        &self,
+        pair_id: i32,
+        exchange: String,
+    ) -> anyhow::Result<()> {
+        let query = asset_queries::upsert_asset_pair_user_metadata(pair_id, exchange);
+        self.db.execute(query).await?;
+        Ok(())
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn delete_asset(&self, user_id: Uuid, asset_id: i32) -> anyhow::Result<()> {
+        let is_owned = self.validate_asset_ownership(user_id, asset_id).await?;
+        if !is_owned {
+            return Err(anyhow::anyhow!("Asset not owned by user"));
+        }
+
+        self.db.start_transaction().await?;
+
+        let query = asset_queries::delete_asset_history_by_asset(asset_id);
+        self.db.execute(query).await?;
+
+        let query = asset_queries::delete_asset_pair_user_metadata_by_asset(asset_id);
+        self.db.execute(query).await?;
+
+        let query = asset_queries::delete_asset_pair_shared_metadata_by_asset(asset_id);
+        self.db.execute(query).await?;
+
+        let query = asset_queries::delete_asset_pairs_by_asset(asset_id);
+        self.db.execute(query).await?;
+
+        let query = asset_queries::delete_asset_by_id_and_user(asset_id, user_id);
+        self.db.execute(query).await?;
+
+        self.db.commit_transaction().await?;
+        Ok(())
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn delete_asset_pair(
+        &self,
+        user_id: Uuid,
+        pair1: i32,
+        pair2: i32,
+    ) -> anyhow::Result<()> {
+        let is_owned = self.validate_asset_ownership(user_id, pair1).await?;
+        if !is_owned {
+            return Err(anyhow::anyhow!("Asset not owned by user"));
+        }
+
+        let pair_id = self.get_asset_pair_id(pair1, pair2).await?;
+
+        self.db.start_transaction().await?;
+
+        let query = asset_queries::delete_asset_pair_rates_by_pair_id(pair_id);
+        self.db.execute(query).await?;
+
+        let query = asset_queries::delete_asset_pair_user_metadata_by_pair_id(pair_id);
+        self.db.execute(query).await?;
+
+        let query = asset_queries::delete_asset_pair_shared_metadata_by_pair_id(pair_id);
+        self.db.execute(query).await?;
+
+        let query = asset_queries::delete_asset_pair_by_id(pair_id);
+        self.db.execute(query).await?;
+
+        self.db.commit_transaction().await?;
+        Ok(())
     }
 }

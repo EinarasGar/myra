@@ -93,6 +93,11 @@ pub struct AssetPairSharedMetadata {
     pub volume: Decimal,
 }
 
+#[derive(sqlx::FromRow, Debug)]
+pub struct AssetPairUserMetadata {
+    pub exchange: Option<String>,
+}
+
 pub struct AssetPair {
     pub pair1: i32,
     pub pair2: i32,

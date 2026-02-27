@@ -6,10 +6,10 @@ use utoipa::ToSchema;
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct AddAssetPairRatesRequestViewModel {
-    rates: Vec<AssetRateViewModel>,
+    pub rates: Vec<AssetRateViewModel>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct AddAssetPairRatesResponseViewModel {
-    rates: Vec<AssetRateViewModel>,
+    pub rates: Vec<AssetRateViewModel>,
 }

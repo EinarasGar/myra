@@ -156,8 +156,8 @@ impl Iden for AssetPairSharedMetadataIden {
 impl Iden for AssetPairUserMetadataIden {
     fn unquoted(&self) -> &str {
         match self {
-            Self::Table => "asset_pair_user_metadata",
-            Self::Id => "id",
+            Self::Table => "asset_pairs_user_metadata",
+            Self::Id => "pair_id",
             Self::Exchange => "exchange",
         }
     }

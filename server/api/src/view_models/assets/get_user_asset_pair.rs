@@ -11,6 +11,6 @@ use super::base_models::{
 pub struct GetUserAssetPairResponseViewModel {
     pub main_asset: ExpandedAssetViewModel,
     pub reference_asset: ExpandedAssetViewModel,
-    pub metadata: AssetPairMetadataViewModel,
-    pub user_metadata: UserAssetPairMetadataViewModel,
+    pub metadata: Option<AssetPairMetadataViewModel>,
+    pub user_metadata: Option<UserAssetPairMetadataViewModel>,
 }

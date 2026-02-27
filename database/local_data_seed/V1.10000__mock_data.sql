@@ -57,14 +57,21 @@ VALUES (
         '2396480f-0052-4cf0-81dc-8cedbde5ce13',
         'einaras',
         '$argon2id$v=19$m=19456,t=2,p=1$cA/2g90uUzqvdHXniTwyBA$WIbpl9GH5JD93dpkDT8gHkMQOMeeNZkqhI5OKUS8/uc',
-        1,
+        3,
         2
     );
 INSERT INTO account_liquidity_types (id, liquidity_type_name)
 VALUES (1, 'Liquid');
 INSERT INTO account_types (id, account_type_name)
 VALUES (1, 'Current'),
-    (2, 'ISA');
+    (2, 'ISA'),
+    (3, 'Credit Card'),
+    (4, 'SIPP'),
+    (5, 'Workplace Pension'),
+    (6, 'GIA'),
+    (7, 'LISA'),
+    (8, 'Mortgage'),
+    (9, 'Savings');
 INSERT INTO account (
         id,
         user_id,

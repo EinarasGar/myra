@@ -2,8 +2,8 @@ use std::collections::{HashMap, HashSet};
 
 use sea_query::{
     extension::postgres::PgExpr, Alias, Asterisk, CommonTableExpression, Cond, Expr, ExprTrait,
-    Func, Order, PostgresQueryBuilder, Query, QueryStatementBuilder, SimpleExpr, Value,
-    WindowStatement, WithClause,
+    Func, OnConflict, Order, PostgresQueryBuilder, Query, QueryStatementBuilder, SimpleExpr,
+    Value, WindowStatement, WithClause,
 };
 use sea_query_sqlx::SqlxBinder;
 use sqlx::types::{time::OffsetDateTime, Uuid};
@@ -13,7 +13,8 @@ use crate::{
     idens::{
         asset_idens::{
             AssetHistoryCalculationIden, AssetHistoryIden, AssetPairSharedMetadataIden,
-            AssetPairsIden, AssetTypesIden, AssetsAliasIden, AssetsIden, OrdinalIden,
+            AssetPairUserMetadataIden, AssetPairsIden, AssetTypesIden, AssetsAliasIden,
+            AssetsIden, OrdinalIden,
         },
         ArrayFunc, CustomFunc, Unnest,
     },
@@ -1179,6 +1180,185 @@ pub fn get_assets_base_pair_ids(ids: HashSet<i32>) -> DbQueryWithValues {
         .column(AssetsIden::BasePairId)
         .from(AssetsIden::Table)
         .and_where(Expr::col(AssetsIden::Id).is_in(ids))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn update_asset(
+    asset_id: i32,
+    name: String,
+    ticker: String,
+    asset_type: i32,
+    base_pair_id: i32,
+    user_id: Uuid,
+) -> DbQueryWithValues {
+    Query::update()
+        .table(AssetsIden::Table)
+        .value(AssetsIden::AssetName, name)
+        .value(AssetsIden::Ticker, ticker)
+        .value(AssetsIden::AssetType, asset_type)
+        .value(AssetsIden::BasePairId, base_pair_id)
+        .and_where(Expr::col(AssetsIden::Id).eq(asset_id))
+        .and_where(Expr::col(AssetsIden::UserId).eq(user_id))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn get_asset_pair_user_metadata(pair_id: i32) -> DbQueryWithValues {
+    Query::select()
+        .column(AssetPairUserMetadataIden::Exchange)
+        .from(AssetPairUserMetadataIden::Table)
+        .and_where(Expr::col(AssetPairUserMetadataIden::Id).eq(pair_id))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn upsert_asset_pair_user_metadata(pair_id: i32, exchange: String) -> DbQueryWithValues {
+    Query::insert()
+        .into_table(AssetPairUserMetadataIden::Table)
+        .columns([
+            AssetPairUserMetadataIden::Id,
+            AssetPairUserMetadataIden::Exchange,
+        ])
+        .values_panic([pair_id.into(), exchange.clone().into()])
+        .on_conflict(
+            OnConflict::column(AssetPairUserMetadataIden::Id)
+                .update_column(AssetPairUserMetadataIden::Exchange)
+                .to_owned(),
+        )
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn delete_asset_history_by_asset(asset_id: i32) -> DbQueryWithValues {
+    let pair_ids_subquery = Query::select()
+        .column(AssetPairsIden::Id)
+        .from(AssetPairsIden::Table)
+        .and_where(
+            Expr::col(AssetPairsIden::Pair1)
+                .eq(asset_id)
+                .or(Expr::col(AssetPairsIden::Pair2).eq(asset_id)),
+        )
+        .to_owned();
+
+    Query::delete()
+        .from_table(AssetHistoryIden::Table)
+        .and_where(Expr::col(AssetHistoryIden::PairId).in_subquery(pair_ids_subquery))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn delete_asset_pair_user_metadata_by_asset(asset_id: i32) -> DbQueryWithValues {
+    let pair_ids_subquery = Query::select()
+        .column(AssetPairsIden::Id)
+        .from(AssetPairsIden::Table)
+        .and_where(
+            Expr::col(AssetPairsIden::Pair1)
+                .eq(asset_id)
+                .or(Expr::col(AssetPairsIden::Pair2).eq(asset_id)),
+        )
+        .to_owned();
+
+    Query::delete()
+        .from_table(AssetPairUserMetadataIden::Table)
+        .and_where(Expr::col(AssetPairUserMetadataIden::Id).in_subquery(pair_ids_subquery))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn delete_asset_pair_shared_metadata_by_asset(asset_id: i32) -> DbQueryWithValues {
+    let pair_ids_subquery = Query::select()
+        .column(AssetPairsIden::Id)
+        .from(AssetPairsIden::Table)
+        .and_where(
+            Expr::col(AssetPairsIden::Pair1)
+                .eq(asset_id)
+                .or(Expr::col(AssetPairsIden::Pair2).eq(asset_id)),
+        )
+        .to_owned();
+
+    Query::delete()
+        .from_table(AssetPairSharedMetadataIden::Table)
+        .and_where(Expr::col(AssetPairSharedMetadataIden::Id).in_subquery(pair_ids_subquery))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn delete_asset_pairs_by_asset(asset_id: i32) -> DbQueryWithValues {
+    Query::delete()
+        .from_table(AssetPairsIden::Table)
+        .and_where(
+            Expr::col(AssetPairsIden::Pair1)
+                .eq(asset_id)
+                .or(Expr::col(AssetPairsIden::Pair2).eq(asset_id)),
+        )
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn delete_asset_by_id_and_user(asset_id: i32, user_id: Uuid) -> DbQueryWithValues {
+    Query::delete()
+        .from_table(AssetsIden::Table)
+        .and_where(Expr::col(AssetsIden::Id).eq(asset_id))
+        .and_where(Expr::col(AssetsIden::UserId).eq(user_id))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn delete_asset_pair_rates_in_range(
+    pair_id: i32,
+    start: OffsetDateTime,
+    end: OffsetDateTime,
+) -> DbQueryWithValues {
+    Query::delete()
+        .from_table(AssetHistoryIden::Table)
+        .and_where(Expr::col(AssetHistoryIden::PairId).eq(pair_id))
+        .and_where(Expr::col(AssetHistoryIden::RecordedAt).between(start, end))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn delete_asset_pair_rates_by_pair_id(pair_id: i32) -> DbQueryWithValues {
+    Query::delete()
+        .from_table(AssetHistoryIden::Table)
+        .and_where(Expr::col(AssetHistoryIden::PairId).eq(pair_id))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn delete_asset_pair_user_metadata_by_pair_id(pair_id: i32) -> DbQueryWithValues {
+    Query::delete()
+        .from_table(AssetPairUserMetadataIden::Table)
+        .and_where(Expr::col(AssetPairUserMetadataIden::Id).eq(pair_id))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn delete_asset_pair_shared_metadata_by_pair_id(pair_id: i32) -> DbQueryWithValues {
+    Query::delete()
+        .from_table(AssetPairSharedMetadataIden::Table)
+        .and_where(Expr::col(AssetPairSharedMetadataIden::Id).eq(pair_id))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn delete_asset_pair_by_id(pair_id: i32) -> DbQueryWithValues {
+    Query::delete()
+        .from_table(AssetPairsIden::Table)
+        .and_where(Expr::col(AssetPairsIden::Id).eq(pair_id))
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }
