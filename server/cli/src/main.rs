@@ -62,6 +62,7 @@ fn asset_rates_service() -> &'static AssetRatesService {
 
 #[tokio::main]
 async fn main() {
+    dotenvy::dotenv().ok();
     let cli = Cli::parse();
     let services = Services::new().await.unwrap();
 

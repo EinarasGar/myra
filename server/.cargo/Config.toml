@@ -1,5 +1,0 @@
-[env]
-DATABASE_URL = "postgres://myradev:devpassword@localhost:5432/myra"
-JWT_SECRET = "devjwtsecret"
-OTLP_ENDPOINT = "http://localhost:4317"
-RUST_LOG = "dal=trace,business=trace,api=trace,tower_http=info"

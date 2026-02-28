@@ -3,7 +3,7 @@ import axios from "axios";
 
 export const queryClient = new QueryClient();
 
-axios.defaults.baseURL = "http://localhost:5173";
+axios.defaults.baseURL = "/";
 
 // Debug: add 500ms delay to all API calls
 // axios.interceptors.request.use(

@@ -5,6 +5,7 @@ database/scratchpad/*
 CLAUDE.md
 .claude/*
 
+.env
 .playwright-mcp/
 .seed_scripts/
 .DS_Store

@@ -12,7 +12,13 @@ pub struct MyraDbConnection {
 
 impl MyraDbConnection {
     pub async fn new() -> anyhow::Result<Self> {
-        let connection_string = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+        let connection_string = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+            let user = std::env::var("POSTGRES_USER").unwrap_or_else(|_| "myradev".into());
+            let password = std::env::var("POSTGRES_PASSWORD").unwrap_or_else(|_| "devpassword".into());
+            let port = std::env::var("POSTGRES_PORT").unwrap_or_else(|_| "5432".into());
+            let db = std::env::var("POSTGRES_DB").unwrap_or_else(|_| "myra".into());
+            format!("postgres://{user}:{password}@localhost:{port}/{db}")
+        });
         let connection_options = PgConnectOptions::from_str(&connection_string)
             .expect("Unable to parse DATABASE_URL connection string")
             .log_statements(tracing::log::LevelFilter::Debug);

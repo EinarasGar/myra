@@ -19,6 +19,7 @@ pub(crate) mod view_models;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    dotenvy::dotenv().ok();
     color_eyre::install()?;
 
     //Initialize logging and OpenTelemetry

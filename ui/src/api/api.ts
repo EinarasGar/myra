@@ -1,6 +1,6 @@
+// @ts-nocheck
 /* tslint:disable */
 /* eslint-disable */
-// @ts-nocheck
 /**
  * Myra Personal Finance API
  * A comprehensive personal finance management API for tracking investments, expenses, and net worth over time. Features include transaction management, portfolio tracking, asset management, and detailed financial reporting.
@@ -18,9 +18,6 @@ import type { AxiosPromise, AxiosInstance, RawAxiosRequestConfig } from "axios";
 import globalAxios from "axios";
 // Some imports not used depending on template conditions
 // @ts-ignore
-// @ts-ignore
-/* eslint-disable */
-
 import {
   DUMMY_BASE_URL,
   assertParamExists,
@@ -6994,7 +6991,7 @@ export interface GetUserAssetPairResponseViewModel {
    * @type {AssetPairMetadataViewModel}
    * @memberof GetUserAssetPairResponseViewModel
    */
-  metadata: AssetPairMetadataViewModel;
+  metadata?: AssetPairMetadataViewModel | null;
   /**
    *
    * @type {AssetIdentifiableAssetTypeViewModel}
@@ -7006,7 +7003,7 @@ export interface GetUserAssetPairResponseViewModel {
    * @type {UserAssetPairMetadataViewModel}
    * @memberof GetUserAssetPairResponseViewModel
    */
-  user_metadata: UserAssetPairMetadataViewModel;
+  user_metadata?: UserAssetPairMetadataViewModel | null;
 }
 /**
  *

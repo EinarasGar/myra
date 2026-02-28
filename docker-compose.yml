@@ -3,22 +3,20 @@ services:
     image: postgres:latest
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:5432"
     volumes:
       - myra-postgres-data:/var/lib/postgresql
     environment:
-      - POSTGRES_USER=myradev
-      - POSTGRES_PASSWORD=devpassword
-      - POSTGRES_DB=myra
-      - POSTGRES_HOSTNAME=localhost
-      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
   flyway:
     image: flyway/flyway:latest
     environment:
-      - FLYWAY_URL=jdbc:postgresql://database/myra
+      - FLYWAY_URL=jdbc:postgresql://database/${POSTGRES_DB}
       - FLYWAY_SCHEMAS=public
-      - FLYWAY_USER=myradev
-      - FLYWAY_PASSWORD=devpassword
+      - FLYWAY_USER=${POSTGRES_USER}
+      - FLYWAY_PASSWORD=${POSTGRES_PASSWORD}
       - FLYWAY_CONNECT_RETRIES=5
     command: migrate
     volumes:
@@ -30,9 +28,8 @@ services:
     environment:
       - COLLECTOR_OTLP_ENABLED=true
     ports:
-      - 16686:16686
-      - 4317:4317
-      - 4318:4318
+      - "${JAEGER_UI_PORT}:16686"
+      - "${OTLP_PORT}:4317"
 
 volumes:
   myra-postgres-data:
