@@ -15,6 +15,7 @@ pub fn transaction_dtos_to_asset_ids_hashset(transactions: &[&TransactionDto]) -
             TransactionTypeDto::AssetPurchase(_) => {}
             TransactionTypeDto::AssetSale(_) => {}
             TransactionTypeDto::CashTransferIn(_) => {}
+            TransactionTypeDto::CashTransferOut(_) => {}
             TransactionTypeDto::CashDividend(_) => {}
             TransactionTypeDto::AssetDividend(_) => {}
         }
@@ -35,6 +36,7 @@ pub fn transaction_dtos_to_account_ids_hashset(transactions: &[&TransactionDto])
             TransactionTypeDto::AssetPurchase(_) => {}
             TransactionTypeDto::AssetSale(_) => {}
             TransactionTypeDto::CashTransferIn(_) => {}
+            TransactionTypeDto::CashTransferOut(_) => {}
             TransactionTypeDto::CashDividend(_) => {}
             TransactionTypeDto::AssetDividend(_) => {}
         }

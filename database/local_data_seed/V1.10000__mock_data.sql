@@ -45,7 +45,8 @@ VALUES ('Income', 'attach_money', 1),
     ('Cash Transfer In', 'money_off', 3),
     ('Cash Dividend', 'money_off', 3),
     ('Asset Dividend', 'money_off', 3),
-    ('Withholding Tax', 'money_off', 4);
+    ('Withholding Tax', 'money_off', 4),
+    ('Cash Transfer Out', 'money_off', 3);
 INSERT INTO users (
         id,
         username,
@@ -96,9 +97,11 @@ VALUES (1, 1, 12),
     (2, 2, 14),
     (2, 3, 15),
     (2, 4, 16),
-    (2, 5, 17);
+    (2, 5, 17),
+    (2, 6, 19);
 INSERT INTO transaction_types (id, transaction_type_name)
 VALUES (1, 'Regular'),
+    (2, 'Cash Transfer Out'),
     (8, 'Asset Sale'),
     (9, 'Asset Purchase'),
     (3, 'Cash Transfer In'),

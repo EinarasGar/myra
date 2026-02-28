@@ -1,4 +1,7 @@
-use business::dtos::transaction_dto::TransactionDto;
+use business::dtos::{
+    entry_dto::EntryDto,
+    transaction_dto::{CashTransferOutMetadataDto, TransactionDto, TransactionTypeDto},
+};
 use macros::type_tag;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -47,7 +50,35 @@ pub struct CashTransferOut<B, E> {
 }
 
 impl From<CashTransferOutViewModel> for TransactionDto {
-    fn from(_trans: CashTransferOutViewModel) -> Self {
-        todo!()
+    fn from(value: CashTransferOutViewModel) -> Self {
+        TransactionDto {
+            transaction_id: None,
+            date: value.base.date,
+            fee_entries: match value.base.fees {
+                Some(f) => f.into_iter().map(|x| x.into()).collect(),
+                None => [].into(),
+            },
+            transaction_type: TransactionTypeDto::CashTransferOut(CashTransferOutMetadataDto {
+                entry: value.entry.into(),
+            }),
+        }
+    }
+}
+
+impl<B, E> From<TransactionDto> for CashTransferOut<B, E>
+where
+    E: From<EntryDto>,
+    B: From<TransactionDto>,
+{
+    fn from(value: TransactionDto) -> Self {
+        if let TransactionTypeDto::CashTransferOut(r) = value.clone().transaction_type {
+            CashTransferOut {
+                r#type: Default::default(),
+                entry: r.entry.into(),
+                base: value.into(),
+            }
+        } else {
+            panic!("Can not convert TransactionDto into CashTransferOut as the type is not CashTransferOut")
+        }
     }
 }

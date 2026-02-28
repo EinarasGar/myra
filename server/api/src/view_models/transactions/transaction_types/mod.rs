@@ -168,6 +168,11 @@ impl From<TransactionDto> for RequiredIdentifiableTransactionWithIdentifiableEnt
                     RequiredIdentifiableCashTransferInWithIdentifiableEntriesViewModel::from(value),
                 )
             }
+            TransactionTypeDto::CashTransferOut(_) => {
+                RequiredIdentifiableTransactionWithIdentifiableEntries::CashTransferOut(
+                    RequiredIdentifiableCashTransferOutWithIdentifiableEntriesViewModel::from(value),
+                )
+            }
             TransactionTypeDto::CashDividend(_) => {
                 RequiredIdentifiableTransactionWithIdentifiableEntries::CashDividend(
                     RequiredIdentifiableCashDividendWithIdentifiableEntriesViewModel::from(value),
@@ -203,6 +208,11 @@ impl From<TransactionDto> for RequiredTransactionWithIdentifiableEntries {
             TransactionTypeDto::CashTransferIn(_) => {
                 RequiredTransactionWithIdentifiableEntries::CashTransferIn(
                     RequiredCashTransferInWithIdentifiableEntriesViewModel::from(value),
+                )
+            }
+            TransactionTypeDto::CashTransferOut(_) => {
+                RequiredTransactionWithIdentifiableEntries::CashTransferOut(
+                    RequiredCashTransferOutWithIdentifiableEntriesViewModel::from(value),
                 )
             }
             TransactionTypeDto::CashDividend(_) => {

@@ -19,6 +19,7 @@ pub enum TransactionTypeDto {
     AssetPurchase(AssetPurchaseMetadataDto),
     AssetSale(AssetSaleMetadataDto),
     CashTransferIn(CashTransferInMetadataDto),
+    CashTransferOut(CashTransferOutMetadataDto),
     CashDividend(CashDividendMetadataDto),
     AssetDividend(AssetDividendMetadataDto),
 }
@@ -48,6 +49,11 @@ pub struct CashTransferInMetadataDto {
 }
 
 #[derive(Clone, Debug)]
+pub struct CashTransferOutMetadataDto {
+    pub entry: EntryDto,
+}
+
+#[derive(Clone, Debug)]
 pub struct CashDividendMetadataDto {
     pub entry: EntryDto,
     pub origin_asset_id: i32,
@@ -65,6 +71,7 @@ impl From<TransactionTypeDto> for TransactionTypes {
             TransactionTypeDto::AssetPurchase(_) => TransactionTypes::AssetPurchase,
             TransactionTypeDto::AssetSale(_) => TransactionTypes::AssetSale,
             TransactionTypeDto::CashTransferIn(_) => TransactionTypes::CashTransferIn,
+            TransactionTypeDto::CashTransferOut(_) => TransactionTypes::CashTransferOut,
             TransactionTypeDto::CashDividend(_) => TransactionTypes::CashDividend,
             TransactionTypeDto::AssetDividend(_) => TransactionTypes::AssetDividend,
         }

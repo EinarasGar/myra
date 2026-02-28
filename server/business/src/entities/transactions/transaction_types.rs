@@ -4,6 +4,7 @@ use asset_purhcase::AssetPurchaseTransaction;
 use asset_sale::AssetSaleTransaction;
 use cash_dividend::CashDividendTransaction;
 use cash_transfer_in::CashTransferInTransaction;
+use cash_transfer_out::CashTransferOutTransaction;
 use dal::{
     enums::transaction_types::DatabaseTransactionTypes,
     models::transaction_models::TransactionWithEntriesModel,
@@ -22,6 +23,7 @@ pub mod asset_purhcase;
 pub mod asset_sale;
 pub mod cash_dividend;
 pub mod cash_transfer_in;
+pub mod cash_transfer_out;
 pub mod regular_transaction;
 
 pub enum TransactionTypes {
@@ -66,7 +68,7 @@ fn get_dto_constructor(
     match choice {
         TransactionTypes::RegularTransaction => &RegularTransaction::try_from_dto,
         TransactionTypes::AssetPurchase => &AssetPurchaseTransaction::try_from_dto,
-        TransactionTypes::CashTransferOut => todo!(),
+        TransactionTypes::CashTransferOut => &CashTransferOutTransaction::try_from_dto,
         TransactionTypes::CashTransferIn => &CashTransferInTransaction::try_from_dto,
         TransactionTypes::CashDividend => &CashDividendTransaction::try_from_dto,
         TransactionTypes::AssetTransferOut => todo!(),
@@ -89,7 +91,9 @@ fn get_model_constructor(
         TransactionTypes::AssetPurchase => {
             &AssetPurchaseTransaction::from_transaction_with_entries_models
         }
-        TransactionTypes::CashTransferOut => todo!(),
+        TransactionTypes::CashTransferOut => {
+            &CashTransferOutTransaction::from_transaction_with_entries_models
+        }
         TransactionTypes::CashTransferIn => {
             &CashTransferInTransaction::from_transaction_with_entries_models
         }
