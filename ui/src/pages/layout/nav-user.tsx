@@ -1,6 +1,6 @@
 import { ChevronsUpDown, LogOut } from "lucide-react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +13,6 @@ import {
 import {
   Item,
   ItemContent,
-  ItemDescription,
   ItemMedia,
   ItemTitle,
 } from "@/components/ui/item";
@@ -31,11 +30,10 @@ export function NavUser({
 }: {
   user: {
     name: string;
-    email: string;
-    avatar: string;
   };
 }) {
   const { logout } = useAuth();
+  const initials = user.name.substring(0, 2).toUpperCase() || "?";
 
   function logoutHandler() {
     logout();
@@ -53,12 +51,12 @@ export function NavUser({
                 className="data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground"
               >
                 <Avatar>
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">
+                    {initials}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
                 </div>
                 <ChevronsUpDown />
               </SidebarMenuButton>
@@ -70,22 +68,16 @@ export function NavUser({
                 <Item size="xs">
                   <ItemMedia>
                     <Avatar>
-                      <AvatarImage src={user.avatar} alt={user.name} />
-                      <AvatarFallback>CN</AvatarFallback>
+                      <AvatarFallback>
+                        {initials}
+                      </AvatarFallback>
                     </Avatar>
                   </ItemMedia>
                   <ItemContent>
                     <ItemTitle>{user.name}</ItemTitle>
-                    <ItemDescription>{user.email}</ItemDescription>
                   </ItemContent>
                 </Item>
               </DropdownMenuLabel>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>Account</DropdownMenuItem>
-              <DropdownMenuItem>Billing</DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <div className="px-2 py-1.5">

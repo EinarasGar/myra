@@ -1,10 +1,7 @@
 import * as React from "react";
 import {
-  BookOpen,
-  Bot,
+  Briefcase,
   Frame,
-  Map,
-  PieChart,
   Settings2,
   SquareTerminal,
 } from "lucide-react";
@@ -12,158 +9,88 @@ import {
 import { NavMain } from "@/pages/layout/nav-main";
 import { NavProjects } from "@/pages/layout/nav-projects";
 import { NavUser } from "@/pages/layout/nav-user";
-import { TeamSwitcher } from "@/pages/layout/team-switcher";
+import { ProfileSwitcher } from "@/pages/layout/profile-switcher";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { useAuth } from "@/hooks/use-auth";
+import { decodeJwt } from "@/lib/jwt";
 
-// This is sample data.
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+const navMain = [
+  {
+    title: "Transactions",
+    url: "/transactions",
+    icon: SquareTerminal,
+    isActive: true,
+    items: [
+      {
+        title: "All Transactions",
+        url: "/transactions",
+      },
+      {
+        title: "Individual Transactions",
+        url: "/transactions/individual",
+      },
+    ],
   },
-  teams: [
-    {
-      name: "Acme Inc",
-      logo: () => null,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: () => null,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: () => null,
-      plan: "Free",
-    },
-  ],
-  navMain: [
-    {
-      title: "Transactions",
-      url: "/transactions",
-      icon: SquareTerminal,
-      isActive: true,
-      items: [
-        {
-          title: "All Transactions",
-          url: "/transactions",
-        },
-        {
-          title: "Individual Transactions",
-          url: "/transactions/individual",
-        },
-      ],
-    },
-    {
-      title: "Portfolio",
-      url: "#",
-      icon: Bot,
-      items: [
-        {
-          title: "History",
-          url: "/portfolio",
-        },
-        {
-          title: "Overview",
-          url: "/portfolio-overview",
-        },
-        {
-          title: "Accounts",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Analytics",
-      url: "#",
-      icon: BookOpen,
-      items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "/settings/categories",
-      icon: Settings2,
-      items: [
-        {
-          title: "Categories",
-          url: "/settings/categories",
-        },
-        {
-          title: "Accounts",
-          url: "/settings/accounts",
-        },
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ],
-    },
-  ],
-  projects: [
-    {
-      name: "COMPONENT TESTING",
-      url: "/component-testing",
-      icon: Frame,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
-    },
-  ],
-};
+  {
+    title: "Portfolio",
+    url: "/portfolio",
+    icon: Briefcase,
+    items: [
+      {
+        title: "History",
+        url: "/portfolio",
+      },
+      {
+        title: "Overview",
+        url: "/portfolio-overview",
+      },
+    ],
+  },
+  {
+    title: "Settings",
+    url: "/settings/categories",
+    icon: Settings2,
+    items: [
+      {
+        title: "Categories",
+        url: "/settings/categories",
+      },
+      {
+        title: "Accounts",
+        url: "/settings/accounts",
+      },
+    ],
+  },
+];
+
+const tools = [
+  {
+    name: "COMPONENT TESTING",
+    url: "/component-testing",
+    icon: Frame,
+  },
+];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user: token } = useAuth();
+  const decoded = React.useMemo(() => (token ? decodeJwt(token) : null), [token]);
+  const username = decoded?.username ?? "User";
+  const role = decoded?.role ?? "";
+
   return (
     <Sidebar collapsible="icon" {...props}>
-      <TeamSwitcher teams={data.teams} />
+      <ProfileSwitcher name={username} role={role} />
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <NavMain items={navMain} />
+        <NavProjects projects={tools} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={{ name: username }} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

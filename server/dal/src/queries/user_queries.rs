@@ -32,6 +32,7 @@ pub fn inset_user(user: AddUserModel) -> DbQueryWithValues {
 pub fn get_user_auth_info(username: String) -> DbQueryWithValues {
     Query::select()
         .column((UsersIden::Table, UsersIden::Id))
+        .column((UsersIden::Table, UsersIden::Username))
         .column((UsersIden::Table, UsersIden::PasswordHash))
         .expr_as(
             Expr::col((UserRolesIden::Table, UserRolesIden::RoleName)),

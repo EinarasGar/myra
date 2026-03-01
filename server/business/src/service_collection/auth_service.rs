@@ -62,6 +62,7 @@ impl AuthService {
             sub: user_auth_info.id,
             exp: jsonwebtoken::get_current_timestamp() + 6000,
             role: UserRoleEnumDto::from_str(&user_auth_info.user_role_name).unwrap(),
+            username: user_auth_info.username,
         };
 
         let token = encode(&Header::default(), &my_claims, &self.jwt_keys.encoding).unwrap();

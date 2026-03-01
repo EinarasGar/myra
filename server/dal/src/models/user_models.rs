@@ -13,6 +13,7 @@ pub struct UserAuthModel {
     pub id: Uuid,
     pub password_hash: String,
     pub user_role_name: String,
+    pub username: String,
 }
 
 #[derive(Debug, sqlx::FromRow)]

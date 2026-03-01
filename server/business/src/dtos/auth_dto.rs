@@ -8,5 +8,6 @@ pub struct ClaimsDto {
     #[serde(with = "Uuid")]
     pub sub: Uuid,
     pub role: UserRoleEnumDto,
+    pub username: String,
     pub exp: u64,
 }
