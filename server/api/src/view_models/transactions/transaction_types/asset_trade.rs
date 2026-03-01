@@ -15,6 +15,7 @@ use crate::view_models::transactions::base_models::{
     },
 };
 
+#[allow(dead_code)]
 pub type AssetTradeViewModel = AssetTrade<TransactionBaseWithEntries, AccountAssetEntryViewModel>;
 #[allow(dead_code)]
 pub type AssetTradeWithIdentifiableEntriesViewModel =
@@ -48,8 +49,8 @@ pub struct AssetTrade<B, E> {
     pub incoming_entry: E,
 }
 
-impl From<AssetTradeViewModel> for TransactionDto {
-    fn from(_trans: AssetTradeViewModel) -> Self {
+impl<E> From<AssetTrade<TransactionBaseWithEntries, E>> for TransactionDto {
+    fn from(_trans: AssetTrade<TransactionBaseWithEntries, E>) -> Self {
         todo!()
     }
 }

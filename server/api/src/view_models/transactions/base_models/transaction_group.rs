@@ -3,6 +3,7 @@ use time::{serde::timestamp, OffsetDateTime};
 use utoipa::ToSchema;
 
 use crate::view_models::transactions::base_models::category_id::RequiredCategoryId;
+use super::description::Description;
 use crate::view_models::transactions::{
     base_models::transaction_group_id::TransactionGroupId,
     transaction_types::{
@@ -24,7 +25,7 @@ pub struct TransactionGroup<T> {
     pub transactions: Vec<T>,
 
     /// Overall description of whole group
-    pub description: String,
+    pub description: Description,
 
     /// Overall category of whole group
     pub category_id: RequiredCategoryId,

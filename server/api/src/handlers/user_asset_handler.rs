@@ -16,8 +16,10 @@ use uuid::Uuid;
 use crate::{
     auth::AuthenticatedUserState,
     errors::{auth::AuthError, ApiError},
+    extractors::ValidatedJson,
     parsers::parse_duration_string,
     states::{AssetRatesServiceState, AssetsServiceState},
+    view_models::assets::base_models::exchange_name::ExchangeName,
     view_models::assets::{
         add_asset::{AddAssetRequestViewModel, AddAssetResponseViewModel},
         add_asset_pair_rates::{
@@ -142,7 +144,7 @@ pub async fn get_user_asset_pair(
             latest_rate: rate.rate,
             last_updated: rate.date,
         }),
-        user_metadata: user_metadata.map(|exchange| UserAssetPairMetadataViewModel { exchange }),
+        user_metadata: user_metadata.map(|exchange| UserAssetPairMetadataViewModel { exchange: ExchangeName::from_trusted(exchange) }),
     };
 
     Ok(ret.into())
@@ -231,7 +233,7 @@ pub async fn put_custom_asset(
     Path((user_id, asset_id)): Path<(Uuid, i32)>,
     AssetsServiceState(assets_service): AssetsServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-    Json(params): Json<UpdateAssetRequestViewModel>,
+    ValidatedJson(params): ValidatedJson<UpdateAssetRequestViewModel>,
 ) -> Result<Json<UpdateAssetResponseViewModel>, ApiError> {
     let is_owned = assets_service
         .validate_asset_ownership(user_id, asset_id)
@@ -242,8 +244,8 @@ pub async fn put_custom_asset(
 
     let update_dto = UpdateAssetDto {
         asset_id,
-        ticker: params.asset.ticker.clone(),
-        name: params.asset.name.clone(),
+        ticker: params.asset.ticker.as_str().to_owned(),
+        name: params.asset.name.as_str().to_owned(),
         asset_type: params.asset.asset_type.0,
         base_pair_id: params.base_asset_id.0,
         user_id,
@@ -290,7 +292,7 @@ pub async fn put_custom_asset_pair(
     Path((user_id, pair1, pair2)): Path<(Uuid, i32, i32)>,
     AssetsServiceState(assets_service): AssetsServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-    Json(params): Json<UpdateAssetPairRequestViewModel>,
+    ValidatedJson(params): ValidatedJson<UpdateAssetPairRequestViewModel>,
 ) -> Result<Json<UpdateAssetPairResponseViewModel>, ApiError> {
     let is_owned = assets_service
         .validate_asset_ownership(user_id, pair1)
@@ -301,7 +303,7 @@ pub async fn put_custom_asset_pair(
 
     let pair_id = assets_service.get_asset_pair_id(pair1, pair2).await?;
     assets_service
-        .upsert_asset_pair_user_metadata(pair_id, params.metadata.exchange.clone())
+        .upsert_asset_pair_user_metadata(pair_id, params.metadata.exchange.as_str().to_owned())
         .await?;
 
     let ret = UpdateAssetPairResponseViewModel {
@@ -338,11 +340,11 @@ pub async fn post_custom_asset(
     Path(user_id): Path<Uuid>,
     AssetsServiceState(assets_service): AssetsServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-    Json(params): Json<AddAssetRequestViewModel>,
+    ValidatedJson(params): ValidatedJson<AddAssetRequestViewModel>,
 ) -> Result<Json<AddAssetResponseViewModel>, ApiError> {
     let asset_dto = AddCustomAssetDto {
-        ticker: params.asset.ticker.clone(),
-        name: params.asset.name.clone(),
+        ticker: params.asset.ticker.as_str().to_owned(),
+        name: params.asset.name.as_str().to_owned(),
         asset_type: params.asset.asset_type.0,
         base_pair_id: params.base_asset_id.0,
         user_id,
@@ -396,7 +398,7 @@ pub async fn post_custom_asset_rates(
     AssetsServiceState(assets_service): AssetsServiceState,
     AssetRatesServiceState(asset_rates_service): AssetRatesServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-    Json(params): Json<AddAssetPairRatesRequestViewModel>,
+    ValidatedJson(params): ValidatedJson<AddAssetPairRatesRequestViewModel>,
 ) -> Result<Json<AddAssetPairRatesResponseViewModel>, ApiError> {
     let is_owned = assets_service
         .validate_asset_ownership(user_id, pair1)
@@ -412,7 +414,7 @@ pub async fn post_custom_asset_rates(
         .iter()
         .map(|r| AssetPairRateInsertDto {
             pair_id,
-            rate: r.rate,
+            rate: r.rate.as_decimal(),
             date: r.date,
         })
         .collect();

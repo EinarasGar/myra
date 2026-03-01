@@ -1,14 +1,13 @@
 use super::base_models::category_type::CategoryTypeViewModel;
+use crate::view_models::categories::base_models::category_type_name::CategoryTypeName;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
-use validator::Validate;
 
-#[derive(Clone, Debug, Serialize, Deserialize, ToSchema, Validate)]
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct UpdateCategoryTypeRequestViewModel {
     /// Category type name
-    #[validate(length(min = 1, max = 50))]
     #[schema(example = "Updated Type Name")]
-    pub name: String,
+    pub name: CategoryTypeName,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
@@ -22,7 +21,7 @@ impl From<UpdateCategoryTypeRequestViewModel>
 {
     fn from(request: UpdateCategoryTypeRequestViewModel) -> Self {
         Self {
-            category_type_name: request.name,
+            category_type_name: request.name.into_inner(),
         }
     }
 }

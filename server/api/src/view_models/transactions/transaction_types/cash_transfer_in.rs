@@ -8,7 +8,7 @@ use utoipa::ToSchema;
 
 use crate::view_models::transactions::base_models::{
     account_asset_entry::{
-        AccountAssetEntryViewModel, IdentifiableAccountAssetEntryViewModel,
+        IdentifiableAccountAssetEntryViewModel, PositiveAccountAssetEntry,
         RequiredIdentifiableAccountAssetEntryViewModel,
     },
     transaction_base::{
@@ -18,8 +18,9 @@ use crate::view_models::transactions::base_models::{
     },
 };
 
+#[allow(dead_code)]
 pub type CashTransferInViewModel =
-    CashTransferIn<TransactionBaseWithEntries, AccountAssetEntryViewModel>;
+    CashTransferIn<TransactionBaseWithEntries, PositiveAccountAssetEntry>;
 #[allow(dead_code)]
 pub type CashTransferInWithIdentifiableEntriesViewModel =
     CashTransferIn<TransactionBaseWithIdentifiableEntries, IdentifiableAccountAssetEntryViewModel>;
@@ -49,8 +50,8 @@ pub struct CashTransferIn<B, E> {
     pub entry: E,
 }
 
-impl From<CashTransferInViewModel> for TransactionDto {
-    fn from(value: CashTransferInViewModel) -> Self {
+impl<E: Into<EntryDto>> From<CashTransferIn<TransactionBaseWithEntries, E>> for TransactionDto {
+    fn from(value: CashTransferIn<TransactionBaseWithEntries, E>) -> Self {
         TransactionDto {
             transaction_id: None,
             date: value.base.date,

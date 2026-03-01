@@ -7,9 +7,10 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::view_models::transactions::base_models::category_id::RequiredCategoryId;
+use crate::view_models::transactions::base_models::description::Description;
 use crate::view_models::transactions::base_models::{
     account_asset_entry::{
-        AccountAssetEntryViewModel, IdentifiableAccountAssetEntryViewModel,
+        IdentifiableAccountAssetEntryViewModel, NonZeroAccountAssetEntry,
         RequiredIdentifiableAccountAssetEntryViewModel,
     },
     transaction_base::{
@@ -19,8 +20,9 @@ use crate::view_models::transactions::base_models::{
     },
 };
 
+#[allow(dead_code)]
 pub type RegularTransactionViewModel =
-    RegularTransaction<TransactionBaseWithEntries, AccountAssetEntryViewModel>;
+    RegularTransaction<TransactionBaseWithEntries, NonZeroAccountAssetEntry>;
 #[allow(dead_code)]
 pub type RegularTransactionWithIdentifiableEntriesViewModel = RegularTransaction<
     TransactionBaseWithIdentifiableEntries,
@@ -56,11 +58,13 @@ pub struct RegularTransaction<B, E> {
     pub category_id: RequiredCategoryId,
 
     /// Description of the transaction.
-    pub description: Option<String>,
+    pub description: Option<Description>,
 }
 
-impl From<RegularTransactionViewModel> for TransactionDto {
-    fn from(trans: RegularTransactionViewModel) -> Self {
+impl<E: Into<EntryDto>> From<RegularTransaction<TransactionBaseWithEntries, E>>
+    for TransactionDto
+{
+    fn from(trans: RegularTransaction<TransactionBaseWithEntries, E>) -> Self {
         TransactionDto {
             transaction_id: None,
             date: trans.base.date,
@@ -69,7 +73,7 @@ impl From<RegularTransactionViewModel> for TransactionDto {
                 None => [].into(),
             },
             transaction_type: TransactionTypeDto::Regular(RegularTransactionMetadataDto {
-                description: trans.description,
+                description: trans.description.map(|d| d.into_inner()),
                 entry: trans.entry.into(),
                 category_id: trans.category_id.0,
             }),
@@ -89,7 +93,7 @@ where
                 base: value.into(),
                 entry: r.entry.into(),
                 category_id: RequiredCategoryId(r.category_id),
-                description: r.description,
+                description: r.description.map(Description::from_trusted),
             }
         } else {
             panic!("Can not convert TransactionDto into RequiredIdentifiableRegularTransactionWithIdentifiableEntriesViewModel as the type is not Regular")

@@ -5,7 +5,7 @@ use utoipa::ToSchema;
 
 use crate::view_models::transactions::base_models::{
     account_asset_entry::{
-        AccountAssetEntryViewModel, IdentifiableAccountAssetEntryViewModel,
+        IdentifiableAccountAssetEntryViewModel, NegativeAccountAssetEntry,
         RequiredIdentifiableAccountAssetEntryViewModel,
     },
     transaction_base::{
@@ -15,8 +15,9 @@ use crate::view_models::transactions::base_models::{
     },
 };
 
+#[allow(dead_code)]
 pub type AssetTransferOutViewModel =
-    AssetTransferOut<TransactionBaseWithEntries, AccountAssetEntryViewModel>;
+    AssetTransferOut<TransactionBaseWithEntries, NegativeAccountAssetEntry>;
 #[allow(dead_code)]
 pub type AssetTransferOutWithIdentifiableEntriesViewModel = AssetTransferOut<
     TransactionBaseWithIdentifiableEntries,
@@ -48,8 +49,8 @@ pub struct AssetTransferOut<B, E> {
     pub entry: E,
 }
 
-impl From<AssetTransferOutViewModel> for TransactionDto {
-    fn from(_trans: AssetTransferOutViewModel) -> Self {
+impl<E> From<AssetTransferOut<TransactionBaseWithEntries, E>> for TransactionDto {
+    fn from(_trans: AssetTransferOut<TransactionBaseWithEntries, E>) -> Self {
         todo!()
     }
 }

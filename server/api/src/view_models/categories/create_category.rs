@@ -1,20 +1,19 @@
 use crate::view_models::categories::base_models::category_type_id::RequiredCategoryTypeId;
+use crate::view_models::categories::base_models::category_name::CategoryName;
+use crate::view_models::categories::base_models::icon_name::IconName;
 
 use super::base_models::category::IdentifiableExpandedCategoryViewModel;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
-use validator::Validate;
 
-#[derive(Clone, Debug, Serialize, Deserialize, ToSchema, Validate)]
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct CreateCategoryRequestViewModel {
-    #[validate(length(min = 1, max = 100))]
     #[schema(example = "Groceries")]
-    pub category: String,
+    pub category: CategoryName,
 
     // TODO: Add icon validation once icon list is defined
-    #[validate(length(min = 1, max = 50))]
     #[schema(example = "shopping-cart")]
-    pub icon: String,
+    pub icon: IconName,
 
     #[schema(example = 1)]
     pub category_type_id: RequiredCategoryTypeId,
@@ -29,8 +28,8 @@ pub struct CreateCategoryResponseViewModel {
 impl From<CreateCategoryRequestViewModel> for business::dtos::categories::CreateCategoryDto {
     fn from(request: CreateCategoryRequestViewModel) -> Self {
         Self {
-            category: request.category,
-            icon: request.icon,
+            category: request.category.into_inner(),
+            icon: request.icon.into_inner(),
             category_type: request.category_type_id.0,
         }
     }

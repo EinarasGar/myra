@@ -1,5 +1,6 @@
 pub mod account_asset_entry;
 pub mod category_id;
+pub mod description;
 pub mod entry_id;
 pub mod metadata_lookup;
 pub mod transaction_base;

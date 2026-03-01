@@ -2,6 +2,8 @@ use super::category_id::RequiredCategoryId;
 use super::category_type::{CategoryTypeViewModel, IdentifiableCategoryTypeViewModel};
 use super::category_type_id::RequiredCategoryTypeId;
 use business::dtos::categories::CategoryDto;
+use super::category_name::CategoryName;
+use super::icon_name::IconName;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -12,11 +14,11 @@ pub type ExpandedCategoryViewModel = Category<IdentifiableCategoryTypeViewModel>
 pub struct Category<T> {
     /// Category name
     #[schema(example = "Groceries")]
-    pub category: String,
+    pub category: CategoryName,
 
     /// Icon identifier for the category
     #[schema(example = "shopping-cart")]
-    pub icon: String,
+    pub icon: IconName,
 
     /// Category type (generic - can be ID or expanded)
     #[schema(inline = false)]
@@ -48,8 +50,8 @@ pub struct IdentifiableCategory<T> {
 impl From<CategoryDto> for CategoryViewModel {
     fn from(dto: CategoryDto) -> Self {
         Self {
-            category: dto.category,
-            icon: dto.icon,
+            category: CategoryName::from_trusted(dto.category),
+            icon: IconName::from_trusted(dto.icon),
             category_type: RequiredCategoryTypeId(dto.category_type),
             is_global: dto.is_global,
             is_system: dto.is_system,
@@ -60,8 +62,8 @@ impl From<CategoryDto> for CategoryViewModel {
 impl From<CategoryDto> for ExpandedCategoryViewModel {
     fn from(dto: CategoryDto) -> Self {
         Self {
-            category: dto.category,
-            icon: dto.icon,
+            category: CategoryName::from_trusted(dto.category),
+            icon: IconName::from_trusted(dto.icon),
             category_type: IdentifiableCategoryTypeViewModel {
                 id: RequiredCategoryTypeId(dto.category_type),
                 category_type: CategoryTypeViewModel {

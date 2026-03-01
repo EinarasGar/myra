@@ -8,6 +8,7 @@ use color_eyre::eyre::Result;
 pub mod auth;
 pub mod converters;
 pub mod errors;
+pub mod extractors;
 mod fallback;
 pub(crate) mod handlers;
 mod observability;

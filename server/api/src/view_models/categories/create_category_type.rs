@@ -1,13 +1,12 @@
 use super::base_models::category_type::IdentifiableCategoryTypeViewModel;
+use crate::view_models::categories::base_models::category_type_name::CategoryTypeName;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
-use validator::Validate;
 
-#[derive(Clone, Debug, Serialize, Deserialize, ToSchema, Validate)]
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct CreateCategoryTypeRequestViewModel {
-    #[validate(length(min = 1, max = 50))]
     #[schema(example = "Custom Expense")]
-    pub name: String,
+    pub name: CategoryTypeName,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
@@ -21,7 +20,7 @@ impl From<CreateCategoryTypeRequestViewModel>
 {
     fn from(request: CreateCategoryTypeRequestViewModel) -> Self {
         Self {
-            category_type_name: request.name,
+            category_type_name: request.name.into_inner(),
         }
     }
 }

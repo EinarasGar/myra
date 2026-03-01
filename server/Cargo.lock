@@ -143,6 +143,7 @@ dependencies = [
  "serde_json",
  "syn 2.0.114",
  "syntect",
+ "thiserror 2.0.18",
  "time",
  "tokio",
  "tower",

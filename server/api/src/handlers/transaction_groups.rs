@@ -7,6 +7,7 @@ use uuid::Uuid;
 use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
+    extractors::ValidatedJson,
     view_models::errors::{CreateResponses, DeleteResponses, GetResponses, UpdateResponses},
     view_models::{
         base_models::search::{
@@ -51,7 +52,7 @@ use crate::{
 pub async fn add_transaction_group(
     Path(_user_id): Path<Uuid>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-    Json(_params): Json<AddTransactionGroupRequestViewModel>,
+    ValidatedJson(_params): ValidatedJson<AddTransactionGroupRequestViewModel>,
 ) -> Result<Json<AddTransactionGroupResponseViewModel>, ApiError> {
     unimplemented!();
 }
@@ -84,7 +85,7 @@ pub async fn add_transaction_group(
 pub async fn update_transaction_group(
     Path((_user_id, _group_id)): Path<(Uuid, i32)>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-    Json(_params): Json<UpdateTransactionGroupRequestViewModel>,
+    ValidatedJson(_params): ValidatedJson<UpdateTransactionGroupRequestViewModel>,
 ) -> Result<Json<UpdateTransactionGroupResponseViewModel>, ApiError> {
     unimplemented!();
 }

@@ -18,6 +18,7 @@ use crate::view_models::transactions::base_models::{
     },
 };
 
+#[allow(dead_code)]
 pub type AssetPurchaseViewModel =
     AssetPurchase<TransactionBaseWithEntries, AccountAssetEntryViewModel>;
 #[allow(dead_code)]
@@ -50,8 +51,8 @@ pub struct AssetPurchase<B, E> {
     pub cash_outgoings_change: E,
 }
 
-impl From<AssetPurchaseViewModel> for TransactionDto {
-    fn from(value: AssetPurchaseViewModel) -> Self {
+impl<E: Into<EntryDto>> From<AssetPurchase<TransactionBaseWithEntries, E>> for TransactionDto {
+    fn from(value: AssetPurchase<TransactionBaseWithEntries, E>) -> Self {
         TransactionDto {
             transaction_id: None,
             date: value.base.date,

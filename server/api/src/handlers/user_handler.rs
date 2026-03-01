@@ -4,6 +4,7 @@ use uuid::Uuid;
 use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
+    extractors::ValidatedJson,
     states::{AssetsServiceState, PortfolioServiceState, UsersServiceState},
     view_models::users::{add_user_view_model::AddUserViewModel, user_view_model::UserViewModel},
 };
@@ -12,7 +13,7 @@ use crate::{
 pub async fn post_user(
     UsersServiceState(_users_service): UsersServiceState,
     AssetsServiceState(_assets_service): AssetsServiceState,
-    Json(_params): Json<AddUserViewModel>,
+    ValidatedJson(_params): ValidatedJson<AddUserViewModel>,
 ) -> Result<Json<UserViewModel>, ApiError> {
     unimplemented!()
     // let (user, default_account) = users_service.register_user(params.clone().into()).await?;

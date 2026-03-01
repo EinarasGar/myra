@@ -5,7 +5,7 @@ use utoipa::ToSchema;
 
 use crate::view_models::transactions::base_models::{
     account_asset_entry::{
-        AccountAssetEntryViewModel, IdentifiableAccountAssetEntryViewModel,
+        IdentifiableAccountAssetEntryViewModel, NegativeAccountAssetEntry,
         RequiredIdentifiableAccountAssetEntryViewModel,
     },
     transaction_base::{
@@ -15,7 +15,8 @@ use crate::view_models::transactions::base_models::{
     },
 };
 
-pub type AccountFeesViewModel = AccountFees<TransactionBaseWithEntries, AccountAssetEntryViewModel>;
+#[allow(dead_code)]
+pub type AccountFeesViewModel = AccountFees<TransactionBaseWithEntries, NegativeAccountAssetEntry>;
 #[allow(dead_code)]
 pub type AccountFeesWithIdentifiableEntriesViewModel =
     AccountFees<TransactionBaseWithIdentifiableEntries, IdentifiableAccountAssetEntryViewModel>;
@@ -45,8 +46,8 @@ pub struct AccountFees<B, E> {
     pub entry: E,
 }
 
-impl From<AccountFeesViewModel> for TransactionDto {
-    fn from(_trans: AccountFeesViewModel) -> Self {
+impl<E> From<AccountFees<TransactionBaseWithEntries, E>> for TransactionDto {
+    fn from(_trans: AccountFees<TransactionBaseWithEntries, E>) -> Self {
         todo!()
     }
 }

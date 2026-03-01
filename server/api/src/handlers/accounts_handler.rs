@@ -8,6 +8,7 @@ use uuid::Uuid;
 use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
+    extractors::ValidatedJson,
     states::AccountsServiceState,
     view_models::accounts::{
         add_account::{AddAccountRequestViewModel, AddAccountResponseViewModel},
@@ -25,6 +26,7 @@ use crate::{
         update_account::UpdateAccountViewModel,
     },
     view_models::errors::{CreateResponses, DeleteResponses, GetResponses, UpdateResponses},
+    view_models::accounts::base_models::ownership_share::OwnershipShare,
 };
 
 /// Get Account
@@ -59,7 +61,7 @@ pub async fn get_account(
 
     let ret = GetAccountResponseViewModel {
         liquidity_type: account.liquidity_type.clone().into(),
-        ownership_share: account.ownership_share,
+        ownership_share: OwnershipShare::from_trusted(account.ownership_share),
         account: account.into(),
     };
 
@@ -156,13 +158,13 @@ pub async fn update_account(
     Path((user_id, account_id)): Path<(Uuid, Uuid)>,
     AccountsServiceState(account_service): AccountsServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-    Json(body): Json<UpdateAccountViewModel>,
+    ValidatedJson(body): ValidatedJson<UpdateAccountViewModel>,
 ) -> Result<Json<UpdateAccountViewModel>, ApiError> {
     let dto = AccountAmendmentDto {
-        account_name: body.account.name.clone(),
+        account_name: body.account.name.as_str().to_owned(),
         account_type: body.account.account_type.0,
         account_liquidity_type: body.liquidity_type.0,
-        ownership_share: body.ownership_share,
+        ownership_share: body.ownership_share.as_decimal(),
     };
 
     account_service
@@ -199,13 +201,13 @@ pub async fn add_account(
     Path(user_id): Path<Uuid>,
     AccountsServiceState(account_service): AccountsServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-    Json(body): Json<AddAccountRequestViewModel>,
+    ValidatedJson(body): ValidatedJson<AddAccountRequestViewModel>,
 ) -> Result<Json<AddAccountResponseViewModel>, ApiError> {
     let dto = AccountAmendmentDto {
-        account_name: body.account.name.clone(),
+        account_name: body.account.name.as_str().to_owned(),
         account_type: body.account.account_type.0,
         account_liquidity_type: body.liquidity_type.0,
-        ownership_share: body.ownership_share,
+        ownership_share: body.ownership_share.as_decimal(),
     };
 
     let new_id = account_service.add_user_account(user_id, dto).await?;

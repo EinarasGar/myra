@@ -1,11 +1,15 @@
 pub mod asset;
 pub mod asset_id;
 pub mod asset_metadata;
+pub mod asset_name;
 pub mod asset_pair_metadata;
+pub mod asset_ticker;
 pub mod asset_type;
 pub mod asset_type_id;
+pub mod exchange_name;
 pub mod lookup;
 pub mod pair;
+pub mod positive_rate;
 pub mod rate;
 pub mod shared_asset_pair_metadata;
 pub mod user_asset_pair_metadata;

@@ -10,6 +10,7 @@ use crate::{
     auth::AuthenticatedUserState,
     converters::{transaction_dtos_to_account_ids_hashset, transaction_dtos_to_asset_ids_hashset},
     errors::ApiError,
+    extractors::ValidatedJson,
     states::{AccountsServiceState, AssetsServiceState, TransactionManagementServiceState},
     view_models::errors::{CreateResponses, GetResponses, UpdateResponses},
     view_models::{
@@ -27,6 +28,7 @@ use crate::{
                 UpdateIndividualTransactionRequestViewModel,
                 UpdateIndividualTransactionResponseViewModel,
             },
+            validation::Validatable,
         },
     },
 };
@@ -58,8 +60,10 @@ pub async fn add_individual_transaction(
     Path(user_id): Path<Uuid>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
     TransactionManagementServiceState(transaction_service): TransactionManagementServiceState,
-    Json(params): Json<AddIndividualTransactionRequestViewModel>,
+    ValidatedJson(params): ValidatedJson<AddIndividualTransactionRequestViewModel>,
 ) -> Result<Json<AddIndividualTransactionResponseViewModel>, ApiError> {
+    params.transaction.validate()?;
+
     let dto: TransactionDto = params.transaction.into();
 
     let return_dto = transaction_service
@@ -104,7 +108,7 @@ pub async fn add_individual_transaction(
 pub async fn update_individual_transaction(
     Path((_user_id, _transaction_id)): Path<(Uuid, Uuid)>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-    Json(_params): Json<UpdateIndividualTransactionRequestViewModel>,
+    ValidatedJson(_params): ValidatedJson<UpdateIndividualTransactionRequestViewModel>,
 ) -> Result<Json<UpdateIndividualTransactionResponseViewModel>, ApiError> {
     unimplemented!();
 }

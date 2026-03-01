@@ -6,9 +6,11 @@ use uuid::Uuid;
 use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
+    extractors::ValidatedJson,
     view_models::{
         accounts::base_models::account_id::RequiredAccountId,
         assets::base_models::asset_id::RequiredAssetId,
+        transactions::value_types::Amount,
         base_models::search::{PageOfResults, PageOfTransactionsWithLookupViewModel},
         errors::{DeleteResponses, GetResponses, UpdateResponses},
         transactions::{
@@ -66,7 +68,7 @@ use crate::{
 pub async fn update_transaction(
     Path((_user_id, _transaction_id)): Path<(Uuid, Uuid)>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-    Json(_params): Json<UpdateTransactionRequestViewModel>,
+    ValidatedJson(_params): ValidatedJson<UpdateTransactionRequestViewModel>,
 ) -> Result<Json<UpdateTransactionResponseViewModel>, ApiError> {
     println!("{:#?}", _params);
     unimplemented!();
@@ -138,7 +140,7 @@ pub async fn get_transactions(
                             entry: AccountAssetEntryViewModel {
                                 account_id: RequiredAccountId(Uuid::new_v4()),
                                 asset_id: RequiredAssetId(1),
-                                amount: dec!(100.0),
+                                amount: Amount(dec!(100.0)),
                             },
                         },
                         base: RequiredIdentifiableTransactionBaseWithIdentifiableEntries {

@@ -16,7 +16,7 @@ use business::{
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::errors::auth::AuthError;
+use crate::errors::{auth::AuthError, ApiError};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AuthenticatedUserState(pub AuthenticatedUser);
@@ -32,7 +32,7 @@ where
     AuthService: FromRef<S>,
     S: Send + Sync,
 {
-    type Rejection = AuthError;
+    type Rejection = ApiError;
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         // Bypass authentication unless AUTH_DISABLED=false
@@ -52,13 +52,13 @@ where
         let TypedHeader(Authorization(bearer)) = parts
             .extract::<TypedHeader<Authorization<Bearer>>>()
             .await
-            .map_err(|_| AuthError::InvalidToken)?;
+            .map_err(|_| -> ApiError { AuthError::InvalidToken.into() })?;
 
         //Verify that the token is valid
         let auth_service = AuthService::from_ref(state);
         let parsed_claims = auth_service
             .verify_auth_token(bearer.token().to_string())
-            .map_err(|_| AuthError::InvalidToken)?;
+            .map_err(|_| -> ApiError { AuthError::InvalidToken.into() })?;
 
         //Extract user id if exists and check if it matches
         let Path(paths) = parts
@@ -67,9 +67,10 @@ where
             .unwrap();
         if parsed_claims.role != UserRoleEnumDto::Admin && paths.contains_key("user_id") {
             let user_id = paths["user_id"].to_string();
-            let uuid = Uuid::parse_str(&user_id).map_err(|_| AuthError::WrongUserId)?;
+            let uuid =
+                Uuid::parse_str(&user_id).map_err(|_| -> ApiError { AuthError::WrongUserId.into() })?;
             if !uuid.eq(&parsed_claims.sub) {
-                return Err(AuthError::Unauthorized);
+                return Err(AuthError::Unauthorized.into());
             }
         }
 

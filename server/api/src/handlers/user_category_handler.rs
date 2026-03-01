@@ -2,11 +2,11 @@ use std::collections::HashMap;
 
 use axum::{extract::Path, http::StatusCode, Json};
 use uuid::Uuid;
-use validator::Validate;
 
 use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
+    extractors::ValidatedJson,
     states::{CategoryServiceState, CategoryTypeServiceState},
     view_models::{
         categories::{
@@ -74,7 +74,8 @@ pub async fn get_categories(
             });
     }
 
-    let mut categories: Vec<IdentifiableCategoryViewModel> = result.into_iter().map_into().collect();
+    let mut categories: Vec<IdentifiableCategoryViewModel> =
+        result.into_iter().map_into().collect();
     categories.sort_by(|a, b| b.id.0.cmp(&a.id.0));
     let response = GetCategoriesResponseViewModel {
         categories,
@@ -144,10 +145,8 @@ pub async fn post_user_category(
     Path(user_id): Path<Uuid>,
     CategoryServiceState(category_service): CategoryServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-    Json(request): Json<CreateCategoryRequestViewModel>,
+    ValidatedJson(request): ValidatedJson<CreateCategoryRequestViewModel>,
 ) -> Result<(StatusCode, Json<CreateCategoryResponseViewModel>), ApiError> {
-    request.validate()?;
-
     let category = category_service
         .create_category(user_id, request.into())
         .await?;
@@ -187,10 +186,8 @@ pub async fn put_user_category(
     Path((user_id, category_id)): Path<(Uuid, i32)>,
     CategoryServiceState(category_service): CategoryServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-    Json(request): Json<UpdateCategoryRequestViewModel>,
+    ValidatedJson(request): ValidatedJson<UpdateCategoryRequestViewModel>,
 ) -> Result<Json<UpdateCategoryResponseViewModel>, ApiError> {
-    request.validate()?;
-
     let category = category_service
         .update_category(category_id, user_id, request.into())
         .await?;
@@ -296,10 +293,8 @@ pub async fn post_user_category_type(
     Path(user_id): Path<Uuid>,
     CategoryTypeServiceState(category_type_service): CategoryTypeServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-    Json(request): Json<CreateCategoryTypeRequestViewModel>,
+    ValidatedJson(request): ValidatedJson<CreateCategoryTypeRequestViewModel>,
 ) -> Result<(StatusCode, Json<CreateCategoryTypeResponseViewModel>), ApiError> {
-    request.validate()?;
-
     let category_type = category_type_service
         .create_category_type(user_id, request.into())
         .await?;
@@ -338,10 +333,8 @@ pub async fn put_user_category_type(
     Path((user_id, type_id)): Path<(Uuid, i32)>,
     CategoryTypeServiceState(category_type_service): CategoryTypeServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-    Json(request): Json<UpdateCategoryTypeRequestViewModel>,
+    ValidatedJson(request): ValidatedJson<UpdateCategoryTypeRequestViewModel>,
 ) -> Result<Json<UpdateCategoryTypeResponseViewModel>, ApiError> {
-    request.validate()?;
-
     let category_type = category_type_service
         .update_category_type(type_id, user_id, request.into())
         .await?;

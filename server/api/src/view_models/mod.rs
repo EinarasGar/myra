@@ -1,3 +1,6 @@
+#[macro_use]
+mod value_types;
+
 pub mod accounts;
 pub mod assets;
 pub mod authentication;

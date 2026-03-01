@@ -9,7 +9,7 @@ use utoipa::ToSchema;
 use crate::view_models::assets::base_models::asset_id::RequiredAssetId;
 use crate::view_models::transactions::base_models::{
     account_asset_entry::{
-        AccountAssetEntryViewModel, IdentifiableAccountAssetEntryViewModel,
+        IdentifiableAccountAssetEntryViewModel, PositiveAccountAssetEntry,
         RequiredIdentifiableAccountAssetEntryViewModel,
     },
     transaction_base::{
@@ -19,8 +19,9 @@ use crate::view_models::transactions::base_models::{
     },
 };
 
+#[allow(dead_code)]
 pub type CashDividendViewModel =
-    CashDividend<TransactionBaseWithEntries, AccountAssetEntryViewModel>;
+    CashDividend<TransactionBaseWithEntries, PositiveAccountAssetEntry>;
 #[allow(dead_code)]
 pub type CashDividendWithIdentifiableEntriesViewModel =
     CashDividend<TransactionBaseWithIdentifiableEntries, IdentifiableAccountAssetEntryViewModel>;
@@ -53,8 +54,8 @@ pub struct CashDividend<B, E> {
     pub origin_asset_id: RequiredAssetId,
 }
 
-impl From<CashDividendViewModel> for TransactionDto {
-    fn from(value: CashDividendViewModel) -> Self {
+impl<E: Into<EntryDto>> From<CashDividend<TransactionBaseWithEntries, E>> for TransactionDto {
+    fn from(value: CashDividend<TransactionBaseWithEntries, E>) -> Self {
         TransactionDto {
             transaction_id: None,
             date: value.base.date,

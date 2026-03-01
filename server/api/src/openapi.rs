@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use crate::errors::{ApiErrorResponse, ErrorType, FieldError};
 use utoipa::{
     openapi::{
         schema::{AnyOf, ArrayItems},
@@ -20,7 +21,6 @@ use crate::view_models::{
         asset_type_id::{AssetTypeId, RequiredAssetTypeId},
     },
     categories::base_models::category_type_id::RequiredCategoryTypeId,
-    errors::{ApiErrorResponse, AuthErrorResponse, ValidationError, ValidationErrorResponse},
     transactions::base_models::{
         category_id::{CategoryId, RequiredCategoryId},
         entry_id::{EntryId, RequiredEntryId},
@@ -113,9 +113,8 @@ use crate::view_models::{
         schemas(RequiredUserId),
         schemas(UserId),
         schemas(ApiErrorResponse),
-        schemas(ValidationErrorResponse),
-        schemas(ValidationError),
-        schemas(AuthErrorResponse),
+        schemas(FieldError),
+        schemas(ErrorType),
         schemas(RequiredCategoryTypeId)
     ),
     modifiers(

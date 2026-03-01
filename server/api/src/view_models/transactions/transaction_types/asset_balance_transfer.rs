@@ -15,6 +15,7 @@ use crate::view_models::transactions::base_models::{
     },
 };
 
+#[allow(dead_code)]
 pub type AssetBalanceTransferViewModel =
     AssetBalanceTransfer<TransactionBaseWithEntries, AccountAssetEntryViewModel>;
 #[allow(dead_code)]
@@ -50,8 +51,8 @@ pub struct AssetBalanceTransfer<B, E> {
     pub incoming_change: E,
 }
 
-impl From<AssetBalanceTransferViewModel> for TransactionDto {
-    fn from(_trans: AssetBalanceTransferViewModel) -> Self {
+impl<E> From<AssetBalanceTransfer<TransactionBaseWithEntries, E>> for TransactionDto {
+    fn from(_trans: AssetBalanceTransfer<TransactionBaseWithEntries, E>) -> Self {
         todo!()
     }
 }
