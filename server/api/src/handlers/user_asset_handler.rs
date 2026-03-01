@@ -3,7 +3,7 @@ use crate::view_models::assets::{
     get_asset_pair_rates::GetAssetPairRatesRequestParams,
 };
 use axum::{
-    extract::{Path, Query},
+    extract::Path,
     Json,
 };
 use business::dtos::{
@@ -16,7 +16,7 @@ use uuid::Uuid;
 use crate::{
     auth::AuthenticatedUserState,
     errors::{auth::AuthError, ApiError},
-    extractors::ValidatedJson,
+    extractors::{ValidatedJson, ValidatedQuery},
     parsers::parse_duration_string,
     states::{AssetRatesServiceState, AssetsServiceState},
     view_models::assets::base_models::exchange_name::ExchangeName,
@@ -175,7 +175,7 @@ pub async fn get_user_asset_pair(
 #[tracing::instrument(skip_all, err)]
 pub async fn get_user_asset_pair_rates(
     Path((user_id, pair1, pair2)): Path<(Uuid, i32, i32)>,
-    query_params: Query<GetAssetPairRatesRequestParams>,
+    ValidatedQuery(query_params): ValidatedQuery<GetAssetPairRatesRequestParams>,
     AssetsServiceState(assets_service): AssetsServiceState,
     AssetRatesServiceState(asset_rates_service): AssetRatesServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
@@ -454,7 +454,7 @@ pub async fn post_custom_asset_rates(
 #[tracing::instrument(skip_all, err)]
 pub async fn delete_asset_pair_rates(
     Path((user_id, pair1, pair2)): Path<(Uuid, i32, i32)>,
-    query_params: Query<DeleteAssetPairRatesParams>,
+    ValidatedQuery(query_params): ValidatedQuery<DeleteAssetPairRatesParams>,
     AssetsServiceState(assets_service): AssetsServiceState,
     AssetRatesServiceState(asset_rates_service): AssetRatesServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,

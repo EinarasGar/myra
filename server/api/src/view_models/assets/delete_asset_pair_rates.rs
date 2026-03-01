@@ -3,6 +3,7 @@ use time::{serde::timestamp, OffsetDateTime};
 use utoipa::IntoParams;
 
 #[derive(Clone, Debug, Serialize, Deserialize, IntoParams)]
+#[into_params(parameter_in = Query)]
 pub struct DeleteAssetPairRatesParams {
     /// From which timestamp delete the rates inclusive.
     #[serde(with = "timestamp")]

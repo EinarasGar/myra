@@ -41,6 +41,7 @@ pub struct PageOfResults<T, L> {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, IntoParams)]
+#[into_params(parameter_in = Query)]
 #[serde(default)]
 pub struct PaginatedSearchQuery {
     #[param(maximum = 100, minimum = 1, example = 10)]

@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query},
+    extract::Path,
     Json,
 };
 use uuid::Uuid;
@@ -7,7 +7,7 @@ use uuid::Uuid;
 use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
-    extractors::ValidatedJson,
+    extractors::{ValidatedJson, ValidatedQuery},
     view_models::errors::{CreateResponses, DeleteResponses, GetResponses, UpdateResponses},
     view_models::{
         base_models::search::{
@@ -142,7 +142,7 @@ pub async fn delete_transaction_group(
 #[tracing::instrument(skip_all, err)]
 pub async fn get_transaction_groups(
     Path(_user_id): Path<Uuid>,
-    _query_params: Query<PaginatedSearchQuery>,
+    ValidatedQuery(_query_params): ValidatedQuery<PaginatedSearchQuery>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<PageOfTransactionGroupsWithLookupViewModel>, ApiError> {
     unimplemented!();

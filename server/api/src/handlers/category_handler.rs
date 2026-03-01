@@ -1,10 +1,11 @@
-use axum::{extract::Query, Json};
+use axum::Json;
 use itertools::Itertools;
 use std::collections::HashMap;
 
 use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
+    extractors::ValidatedQuery,
     states::{CategoryServiceState, CategoryTypeServiceState},
     view_models::{
         base_models::search::{PaginatedSearchQuery, SearchCategoriesResponseViewModel},
@@ -45,8 +46,8 @@ use crate::{
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn search_categories(
-    Query(search_query): Query<PaginatedSearchQuery>,
-    Query(query): Query<SearchCategoriesQuery>,
+    ValidatedQuery(search_query): ValidatedQuery<PaginatedSearchQuery>,
+    ValidatedQuery(query): ValidatedQuery<SearchCategoriesQuery>,
     CategoryServiceState(category_service): CategoryServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<SearchCategoriesResponseViewModel>, ApiError> {

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use axum::{
-    extract::{Path, Query},
+    extract::Path,
     Json,
 };
 use business::dtos::{
@@ -12,6 +12,7 @@ use business::dtos::{
 use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
+    extractors::ValidatedQuery,
     parsers::parse_duration_string,
     states::{AssetRatesServiceState, AssetsServiceState},
     view_models::errors::GetResponses,
@@ -59,7 +60,7 @@ use crate::{
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn search_assets(
-    query_params: Query<PaginatedSearchQuery>,
+    ValidatedQuery(query_params): ValidatedQuery<PaginatedSearchQuery>,
     AssetsServiceState(assets_service): AssetsServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<PageOfResults<GetAssetsLineResponseViewModel, AssetLookupTables>>, ApiError> {
@@ -216,7 +217,7 @@ pub async fn get_asset_pair(
 #[tracing::instrument(skip_all, err)]
 pub async fn get_asset_pair_rates(
     Path((id, reference_id)): Path<(i32, i32)>,
-    query_params: Query<GetAssetPairRatesRequestParams>,
+    ValidatedQuery(query_params): ValidatedQuery<GetAssetPairRatesRequestParams>,
     AssetRatesServiceState(asset_rates_service): AssetRatesServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetAssetPairRatesResponseViewModel>, ApiError> {

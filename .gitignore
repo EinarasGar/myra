@@ -9,3 +9,4 @@ CLAUDE.md
 .playwright-mcp/
 .seed_scripts/
 .DS_Store
+db_dump.sql

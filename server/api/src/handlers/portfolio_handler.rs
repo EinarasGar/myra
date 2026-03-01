@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use axum::{
-    extract::{Path, Query},
+    extract::Path,
     Json,
 };
 use business::dtos::{
@@ -16,6 +16,7 @@ use uuid::Uuid;
 use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
+    extractors::ValidatedQuery,
     states::{
         AccountsServiceState, AssetRatesServiceState, AssetsServiceState,
         PortfolioOverviewServiceState, PortfolioServiceState, UsersServiceState,
@@ -60,7 +61,7 @@ pub struct GetPortfolioQueryParams {
 #[tracing::instrument(skip_all, err)]
 pub async fn get_holdings(
     Path(user_id): Path<Uuid>,
-    query_params: Query<GetPortfolioQueryParams>,
+    ValidatedQuery(query_params): ValidatedQuery<GetPortfolioQueryParams>,
     PortfolioOverviewServiceState(portfolio_service): PortfolioOverviewServiceState,
     AccountsServiceState(accounts_service): AccountsServiceState,
     AssetsServiceState(asset_service): AssetsServiceState,
@@ -135,7 +136,7 @@ pub async fn get_holdings(
 #[tracing::instrument(skip_all, err)]
 pub async fn get_networth_history(
     Path(user_id): Path<Uuid>,
-    query_params: Query<GetNetWorthHistoryRequestParams>,
+    ValidatedQuery(query_params): ValidatedQuery<GetNetWorthHistoryRequestParams>,
     PortfolioServiceState(portfolio_service): PortfolioServiceState,
     UsersServiceState(user_service): UsersServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
@@ -177,7 +178,7 @@ pub async fn get_networth_history(
 #[tracing::instrument(skip_all, err)]
 pub async fn get_portfolio_overview(
     Path(user_id): Path<Uuid>,
-    _query_params: Query<GetPortfolioOverviewQueryParams>,
+    ValidatedQuery(_query_params): ValidatedQuery<GetPortfolioOverviewQueryParams>,
     PortfolioOverviewServiceState(portfolio_service): PortfolioOverviewServiceState,
     UsersServiceState(_user_service): UsersServiceState,
     AccountsServiceState(accounts_service): AccountsServiceState,

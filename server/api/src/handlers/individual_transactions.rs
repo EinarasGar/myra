@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query},
+    extract::Path,
     Json,
 };
 use business::dtos::{paging_dto::PagingDto, transaction_dto::TransactionDto};
@@ -10,7 +10,7 @@ use crate::{
     auth::AuthenticatedUserState,
     converters::{transaction_dtos_to_account_ids_hashset, transaction_dtos_to_asset_ids_hashset},
     errors::ApiError,
-    extractors::ValidatedJson,
+    extractors::{ValidatedJson, ValidatedQuery},
     states::{AccountsServiceState, AssetsServiceState, TransactionManagementServiceState},
     view_models::errors::{CreateResponses, GetResponses, UpdateResponses},
     view_models::{
@@ -136,7 +136,7 @@ pub async fn update_individual_transaction(
 #[tracing::instrument(skip_all, err)]
 pub async fn get_individual_transactions(
     Path(user_id): Path<Uuid>,
-    query_params: Query<PaginatedSearchQuery>,
+    ValidatedQuery(query_params): ValidatedQuery<PaginatedSearchQuery>,
     AssetsServiceState(asset_service): AssetsServiceState,
     TransactionManagementServiceState(transaction_service): TransactionManagementServiceState,
     AccountsServiceState(accounts_service): AccountsServiceState,

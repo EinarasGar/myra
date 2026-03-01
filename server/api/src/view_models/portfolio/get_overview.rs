@@ -12,6 +12,7 @@ use crate::view_models::assets::base_models::asset_id::AssetId;
 use super::base_models::metadata_lookup::HoldingsMetadataLookupTables;
 
 #[derive(Clone, Debug, Serialize, Deserialize, IntoParams, ToSchema)]
+#[into_params(parameter_in = Query)]
 pub struct GetPortfolioOverviewQueryParams {
     #[param(default = "From user settings.")]
     /// The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used

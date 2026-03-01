@@ -4,6 +4,7 @@ use utoipa::{IntoParams, ToSchema};
 use super::base_models::rate::AssetRateViewModel;
 
 #[derive(Clone, Debug, Serialize, Deserialize, IntoParams)]
+#[into_params(parameter_in = Query)]
 #[serde(default)]
 pub struct GetAssetPairRatesRequestParams {
     #[param(default = "1d", pattern = "^(1d|1w|1m|3m|6m|1y|all)$")]

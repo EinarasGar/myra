@@ -60,6 +60,22 @@ ports: ## List all service ports
 	@echo "$(YELLOW)OTLP Collector$(NC)  http://localhost:$(OTLP_PORT)"
 	@echo "$(YELLOW)Jaeger UI$(NC)       http://localhost:$(JAEGER_UI_PORT)"
 
+# Database
+.PHONY: export-db
+export-db: ## Export database data to db_dump.sql
+	@echo "$(GREEN)Exporting database data...$(NC)"
+	@PGPASSWORD=$(POSTGRES_PASSWORD) pg_dump -h localhost -p $(POSTGRES_PORT) -U $(POSTGRES_USER) -d $(POSTGRES_DB) --data-only > db_dump.sql
+	@echo "$(GREEN)Database data exported to db_dump.sql$(NC)"
+
+.PHONY: import-db
+import-db: ## Import database data from db_dump.sql (truncates existing data first)
+	@echo "$(YELLOW)Truncating existing data...$(NC)"
+	@PGPASSWORD=$(POSTGRES_PASSWORD) psql -h localhost -p $(POSTGRES_PORT) -U $(POSTGRES_USER) -d $(POSTGRES_DB) -c \
+		"DO \$$\$$ DECLARE r RECORD; BEGIN FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename NOT LIKE 'flyway_%') LOOP EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE'; END LOOP; END \$$\$$;"
+	@echo "$(GREEN)Importing database data...$(NC)"
+	@PGPASSWORD=$(POSTGRES_PASSWORD) psql -h localhost -p $(POSTGRES_PORT) -U $(POSTGRES_USER) -d $(POSTGRES_DB) < db_dump.sql
+	@echo "$(GREEN)Database data imported from db_dump.sql$(NC)"
+
 # API Generation
 .PHONY: generate-api
 generate-api: ## Generate TypeScript API client from OpenAPI spec

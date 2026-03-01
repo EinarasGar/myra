@@ -6,6 +6,7 @@ use crate::view_models::assets::base_models::{
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize, IntoParams)]
+#[into_params(parameter_in = Query)]
 #[serde(default)]
 pub struct GetNetWorthHistoryRequestParams {
     #[param(default = "1d", pattern = "^(1d|1w|1m|3m|6m|1y|all)$")]
