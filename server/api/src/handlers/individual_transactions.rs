@@ -156,11 +156,8 @@ pub async fn get_individual_transactions(
         accounts_service.get_accounts(account_ids),
     )?;
 
-    let mut results = dtos.results;
-    results.sort_by(|a, b| b.date.cmp(&a.date));
-
     let ret = PageOfIndividualTransactionsWithLookupViewModel {
-        results: results.into_iter().map(Into::into).collect(),
+        results: dtos.results.into_iter().map(Into::into).collect(),
         total_results: dtos.total_results,
         lookup_tables: MetadataLookupTables {
             assets: assets.into_iter().map_into().collect(),

@@ -14,17 +14,16 @@ pub fn inset_user(user: AddUserModel) -> DbQueryWithValues {
     Query::insert()
         .into_table(UsersIden::Table)
         .columns([
-            UsersIden::Id,
             UsersIden::Username,
             UsersIden::PasswordHash,
             UsersIden::DefaultAssset,
         ])
         .values_panic([
-            user.id.into(),
             user.username.into(),
             user.password.into(),
             user.default_asset.into(),
         ])
+        .returning_col(UsersIden::Id)
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }

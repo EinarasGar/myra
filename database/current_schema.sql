@@ -1,6 +1,5 @@
 -- DROP SCHEMA public CASCADE;
 -- CREATE SCHEMA public;
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS transaction_types (
     id SERIAL NOT NULL,
     transaction_type_name TEXT NOT NULL,
@@ -39,7 +38,7 @@ CREATE TABLE IF NOT EXISTS transaction_categories (
     CONSTRAINT transaction_categories_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS transaction_group (
-    id UUID NOT NULL,
+    id UUID DEFAULT uuidv7() NOT NULL,
     category_id INT NOT NULL,
     description TEXT NOT NULL,
     date_added TIMESTAMPTZ NOT NULL,
@@ -91,7 +90,7 @@ CREATE TABLE IF NOT EXISTS user_roles (
     CONSTRAINT user_roles_pk PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS users (
-    id UUID DEFAULT uuid_generate_v4() NOT NULL,
+    id UUID DEFAULT uuidv7() NOT NULL,
     username TEXT NOT NULL,
     password_hash TEXT NOT NULL,
     default_asset INT NOT NULL,
@@ -104,7 +103,7 @@ CREATE TABLE IF NOT EXISTS users (
 ALTER TABLE assets
 ADD CONSTRAINT assets_user_id_fkey FOREIGN KEY (user_id) REFERENCES users (id);
 CREATE TABLE IF NOT EXISTS account (
-    id UUID DEFAULT uuid_generate_v4() NOT NULL,
+    id UUID DEFAULT uuidv7() NOT NULL,
     user_id UUID NOT NULL,
     account_name TEXT NOT NULL,
     account_type INT NOT NULL,
@@ -117,7 +116,7 @@ CREATE TABLE IF NOT EXISTS account (
     CONSTRAINT account_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id)
 );
 CREATE TABLE IF NOT EXISTS transaction (
-    id UUID DEFAULT uuid_generate_v4() NOT NULL,
+    id UUID DEFAULT uuidv7() NOT NULL,
     group_id UUID NULL,
     user_id UUID NOT NULL,
     type_id INT NULL,

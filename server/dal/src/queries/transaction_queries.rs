@@ -46,7 +46,8 @@ pub fn get_transaction_with_entries(params: GetTransactionWithEntriesParams) -> 
     };
 
     eligible_transactions_builder
-        .order_by(TransactionIden::DateTransacted, sea_query::Order::Desc);
+        .order_by(TransactionIden::DateTransacted, sea_query::Order::Desc)
+        .order_by(TransactionIden::Id, sea_query::Order::Desc);
 
     let is_paged = params.paging.is_some();
     if let Some(paging) = params.paging {

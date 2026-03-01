@@ -26,9 +26,7 @@ impl UsersService {
 
     #[tracing::instrument(skip_all, err)]
     pub async fn register_user(&self, user: AddUserDto) -> anyhow::Result<UserFullDto> {
-        let new_user_id: Uuid = Uuid::new_v4();
         let db_user: AddUserModel = AddUserModel {
-            id: new_user_id,
             username: user.username.clone(),
             password: self.hash_password(user.password),
             default_asset: user.default_asset,
@@ -38,7 +36,7 @@ impl UsersService {
         self.db.start_transaction().await?;
 
         let query = user_queries::inset_user(db_user);
-        self.db.execute(query).await?;
+        let new_user_id: Uuid = self.db.fetch_one_scalar(query).await?;
         let query = user_queries::get_user_role(new_user_id);
         let user_role = self.db.fetch_one::<UserRoleModel>(query).await?;
 

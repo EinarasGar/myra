@@ -2,7 +2,6 @@ use sqlx::types::Uuid;
 
 #[derive(Debug)]
 pub struct AddUserModel {
-    pub id: Uuid,
     pub username: String,
     pub password: String,
     pub default_asset: i32,
