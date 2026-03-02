@@ -6542,6 +6542,18 @@ export interface GetAccountLiquidityTypesResponseViewModel {
   account_liquidity_types: Array<IdentifiableAccountLiquidityTypeViewModel>;
 }
 /**
+ * @type GetAccountNetworthHistoryDefaultAssetIdParameter
+ * @export
+ */
+export type GetAccountNetworthHistoryDefaultAssetIdParameter = number;
+
+/**
+ * @type GetAccountPortfolioOverviewDefaultAssetIdParameter
+ * @export
+ */
+export type GetAccountPortfolioOverviewDefaultAssetIdParameter = number;
+
+/**
  *
  * @export
  * @interface GetAccountResponseViewModel
@@ -6910,18 +6922,6 @@ export interface GetNetWorthHistoryResponseViewModel {
    */
   sums: Array<AssetRateViewModel>;
 }
-/**
- * @type GetNetworthHistoryDefaultAssetIdParameter
- * @export
- */
-export type GetNetworthHistoryDefaultAssetIdParameter = number;
-
-/**
- * @type GetPortfolioOverviewDefaultAssetIdParameter
- * @export
- */
-export type GetPortfolioOverviewDefaultAssetIdParameter = number;
-
 /**
  *
  * @export
@@ -8737,6 +8737,598 @@ export interface UserAssetPairMetadataViewModel {
    * @memberof UserAssetPairMetadataViewModel
    */
   exchange: string;
+}
+
+/**
+ * AccountPortfolioApi - axios parameter creator
+ * @export
+ */
+export const AccountPortfolioApiAxiosParamCreator = function (
+  configuration?: Configuration,
+) {
+  return {
+    /**
+     * Returns net worth history scoped to a specific account.
+     * @summary Get Account Net Worth History
+     * @param {string} userId User id
+     * @param {string} accountId Account id
+     * @param {string} [range] The range time for which to retrieve the sums for
+     * @param {GetAccountNetworthHistoryDefaultAssetIdParameter} [defaultAssetId] The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getAccountNetworthHistory: async (
+      userId: string,
+      accountId: string,
+      range?: string,
+      defaultAssetId?: GetAccountNetworthHistoryDefaultAssetIdParameter,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("getAccountNetworthHistory", "userId", userId);
+      // verify required parameter 'accountId' is not null or undefined
+      assertParamExists("getAccountNetworthHistory", "accountId", accountId);
+      const localVarPath =
+        `/api/users/{user_id}/accounts/{account_id}/portfolio/history`
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+          .replace(`{${"account_id"}}`, encodeURIComponent(String(accountId)));
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      if (range !== undefined) {
+        localVarQueryParameter["range"] = range;
+      }
+
+      if (defaultAssetId !== undefined) {
+        for (const [key, value] of Object.entries(defaultAssetId)) {
+          localVarQueryParameter[key] = value;
+        }
+      }
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Returns portfolio overview scoped to a specific account.
+     * @summary Get Account Portfolio Overview
+     * @param {string} userId User id
+     * @param {string} accountId Account id
+     * @param {GetAccountPortfolioOverviewDefaultAssetIdParameter} defaultAssetId The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getAccountPortfolioOverview: async (
+      userId: string,
+      accountId: string,
+      defaultAssetId: GetAccountPortfolioOverviewDefaultAssetIdParameter,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("getAccountPortfolioOverview", "userId", userId);
+      // verify required parameter 'accountId' is not null or undefined
+      assertParamExists("getAccountPortfolioOverview", "accountId", accountId);
+      // verify required parameter 'defaultAssetId' is not null or undefined
+      assertParamExists(
+        "getAccountPortfolioOverview",
+        "defaultAssetId",
+        defaultAssetId,
+      );
+      const localVarPath =
+        `/api/users/{user_id}/accounts/{account_id}/portfolio/overview`
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+          .replace(`{${"account_id"}}`, encodeURIComponent(String(accountId)));
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      if (defaultAssetId !== undefined) {
+        for (const [key, value] of Object.entries(defaultAssetId)) {
+          localVarQueryParameter[key] = value;
+        }
+      }
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Returns paginated transactions scoped to a specific account.
+     * @summary Get Account Transactions
+     * @param {string} userId User id
+     * @param {string} accountId Account id
+     * @param {number} [count] How many items to return in a single page
+     * @param {number} [start] The index in the list of the fist element of the page.
+     * @param {string} [query] The search query
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getAccountTransactions: async (
+      userId: string,
+      accountId: string,
+      count?: number,
+      start?: number,
+      query?: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("getAccountTransactions", "userId", userId);
+      // verify required parameter 'accountId' is not null or undefined
+      assertParamExists("getAccountTransactions", "accountId", accountId);
+      const localVarPath =
+        `/api/users/{user_id}/accounts/{account_id}/transactions`
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+          .replace(`{${"account_id"}}`, encodeURIComponent(String(accountId)));
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      if (count !== undefined) {
+        localVarQueryParameter["count"] = count;
+      }
+
+      if (start !== undefined) {
+        localVarQueryParameter["start"] = start;
+      }
+
+      if (query !== undefined) {
+        localVarQueryParameter["query"] = query;
+      }
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+  };
+};
+
+/**
+ * AccountPortfolioApi - functional programming interface
+ * @export
+ */
+export const AccountPortfolioApiFp = function (configuration?: Configuration) {
+  const localVarAxiosParamCreator =
+    AccountPortfolioApiAxiosParamCreator(configuration);
+  return {
+    /**
+     * Returns net worth history scoped to a specific account.
+     * @summary Get Account Net Worth History
+     * @param {string} userId User id
+     * @param {string} accountId Account id
+     * @param {string} [range] The range time for which to retrieve the sums for
+     * @param {GetAccountNetworthHistoryDefaultAssetIdParameter} [defaultAssetId] The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getAccountNetworthHistory(
+      userId: string,
+      accountId: string,
+      range?: string,
+      defaultAssetId?: GetAccountNetworthHistoryDefaultAssetIdParameter,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<GetNetWorthHistoryResponseViewModel>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.getAccountNetworthHistory(
+          userId,
+          accountId,
+          range,
+          defaultAssetId,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["AccountPortfolioApi.getAccountNetworthHistory"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Returns portfolio overview scoped to a specific account.
+     * @summary Get Account Portfolio Overview
+     * @param {string} userId User id
+     * @param {string} accountId Account id
+     * @param {GetAccountPortfolioOverviewDefaultAssetIdParameter} defaultAssetId The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getAccountPortfolioOverview(
+      userId: string,
+      accountId: string,
+      defaultAssetId: GetAccountPortfolioOverviewDefaultAssetIdParameter,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<GetPortfolioOverviewViewModel>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.getAccountPortfolioOverview(
+          userId,
+          accountId,
+          defaultAssetId,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["AccountPortfolioApi.getAccountPortfolioOverview"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Returns paginated transactions scoped to a specific account.
+     * @summary Get Account Transactions
+     * @param {string} userId User id
+     * @param {string} accountId Account id
+     * @param {number} [count] How many items to return in a single page
+     * @param {number} [start] The index in the list of the fist element of the page.
+     * @param {string} [query] The search query
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getAccountTransactions(
+      userId: string,
+      accountId: string,
+      count?: number,
+      start?: number,
+      query?: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<PageOfResultsRequiredIdentifiableTransactionWithIdentifiableEntriesMetadataLookupTables>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.getAccountTransactions(
+          userId,
+          accountId,
+          count,
+          start,
+          query,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["AccountPortfolioApi.getAccountTransactions"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+  };
+};
+
+/**
+ * AccountPortfolioApi - factory interface
+ * @export
+ */
+export const AccountPortfolioApiFactory = function (
+  configuration?: Configuration,
+  basePath?: string,
+  axios?: AxiosInstance,
+) {
+  const localVarFp = AccountPortfolioApiFp(configuration);
+  return {
+    /**
+     * Returns net worth history scoped to a specific account.
+     * @summary Get Account Net Worth History
+     * @param {string} userId User id
+     * @param {string} accountId Account id
+     * @param {string} [range] The range time for which to retrieve the sums for
+     * @param {GetAccountNetworthHistoryDefaultAssetIdParameter} [defaultAssetId] The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getAccountNetworthHistory(
+      userId: string,
+      accountId: string,
+      range?: string,
+      defaultAssetId?: GetAccountNetworthHistoryDefaultAssetIdParameter,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<GetNetWorthHistoryResponseViewModel> {
+      return localVarFp
+        .getAccountNetworthHistory(
+          userId,
+          accountId,
+          range,
+          defaultAssetId,
+          options,
+        )
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Returns portfolio overview scoped to a specific account.
+     * @summary Get Account Portfolio Overview
+     * @param {string} userId User id
+     * @param {string} accountId Account id
+     * @param {GetAccountPortfolioOverviewDefaultAssetIdParameter} defaultAssetId The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getAccountPortfolioOverview(
+      userId: string,
+      accountId: string,
+      defaultAssetId: GetAccountPortfolioOverviewDefaultAssetIdParameter,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<GetPortfolioOverviewViewModel> {
+      return localVarFp
+        .getAccountPortfolioOverview(userId, accountId, defaultAssetId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Returns paginated transactions scoped to a specific account.
+     * @summary Get Account Transactions
+     * @param {string} userId User id
+     * @param {string} accountId Account id
+     * @param {number} [count] How many items to return in a single page
+     * @param {number} [start] The index in the list of the fist element of the page.
+     * @param {string} [query] The search query
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getAccountTransactions(
+      userId: string,
+      accountId: string,
+      count?: number,
+      start?: number,
+      query?: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<PageOfResultsRequiredIdentifiableTransactionWithIdentifiableEntriesMetadataLookupTables> {
+      return localVarFp
+        .getAccountTransactions(userId, accountId, count, start, query, options)
+        .then((request) => request(axios, basePath));
+    },
+  };
+};
+
+/**
+ * AccountPortfolioApi - interface
+ * @export
+ * @interface AccountPortfolioApi
+ */
+export interface AccountPortfolioApiInterface {
+  /**
+   * Returns net worth history scoped to a specific account.
+   * @summary Get Account Net Worth History
+   * @param {string} userId User id
+   * @param {string} accountId Account id
+   * @param {string} [range] The range time for which to retrieve the sums for
+   * @param {GetAccountNetworthHistoryDefaultAssetIdParameter} [defaultAssetId] The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AccountPortfolioApiInterface
+   */
+  getAccountNetworthHistory(
+    userId: string,
+    accountId: string,
+    range?: string,
+    defaultAssetId?: GetAccountNetworthHistoryDefaultAssetIdParameter,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<GetNetWorthHistoryResponseViewModel>;
+
+  /**
+   * Returns portfolio overview scoped to a specific account.
+   * @summary Get Account Portfolio Overview
+   * @param {string} userId User id
+   * @param {string} accountId Account id
+   * @param {GetAccountPortfolioOverviewDefaultAssetIdParameter} defaultAssetId The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AccountPortfolioApiInterface
+   */
+  getAccountPortfolioOverview(
+    userId: string,
+    accountId: string,
+    defaultAssetId: GetAccountPortfolioOverviewDefaultAssetIdParameter,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<GetPortfolioOverviewViewModel>;
+
+  /**
+   * Returns paginated transactions scoped to a specific account.
+   * @summary Get Account Transactions
+   * @param {string} userId User id
+   * @param {string} accountId Account id
+   * @param {number} [count] How many items to return in a single page
+   * @param {number} [start] The index in the list of the fist element of the page.
+   * @param {string} [query] The search query
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AccountPortfolioApiInterface
+   */
+  getAccountTransactions(
+    userId: string,
+    accountId: string,
+    count?: number,
+    start?: number,
+    query?: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<PageOfResultsRequiredIdentifiableTransactionWithIdentifiableEntriesMetadataLookupTables>;
+}
+
+/**
+ * AccountPortfolioApi - object-oriented interface
+ * @export
+ * @class AccountPortfolioApi
+ * @extends {BaseAPI}
+ */
+export class AccountPortfolioApi
+  extends BaseAPI
+  implements AccountPortfolioApiInterface
+{
+  /**
+   * Returns net worth history scoped to a specific account.
+   * @summary Get Account Net Worth History
+   * @param {string} userId User id
+   * @param {string} accountId Account id
+   * @param {string} [range] The range time for which to retrieve the sums for
+   * @param {GetAccountNetworthHistoryDefaultAssetIdParameter} [defaultAssetId] The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AccountPortfolioApi
+   */
+  public getAccountNetworthHistory(
+    userId: string,
+    accountId: string,
+    range?: string,
+    defaultAssetId?: GetAccountNetworthHistoryDefaultAssetIdParameter,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return AccountPortfolioApiFp(this.configuration)
+      .getAccountNetworthHistory(
+        userId,
+        accountId,
+        range,
+        defaultAssetId,
+        options,
+      )
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Returns portfolio overview scoped to a specific account.
+   * @summary Get Account Portfolio Overview
+   * @param {string} userId User id
+   * @param {string} accountId Account id
+   * @param {GetAccountPortfolioOverviewDefaultAssetIdParameter} defaultAssetId The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AccountPortfolioApi
+   */
+  public getAccountPortfolioOverview(
+    userId: string,
+    accountId: string,
+    defaultAssetId: GetAccountPortfolioOverviewDefaultAssetIdParameter,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return AccountPortfolioApiFp(this.configuration)
+      .getAccountPortfolioOverview(userId, accountId, defaultAssetId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Returns paginated transactions scoped to a specific account.
+   * @summary Get Account Transactions
+   * @param {string} userId User id
+   * @param {string} accountId Account id
+   * @param {number} [count] How many items to return in a single page
+   * @param {number} [start] The index in the list of the fist element of the page.
+   * @param {string} [query] The search query
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AccountPortfolioApi
+   */
+  public getAccountTransactions(
+    userId: string,
+    accountId: string,
+    count?: number,
+    start?: number,
+    query?: string,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return AccountPortfolioApiFp(this.configuration)
+      .getAccountTransactions(userId, accountId, count, start, query, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
 }
 
 /**
@@ -11661,14 +12253,14 @@ export const PortfolioApiAxiosParamCreator = function (
      * @summary Get Net Worth History
      * @param {string} userId User id for who to retrieve net worth history
      * @param {string} [range] The range time for which to retrieve the sums for
-     * @param {GetNetworthHistoryDefaultAssetIdParameter} [defaultAssetId] The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
+     * @param {GetAccountNetworthHistoryDefaultAssetIdParameter} [defaultAssetId] The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     getNetworthHistory: async (
       userId: string,
       range?: string,
-      defaultAssetId?: GetNetworthHistoryDefaultAssetIdParameter,
+      defaultAssetId?: GetAccountNetworthHistoryDefaultAssetIdParameter,
       options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
@@ -11720,13 +12312,13 @@ export const PortfolioApiAxiosParamCreator = function (
      * Retunrs information about the entire portfolio and statistics such as gains/losses
      * @summary Get Portfolio Overview
      * @param {string} userId User id for who to retrieve net worth history
-     * @param {GetPortfolioOverviewDefaultAssetIdParameter} defaultAssetId The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
+     * @param {GetAccountPortfolioOverviewDefaultAssetIdParameter} defaultAssetId The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     getPortfolioOverview: async (
       userId: string,
-      defaultAssetId: GetPortfolioOverviewDefaultAssetIdParameter,
+      defaultAssetId: GetAccountPortfolioOverviewDefaultAssetIdParameter,
       options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
@@ -11828,14 +12420,14 @@ export const PortfolioApiFp = function (configuration?: Configuration) {
      * @summary Get Net Worth History
      * @param {string} userId User id for who to retrieve net worth history
      * @param {string} [range] The range time for which to retrieve the sums for
-     * @param {GetNetworthHistoryDefaultAssetIdParameter} [defaultAssetId] The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
+     * @param {GetAccountNetworthHistoryDefaultAssetIdParameter} [defaultAssetId] The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     async getNetworthHistory(
       userId: string,
       range?: string,
-      defaultAssetId?: GetNetworthHistoryDefaultAssetIdParameter,
+      defaultAssetId?: GetAccountNetworthHistoryDefaultAssetIdParameter,
       options?: RawAxiosRequestConfig,
     ): Promise<
       (
@@ -11867,13 +12459,13 @@ export const PortfolioApiFp = function (configuration?: Configuration) {
      * Retunrs information about the entire portfolio and statistics such as gains/losses
      * @summary Get Portfolio Overview
      * @param {string} userId User id for who to retrieve net worth history
-     * @param {GetPortfolioOverviewDefaultAssetIdParameter} defaultAssetId The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
+     * @param {GetAccountPortfolioOverviewDefaultAssetIdParameter} defaultAssetId The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     async getPortfolioOverview(
       userId: string,
-      defaultAssetId: GetPortfolioOverviewDefaultAssetIdParameter,
+      defaultAssetId: GetAccountPortfolioOverviewDefaultAssetIdParameter,
       options?: RawAxiosRequestConfig,
     ): Promise<
       (
@@ -11936,14 +12528,14 @@ export const PortfolioApiFactory = function (
      * @summary Get Net Worth History
      * @param {string} userId User id for who to retrieve net worth history
      * @param {string} [range] The range time for which to retrieve the sums for
-     * @param {GetNetworthHistoryDefaultAssetIdParameter} [defaultAssetId] The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
+     * @param {GetAccountNetworthHistoryDefaultAssetIdParameter} [defaultAssetId] The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     getNetworthHistory(
       userId: string,
       range?: string,
-      defaultAssetId?: GetNetworthHistoryDefaultAssetIdParameter,
+      defaultAssetId?: GetAccountNetworthHistoryDefaultAssetIdParameter,
       options?: RawAxiosRequestConfig,
     ): AxiosPromise<GetNetWorthHistoryResponseViewModel> {
       return localVarFp
@@ -11954,13 +12546,13 @@ export const PortfolioApiFactory = function (
      * Retunrs information about the entire portfolio and statistics such as gains/losses
      * @summary Get Portfolio Overview
      * @param {string} userId User id for who to retrieve net worth history
-     * @param {GetPortfolioOverviewDefaultAssetIdParameter} defaultAssetId The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
+     * @param {GetAccountPortfolioOverviewDefaultAssetIdParameter} defaultAssetId The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     getPortfolioOverview(
       userId: string,
-      defaultAssetId: GetPortfolioOverviewDefaultAssetIdParameter,
+      defaultAssetId: GetAccountPortfolioOverviewDefaultAssetIdParameter,
       options?: RawAxiosRequestConfig,
     ): AxiosPromise<GetPortfolioOverviewViewModel> {
       return localVarFp
@@ -11996,7 +12588,7 @@ export interface PortfolioApiInterface {
    * @summary Get Net Worth History
    * @param {string} userId User id for who to retrieve net worth history
    * @param {string} [range] The range time for which to retrieve the sums for
-   * @param {GetNetworthHistoryDefaultAssetIdParameter} [defaultAssetId] The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
+   * @param {GetAccountNetworthHistoryDefaultAssetIdParameter} [defaultAssetId] The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    * @memberof PortfolioApiInterface
@@ -12004,7 +12596,7 @@ export interface PortfolioApiInterface {
   getNetworthHistory(
     userId: string,
     range?: string,
-    defaultAssetId?: GetNetworthHistoryDefaultAssetIdParameter,
+    defaultAssetId?: GetAccountNetworthHistoryDefaultAssetIdParameter,
     options?: RawAxiosRequestConfig,
   ): AxiosPromise<GetNetWorthHistoryResponseViewModel>;
 
@@ -12012,14 +12604,14 @@ export interface PortfolioApiInterface {
    * Retunrs information about the entire portfolio and statistics such as gains/losses
    * @summary Get Portfolio Overview
    * @param {string} userId User id for who to retrieve net worth history
-   * @param {GetPortfolioOverviewDefaultAssetIdParameter} defaultAssetId The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
+   * @param {GetAccountPortfolioOverviewDefaultAssetIdParameter} defaultAssetId The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    * @memberof PortfolioApiInterface
    */
   getPortfolioOverview(
     userId: string,
-    defaultAssetId: GetPortfolioOverviewDefaultAssetIdParameter,
+    defaultAssetId: GetAccountPortfolioOverviewDefaultAssetIdParameter,
     options?: RawAxiosRequestConfig,
   ): AxiosPromise<GetPortfolioOverviewViewModel>;
 }
@@ -12055,7 +12647,7 @@ export class PortfolioApi extends BaseAPI implements PortfolioApiInterface {
    * @summary Get Net Worth History
    * @param {string} userId User id for who to retrieve net worth history
    * @param {string} [range] The range time for which to retrieve the sums for
-   * @param {GetNetworthHistoryDefaultAssetIdParameter} [defaultAssetId] The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
+   * @param {GetAccountNetworthHistoryDefaultAssetIdParameter} [defaultAssetId] The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    * @memberof PortfolioApi
@@ -12063,7 +12655,7 @@ export class PortfolioApi extends BaseAPI implements PortfolioApiInterface {
   public getNetworthHistory(
     userId: string,
     range?: string,
-    defaultAssetId?: GetNetworthHistoryDefaultAssetIdParameter,
+    defaultAssetId?: GetAccountNetworthHistoryDefaultAssetIdParameter,
     options?: RawAxiosRequestConfig,
   ) {
     return PortfolioApiFp(this.configuration)
@@ -12075,14 +12667,14 @@ export class PortfolioApi extends BaseAPI implements PortfolioApiInterface {
    * Retunrs information about the entire portfolio and statistics such as gains/losses
    * @summary Get Portfolio Overview
    * @param {string} userId User id for who to retrieve net worth history
-   * @param {GetPortfolioOverviewDefaultAssetIdParameter} defaultAssetId The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
+   * @param {GetAccountPortfolioOverviewDefaultAssetIdParameter} defaultAssetId The default asset id to use for retrieving current value of units. If not provided, the default asset id from the user will be used
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    * @memberof PortfolioApi
    */
   public getPortfolioOverview(
     userId: string,
-    defaultAssetId: GetPortfolioOverviewDefaultAssetIdParameter,
+    defaultAssetId: GetAccountPortfolioOverviewDefaultAssetIdParameter,
     options?: RawAxiosRequestConfig,
   ) {
     return PortfolioApiFp(this.configuration)

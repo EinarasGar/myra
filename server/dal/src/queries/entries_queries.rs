@@ -120,6 +120,17 @@ pub fn get_holdings(user_id: Uuid) -> DbQueryWithValues {
 /// ```
 #[tracing::instrument(skip_all)]
 pub fn get_binned_entries(params: GetBinnedEntriesParams) -> DbQueryWithValues {
+    let account_id = params.account_id;
+
+    let sum_expr = if params.apply_ownership_share {
+        Expr::sum(
+            Expr::col((EntryIden::Table, EntryIden::Quantity))
+                .mul(Expr::col((AccountIden::Table, AccountIden::OwnershipShare))),
+        )
+    } else {
+        Expr::sum(Expr::col((EntryIden::Table, EntryIden::Quantity)))
+    };
+
     let scoped_subquery = Query::select()
         .expr_as(
             CustomFunc::date_bin_col(
@@ -130,10 +141,7 @@ pub fn get_binned_entries(params: GetBinnedEntriesParams) -> DbQueryWithValues {
         )
         .column((EntryIden::Table, EntryIden::AssetId))
         .expr_as(
-            Expr::sum(
-                Expr::col((EntryIden::Table, EntryIden::Quantity))
-                    .mul(Expr::col((AccountIden::Table, AccountIden::OwnershipShare))),
-            ),
+            sum_expr.clone(),
             BinnedEntriesIden::Sum,
         )
         .from(EntryIden::Table)
@@ -150,6 +158,9 @@ pub fn get_binned_entries(params: GetBinnedEntriesParams) -> DbQueryWithValues {
                 .equals((AccountIden::Table, AccountIden::Id)),
         )
         .and_where(Expr::col((TransactionIden::Table, TransactionIden::UserId)).eq(params.user_id))
+        .apply_if(account_id, |q, id| {
+            q.and_where(Expr::col((EntryIden::Table, EntryIden::AccountId)).eq(id));
+        })
         .apply_if(params.start_date, |q, v| {
             q.and_where(
                 Expr::col((TransactionIden::Table, TransactionIden::DateTransacted)).gte(
@@ -175,10 +186,7 @@ pub fn get_binned_entries(params: GetBinnedEntriesParams) -> DbQueryWithValues {
                 )
                 .column((EntryIden::Table, EntryIden::AssetId))
                 .expr_as(
-                    Expr::sum(
-                        Expr::col((EntryIden::Table, EntryIden::Quantity))
-                            .mul(Expr::col((AccountIden::Table, AccountIden::OwnershipShare))),
-                    ),
+                    sum_expr,
                     BinnedEntriesIden::Sum,
                 )
                 .from(EntryIden::Table)
@@ -197,6 +205,9 @@ pub fn get_binned_entries(params: GetBinnedEntriesParams) -> DbQueryWithValues {
                 .and_where(
                     Expr::col((TransactionIden::Table, TransactionIden::UserId)).eq(params.user_id),
                 )
+                .apply_if(account_id, |q, id| {
+                    q.and_where(Expr::col((EntryIden::Table, EntryIden::AccountId)).eq(id));
+                })
                 .and_where(
                     Expr::col((TransactionIden::Table, TransactionIden::DateTransacted))
                         .lt(CustomFunc::date_bin_time(params.interval, v)
@@ -212,11 +223,22 @@ pub fn get_binned_entries(params: GetBinnedEntriesParams) -> DbQueryWithValues {
 }
 
 #[tracing::instrument(skip_all)]
-pub fn get_oldest_entry_date(user_id: Uuid) -> DbQueryWithValues {
-    Query::select()
-        .expr(Expr::min(Expr::col(TransactionIden::DateTransacted)))
+pub fn get_oldest_entry_date(user_id: Uuid, account_id: Option<Uuid>) -> DbQueryWithValues {
+    let mut query = Query::select()
+        .expr(Expr::min(Expr::col((TransactionIden::Table, TransactionIden::DateTransacted))))
         .from(TransactionIden::Table)
         .and_where(Expr::col((TransactionIden::Table, TransactionIden::UserId)).eq(user_id))
-        .build_sqlx(PostgresQueryBuilder)
-        .into()
+        .to_owned();
+
+    if let Some(account_id) = account_id {
+        query.join(
+            JoinType::Join,
+            EntryIden::Table,
+            Expr::col((EntryIden::Table, EntryIden::TransactionId))
+                .equals((TransactionIden::Table, TransactionIden::Id)),
+        )
+        .and_where(Expr::col((EntryIden::Table, EntryIden::AccountId)).eq(account_id));
+    }
+
+    query.build_sqlx(PostgresQueryBuilder).into()
 }

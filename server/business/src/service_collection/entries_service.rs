@@ -64,6 +64,8 @@ impl EntriesService {
         &self,
         user_id: Uuid,
         range: Range,
+        account_id: Option<Uuid>,
+        apply_ownership_share: bool,
     ) -> anyhow::Result<impl Iterator<Item = EntriesIntervalSumDto>> {
         let start_time_for_binned = (!range.infinite_start()).then(|| range.start_time());
 
@@ -71,6 +73,8 @@ impl EntriesService {
             interval: range.interval(),
             user_id,
             start_date: start_time_for_binned,
+            account_id,
+            apply_ownership_share,
         };
 
         let query = get_binned_entries(params);
@@ -79,8 +83,8 @@ impl EntriesService {
     }
 
     #[tracing::instrument(skip_all, err)]
-    pub async fn get_oldest_entry_date(&self, user_id: Uuid) -> anyhow::Result<OffsetDateTime> {
-        let query = get_oldest_entry_date(user_id);
+    pub async fn get_oldest_entry_date(&self, user_id: Uuid, account_id: Option<Uuid>) -> anyhow::Result<Option<OffsetDateTime>> {
+        let query = get_oldest_entry_date(user_id, account_id);
         Ok(self.db.fetch_one_scalar(query).await?)
     }
 }

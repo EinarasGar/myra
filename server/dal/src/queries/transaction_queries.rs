@@ -45,6 +45,19 @@ pub fn get_transaction_with_entries(params: GetTransactionWithEntriesParams) -> 
             .and_where(Expr::col((TransactionIden::Table, TransactionIden::UserId)).eq(uuid)),
     };
 
+    if let Some(account_id) = params.account_filter {
+        let account_tx_subquery = Query::select()
+            .column(EntryIden::TransactionId)
+            .from(EntryIden::Table)
+            .and_where(Expr::col(EntryIden::AccountId).eq(account_id))
+            .distinct()
+            .to_owned();
+
+        eligible_transactions_builder.and_where(
+            Expr::col((TransactionIden::Table, TransactionIden::Id)).in_subquery(account_tx_subquery)
+        );
+    }
+
     eligible_transactions_builder
         .order_by(TransactionIden::DateTransacted, sea_query::Order::Desc)
         .order_by(TransactionIden::Id, sea_query::Order::Desc);

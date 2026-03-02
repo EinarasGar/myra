@@ -148,7 +148,7 @@ pub async fn get_networth_history(
     });
 
     let history = portfolio_service
-        .get_full_portfolio_history(user_id, default_asset, range)
+        .get_full_portfolio_history(user_id, default_asset, range, None)
         .await?;
 
     let response = GetNetWorthHistoryResponseViewModel {
@@ -191,7 +191,7 @@ pub async fn get_portfolio_overview(
     };
 
     let overview = portfolio_service
-        .get_portfolio_overview(default_asset, user_id)
+        .get_portfolio_overview(default_asset, user_id, None)
         .await?;
 
     let account_ids = overview

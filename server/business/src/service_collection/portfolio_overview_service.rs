@@ -53,8 +53,12 @@ impl PortfolioOverviewService {
         &self,
         reference_asset_id: AssetIdDto,
         user_id: Uuid,
+        account_id: Option<Uuid>,
     ) -> anyhow::Result<PortfolioOverviewDto> {
-        let query_params = GetTransactionWithEntriesParams::by_user_id_with_ownership(user_id);
+        let query_params = match account_id {
+            Some(acc_id) => GetTransactionWithEntriesParams::by_user_id_for_account(user_id, acc_id),
+            None => GetTransactionWithEntriesParams::by_user_id_with_ownership(user_id),
+        };
 
         let query = transaction_queries::get_transaction_with_entries(query_params);
         let models = self

@@ -6,6 +6,7 @@ pub struct GetTransactionWithEntriesParams {
     pub search_type: GetTransactionWithEntriesParamsSeachType,
     pub paging: Option<PagingParams>,
     pub apply_ownership_share: bool,
+    pub account_filter: Option<Uuid>,
 }
 
 impl GetTransactionWithEntriesParams {
@@ -14,6 +15,7 @@ impl GetTransactionWithEntriesParams {
             search_type: GetTransactionWithEntriesParamsSeachType::ByTransactionId(transaction_id),
             paging: None,
             apply_ownership_share: false,
+            account_filter: None,
         }
     }
 
@@ -24,6 +26,7 @@ impl GetTransactionWithEntriesParams {
             ),
             paging: None,
             apply_ownership_share: false,
+            account_filter: None,
         }
     }
 
@@ -32,6 +35,7 @@ impl GetTransactionWithEntriesParams {
             search_type: GetTransactionWithEntriesParamsSeachType::ByUserId(user_id),
             paging: None,
             apply_ownership_share: false,
+            account_filter: None,
         }
     }
 
@@ -40,6 +44,7 @@ impl GetTransactionWithEntriesParams {
             search_type: GetTransactionWithEntriesParamsSeachType::ByUserId(user_id),
             paging: Some(paging_params),
             apply_ownership_share: false,
+            account_filter: None,
         }
     }
 
@@ -48,6 +53,25 @@ impl GetTransactionWithEntriesParams {
             search_type: GetTransactionWithEntriesParamsSeachType::ByUserId(user_id),
             paging: None,
             apply_ownership_share: true,
+            account_filter: None,
+        }
+    }
+
+    pub fn by_user_id_for_account(user_id: Uuid, account_id: Uuid) -> Self {
+        Self {
+            search_type: GetTransactionWithEntriesParamsSeachType::ByUserId(user_id),
+            paging: None,
+            apply_ownership_share: false,
+            account_filter: Some(account_id),
+        }
+    }
+
+    pub fn by_user_id_paged_with_account(user_id: Uuid, paging_params: PagingParams, account_id: Uuid) -> Self {
+        Self {
+            search_type: GetTransactionWithEntriesParamsSeachType::ByUserId(user_id),
+            paging: Some(paging_params),
+            apply_ownership_share: false,
+            account_filter: Some(account_id),
         }
     }
 }

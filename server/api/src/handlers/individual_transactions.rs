@@ -148,7 +148,7 @@ pub async fn get_individual_transactions(
     };
 
     let dtos = transaction_service
-        .search_transactions(user_id, paging_dto)
+        .search_transactions(user_id, paging_dto, None)
         .await?;
 
     let asset_ids = transaction_dtos_to_asset_ids_hashset(&dtos.results.iter().collect::<Vec<_>>());

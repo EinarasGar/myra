@@ -5,11 +5,12 @@ import {
   useCreateAccount,
   useUpdateAccount,
 } from "@/hooks/api/use-user-account-api";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ExpandedAccount, AccountType, LiquidityType } from "@/types/account";
-import { Pencil, Trash2, Check, X, Loader2 } from "lucide-react";
+import { Eye, Pencil, Trash2, Check, X, Loader2 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { DeleteAccountDialog } from "./delete-account-dialog";
 import AccountTypePicker from "@/components/feature/account-type-picker";
 import AccountLiquidityTypePicker from "@/components/feature/account-liquidity-type-picker";
@@ -311,6 +312,13 @@ export function AccountsCardContent({
                   )}
 
                   <div className="flex items-center gap-1 shrink-0">
+                    <Link
+                      to="/accounts/$accountId"
+                      params={{ accountId: account.id }}
+                      className={buttonVariants({ variant: "ghost", size: "icon", className: "h-8 w-8" })}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Link>
                     <Button
                       variant="ghost"
                       size="icon"

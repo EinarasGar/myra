@@ -113,9 +113,12 @@ impl TransactionManagementService {
         &self,
         user_id: Uuid,
         paging: PagingDto,
+        account_id: Option<Uuid>,
     ) -> anyhow::Result<PageOfResultsDto<TransactionDto>> {
-        let query_params =
-            GetTransactionWithEntriesParams::by_user_id_paged(user_id, paging.into());
+        let query_params = match account_id {
+            Some(acc_id) => GetTransactionWithEntriesParams::by_user_id_paged_with_account(user_id, paging.into(), acc_id),
+            None => GetTransactionWithEntriesParams::by_user_id_paged(user_id, paging.into()),
+        };
 
         let query = transaction_queries::get_transaction_with_entries(query_params);
         let counted_models = self

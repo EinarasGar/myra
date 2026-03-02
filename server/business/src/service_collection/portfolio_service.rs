@@ -32,12 +32,16 @@ impl PortfolioService {
         user_id: Uuid,
         reference_asset: AssetIdDto,
         range_dto: RangeDto,
+        account_id: Option<Uuid>,
     ) -> anyhow::Result<Vec<AssetRateDto>> {
         let range = match range_dto.clone().try_into() {
             Ok(r) => r,
             Err(RangeError::StartDateNotSpecified) => {
-                let oldest_date = self.entries_service.get_oldest_entry_date(user_id).await?;
-                Range::try_from_with_time(range_dto.clone(), oldest_date)?
+                let oldest_date = self.entries_service.get_oldest_entry_date(user_id, account_id).await?;
+                match oldest_date {
+                    Some(date) => Range::try_from_with_time(range_dto.clone(), date)?,
+                    None => return Ok(vec![]),
+                }
             }
             Err(err) => return Err(err.into()),
         };
@@ -48,7 +52,7 @@ impl PortfolioService {
 
         let scoped_sums = self
             .entries_service
-            .get_entries_interval_sums(user_id, range)
+            .get_entries_interval_sums(user_id, range, account_id, account_id.is_none())
             .await?;
 
         net_worth_history.add_entries(scoped_sums);

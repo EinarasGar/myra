@@ -1,3 +1,4 @@
+pub mod account_portfolio_handler;
 pub mod accounts_handler;
 pub mod asset_handler;
 pub mod auth_handler;
