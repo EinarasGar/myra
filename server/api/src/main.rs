@@ -20,6 +20,17 @@ pub(crate) mod view_models;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Generate OpenAPI spec to stdout and exit (no DB/server needed)
+    if env::args().any(|arg| arg == "--openapi") {
+        use utoipa::OpenApi;
+        let spec = openapi::ApiDoc::openapi();
+        let json = spec
+            .to_pretty_json()
+            .expect("Failed to serialize OpenAPI spec to JSON");
+        print!("{}", json);
+        return Ok(());
+    }
+
     dotenvy::dotenv().ok();
     color_eyre::install()?;
 

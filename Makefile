@@ -79,10 +79,10 @@ import-db: ## Import database data from db_dump.sql (truncates existing data fir
 # API Generation
 .PHONY: generate-api
 generate-api: ## Generate TypeScript API client from OpenAPI spec
-	@echo "$(GREEN)Downloading OpenAPI spec from localhost:$(SERVER_PORT)...$(NC)"
+	@echo "$(GREEN)Compiling and generating OpenAPI spec...$(NC)"
 	@TEMP_FILE=$$(mktemp /tmp/openapi.XXXXXX.json); \
-	if curl -f -s http://localhost:$(SERVER_PORT)/api-docs/openapi.json -o $$TEMP_FILE; then \
-		echo "$(GREEN)OpenAPI spec downloaded successfully$(NC)"; \
+	if (cd server && cargo run -p api -- --openapi) > $$TEMP_FILE 2>/dev/null; then \
+		echo "$(GREEN)OpenAPI spec generated successfully$(NC)"; \
 		echo "$(YELLOW)Converting anyOf to oneOf...$(NC)"; \
 		sed -i '' 's/"anyOf"/"oneOf"/g' $$TEMP_FILE; \
 		echo "$(GREEN)Generating API client...$(NC)"; \
@@ -98,8 +98,8 @@ generate-api: ## Generate TypeScript API client from OpenAPI spec
 		bunx prettier --write "src/api/**/*.ts"; \
 		echo "$(GREEN)API client generated successfully!$(NC)"; \
 	else \
-		echo "$(RED)Error: Cannot download OpenAPI spec from http://localhost:$(SERVER_PORT)/api-docs/openapi.json$(NC)"; \
-		echo "$(RED)Make sure the web server is running on port $(SERVER_PORT)$(NC)"; \
+		echo "$(RED)Error: Failed to generate OpenAPI spec. Check Rust compilation errors:$(NC)"; \
+		(cd server && cargo run -p api -- --openapi) 2>&1 || true; \
 		rm -f $$TEMP_FILE; \
 		exit 1; \
 	fi
