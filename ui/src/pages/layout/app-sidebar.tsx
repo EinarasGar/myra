@@ -1,6 +1,7 @@
 import * as React from "react";
 import {
   Briefcase,
+  Coins,
   Frame,
   Settings2,
   SquareTerminal,
@@ -48,6 +49,22 @@ const navMain = [
       {
         title: "Overview",
         url: "/portfolio-overview",
+      },
+    ],
+  },
+  {
+    title: "Assets",
+    url: "/user-assets",
+    icon: Coins,
+    items: [
+      {
+        title: "User Assets",
+        url: "/user-assets",
+      },
+      {
+        title: "Global Assets",
+        url: "#",
+        disabled: true,
       },
     ],
   },

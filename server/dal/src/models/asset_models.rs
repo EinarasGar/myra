@@ -120,3 +120,9 @@ pub struct AssetPairRateInsert {
     pub rate: Decimal,
     pub recorded_at: OffsetDateTime,
 }
+
+#[derive(sqlx::FromRow, Debug)]
+pub struct AssetTypeModel {
+    pub id: i32,
+    pub asset_type_name: String,
+}

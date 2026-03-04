@@ -1,7 +1,17 @@
 use crate::view_models::assets::{
     delete_asset_pair_rates::DeleteAssetPairRatesParams,
     get_asset_pair_rates::GetAssetPairRatesRequestParams,
+    get_assets::GetAssetsLineResponseViewModel,
+    get_user_assets::GetUserAssetsResponseViewModel,
+    add_asset_pair::{AddAssetPairRequestViewModel, AddAssetPairResponseViewModel},
+    base_models::{
+        asset_type::IdentifiableAssetTypeViewModel,
+        asset_type_id::RequiredAssetTypeId,
+        lookup::AssetLookupTables,
+        asset_metadata::AssetPairInfoViewModel,
+    },
 };
+use std::collections::HashSet;
 use axum::{
     extract::Path,
     Json,
@@ -10,6 +20,7 @@ use business::dtos::{
     add_custom_asset_dto::AddCustomAssetDto,
     asset_pair_rate_insert_dto::AssetPairRateInsertDto,
     assets::{asset_id_dto::AssetIdDto, asset_pair_ids_dto::AssetPairIdsDto, update_asset_dto::UpdateAssetDto},
+    net_worth::range_dto::RangeDto,
 };
 use uuid::Uuid;
 
@@ -17,7 +28,6 @@ use crate::{
     auth::AuthenticatedUserState,
     errors::{auth::AuthError, ApiError},
     extractors::{ValidatedJson, ValidatedQuery},
-    parsers::parse_duration_string,
     states::{AssetRatesServiceState, AssetsServiceState},
     view_models::assets::base_models::exchange_name::ExchangeName,
     view_models::assets::{
@@ -75,16 +85,53 @@ pub async fn get_user_asset(
 
     let asset_dto = assets_service.get_asset_with_metadata(id).await?;
 
+    let base_asset_id = asset_dto.base_asset_id.0;
+    let pair_ids: Vec<i32> = asset_dto
+        .pairs
+        .as_ref()
+        .map(|p| p.iter().map(|x| x.0).collect())
+        .unwrap_or_default();
+
+    // Collect all IDs to fetch: pair IDs + base asset ID
+    let mut all_ids: HashSet<i32> = pair_ids.iter().copied().collect();
+    all_ids.insert(base_asset_id);
+
+    let fetched_assets = if !all_ids.is_empty() {
+        assets_service.get_assets(all_ids).await?
+    } else {
+        vec![]
+    };
+
+    let asset_map: std::collections::HashMap<i32, _> = fetched_assets
+        .into_iter()
+        .map(|a| (a.id.0, a))
+        .collect();
+
+    let pair_infos: Vec<AssetPairInfoViewModel> = pair_ids
+        .iter()
+        .filter_map(|id| {
+            asset_map.get(id).map(|a| AssetPairInfoViewModel {
+                asset_id: RequiredAssetId(a.id.0),
+                ticker: a.ticker.clone(),
+                name: a.name.clone(),
+            })
+        })
+        .collect();
+
+    let base_asset_info = asset_map
+        .get(&base_asset_id)
+        .map(|a| AssetPairInfoViewModel {
+            asset_id: RequiredAssetId(a.id.0),
+            ticker: a.ticker.clone(),
+            name: a.name.clone(),
+        })
+        .ok_or_else(|| anyhow::anyhow!("Base asset not found"))?;
+
     let ret = GetAssetResponseViewModel {
         asset: asset_dto.asset.into(),
         metadata: AssetMetadataViewModel {
-            base_asset_id: RequiredAssetId(asset_dto.base_asset_id.0),
-            pairs: asset_dto
-                .pairs
-                .unwrap_or_default()
-                .iter()
-                .map(|x| RequiredAssetId(x.0))
-                .collect(),
+            base_asset: base_asset_info,
+            pairs: pair_infos,
         },
     };
 
@@ -187,11 +234,11 @@ pub async fn get_user_asset_pair_rates(
         return Err(AuthError::Unauthorized.into());
     }
 
-    let duration = parse_duration_string(query_params.range.clone())?;
+    let range = RangeDto::StringBased(query_params.range.clone());
     let rates = asset_rates_service
-        .get_pairs_by_duration_direct(
+        .get_pairs_by_range_direct(
             AssetPairIdsDto::new(AssetIdDto(pair1), AssetIdDto(pair2)),
-            duration,
+            range,
         )
         .await?;
 
@@ -536,4 +583,97 @@ pub async fn delete_asset(
 ) -> Result<(), ApiError> {
     assets_service.delete_asset(user_id, asset_id).await?;
     Ok(())
+}
+
+/// List user assets
+///
+/// Gets all custom assets created by the user. Returns unpaginated results with lookup tables.
+#[utoipa::path(
+    get,
+    path = "/api/users/{user_id}/assets",
+    tag = "User Assets",
+    params(
+        ("user_id" = Uuid, Path, description = "Id of the user whose assets to list."),
+    ),
+    responses(
+        (status = 200, description = "User assets retrieved successfully.", body = GetUserAssetsResponseViewModel),
+        GetResponses
+    ),
+    security(
+        ("auth_token" = [])
+    )
+)]
+#[tracing::instrument(skip_all, err)]
+pub async fn get_user_assets(
+    Path(user_id): Path<Uuid>,
+    AssetsServiceState(assets_service): AssetsServiceState,
+    AuthenticatedUserState(_auth): AuthenticatedUserState,
+) -> Result<Json<GetUserAssetsResponseViewModel>, ApiError> {
+    let assets = assets_service.get_all_user_assets(user_id).await?;
+
+    let mut map: std::collections::HashMap<i32, IdentifiableAssetTypeViewModel> = std::collections::HashMap::new();
+    for x in &assets {
+        map.entry(x.asset_type.id)
+            .or_insert_with(|| IdentifiableAssetTypeViewModel {
+                name: x.asset_type.name.clone(),
+                id: RequiredAssetTypeId(x.asset_type.id),
+            });
+    }
+    let metadata: Vec<IdentifiableAssetTypeViewModel> = map.into_values().collect();
+
+    let asset_view_models: Vec<GetAssetsLineResponseViewModel> = assets
+        .into_iter()
+        .map(|x| GetAssetsLineResponseViewModel { asset: x.into() })
+        .collect();
+
+    let ret = GetUserAssetsResponseViewModel {
+        results: asset_view_models,
+        lookup_tables: AssetLookupTables {
+            asset_types: metadata,
+        },
+    };
+
+    Ok(ret.into())
+}
+
+/// Add user asset pair
+///
+/// Adds a new reference pair to an existing user asset.
+#[utoipa::path(
+    post,
+    path = "/api/users/{user_id}/assets/{asset_id}/pairs",
+    tag = "User Assets",
+    params(
+        ("user_id" = Uuid, Path, description = "Id of the user who owns the asset."),
+        ("asset_id" = i32, Path, description = "Id of the user asset."),
+    ),
+    request_body (
+        content = AddAssetPairRequestViewModel,
+    ),
+    responses(
+        (status = 201, description = "Asset pair created successfully.", body = AddAssetPairResponseViewModel),
+        CreateResponses
+    ),
+    security(
+        ("auth_token" = [])
+    )
+)]
+#[tracing::instrument(skip_all, err)]
+pub async fn post_asset_pair(
+    Path((user_id, asset_id)): Path<(Uuid, i32)>,
+    AssetsServiceState(assets_service): AssetsServiceState,
+    AuthenticatedUserState(_auth): AuthenticatedUserState,
+    ValidatedJson(params): ValidatedJson<AddAssetPairRequestViewModel>,
+) -> Result<Json<AddAssetPairResponseViewModel>, ApiError> {
+    assets_service
+        .add_asset_pair(user_id, asset_id, params.reference_id.0)
+        .await?;
+
+    let ret = AddAssetPairResponseViewModel {
+        main_asset_id: RequiredAssetId(asset_id),
+        reference_asset_id: params.reference_id,
+        metadata: None,
+        user_metadata: None,
+    };
+    Ok(ret.into())
 }

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use axum::{
     extract::Path,
@@ -6,20 +6,21 @@ use axum::{
 };
 use business::dtos::{
     assets::{asset_id_dto::AssetIdDto, asset_pair_ids_dto::AssetPairIdsDto},
+    net_worth::range_dto::RangeDto,
     paging_dto::PagingDto,
 };
 
+use crate::view_models::assets::get_asset_types::GetAssetTypesResponseViewModel;
 use crate::{
     auth::AuthenticatedUserState,
     errors::ApiError,
     extractors::ValidatedQuery,
-    parsers::parse_duration_string,
     states::{AssetRatesServiceState, AssetsServiceState},
     view_models::errors::GetResponses,
     view_models::{
         assets::{
             base_models::{
-                asset_id::RequiredAssetId, asset_metadata::AssetMetadataViewModel,
+                asset_id::RequiredAssetId, asset_metadata::{AssetMetadataViewModel, AssetPairInfoViewModel},
                 asset_pair_metadata::AssetPairMetadataViewModel,
                 asset_type::IdentifiableAssetTypeViewModel, asset_type_id::RequiredAssetTypeId,
                 lookup::AssetLookupTables, rate::AssetRateViewModel,
@@ -126,16 +127,53 @@ pub async fn get_asset(
 ) -> Result<Json<GetAssetResponseViewModel>, ApiError> {
     let asset_dto = assets_service.get_asset_with_metadata(id).await?;
 
+    let base_asset_id = asset_dto.base_asset_id.0;
+    let pair_ids: Vec<i32> = asset_dto
+        .pairs
+        .as_ref()
+        .map(|p| p.iter().map(|x| x.0).collect())
+        .unwrap_or_default();
+
+    // Collect all IDs to fetch: pair IDs + base asset ID
+    let mut all_ids: HashSet<i32> = pair_ids.iter().copied().collect();
+    all_ids.insert(base_asset_id);
+
+    let fetched_assets = if !all_ids.is_empty() {
+        assets_service.get_assets(all_ids).await?
+    } else {
+        vec![]
+    };
+
+    let asset_map: std::collections::HashMap<i32, _> = fetched_assets
+        .into_iter()
+        .map(|a| (a.id.0, a))
+        .collect();
+
+    let pair_infos: Vec<AssetPairInfoViewModel> = pair_ids
+        .iter()
+        .filter_map(|id| {
+            asset_map.get(id).map(|a| AssetPairInfoViewModel {
+                asset_id: RequiredAssetId(a.id.0),
+                ticker: a.ticker.clone(),
+                name: a.name.clone(),
+            })
+        })
+        .collect();
+
+    let base_asset_info = asset_map
+        .get(&base_asset_id)
+        .map(|a| AssetPairInfoViewModel {
+            asset_id: RequiredAssetId(a.id.0),
+            ticker: a.ticker.clone(),
+            name: a.name.clone(),
+        })
+        .ok_or_else(|| anyhow::anyhow!("Base asset not found"))?;
+
     let ret = GetAssetResponseViewModel {
         asset: asset_dto.asset.into(),
         metadata: AssetMetadataViewModel {
-            base_asset_id: RequiredAssetId(asset_dto.base_asset_id.0),
-            pairs: asset_dto
-                .pairs
-                .unwrap()
-                .iter()
-                .map(|x| RequiredAssetId(x.0))
-                .collect(),
+            base_asset: base_asset_info,
+            pairs: pair_infos,
         },
     };
 
@@ -221,11 +259,11 @@ pub async fn get_asset_pair_rates(
     AssetRatesServiceState(asset_rates_service): AssetRatesServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetAssetPairRatesResponseViewModel>, ApiError> {
-    let duration = parse_duration_string(query_params.range.clone())?;
+    let range = RangeDto::StringBased(query_params.range.clone());
     let rates = asset_rates_service
-        .get_pairs_by_duration_direct(
+        .get_pairs_by_range_direct(
             AssetPairIdsDto::new(AssetIdDto(id), AssetIdDto(reference_id)),
-            duration,
+            range,
         )
         .await?;
 
@@ -236,5 +274,31 @@ pub async fn get_asset_pair_rates(
         range: query_params.range.clone(),
     };
 
+    Ok(ret.into())
+}
+
+/// Get asset types
+///
+/// Retrieves all available asset types
+#[utoipa::path(
+    get,
+    path = "/api/assets/types",
+    tag = "Assets",
+    responses(
+        (status = 200, description = "List of available asset types.", body = GetAssetTypesResponseViewModel),
+        GetResponses
+    ),
+    security(
+        ("auth_token" = [])
+    )
+)]
+#[tracing::instrument(skip_all, err)]
+pub async fn get_asset_types(
+    AssetsServiceState(assets_service): AssetsServiceState,
+) -> Result<Json<GetAssetTypesResponseViewModel>, ApiError> {
+    let dtos = assets_service.get_asset_types().await?;
+    let ret = GetAssetTypesResponseViewModel {
+        asset_types: dtos.into_iter().map(Into::into).collect(),
+    };
     Ok(ret.into())
 }

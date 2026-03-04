@@ -2,8 +2,8 @@ use std::collections::{HashMap, HashSet};
 
 use sea_query::{
     extension::postgres::PgExpr, Alias, Asterisk, CommonTableExpression, Cond, Expr, ExprTrait,
-    Func, OnConflict, Order, PostgresQueryBuilder, Query, QueryStatementBuilder, SimpleExpr,
-    Value, WindowStatement, WithClause,
+    Func, OnConflict, Order, PostgresQueryBuilder, Query, QueryStatementBuilder, SimpleExpr, Value,
+    WindowStatement, WithClause,
 };
 use sea_query_sqlx::SqlxBinder;
 use sqlx::types::{time::OffsetDateTime, Uuid};
@@ -13,8 +13,8 @@ use crate::{
     idens::{
         asset_idens::{
             AssetHistoryCalculationIden, AssetHistoryIden, AssetPairSharedMetadataIden,
-            AssetPairUserMetadataIden, AssetPairsIden, AssetTypesIden, AssetsAliasIden,
-            AssetsIden, OrdinalIden,
+            AssetPairUserMetadataIden, AssetPairsIden, AssetTypesIden, AssetsAliasIden, AssetsIden,
+            OrdinalIden,
         },
         ArrayFunc, CustomFunc, Unnest,
     },
@@ -71,14 +71,25 @@ pub fn get_public_assets(page_length: u64, page: u64, search: Option<String>) ->
 }
 
 #[tracing::instrument(skip_all)]
+pub fn get_asset_types() -> DbQueryWithValues {
+    Query::select()
+        .columns(vec![AssetTypesIden::Id, AssetTypesIden::AssetTypeName])
+        .from(AssetTypesIden::Table)
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
 pub fn get_users_assets(user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .column((AssetsIden::Table, AssetsIden::Id))
         .column((AssetsIden::Table, AssetsIden::AssetName))
+        .column((AssetsIden::Table, AssetsIden::AssetType))
         .column((AssetsIden::Table, AssetsIden::Ticker))
+        .column((AssetsIden::Table, AssetsIden::UserId))
         .expr_as(
             Expr::col((AssetTypesIden::Table, AssetTypesIden::AssetTypeName)),
-            Alias::new("category"),
+            Alias::new("asset_type_name"),
         )
         .from(AssetsIden::Table)
         .inner_join(
@@ -203,7 +214,7 @@ pub fn get_rates(params: GetRatesParams) -> DbQueryWithValues {
         GetRatesSeachType::ByPairs(_hash_set) => todo!(),
     }
 
-    if let Some(interval) = params.interval {
+    if let Some(interval) = params.start_end {
         builder
             .and_where(Expr::col(AssetHistoryIden::RecordedAt).lte(interval.end_date))
             .and_where(Expr::col(AssetHistoryIden::RecordedAt).gte(interval.start_date));
@@ -641,10 +652,7 @@ pub fn get_pair_prices_by_dates(pair_dates: Vec<AssetPairDate>) -> DbQueryWithVa
             Func::cust(Unnest).arg(target_date_array),
             AssetHistoryIden::RecordedAt,
         )
-        .expr_as(
-            Func::cust(Unnest).arg(ord_array),
-            OrdinalIden::Ord,
-        )
+        .expr_as(Func::cust(Unnest).arg(ord_array), OrdinalIden::Ord)
         .to_owned();
 
     let base_pairs_query = Query::select()
@@ -697,10 +705,7 @@ pub fn get_pair_prices_by_dates(pair_dates: Vec<AssetPairDate>) -> DbQueryWithVa
             AssetsAliasIden::PairsDatesList,
             AssetHistoryIden::RecordedAt,
         ))
-        .column((
-            AssetsAliasIden::PairsDatesList,
-            OrdinalIden::Ord,
-        ))
+        .column((AssetsAliasIden::PairsDatesList, OrdinalIden::Ord))
         .from_subquery(asset_pairs_dates, AssetsAliasIden::PairsDatesList)
         .join_subquery(
             sea_query::JoinType::LeftJoin,

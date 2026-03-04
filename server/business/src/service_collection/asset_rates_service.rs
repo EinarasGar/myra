@@ -17,8 +17,9 @@ use crate::dtos::{
     asset_id_date_dto::AssetIdDateDto, asset_pair_date_dto::AssetPairDateDto,
     asset_pair_rate_dto::AssetPairRateDto, asset_pair_rate_insert_dto::AssetPairRateInsertDto,
     asset_rate_dto::AssetRateDto, assets::asset_id_dto::AssetIdDto,
-    assets::asset_pair_ids_dto::AssetPairIdsDto,
+    assets::asset_pair_ids_dto::AssetPairIdsDto, net_worth::range_dto::RangeDto,
 };
+use crate::entities::range::{Range, RangeError};
 
 use time::OffsetDateTime;
 
@@ -131,24 +132,31 @@ impl AssetRatesService {
     }
 
     #[tracing::instrument(skip_all, err)]
-    pub async fn get_pairs_by_duration_direct(
+    pub async fn get_pairs_by_range_direct(
         &self,
         pair: AssetPairIdsDto,
-        duration: Duration,
+        range_dto: RangeDto,
     ) -> anyhow::Result<Vec<AssetRateDto>> {
+        let start_end = match Range::try_from(range_dto) {
+            Ok(range) => Some(GetRatesTimeParams {
+                start_date: range.start_time(),
+                end_date: range.end_time(),
+            }),
+            Err(RangeError::StartDateNotSpecified) => None,
+            Err(err) => return Err(err.into()),
+        };
+
         let params = GetRatesParams {
             search_type: GetRatesSeachType::ByPair(pair.pair1.0, pair.pair2.0),
-            interval: Some(GetRatesTimeParams {
-                start_date: time::OffsetDateTime::now_utc() - duration,
-                end_date: time::OffsetDateTime::now_utc(),
-            }),
+            start_end,
             ..Default::default()
         };
 
         let query = asset_queries::get_rates(params);
         let ret = self.db.fetch_all::<AssetRate>(query).await?;
 
-        let result: Vec<AssetRateDto> = ret.into_iter().map(|x| x.into()).collect();
+        let mut result: Vec<AssetRateDto> = ret.into_iter().map(|x| x.into()).collect();
+        result.reverse();
 
         Ok(result)
     }

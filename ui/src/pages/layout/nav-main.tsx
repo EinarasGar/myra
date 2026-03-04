@@ -28,6 +28,7 @@ export function NavMain({
     items?: {
       title: string;
       url: string;
+      disabled?: boolean;
     }[];
   }[];
 }) {
@@ -55,7 +56,10 @@ export function NavMain({
                 <SidebarMenuSub>
                   {item.items?.map((subItem) => (
                     <SidebarMenuSubItem key={subItem.title}>
-                      <SidebarMenuSubButton render={<Link to={subItem.url} />}>
+                      <SidebarMenuSubButton
+                        render={<Link to={subItem.url} />}
+                        className={subItem.disabled ? "opacity-50 pointer-events-none" : ""}
+                      >
                         {subItem.title}
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>

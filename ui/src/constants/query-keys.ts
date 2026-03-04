@@ -14,4 +14,9 @@ export const QueryKeys = {
   ACCOUNT_PORTFOLIO_HISTORY: "account-portfolio-history",
   ACCOUNT_PORTFOLIO_OVERVIEW: "account-portfolio-overview",
   ACCOUNT_TRANSACTIONS: "account-transactions",
+  USER_ASSETS: "user-assets",
+  USER_ASSET_DETAIL: "user-asset-detail",
+  USER_ASSET_PAIR: "user-asset-pair",
+  USER_ASSET_PAIR_RATES: "user-asset-pair-rates",
+  ASSET_TYPES: "asset-types",
 };

@@ -4,12 +4,17 @@ use utoipa::ToSchema;
 use super::asset_id::RequiredAssetId;
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-pub struct AssetMetadataViewModel {
-    /// Id of the asset paired to this asset by default.
-    #[schema(example = 2)]
-    pub base_asset_id: RequiredAssetId,
+pub struct AssetPairInfoViewModel {
+    pub asset_id: RequiredAssetId,
+    pub ticker: String,
+    pub name: String,
+}
 
-    /// Ids of available second assets paired to this asset.
-    #[schema(example = json!(vec![2,4]))]
-    pub pairs: Vec<RequiredAssetId>,
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+pub struct AssetMetadataViewModel {
+    /// The asset paired to this asset by default, with resolved ticker and name.
+    pub base_asset: AssetPairInfoViewModel,
+
+    /// Available pairs with resolved ticker and name info.
+    pub pairs: Vec<AssetPairInfoViewModel>,
 }

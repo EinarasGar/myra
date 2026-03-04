@@ -4,7 +4,7 @@ use sqlx::types::time::OffsetDateTime;
 
 pub struct GetRatesParams {
     pub search_type: GetRatesSeachType,
-    pub interval: Option<GetRatesTimeParams>,
+    pub start_end: Option<GetRatesTimeParams>,
     pub limit: Option<u64>,
 }
 
@@ -12,7 +12,7 @@ impl Default for GetRatesParams {
     fn default() -> Self {
         Self {
             search_type: GetRatesSeachType::All,
-            interval: None,
+            start_end: None,
             limit: None,
         }
     }

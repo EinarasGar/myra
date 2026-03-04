@@ -688,6 +688,50 @@ export interface AddAssetPairRatesResponseViewModel {
 /**
  *
  * @export
+ * @interface AddAssetPairRequestViewModel
+ */
+export interface AddAssetPairRequestViewModel {
+  /**
+   *
+   * @type {number}
+   * @memberof AddAssetPairRequestViewModel
+   */
+  reference_id: number;
+}
+/**
+ *
+ * @export
+ * @interface AddAssetPairResponseViewModel
+ */
+export interface AddAssetPairResponseViewModel {
+  /**
+   *
+   * @type {number}
+   * @memberof AddAssetPairResponseViewModel
+   */
+  main_asset_id: number;
+  /**
+   *
+   * @type {AssetPairMetadataViewModel}
+   * @memberof AddAssetPairResponseViewModel
+   */
+  metadata?: AssetPairMetadataViewModel | null;
+  /**
+   *
+   * @type {number}
+   * @memberof AddAssetPairResponseViewModel
+   */
+  reference_asset_id: number;
+  /**
+   *
+   * @type {UserAssetPairMetadataViewModel}
+   * @memberof AddAssetPairResponseViewModel
+   */
+  user_metadata?: UserAssetPairMetadataViewModel | null;
+}
+/**
+ *
+ * @export
  * @interface AddAssetRequestViewModel
  */
 export interface AddAssetRequestViewModel {
@@ -1954,17 +1998,42 @@ export interface AssetLookupTables {
  */
 export interface AssetMetadataViewModel {
   /**
+   * The asset paired to this asset by default, with resolved ticker and name.
+   * @type {AssetPairInfoViewModel}
+   * @memberof AssetMetadataViewModel
+   */
+  base_asset: AssetPairInfoViewModel;
+  /**
+   * Available pairs with resolved ticker and name info.
+   * @type {Array<AssetPairInfoViewModel>}
+   * @memberof AssetMetadataViewModel
+   */
+  pairs: Array<AssetPairInfoViewModel>;
+}
+/**
+ *
+ * @export
+ * @interface AssetPairInfoViewModel
+ */
+export interface AssetPairInfoViewModel {
+  /**
    *
    * @type {number}
-   * @memberof AssetMetadataViewModel
+   * @memberof AssetPairInfoViewModel
    */
-  base_asset_id: number;
+  asset_id: number;
   /**
-   * Ids of available second assets paired to this asset.
-   * @type {Array<number>}
-   * @memberof AssetMetadataViewModel
+   *
+   * @type {string}
+   * @memberof AssetPairInfoViewModel
    */
-  pairs: Array<number>;
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof AssetPairInfoViewModel
+   */
+  ticker: string;
 }
 /**
  *
@@ -6722,17 +6791,30 @@ export interface GetAssetResponseViewModel {
    */
   ticker: string;
   /**
-   *
-   * @type {number}
+   * The asset paired to this asset by default, with resolved ticker and name.
+   * @type {AssetPairInfoViewModel}
    * @memberof GetAssetResponseViewModel
    */
-  base_asset_id: number;
+  base_asset: AssetPairInfoViewModel;
   /**
-   * Ids of available second assets paired to this asset.
-   * @type {Array<number>}
+   * Available pairs with resolved ticker and name info.
+   * @type {Array<AssetPairInfoViewModel>}
    * @memberof GetAssetResponseViewModel
    */
-  pairs: Array<number>;
+  pairs: Array<AssetPairInfoViewModel>;
+}
+/**
+ *
+ * @export
+ * @interface GetAssetTypesResponseViewModel
+ */
+export interface GetAssetTypesResponseViewModel {
+  /**
+   *
+   * @type {Array<IdentifiableAssetTypeViewModel>}
+   * @memberof GetAssetTypesResponseViewModel
+   */
+  asset_types: Array<IdentifiableAssetTypeViewModel>;
 }
 /**
  *
@@ -7027,6 +7109,25 @@ export interface GetUserAssetPairResponseViewModel {
    * @memberof GetUserAssetPairResponseViewModel
    */
   user_metadata?: UserAssetPairMetadataViewModel | null;
+}
+/**
+ *
+ * @export
+ * @interface GetUserAssetsResponseViewModel
+ */
+export interface GetUserAssetsResponseViewModel {
+  /**
+   *
+   * @type {AssetLookupTables}
+   * @memberof GetUserAssetsResponseViewModel
+   */
+  lookup_tables: AssetLookupTables;
+  /**
+   *
+   * @type {Array<GetAssetsLineResponseViewModel>}
+   * @memberof GetUserAssetsResponseViewModel
+   */
+  results: Array<GetAssetsLineResponseViewModel>;
 }
 /**
  *
@@ -10494,6 +10595,49 @@ export const AssetsApiAxiosParamCreator = function (
       };
     },
     /**
+     * Retrieves all available asset types
+     * @summary Get asset types
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getAssetTypes: async (
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      const localVarPath = `/api/assets/types`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
      * Query to search shared assets. Returns a page of results. If no query parameters are provided, returns results sorted by most popular. The equivalent search endpoint for the user assets is not provided, as user assets can be retrieved in full due to it being a small subset.
      * @summary Search assets
      * @param {number} [count] How many items to return in a single page
@@ -10673,6 +10817,35 @@ export const AssetsApiFp = function (configuration?: Configuration) {
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
+     * Retrieves all available asset types
+     * @summary Get asset types
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getAssetTypes(
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<GetAssetTypesResponseViewModel>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.getAssetTypes(options);
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["AssetsApi.getAssetTypes"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
      * Query to search shared assets. Returns a page of results. If no query parameters are provided, returns results sorted by most popular. The equivalent search endpoint for the user assets is not provided, as user assets can be retrieved in full due to it being a small subset.
      * @summary Search assets
      * @param {number} [count] How many items to return in a single page
@@ -10777,6 +10950,19 @@ export const AssetsApiFactory = function (
         .then((request) => request(axios, basePath));
     },
     /**
+     * Retrieves all available asset types
+     * @summary Get asset types
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getAssetTypes(
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<GetAssetTypesResponseViewModel> {
+      return localVarFp
+        .getAssetTypes(options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
      * Query to search shared assets. Returns a page of results. If no query parameters are provided, returns results sorted by most popular. The equivalent search endpoint for the user assets is not provided, as user assets can be retrieved in full due to it being a small subset.
      * @summary Search assets
      * @param {number} [count] How many items to return in a single page
@@ -10848,6 +11034,17 @@ export interface AssetsApiInterface {
     range?: string,
     options?: RawAxiosRequestConfig,
   ): AxiosPromise<GetAssetPairRatesResponseViewModel>;
+
+  /**
+   * Retrieves all available asset types
+   * @summary Get asset types
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AssetsApiInterface
+   */
+  getAssetTypes(
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<GetAssetTypesResponseViewModel>;
 
   /**
    * Query to search shared assets. Returns a page of results. If no query parameters are provided, returns results sorted by most popular. The equivalent search endpoint for the user assets is not provided, as user assets can be retrieved in full due to it being a small subset.
@@ -10925,6 +11122,19 @@ export class AssetsApi extends BaseAPI implements AssetsApiInterface {
   ) {
     return AssetsApiFp(this.configuration)
       .getAssetPairRates(assetId, referenceId, range, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Retrieves all available asset types
+   * @summary Get asset types
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AssetsApi
+   */
+  public getAssetTypes(options?: RawAxiosRequestConfig) {
+    return AssetsApiFp(this.configuration)
+      .getAssetTypes(options)
       .then((request) => request(this.axios, this.basePath));
   }
 
@@ -14276,6 +14486,124 @@ export const UserAssetsApiAxiosParamCreator = function (
       };
     },
     /**
+     * Gets all custom assets created by the user. Returns unpaginated results with lookup tables.
+     * @summary List user assets
+     * @param {string} userId Id of the user whose assets to list.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getUserAssets: async (
+      userId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("getUserAssets", "userId", userId);
+      const localVarPath = `/api/users/{user_id}/assets`.replace(
+        `{${"user_id"}}`,
+        encodeURIComponent(String(userId)),
+      );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Adds a new reference pair to an existing user asset.
+     * @summary Add user asset pair
+     * @param {string} userId Id of the user who owns the asset.
+     * @param {number} assetId Id of the user asset.
+     * @param {AddAssetPairRequestViewModel} addAssetPairRequestViewModel
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    postAssetPair: async (
+      userId: string,
+      assetId: number,
+      addAssetPairRequestViewModel: AddAssetPairRequestViewModel,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("postAssetPair", "userId", userId);
+      // verify required parameter 'assetId' is not null or undefined
+      assertParamExists("postAssetPair", "assetId", assetId);
+      // verify required parameter 'addAssetPairRequestViewModel' is not null or undefined
+      assertParamExists(
+        "postAssetPair",
+        "addAssetPairRequestViewModel",
+        addAssetPairRequestViewModel,
+      );
+      const localVarPath = `/api/users/{user_id}/assets/{asset_id}/pairs`
+        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+        .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)));
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "POST",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        addAssetPairRequestViewModel,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
      * Adds a user defined asset.
      * @summary Add user asset
      * @param {string} userId User id for which to add the asset to.
@@ -14805,6 +15133,78 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
+     * Gets all custom assets created by the user. Returns unpaginated results with lookup tables.
+     * @summary List user assets
+     * @param {string} userId Id of the user whose assets to list.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getUserAssets(
+      userId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<GetUserAssetsResponseViewModel>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.getUserAssets(
+        userId,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["UserAssetsApi.getUserAssets"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Adds a new reference pair to an existing user asset.
+     * @summary Add user asset pair
+     * @param {string} userId Id of the user who owns the asset.
+     * @param {number} assetId Id of the user asset.
+     * @param {AddAssetPairRequestViewModel} addAssetPairRequestViewModel
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async postAssetPair(
+      userId: string,
+      assetId: number,
+      addAssetPairRequestViewModel: AddAssetPairRequestViewModel,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<AddAssetPairResponseViewModel>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.postAssetPair(
+        userId,
+        assetId,
+        addAssetPairRequestViewModel,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["UserAssetsApi.postAssetPair"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
      * Adds a user defined asset.
      * @summary Add user asset
      * @param {string} userId User id for which to add the asset to.
@@ -15103,6 +15503,40 @@ export const UserAssetsApiFactory = function (
         .then((request) => request(axios, basePath));
     },
     /**
+     * Gets all custom assets created by the user. Returns unpaginated results with lookup tables.
+     * @summary List user assets
+     * @param {string} userId Id of the user whose assets to list.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getUserAssets(
+      userId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<GetUserAssetsResponseViewModel> {
+      return localVarFp
+        .getUserAssets(userId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Adds a new reference pair to an existing user asset.
+     * @summary Add user asset pair
+     * @param {string} userId Id of the user who owns the asset.
+     * @param {number} assetId Id of the user asset.
+     * @param {AddAssetPairRequestViewModel} addAssetPairRequestViewModel
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    postAssetPair(
+      userId: string,
+      assetId: number,
+      addAssetPairRequestViewModel: AddAssetPairRequestViewModel,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<AddAssetPairResponseViewModel> {
+      return localVarFp
+        .postAssetPair(userId, assetId, addAssetPairRequestViewModel, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
      * Adds a user defined asset.
      * @summary Add user asset
      * @param {string} userId User id for which to add the asset to.
@@ -15304,6 +15738,36 @@ export interface UserAssetsApiInterface {
     range?: string,
     options?: RawAxiosRequestConfig,
   ): AxiosPromise<GetAssetPairRatesResponseViewModel>;
+
+  /**
+   * Gets all custom assets created by the user. Returns unpaginated results with lookup tables.
+   * @summary List user assets
+   * @param {string} userId Id of the user whose assets to list.
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserAssetsApiInterface
+   */
+  getUserAssets(
+    userId: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<GetUserAssetsResponseViewModel>;
+
+  /**
+   * Adds a new reference pair to an existing user asset.
+   * @summary Add user asset pair
+   * @param {string} userId Id of the user who owns the asset.
+   * @param {number} assetId Id of the user asset.
+   * @param {AddAssetPairRequestViewModel} addAssetPairRequestViewModel
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserAssetsApiInterface
+   */
+  postAssetPair(
+    userId: string,
+    assetId: number,
+    addAssetPairRequestViewModel: AddAssetPairRequestViewModel,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<AddAssetPairResponseViewModel>;
 
   /**
    * Adds a user defined asset.
@@ -15515,6 +15979,41 @@ export class UserAssetsApi extends BaseAPI implements UserAssetsApiInterface {
   ) {
     return UserAssetsApiFp(this.configuration)
       .getUserAssetPairRates(userId, assetId, referenceId, range, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Gets all custom assets created by the user. Returns unpaginated results with lookup tables.
+   * @summary List user assets
+   * @param {string} userId Id of the user whose assets to list.
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserAssetsApi
+   */
+  public getUserAssets(userId: string, options?: RawAxiosRequestConfig) {
+    return UserAssetsApiFp(this.configuration)
+      .getUserAssets(userId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Adds a new reference pair to an existing user asset.
+   * @summary Add user asset pair
+   * @param {string} userId Id of the user who owns the asset.
+   * @param {number} assetId Id of the user asset.
+   * @param {AddAssetPairRequestViewModel} addAssetPairRequestViewModel
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserAssetsApi
+   */
+  public postAssetPair(
+    userId: string,
+    assetId: number,
+    addAssetPairRequestViewModel: AddAssetPairRequestViewModel,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return UserAssetsApiFp(this.configuration)
+      .postAssetPair(userId, assetId, addAssetPairRequestViewModel, options)
       .then((request) => request(this.axios, this.basePath));
   }
 
