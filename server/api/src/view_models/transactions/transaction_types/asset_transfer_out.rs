@@ -1,4 +1,7 @@
-use business::dtos::transaction_dto::TransactionDto;
+use business::dtos::{
+    entry_dto::EntryDto,
+    transaction_dto::{AssetTransferOutMetadataDto, TransactionDto, TransactionTypeDto},
+};
 use macros::type_tag;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -49,8 +52,36 @@ pub struct AssetTransferOut<B, E> {
     pub entry: E,
 }
 
-impl<E> From<AssetTransferOut<TransactionBaseWithEntries, E>> for TransactionDto {
-    fn from(_trans: AssetTransferOut<TransactionBaseWithEntries, E>) -> Self {
-        todo!()
+impl<E: Into<EntryDto>> From<AssetTransferOut<TransactionBaseWithEntries, E>> for TransactionDto {
+    fn from(value: AssetTransferOut<TransactionBaseWithEntries, E>) -> Self {
+        TransactionDto {
+            transaction_id: None,
+            date: value.base.date,
+            fee_entries: match value.base.fees {
+                Some(f) => f.into_iter().map(|x| x.into()).collect(),
+                None => [].into(),
+            },
+            transaction_type: TransactionTypeDto::AssetTransferOut(AssetTransferOutMetadataDto {
+                entry: value.entry.into(),
+            }),
+        }
+    }
+}
+
+impl<B, E> From<TransactionDto> for AssetTransferOut<B, E>
+where
+    E: From<EntryDto>,
+    B: From<TransactionDto>,
+{
+    fn from(value: TransactionDto) -> Self {
+        if let TransactionTypeDto::AssetTransferOut(r) = value.clone().transaction_type {
+            AssetTransferOut {
+                r#type: Default::default(),
+                entry: r.entry.into(),
+                base: value.into(),
+            }
+        } else {
+            panic!("Can not convert TransactionDto into AssetTransferOut as the type is not AssetTransferOut")
+        }
     }
 }

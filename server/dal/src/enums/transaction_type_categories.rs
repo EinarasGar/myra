@@ -9,6 +9,11 @@ pub enum DatabaseTransactionTypeCategories {
     CashDividend = 4,
     AssetDividend = 5,
     CashTransferOut = 6,
+    AssetTransferOut = 7,
+    AssetTransferIn = 8,
+    AssetTrade = 9,
+    AssetBalanceTransfer = 10,
+    AccountFees = 11,
 }
 
 impl DatabaseTransactionTypeCategories {

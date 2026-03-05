@@ -46,7 +46,12 @@ VALUES ('Income', 'attach_money', 1),
     ('Cash Dividend', 'money_off', 3),
     ('Asset Dividend', 'money_off', 3),
     ('Withholding Tax', 'money_off', 4),
-    ('Cash Transfer Out', 'money_off', 3);
+    ('Cash Transfer Out', 'money_off', 3),
+    ('Asset Transfer Out', 'money_off', 3),
+    ('Asset Transfer In', 'money_off', 3),
+    ('Asset Trade', 'money_off', 3),
+    ('Asset Balance Transfer', 'money_off', 3),
+    ('Account Fees', 'money_off', 4);
 INSERT INTO users (
         id,
         username,
@@ -98,7 +103,12 @@ VALUES (1, 1, 12),
     (2, 3, 15),
     (2, 4, 16),
     (2, 5, 17),
-    (2, 6, 19);
+    (2, 6, 19),
+    (2, 7, 20),
+    (2, 8, 21),
+    (2, 9, 22),
+    (2, 10, 23),
+    (2, 11, 24);
 INSERT INTO transaction_types (id, transaction_type_name)
 VALUES (1, 'Regular'),
     (2, 'Cash Transfer Out'),
@@ -106,7 +116,12 @@ VALUES (1, 'Regular'),
     (9, 'Asset Purchase'),
     (3, 'Cash Transfer In'),
     (4, 'Cash Dividend'),
-    (10, 'Asset Dividend');
+    (10, 'Asset Dividend'),
+    (5, 'Asset Transfer Out'),
+    (6, 'Asset Transfer In'),
+    (7, 'Asset Trade'),
+    (11, 'Asset Balance Transfer'),
+    (12, 'Account Fees');
 INSERT INTO public.asset_pairs (pair1, pair2)
 VALUES (4, 1),
     (5, 3),

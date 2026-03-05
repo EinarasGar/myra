@@ -1,4 +1,7 @@
-use business::dtos::transaction_dto::TransactionDto;
+use business::dtos::{
+    entry_dto::EntryDto,
+    transaction_dto::{AssetTradeMetadataDto, TransactionDto, TransactionTypeDto},
+};
 use macros::type_tag;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -49,8 +52,38 @@ pub struct AssetTrade<B, E> {
     pub incoming_entry: E,
 }
 
-impl<E> From<AssetTrade<TransactionBaseWithEntries, E>> for TransactionDto {
-    fn from(_trans: AssetTrade<TransactionBaseWithEntries, E>) -> Self {
-        todo!()
+impl<E: Into<EntryDto>> From<AssetTrade<TransactionBaseWithEntries, E>> for TransactionDto {
+    fn from(value: AssetTrade<TransactionBaseWithEntries, E>) -> Self {
+        TransactionDto {
+            transaction_id: None,
+            date: value.base.date,
+            fee_entries: match value.base.fees {
+                Some(f) => f.into_iter().map(|x| x.into()).collect(),
+                None => [].into(),
+            },
+            transaction_type: TransactionTypeDto::AssetTrade(AssetTradeMetadataDto {
+                outgoing_entry: value.outgoing_entry.into(),
+                incoming_entry: value.incoming_entry.into(),
+            }),
+        }
+    }
+}
+
+impl<B, E> From<TransactionDto> for AssetTrade<B, E>
+where
+    E: From<EntryDto>,
+    B: From<TransactionDto>,
+{
+    fn from(value: TransactionDto) -> Self {
+        if let TransactionTypeDto::AssetTrade(r) = value.clone().transaction_type {
+            AssetTrade {
+                r#type: Default::default(),
+                outgoing_entry: r.outgoing_entry.into(),
+                incoming_entry: r.incoming_entry.into(),
+                base: value.into(),
+            }
+        } else {
+            panic!("Can not convert TransactionDto into AssetTrade as the type is not AssetTrade")
+        }
     }
 }

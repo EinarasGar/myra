@@ -183,6 +183,31 @@ impl From<TransactionDto> for RequiredIdentifiableTransactionWithIdentifiableEnt
                     RequiredIdentifiableAssetDividendWithIdentifiableEntriesViewModel::from(value),
                 )
             }
+            TransactionTypeDto::AssetTransferOut(_) => {
+                RequiredIdentifiableTransactionWithIdentifiableEntries::AssetTransferOut(
+                    RequiredIdentifiableAssetTransferOutWithIdentifiableEntriesViewModel::from(value),
+                )
+            }
+            TransactionTypeDto::AssetTransferIn(_) => {
+                RequiredIdentifiableTransactionWithIdentifiableEntries::AssetTransferIn(
+                    RequiredIdentifiableAssetTransferInWithIdentifiableEntriesViewModel::from(value),
+                )
+            }
+            TransactionTypeDto::AssetTrade(_) => {
+                RequiredIdentifiableTransactionWithIdentifiableEntries::AssetTrade(
+                    RequiredIdentifiableAssetTradeWithIdentifiableEntriesViewModel::from(value),
+                )
+            }
+            TransactionTypeDto::AssetBalanceTransfer(_) => {
+                RequiredIdentifiableTransactionWithIdentifiableEntries::AssetBalanceTransfer(
+                    RequiredIdentifiableAssetBalanceTransferWithIdentifiableEntriesViewModel::from(value),
+                )
+            }
+            TransactionTypeDto::AccountFees(_) => {
+                RequiredIdentifiableTransactionWithIdentifiableEntries::AccountFees(
+                    RequiredIdentifiableAccountFeesWithIdentifiableEntriesViewModel::from(value),
+                )
+            }
         }
     }
 }
@@ -223,6 +248,31 @@ impl From<TransactionDto> for RequiredTransactionWithIdentifiableEntries {
             TransactionTypeDto::AssetDividend(_) => {
                 RequiredTransactionWithIdentifiableEntries::AssetDividend(
                     RequiredAssetDividendWithIdentifiableEntriesViewModel::from(value),
+                )
+            }
+            TransactionTypeDto::AssetTransferOut(_) => {
+                RequiredTransactionWithIdentifiableEntries::AssetTransferOut(
+                    RequiredAssetTransferOutWithIdentifiableEntriesViewModel::from(value),
+                )
+            }
+            TransactionTypeDto::AssetTransferIn(_) => {
+                RequiredTransactionWithIdentifiableEntries::AssetTransferIn(
+                    RequiredAssetTransferInWithIdentifiableEntriesViewModel::from(value),
+                )
+            }
+            TransactionTypeDto::AssetTrade(_) => {
+                RequiredTransactionWithIdentifiableEntries::AssetTrade(
+                    RequiredAssetTradeWithIdentifiableEntriesViewModel::from(value),
+                )
+            }
+            TransactionTypeDto::AssetBalanceTransfer(_) => {
+                RequiredTransactionWithIdentifiableEntries::AssetBalanceTransfer(
+                    RequiredAssetBalanceTransferWithIdentifiableEntriesViewModel::from(value),
+                )
+            }
+            TransactionTypeDto::AccountFees(_) => {
+                RequiredTransactionWithIdentifiableEntries::AccountFees(
+                    RequiredAccountFeesWithIdentifiableEntriesViewModel::from(value),
                 )
             }
         }

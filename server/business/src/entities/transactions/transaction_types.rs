@@ -1,7 +1,12 @@
 use anyhow::Result;
+use account_fees::AccountFeesTransaction;
+use asset_balance_transfer::AssetBalanceTransferTransaction;
 use asset_dividend::AssetDividendTransaction;
 use asset_purhcase::AssetPurchaseTransaction;
 use asset_sale::AssetSaleTransaction;
+use asset_trade::AssetTradeTransaction;
+use asset_transfer_in::AssetTransferInTransaction;
+use asset_transfer_out::AssetTransferOutTransaction;
 use cash_dividend::CashDividendTransaction;
 use cash_transfer_in::CashTransferInTransaction;
 use cash_transfer_out::CashTransferOutTransaction;
@@ -18,9 +23,14 @@ use self::regular_transaction::RegularTransaction;
 
 use super::transaction::{Transaction, TransactionProcessor};
 
+pub mod account_fees;
+pub mod asset_balance_transfer;
 pub mod asset_dividend;
 pub mod asset_purhcase;
 pub mod asset_sale;
+pub mod asset_trade;
+pub mod asset_transfer_in;
+pub mod asset_transfer_out;
 pub mod cash_dividend;
 pub mod cash_transfer_in;
 pub mod cash_transfer_out;
@@ -71,13 +81,13 @@ fn get_dto_constructor(
         TransactionTypes::CashTransferOut => &CashTransferOutTransaction::try_from_dto,
         TransactionTypes::CashTransferIn => &CashTransferInTransaction::try_from_dto,
         TransactionTypes::CashDividend => &CashDividendTransaction::try_from_dto,
-        TransactionTypes::AssetTransferOut => todo!(),
-        TransactionTypes::AssetTransferIn => todo!(),
-        TransactionTypes::AssetTrade => todo!(),
+        TransactionTypes::AssetTransferOut => &AssetTransferOutTransaction::try_from_dto,
+        TransactionTypes::AssetTransferIn => &AssetTransferInTransaction::try_from_dto,
+        TransactionTypes::AssetTrade => &AssetTradeTransaction::try_from_dto,
         TransactionTypes::AssetSale => &AssetSaleTransaction::try_from_dto,
         TransactionTypes::AssetDividend => &AssetDividendTransaction::try_from_dto,
-        TransactionTypes::AssetBalanceTransfer => todo!(),
-        TransactionTypes::AccountFees => todo!(),
+        TransactionTypes::AssetBalanceTransfer => &AssetBalanceTransferTransaction::try_from_dto,
+        TransactionTypes::AccountFees => &AccountFeesTransaction::try_from_dto,
     }
 }
 
@@ -100,17 +110,25 @@ fn get_model_constructor(
         TransactionTypes::CashDividend => {
             &CashDividendTransaction::from_transaction_with_entries_models
         }
-        TransactionTypes::AssetTransferOut => todo!(),
-        TransactionTypes::AssetTransferIn => todo!(),
-        TransactionTypes::AssetTrade => todo!(),
+        TransactionTypes::AssetTransferOut => {
+            &AssetTransferOutTransaction::from_transaction_with_entries_models
+        }
+        TransactionTypes::AssetTransferIn => {
+            &AssetTransferInTransaction::from_transaction_with_entries_models
+        }
+        TransactionTypes::AssetTrade => &AssetTradeTransaction::from_transaction_with_entries_models,
         TransactionTypes::AssetSale => {
             &AssetSaleTransaction::from_transaction_with_entries_models
         }
         TransactionTypes::AssetDividend => {
             &AssetDividendTransaction::from_transaction_with_entries_models
         }
-        TransactionTypes::AssetBalanceTransfer => todo!(),
-        TransactionTypes::AccountFees => todo!(),
+        TransactionTypes::AssetBalanceTransfer => {
+            &AssetBalanceTransferTransaction::from_transaction_with_entries_models
+        }
+        TransactionTypes::AccountFees => {
+            &AccountFeesTransaction::from_transaction_with_entries_models
+        }
     }
 }
 

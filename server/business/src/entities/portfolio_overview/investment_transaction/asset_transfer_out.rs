@@ -2,7 +2,10 @@ use rust_decimal::Decimal;
 use time::OffsetDateTime;
 use uuid::Uuid;
 
-use crate::entities::portfolio_overview::portfolio::{Portfolio, PortfolioAction};
+use crate::{
+    dtos::assets::asset_id_dto::AssetIdDto,
+    entities::portfolio_overview::portfolio::{Portfolio, PortfolioAction, ReferentialPortfolioAction},
+};
 
 #[allow(dead_code)]
 #[derive(Clone, Debug)]
@@ -24,6 +27,16 @@ impl PortfolioAction for AssetTransferOut {
 
     fn date(&self) -> OffsetDateTime {
         self.date
+    }
+}
+
+impl ReferentialPortfolioAction for AssetTransferOut {
+    fn apply_conversion_rate(&mut self, price: Decimal) {
+        self.fees *= price;
+    }
+
+    fn get_conversion_asset_id(&self) -> AssetIdDto {
+        AssetIdDto(self.asset_id)
     }
 }
 

@@ -43,4 +43,8 @@ export const TransactionTypes = {
     label: "Cash Dividend",
     key: "cash_dividend",
   },
+  ACCOUNT_FEES: {
+    label: "Account Fees",
+    key: "account_fees",
+  },
 };

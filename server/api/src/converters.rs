@@ -9,15 +9,46 @@ pub fn transaction_dtos_to_asset_ids_hashset(transactions: &[&TransactionDto]) -
             asset_ids.insert(fee_entry.entry.asset_id);
         }
         match &transaction.transaction_type {
-            TransactionTypeDto::Regular(regular_transaction_metadata) => {
-                asset_ids.insert(regular_transaction_metadata.entry.asset_id);
+            TransactionTypeDto::Regular(m) => {
+                asset_ids.insert(m.entry.asset_id);
             }
-            TransactionTypeDto::AssetPurchase(_) => {}
-            TransactionTypeDto::AssetSale(_) => {}
-            TransactionTypeDto::CashTransferIn(_) => {}
-            TransactionTypeDto::CashTransferOut(_) => {}
-            TransactionTypeDto::CashDividend(_) => {}
-            TransactionTypeDto::AssetDividend(_) => {}
+            TransactionTypeDto::AssetPurchase(m) => {
+                asset_ids.insert(m.purchase.asset_id);
+                asset_ids.insert(m.sale.asset_id);
+            }
+            TransactionTypeDto::AssetSale(m) => {
+                asset_ids.insert(m.sale.asset_id);
+                asset_ids.insert(m.proceeds.asset_id);
+            }
+            TransactionTypeDto::CashTransferIn(m) => {
+                asset_ids.insert(m.entry.asset_id);
+            }
+            TransactionTypeDto::CashTransferOut(m) => {
+                asset_ids.insert(m.entry.asset_id);
+            }
+            TransactionTypeDto::CashDividend(m) => {
+                asset_ids.insert(m.entry.asset_id);
+            }
+            TransactionTypeDto::AssetDividend(m) => {
+                asset_ids.insert(m.entry.asset_id);
+            }
+            TransactionTypeDto::AssetTransferOut(m) => {
+                asset_ids.insert(m.entry.asset_id);
+            }
+            TransactionTypeDto::AssetTransferIn(m) => {
+                asset_ids.insert(m.entry.asset_id);
+            }
+            TransactionTypeDto::AssetTrade(m) => {
+                asset_ids.insert(m.outgoing_entry.asset_id);
+                asset_ids.insert(m.incoming_entry.asset_id);
+            }
+            TransactionTypeDto::AssetBalanceTransfer(m) => {
+                asset_ids.insert(m.outgoing_change.asset_id);
+                asset_ids.insert(m.incoming_change.asset_id);
+            }
+            TransactionTypeDto::AccountFees(m) => {
+                asset_ids.insert(m.entry.asset_id);
+            }
         }
     }
     asset_ids
@@ -30,15 +61,46 @@ pub fn transaction_dtos_to_account_ids_hashset(transactions: &[&TransactionDto])
             account_ids.insert(fee_entry.entry.account_id);
         }
         match &transaction.transaction_type {
-            TransactionTypeDto::Regular(regular_transaction_metadata) => {
-                account_ids.insert(regular_transaction_metadata.entry.account_id);
+            TransactionTypeDto::Regular(m) => {
+                account_ids.insert(m.entry.account_id);
             }
-            TransactionTypeDto::AssetPurchase(_) => {}
-            TransactionTypeDto::AssetSale(_) => {}
-            TransactionTypeDto::CashTransferIn(_) => {}
-            TransactionTypeDto::CashTransferOut(_) => {}
-            TransactionTypeDto::CashDividend(_) => {}
-            TransactionTypeDto::AssetDividend(_) => {}
+            TransactionTypeDto::AssetPurchase(m) => {
+                account_ids.insert(m.purchase.account_id);
+                account_ids.insert(m.sale.account_id);
+            }
+            TransactionTypeDto::AssetSale(m) => {
+                account_ids.insert(m.sale.account_id);
+                account_ids.insert(m.proceeds.account_id);
+            }
+            TransactionTypeDto::CashTransferIn(m) => {
+                account_ids.insert(m.entry.account_id);
+            }
+            TransactionTypeDto::CashTransferOut(m) => {
+                account_ids.insert(m.entry.account_id);
+            }
+            TransactionTypeDto::CashDividend(m) => {
+                account_ids.insert(m.entry.account_id);
+            }
+            TransactionTypeDto::AssetDividend(m) => {
+                account_ids.insert(m.entry.account_id);
+            }
+            TransactionTypeDto::AssetTransferOut(m) => {
+                account_ids.insert(m.entry.account_id);
+            }
+            TransactionTypeDto::AssetTransferIn(m) => {
+                account_ids.insert(m.entry.account_id);
+            }
+            TransactionTypeDto::AssetTrade(m) => {
+                account_ids.insert(m.outgoing_entry.account_id);
+                account_ids.insert(m.incoming_entry.account_id);
+            }
+            TransactionTypeDto::AssetBalanceTransfer(m) => {
+                account_ids.insert(m.outgoing_change.account_id);
+                account_ids.insert(m.incoming_change.account_id);
+            }
+            TransactionTypeDto::AccountFees(m) => {
+                account_ids.insert(m.entry.account_id);
+            }
         }
     }
     account_ids

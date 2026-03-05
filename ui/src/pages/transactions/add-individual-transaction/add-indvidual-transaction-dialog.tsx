@@ -16,8 +16,13 @@ import AddCashTransferInForm from "./add-cash-transfer-in-form";
 import AddCashTransferOutForm from "./add-cash-transfer-out-form";
 import AddCashDividendForm from "./add-cash-dividend-form";
 import AddAssetDividendForm from "./add-asset-dividend-form";
+import AddAssetTransferOutForm from "./add-asset-transfer-out-form";
+import AddAssetTransferInForm from "./add-asset-transfer-in-form";
+import AddAssetTradeForm from "./add-asset-trade-form";
+import AddAssetBalanceTransferForm from "./add-asset-balance-transfer-form";
+import AddAccountFeesForm from "./add-account-fees-form";
 
-const SPECIALIZED_TYPES = ["asset_purchase", "asset_sale", "cash_transfer_in", "cash_transfer_out", "cash_dividend", "asset_dividend"];
+const SPECIALIZED_TYPES = ["asset_purchase", "asset_sale", "cash_transfer_in", "cash_transfer_out", "cash_dividend", "asset_dividend", "asset_transfer_out", "asset_transfer_in", "asset_trade", "asset_balance_transfer", "account_fees"];
 
 export function AddIndividualTranscationDialog() {
   const [open, setOpen] = useState(false);
@@ -74,6 +79,21 @@ export function AddIndividualTranscationDialog() {
           <AddAssetDividendForm
             onSuccess={() => handleOpenChange(false)}
           />
+        )}
+        {selectedType === "asset_transfer_out" && (
+          <AddAssetTransferOutForm onSuccess={() => handleOpenChange(false)} />
+        )}
+        {selectedType === "asset_transfer_in" && (
+          <AddAssetTransferInForm onSuccess={() => handleOpenChange(false)} />
+        )}
+        {selectedType === "asset_trade" && (
+          <AddAssetTradeForm onSuccess={() => handleOpenChange(false)} />
+        )}
+        {selectedType === "asset_balance_transfer" && (
+          <AddAssetBalanceTransferForm onSuccess={() => handleOpenChange(false)} />
+        )}
+        {selectedType === "account_fees" && (
+          <AddAccountFeesForm onSuccess={() => handleOpenChange(false)} />
         )}
         {selectedType && !SPECIALIZED_TYPES.includes(selectedType) && (
           <AddTransactionForm

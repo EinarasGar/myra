@@ -68,6 +68,12 @@ impl Portfolio {
                     .cash_portfolios
                     .retain(|_, cash_portfolio| !cash_portfolio.is_empty());
             });
+
+        // filter out any empty account portfolios
+        self.account_portfolios.retain(|_, account_portfolio| {
+            !account_portfolio.asset_portfolios.is_empty()
+                || !account_portfolio.cash_portfolios.is_empty()
+        });
     }
 
     pub fn get_cash_portfolio(
