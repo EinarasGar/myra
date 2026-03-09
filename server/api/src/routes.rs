@@ -1,17 +1,19 @@
-use crate::{handlers, observability, openapi::ApiDoc, AppState};
+use crate::{handlers, observability, openapi::build_openapi_json, AppState};
 use axum::{
+    http::header,
+    response::{Html, IntoResponse},
     routing::{delete, get, post, put},
     Router,
 };
-use utoipa::OpenApi;
 use utoipa_rapidoc::RapiDoc;
-use utoipa_redoc::{Redoc, Servable};
+use utoipa_redoc::Redoc;
 
 #[rustfmt::skip]
 pub(crate) fn create_router(state: AppState) -> Router {
     Router::new()
-        .merge(Redoc::with_url("/redoc", ApiDoc::openapi()))
-        .merge(RapiDoc::with_openapi("/api-docs/openapi.json", ApiDoc::openapi()).path("/rapidoc"))
+        .route("/api-docs/openapi.json",                                            get(serve_openapi_json))
+        .route("/redoc",                                                            get(serve_redoc))
+        .route("/rapidoc",                                                          get(serve_rapidoc))
         .route("/api/users",                                                            post(  handlers::user_handler::post_user))
         .route("/api/users/{user_id}",                                                  get(   handlers::user_handler::get_user_by_id))
         .route("/api/users/{user_id}/transactions/groups",                              post(  handlers::transaction_groups::add_transaction_group))
@@ -68,4 +70,19 @@ pub(crate) fn create_router(state: AppState) -> Router {
         .route("/api/auth",                                                             post(  handlers::auth_handler::post_login_details))
         .layer(observability::create_tower_http_tracing_layer())
         .with_state(state)
+}
+
+async fn serve_openapi_json() -> impl IntoResponse {
+    (
+        [(header::CONTENT_TYPE, "application/json; charset=utf-8")],
+        build_openapi_json(),
+    )
+}
+
+async fn serve_redoc() -> Html<String> {
+    Html(Redoc::new("/api-docs/openapi.json").to_html())
+}
+
+async fn serve_rapidoc() -> Html<String> {
+    Html(RapiDoc::new("/api-docs/openapi.json").to_html())
 }

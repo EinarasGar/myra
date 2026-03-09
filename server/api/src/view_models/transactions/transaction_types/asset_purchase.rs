@@ -18,6 +18,7 @@ use crate::view_models::transactions::base_models::{
     },
 };
 
+pub type AssetPurchaseInputViewModel = AssetPurchaseViewModel;
 #[allow(dead_code)]
 pub type AssetPurchaseViewModel =
     AssetPurchase<TransactionBaseWithEntries, AccountAssetEntryViewModel>;

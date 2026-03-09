@@ -128,7 +128,10 @@ export default function CreateAssetDialog({ open, onOpenChange }: Props) {
           </div>
           <div className="space-y-2">
             <Label>Asset Type</Label>
-            <Select value={assetType} onValueChange={setAssetType}>
+            <Select
+              value={assetType}
+              onValueChange={(value) => setAssetType(value ?? "")}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select asset type" />
               </SelectTrigger>

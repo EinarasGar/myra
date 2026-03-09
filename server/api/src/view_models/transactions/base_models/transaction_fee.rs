@@ -5,15 +5,16 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::account_asset_entry::{
-    AccountAssetEntryViewModel, IdentifiableAccountAssetEntryViewModel,
-    RequiredIdentifiableAccountAssetEntryViewModel,
+    TransactionEntry, TransactionEntryWithEntryId, TransactionEntryWithRequiredEntryId,
 };
 
-pub type TransactionFeeViewModel = TransactionFee<AccountAssetEntryViewModel>;
-pub type IdentifiableTransactionFeeViewModel =
-    TransactionFee<IdentifiableAccountAssetEntryViewModel>;
-pub type RequiredIdentifiableTransactionFeeViewModel =
-    TransactionFee<RequiredIdentifiableAccountAssetEntryViewModel>;
+pub type TransactionFeeItem = TransactionFee<TransactionEntry>;
+pub type TransactionFeeItemWithEntryId = TransactionFee<TransactionEntryWithEntryId>;
+pub type TransactionFeeItemWithRequiredEntryId =
+    TransactionFee<TransactionEntryWithRequiredEntryId>;
+pub type TransactionFeeViewModel = TransactionFeeItem;
+pub type IdentifiableTransactionFeeViewModel = TransactionFeeItemWithEntryId;
+pub type RequiredIdentifiableTransactionFeeViewModel = TransactionFeeItemWithRequiredEntryId;
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct TransactionFee<E> {

@@ -10,12 +10,6 @@ pub mod cash_dividend;
 pub mod cash_transfer_in;
 pub mod cash_transfer_out;
 pub mod regular_transaction;
-use crate::view_models::transactions::base_models::account_asset_entry::IdentifiableAccountAssetEntry;
-use crate::view_models::transactions::base_models::entry_id::{EntryId, RequiredEntryId};
-use crate::view_models::transactions::base_models::transaction_fee::TransactionFee;
-use crate::view_models::transactions::base_models::transaction_id::{
-    RequiredTransactionId, TransactionId,
-};
 use business::dtos::transaction_dto::{TransactionDto, TransactionTypeDto};
 use paste::paste;
 
@@ -33,12 +27,7 @@ use business::dtos::transaction_dto::{
     CashTransferInMetadataDto, CashTransferOutMetadataDto, RegularTransactionMetadataDto,
 };
 
-use crate::view_models::transactions::base_models::account_asset_entry::{
-    AccountAssetEntryViewModel, RequiredIdentifiableAccountAssetEntryViewModel,
-};
-use crate::view_models::transactions::base_models::transaction_base::{
-    IdentifiableTransactionBase, TransactionBase, TransactionBaseWithIdentifiableEntries,
-};
+use crate::view_models::transactions::base_models::transaction_base::TransactionBaseWithIdentifiableEntries;
 
 use self::{
     account_fees::*, asset_balance_transfer::*, asset_dividend::*, asset_purchase::*,
@@ -55,12 +44,7 @@ macro_rules! generate_transaction_type_enums {
             #[schema(discriminator = "type")]
             pub enum TransactionWithEntries {
                 $(
-                    $name(
-                        [<$name>]<
-                            TransactionBase<TransactionFee<AccountAssetEntryViewModel>>,
-                            AccountAssetEntryViewModel,
-                        >
-                    ),
+                    $name([<$name InputViewModel>]),
                 )*
             }
 
@@ -79,15 +63,7 @@ macro_rules! generate_transaction_type_enums {
             #[schema(discriminator = "type")]
             pub enum IdentifiableTransactionWithIdentifiableEntries {
                 $(
-                    $name(
-                        [<$name>]<
-                            IdentifiableTransactionBase<
-                                TransactionBase<TransactionFee<IdentifiableAccountAssetEntry<EntryId>>>,
-                                TransactionId,
-                            >,
-                            IdentifiableAccountAssetEntry<EntryId>,
-                        >,
-                    ),
+                    $name([<Identifiable $name WithIdentifiableEntriesViewModel>]),
                 )*
             }
 
@@ -96,12 +72,7 @@ macro_rules! generate_transaction_type_enums {
             #[schema(discriminator = "type")]
             pub enum RequiredTransactionWithIdentifiableEntries {
                 $(
-                    $name(
-                        [<$name>]<
-                            TransactionBase<TransactionFee<IdentifiableAccountAssetEntry<EntryId>>>,
-                            IdentifiableAccountAssetEntry<RequiredEntryId>,
-                        >,
-                    ),
+                    $name([<Required $name WithIdentifiableEntriesViewModel>]),
                 )*
             }
 
@@ -110,15 +81,7 @@ macro_rules! generate_transaction_type_enums {
             #[schema(discriminator = "type")]
             pub enum RequiredIdentifiableTransactionWithIdentifiableEntries {
                 $(
-                    $name(
-                        [<$name>]<
-                            IdentifiableTransactionBase<
-                                TransactionBase<TransactionFee<IdentifiableAccountAssetEntry<RequiredEntryId>>>,
-                                RequiredTransactionId,
-                            >,
-                            RequiredIdentifiableAccountAssetEntryViewModel,
-                        >
-                    ),
+                    $name([<Required Identifiable $name WithIdentifiableEntriesViewModel>]),
                 )*
             }
 
@@ -127,12 +90,7 @@ macro_rules! generate_transaction_type_enums {
             #[schema(discriminator = "type")]
             pub enum TransactionWithIdentifiableEntries {
                 $(
-                    $name(
-                        [<$name>]<
-                            TransactionBase<TransactionFee<IdentifiableAccountAssetEntry<EntryId>>>,
-                            IdentifiableAccountAssetEntry<EntryId>,
-                        >,
-                    ),
+                    $name([<$name WithIdentifiableEntriesViewModel>]),
                 )*
             }
 
@@ -154,6 +112,10 @@ generate_transaction_type_enums!(
     AssetBalanceTransfer,
     AccountFees
 );
+
+pub type TransactionInput = TransactionWithEntries;
+pub type TransactionWithId = IdentifiableTransactionWithIdentifiableEntries;
+pub type RequiredTransactionWithId = RequiredIdentifiableTransactionWithIdentifiableEntries;
 
 impl From<TransactionDto> for RequiredIdentifiableTransactionWithIdentifiableEntries {
     fn from(value: TransactionDto) -> Self {

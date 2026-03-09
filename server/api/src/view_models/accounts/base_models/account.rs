@@ -19,9 +19,12 @@ pub struct Account<T> {
     pub account_type: T,
 }
 
-pub type IdentifiableAccountViewModel = IdentifiableAccount<AccountViewModel>;
+pub type AccountWithId = IdentifiableAccount<AccountViewModel>;
 #[allow(dead_code)]
-pub type IdentifiableExpandedAccountViewModel = IdentifiableAccount<ExpandedAccountViewModel>;
+pub type AccountWithTypeAndId = IdentifiableAccount<ExpandedAccountViewModel>;
+pub type IdentifiableAccountViewModel = AccountWithId;
+#[allow(dead_code)]
+pub type IdentifiableExpandedAccountViewModel = AccountWithTypeAndId;
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct IdentifiableAccount<T> {
@@ -31,7 +34,7 @@ pub struct IdentifiableAccount<T> {
     pub account: T,
 }
 
-impl From<FullAccountDto> for IdentifiableAccountViewModel {
+impl From<FullAccountDto> for AccountWithId {
     fn from(account: FullAccountDto) -> Self {
         Self {
             account_id: RequiredAccountId(account.id),
@@ -58,7 +61,7 @@ impl From<FullAccountDto> for ExpandedAccountViewModel {
     }
 }
 
-impl From<AccountDto> for IdentifiableAccountViewModel {
+impl From<AccountDto> for AccountWithId {
     fn from(account: AccountDto) -> Self {
         Self {
             account_id: RequiredAccountId(account.id),

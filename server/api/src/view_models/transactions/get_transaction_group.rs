@@ -7,8 +7,7 @@ use crate::view_models::transactions::base_models::{
     category_id::RequiredCategoryId,
     description::Description,
     transaction_group::{
-        IdentifiableTransactionGroup, RequiredIdentifiableTransactionGroupViewModel,
-        RequiredTransactionGroupViewModel,
+        IdentifiableTransactionGroup, RequiredTransactionGroup, TransactionGroupWithId,
     },
     transaction_group_id::TransactionGroupId,
 };
@@ -16,7 +15,7 @@ use crate::view_models::transactions::base_models::{
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct GetTransactionGroupLineResponseViewModel {
     #[serde(flatten)]
-    pub transaction_group: RequiredIdentifiableTransactionGroupViewModel,
+    pub transaction_group: TransactionGroupWithId,
 }
 
 impl TryFrom<TransactionGroupDto> for GetTransactionGroupLineResponseViewModel {
@@ -30,7 +29,7 @@ impl TryFrom<TransactionGroupDto> for GetTransactionGroupLineResponseViewModel {
         Ok(GetTransactionGroupLineResponseViewModel {
             transaction_group: IdentifiableTransactionGroup {
                 group_id: TransactionGroupId(group_id),
-                group: RequiredTransactionGroupViewModel {
+                group: RequiredTransactionGroup {
                     transactions: dto.transactions.into_iter().map(Into::into).collect(),
                     description: Description::from_trusted(dto.description),
                     category_id: RequiredCategoryId(dto.category_id),

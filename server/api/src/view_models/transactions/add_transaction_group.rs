@@ -3,18 +3,18 @@ use utoipa::ToSchema;
 
 use super::base_models::{
     metadata_lookup::MetadataLookupTables,
-    transaction_group::{RequiredIdentifiableTransactionGroupViewModel, TransactionGroupViewModel},
+    transaction_group::{TransactionGroupInput, TransactionGroupWithId},
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct AddTransactionGroupRequestViewModel {
     #[serde(flatten)]
-    pub group: TransactionGroupViewModel,
+    pub group: TransactionGroupInput,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct AddTransactionGroupResponseViewModel {
-    pub group: RequiredIdentifiableTransactionGroupViewModel,
+    pub group: TransactionGroupWithId,
 
     #[serde(flatten)]
     pub metadata: MetadataLookupTables,

@@ -6,17 +6,12 @@ use super::description::Description;
 use crate::view_models::transactions::base_models::category_id::RequiredCategoryId;
 use crate::view_models::transactions::{
     base_models::transaction_group_id::TransactionGroupId,
-    transaction_types::{
-        IdentifiableTransactionWithIdentifiableEntries,
-        RequiredIdentifiableTransactionWithIdentifiableEntries, TransactionWithEntries,
-    },
+    transaction_types::{RequiredTransactionWithId, TransactionInput, TransactionWithId},
 };
 
-pub type TransactionGroupViewModel = TransactionGroup<TransactionWithEntries>;
-pub type TransactionGroupWithIdentifiableChildrenViewModel =
-    TransactionGroup<IdentifiableTransactionWithIdentifiableEntries>;
-pub type RequiredTransactionGroupViewModel =
-    TransactionGroup<RequiredIdentifiableTransactionWithIdentifiableEntries>;
+pub type TransactionGroupInput = TransactionGroup<TransactionInput>;
+pub type TransactionGroupWithEntryIds = TransactionGroup<TransactionWithId>;
+pub type RequiredTransactionGroup = TransactionGroup<RequiredTransactionWithId>;
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct TransactionGroup<T> {
@@ -36,8 +31,8 @@ pub struct TransactionGroup<T> {
     pub date: OffsetDateTime,
 }
 
-pub type RequiredIdentifiableTransactionGroupViewModel =
-    IdentifiableTransactionGroup<TransactionGroupId, RequiredTransactionGroupViewModel>;
+pub type TransactionGroupWithId =
+    IdentifiableTransactionGroup<TransactionGroupId, RequiredTransactionGroup>;
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct IdentifiableTransactionGroup<I, G> {

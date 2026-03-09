@@ -1,9 +1,7 @@
 import {
   UserCategoriesApiFactory,
-  CreateCategoryRequestViewModel,
-  CreateCategoryTypeRequestViewModel,
-  UpdateCategoryRequestViewModel,
-  UpdateCategoryTypeRequestViewModel,
+  CreateCategoryRequest,
+  CreateCategoryTypeRequest,
 } from "@/api";
 import { QueryKeys } from "@/constants/query-keys";
 import {
@@ -48,7 +46,7 @@ export function useCreateCategory(userId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CreateCategoryRequestViewModel) =>
+    mutationFn: (data: CreateCategoryRequest) =>
       UserCategoriesApiFactory().postUserCategory(userId, data),
     onSettled: () => {
       queryClient.invalidateQueries({
@@ -70,7 +68,7 @@ export function useUpdateCategory(userId: string) {
       data,
     }: {
       categoryId: number;
-      data: UpdateCategoryRequestViewModel;
+      data: CreateCategoryRequest;
     }) => UserCategoriesApiFactory().putUserCategory(userId, categoryId, data),
     onMutate: async ({ categoryId, data }) => {
       await queryClient.cancelQueries({ queryKey });
@@ -149,7 +147,7 @@ export function useCreateCategoryType(userId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CreateCategoryTypeRequestViewModel) =>
+    mutationFn: (data: CreateCategoryTypeRequest) =>
       UserCategoriesApiFactory().postUserCategoryType(userId, data),
     onSettled: () => {
       queryClient.invalidateQueries({
@@ -171,7 +169,7 @@ export function useUpdateCategoryType(userId: string) {
       data,
     }: {
       typeId: number;
-      data: UpdateCategoryTypeRequestViewModel;
+      data: CreateCategoryTypeRequest;
     }) => UserCategoriesApiFactory().putUserCategoryType(userId, typeId, data),
     onMutate: async ({ typeId, data }) => {
       await queryClient.cancelQueries({ queryKey });

@@ -6,37 +6,15 @@ use uuid::Uuid;
 use crate::view_models::{
     assets::{base_models::lookup::AssetLookupTables, get_assets::GetAssetsLineResponseViewModel},
     categories::base_models::{
-        category::IdentifiableCategoryViewModel, metadata_lookup::CategoryMetadataLookupTables,
+        category::CategoryWithId, metadata_lookup::CategoryMetadataLookupTables,
     },
     transactions::{
         base_models::metadata_lookup::MetadataLookupTables,
         get_transaction_group::GetTransactionGroupLineResponseViewModel,
         get_transactions::CombinedTransactionItemViewModel,
-        transaction_types::RequiredIdentifiableTransactionWithIdentifiableEntries,
+        transaction_types::RequiredTransactionWithId,
     },
 };
-
-pub type PageOfAssetsResultsWithLookupViewModel =
-    PageOfResults<GetAssetsLineResponseViewModel, AssetLookupTables>;
-pub type PageOfIndividualTransactionsWithLookupViewModel =
-    PageOfResults<RequiredIdentifiableTransactionWithIdentifiableEntries, MetadataLookupTables>;
-pub type SearchCategoriesResponseViewModel =
-    PageOfResults<IdentifiableCategoryViewModel, CategoryMetadataLookupTables>;
-
-#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-pub struct PageOfResults<T, L> {
-    /// One page of results
-    #[schema(inline = false)]
-    pub results: Vec<T>,
-
-    /// The total number of results available
-    #[schema(example = 2203)]
-    pub total_results: i32,
-
-    /// The lookup tables for the results
-    #[schema(inline = false)]
-    pub lookup_tables: L,
-}
 
 #[derive(Clone, Debug, Serialize, Deserialize, IntoParams)]
 #[into_params(parameter_in = Query)]
@@ -64,18 +42,57 @@ impl Default for PaginatedSearchQuery {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-pub struct CursorOrPageOfResults<T, L> {
-    #[schema(inline = false)]
-    pub results: Vec<T>,
-    pub has_more: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub next_cursor: Option<Uuid>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub total_results: Option<i64>,
-    #[schema(inline = false)]
-    pub lookup_tables: L,
+macro_rules! define_page_schema {
+    ($name:ident, $item:ty, $lookup:ty) => {
+        #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+        pub struct $name {
+            /// One page of results
+            #[schema(inline = false)]
+            pub results: Vec<$item>,
+
+            /// The total number of results available
+            #[schema(example = 2203)]
+            pub total_results: i32,
+
+            /// The lookup tables for the results
+            #[schema(inline = false)]
+            pub lookup_tables: $lookup,
+        }
+    };
 }
+
+macro_rules! define_cursor_page_schema {
+    ($name:ident, $item:ty, $lookup:ty) => {
+        #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+        pub struct $name {
+            #[schema(inline = false)]
+            pub results: Vec<$item>,
+            pub has_more: bool,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            pub next_cursor: Option<Uuid>,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            pub total_results: Option<i64>,
+            #[schema(inline = false)]
+            pub lookup_tables: $lookup,
+        }
+    };
+}
+
+define_page_schema!(
+    AssetsPage,
+    GetAssetsLineResponseViewModel,
+    AssetLookupTables
+);
+define_page_schema!(
+    AccountTransactionsPage,
+    RequiredTransactionWithId,
+    MetadataLookupTables
+);
+define_page_schema!(
+    SearchCategoriesResponseViewModel,
+    CategoryWithId,
+    CategoryMetadataLookupTables
+);
 
 #[derive(Clone, Debug, Serialize, Deserialize, IntoParams)]
 #[into_params(parameter_in = Query)]
@@ -125,11 +142,18 @@ impl From<&CursorOrPaginatedSearchQuery> for PaginationModeDto {
     }
 }
 
-pub type CursorPageOfIndividualTransactionsWithLookupViewModel = CursorOrPageOfResults<
-    RequiredIdentifiableTransactionWithIdentifiableEntries,
-    MetadataLookupTables,
->;
-pub type CursorPageOfTransactionGroupsWithLookupViewModel =
-    CursorOrPageOfResults<GetTransactionGroupLineResponseViewModel, MetadataLookupTables>;
-pub type CursorPageOfCombinedTransactionsWithLookupViewModel =
-    CursorOrPageOfResults<CombinedTransactionItemViewModel, MetadataLookupTables>;
+define_cursor_page_schema!(
+    IndividualTransactionsPage,
+    RequiredTransactionWithId,
+    MetadataLookupTables
+);
+define_cursor_page_schema!(
+    TransactionGroupsPage,
+    GetTransactionGroupLineResponseViewModel,
+    MetadataLookupTables
+);
+define_cursor_page_schema!(
+    CombinedTransactionsPage,
+    CombinedTransactionItemViewModel,
+    MetadataLookupTables
+);

@@ -1,4 +1,4 @@
-import { AssetsApiFactory, GetAssetsLineResponseViewModel } from "@/api";
+import { AssetsApiFactory, AssetsPage } from "@/api";
 import { QueryKeys } from "@/constants/query-keys";
 import { useQuery } from "@tanstack/react-query";
 import { PaginatedResponse } from "@/types/pagination";
@@ -13,7 +13,7 @@ export default function useSearchAssets(query?: string | null) {
     start?: number,
     query?: string | null,
     signal?: AbortSignal,
-  ): Promise<PaginatedResponse<GetAssetsLineResponseViewModel>> => {
+  ): Promise<PaginatedResponse<AssetsPage["results"][number]>> => {
     const data = await AssetsApiFactory().searchAssets(
       count,
       start,

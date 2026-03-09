@@ -1,9 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
-import { AuthenticationApiFactory, LoginDetailsViewModel } from "@/api";
+import { AuthenticationApiFactory, LoginDetails } from "@/api";
 
 const usePostAuth = () => {
   return useMutation({
-    mutationFn: (details: LoginDetailsViewModel) => {
+    mutationFn: (details: LoginDetails) => {
       return AuthenticationApiFactory().postLoginDetails(details);
     },
     onSuccess: () => {},

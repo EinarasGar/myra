@@ -10,8 +10,8 @@ use crate::view_models::transactions::base_models::category_id::RequiredCategory
 use crate::view_models::transactions::base_models::description::Description;
 use crate::view_models::transactions::base_models::{
     account_asset_entry::{
-        IdentifiableAccountAssetEntryViewModel, NonZeroAccountAssetEntry,
-        RequiredIdentifiableAccountAssetEntryViewModel,
+        AccountAssetEntryViewModel, IdentifiableAccountAssetEntryViewModel,
+        NonZeroAccountAssetEntry, RequiredIdentifiableAccountAssetEntryViewModel,
     },
     transaction_base::{
         IdentifiableTransactionBaseWithIdentifiableEntries,
@@ -20,6 +20,8 @@ use crate::view_models::transactions::base_models::{
     },
 };
 
+pub type RegularTransactionInputViewModel =
+    RegularTransaction<TransactionBaseWithEntries, AccountAssetEntryViewModel>;
 #[allow(dead_code)]
 pub type RegularTransactionViewModel =
     RegularTransaction<TransactionBaseWithEntries, NonZeroAccountAssetEntry>;

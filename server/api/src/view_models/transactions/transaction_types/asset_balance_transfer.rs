@@ -18,6 +18,7 @@ use crate::view_models::transactions::base_models::{
     },
 };
 
+pub type AssetBalanceTransferInputViewModel = AssetBalanceTransferViewModel;
 #[allow(dead_code)]
 pub type AssetBalanceTransferViewModel =
     AssetBalanceTransfer<TransactionBaseWithEntries, AccountAssetEntryViewModel>;

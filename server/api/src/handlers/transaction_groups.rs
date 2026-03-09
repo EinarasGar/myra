@@ -13,10 +13,7 @@ use crate::{
     view_models::errors::{CreateResponses, DeleteResponses, GetResponses, UpdateResponses},
     view_models::transactions::validation::Validatable,
     view_models::{
-        base_models::search::{
-            CursorOrPageOfResults, CursorOrPaginatedSearchQuery,
-            CursorPageOfTransactionGroupsWithLookupViewModel,
-        },
+        base_models::search::{CursorOrPaginatedSearchQuery, TransactionGroupsPage},
         transactions::{
             add_transaction_group::{
                 AddTransactionGroupRequestViewModel, AddTransactionGroupResponseViewModel,
@@ -217,7 +214,7 @@ pub async fn delete_transaction_group(
     path = "/api/users/{user_id}/transactions/groups",
     tag = "Transaction Groups",
     responses(
-        (status = 200, description = "Transaction groups retrieved successfully.", body = CursorOrPageOfResults<GetTransactionGroupLineResponseViewModel, MetadataLookupTables>),
+        (status = 200, description = "Transaction groups retrieved successfully.", body = TransactionGroupsPage),
         GetResponses
     ),
     params(
@@ -236,7 +233,7 @@ pub async fn get_transaction_groups(
     AssetsServiceState(asset_service): AssetsServiceState,
     AccountsServiceState(accounts_service): AccountsServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-) -> Result<Json<CursorPageOfTransactionGroupsWithLookupViewModel>, ApiError> {
+) -> Result<Json<TransactionGroupsPage>, ApiError> {
     let pagination = PaginationModeDto::from(&query_params);
 
     let result = service
@@ -262,7 +259,7 @@ pub async fn get_transaction_groups(
         None
     };
 
-    let ret = CursorPageOfTransactionGroupsWithLookupViewModel {
+    let ret = TransactionGroupsPage {
         results: result
             .results
             .into_iter()

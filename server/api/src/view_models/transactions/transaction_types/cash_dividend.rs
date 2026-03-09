@@ -9,8 +9,8 @@ use utoipa::ToSchema;
 use crate::view_models::assets::base_models::asset_id::RequiredAssetId;
 use crate::view_models::transactions::base_models::{
     account_asset_entry::{
-        IdentifiableAccountAssetEntryViewModel, PositiveAccountAssetEntry,
-        RequiredIdentifiableAccountAssetEntryViewModel,
+        AccountAssetEntryViewModel, IdentifiableAccountAssetEntryViewModel,
+        PositiveAccountAssetEntry, RequiredIdentifiableAccountAssetEntryViewModel,
     },
     transaction_base::{
         IdentifiableTransactionBaseWithIdentifiableEntries,
@@ -19,6 +19,8 @@ use crate::view_models::transactions::base_models::{
     },
 };
 
+pub type CashDividendInputViewModel =
+    CashDividend<TransactionBaseWithEntries, AccountAssetEntryViewModel>;
 #[allow(dead_code)]
 pub type CashDividendViewModel =
     CashDividend<TransactionBaseWithEntries, PositiveAccountAssetEntry>;

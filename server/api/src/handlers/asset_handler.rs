@@ -33,9 +33,7 @@ use crate::{
             },
             get_assets::GetAssetsLineResponseViewModel,
         },
-        base_models::search::{
-            PageOfAssetsResultsWithLookupViewModel, PageOfResults, PaginatedSearchQuery,
-        },
+        base_models::search::{AssetsPage, PaginatedSearchQuery},
     },
 };
 
@@ -51,7 +49,7 @@ use crate::{
     tag = "Assets",
     params(PaginatedSearchQuery),
     responses(
-        (status = 200, description = "Assets retrieved successfully.", body = PageOfResults<GetAssetsLineResponseViewModel, AssetLookupTables>),
+        (status = 200, description = "Assets retrieved successfully.", body = AssetsPage),
         GetResponses
     ),
     security(
@@ -64,7 +62,7 @@ pub async fn search_assets(
     ValidatedQuery(query_params): ValidatedQuery<PaginatedSearchQuery>,
     AssetsServiceState(assets_service): AssetsServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-) -> Result<Json<PageOfResults<GetAssetsLineResponseViewModel, AssetLookupTables>>, ApiError> {
+) -> Result<Json<AssetsPage>, ApiError> {
     let paging_dto = PagingDto {
         start: query_params.start,
         count: query_params.count,
@@ -90,7 +88,7 @@ pub async fn search_assets(
         .map(|x| GetAssetsLineResponseViewModel { asset: x.into() })
         .collect();
 
-    let ret = PageOfAssetsResultsWithLookupViewModel {
+    let ret = AssetsPage {
         results: asset_view_models,
         total_results: page.total_results,
         lookup_tables: AssetLookupTables {

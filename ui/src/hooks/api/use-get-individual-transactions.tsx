@@ -1,6 +1,6 @@
 import {
   IndividualTransactionsApiFactory,
-  RequiredIdentifiableTransactionWithIdentifiableEntries,
+  RequiredIdentifiableTransaction,
 } from "@/api";
 import { QueryKeys } from "@/constants/query-keys";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -20,14 +20,14 @@ export default function useGetIndividualTransactions(
     userId: string,
     count?: number,
     start?: number,
-  ): Promise<
-    PaginatedResponse<RequiredIdentifiableTransactionWithIdentifiableEntries>
-  > => {
+  ): Promise<PaginatedResponse<RequiredIdentifiableTransaction>> => {
     const data =
       await IndividualTransactionsApiFactory().getIndividualTransactions(
         userId,
-        count,
+        undefined,
+        undefined,
         start,
+        count,
       );
     addAsset(
       data.data.lookup_tables.assets.map((asset) => {
@@ -50,7 +50,7 @@ export default function useGetIndividualTransactions(
     );
 
     return {
-      totalCount: data.data.total_results,
+      totalCount: data.data.total_results ?? data.data.results.length,
       data: data.data.results,
     };
   };

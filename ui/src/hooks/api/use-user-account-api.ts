@@ -1,7 +1,6 @@
 import {
   AccountsApiFactory,
-  AddAccountRequestViewModel,
-  UpdateAccountViewModel,
+  UpdateAccount,
 } from "@/api";
 import { QueryKeys } from "@/constants/query-keys";
 import {
@@ -70,7 +69,7 @@ export function useCreateAccount(userId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: AddAccountRequestViewModel) =>
+    mutationFn: (data: UpdateAccount) =>
       AccountsApiFactory().addAccount(userId, data),
     onSettled: () => {
       queryClient.invalidateQueries({
@@ -92,7 +91,7 @@ export function useUpdateAccount(userId: string) {
       data,
     }: {
       accountId: string;
-      data: UpdateAccountViewModel;
+      data: UpdateAccount;
     }) => AccountsApiFactory().updateAccount(userId, accountId, data),
     onMutate: async ({ accountId, data }) => {
       await queryClient.cancelQueries({ queryKey });

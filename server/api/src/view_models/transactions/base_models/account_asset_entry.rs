@@ -9,7 +9,7 @@ use crate::view_models::transactions::value_types::{
     Amount, IntoDecimal, NegativeAmount, NonZeroAmount, PositiveAmount,
 };
 
-pub type AccountAssetEntryViewModel = AccountAssetEntry<Amount>;
+pub type TransactionEntry = AccountAssetEntry<Amount>;
 
 #[allow(dead_code)]
 pub type PositiveAccountAssetEntry = AccountAssetEntry<PositiveAmount>;
@@ -20,9 +20,11 @@ pub type NegativeAccountAssetEntry = AccountAssetEntry<NegativeAmount>;
 #[allow(dead_code)]
 pub type NonZeroAccountAssetEntry = AccountAssetEntry<NonZeroAmount>;
 
-pub type IdentifiableAccountAssetEntryViewModel = IdentifiableAccountAssetEntry<EntryId>;
-pub type RequiredIdentifiableAccountAssetEntryViewModel =
-    IdentifiableAccountAssetEntry<RequiredEntryId>;
+pub type TransactionEntryWithEntryId = IdentifiableAccountAssetEntry<EntryId>;
+pub type TransactionEntryWithRequiredEntryId = IdentifiableAccountAssetEntry<RequiredEntryId>;
+pub type AccountAssetEntryViewModel = TransactionEntry;
+pub type IdentifiableAccountAssetEntryViewModel = TransactionEntryWithEntryId;
+pub type RequiredIdentifiableAccountAssetEntryViewModel = TransactionEntryWithRequiredEntryId;
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct IdentifiableAccountAssetEntry<I> {
@@ -31,7 +33,7 @@ pub struct IdentifiableAccountAssetEntry<I> {
     pub entry_id: I,
 
     #[serde(flatten)]
-    pub entry: AccountAssetEntryViewModel,
+    pub entry: TransactionEntry,
 }
 
 /// A single account-asset-entry in a transaction.
@@ -65,8 +67,8 @@ impl<A: IntoDecimal> From<AccountAssetEntry<A>> for EntryDto {
     }
 }
 
-impl From<IdentifiableAccountAssetEntryViewModel> for EntryDto {
-    fn from(value: IdentifiableAccountAssetEntryViewModel) -> Self {
+impl From<TransactionEntryWithEntryId> for EntryDto {
+    fn from(value: TransactionEntryWithEntryId) -> Self {
         EntryDto {
             entry_id: value.entry_id.0,
             asset_id: value.entry.asset_id.0,
@@ -76,8 +78,8 @@ impl From<IdentifiableAccountAssetEntryViewModel> for EntryDto {
     }
 }
 
-impl From<RequiredIdentifiableAccountAssetEntryViewModel> for EntryDto {
-    fn from(value: RequiredIdentifiableAccountAssetEntryViewModel) -> Self {
+impl From<TransactionEntryWithRequiredEntryId> for EntryDto {
+    fn from(value: TransactionEntryWithRequiredEntryId) -> Self {
         EntryDto {
             entry_id: Some(value.entry_id.0),
             asset_id: value.entry.asset_id.0,
@@ -94,7 +96,7 @@ impl From<RequiredIdentifiableAccountAssetEntryViewModel> for EntryDto {
 /// Converts an `EntryDto` into an `AccountAssetEntryViewModel` (`AccountAssetEntry<Amount>`).
 /// Only implemented for the unvalidated `Amount` wrapper because outbound
 /// conversion is infallible (the data already exists in the DB).
-impl From<EntryDto> for AccountAssetEntryViewModel {
+impl From<EntryDto> for TransactionEntry {
     fn from(entry: EntryDto) -> Self {
         AccountAssetEntry {
             account_id: RequiredAccountId(entry.account_id),
@@ -104,18 +106,18 @@ impl From<EntryDto> for AccountAssetEntryViewModel {
     }
 }
 
-impl From<EntryDto> for RequiredIdentifiableAccountAssetEntryViewModel {
+impl From<EntryDto> for TransactionEntryWithRequiredEntryId {
     fn from(entry: EntryDto) -> Self {
-        RequiredIdentifiableAccountAssetEntryViewModel {
+        TransactionEntryWithRequiredEntryId {
             entry_id: RequiredEntryId(entry.entry_id.unwrap()),
             entry: entry.into(),
         }
     }
 }
 
-impl From<EntryDto> for IdentifiableAccountAssetEntryViewModel {
+impl From<EntryDto> for TransactionEntryWithEntryId {
     fn from(entry: EntryDto) -> Self {
-        IdentifiableAccountAssetEntryViewModel {
+        TransactionEntryWithEntryId {
             entry_id: EntryId(entry.entry_id),
             entry: entry.into(),
         }

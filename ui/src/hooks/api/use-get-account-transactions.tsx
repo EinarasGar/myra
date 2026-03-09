@@ -1,6 +1,6 @@
 import {
   AccountPortfolioApiFactory,
-  RequiredIdentifiableTransactionWithIdentifiableEntries,
+  RequiredIdentifiableTransaction,
 } from "@/api";
 import { QueryKeys } from "@/constants/query-keys";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -22,9 +22,7 @@ export default function useGetAccountTransactions(
     accountId: string,
     count?: number,
     start?: number,
-  ): Promise<
-    PaginatedResponse<RequiredIdentifiableTransactionWithIdentifiableEntries>
-  > => {
+  ): Promise<PaginatedResponse<RequiredIdentifiableTransaction>> => {
     const data =
       await AccountPortfolioApiFactory().getAccountTransactions(
         userId,

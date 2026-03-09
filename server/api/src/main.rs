@@ -22,11 +22,7 @@ pub(crate) mod view_models;
 async fn main() -> Result<()> {
     // Generate OpenAPI spec to stdout and exit (no DB/server needed)
     if env::args().any(|arg| arg == "--openapi") {
-        use utoipa::OpenApi;
-        let spec = openapi::ApiDoc::openapi();
-        let json = spec
-            .to_pretty_json()
-            .expect("Failed to serialize OpenAPI spec to JSON");
+        let json = openapi::build_openapi_json();
         print!("{}", json);
         return Ok(());
     }

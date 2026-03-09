@@ -12,10 +12,7 @@ use crate::{
     extractors::{ValidatedJson, ValidatedQuery},
     states::{AccountsServiceState, AssetsServiceState, TransactionManagementServiceState},
     view_models::{
-        base_models::search::{
-            CursorOrPageOfResults, CursorOrPaginatedSearchQuery,
-            CursorPageOfCombinedTransactionsWithLookupViewModel,
-        },
+        base_models::search::{CombinedTransactionsPage, CursorOrPaginatedSearchQuery},
         errors::{DeleteResponses, GetResponses, UpdateResponses},
         transactions::{
             base_models::metadata_lookup::MetadataLookupTables,
@@ -130,7 +127,7 @@ pub async fn delete_transaction(
     path = "/api/users/{user_id}/transactions",
     tag = "Transactions",
     responses(
-        (status = 200, description = "Transactions retrieved successfully.", body = CursorOrPageOfResults<CombinedTransactionItemViewModel, MetadataLookupTables>),
+        (status = 200, description = "Transactions retrieved successfully.", body = CombinedTransactionsPage),
         GetResponses
     ),
     params(
@@ -149,7 +146,7 @@ pub async fn get_transactions(
     AssetsServiceState(asset_service): AssetsServiceState,
     AccountsServiceState(accounts_service): AccountsServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-) -> Result<Json<CursorPageOfCombinedTransactionsWithLookupViewModel>, ApiError> {
+) -> Result<Json<CombinedTransactionsPage>, ApiError> {
     let pagination = PaginationModeDto::from(&query_params);
 
     let result = service
@@ -179,7 +176,7 @@ pub async fn get_transactions(
         None
     };
 
-    let ret = CursorPageOfCombinedTransactionsWithLookupViewModel {
+    let ret = CombinedTransactionsPage {
         results: result
             .results
             .into_iter()

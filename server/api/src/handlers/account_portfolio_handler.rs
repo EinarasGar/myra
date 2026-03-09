@@ -18,9 +18,7 @@ use crate::{
         PortfolioServiceState, TransactionManagementServiceState, UsersServiceState,
     },
     view_models::{
-        base_models::search::{
-            PageOfIndividualTransactionsWithLookupViewModel, PageOfResults, PaginatedSearchQuery,
-        },
+        base_models::search::{AccountTransactionsPage, PaginatedSearchQuery},
         errors::GetResponses,
         portfolio::{
             base_models::metadata_lookup::HoldingsMetadataLookupTables,
@@ -29,10 +27,7 @@ use crate::{
             },
             get_overview::{GetPortfolioOverviewQueryParams, GetPortfolioOverviewViewModel},
         },
-        transactions::{
-            base_models::metadata_lookup::MetadataLookupTables,
-            transaction_types::RequiredIdentifiableTransactionWithIdentifiableEntries,
-        },
+        transactions::base_models::metadata_lookup::MetadataLookupTables,
     },
 };
 
@@ -163,7 +158,7 @@ pub async fn get_account_portfolio_overview(
     path = "/api/users/{user_id}/accounts/{account_id}/transactions",
     tag = "Account Portfolio",
     responses(
-        (status = 200, description = "Account transactions retrieved successfully.", body = PageOfResults<RequiredIdentifiableTransactionWithIdentifiableEntries, MetadataLookupTables>),
+        (status = 200, description = "Account transactions retrieved successfully.", body = AccountTransactionsPage),
         GetResponses
     ),
     params(
@@ -183,7 +178,7 @@ pub async fn get_account_transactions(
     TransactionManagementServiceState(transaction_service): TransactionManagementServiceState,
     AccountsServiceState(accounts_service): AccountsServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-) -> Result<Json<PageOfIndividualTransactionsWithLookupViewModel>, ApiError> {
+) -> Result<Json<AccountTransactionsPage>, ApiError> {
     let paging_dto = PagingDto {
         start: query_params.start,
         count: query_params.count,
@@ -202,7 +197,7 @@ pub async fn get_account_transactions(
         accounts_service.get_accounts(account_ids),
     )?;
 
-    let ret = PageOfIndividualTransactionsWithLookupViewModel {
+    let ret = AccountTransactionsPage {
         results: dtos.results.into_iter().map(Into::into).collect(),
         total_results: dtos.total_results,
         lookup_tables: MetadataLookupTables {

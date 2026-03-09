@@ -8,8 +8,8 @@ use utoipa::ToSchema;
 
 use crate::view_models::transactions::base_models::{
     account_asset_entry::{
-        IdentifiableAccountAssetEntryViewModel, NegativeAccountAssetEntry,
-        RequiredIdentifiableAccountAssetEntryViewModel,
+        AccountAssetEntryViewModel, IdentifiableAccountAssetEntryViewModel,
+        NegativeAccountAssetEntry, RequiredIdentifiableAccountAssetEntryViewModel,
     },
     transaction_base::{
         IdentifiableTransactionBaseWithIdentifiableEntries,
@@ -18,6 +18,8 @@ use crate::view_models::transactions::base_models::{
     },
 };
 
+pub type AccountFeesInputViewModel =
+    AccountFees<TransactionBaseWithEntries, AccountAssetEntryViewModel>;
 #[allow(dead_code)]
 pub type AccountFeesViewModel = AccountFees<TransactionBaseWithEntries, NegativeAccountAssetEntry>;
 #[allow(dead_code)]

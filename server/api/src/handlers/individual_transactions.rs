@@ -12,17 +12,13 @@ use crate::{
     states::{AccountsServiceState, AssetsServiceState, TransactionManagementServiceState},
     view_models::errors::{CreateResponses, GetResponses, UpdateResponses},
     view_models::{
-        base_models::search::{
-            CursorOrPageOfResults, CursorOrPaginatedSearchQuery,
-            CursorPageOfIndividualTransactionsWithLookupViewModel,
-        },
+        base_models::search::{CursorOrPaginatedSearchQuery, IndividualTransactionsPage},
         transactions::{
             add_individual_transaction::{
                 AddIndividualTransactionRequestViewModel, AddIndividualTransactionResponseViewModel,
             },
             base_models::metadata_lookup::MetadataLookupTables,
             get_individual_transaction::GetIndividualTransactionViewModel,
-            transaction_types::RequiredIdentifiableTransactionWithIdentifiableEntries,
             update_individual_transaction::{
                 UpdateIndividualTransactionRequestViewModel,
                 UpdateIndividualTransactionResponseViewModel,
@@ -143,7 +139,7 @@ pub async fn update_individual_transaction(
     path = "/api/users/{user_id}/transactions/individual",
     tag = "Individual Transactions",
     responses(
-        (status = 200, description = "Individual transactions retrieved successfully.", body = CursorOrPageOfResults<RequiredIdentifiableTransactionWithIdentifiableEntries, MetadataLookupTables>),
+        (status = 200, description = "Individual transactions retrieved successfully.", body = IndividualTransactionsPage),
         GetResponses
     ),
     params(
@@ -163,7 +159,7 @@ pub async fn get_individual_transactions(
     TransactionManagementServiceState(transaction_service): TransactionManagementServiceState,
     AccountsServiceState(accounts_service): AccountsServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-) -> Result<Json<CursorPageOfIndividualTransactionsWithLookupViewModel>, ApiError> {
+) -> Result<Json<IndividualTransactionsPage>, ApiError> {
     let pagination = PaginationModeDto::from(&query_params);
 
     let result = transaction_service
@@ -186,7 +182,7 @@ pub async fn get_individual_transactions(
         None
     };
 
-    let ret = CursorPageOfIndividualTransactionsWithLookupViewModel {
+    let ret = IndividualTransactionsPage {
         results: result.results.into_iter().map(Into::into).collect(),
         has_more: result.has_more,
         next_cursor,

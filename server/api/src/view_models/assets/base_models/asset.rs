@@ -9,7 +9,7 @@ use super::asset_type::IdentifiableAssetTypeViewModel;
 use super::asset_type_id::RequiredAssetTypeId;
 
 pub type AssetViewModel = Asset<RequiredAssetTypeId>;
-pub type ExpandedAssetViewModel = Asset<IdentifiableAssetTypeViewModel>;
+pub type AssetWithType = Asset<IdentifiableAssetTypeViewModel>;
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct Asset<T> {
@@ -25,9 +25,13 @@ pub struct Asset<T> {
     pub asset_type: T,
 }
 
-pub type IdentifiableAssetViewModel = IdentifiableAsset<AssetViewModel>;
+pub type AssetWithId = IdentifiableAsset<AssetViewModel>;
 #[allow(dead_code)]
-pub type IdentifiableExpandedAssetViewModel = IdentifiableAsset<ExpandedAssetViewModel>;
+pub type AssetWithTypeAndId = IdentifiableAsset<AssetWithType>;
+pub type ExpandedAssetViewModel = AssetWithType;
+pub type IdentifiableAssetViewModel = AssetWithId;
+#[allow(dead_code)]
+pub type IdentifiableExpandedAssetViewModel = AssetWithTypeAndId;
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct IdentifiableAsset<T> {
@@ -38,7 +42,7 @@ pub struct IdentifiableAsset<T> {
     pub asset: T,
 }
 
-impl From<AssetDto> for ExpandedAssetViewModel {
+impl From<AssetDto> for AssetWithType {
     fn from(value: AssetDto) -> Self {
         Self {
             ticker: AssetTicker::from_trusted(value.ticker),
@@ -58,7 +62,7 @@ impl From<AssetDto> for AssetViewModel {
     }
 }
 
-impl From<AssetDto> for IdentifiableAssetViewModel {
+impl From<AssetDto> for AssetWithId {
     fn from(value: AssetDto) -> Self {
         Self {
             asset_id: RequiredAssetId(value.id.0),
