@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 use time::{serde::timestamp, OffsetDateTime};
 use utoipa::ToSchema;
 
-use crate::view_models::transactions::base_models::category_id::RequiredCategoryId;
 use super::description::Description;
+use crate::view_models::transactions::base_models::category_id::RequiredCategoryId;
 use crate::view_models::transactions::{
     base_models::transaction_group_id::TransactionGroupId,
     transaction_types::{

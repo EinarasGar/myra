@@ -10,6 +10,7 @@ use crate::{
     errors::ApiError,
     extractors::ValidatedJson,
     states::AccountsServiceState,
+    view_models::accounts::base_models::ownership_share::OwnershipShare,
     view_models::accounts::{
         add_account::{AddAccountRequestViewModel, AddAccountResponseViewModel},
         base_models::{
@@ -26,7 +27,6 @@ use crate::{
         update_account::UpdateAccountViewModel,
     },
     view_models::errors::{CreateResponses, DeleteResponses, GetResponses, UpdateResponses},
-    view_models::accounts::base_models::ownership_share::OwnershipShare,
 };
 
 /// Get Account

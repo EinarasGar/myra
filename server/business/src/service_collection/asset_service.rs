@@ -177,10 +177,14 @@ impl AssetsService {
     }
 
     #[tracing::instrument(skip_all, err)]
-    pub async fn get_all_user_assets(&self, user_id: Uuid) -> anyhow::Result<Vec<dtos::assets::asset_dto::AssetDto>> {
+    pub async fn get_all_user_assets(
+        &self,
+        user_id: Uuid,
+    ) -> anyhow::Result<Vec<dtos::assets::asset_dto::AssetDto>> {
         let query = asset_queries::get_users_assets(user_id);
         let models = self.db.fetch_all::<Asset>(query).await?;
-        let ret_vec: Vec<dtos::assets::asset_dto::AssetDto> = models.into_iter().map(Into::into).collect();
+        let ret_vec: Vec<dtos::assets::asset_dto::AssetDto> =
+            models.into_iter().map(Into::into).collect();
         Ok(ret_vec)
     }
 
@@ -288,7 +292,12 @@ impl AssetsService {
     }
 
     #[tracing::instrument(skip_all, err)]
-    pub async fn add_asset_pair(&self, user_id: Uuid, asset_id: i32, reference_id: i32) -> anyhow::Result<i32> {
+    pub async fn add_asset_pair(
+        &self,
+        user_id: Uuid,
+        asset_id: i32,
+        reference_id: i32,
+    ) -> anyhow::Result<i32> {
         let is_owned = self.validate_asset_ownership(user_id, asset_id).await?;
         if !is_owned {
             return Err(anyhow::anyhow!("Asset not owned by user"));
@@ -413,9 +422,14 @@ impl AssetsService {
     }
 
     #[tracing::instrument(skip_all, err)]
-    pub async fn get_asset_types(&self) -> anyhow::Result<Vec<dtos::assets::asset_type_dto::AssetTypeDto>> {
+    pub async fn get_asset_types(
+        &self,
+    ) -> anyhow::Result<Vec<dtos::assets::asset_type_dto::AssetTypeDto>> {
         let query = asset_queries::get_asset_types();
-        let models = self.db.fetch_all::<dal::models::asset_models::AssetTypeModel>(query).await?;
+        let models = self
+            .db
+            .fetch_all::<dal::models::asset_models::AssetTypeModel>(query)
+            .await?;
         let ret: Vec<dtos::assets::asset_type_dto::AssetTypeDto> = models
             .into_iter()
             .map(|m| dtos::assets::asset_type_dto::AssetTypeDto {

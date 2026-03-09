@@ -2,7 +2,10 @@ use rust_decimal::Decimal;
 
 use crate::errors::{ApiError, FieldError};
 use crate::view_models::transactions::base_models::account_asset_entry::AccountAssetEntryViewModel;
+use crate::view_models::transactions::base_models::transaction_group::TransactionGroup;
+use crate::view_models::transactions::transaction_types::IdentifiableTransactionWithIdentifiableEntries;
 use crate::view_models::transactions::transaction_types::TransactionWithEntries;
+use crate::view_models::transactions::transaction_types::TransactionWithIdentifiableEntries;
 use crate::view_models::transactions::value_types::IntoDecimal;
 
 /// Trait for validating inbound request view models.
@@ -12,10 +15,7 @@ pub trait Validatable {
     fn validate(&self) -> Result<(), ApiError>;
 }
 
-fn validate_positive(
-    entry: &AccountAssetEntryViewModel,
-    field_prefix: &str,
-) -> Option<FieldError> {
+fn validate_positive(entry: &AccountAssetEntryViewModel, field_prefix: &str) -> Option<FieldError> {
     if entry.amount.as_decimal() <= Decimal::ZERO {
         Some(FieldError {
             field: format!("{}.amount", field_prefix),
@@ -26,10 +26,7 @@ fn validate_positive(
     }
 }
 
-fn validate_negative(
-    entry: &AccountAssetEntryViewModel,
-    field_prefix: &str,
-) -> Option<FieldError> {
+fn validate_negative(entry: &AccountAssetEntryViewModel, field_prefix: &str) -> Option<FieldError> {
     if entry.amount.as_decimal() >= Decimal::ZERO {
         Some(FieldError {
             field: format!("{}.amount", field_prefix),
@@ -40,10 +37,7 @@ fn validate_negative(
     }
 }
 
-fn validate_non_zero(
-    entry: &AccountAssetEntryViewModel,
-    field_prefix: &str,
-) -> Option<FieldError> {
+fn validate_non_zero(entry: &AccountAssetEntryViewModel, field_prefix: &str) -> Option<FieldError> {
     if entry.amount.as_decimal() == Decimal::ZERO {
         Some(FieldError {
             field: format!("{}.amount", field_prefix),
@@ -155,6 +149,157 @@ impl Validatable for TransactionWithEntries {
                 collect_errors(vec![validate_negative(&t.entry, "entry")])
             }
         }
+    }
+}
+
+impl Validatable for IdentifiableTransactionWithIdentifiableEntries {
+    fn validate(&self) -> Result<(), ApiError> {
+        match self {
+            IdentifiableTransactionWithIdentifiableEntries::RegularTransaction(t) => {
+                collect_errors(vec![validate_non_zero(&t.entry.entry, "entry")])
+            }
+            IdentifiableTransactionWithIdentifiableEntries::CashTransferIn(t) => {
+                collect_errors(vec![validate_positive(&t.entry.entry, "entry")])
+            }
+            IdentifiableTransactionWithIdentifiableEntries::CashTransferOut(t) => {
+                collect_errors(vec![validate_negative(&t.entry.entry, "entry")])
+            }
+            IdentifiableTransactionWithIdentifiableEntries::CashDividend(t) => {
+                collect_errors(vec![validate_positive(&t.entry.entry, "entry")])
+            }
+            IdentifiableTransactionWithIdentifiableEntries::AssetDividend(t) => {
+                collect_errors(vec![validate_positive(&t.entry.entry, "entry")])
+            }
+            IdentifiableTransactionWithIdentifiableEntries::AssetPurchase(t) => {
+                let [acct_a, acct_b] = validate_same_account(
+                    &t.purchase_change.entry,
+                    "purchase_change",
+                    &t.cash_outgoings_change.entry,
+                    "cash_outgoings_change",
+                );
+                collect_errors(vec![
+                    validate_positive(&t.purchase_change.entry, "purchase_change"),
+                    validate_negative(&t.cash_outgoings_change.entry, "cash_outgoings_change"),
+                    acct_a,
+                    acct_b,
+                ])
+            }
+            IdentifiableTransactionWithIdentifiableEntries::AssetSale(t) => {
+                let [acct_a, acct_b] = validate_same_account(
+                    &t.sale_entry.entry,
+                    "sale_entry",
+                    &t.proceeds_entry.entry,
+                    "proceeds_entry",
+                );
+                collect_errors(vec![
+                    validate_negative(&t.sale_entry.entry, "sale_entry"),
+                    validate_positive(&t.proceeds_entry.entry, "proceeds_entry"),
+                    acct_a,
+                    acct_b,
+                ])
+            }
+            IdentifiableTransactionWithIdentifiableEntries::AssetTrade(t) => collect_errors(vec![
+                validate_negative(&t.outgoing_entry.entry, "outgoing_entry"),
+                validate_positive(&t.incoming_entry.entry, "incoming_entry"),
+            ]),
+            IdentifiableTransactionWithIdentifiableEntries::AssetTransferIn(t) => {
+                collect_errors(vec![validate_positive(&t.entry.entry, "entry")])
+            }
+            IdentifiableTransactionWithIdentifiableEntries::AssetTransferOut(t) => {
+                collect_errors(vec![validate_negative(&t.entry.entry, "entry")])
+            }
+            IdentifiableTransactionWithIdentifiableEntries::AssetBalanceTransfer(t) => {
+                collect_errors(vec![
+                    validate_negative(&t.outgoing_change.entry, "outgoing_change"),
+                    validate_positive(&t.incoming_change.entry, "incoming_change"),
+                ])
+            }
+            IdentifiableTransactionWithIdentifiableEntries::AccountFees(t) => {
+                collect_errors(vec![validate_negative(&t.entry.entry, "entry")])
+            }
+        }
+    }
+}
+
+impl Validatable for TransactionWithIdentifiableEntries {
+    fn validate(&self) -> Result<(), ApiError> {
+        match self {
+            TransactionWithIdentifiableEntries::RegularTransaction(t) => {
+                collect_errors(vec![validate_non_zero(&t.entry.entry, "entry")])
+            }
+            TransactionWithIdentifiableEntries::CashTransferIn(t) => {
+                collect_errors(vec![validate_positive(&t.entry.entry, "entry")])
+            }
+            TransactionWithIdentifiableEntries::CashTransferOut(t) => {
+                collect_errors(vec![validate_negative(&t.entry.entry, "entry")])
+            }
+            TransactionWithIdentifiableEntries::CashDividend(t) => {
+                collect_errors(vec![validate_positive(&t.entry.entry, "entry")])
+            }
+            TransactionWithIdentifiableEntries::AssetDividend(t) => {
+                collect_errors(vec![validate_positive(&t.entry.entry, "entry")])
+            }
+            TransactionWithIdentifiableEntries::AssetPurchase(t) => {
+                let [acct_a, acct_b] = validate_same_account(
+                    &t.purchase_change.entry,
+                    "purchase_change",
+                    &t.cash_outgoings_change.entry,
+                    "cash_outgoings_change",
+                );
+                collect_errors(vec![
+                    validate_positive(&t.purchase_change.entry, "purchase_change"),
+                    validate_negative(&t.cash_outgoings_change.entry, "cash_outgoings_change"),
+                    acct_a,
+                    acct_b,
+                ])
+            }
+            TransactionWithIdentifiableEntries::AssetSale(t) => {
+                let [acct_a, acct_b] = validate_same_account(
+                    &t.sale_entry.entry,
+                    "sale_entry",
+                    &t.proceeds_entry.entry,
+                    "proceeds_entry",
+                );
+                collect_errors(vec![
+                    validate_negative(&t.sale_entry.entry, "sale_entry"),
+                    validate_positive(&t.proceeds_entry.entry, "proceeds_entry"),
+                    acct_a,
+                    acct_b,
+                ])
+            }
+            TransactionWithIdentifiableEntries::AssetTrade(t) => collect_errors(vec![
+                validate_negative(&t.outgoing_entry.entry, "outgoing_entry"),
+                validate_positive(&t.incoming_entry.entry, "incoming_entry"),
+            ]),
+            TransactionWithIdentifiableEntries::AssetTransferIn(t) => {
+                collect_errors(vec![validate_positive(&t.entry.entry, "entry")])
+            }
+            TransactionWithIdentifiableEntries::AssetTransferOut(t) => {
+                collect_errors(vec![validate_negative(&t.entry.entry, "entry")])
+            }
+            TransactionWithIdentifiableEntries::AssetBalanceTransfer(t) => collect_errors(vec![
+                validate_negative(&t.outgoing_change.entry, "outgoing_change"),
+                validate_positive(&t.incoming_change.entry, "incoming_change"),
+            ]),
+            TransactionWithIdentifiableEntries::AccountFees(t) => {
+                collect_errors(vec![validate_negative(&t.entry.entry, "entry")])
+            }
+        }
+    }
+}
+
+impl<T: Validatable> Validatable for TransactionGroup<T> {
+    fn validate(&self) -> Result<(), ApiError> {
+        if self.transactions.is_empty() {
+            return Err(ApiError::Validation(vec![FieldError {
+                field: "transactions".to_string(),
+                message: "At least one transaction is required.".to_string(),
+            }]));
+        }
+        for tx in &self.transactions {
+            tx.validate()?;
+        }
+        Ok(())
     }
 }
 
@@ -356,7 +501,9 @@ mod tests {
         let err = t.validate().unwrap_err();
         match err {
             ApiError::Validation(errors) => {
-                assert!(errors.iter().any(|e| e.field == "purchase_change.account_id"));
+                assert!(errors
+                    .iter()
+                    .any(|e| e.field == "purchase_change.account_id"));
                 assert!(errors
                     .iter()
                     .any(|e| e.field == "cash_outgoings_change.account_id"));
@@ -391,7 +538,9 @@ mod tests {
         match err {
             ApiError::Validation(errors) => {
                 assert!(errors.iter().any(|e| e.field == "sale_entry.account_id"));
-                assert!(errors.iter().any(|e| e.field == "proceeds_entry.account_id"));
+                assert!(errors
+                    .iter()
+                    .any(|e| e.field == "proceeds_entry.account_id"));
             }
             _ => panic!("Expected Validation error"),
         }

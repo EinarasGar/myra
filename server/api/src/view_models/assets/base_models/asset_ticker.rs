@@ -1,7 +1,11 @@
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use utoipa::ToSchema;
 
-validated_string_type!(AssetTicker, max_len = 20, description = "Asset ticker symbol");
+validated_string_type!(
+    AssetTicker,
+    max_len = 20,
+    description = "Asset ticker symbol"
+);
 
 #[cfg(test)]
 mod tests {

@@ -54,4 +54,4 @@ pub trait TransactionProcessor {
 }
 
 /// A boxed trait object for a transaction processor
-pub type Transaction = Box<dyn TransactionProcessor + Send>;
+pub type Transaction = Box<dyn TransactionProcessor + Send + Sync>;

@@ -128,6 +128,7 @@ use crate::view_models::{
         &SecurityAddon,
         &DeriveDiscriminatorMapping,
         &OneOfToAnyOfTransformer,
+        &ShortenTransactionVariantReferences,
         &NullableTypeReferenceTransformer,
     ),
     tags(
@@ -585,5 +586,180 @@ impl NullableTypeReferenceTransformer {
             }
         }
         false
+    }
+}
+
+pub struct ShortenTransactionVariantReferences;
+
+impl Modify for ShortenTransactionVariantReferences {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        let Some(components) = openapi.components.as_mut() else {
+            return;
+        };
+
+        let existing_schemas = components.schemas.clone();
+        let mut schemas_to_update = BTreeMap::new();
+        let mut schemas_to_add = BTreeMap::new();
+
+        for union_name in [
+            "TransactionWithEntries",
+            "TransactionWithIdentifiableEntries",
+            "IdentifiableTransactionWithIdentifiableEntries",
+            "RequiredTransactionWithIdentifiableEntries",
+            "RequiredIdentifiableTransactionWithIdentifiableEntries",
+        ] {
+            match components.schemas.get(union_name) {
+                Some(RefOr::T(Schema::AnyOf(any_of_schema))) => {
+                    let mut updated_union = any_of_schema.clone();
+                    Self::rewrite_union_refs(
+                        union_name,
+                        &mut updated_union.items,
+                        updated_union.discriminator.as_mut(),
+                        &existing_schemas,
+                        &mut schemas_to_add,
+                    );
+                    schemas_to_update.insert(
+                        union_name.to_string(),
+                        RefOr::T(Schema::AnyOf(updated_union)),
+                    );
+                }
+                Some(RefOr::T(Schema::OneOf(one_of_schema))) => {
+                    let mut updated_union = one_of_schema.clone();
+                    Self::rewrite_union_refs(
+                        union_name,
+                        &mut updated_union.items,
+                        updated_union.discriminator.as_mut(),
+                        &existing_schemas,
+                        &mut schemas_to_add,
+                    );
+                    schemas_to_update.insert(
+                        union_name.to_string(),
+                        RefOr::T(Schema::OneOf(updated_union)),
+                    );
+                }
+                _ => {}
+            }
+        }
+
+        components.schemas.extend(schemas_to_add);
+        components.schemas.extend(schemas_to_update);
+    }
+}
+
+impl ShortenTransactionVariantReferences {
+    fn short_schema_name(union_name: &str, transaction_type: &str) -> String {
+        match union_name {
+            "TransactionWithEntries" => format!("{transaction_type}TransactionInput"),
+            "TransactionWithIdentifiableEntries" => {
+                format!("{transaction_type}TransactionWithEntryIds")
+            }
+            "IdentifiableTransactionWithIdentifiableEntries" => {
+                format!("Identifiable{transaction_type}Transaction")
+            }
+            "RequiredTransactionWithIdentifiableEntries" => {
+                format!("Required{transaction_type}Transaction")
+            }
+            "RequiredIdentifiableTransactionWithIdentifiableEntries" => {
+                format!("RequiredIdentifiable{transaction_type}Transaction")
+            }
+            _ => transaction_type.to_string(),
+        }
+    }
+
+    fn rewrite_union_refs(
+        union_name: &str,
+        items: &mut [RefOr<Schema>],
+        discriminator: Option<&mut utoipa::openapi::schema::Discriminator>,
+        existing_schemas: &BTreeMap<String, RefOr<Schema>>,
+        schemas_to_add: &mut BTreeMap<String, RefOr<Schema>>,
+    ) {
+        let discriminator_mapping = discriminator
+            .as_ref()
+            .map(|d| d.mapping.clone())
+            .unwrap_or_default();
+
+        for item in items {
+            let RefOr::Ref(schema_ref) = item else {
+                continue;
+            };
+
+            let Some((_, old_schema_name)) = schema_ref.ref_location.rsplit_once('/') else {
+                continue;
+            };
+
+            let Some(tag) = discriminator_mapping
+                .iter()
+                .find_map(|(tag, ref_path)| (ref_path == &schema_ref.ref_location).then_some(tag))
+            else {
+                continue;
+            };
+
+            let short_schema_name = Self::short_schema_name(union_name, &Self::pascal_case(tag));
+            let new_ref_location = format!("#/components/schemas/{short_schema_name}");
+
+            if !existing_schemas.contains_key(&short_schema_name)
+                && !schemas_to_add.contains_key(&short_schema_name)
+            {
+                let Some(existing_schema) = existing_schemas.get(old_schema_name).cloned() else {
+                    continue;
+                };
+
+                schemas_to_add.insert(
+                    short_schema_name.clone(),
+                    Self::with_title(existing_schema, &short_schema_name),
+                );
+            }
+
+            schema_ref.ref_location = new_ref_location;
+        }
+
+        if let Some(discriminator) = discriminator {
+            for (tag, ref_path) in &mut discriminator.mapping {
+                let short_schema_name =
+                    Self::short_schema_name(union_name, &Self::pascal_case(tag));
+                *ref_path = format!("#/components/schemas/{short_schema_name}");
+            }
+        }
+    }
+
+    fn pascal_case(value: &str) -> String {
+        value
+            .split('_')
+            .filter(|segment| !segment.is_empty())
+            .map(|segment| {
+                let mut chars = segment.chars();
+                match chars.next() {
+                    Some(first) => {
+                        let mut formatted = String::new();
+                        formatted.push(first.to_ascii_uppercase());
+                        formatted.push_str(chars.as_str());
+                        formatted
+                    }
+                    None => String::new(),
+                }
+            })
+            .collect()
+    }
+
+    fn with_title(schema: RefOr<Schema>, title: &str) -> RefOr<Schema> {
+        match schema {
+            RefOr::T(Schema::AllOf(mut all_of)) => {
+                all_of.title = Some(title.to_string());
+                RefOr::T(Schema::AllOf(all_of))
+            }
+            RefOr::T(Schema::Object(mut object)) => {
+                object.title = Some(title.to_string());
+                RefOr::T(Schema::Object(object))
+            }
+            RefOr::T(Schema::OneOf(mut one_of)) => {
+                one_of.title = Some(title.to_string());
+                RefOr::T(Schema::OneOf(one_of))
+            }
+            RefOr::T(Schema::Array(mut array)) => {
+                array.title = Some(title.to_string());
+                RefOr::T(Schema::Array(array))
+            }
+            other => other,
+        }
     }
 }

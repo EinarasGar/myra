@@ -1,9 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use axum::{
-    extract::Path,
-    Json,
-};
+use axum::{extract::Path, Json};
 use business::dtos::{
     assets::{asset_id_dto::AssetIdDto, asset_pair_ids_dto::AssetPairIdsDto},
     net_worth::range_dto::RangeDto,
@@ -20,10 +17,13 @@ use crate::{
     view_models::{
         assets::{
             base_models::{
-                asset_id::RequiredAssetId, asset_metadata::{AssetMetadataViewModel, AssetPairInfoViewModel},
+                asset_id::RequiredAssetId,
+                asset_metadata::{AssetMetadataViewModel, AssetPairInfoViewModel},
                 asset_pair_metadata::AssetPairMetadataViewModel,
-                asset_type::IdentifiableAssetTypeViewModel, asset_type_id::RequiredAssetTypeId,
-                lookup::AssetLookupTables, rate::AssetRateViewModel,
+                asset_type::IdentifiableAssetTypeViewModel,
+                asset_type_id::RequiredAssetTypeId,
+                lookup::AssetLookupTables,
+                rate::AssetRateViewModel,
                 shared_asset_pair_metadata::SharedAssetPairMetadataViewModel,
             },
             get_asset::GetAssetResponseViewModel,
@@ -144,10 +144,8 @@ pub async fn get_asset(
         vec![]
     };
 
-    let asset_map: std::collections::HashMap<i32, _> = fetched_assets
-        .into_iter()
-        .map(|a| (a.id.0, a))
-        .collect();
+    let asset_map: std::collections::HashMap<i32, _> =
+        fetched_assets.into_iter().map(|a| (a.id.0, a)).collect();
 
     let pair_infos: Vec<AssetPairInfoViewModel> = pair_ids
         .iter()

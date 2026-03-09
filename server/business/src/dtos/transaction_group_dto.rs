@@ -7,6 +7,6 @@ pub struct TransactionGroupDto {
     pub transactions: Vec<TransactionDto>,
     pub group_id: Option<Uuid>,
     pub description: String,
-    pub category: i32,
+    pub category_id: i32,
     pub date: OffsetDateTime,
 }

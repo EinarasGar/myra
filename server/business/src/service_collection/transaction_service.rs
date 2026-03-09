@@ -1,7 +1,10 @@
 #[mockall_double::double]
 use dal::database_context::MyraDb;
 
-use dal::{models::transaction_models::AddTransactionModel, queries::transaction_data_queries};
+use dal::{
+    models::transaction_models::{AddTransactionModel, UpdateTransactionFieldsModel},
+    queries::transaction_data_queries,
+};
 use mockall::automock;
 
 use uuid::Uuid;
@@ -39,6 +42,28 @@ impl TransactionService {
         transactions.iter_mut().enumerate().for_each(|(i, x)| {
             x.set_transaction_id(new_ids[i]);
         });
+
+        Ok(())
+    }
+
+    pub(crate) async fn update_transaction_info(
+        &self,
+        transaction_id: Uuid,
+        old_transaction: &Transaction,
+        new_transaction: &Transaction,
+    ) -> anyhow::Result<()> {
+        let old_model = old_transaction.get_add_transaction_model();
+        let new_model = new_transaction.get_add_transaction_model();
+
+        if old_model != new_model {
+            let update_model = UpdateTransactionFieldsModel {
+                date: new_model.date,
+                transaction_type_id: new_model.transaction_type_id,
+            };
+            let query =
+                transaction_data_queries::update_transaction_fields(transaction_id, update_model);
+            self.db.execute(query).await?;
+        }
 
         Ok(())
     }

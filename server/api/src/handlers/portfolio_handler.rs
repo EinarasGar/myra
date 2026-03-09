@@ -1,9 +1,6 @@
 use std::collections::HashSet;
 
-use axum::{
-    extract::Path,
-    Json,
-};
+use axum::{extract::Path, Json};
 use business::dtos::{
     assets::{asset_id_dto::AssetIdDto, asset_pair_ids_dto::AssetPairIdsDto},
     net_worth::range_dto::RangeDto,

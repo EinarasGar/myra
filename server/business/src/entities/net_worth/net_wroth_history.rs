@@ -87,10 +87,8 @@ impl NetWorthHistory {
         self.asset_pair_rates
             .iter()
             .for_each(|(asset_id, rate_queue)| {
-                *self
-                    .last_rates
-                    .entry(*asset_id)
-                    .or_default() = rate_queue.front().unwrap().clone();
+                *self.last_rates.entry(*asset_id).or_default() =
+                    rate_queue.front().unwrap().clone();
             });
 
         self.update_rates_with_base_rate();
@@ -168,10 +166,7 @@ impl NetWorthHistory {
                     .is_some_and(|r| r.date <= current_timestamp)
                 {
                     let rate = rate_queue.pop_front().unwrap();
-                    *self
-                        .last_rates
-                        .entry(*asset_id)
-                        .or_default() = rate;
+                    *self.last_rates.entry(*asset_id).or_default() = rate;
                     continue;
                 }
                 break;
@@ -205,10 +200,7 @@ impl NetWorthHistory {
                                     / (next_timestamp - last_timestamp)
                                     + latest_rate.rate;
 
-                                *self
-                                    .last_rates
-                                    .entry(*asset_id_pair)
-                                    .or_default() = AssetRateDto {
+                                *self.last_rates.entry(*asset_id_pair).or_default() = AssetRateDto {
                                     date: current_timestamp,
                                     rate: interpolated_rate,
                                 }

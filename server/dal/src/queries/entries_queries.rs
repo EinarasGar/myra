@@ -140,10 +140,7 @@ pub fn get_binned_entries(params: GetBinnedEntriesParams) -> DbQueryWithValues {
             BinnedEntriesIden::StartTime,
         )
         .column((EntryIden::Table, EntryIden::AssetId))
-        .expr_as(
-            sum_expr.clone(),
-            BinnedEntriesIden::Sum,
-        )
+        .expr_as(sum_expr.clone(), BinnedEntriesIden::Sum)
         .from(EntryIden::Table)
         .join(
             JoinType::Join,
@@ -185,10 +182,7 @@ pub fn get_binned_entries(params: GetBinnedEntriesParams) -> DbQueryWithValues {
                     BinnedEntriesIden::StartTime,
                 )
                 .column((EntryIden::Table, EntryIden::AssetId))
-                .expr_as(
-                    sum_expr,
-                    BinnedEntriesIden::Sum,
-                )
+                .expr_as(sum_expr, BinnedEntriesIden::Sum)
                 .from(EntryIden::Table)
                 .join(
                     JoinType::Join,
@@ -225,19 +219,23 @@ pub fn get_binned_entries(params: GetBinnedEntriesParams) -> DbQueryWithValues {
 #[tracing::instrument(skip_all)]
 pub fn get_oldest_entry_date(user_id: Uuid, account_id: Option<Uuid>) -> DbQueryWithValues {
     let mut query = Query::select()
-        .expr(Expr::min(Expr::col((TransactionIden::Table, TransactionIden::DateTransacted))))
+        .expr(Expr::min(Expr::col((
+            TransactionIden::Table,
+            TransactionIden::DateTransacted,
+        ))))
         .from(TransactionIden::Table)
         .and_where(Expr::col((TransactionIden::Table, TransactionIden::UserId)).eq(user_id))
         .to_owned();
 
     if let Some(account_id) = account_id {
-        query.join(
-            JoinType::Join,
-            EntryIden::Table,
-            Expr::col((EntryIden::Table, EntryIden::TransactionId))
-                .equals((TransactionIden::Table, TransactionIden::Id)),
-        )
-        .and_where(Expr::col((EntryIden::Table, EntryIden::AccountId)).eq(account_id));
+        query
+            .join(
+                JoinType::Join,
+                EntryIden::Table,
+                Expr::col((EntryIden::Table, EntryIden::TransactionId))
+                    .equals((TransactionIden::Table, TransactionIden::Id)),
+            )
+            .and_where(Expr::col((EntryIden::Table, EntryIden::AccountId)).eq(account_id));
     }
 
     query.build_sqlx(PostgresQueryBuilder).into()

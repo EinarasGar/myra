@@ -1,27 +1,25 @@
 use crate::view_models::assets::{
+    add_asset_pair::{AddAssetPairRequestViewModel, AddAssetPairResponseViewModel},
+    base_models::{
+        asset_metadata::AssetPairInfoViewModel, asset_type::IdentifiableAssetTypeViewModel,
+        asset_type_id::RequiredAssetTypeId, lookup::AssetLookupTables,
+    },
     delete_asset_pair_rates::DeleteAssetPairRatesParams,
     get_asset_pair_rates::GetAssetPairRatesRequestParams,
     get_assets::GetAssetsLineResponseViewModel,
     get_user_assets::GetUserAssetsResponseViewModel,
-    add_asset_pair::{AddAssetPairRequestViewModel, AddAssetPairResponseViewModel},
-    base_models::{
-        asset_type::IdentifiableAssetTypeViewModel,
-        asset_type_id::RequiredAssetTypeId,
-        lookup::AssetLookupTables,
-        asset_metadata::AssetPairInfoViewModel,
-    },
 };
-use std::collections::HashSet;
-use axum::{
-    extract::Path,
-    Json,
-};
+use axum::{extract::Path, Json};
 use business::dtos::{
     add_custom_asset_dto::AddCustomAssetDto,
     asset_pair_rate_insert_dto::AssetPairRateInsertDto,
-    assets::{asset_id_dto::AssetIdDto, asset_pair_ids_dto::AssetPairIdsDto, update_asset_dto::UpdateAssetDto},
+    assets::{
+        asset_id_dto::AssetIdDto, asset_pair_ids_dto::AssetPairIdsDto,
+        update_asset_dto::UpdateAssetDto,
+    },
     net_worth::range_dto::RangeDto,
 };
+use std::collections::HashSet;
 use uuid::Uuid;
 
 use crate::{
@@ -38,8 +36,8 @@ use crate::{
         base_models::{
             asset::{AssetViewModel, IdentifiableAssetViewModel},
             asset_id::RequiredAssetId,
-            asset_pair_metadata::AssetPairMetadataViewModel,
             asset_metadata::AssetMetadataViewModel,
+            asset_pair_metadata::AssetPairMetadataViewModel,
             rate::AssetRateViewModel,
             user_asset_pair_metadata::UserAssetPairMetadataViewModel,
         },
@@ -102,10 +100,8 @@ pub async fn get_user_asset(
         vec![]
     };
 
-    let asset_map: std::collections::HashMap<i32, _> = fetched_assets
-        .into_iter()
-        .map(|a| (a.id.0, a))
-        .collect();
+    let asset_map: std::collections::HashMap<i32, _> =
+        fetched_assets.into_iter().map(|a| (a.id.0, a)).collect();
 
     let pair_infos: Vec<AssetPairInfoViewModel> = pair_ids
         .iter()
@@ -177,10 +173,8 @@ pub async fn get_user_asset_pair(
 
     let (pair_dtos, latest_rate, user_metadata) = tokio::try_join!(
         assets_service.get_asset_pair(pair1, pair2),
-        asset_rates_service.get_pair_latest_direct(AssetPairIdsDto::new(
-            AssetIdDto(pair1),
-            AssetIdDto(pair2)
-        )),
+        asset_rates_service
+            .get_pair_latest_direct(AssetPairIdsDto::new(AssetIdDto(pair1), AssetIdDto(pair2))),
         assets_service.get_asset_pair_user_metadata(pair_id)
     )?;
 
@@ -191,7 +185,9 @@ pub async fn get_user_asset_pair(
             latest_rate: rate.rate,
             last_updated: rate.date,
         }),
-        user_metadata: user_metadata.map(|exchange| UserAssetPairMetadataViewModel { exchange: ExchangeName::from_trusted(exchange) }),
+        user_metadata: user_metadata.map(|exchange| UserAssetPairMetadataViewModel {
+            exchange: ExchangeName::from_trusted(exchange),
+        }),
     };
 
     Ok(ret.into())
@@ -515,7 +511,11 @@ pub async fn delete_asset_pair_rates(
 
     let pair_id = assets_service.get_asset_pair_id(pair1, pair2).await?;
     asset_rates_service
-        .delete_rates_in_range(pair_id, query_params.start_timestamp, query_params.end_timestamp)
+        .delete_rates_in_range(
+            pair_id,
+            query_params.start_timestamp,
+            query_params.end_timestamp,
+        )
         .await?;
 
     Ok(())
@@ -611,7 +611,8 @@ pub async fn get_user_assets(
 ) -> Result<Json<GetUserAssetsResponseViewModel>, ApiError> {
     let assets = assets_service.get_all_user_assets(user_id).await?;
 
-    let mut map: std::collections::HashMap<i32, IdentifiableAssetTypeViewModel> = std::collections::HashMap::new();
+    let mut map: std::collections::HashMap<i32, IdentifiableAssetTypeViewModel> =
+        std::collections::HashMap::new();
     for x in &assets {
         map.entry(x.asset_type.id)
             .or_insert_with(|| IdentifiableAssetTypeViewModel {

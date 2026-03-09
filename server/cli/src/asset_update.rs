@@ -174,14 +174,12 @@ pub(crate) async fn insert_quotes(
         return;
     }
     let response = resp.unwrap();
-    let is_pence = response
-        .metadata()
-        .ok()
-        .and_then(|m| m.currency)
-        .as_deref()
-        == Some("GBp");
+    let is_pence = response.metadata().ok().and_then(|m| m.currency).as_deref() == Some("GBp");
     if is_pence {
-        println!("{} is denominated in pence (GBp), converting to GBP", ticker);
+        println!(
+            "{} is denominated in pence (GBp), converting to GBP",
+            ticker
+        );
     }
     let quotes = match response.quotes() {
         Ok(quotes) => quotes,
@@ -192,9 +190,12 @@ pub(crate) async fn insert_quotes(
     };
 
     for quote in quotes {
-        let date =
-            OffsetDateTime::from_unix_timestamp(quote.timestamp).unwrap();
-        let price = if is_pence { quote.close / 100.0 } else { quote.close };
+        let date = OffsetDateTime::from_unix_timestamp(quote.timestamp).unwrap();
+        let price = if is_pence {
+            quote.close / 100.0
+        } else {
+            quote.close
+        };
         asset_rates_service()
             .insert_pair_single(AssetPairRateInsertDto {
                 pair_id,

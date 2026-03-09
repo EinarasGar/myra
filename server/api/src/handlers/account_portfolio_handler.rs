@@ -1,13 +1,8 @@
 use std::collections::HashSet;
 
-use axum::{
-    extract::Path,
-    Json,
-};
+use axum::{extract::Path, Json};
 use business::dtos::{
-    assets::asset_id_dto::AssetIdDto,
-    net_worth::range_dto::RangeDto,
-    paging_dto::PagingDto,
+    assets::asset_id_dto::AssetIdDto, net_worth::range_dto::RangeDto, paging_dto::PagingDto,
     portfolio::overview::PortfolioOverviewType,
 };
 use itertools::Itertools;

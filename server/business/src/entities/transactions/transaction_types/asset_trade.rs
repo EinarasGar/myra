@@ -107,15 +107,17 @@ impl TransactionProcessor for AssetTradeTransaction {
         let outgoing_entry = self.base.entry(|x| x.quantity < dec!(0))?;
         let incoming_entry = self.base.entry(|x| x.quantity > dec!(0))?;
 
-        Ok(TransactionPortfolioAction::Referential(Box::new(AssetTrade {
-            account_id: outgoing_entry.account_id,
-            outgoing_asset_id: outgoing_entry.asset_id,
-            outgoing_quantity: outgoing_entry.quantity.abs(),
-            incoming_asset_id: incoming_entry.asset_id,
-            incoming_quantity: incoming_entry.quantity,
-            incoming_price: dec!(1),
-            fees: self.base.fee_entries_total().abs(),
-            date: self.base.date(),
-        })))
+        Ok(TransactionPortfolioAction::Referential(Box::new(
+            AssetTrade {
+                account_id: outgoing_entry.account_id,
+                outgoing_asset_id: outgoing_entry.asset_id,
+                outgoing_quantity: outgoing_entry.quantity.abs(),
+                incoming_asset_id: incoming_entry.asset_id,
+                incoming_quantity: incoming_entry.quantity,
+                incoming_price: dec!(1),
+                fees: self.base.fee_entries_total().abs(),
+                date: self.base.date(),
+            },
+        )))
     }
 }

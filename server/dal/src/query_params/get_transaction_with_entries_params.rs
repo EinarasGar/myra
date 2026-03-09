@@ -1,12 +1,22 @@
 use sqlx::types::Uuid;
 
-use super::paging_params::PagingParams;
+use super::paging_params::{CursorPagingParams, PagingParams};
+
+pub enum GroupFilter {
+    IndividualOnly,
+    GroupedOnly,
+    All,
+    ByGroupId(Uuid),
+}
 
 pub struct GetTransactionWithEntriesParams {
     pub search_type: GetTransactionWithEntriesParamsSeachType,
     pub paging: Option<PagingParams>,
     pub apply_ownership_share: bool,
     pub account_filter: Option<Uuid>,
+    pub group_filter: GroupFilter,
+    pub search_query: Option<String>,
+    pub cursor_paging: Option<CursorPagingParams>,
 }
 
 impl GetTransactionWithEntriesParams {
@@ -16,6 +26,9 @@ impl GetTransactionWithEntriesParams {
             paging: None,
             apply_ownership_share: false,
             account_filter: None,
+            group_filter: GroupFilter::All,
+            search_query: None,
+            cursor_paging: None,
         }
     }
 
@@ -27,6 +40,9 @@ impl GetTransactionWithEntriesParams {
             paging: None,
             apply_ownership_share: false,
             account_filter: None,
+            group_filter: GroupFilter::All,
+            search_query: None,
+            cursor_paging: None,
         }
     }
 
@@ -36,6 +52,9 @@ impl GetTransactionWithEntriesParams {
             paging: None,
             apply_ownership_share: false,
             account_filter: None,
+            group_filter: GroupFilter::All,
+            search_query: None,
+            cursor_paging: None,
         }
     }
 
@@ -45,6 +64,9 @@ impl GetTransactionWithEntriesParams {
             paging: Some(paging_params),
             apply_ownership_share: false,
             account_filter: None,
+            group_filter: GroupFilter::All,
+            search_query: None,
+            cursor_paging: None,
         }
     }
 
@@ -54,6 +76,9 @@ impl GetTransactionWithEntriesParams {
             paging: None,
             apply_ownership_share: true,
             account_filter: None,
+            group_filter: GroupFilter::All,
+            search_query: None,
+            cursor_paging: None,
         }
     }
 
@@ -63,15 +88,37 @@ impl GetTransactionWithEntriesParams {
             paging: None,
             apply_ownership_share: false,
             account_filter: Some(account_id),
+            group_filter: GroupFilter::All,
+            search_query: None,
+            cursor_paging: None,
         }
     }
 
-    pub fn by_user_id_paged_with_account(user_id: Uuid, paging_params: PagingParams, account_id: Uuid) -> Self {
+    pub fn by_user_id_paged_with_account(
+        user_id: Uuid,
+        paging_params: PagingParams,
+        account_id: Uuid,
+    ) -> Self {
         Self {
             search_type: GetTransactionWithEntriesParamsSeachType::ByUserId(user_id),
             paging: Some(paging_params),
             apply_ownership_share: false,
             account_filter: Some(account_id),
+            group_filter: GroupFilter::All,
+            search_query: None,
+            cursor_paging: None,
+        }
+    }
+
+    pub fn by_user_id_individual_only(user_id: Uuid) -> Self {
+        Self {
+            search_type: GetTransactionWithEntriesParamsSeachType::ByUserId(user_id),
+            paging: None,
+            apply_ownership_share: false,
+            account_filter: None,
+            group_filter: GroupFilter::IndividualOnly,
+            search_query: None,
+            cursor_paging: None,
         }
     }
 }

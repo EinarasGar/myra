@@ -54,7 +54,9 @@ pub struct AssetBalanceTransfer<B, E> {
     pub incoming_change: E,
 }
 
-impl<E: Into<EntryDto>> From<AssetBalanceTransfer<TransactionBaseWithEntries, E>> for TransactionDto {
+impl<E: Into<EntryDto>> From<AssetBalanceTransfer<TransactionBaseWithEntries, E>>
+    for TransactionDto
+{
     fn from(value: AssetBalanceTransfer<TransactionBaseWithEntries, E>) -> Self {
         TransactionDto {
             transaction_id: None,
@@ -63,10 +65,12 @@ impl<E: Into<EntryDto>> From<AssetBalanceTransfer<TransactionBaseWithEntries, E>
                 Some(f) => f.into_iter().map(|x| x.into()).collect(),
                 None => [].into(),
             },
-            transaction_type: TransactionTypeDto::AssetBalanceTransfer(AssetBalanceTransferMetadataDto {
-                outgoing_change: value.outgoing_change.into(),
-                incoming_change: value.incoming_change.into(),
-            }),
+            transaction_type: TransactionTypeDto::AssetBalanceTransfer(
+                AssetBalanceTransferMetadataDto {
+                    outgoing_change: value.outgoing_change.into(),
+                    incoming_change: value.incoming_change.into(),
+                },
+            ),
         }
     }
 }

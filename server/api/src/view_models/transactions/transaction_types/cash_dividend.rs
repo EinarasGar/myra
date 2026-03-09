@@ -85,7 +85,9 @@ where
                 base: value.into(),
             }
         } else {
-            panic!("Can not convert TransactionDto into CashDividend as the type is not CashDividend")
+            panic!(
+                "Can not convert TransactionDto into CashDividend as the type is not CashDividend"
+            )
         }
     }
 }

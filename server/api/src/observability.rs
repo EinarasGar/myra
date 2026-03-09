@@ -28,9 +28,8 @@ fn create_opentelemetry_layer<S>() -> Option<OpenTelemetryLayer<S, Tracer>>
 where
     S: Subscriber + for<'span> LookupSpan<'span>,
 {
-    let otlp_endpoint = std::env::var("OTLP_ENDPOINT").or_else(|_| {
-        std::env::var("OTLP_PORT").map(|port| format!("http://localhost:{port}"))
-    });
+    let otlp_endpoint = std::env::var("OTLP_ENDPOINT")
+        .or_else(|_| std::env::var("OTLP_PORT").map(|port| format!("http://localhost:{port}")));
     match otlp_endpoint {
         Ok(endpoint) => {
             let exporter = opentelemetry_otlp::SpanExporter::builder()

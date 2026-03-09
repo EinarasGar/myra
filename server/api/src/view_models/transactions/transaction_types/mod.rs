@@ -19,14 +19,25 @@ use crate::view_models::transactions::base_models::transaction_id::{
 use business::dtos::transaction_dto::{TransactionDto, TransactionTypeDto};
 use paste::paste;
 
+use business::dtos::fee_entry_dto::FeeEntryDto;
 use serde::{Deserialize, Serialize};
+use time::OffsetDateTime;
 use utoipa::ToSchema;
+use uuid::Uuid;
+
+use crate::view_models::transactions::base_models::transaction_base::IdentifiableTransactionBaseWithIdentifiableEntries;
+use business::dtos::transaction_dto::{
+    AccountFeesMetadataDto, AssetBalanceTransferMetadataDto, AssetDividendMetadataDto,
+    AssetPurchaseMetadataDto, AssetSaleMetadataDto, AssetTradeMetadataDto,
+    AssetTransferInMetadataDto, AssetTransferOutMetadataDto, CashDividendMetadataDto,
+    CashTransferInMetadataDto, CashTransferOutMetadataDto, RegularTransactionMetadataDto,
+};
 
 use crate::view_models::transactions::base_models::account_asset_entry::{
     AccountAssetEntryViewModel, RequiredIdentifiableAccountAssetEntryViewModel,
 };
 use crate::view_models::transactions::base_models::transaction_base::{
-    IdentifiableTransactionBase, TransactionBase,
+    IdentifiableTransactionBase, TransactionBase, TransactionBaseWithIdentifiableEntries,
 };
 
 use self::{
@@ -124,6 +135,7 @@ macro_rules! generate_transaction_type_enums {
                     ),
                 )*
             }
+
         }
     };
 }
@@ -170,7 +182,9 @@ impl From<TransactionDto> for RequiredIdentifiableTransactionWithIdentifiableEnt
             }
             TransactionTypeDto::CashTransferOut(_) => {
                 RequiredIdentifiableTransactionWithIdentifiableEntries::CashTransferOut(
-                    RequiredIdentifiableCashTransferOutWithIdentifiableEntriesViewModel::from(value),
+                    RequiredIdentifiableCashTransferOutWithIdentifiableEntriesViewModel::from(
+                        value,
+                    ),
                 )
             }
             TransactionTypeDto::CashDividend(_) => {
@@ -185,12 +199,16 @@ impl From<TransactionDto> for RequiredIdentifiableTransactionWithIdentifiableEnt
             }
             TransactionTypeDto::AssetTransferOut(_) => {
                 RequiredIdentifiableTransactionWithIdentifiableEntries::AssetTransferOut(
-                    RequiredIdentifiableAssetTransferOutWithIdentifiableEntriesViewModel::from(value),
+                    RequiredIdentifiableAssetTransferOutWithIdentifiableEntriesViewModel::from(
+                        value,
+                    ),
                 )
             }
             TransactionTypeDto::AssetTransferIn(_) => {
                 RequiredIdentifiableTransactionWithIdentifiableEntries::AssetTransferIn(
-                    RequiredIdentifiableAssetTransferInWithIdentifiableEntriesViewModel::from(value),
+                    RequiredIdentifiableAssetTransferInWithIdentifiableEntriesViewModel::from(
+                        value,
+                    ),
                 )
             }
             TransactionTypeDto::AssetTrade(_) => {
@@ -200,7 +218,9 @@ impl From<TransactionDto> for RequiredIdentifiableTransactionWithIdentifiableEnt
             }
             TransactionTypeDto::AssetBalanceTransfer(_) => {
                 RequiredIdentifiableTransactionWithIdentifiableEntries::AssetBalanceTransfer(
-                    RequiredIdentifiableAssetBalanceTransferWithIdentifiableEntriesViewModel::from(value),
+                    RequiredIdentifiableAssetBalanceTransferWithIdentifiableEntriesViewModel::from(
+                        value,
+                    ),
                 )
             }
             TransactionTypeDto::AccountFees(_) => {
@@ -274,6 +294,342 @@ impl From<TransactionDto> for RequiredTransactionWithIdentifiableEntries {
                 RequiredTransactionWithIdentifiableEntries::AccountFees(
                     RequiredAccountFeesWithIdentifiableEntriesViewModel::from(value),
                 )
+            }
+        }
+    }
+}
+
+fn extract_base_no_id(
+    base: TransactionBaseWithIdentifiableEntries,
+) -> (OffsetDateTime, Vec<FeeEntryDto>) {
+    (
+        base.date,
+        base.fees
+            .map(|f| f.into_iter().map(Into::into).collect())
+            .unwrap_or_default(),
+    )
+}
+
+fn extract_identifiable_base(
+    base: IdentifiableTransactionBaseWithIdentifiableEntries,
+) -> (Option<Uuid>, OffsetDateTime, Vec<FeeEntryDto>) {
+    (
+        base.transaction_id.0,
+        base.base.date,
+        base.base
+            .fees
+            .map(|f| f.into_iter().map(Into::into).collect())
+            .unwrap_or_default(),
+    )
+}
+
+impl From<IdentifiableTransactionWithIdentifiableEntries> for TransactionDto {
+    fn from(value: IdentifiableTransactionWithIdentifiableEntries) -> Self {
+        match value {
+            IdentifiableTransactionWithIdentifiableEntries::RegularTransaction(t) => {
+                let (transaction_id, date, fee_entries) = extract_identifiable_base(t.base);
+                TransactionDto {
+                    transaction_id,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::Regular(RegularTransactionMetadataDto {
+                        description: t.description.map(|d| d.into_inner()),
+                        entry: t.entry.into(),
+                        category_id: t.category_id.0,
+                    }),
+                }
+            }
+            IdentifiableTransactionWithIdentifiableEntries::CashTransferOut(t) => {
+                let (transaction_id, date, fee_entries) = extract_identifiable_base(t.base);
+                TransactionDto {
+                    transaction_id,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::CashTransferOut(
+                        CashTransferOutMetadataDto {
+                            entry: t.entry.into(),
+                        },
+                    ),
+                }
+            }
+            IdentifiableTransactionWithIdentifiableEntries::CashTransferIn(t) => {
+                let (transaction_id, date, fee_entries) = extract_identifiable_base(t.base);
+                TransactionDto {
+                    transaction_id,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::CashTransferIn(
+                        CashTransferInMetadataDto {
+                            entry: t.entry.into(),
+                        },
+                    ),
+                }
+            }
+            IdentifiableTransactionWithIdentifiableEntries::CashDividend(t) => {
+                let (transaction_id, date, fee_entries) = extract_identifiable_base(t.base);
+                TransactionDto {
+                    transaction_id,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::CashDividend(CashDividendMetadataDto {
+                        entry: t.entry.into(),
+                        origin_asset_id: t.origin_asset_id.0,
+                    }),
+                }
+            }
+            IdentifiableTransactionWithIdentifiableEntries::AssetPurchase(t) => {
+                let (transaction_id, date, fee_entries) = extract_identifiable_base(t.base);
+                TransactionDto {
+                    transaction_id,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::AssetPurchase(AssetPurchaseMetadataDto {
+                        purchase: t.purchase_change.into(),
+                        sale: t.cash_outgoings_change.into(),
+                    }),
+                }
+            }
+            IdentifiableTransactionWithIdentifiableEntries::AssetSale(t) => {
+                let (transaction_id, date, fee_entries) = extract_identifiable_base(t.base);
+                TransactionDto {
+                    transaction_id,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::AssetSale(AssetSaleMetadataDto {
+                        sale: t.sale_entry.into(),
+                        proceeds: t.proceeds_entry.into(),
+                    }),
+                }
+            }
+            IdentifiableTransactionWithIdentifiableEntries::AssetTrade(t) => {
+                let (transaction_id, date, fee_entries) = extract_identifiable_base(t.base);
+                TransactionDto {
+                    transaction_id,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::AssetTrade(AssetTradeMetadataDto {
+                        outgoing_entry: t.outgoing_entry.into(),
+                        incoming_entry: t.incoming_entry.into(),
+                    }),
+                }
+            }
+            IdentifiableTransactionWithIdentifiableEntries::AssetTransferIn(t) => {
+                let (transaction_id, date, fee_entries) = extract_identifiable_base(t.base);
+                TransactionDto {
+                    transaction_id,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::AssetTransferIn(
+                        AssetTransferInMetadataDto {
+                            entry: t.entry.into(),
+                        },
+                    ),
+                }
+            }
+            IdentifiableTransactionWithIdentifiableEntries::AssetTransferOut(t) => {
+                let (transaction_id, date, fee_entries) = extract_identifiable_base(t.base);
+                TransactionDto {
+                    transaction_id,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::AssetTransferOut(
+                        AssetTransferOutMetadataDto {
+                            entry: t.entry.into(),
+                        },
+                    ),
+                }
+            }
+            IdentifiableTransactionWithIdentifiableEntries::AssetDividend(t) => {
+                let (transaction_id, date, fee_entries) = extract_identifiable_base(t.base);
+                TransactionDto {
+                    transaction_id,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::AssetDividend(AssetDividendMetadataDto {
+                        entry: t.entry.into(),
+                    }),
+                }
+            }
+            IdentifiableTransactionWithIdentifiableEntries::AssetBalanceTransfer(t) => {
+                let (transaction_id, date, fee_entries) = extract_identifiable_base(t.base);
+                TransactionDto {
+                    transaction_id,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::AssetBalanceTransfer(
+                        AssetBalanceTransferMetadataDto {
+                            outgoing_change: t.outgoing_change.into(),
+                            incoming_change: t.incoming_change.into(),
+                        },
+                    ),
+                }
+            }
+            IdentifiableTransactionWithIdentifiableEntries::AccountFees(t) => {
+                let (transaction_id, date, fee_entries) = extract_identifiable_base(t.base);
+                TransactionDto {
+                    transaction_id,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::AccountFees(AccountFeesMetadataDto {
+                        entry: t.entry.into(),
+                    }),
+                }
+            }
+        }
+    }
+}
+
+impl From<TransactionWithIdentifiableEntries> for TransactionDto {
+    fn from(value: TransactionWithIdentifiableEntries) -> Self {
+        match value {
+            TransactionWithIdentifiableEntries::RegularTransaction(t) => {
+                let (date, fee_entries) = extract_base_no_id(t.base);
+                TransactionDto {
+                    transaction_id: None,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::Regular(RegularTransactionMetadataDto {
+                        description: t.description.map(|d| d.into_inner()),
+                        entry: t.entry.into(),
+                        category_id: t.category_id.0,
+                    }),
+                }
+            }
+            TransactionWithIdentifiableEntries::CashTransferOut(t) => {
+                let (date, fee_entries) = extract_base_no_id(t.base);
+                TransactionDto {
+                    transaction_id: None,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::CashTransferOut(
+                        CashTransferOutMetadataDto {
+                            entry: t.entry.into(),
+                        },
+                    ),
+                }
+            }
+            TransactionWithIdentifiableEntries::CashTransferIn(t) => {
+                let (date, fee_entries) = extract_base_no_id(t.base);
+                TransactionDto {
+                    transaction_id: None,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::CashTransferIn(
+                        CashTransferInMetadataDto {
+                            entry: t.entry.into(),
+                        },
+                    ),
+                }
+            }
+            TransactionWithIdentifiableEntries::CashDividend(t) => {
+                let (date, fee_entries) = extract_base_no_id(t.base);
+                TransactionDto {
+                    transaction_id: None,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::CashDividend(CashDividendMetadataDto {
+                        entry: t.entry.into(),
+                        origin_asset_id: t.origin_asset_id.0,
+                    }),
+                }
+            }
+            TransactionWithIdentifiableEntries::AssetPurchase(t) => {
+                let (date, fee_entries) = extract_base_no_id(t.base);
+                TransactionDto {
+                    transaction_id: None,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::AssetPurchase(AssetPurchaseMetadataDto {
+                        purchase: t.purchase_change.into(),
+                        sale: t.cash_outgoings_change.into(),
+                    }),
+                }
+            }
+            TransactionWithIdentifiableEntries::AssetSale(t) => {
+                let (date, fee_entries) = extract_base_no_id(t.base);
+                TransactionDto {
+                    transaction_id: None,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::AssetSale(AssetSaleMetadataDto {
+                        sale: t.sale_entry.into(),
+                        proceeds: t.proceeds_entry.into(),
+                    }),
+                }
+            }
+            TransactionWithIdentifiableEntries::AssetTrade(t) => {
+                let (date, fee_entries) = extract_base_no_id(t.base);
+                TransactionDto {
+                    transaction_id: None,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::AssetTrade(AssetTradeMetadataDto {
+                        outgoing_entry: t.outgoing_entry.into(),
+                        incoming_entry: t.incoming_entry.into(),
+                    }),
+                }
+            }
+            TransactionWithIdentifiableEntries::AssetTransferIn(t) => {
+                let (date, fee_entries) = extract_base_no_id(t.base);
+                TransactionDto {
+                    transaction_id: None,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::AssetTransferIn(
+                        AssetTransferInMetadataDto {
+                            entry: t.entry.into(),
+                        },
+                    ),
+                }
+            }
+            TransactionWithIdentifiableEntries::AssetTransferOut(t) => {
+                let (date, fee_entries) = extract_base_no_id(t.base);
+                TransactionDto {
+                    transaction_id: None,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::AssetTransferOut(
+                        AssetTransferOutMetadataDto {
+                            entry: t.entry.into(),
+                        },
+                    ),
+                }
+            }
+            TransactionWithIdentifiableEntries::AssetDividend(t) => {
+                let (date, fee_entries) = extract_base_no_id(t.base);
+                TransactionDto {
+                    transaction_id: None,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::AssetDividend(AssetDividendMetadataDto {
+                        entry: t.entry.into(),
+                    }),
+                }
+            }
+            TransactionWithIdentifiableEntries::AssetBalanceTransfer(t) => {
+                let (date, fee_entries) = extract_base_no_id(t.base);
+                TransactionDto {
+                    transaction_id: None,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::AssetBalanceTransfer(
+                        AssetBalanceTransferMetadataDto {
+                            outgoing_change: t.outgoing_change.into(),
+                            incoming_change: t.incoming_change.into(),
+                        },
+                    ),
+                }
+            }
+            TransactionWithIdentifiableEntries::AccountFees(t) => {
+                let (date, fee_entries) = extract_base_no_id(t.base);
+                TransactionDto {
+                    transaction_id: None,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::AccountFees(AccountFeesMetadataDto {
+                        entry: t.entry.into(),
+                    }),
+                }
             }
         }
     }

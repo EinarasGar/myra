@@ -131,9 +131,29 @@ impl Iden for TransactionGroupIden {
         match self {
             Self::Table => "transaction_group",
             Self::CategoryId => "category_id",
-            Self::TransactionGroupId => "transaction_group_id",
+            Self::TransactionGroupId => "id",
             Self::Description => "description",
             Self::DateAdded => "date_added",
+        }
+    }
+}
+
+pub enum CombinedTransactionIden {
+    Combined,
+    SortDate,
+    ItemType,
+    Id,
+    CursorLookup,
+}
+
+impl Iden for CombinedTransactionIden {
+    fn unquoted(&self) -> &str {
+        match self {
+            Self::Combined => "combined",
+            Self::SortDate => "sort_date",
+            Self::ItemType => "item_type",
+            Self::Id => "id",
+            Self::CursorLookup => "c2",
         }
     }
 }

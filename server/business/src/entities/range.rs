@@ -38,9 +38,8 @@ impl TryFrom<RangeDto> for Range {
                 let start_time = start.ok_or(RangeError::StartDateNotSpecified)?;
                 let infinite_end = end.is_none();
                 let end_time = end.unwrap_or(OffsetDateTime::now_utc());
-                let interval = duration.unwrap_or_else(|| {
-                    Range::calculate_interval(start_time, end_time)
-                });
+                let interval =
+                    duration.unwrap_or_else(|| Range::calculate_interval(start_time, end_time));
                 Ok(Range {
                     start_time,
                     end_time,

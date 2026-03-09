@@ -3,8 +3,7 @@ use utoipa::ToSchema;
 use validator::Validate;
 
 use super::base_models::{
-    asset_id::RequiredAssetId,
-    asset_pair_metadata::AssetPairMetadataViewModel,
+    asset_id::RequiredAssetId, asset_pair_metadata::AssetPairMetadataViewModel,
     user_asset_pair_metadata::UserAssetPairMetadataViewModel,
 };
 

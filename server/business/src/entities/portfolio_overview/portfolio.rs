@@ -164,9 +164,7 @@ impl Portfolio {
                         }));
                     });
             });
-        Ok(PortfolioOverviewDto {
-            portfolios,
-        })
+        Ok(PortfolioOverviewDto { portfolios })
     }
 }
 

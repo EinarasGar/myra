@@ -4,7 +4,9 @@ use uuid::Uuid;
 
 use crate::{
     dtos::assets::asset_id_dto::AssetIdDto,
-    entities::portfolio_overview::portfolio::{Portfolio, PortfolioAction, ReferentialPortfolioAction},
+    entities::portfolio_overview::portfolio::{
+        Portfolio, PortfolioAction, ReferentialPortfolioAction,
+    },
 };
 
 #[allow(dead_code)]

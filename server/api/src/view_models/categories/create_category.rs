@@ -1,5 +1,5 @@
-use crate::view_models::categories::base_models::category_type_id::RequiredCategoryTypeId;
 use crate::view_models::categories::base_models::category_name::CategoryName;
+use crate::view_models::categories::base_models::category_type_id::RequiredCategoryTypeId;
 use crate::view_models::categories::base_models::icon_name::IconName;
 
 use super::base_models::category::IdentifiableExpandedCategoryViewModel;

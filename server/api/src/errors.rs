@@ -1,6 +1,7 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
+use business::dtos::validation_error_dto::BusinessValidationErrorDto;
 
 pub mod api_error_response;
 pub mod app;
@@ -26,6 +27,28 @@ pub enum ApiError {
     Internal(#[from] anyhow::Error),
 }
 
+impl ApiError {
+    /// Converts an `anyhow::Error` into an `ApiError`, surfacing
+    /// `BusinessValidationErrorDto` as a structured 422 response
+    /// instead of a generic 500.
+    pub fn from_anyhow(err: anyhow::Error) -> Self {
+        if let Some(val_err) = err.downcast_ref::<BusinessValidationErrorDto>() {
+            ApiError::Validation(
+                val_err
+                    .errors
+                    .iter()
+                    .map(|e| FieldError {
+                        field: e.field.clone(),
+                        message: e.message.clone(),
+                    })
+                    .collect(),
+            )
+        } else {
+            ApiError::Internal(err)
+        }
+    }
+}
+
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let (status, error_type, message, errors) = match &self {
@@ -36,7 +59,7 @@ impl IntoResponse for ApiError {
                 vec![],
             ),
             ApiError::Validation(field_errors) => (
-                StatusCode::BAD_REQUEST,
+                StatusCode::UNPROCESSABLE_ENTITY,
                 ErrorType::ValidationError,
                 "One or more fields failed validation.".to_string(),
                 field_errors.clone(),

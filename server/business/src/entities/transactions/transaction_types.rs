@@ -1,5 +1,5 @@
-use anyhow::Result;
 use account_fees::AccountFeesTransaction;
+use anyhow::Result;
 use asset_balance_transfer::AssetBalanceTransferTransaction;
 use asset_dividend::AssetDividendTransaction;
 use asset_purhcase::AssetPurchaseTransaction;
@@ -116,10 +116,10 @@ fn get_model_constructor(
         TransactionTypes::AssetTransferIn => {
             &AssetTransferInTransaction::from_transaction_with_entries_models
         }
-        TransactionTypes::AssetTrade => &AssetTradeTransaction::from_transaction_with_entries_models,
-        TransactionTypes::AssetSale => {
-            &AssetSaleTransaction::from_transaction_with_entries_models
+        TransactionTypes::AssetTrade => {
+            &AssetTradeTransaction::from_transaction_with_entries_models
         }
+        TransactionTypes::AssetSale => &AssetSaleTransaction::from_transaction_with_entries_models,
         TransactionTypes::AssetDividend => {
             &AssetDividendTransaction::from_transaction_with_entries_models
         }
@@ -161,17 +161,22 @@ pub fn create_transaction_from_transaction_with_entries_model(
 pub fn create_transactions_from_transaction_with_entries_models(
     models: Vec<TransactionWithEntriesModel>,
 ) -> anyhow::Result<Vec<Transaction>> {
-    // split vector into multiple by transaction_id
-    let grouped_results_full: Vec<Vec<TransactionWithEntriesModel>> = models
+    // Group entries by transaction_id while preserving the order of first appearance.
+    // This is critical for cursor-based pagination: the DB returns rows ordered by
+    // (date DESC, id DESC), and we must maintain that ordering after grouping.
+    let mut order: Vec<Uuid> = Vec::new();
+    let mut map: HashMap<Uuid, Vec<TransactionWithEntriesModel>> = HashMap::new();
+    for model in models {
+        let tid = model.transaction_id;
+        if !map.contains_key(&tid) {
+            order.push(tid);
+        }
+        map.entry(tid).or_default().push(model);
+    }
+
+    let grouped_results_full: Vec<Vec<TransactionWithEntriesModel>> = order
         .into_iter()
-        .fold(
-            HashMap::new(),
-            |mut acc: HashMap<Uuid, Vec<TransactionWithEntriesModel>>, model| {
-                acc.entry(model.transaction_id).or_default().push(model);
-                acc
-            },
-        )
-        .into_values()
+        .filter_map(|tid| map.remove(&tid))
         .collect();
 
     let transactions: Vec<Transaction> = grouped_results_full

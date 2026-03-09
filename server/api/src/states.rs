@@ -8,6 +8,7 @@ use business::service_collection::{
     asset_service::AssetsService, auth_service::AuthService, category_service::CategoryService,
     category_type_service::CategoryTypeService, entries_service::EntriesService,
     portfolio_overview_service::PortfolioOverviewService, portfolio_service::PortfolioService,
+    transaction_group_service::TransactionGroupService,
     transaction_management_service::TransactionManagementService,
     transaction_service::TransactionService, user_service::UsersService,
 };
@@ -57,6 +58,7 @@ service_state!(UsersService);
 service_state!(AuthService);
 service_state!(TransactionService);
 service_state!(TransactionManagementService);
+service_state!(TransactionGroupService);
 service_state!(PortfolioService);
 service_state!(AssetsService);
 service_state!(AssetRatesService);

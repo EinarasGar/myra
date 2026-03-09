@@ -181,6 +181,25 @@ impl MyraDb {
             Ok(())
         }
     }
+
+    #[tracing::instrument(skip(self), err, ret(level = Level::TRACE))]
+    pub async fn execute_with_rows_affected(
+        &self,
+        query: DbQueryWithValues,
+    ) -> Result<u64, sqlx::Error> {
+        let mut tx_guard = self.transaction.lock().await;
+        if let Some(ref mut tx) = &mut *tx_guard {
+            let result = sqlx::query_with(&query.query, query.values)
+                .execute(&mut **tx)
+                .await?;
+            Ok(result.rows_affected())
+        } else {
+            let result = sqlx::query_with(&query.query, query.values)
+                .execute(&self.pool)
+                .await?;
+            Ok(result.rows_affected())
+        }
+    }
 }
 
 mock! {
@@ -202,6 +221,7 @@ mock! {
         pub async fn fetch_one_scalar<T: 'static>(&self, query: DbQueryWithValues) -> Result<T, sqlx::Error>;
         pub async fn fetch_optional<T: 'static>(&self, query: DbQueryWithValues) -> Result<Option<T>, sqlx::Error>;
         pub async fn execute(&self, query: DbQueryWithValues) -> Result<(), sqlx::Error>;
+        pub async fn execute_with_rows_affected(&self, query: DbQueryWithValues) -> Result<u64, sqlx::Error>;
     }
 
     impl Clone for MyraDb {

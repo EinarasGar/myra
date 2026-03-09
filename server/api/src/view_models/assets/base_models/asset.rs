@@ -3,10 +3,10 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::asset_id::RequiredAssetId;
-use super::asset_type::IdentifiableAssetTypeViewModel;
-use super::asset_type_id::RequiredAssetTypeId;
 use super::asset_name::AssetName;
 use super::asset_ticker::AssetTicker;
+use super::asset_type::IdentifiableAssetTypeViewModel;
+use super::asset_type_id::RequiredAssetTypeId;
 
 pub type AssetViewModel = Asset<RequiredAssetTypeId>;
 pub type ExpandedAssetViewModel = Asset<IdentifiableAssetTypeViewModel>;

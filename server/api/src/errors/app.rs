@@ -19,4 +19,3 @@ impl From<validator::ValidationErrors> for ApiError {
         ApiError::Validation(field_errors)
     }
 }
-

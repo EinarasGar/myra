@@ -37,7 +37,10 @@ impl PortfolioService {
         let range = match range_dto.clone().try_into() {
             Ok(r) => r,
             Err(RangeError::StartDateNotSpecified) => {
-                let oldest_date = self.entries_service.get_oldest_entry_date(user_id, account_id).await?;
+                let oldest_date = self
+                    .entries_service
+                    .get_oldest_entry_date(user_id, account_id)
+                    .await?;
                 match oldest_date {
                     Some(date) => Range::try_from_with_time(range_dto.clone(), date)?,
                     None => return Ok(vec![]),

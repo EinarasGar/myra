@@ -61,9 +61,7 @@ pub struct RegularTransaction<B, E> {
     pub description: Option<Description>,
 }
 
-impl<E: Into<EntryDto>> From<RegularTransaction<TransactionBaseWithEntries, E>>
-    for TransactionDto
-{
+impl<E: Into<EntryDto>> From<RegularTransaction<TransactionBaseWithEntries, E>> for TransactionDto {
     fn from(trans: RegularTransaction<TransactionBaseWithEntries, E>) -> Self {
         TransactionDto {
             transaction_id: None,

@@ -1,9 +1,9 @@
 use super::category_id::RequiredCategoryId;
+use super::category_name::CategoryName;
 use super::category_type::{CategoryTypeViewModel, IdentifiableCategoryTypeViewModel};
 use super::category_type_id::RequiredCategoryTypeId;
-use business::dtos::categories::CategoryDto;
-use super::category_name::CategoryName;
 use super::icon_name::IconName;
+use business::dtos::categories::CategoryDto;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 

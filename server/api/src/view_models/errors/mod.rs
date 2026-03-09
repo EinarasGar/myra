@@ -36,11 +36,11 @@ pub enum GetResponses {
 #[derive(IntoResponses)]
 pub enum CreateResponses {
     #[response(
-        status = 400,
-        description = "Bad request / Validation error",
+        status = 422,
+        description = "Validation error",
         content_type = "application/json"
     )]
-    BadRequest(ApiErrorResponse),
+    UnprocessableEntity(ApiErrorResponse),
     #[response(
         status = 401,
         description = "Unauthorized access",
@@ -66,11 +66,11 @@ pub enum CreateResponses {
 #[derive(IntoResponses)]
 pub enum UpdateResponses {
     #[response(
-        status = 400,
-        description = "Bad request / Validation error",
+        status = 422,
+        description = "Validation error",
         content_type = "application/json"
     )]
-    BadRequest(ApiErrorResponse),
+    UnprocessableEntity(ApiErrorResponse),
     #[response(
         status = 401,
         description = "Unauthorized access",

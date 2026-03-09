@@ -6,6 +6,7 @@ use crate::enums::{
     transaction_types::DatabaseTransactionTypes,
 };
 
+#[derive(PartialEq)]
 pub struct AddTransactionModel {
     pub user_id: Uuid,
     pub group_id: Option<Uuid>,
@@ -60,4 +61,49 @@ pub struct AddTransactionDividendModel {
 pub struct TransactionDividendModel {
     pub transaction_id: Uuid,
     pub source_asset_id: i32,
+}
+
+#[derive(sqlx::FromRow, Debug)]
+pub struct TransactionGroupModel {
+    pub id: Uuid,
+    pub category_id: i32,
+    pub description: String,
+    pub date_added: OffsetDateTime,
+}
+
+pub struct AddTransactionGroupModel {
+    pub category_id: i32,
+    pub description: String,
+    pub date_added: OffsetDateTime,
+}
+
+pub struct UpdateTransactionGroupModel {
+    pub id: Uuid,
+    pub category_id: i32,
+    pub description: String,
+    pub date_added: OffsetDateTime,
+}
+
+#[derive(sqlx::FromRow, Debug)]
+pub struct TransactionIdWithGroupModel {
+    pub id: Uuid,
+    pub group_id: Uuid,
+}
+
+#[derive(sqlx::FromRow, Debug)]
+pub struct CombinedTransactionIdModel {
+    pub id: Uuid,
+    pub item_type: String,
+}
+
+pub struct UpdateEntryModel {
+    pub asset_id: i32,
+    pub account_id: Uuid,
+    pub quantity: Decimal,
+    pub category_id: i32,
+}
+
+pub struct UpdateTransactionFieldsModel {
+    pub date: OffsetDateTime,
+    pub transaction_type_id: i32,
 }

@@ -9,6 +9,7 @@ pub mod category_type_queries;
 pub mod entries_queries;
 pub mod transaction_categories_queries;
 pub mod transaction_data_queries;
+pub mod transaction_group_queries;
 pub mod transaction_queries;
 pub mod user_queries;
 
@@ -38,4 +39,13 @@ impl From<(String, SqlxValues)> for DbQueryWithValues {
             values: tuple.1,
         }
     }
+}
+
+/// Escapes ILIKE metacharacters (% and _) in a search string and wraps it in %...% for partial matching.
+pub fn escape_ilike_pattern(query: &str) -> String {
+    let escaped = query
+        .replace('\\', "\\\\")
+        .replace('%', "\\%")
+        .replace('_', "\\_");
+    format!("%{}%", escaped)
 }

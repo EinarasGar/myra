@@ -49,6 +49,13 @@ impl Entry {
         self.entry_id = Some(entry_id);
     }
 
+    pub fn content_eq(&self, other: &Entry) -> bool {
+        self.asset_id == other.asset_id
+            && self.quantity == other.quantity
+            && self.account_id == other.account_id
+            && self.category == other.category
+    }
+
     pub(crate) fn is_fee(&self) -> bool {
         is_fee_category(self.category)
     }

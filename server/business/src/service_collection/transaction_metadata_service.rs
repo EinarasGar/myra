@@ -33,8 +33,136 @@ impl TransactionMetadataService {
         Ok(())
     }
 
-    pub async fn sync_metadata(&self, _transactions: &mut [Transaction]) -> anyhow::Result<()> {
-        todo!();
+    pub async fn update_metadata(
+        &self,
+        old_transaction: &Transaction,
+        new_transaction: &mut Transaction,
+    ) -> anyhow::Result<()> {
+        let transaction_id = new_transaction
+            .get_transaction_id()
+            .expect("Transaction must have an id for update");
+
+        self.diff_descriptions(transaction_id, old_transaction, new_transaction)
+            .await?;
+        self.diff_dividends(transaction_id, old_transaction, new_transaction)
+            .await?;
+
+        Ok(())
+    }
+
+    async fn diff_descriptions(
+        &self,
+        transaction_id: Uuid,
+        old_transaction: &Transaction,
+        new_transaction: &mut Transaction,
+    ) -> anyhow::Result<()> {
+        let old_desc = old_transaction
+            .get_metadata_fields()
+            .into_iter()
+            .find_map(|f| match f {
+                MetadataField::Description(v) => Some(v),
+                _ => None,
+            })
+            .flatten();
+
+        let new_desc = new_transaction
+            .get_metadata_fields()
+            .into_iter()
+            .find_map(|f| match f {
+                MetadataField::Description(v) => Some(v),
+                _ => None,
+            })
+            .flatten();
+
+        match (old_desc, &new_desc) {
+            (Some(old_val), Some(new_val)) => {
+                if old_val != *new_val {
+                    let query = transaction_data_queries::update_description(
+                        transaction_id,
+                        new_val.clone(),
+                    );
+                    self.db.execute(query).await?;
+                }
+            }
+            (None, Some(new_val)) => {
+                let query = transaction_data_queries::insert_descriptions(vec![
+                    AddTransactionDescriptionModel {
+                        transaction_id,
+                        description: new_val.clone(),
+                    },
+                ]);
+                self.db.execute(query).await?;
+            }
+            (Some(_), None) => {
+                let query = transaction_data_queries::delete_descriptions_by_transaction_ids(vec![
+                    transaction_id,
+                ]);
+                self.db.execute(query).await?;
+            }
+            (None, None) => {}
+        }
+
+        if let Some(desc) = new_desc {
+            new_transaction.set_metadata_fields(MetadataField::Description(Some(desc)));
+        }
+
+        Ok(())
+    }
+
+    async fn diff_dividends(
+        &self,
+        transaction_id: Uuid,
+        old_transaction: &Transaction,
+        new_transaction: &mut Transaction,
+    ) -> anyhow::Result<()> {
+        let old_div = old_transaction
+            .get_metadata_fields()
+            .into_iter()
+            .find_map(|f| match f {
+                MetadataField::Dividends(v) => Some(v),
+                _ => None,
+            })
+            .flatten();
+
+        let new_div = new_transaction
+            .get_metadata_fields()
+            .into_iter()
+            .find_map(|f| match f {
+                MetadataField::Dividends(v) => Some(v),
+                _ => None,
+            })
+            .flatten();
+
+        match (old_div, new_div) {
+            (Some(old_asset_id), Some(new_asset_id)) => {
+                if old_asset_id != new_asset_id {
+                    let query =
+                        transaction_data_queries::update_dividend(transaction_id, new_asset_id);
+                    self.db.execute(query).await?;
+                }
+            }
+            (None, Some(new_asset_id)) => {
+                let query =
+                    transaction_data_queries::insert_dividends(vec![AddTransactionDividendModel {
+                        transaction_id,
+                        source_asset_id: new_asset_id,
+                    }]);
+                self.db.execute(query).await?;
+            }
+            (Some(_), None) => {
+                let query = transaction_data_queries::delete_dividends_by_transaction_ids(vec![
+                    transaction_id,
+                ]);
+                self.db.execute(query).await?;
+            }
+            (None, None) => {}
+        }
+
+        if let Some(asset_id) = new_div {
+            new_transaction.set_metadata_fields(MetadataField::Dividends(Some(asset_id)));
+        }
+
+        Ok(())
     }
 
     pub async fn write_transaction_descriptions(
@@ -130,10 +258,7 @@ impl TransactionMetadataService {
         if !transaction_ids.is_empty() {
             let query = transaction_data_queries::get_transactions_dividends(transaction_ids);
 
-            let models = self
-                .db
-                .fetch_all::<TransactionDividendModel>(query)
-                .await?;
+            let models = self.db.fetch_all::<TransactionDividendModel>(query).await?;
 
             models.iter().for_each(|model| {
                 transactions

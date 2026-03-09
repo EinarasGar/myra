@@ -1,40 +1,29 @@
 use axum::{extract::Path, Json};
-use rust_decimal_macros::dec;
-use time::macros::datetime;
+use business::dtos::combined_transaction_dto::CombinedTransactionItem;
+use business::dtos::paging_dto::PaginationModeDto;
+use business::dtos::transaction_dto::TransactionDto;
+use itertools::Itertools;
 use uuid::Uuid;
 
 use crate::{
     auth::AuthenticatedUserState,
+    converters::{transaction_dtos_to_account_ids_hashset, transaction_dtos_to_asset_ids_hashset},
     errors::ApiError,
-    extractors::ValidatedJson,
+    extractors::{ValidatedJson, ValidatedQuery},
+    states::{AccountsServiceState, AssetsServiceState, TransactionManagementServiceState},
     view_models::{
-        accounts::base_models::account_id::RequiredAccountId,
-        assets::base_models::asset_id::RequiredAssetId,
-        transactions::value_types::Amount,
-        base_models::search::{PageOfResults, PageOfTransactionsWithLookupViewModel},
+        base_models::search::{
+            CursorOrPageOfResults, CursorOrPaginatedSearchQuery,
+            CursorPageOfCombinedTransactionsWithLookupViewModel,
+        },
         errors::{DeleteResponses, GetResponses, UpdateResponses},
         transactions::{
-            base_models::{
-                account_asset_entry::{
-                    AccountAssetEntryViewModel, RequiredIdentifiableAccountAssetEntryViewModel,
-                },
-                category_id::RequiredCategoryId,
-                entry_id::RequiredEntryId,
-                metadata_lookup::MetadataLookupTables,
-                transaction_base::{
-                    RequiredIdentifiableTransactionBaseWithIdentifiableEntries,
-                    RequiredTransactionBaseWithIdentifiableEntries,
-                },
-                transaction_id::RequiredTransactionId,
-            },
-            get_transactions::GetTransactionsResultsViewModel,
-            transaction_types::{
-                regular_transaction::RequiredIdentifiableRegularTransactionWithIdentifiableEntriesViewModel,
-                RequiredIdentifiableTransactionWithIdentifiableEntries,
-            },
+            base_models::metadata_lookup::MetadataLookupTables,
+            get_transactions::CombinedTransactionItemViewModel,
             update_transaction::{
                 UpdateTransactionRequestViewModel, UpdateTransactionResponseViewModel,
             },
+            validation::Validatable,
         },
     },
 };
@@ -66,12 +55,37 @@ use crate::{
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn update_transaction(
-    Path((_user_id, _transaction_id)): Path<(Uuid, Uuid)>,
+    Path((user_id, transaction_id)): Path<(Uuid, Uuid)>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-    ValidatedJson(_params): ValidatedJson<UpdateTransactionRequestViewModel>,
+    TransactionManagementServiceState(service): TransactionManagementServiceState,
+    AssetsServiceState(asset_service): AssetsServiceState,
+    AccountsServiceState(accounts_service): AccountsServiceState,
+    ValidatedJson(params): ValidatedJson<UpdateTransactionRequestViewModel>,
 ) -> Result<Json<UpdateTransactionResponseViewModel>, ApiError> {
-    println!("{:#?}", _params);
-    unimplemented!();
+    params.transaction.validate()?;
+
+    let dto: TransactionDto = params.transaction.into();
+
+    let result = service
+        .update_individual_transaction(user_id, transaction_id, dto)
+        .await
+        .map_err(ApiError::from_anyhow)?;
+
+    let asset_ids = transaction_dtos_to_asset_ids_hashset(&[&result]);
+    let account_ids = transaction_dtos_to_account_ids_hashset(&[&result]);
+
+    let (assets, accounts) = tokio::try_join!(
+        asset_service.get_assets(asset_ids),
+        accounts_service.get_accounts(account_ids),
+    )?;
+
+    Ok(Json(UpdateTransactionResponseViewModel {
+        transaction: result.into(),
+        metadata: MetadataLookupTables {
+            assets: assets.into_iter().map_into().collect(),
+            accounts: accounts.into_iter().map_into().collect(),
+        },
+    }))
 }
 
 /// Delete existing
@@ -97,10 +111,15 @@ pub async fn update_transaction(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn delete_transaction(
-    Path((_user_id, _transaction_id)): Path<(Uuid, Uuid)>,
+    Path((user_id, transaction_id)): Path<(Uuid, Uuid)>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
+    TransactionManagementServiceState(service): TransactionManagementServiceState,
 ) -> Result<(), ApiError> {
-    unimplemented!();
+    service
+        .delete_transactions(user_id, vec![transaction_id])
+        .await
+        .map_err(ApiError::from_anyhow)?;
+    Ok(())
 }
 
 /// Get all
@@ -111,58 +130,71 @@ pub async fn delete_transaction(
     path = "/api/users/{user_id}/transactions",
     tag = "Transactions",
     responses(
-        (status = 200, description = "Transactions retrieved successfully.", body = PageOfResults<GetTransactionsResultsViewModel, MetadataLookupTables>),
+        (status = 200, description = "Transactions retrieved successfully.", body = CursorOrPageOfResults<CombinedTransactionItemViewModel, MetadataLookupTables>),
         GetResponses
     ),
     params(
-        ("user_id" = Uuid, Path, description = "User id for which the transaction belongs to.")
+        ("user_id" = Uuid, Path, description = "User id for which the transaction belongs to."),
+        CursorOrPaginatedSearchQuery
     ),
     security(
         ("auth_token" = [])
     )
-
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_transactions(
-    Path(_user_id): Path<Uuid>,
+    Path(user_id): Path<Uuid>,
+    ValidatedQuery(query_params): ValidatedQuery<CursorOrPaginatedSearchQuery>,
+    TransactionManagementServiceState(service): TransactionManagementServiceState,
+    AssetsServiceState(asset_service): AssetsServiceState,
+    AccountsServiceState(accounts_service): AccountsServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-) -> Result<Json<PageOfTransactionsWithLookupViewModel>, ApiError> {
-    let model = PageOfTransactionsWithLookupViewModel {
-        results: vec![GetTransactionsResultsViewModel {
-            individual_transactions: vec![
-                RequiredIdentifiableTransactionWithIdentifiableEntries::RegularTransaction(
-                    RequiredIdentifiableRegularTransactionWithIdentifiableEntriesViewModel {
-                        r#type: Default::default(),
-                        category_id: RequiredCategoryId(3),
-                        description: None,
-                        entry: RequiredIdentifiableAccountAssetEntryViewModel {
-                            entry_id: RequiredEntryId(1),
-                            entry: AccountAssetEntryViewModel {
-                                account_id: RequiredAccountId(Uuid::new_v4()),
-                                asset_id: RequiredAssetId(1),
-                                amount: Amount(dec!(100.0)),
-                            },
-                        },
-                        base: RequiredIdentifiableTransactionBaseWithIdentifiableEntries {
-                            transaction_id: RequiredTransactionId(Uuid::new_v4()),
-                            base: RequiredTransactionBaseWithIdentifiableEntries {
-                                date: datetime!(2000-03-22 00:00:00 UTC),
-                                fees: None,
-                            },
-                        },
-                    },
-                ),
-            ],
-            transaction_groups: vec![],
-        }],
-        total_results: 1,
+) -> Result<Json<CursorPageOfCombinedTransactionsWithLookupViewModel>, ApiError> {
+    let pagination = PaginationModeDto::from(&query_params);
+
+    let result = service
+        .get_combined_transactions(user_id, pagination, query_params.query)
+        .await?;
+
+    // Build lookup tables from all transactions across all items
+    let all_tx_refs: Vec<_> = result
+        .results
+        .iter()
+        .flat_map(|item| match item {
+            CombinedTransactionItem::Individual(tx) => vec![tx],
+            CombinedTransactionItem::Group(grp) => grp.transactions.iter().collect(),
+        })
+        .collect();
+    let asset_ids = transaction_dtos_to_asset_ids_hashset(&all_tx_refs);
+    let account_ids = transaction_dtos_to_account_ids_hashset(&all_tx_refs);
+
+    let (assets, accounts) = tokio::try_join!(
+        asset_service.get_assets(asset_ids),
+        accounts_service.get_accounts(account_ids),
+    )?;
+
+    let next_cursor = if result.has_more {
+        result.next_cursor
+    } else {
+        None
+    };
+
+    let ret = CursorPageOfCombinedTransactionsWithLookupViewModel {
+        results: result
+            .results
+            .into_iter()
+            .map(CombinedTransactionItemViewModel::try_from)
+            .collect::<Result<Vec<_>, _>>()?,
+        has_more: result.has_more,
+        next_cursor,
+        total_results: result.total_results,
         lookup_tables: MetadataLookupTables {
-            assets: vec![],
-            accounts: vec![],
+            assets: assets.into_iter().map_into().collect(),
+            accounts: accounts.into_iter().map_into().collect(),
         },
     };
-    let ret = model.into();
-    Ok(ret)
+
+    Ok(Json(ret))
 }
 
 // #[tracing::instrument(skip_all, err)]

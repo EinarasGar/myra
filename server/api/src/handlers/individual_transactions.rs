@@ -1,8 +1,6 @@
-use axum::{
-    extract::Path,
-    Json,
-};
-use business::dtos::{paging_dto::PagingDto, transaction_dto::TransactionDto};
+use axum::{extract::Path, Json};
+use business::dtos::paging_dto::PaginationModeDto;
+use business::dtos::transaction_dto::TransactionDto;
 use itertools::Itertools;
 use uuid::Uuid;
 
@@ -15,7 +13,8 @@ use crate::{
     view_models::errors::{CreateResponses, GetResponses, UpdateResponses},
     view_models::{
         base_models::search::{
-            PageOfIndividualTransactionsWithLookupViewModel, PageOfResults, PaginatedSearchQuery,
+            CursorOrPageOfResults, CursorOrPaginatedSearchQuery,
+            CursorPageOfIndividualTransactionsWithLookupViewModel,
         },
         transactions::{
             add_individual_transaction::{
@@ -106,11 +105,34 @@ pub async fn add_individual_transaction(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn update_individual_transaction(
-    Path((_user_id, _transaction_id)): Path<(Uuid, Uuid)>,
+    Path((user_id, transaction_id)): Path<(Uuid, Uuid)>,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-    ValidatedJson(_params): ValidatedJson<UpdateIndividualTransactionRequestViewModel>,
+    TransactionManagementServiceState(service): TransactionManagementServiceState,
+    AssetsServiceState(asset_service): AssetsServiceState,
+    AccountsServiceState(accounts_service): AccountsServiceState,
+    ValidatedJson(params): ValidatedJson<UpdateIndividualTransactionRequestViewModel>,
 ) -> Result<Json<UpdateIndividualTransactionResponseViewModel>, ApiError> {
-    unimplemented!();
+    params.transaction.validate()?;
+    let dto: TransactionDto = params.transaction.into();
+    let result = service
+        .update_individual_transaction(user_id, transaction_id, dto)
+        .await?;
+
+    let asset_ids = transaction_dtos_to_asset_ids_hashset(&[&result]);
+    let account_ids = transaction_dtos_to_account_ids_hashset(&[&result]);
+
+    let (assets, accounts) = tokio::try_join!(
+        asset_service.get_assets(asset_ids),
+        accounts_service.get_accounts(account_ids),
+    )?;
+
+    Ok(Json(UpdateIndividualTransactionResponseViewModel {
+        transaction: result.into(),
+        metadata: MetadataLookupTables {
+            assets: assets.into_iter().map_into().collect(),
+            accounts: accounts.into_iter().map_into().collect(),
+        },
+    }))
 }
 
 /// Get all
@@ -121,12 +143,12 @@ pub async fn update_individual_transaction(
     path = "/api/users/{user_id}/transactions/individual",
     tag = "Individual Transactions",
     responses(
-        (status = 200, description = "Individual transactions retrieved successfully.", body = PageOfResults<RequiredIdentifiableTransactionWithIdentifiableEntries, MetadataLookupTables>),
+        (status = 200, description = "Individual transactions retrieved successfully.", body = CursorOrPageOfResults<RequiredIdentifiableTransactionWithIdentifiableEntries, MetadataLookupTables>),
         GetResponses
     ),
     params(
         ("user_id" = Uuid, Path, description = "User id for which the transactions group belongs to."),
-        PaginatedSearchQuery
+        CursorOrPaginatedSearchQuery
     ),
     security(
         ("auth_token" = [])
@@ -136,33 +158,39 @@ pub async fn update_individual_transaction(
 #[tracing::instrument(skip_all, err)]
 pub async fn get_individual_transactions(
     Path(user_id): Path<Uuid>,
-    ValidatedQuery(query_params): ValidatedQuery<PaginatedSearchQuery>,
+    ValidatedQuery(query_params): ValidatedQuery<CursorOrPaginatedSearchQuery>,
     AssetsServiceState(asset_service): AssetsServiceState,
     TransactionManagementServiceState(transaction_service): TransactionManagementServiceState,
     AccountsServiceState(accounts_service): AccountsServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
-) -> Result<Json<PageOfIndividualTransactionsWithLookupViewModel>, ApiError> {
-    let paging_dto = PagingDto {
-        start: query_params.start,
-        count: query_params.count,
-    };
+) -> Result<Json<CursorPageOfIndividualTransactionsWithLookupViewModel>, ApiError> {
+    let pagination = PaginationModeDto::from(&query_params);
 
-    let dtos = transaction_service
-        .search_transactions(user_id, paging_dto, None)
+    let result = transaction_service
+        .search_individual_transactions(user_id, pagination, query_params.query, None)
         .await?;
 
-    let asset_ids = transaction_dtos_to_asset_ids_hashset(&dtos.results.iter().collect::<Vec<_>>());
+    let asset_ids =
+        transaction_dtos_to_asset_ids_hashset(&result.results.iter().collect::<Vec<_>>());
     let account_ids =
-        transaction_dtos_to_account_ids_hashset(&dtos.results.iter().collect::<Vec<_>>());
+        transaction_dtos_to_account_ids_hashset(&result.results.iter().collect::<Vec<_>>());
 
     let (assets, accounts) = tokio::try_join!(
         asset_service.get_assets(asset_ids),
         accounts_service.get_accounts(account_ids),
     )?;
 
-    let ret = PageOfIndividualTransactionsWithLookupViewModel {
-        results: dtos.results.into_iter().map(Into::into).collect(),
-        total_results: dtos.total_results,
+    let next_cursor = if result.has_more {
+        result.next_cursor
+    } else {
+        None
+    };
+
+    let ret = CursorPageOfIndividualTransactionsWithLookupViewModel {
+        results: result.results.into_iter().map(Into::into).collect(),
+        has_more: result.has_more,
+        next_cursor,
+        total_results: result.total_results,
         lookup_tables: MetadataLookupTables {
             assets: assets.into_iter().map_into().collect(),
             accounts: accounts.into_iter().map_into().collect(),

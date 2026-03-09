@@ -2,9 +2,9 @@ use business::dtos::accounts::{account_dto::AccountDto, full_account_dto::FullAc
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+use super::account_name::AccountName;
 use crate::view_models::accounts::base_models::account_id::RequiredAccountId;
 use crate::view_models::accounts::base_models::account_type_id::AccountTypeId;
-use super::account_name::AccountName;
 
 use super::account_type::IdentifiableAccountTypeViewModel;
 
