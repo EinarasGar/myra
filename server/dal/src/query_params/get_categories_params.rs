@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use sqlx::types::Uuid;
 
 use super::paging_params::PagingParams;
@@ -64,10 +66,19 @@ impl GetCategoriesParams {
             paging: Some(PagingParams { start, count }),
         }
     }
+
+    pub fn by_ids(ids: HashSet<i32>) -> Self {
+        Self {
+            user_id: None,
+            search_type: GetCategoriesParamsSearchType::ByIds(ids),
+            paging: None,
+        }
+    }
 }
 
 pub enum GetCategoriesParamsSearchType {
     ById(i32),
+    ByIds(HashSet<i32>),
     All,
     ByQuery(String),
     ByType(i32),

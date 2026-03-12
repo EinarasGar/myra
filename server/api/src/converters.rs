@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 
+use business::dtos::combined_transaction_dto::CombinedTransactionItem;
 use business::dtos::transaction_dto::{TransactionDto, TransactionTypeDto};
 use uuid::Uuid;
 pub fn transaction_dtos_to_asset_ids_hashset(transactions: &[&TransactionDto]) -> HashSet<i32> {
@@ -104,4 +105,26 @@ pub fn transaction_dtos_to_account_ids_hashset(transactions: &[&TransactionDto])
         }
     }
     account_ids
+}
+
+pub fn combined_items_to_category_ids_hashset(items: &[CombinedTransactionItem]) -> HashSet<i32> {
+    let mut category_ids = HashSet::new();
+    for item in items {
+        match item {
+            CombinedTransactionItem::Individual(tx) => {
+                if let TransactionTypeDto::Regular(m) = &tx.transaction_type {
+                    category_ids.insert(m.category_id);
+                }
+            }
+            CombinedTransactionItem::Group(grp) => {
+                category_ids.insert(grp.category_id);
+                for tx in &grp.transactions {
+                    if let TransactionTypeDto::Regular(m) = &tx.transaction_type {
+                        category_ids.insert(m.category_id);
+                    }
+                }
+            }
+        }
+    }
+    category_ids
 }

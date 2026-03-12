@@ -179,6 +179,16 @@ pub fn delete_dividends_by_transaction_ids(transaction_ids: Vec<Uuid>) -> DbQuer
 }
 
 #[tracing::instrument(skip_all)]
+pub fn clear_group_id_on_transaction(transaction_id: Uuid) -> DbQueryWithValues {
+    Query::update()
+        .table(TransactionIden::Table)
+        .value(TransactionIden::GroupId, Option::<Uuid>::None)
+        .and_where(Expr::col(TransactionIden::Id).eq(transaction_id))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
 pub fn delete_entries_by_transaction_ids(transaction_ids: Vec<Uuid>) -> DbQueryWithValues {
     Query::delete()
         .from_table(EntryIden::Table)

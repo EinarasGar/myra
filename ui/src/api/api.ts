@@ -524,6 +524,12 @@ export interface AddTransactionGroupResponse {
   assets: Array<AssetAssetRequiredAssetTypeIdWithId>;
   /**
    *
+   * @type {Array<CategoryRequiredCategoryTypeIdWithId>}
+   * @memberof AddTransactionGroupResponse
+   */
+  categories?: Array<CategoryRequiredCategoryTypeIdWithId>;
+  /**
+   *
    * @type {TransactionGroupTransactionGroupIdTransactionGroupRequiredIdentifiableTransactionWithIdentifiableEntriesAndId}
    * @memberof AddTransactionGroupResponse
    */
@@ -3566,10 +3572,10 @@ export interface GetHoldingsResponse {
   holdings: Array<GetHoldingsResponseViewModelRow>;
   /**
    *
-   * @type {MetadataLookupTables}
+   * @type {HoldingsMetadataLookupTables}
    * @memberof GetHoldingsResponse
    */
-  lookup_tables: MetadataLookupTables;
+  lookup_tables: HoldingsMetadataLookupTables;
 }
 /**
  *
@@ -3648,10 +3654,10 @@ export interface GetNetWorthHistoryResponse {
 export interface GetPortfolioOverview {
   /**
    *
-   * @type {MetadataLookupTables}
+   * @type {HoldingsMetadataLookupTables}
    * @memberof GetPortfolioOverview
    */
-  lookup_tables: MetadataLookupTables;
+  lookup_tables: HoldingsMetadataLookupTables;
   /**
    *
    * @type {PortfolioOverview}
@@ -3760,6 +3766,25 @@ export const GroupTransactionItemItemTypeEnum = {
 export type GroupTransactionItemItemTypeEnum =
   (typeof GroupTransactionItemItemTypeEnum)[keyof typeof GroupTransactionItemItemTypeEnum];
 
+/**
+ *
+ * @export
+ * @interface HoldingsMetadataLookupTables
+ */
+export interface HoldingsMetadataLookupTables {
+  /**
+   *
+   * @type {Array<AccountAccountAccountTypeIdWithId>}
+   * @memberof HoldingsMetadataLookupTables
+   */
+  accounts: Array<AccountAccountAccountTypeIdWithId>;
+  /**
+   *
+   * @type {Array<AssetAssetRequiredAssetTypeIdWithId>}
+   * @memberof HoldingsMetadataLookupTables
+   */
+  assets: Array<AssetAssetRequiredAssetTypeIdWithId>;
+}
 /**
  *
  * @export
@@ -3981,6 +4006,12 @@ export interface MetadataLookupTables {
    * @memberof MetadataLookupTables
    */
   assets: Array<AssetAssetRequiredAssetTypeIdWithId>;
+  /**
+   *
+   * @type {Array<CategoryRequiredCategoryTypeIdWithId>}
+   * @memberof MetadataLookupTables
+   */
+  categories?: Array<CategoryRequiredCategoryTypeIdWithId>;
 }
 /**
  *
@@ -4832,6 +4863,12 @@ export interface UpdateTransactionGroupResponse {
   assets: Array<AssetAssetRequiredAssetTypeIdWithId>;
   /**
    *
+   * @type {Array<CategoryRequiredCategoryTypeIdWithId>}
+   * @memberof UpdateTransactionGroupResponse
+   */
+  categories?: Array<CategoryRequiredCategoryTypeIdWithId>;
+  /**
+   *
    * @type {TransactionGroupRequiredIdentifiableTransactionWithIdentifiableEntries}
    * @memberof UpdateTransactionGroupResponse
    */
@@ -4868,6 +4905,12 @@ export interface UpdateTransactionResponse {
    * @memberof UpdateTransactionResponse
    */
   assets: Array<AssetAssetRequiredAssetTypeIdWithId>;
+  /**
+   *
+   * @type {Array<CategoryRequiredCategoryTypeIdWithId>}
+   * @memberof UpdateTransactionResponse
+   */
+  categories?: Array<CategoryRequiredCategoryTypeIdWithId>;
   /**
    *
    * @type {RequiredTransaction}
@@ -9181,6 +9224,71 @@ export const TransactionGroupsApiAxiosParamCreator = function (
       };
     },
     /**
+     * Creates a new transaction group from existing individual transactions. The provided transaction IDs will be moved from individual to the new group.
+     * @summary Group individual transactions
+     * @param {string} userId
+     * @param {TransactionGroupIdentifiableTransactionWithIdentifiableEntries} transactionGroupIdentifiableTransactionWithIdentifiableEntries
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    groupIndividualTransactions: async (
+      userId: string,
+      transactionGroupIdentifiableTransactionWithIdentifiableEntries: TransactionGroupIdentifiableTransactionWithIdentifiableEntries,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("groupIndividualTransactions", "userId", userId);
+      // verify required parameter 'transactionGroupIdentifiableTransactionWithIdentifiableEntries' is not null or undefined
+      assertParamExists(
+        "groupIndividualTransactions",
+        "transactionGroupIdentifiableTransactionWithIdentifiableEntries",
+        transactionGroupIdentifiableTransactionWithIdentifiableEntries,
+      );
+      const localVarPath = `/api/users/{user_id}/transactions/groups`.replace(
+        `{${"user_id"}}`,
+        encodeURIComponent(String(userId)),
+      );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "PUT",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        transactionGroupIdentifiableTransactionWithIdentifiableEntries,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
      * If the transactions array is updated with an existing transaction id, that transaction will be moved from individual to a group.
      * @summary Update existing
      * @param {string} groupId
@@ -9380,6 +9488,43 @@ export const TransactionGroupsApiFp = function (configuration?: Configuration) {
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
+     * Creates a new transaction group from existing individual transactions. The provided transaction IDs will be moved from individual to the new group.
+     * @summary Group individual transactions
+     * @param {string} userId
+     * @param {TransactionGroupIdentifiableTransactionWithIdentifiableEntries} transactionGroupIdentifiableTransactionWithIdentifiableEntries
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async groupIndividualTransactions(
+      userId: string,
+      transactionGroupIdentifiableTransactionWithIdentifiableEntries: TransactionGroupIdentifiableTransactionWithIdentifiableEntries,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<AddTransactionGroupResponse>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.groupIndividualTransactions(
+          userId,
+          transactionGroupIdentifiableTransactionWithIdentifiableEntries,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap[
+          "TransactionGroupsApi.groupIndividualTransactions"
+        ]?.[localVarOperationServerIndex]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
      * If the transactions array is updated with an existing transaction id, that transaction will be moved from individual to a group.
      * @summary Update existing
      * @param {string} groupId
@@ -9505,6 +9650,27 @@ export const TransactionGroupsApiFactory = function (
         .then((request) => request(axios, basePath));
     },
     /**
+     * Creates a new transaction group from existing individual transactions. The provided transaction IDs will be moved from individual to the new group.
+     * @summary Group individual transactions
+     * @param {string} userId
+     * @param {TransactionGroupIdentifiableTransactionWithIdentifiableEntries} transactionGroupIdentifiableTransactionWithIdentifiableEntries
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    groupIndividualTransactions(
+      userId: string,
+      transactionGroupIdentifiableTransactionWithIdentifiableEntries: TransactionGroupIdentifiableTransactionWithIdentifiableEntries,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<AddTransactionGroupResponse> {
+      return localVarFp
+        .groupIndividualTransactions(
+          userId,
+          transactionGroupIdentifiableTransactionWithIdentifiableEntries,
+          options,
+        )
+        .then((request) => request(axios, basePath));
+    },
+    /**
      * If the transactions array is updated with an existing transaction id, that transaction will be moved from individual to a group.
      * @summary Update existing
      * @param {string} groupId
@@ -9589,6 +9755,21 @@ export interface TransactionGroupsApiInterface {
     query?: string,
     options?: RawAxiosRequestConfig,
   ): AxiosPromise<TransactionGroupsPage>;
+
+  /**
+   * Creates a new transaction group from existing individual transactions. The provided transaction IDs will be moved from individual to the new group.
+   * @summary Group individual transactions
+   * @param {string} userId
+   * @param {TransactionGroupIdentifiableTransactionWithIdentifiableEntries} transactionGroupIdentifiableTransactionWithIdentifiableEntries
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof TransactionGroupsApiInterface
+   */
+  groupIndividualTransactions(
+    userId: string,
+    transactionGroupIdentifiableTransactionWithIdentifiableEntries: TransactionGroupIdentifiableTransactionWithIdentifiableEntries,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<AddTransactionGroupResponse>;
 
   /**
    * If the transactions array is updated with an existing transaction id, that transaction will be moved from individual to a group.
@@ -9684,6 +9865,29 @@ export class TransactionGroupsApi
   ) {
     return TransactionGroupsApiFp(this.configuration)
       .getTransactionGroups(userId, limit, cursor, start, count, query, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Creates a new transaction group from existing individual transactions. The provided transaction IDs will be moved from individual to the new group.
+   * @summary Group individual transactions
+   * @param {string} userId
+   * @param {TransactionGroupIdentifiableTransactionWithIdentifiableEntries} transactionGroupIdentifiableTransactionWithIdentifiableEntries
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof TransactionGroupsApi
+   */
+  public groupIndividualTransactions(
+    userId: string,
+    transactionGroupIdentifiableTransactionWithIdentifiableEntries: TransactionGroupIdentifiableTransactionWithIdentifiableEntries,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return TransactionGroupsApiFp(this.configuration)
+      .groupIndividualTransactions(
+        userId,
+        transactionGroupIdentifiableTransactionWithIdentifiableEntries,
+        options,
+      )
       .then((request) => request(this.axios, this.basePath));
   }
 

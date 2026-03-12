@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use anyhow::Context;
 use dal::database_context::MyraDb;
 use dal::models::base::TotalCount;
@@ -76,6 +78,19 @@ impl CategoryService {
             .await
             .context("Failed to fetch categories")?;
 
+        Ok(models.into_iter().map_into().collect())
+    }
+
+    pub async fn get_categories(&self, ids: HashSet<i32>) -> anyhow::Result<Vec<CategoryDto>> {
+        if ids.is_empty() {
+            return Ok(Vec::new());
+        }
+        let query = category_queries::get_categories(GetCategoriesParams::by_ids(ids));
+        let models = self
+            .db
+            .fetch_all::<CategoryWithTypeModel>(query)
+            .await
+            .context("Failed to fetch categories by ids")?;
         Ok(models.into_iter().map_into().collect())
     }
 

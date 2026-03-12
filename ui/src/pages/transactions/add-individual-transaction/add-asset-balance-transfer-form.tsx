@@ -7,13 +7,16 @@ import { useAddIndividualTransaction } from "@/hooks/api/use-add-individual-tran
 import { useAuthUserId } from "@/hooks/use-auth";
 import type { ExpandedAsset } from "@/types/assets";
 import type { ExpandedAccount } from "@/types/account";
+import type { TransactionInput } from '@/api';
 
 interface AddAssetBalanceTransferFormProps {
   onSuccess?: () => void;
+  onCollect?: (transaction: TransactionInput) => void;
 }
 
 export default function AddAssetBalanceTransferForm({
   onSuccess,
+  onCollect,
 }: AddAssetBalanceTransferFormProps) {
   const userId = useAuthUserId();
   const addTransaction = useAddIndividualTransaction(userId);
@@ -51,27 +54,14 @@ export default function AddAssetBalanceTransferForm({
     const incomingAmount = Number(incoming.amount);
     if (isNaN(outgoingAmount) || isNaN(incomingAmount)) return;
 
-    addTransaction.mutate(
-      {
-        transaction: {
-          type: "asset_balance_transfer",
-          date: Math.floor(selectedDate.getTime() / 1000),
-          outgoing_change: {
-            account_id: outgoingAccount.id,
-            amount: outgoingAmount,
-            asset_id: outgoing.asset.id,
-          },
-          incoming_change: {
-            account_id: incomingAccount.id,
-            amount: incomingAmount,
-            asset_id: incoming.asset.id,
-          },
-        },
-      },
-      {
-        onSuccess: () => onSuccess?.(),
-      },
-    );
+    const transactionData: TransactionInput = {
+      type: 'asset_balance_transfer',
+      date: Math.floor(selectedDate.getTime() / 1000),
+      outgoing_change: { account_id: outgoingAccount.id, amount: outgoingAmount, asset_id: outgoing.asset.id },
+      incoming_change: { account_id: incomingAccount.id, amount: incomingAmount, asset_id: incoming.asset.id },
+    };
+    if (onCollect) { onCollect(transactionData); return; }
+    addTransaction.mutate({ transaction: transactionData }, { onSuccess: () => onSuccess?.() });
   };
 
   return (
@@ -110,8 +100,8 @@ export default function AddAssetBalanceTransferForm({
         />
       </div>
 
-      <Button onClick={handleSave} disabled={addTransaction.isPending}>
-        {addTransaction.isPending ? "Saving..." : "Save"}
+      <Button onClick={handleSave} disabled={!onCollect && addTransaction.isPending}>
+        {onCollect ? 'Add to Group' : (addTransaction.isPending ? 'Saving...' : 'Save')}
       </Button>
     </div>
   );

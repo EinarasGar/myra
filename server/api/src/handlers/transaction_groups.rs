@@ -95,6 +95,82 @@ pub async fn add_transaction_group(
             metadata: MetadataLookupTables {
                 assets: assets.into_iter().map_into().collect(),
                 accounts: accounts.into_iter().map_into().collect(),
+                ..Default::default()
+            },
+        }),
+    ))
+}
+
+/// Group individual transactions
+///
+/// Creates a new transaction group from existing individual transactions.
+/// The provided transaction IDs will be moved from individual to the new group.
+#[utoipa::path(
+    put,
+    path = "/api/users/{user_id}/transactions/groups",
+    tag = "Transaction Groups",
+    request_body (
+      content = UpdateTransactionGroupRequestViewModel,
+    ),
+    responses(
+        (status = 201, description = "Transaction group created successfully.", body = AddTransactionGroupResponseViewModel),
+        CreateResponses
+    ),
+    params(
+        ("user_id" = Uuid, Path, description = "User Id for which to create the transaction group."),
+    ),
+    security(
+        ("auth_token" = [])
+    )
+)]
+#[tracing::instrument(skip_all, err)]
+pub async fn group_individual_transactions(
+    Path(user_id): Path<Uuid>,
+    AuthenticatedUserState(_auth): AuthenticatedUserState,
+    TransactionGroupServiceState(service): TransactionGroupServiceState,
+    AssetsServiceState(asset_service): AssetsServiceState,
+    AccountsServiceState(accounts_service): AccountsServiceState,
+    ValidatedJson(params): ValidatedJson<UpdateTransactionGroupRequestViewModel>,
+) -> Result<(StatusCode, Json<AddTransactionGroupResponseViewModel>), ApiError> {
+    params.group.validate()?;
+
+    let transaction_dtos: Vec<TransactionDto> = params
+        .group
+        .transactions
+        .into_iter()
+        .map(Into::into)
+        .collect();
+
+    let result = service
+        .group_individual_transactions(
+            user_id,
+            params.group.description.into_inner(),
+            params.group.category_id.0,
+            params.group.date,
+            transaction_dtos,
+        )
+        .await
+        .map_err(ApiError::from_anyhow)?;
+
+    let tx_refs: Vec<_> = result.transactions.iter().collect();
+    let asset_ids = transaction_dtos_to_asset_ids_hashset(&tx_refs);
+    let account_ids = transaction_dtos_to_account_ids_hashset(&tx_refs);
+
+    let (assets, accounts) = tokio::try_join!(
+        asset_service.get_assets(asset_ids),
+        accounts_service.get_accounts(account_ids),
+    )?;
+
+    let group: GetTransactionGroupLineResponseViewModel = result.try_into()?;
+
+    Ok((
+        StatusCode::CREATED,
+        Json(AddTransactionGroupResponseViewModel {
+            group: group.transaction_group,
+            metadata: MetadataLookupTables {
+                assets: assets.into_iter().map_into().collect(),
+                accounts: accounts.into_iter().map_into().collect(),
+                ..Default::default()
             },
         }),
     ))
@@ -169,6 +245,7 @@ pub async fn update_transaction_group(
         metadata: MetadataLookupTables {
             assets: assets.into_iter().map_into().collect(),
             accounts: accounts.into_iter().map_into().collect(),
+            ..Default::default()
         },
     }))
 }
@@ -271,6 +348,7 @@ pub async fn get_transaction_groups(
         lookup_tables: MetadataLookupTables {
             assets: assets.into_iter().map_into().collect(),
             accounts: accounts.into_iter().map_into().collect(),
+            ..Default::default()
         },
     };
 

@@ -1,5 +1,11 @@
 import { useAssetStore } from "@/hooks/store/use-asset-store";
-import { Transaction } from "../pages/transactions/individual-transactions-table";
+
+export interface Transaction {
+  type: string;
+  description: string;
+  date: number;
+  deltas: string;
+}
 
 interface TransactionConverterProps {
   type: string;

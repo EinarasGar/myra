@@ -4,8 +4,7 @@ import { useAuthUserId } from "@/hooks/use-auth";
 import useGetAccountTransactions from "@/hooks/api/use-get-account-transactions";
 import { MemoizedDataTable } from "@/components/ui/data-table";
 import { DataTableSkeleton } from "@/components/data-table-skeleton";
-import useTransactionViewModelConverter from "@/hooks/use-transaction-converter";
-import { Transaction } from "@/pages/transactions/individual-transactions-table";
+import useTransactionViewModelConverter, { Transaction } from "@/hooks/use-transaction-converter";
 
 interface AccountTransactionsProps {
   accountId: string;

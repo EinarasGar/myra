@@ -7,10 +7,16 @@ use uuid::Uuid;
 
 use crate::{
     auth::AuthenticatedUserState,
-    converters::{transaction_dtos_to_account_ids_hashset, transaction_dtos_to_asset_ids_hashset},
+    converters::{
+        combined_items_to_category_ids_hashset, transaction_dtos_to_account_ids_hashset,
+        transaction_dtos_to_asset_ids_hashset,
+    },
     errors::ApiError,
     extractors::{ValidatedJson, ValidatedQuery},
-    states::{AccountsServiceState, AssetsServiceState, TransactionManagementServiceState},
+    states::{
+        AccountsServiceState, AssetsServiceState, CategoryServiceState,
+        TransactionManagementServiceState,
+    },
     view_models::{
         base_models::search::{CombinedTransactionsPage, CursorOrPaginatedSearchQuery},
         errors::{DeleteResponses, GetResponses, UpdateResponses},
@@ -81,6 +87,7 @@ pub async fn update_transaction(
         metadata: MetadataLookupTables {
             assets: assets.into_iter().map_into().collect(),
             accounts: accounts.into_iter().map_into().collect(),
+            ..Default::default()
         },
     }))
 }
@@ -145,6 +152,7 @@ pub async fn get_transactions(
     TransactionManagementServiceState(service): TransactionManagementServiceState,
     AssetsServiceState(asset_service): AssetsServiceState,
     AccountsServiceState(accounts_service): AccountsServiceState,
+    CategoryServiceState(category_service): CategoryServiceState,
     AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<CombinedTransactionsPage>, ApiError> {
     let pagination = PaginationModeDto::from(&query_params);
@@ -164,10 +172,12 @@ pub async fn get_transactions(
         .collect();
     let asset_ids = transaction_dtos_to_asset_ids_hashset(&all_tx_refs);
     let account_ids = transaction_dtos_to_account_ids_hashset(&all_tx_refs);
+    let category_ids = combined_items_to_category_ids_hashset(&result.results);
 
-    let (assets, accounts) = tokio::try_join!(
+    let (assets, accounts, categories) = tokio::try_join!(
         asset_service.get_assets(asset_ids),
         accounts_service.get_accounts(account_ids),
+        category_service.get_categories(category_ids),
     )?;
 
     let next_cursor = if result.has_more {
@@ -188,6 +198,7 @@ pub async fn get_transactions(
         lookup_tables: MetadataLookupTables {
             assets: assets.into_iter().map_into().collect(),
             accounts: accounts.into_iter().map_into().collect(),
+            categories: categories.into_iter().map_into().collect(),
         },
     };
 

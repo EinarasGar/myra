@@ -127,6 +127,7 @@ pub async fn update_individual_transaction(
         metadata: MetadataLookupTables {
             assets: assets.into_iter().map_into().collect(),
             accounts: accounts.into_iter().map_into().collect(),
+            ..Default::default()
         },
     }))
 }
@@ -190,6 +191,7 @@ pub async fn get_individual_transactions(
         lookup_tables: MetadataLookupTables {
             assets: assets.into_iter().map_into().collect(),
             accounts: accounts.into_iter().map_into().collect(),
+            ..Default::default()
         },
     };
 
@@ -241,6 +243,7 @@ pub async fn get_single(
         lookup_tables: MetadataLookupTables {
             assets: assets.into_iter().map_into().collect(),
             accounts: accounts.into_iter().map_into().collect(),
+            ..Default::default()
         },
     };
     Ok(ret.into())

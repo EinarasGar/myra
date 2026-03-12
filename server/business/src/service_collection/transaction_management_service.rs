@@ -309,10 +309,13 @@ impl TransactionManagementService {
         };
         let combined_query =
             transaction_queries::get_combined_transaction_ids_for_user(combined_params);
-        let mut id_rows = self
+        let id_rows_raw = self
             .db
-            .fetch_all::<CombinedTransactionIdModel>(combined_query)
+            .fetch_all::<TotalCount<CombinedTransactionIdModel>>(combined_query)
             .await?;
+        let total_results = id_rows_raw.first().map(|r| r.total_results);
+        let mut id_rows: Vec<CombinedTransactionIdModel> =
+            id_rows_raw.into_iter().map(|r| r.model).collect();
 
         // Detect has_more
         let has_more = id_rows.len() as u64 > limit;
@@ -453,7 +456,7 @@ impl TransactionManagementService {
             results: combined,
             has_more,
             next_cursor,
-            total_results: None,
+            total_results,
         })
     }
 
@@ -466,6 +469,8 @@ impl TransactionManagementService {
         self.db.start_transaction().await?;
         self.update_individual_transaction_inner(user_id, transaction_id, transaction_dto)
             .await?;
+        let query = transaction_data_queries::clear_group_id_on_transaction(transaction_id);
+        self.db.execute(query).await?;
         self.db.commit_transaction().await?;
         self.get_individual_transaction(user_id, transaction_id)
             .await

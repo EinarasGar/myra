@@ -101,25 +101,42 @@ pub fn get_categories(params: GetCategoriesParams) -> DbQueryWithValues {
         )),
     );
 
-    if let Some(user_id) = params.user_id {
-        query.and_where(
-            Expr::col((
-                TransactionCategoriesIden::Table,
-                TransactionCategoriesIden::UserId,
-            ))
-            .eq(user_id),
-        );
-    } else {
-        query.and_where(
-            Expr::col((
-                TransactionCategoriesIden::Table,
-                TransactionCategoriesIden::UserId,
-            ))
-            .is_null(),
-        );
+    match &params.search_type {
+        GetCategoriesParamsSearchType::ByIds(_) => {
+            // No user_id filter for ID lookups
+        }
+        _ => {
+            if let Some(user_id) = params.user_id {
+                query.and_where(
+                    Expr::col((
+                        TransactionCategoriesIden::Table,
+                        TransactionCategoriesIden::UserId,
+                    ))
+                    .eq(user_id),
+                );
+            } else {
+                query.and_where(
+                    Expr::col((
+                        TransactionCategoriesIden::Table,
+                        TransactionCategoriesIden::UserId,
+                    ))
+                    .is_null(),
+                );
+            }
+        }
     }
 
     match params.search_type {
+        GetCategoriesParamsSearchType::ByIds(ids) => {
+            let ids_vec: Vec<sea_query::Value> = ids.into_iter().map(|id| id.into()).collect();
+            query.and_where(
+                Expr::col((
+                    TransactionCategoriesIden::Table,
+                    TransactionCategoriesIden::Id,
+                ))
+                .is_in(ids_vec),
+            );
+        }
         GetCategoriesParamsSearchType::ById(category_id) => {
             query.and_where(
                 Expr::col((

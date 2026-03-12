@@ -8,13 +8,16 @@ import { useAddIndividualTransaction } from "@/hooks/api/use-add-individual-tran
 import { useAuthUserId } from "@/hooks/use-auth";
 import type { ExpandedAsset } from "@/types/assets";
 import type { ExpandedAccount } from "@/types/account";
+import type { TransactionInput } from "@/api";
 
 interface AddCashDividendFormProps {
   onSuccess?: () => void;
+  onCollect?: (transaction: TransactionInput) => void;
 }
 
 export default function AddCashDividendForm({
   onSuccess,
+  onCollect,
 }: AddCashDividendFormProps) {
   const userId = useAuthUserId();
   const addTransaction = useAddIndividualTransaction(userId);
@@ -44,23 +47,16 @@ export default function AddCashDividendForm({
     const parsedAmount = Number(entry.amount);
     if (isNaN(parsedAmount)) return;
 
-    addTransaction.mutate(
-      {
-        transaction: {
-          type: "cash_dividend",
-          date: Math.floor(selectedDate.getTime() / 1000),
-          entry: {
-            account_id: entryAccount.id,
-            asset_id: entry.asset.id,
-            amount: parsedAmount,
-          },
-          origin_asset_id: originAsset.id,
-        },
-      },
-      {
-        onSuccess: () => onSuccess?.(),
-      },
-    );
+    const transactionData: TransactionInput = {
+      type: "cash_dividend",
+      date: Math.floor(selectedDate.getTime() / 1000),
+      entry: { account_id: entryAccount.id, asset_id: entry.asset.id, amount: parsedAmount },
+      origin_asset_id: originAsset.id,
+    };
+
+    if (onCollect) { onCollect(transactionData); return; }
+
+    addTransaction.mutate({ transaction: transactionData }, { onSuccess: () => onSuccess?.() });
   };
 
   return (
@@ -93,8 +89,8 @@ export default function AddCashDividendForm({
         />
       </div>
 
-      <Button onClick={handleSave} disabled={addTransaction.isPending}>
-        {addTransaction.isPending ? "Saving..." : "Save"}
+      <Button onClick={handleSave} disabled={!onCollect && addTransaction.isPending}>
+        {onCollect ? "Add to Group" : (addTransaction.isPending ? "Saving..." : "Save")}
       </Button>
     </div>
   );

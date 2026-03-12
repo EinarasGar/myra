@@ -312,6 +312,11 @@ pub fn get_combined_transaction_ids_for_user(
             CombinedTransactionIden::ItemType,
         ))
         .from(CombinedTransactionIden::Combined);
+    main_query.expr_window_as(
+        Expr::col(Asterisk).count(),
+        WindowStatement::default(),
+        Alias::new("total_results"),
+    );
 
     // --- Optional ILIKE filter on description ---
     if let Some(ref query) = params.search_query {

@@ -78,12 +78,12 @@ export default function AssetAmountInput({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!defaultSign || lockSign) return;
+    if (lockSign) return;
 
-    if (e.key === "Backspace" && !displayAmount && sign !== defaultSign) {
+    if (defaultSign && e.key === "Backspace" && !displayAmount && sign !== defaultSign) {
       e.preventDefault();
-      setSign(defaultSign!);
-      emitAmount("", defaultSign!);
+      setSign(defaultSign);
+      emitAmount("", defaultSign);
       return;
     }
 
@@ -98,7 +98,7 @@ export default function AssetAmountInput({
   };
 
   const handleSignClick = () => {
-    if (!defaultSign || lockSign || disabled || !currentAsset) return;
+    if (lockSign || disabled || !currentAsset) return;
     const newSign: Sign = sign === "positive" ? "negative" : "positive";
     setSign(newSign);
     emitAmount(displayAmount, newSign);
@@ -120,7 +120,6 @@ export default function AssetAmountInput({
           />
         </div>
         <div className="relative flex-1 -ml-px">
-          {defaultSign && (
             <button
               type="button"
               tabIndex={-1}
@@ -139,7 +138,6 @@ export default function AssetAmountInput({
             >
               {signChar}
             </button>
-          )}
           <Input
             type="text"
             value={displayAmount}
@@ -150,7 +148,7 @@ export default function AssetAmountInput({
             required={required}
             className={cn(
               "rounded-l-none w-full",
-              defaultSign && "pl-5",
+              "pl-5",
               error && "border-red-500",
               !currentAsset && "bg-muted/50",
             )}

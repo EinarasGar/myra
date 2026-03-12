@@ -15,6 +15,9 @@ export function useAddIndividualTransaction(userId: string) {
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.INDIVIDUAL_TRANSACTIONS],
       });
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.COMBINED_TRANSACTIONS],
+      });
     },
   });
 }

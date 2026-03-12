@@ -203,6 +203,7 @@ pub async fn get_account_transactions(
         lookup_tables: MetadataLookupTables {
             assets: assets.into_iter().map_into().collect(),
             accounts: accounts.into_iter().map_into().collect(),
+            ..Default::default()
         },
     };
 

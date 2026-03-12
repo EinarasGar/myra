@@ -7,13 +7,16 @@ import { useAddIndividualTransaction } from "@/hooks/api/use-add-individual-tran
 import { useAuthUserId } from "@/hooks/use-auth";
 import type { ExpandedAsset } from "@/types/assets";
 import type { ExpandedAccount } from "@/types/account";
+import type { TransactionInput } from '@/api';
 
 interface AddAssetPurchaseFormProps {
   onSuccess?: () => void;
+  onCollect?: (transaction: TransactionInput) => void;
 }
 
 export default function AddAssetPurchaseForm({
   onSuccess,
+  onCollect,
 }: AddAssetPurchaseFormProps) {
   const userId = useAuthUserId();
   const addTransaction = useAddIndividualTransaction(userId);
@@ -50,27 +53,14 @@ export default function AddAssetPurchaseForm({
     const purchaseAmount = Number(purchase.amount);
     if (isNaN(cashAmount) || isNaN(purchaseAmount)) return;
 
-    addTransaction.mutate(
-      {
-        transaction: {
-          type: "asset_purchase",
-          date: Math.floor(selectedDate.getTime() / 1000),
-          cash_outgoings_change: {
-            account_id: cashAccount.id,
-            amount: cashAmount,
-            asset_id: cashOutgoings.asset.id,
-          },
-          purchase_change: {
-            account_id: purchaseAccount.id,
-            amount: purchaseAmount,
-            asset_id: purchase.asset.id,
-          },
-        },
-      },
-      {
-        onSuccess: () => onSuccess?.(),
-      },
-    );
+    const transactionData: TransactionInput = {
+      type: 'asset_purchase',
+      date: Math.floor(selectedDate.getTime() / 1000),
+      cash_outgoings_change: { account_id: cashAccount.id, amount: cashAmount, asset_id: cashOutgoings.asset.id },
+      purchase_change: { account_id: purchaseAccount.id, amount: purchaseAmount, asset_id: purchase.asset.id },
+    };
+    if (onCollect) { onCollect(transactionData); return; }
+    addTransaction.mutate({ transaction: transactionData }, { onSuccess: () => onSuccess?.() });
   };
 
   return (
@@ -109,8 +99,8 @@ export default function AddAssetPurchaseForm({
         />
       </div>
 
-      <Button onClick={handleSave} disabled={addTransaction.isPending}>
-        {addTransaction.isPending ? "Saving..." : "Save"}
+      <Button onClick={handleSave} disabled={!onCollect && addTransaction.isPending}>
+        {onCollect ? 'Add to Group' : (addTransaction.isPending ? 'Saving...' : 'Save')}
       </Button>
     </div>
   );

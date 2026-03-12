@@ -20,6 +20,7 @@ import { Route as AuthPortfolioOverviewRouteImport } from './routes/_auth.portfo
 import { Route as AuthPortfolioRouteImport } from './routes/_auth.portfolio'
 import { Route as AuthComponentTestingRouteImport } from './routes/_auth.component-testing'
 import { Route as AuthUserAssetsIndexRouteImport } from './routes/_auth.user-assets.index'
+import { Route as AuthTransactionsIndexRouteImport } from './routes/_auth.transactions.index'
 import { Route as AuthUserAssetsAssetIdRouteImport } from './routes/_auth.user-assets.$assetId'
 import { Route as AuthTransactionsIndividualRouteImport } from './routes/_auth.transactions.individual'
 import { Route as AuthSettingsCategoriesRouteImport } from './routes/_auth.settings.categories'
@@ -80,6 +81,11 @@ const AuthUserAssetsIndexRoute = AuthUserAssetsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthUserAssetsRoute,
 } as any)
+const AuthTransactionsIndexRoute = AuthTransactionsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthTransactionsRoute,
+} as any)
 const AuthUserAssetsAssetIdRoute = AuthUserAssetsAssetIdRouteImport.update({
   id: '/$assetId',
   path: '/$assetId',
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/settings/categories': typeof AuthSettingsCategoriesRoute
   '/transactions/individual': typeof AuthTransactionsIndividualRoute
   '/user-assets/$assetId': typeof AuthUserAssetsAssetIdRoute
+  '/transactions/': typeof AuthTransactionsIndexRoute
   '/user-assets/': typeof AuthUserAssetsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -131,13 +138,13 @@ export interface FileRoutesByTo {
   '/portfolio': typeof AuthPortfolioRoute
   '/portfolio-overview': typeof AuthPortfolioOverviewRoute
   '/settings': typeof AuthSettingsRouteWithChildren
-  '/transactions': typeof AuthTransactionsRouteWithChildren
   '/': typeof AuthIndexRoute
   '/accounts/$accountId': typeof AuthAccountsAccountIdRoute
   '/settings/accounts': typeof AuthSettingsAccountsRoute
   '/settings/categories': typeof AuthSettingsCategoriesRoute
   '/transactions/individual': typeof AuthTransactionsIndividualRoute
   '/user-assets/$assetId': typeof AuthUserAssetsAssetIdRoute
+  '/transactions': typeof AuthTransactionsIndexRoute
   '/user-assets': typeof AuthUserAssetsIndexRoute
 }
 export interface FileRoutesById {
@@ -157,6 +164,7 @@ export interface FileRoutesById {
   '/_auth/settings/categories': typeof AuthSettingsCategoriesRoute
   '/_auth/transactions/individual': typeof AuthTransactionsIndividualRoute
   '/_auth/user-assets/$assetId': typeof AuthUserAssetsAssetIdRoute
+  '/_auth/transactions/': typeof AuthTransactionsIndexRoute
   '/_auth/user-assets/': typeof AuthUserAssetsIndexRoute
 }
 export interface FileRouteTypes {
@@ -176,6 +184,7 @@ export interface FileRouteTypes {
     | '/settings/categories'
     | '/transactions/individual'
     | '/user-assets/$assetId'
+    | '/transactions/'
     | '/user-assets/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -185,13 +194,13 @@ export interface FileRouteTypes {
     | '/portfolio'
     | '/portfolio-overview'
     | '/settings'
-    | '/transactions'
     | '/'
     | '/accounts/$accountId'
     | '/settings/accounts'
     | '/settings/categories'
     | '/transactions/individual'
     | '/user-assets/$assetId'
+    | '/transactions'
     | '/user-assets'
   id:
     | '__root__'
@@ -210,6 +219,7 @@ export interface FileRouteTypes {
     | '/_auth/settings/categories'
     | '/_auth/transactions/individual'
     | '/_auth/user-assets/$assetId'
+    | '/_auth/transactions/'
     | '/_auth/user-assets/'
   fileRoutesById: FileRoutesById
 }
@@ -298,6 +308,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthUserAssetsIndexRouteImport
       parentRoute: typeof AuthUserAssetsRoute
     }
+    '/_auth/transactions/': {
+      id: '/_auth/transactions/'
+      path: '/'
+      fullPath: '/transactions/'
+      preLoaderRoute: typeof AuthTransactionsIndexRouteImport
+      parentRoute: typeof AuthTransactionsRoute
+    }
     '/_auth/user-assets/$assetId': {
       id: '/_auth/user-assets/$assetId'
       path: '/$assetId'
@@ -352,10 +369,12 @@ const AuthSettingsRouteWithChildren = AuthSettingsRoute._addFileChildren(
 
 interface AuthTransactionsRouteChildren {
   AuthTransactionsIndividualRoute: typeof AuthTransactionsIndividualRoute
+  AuthTransactionsIndexRoute: typeof AuthTransactionsIndexRoute
 }
 
 const AuthTransactionsRouteChildren: AuthTransactionsRouteChildren = {
   AuthTransactionsIndividualRoute: AuthTransactionsIndividualRoute,
+  AuthTransactionsIndexRoute: AuthTransactionsIndexRoute,
 }
 
 const AuthTransactionsRouteWithChildren =

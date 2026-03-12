@@ -7,13 +7,16 @@ import { useAddIndividualTransaction } from "@/hooks/api/use-add-individual-tran
 import { useAuthUserId } from "@/hooks/use-auth";
 import type { ExpandedAsset } from "@/types/assets";
 import type { ExpandedAccount } from "@/types/account";
+import type { TransactionInput } from "@/api";
 
 interface AddCashTransferOutFormProps {
   onSuccess?: () => void;
+  onCollect?: (transaction: TransactionInput) => void;
 }
 
 export default function AddCashTransferOutForm({
   onSuccess,
+  onCollect,
 }: AddCashTransferOutFormProps) {
   const userId = useAuthUserId();
   const addTransaction = useAddIndividualTransaction(userId);
@@ -36,22 +39,15 @@ export default function AddCashTransferOutForm({
     const parsedAmount = Number(entry.amount);
     if (isNaN(parsedAmount)) return;
 
-    addTransaction.mutate(
-      {
-        transaction: {
-          type: "cash_transfer_out",
-          date: Math.floor(selectedDate.getTime() / 1000),
-          entry: {
-            account_id: entryAccount.id,
-            asset_id: entry.asset.id,
-            amount: parsedAmount,
-          },
-        },
-      },
-      {
-        onSuccess: () => onSuccess?.(),
-      },
-    );
+    const transactionData: TransactionInput = {
+      type: "cash_transfer_out",
+      date: Math.floor(selectedDate.getTime() / 1000),
+      entry: { account_id: entryAccount.id, asset_id: entry.asset.id, amount: parsedAmount },
+    };
+
+    if (onCollect) { onCollect(transactionData); return; }
+
+    addTransaction.mutate({ transaction: transactionData }, { onSuccess: () => onSuccess?.() });
   };
 
   return (
@@ -74,8 +70,8 @@ export default function AddCashTransferOutForm({
         />
       </div>
 
-      <Button onClick={handleSave} disabled={addTransaction.isPending}>
-        {addTransaction.isPending ? "Saving..." : "Save"}
+      <Button onClick={handleSave} disabled={!onCollect && addTransaction.isPending}>
+        {onCollect ? "Add to Group" : (addTransaction.isPending ? "Saving..." : "Save")}
       </Button>
     </div>
   );

@@ -129,7 +129,70 @@ impl TransactionGroupService {
         })
     }
 
+    pub async fn group_individual_transactions(
+        &self,
+        user_id: Uuid,
+        description: String,
+        category_id: i32,
+        date: OffsetDateTime,
+        transaction_dtos: Vec<TransactionDto>,
+    ) -> anyhow::Result<TransactionGroupDto> {
+        self.db.start_transaction().await?;
+
+        // Create the group record
+        let insert_group_query =
+            transaction_group_queries::insert_transaction_group(AddTransactionGroupModel {
+                category_id,
+                description: description.clone(),
+                date_added: date,
+            });
+        let group_id = self.db.fetch_one_scalar::<Uuid>(insert_group_query).await?;
+
+        // Delegate to inner which handles moving existing transactions
+        let result = self
+            .update_transaction_group_inner(
+                user_id,
+                group_id,
+                description,
+                category_id,
+                date,
+                transaction_dtos,
+            )
+            .await?;
+
+        self.db.commit_transaction().await?;
+
+        Ok(result)
+    }
+
     pub async fn update_transaction_group(
+        &self,
+        user_id: Uuid,
+        group_id: Uuid,
+        description: String,
+        category_id: i32,
+        date: OffsetDateTime,
+        transaction_dtos: Vec<TransactionDto>,
+    ) -> anyhow::Result<TransactionGroupDto> {
+        self.db.start_transaction().await?;
+
+        let result = self
+            .update_transaction_group_inner(
+                user_id,
+                group_id,
+                description,
+                category_id,
+                date,
+                transaction_dtos,
+            )
+            .await?;
+
+        self.db.commit_transaction().await?;
+
+        Ok(result)
+    }
+
+    async fn update_transaction_group_inner(
         &self,
         user_id: Uuid,
         group_id: Uuid,
@@ -194,8 +257,6 @@ impl TransactionGroupService {
             .cloned()
             .collect();
 
-        self.db.start_transaction().await?;
-
         // Delete removed transactions
         if !to_delete.is_empty() {
             self.management_service
@@ -255,8 +316,6 @@ impl TransactionGroupService {
                 date_added: date,
             });
         self.db.execute(update_group_query).await?;
-
-        self.db.commit_transaction().await?;
 
         // Collect all final transaction IDs and fetch back
         let all_ids: Vec<Uuid> = to_update

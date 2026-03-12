@@ -1,10 +1,7 @@
-import IndividialTransactionsPage from "@/pages/transactions/individual-transactions-page";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_auth/transactions/individual")({
-  component: RouteComponent,
+  beforeLoad: () => {
+    throw redirect({ to: "/transactions" });
+  },
 });
-
-function RouteComponent() {
-  return <IndividialTransactionsPage></IndividialTransactionsPage>;
-}

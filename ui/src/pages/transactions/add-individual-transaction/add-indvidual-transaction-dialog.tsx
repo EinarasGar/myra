@@ -1,11 +1,9 @@
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { TransactionTypeSelector } from "./transaction-type-selector";
 import { useState } from "react";
@@ -24,12 +22,16 @@ import AddAccountFeesForm from "./add-account-fees-form";
 
 const SPECIALIZED_TYPES = ["asset_purchase", "asset_sale", "cash_transfer_in", "cash_transfer_out", "cash_dividend", "asset_dividend", "asset_transfer_out", "asset_transfer_in", "asset_trade", "asset_balance_transfer", "account_fees"];
 
-export function AddIndividualTranscationDialog() {
-  const [open, setOpen] = useState(false);
+interface AddIndividualTranscationDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function AddIndividualTranscationDialog({ open, onOpenChange }: AddIndividualTranscationDialogProps) {
   const [selectedType, setSelectedType] = useState<string | null>(null);
 
   const handleOpenChange = (value: boolean) => {
-    setOpen(value);
+    onOpenChange(value);
     if (!value) {
       setSelectedType(null);
     }
@@ -37,13 +39,10 @@ export function AddIndividualTranscationDialog() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button variant="outline" />}>
-        Edit Profile
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add new transaction</DialogTitle>
-          <DialogDescription>Select transaction type.</DialogDescription>
+          <DialogTitle>New Transaction</DialogTitle>
+          {!selectedType && (<DialogDescription>Select transaction type.</DialogDescription>)}
         </DialogHeader>
         {!selectedType && (
           <TransactionTypeSelector

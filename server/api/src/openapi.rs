@@ -45,6 +45,7 @@ mod modifiers;
     ),
     paths(
         super::handlers::transaction_groups::add_transaction_group,
+        super::handlers::transaction_groups::group_individual_transactions,
         super::handlers::transaction_groups::update_transaction_group,
         super::handlers::transaction_groups::delete_transaction_group,
         super::handlers::transaction_groups::get_transaction_groups,
