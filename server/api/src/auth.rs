@@ -1,22 +1,31 @@
 use std::collections::HashMap;
 
 use axum::{
-    extract::{FromRef, FromRequestParts, Path},
+    extract::{FromRequestParts, Path},
     http::request::Parts,
     RequestPartsExt,
 };
+
+#[cfg(any(feature = "database", feature = "clerk"))]
+use axum::extract::FromRef;
+
+#[cfg(any(feature = "database", feature = "clerk"))]
 use axum_extra::{
     headers::{authorization::Bearer, Authorization},
     TypedHeader,
 };
 
+#[cfg(any(feature = "database", feature = "clerk"))]
 use business::{
     dtos::user_role_dto::UserRoleEnumDto, service_collection::auth_service::AuthService,
 };
+
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::errors::{auth::AuthError, ApiError};
+#[cfg(any(feature = "database", feature = "clerk"))]
+use crate::errors::auth::AuthError;
+use crate::errors::ApiError;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AuthenticatedUserState(pub AuthenticatedUser);
@@ -25,8 +34,35 @@ pub struct AuthenticatedUserState(pub AuthenticatedUser);
 pub struct AuthenticatedUser {
     #[serde(with = "Uuid")]
     pub user_id: Uuid,
+    pub role: Option<String>,
+    pub username: Option<String>,
 }
 
+#[cfg(feature = "noauth")]
+impl<S> FromRequestParts<S> for AuthenticatedUserState
+where
+    S: Send + Sync,
+{
+    type Rejection = ApiError;
+
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+        let Path(paths) = parts
+            .extract::<Path<HashMap<String, String>>>()
+            .await
+            .unwrap();
+        let user_id = paths
+            .get("user_id")
+            .and_then(|id| Uuid::parse_str(id).ok())
+            .unwrap_or_else(|| Uuid::parse_str("2396480f-0052-4cf0-81dc-8cedbde5ce13").unwrap());
+        Ok(Self(AuthenticatedUser {
+            user_id,
+            role: None,
+            username: None,
+        }))
+    }
+}
+
+#[cfg(feature = "database")]
 impl<S> FromRequestParts<S> for AuthenticatedUserState
 where
     AuthService: FromRef<S>,
@@ -35,32 +71,19 @@ where
     type Rejection = ApiError;
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        // Bypass authentication unless AUTH_DISABLED=false
-        if !std::env::var("AUTH_DISABLED").is_ok_and(|v| v == "false") {
-            let Path(paths) = parts
-                .extract::<Path<HashMap<String, String>>>()
-                .await
-                .unwrap();
-            let user_id = paths
-                .get("user_id")
-                .and_then(|id| Uuid::parse_str(id).ok())
-                .unwrap_or(Uuid::nil());
-            return Ok(Self(AuthenticatedUser { user_id }));
-        }
-
         // Extract the token from the authorization header
         let TypedHeader(Authorization(bearer)) = parts
             .extract::<TypedHeader<Authorization<Bearer>>>()
             .await
             .map_err(|_| -> ApiError { AuthError::InvalidToken.into() })?;
 
-        //Verify that the token is valid
+        // Verify that the token is valid
         let auth_service = AuthService::from_ref(state);
         let parsed_claims = auth_service
             .verify_auth_token(bearer.token().to_string())
             .map_err(|_| -> ApiError { AuthError::InvalidToken.into() })?;
 
-        //Extract user id if exists and check if it matches
+        // Extract user id if exists and check if it matches
         let Path(paths) = parts
             .extract::<Path<HashMap<String, String>>>()
             .await
@@ -74,9 +97,61 @@ where
             }
         }
 
-        let respp = AuthenticatedUser {
+        Ok(Self(AuthenticatedUser {
             user_id: parsed_claims.sub,
-        };
-        Ok(Self(respp))
+            role: None,
+            username: None,
+        }))
+    }
+}
+
+#[cfg(feature = "clerk")]
+impl<S> FromRequestParts<S> for AuthenticatedUserState
+where
+    AuthService: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = ApiError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        // Extract the token from the authorization header
+        let TypedHeader(Authorization(bearer)) = parts
+            .extract::<TypedHeader<Authorization<Bearer>>>()
+            .await
+            .map_err(|_| -> ApiError { AuthError::InvalidToken.into() })?;
+
+        // Verify via AuthService::verify_clerk_token (which resolves internal UUID)
+        let auth_service = AuthService::from_ref(state);
+        let parsed_claims = auth_service
+            .verify_clerk_token(bearer.token().to_string())
+            .await
+            .map_err(|e| -> ApiError {
+                tracing::error!("Clerk token verification failed: {}", e);
+                if e.to_string().contains("Failed to fetch Clerk JWKS") {
+                    AuthError::ServiceUnavailable.into()
+                } else {
+                    AuthError::InvalidToken.into()
+                }
+            })?;
+
+        // Extract user id if exists and check if it matches
+        let Path(paths) = parts
+            .extract::<Path<HashMap<String, String>>>()
+            .await
+            .unwrap();
+        if parsed_claims.role != UserRoleEnumDto::Admin && paths.contains_key("user_id") {
+            let user_id = paths["user_id"].to_string();
+            let uuid = Uuid::parse_str(&user_id)
+                .map_err(|_| -> ApiError { AuthError::WrongUserId.into() })?;
+            if !uuid.eq(&parsed_claims.sub) {
+                return Err(AuthError::Unauthorized.into());
+            }
+        }
+
+        Ok(Self(AuthenticatedUser {
+            user_id: parsed_claims.sub,
+            role: Some(format!("{:?}", parsed_claims.role)),
+            username: Some(parsed_claims.username),
+        }))
     }
 }

@@ -80,7 +80,12 @@ export default function AssetAmountInput({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (lockSign) return;
 
-    if (defaultSign && e.key === "Backspace" && !displayAmount && sign !== defaultSign) {
+    if (
+      defaultSign &&
+      e.key === "Backspace" &&
+      !displayAmount &&
+      sign !== defaultSign
+    ) {
       e.preventDefault();
       setSign(defaultSign);
       emitAmount("", defaultSign);
@@ -120,24 +125,24 @@ export default function AssetAmountInput({
           />
         </div>
         <div className="relative flex-1 -ml-px">
-            <button
-              type="button"
-              tabIndex={-1}
-              onClick={handleSignClick}
-              disabled={disabled || !currentAsset}
-              className={cn(
-                "absolute left-2.5 top-1/2 -translate-y-1/2 z-10 text-sm font-medium select-none",
-                "focus:outline-none",
-                disabled || !currentAsset
-                  ? "opacity-50 cursor-not-allowed"
-                  : "cursor-pointer",
-                isDefaultSign && !displayAmount
-                  ? "text-muted-foreground/40"
-                  : "text-foreground",
-              )}
-            >
-              {signChar}
-            </button>
+          <button
+            type="button"
+            tabIndex={-1}
+            onClick={handleSignClick}
+            disabled={disabled || !currentAsset}
+            className={cn(
+              "absolute left-2.5 top-1/2 -translate-y-1/2 z-10 text-sm font-medium select-none",
+              "focus:outline-none",
+              disabled || !currentAsset
+                ? "opacity-50 cursor-not-allowed"
+                : "cursor-pointer",
+              isDefaultSign && !displayAmount
+                ? "text-muted-foreground/40"
+                : "text-foreground",
+            )}
+          >
+            {signChar}
+          </button>
           <Input
             type="text"
             value={displayAmount}

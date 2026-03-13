@@ -12,13 +12,14 @@ impl From<AuthError> for ApiError {
             // Authenticated but not authorised for this resource
             AuthError::Unauthorized | AuthError::WrongUserId => ApiError::Forbidden,
             AuthError::TokenCreation => ApiError::Internal(anyhow::anyhow!("Token creation error")),
+            AuthError::ServiceUnavailable => ApiError::ServiceUnavailable,
         }
     }
 }
 
 impl Display for AuthError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "autentikacijos problemele :(")
+        write!(f, "Authentication error")
     }
 }
 
@@ -30,4 +31,5 @@ pub enum AuthError {
     InvalidToken,
     WrongUserId,
     Unauthorized,
+    ServiceUnavailable,
 }

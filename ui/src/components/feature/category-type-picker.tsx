@@ -5,7 +5,7 @@ import {
   mapCategoryTypeComboBoxProps,
   type CategoryType,
 } from "@/types/category";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 import type { ComboBoxElement } from "@/interfaces/combo-box-element";
 
 interface CategoryTypePickerProps {
@@ -19,7 +19,7 @@ export default function CategoryTypePicker({
   onChange,
   className,
 }: CategoryTypePickerProps) {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const { data: categoryTypes } = useGetCategoryTypes(userId);
   const [selectedType, setSelectedType] = useState<CategoryType | null>(
     value ?? null,

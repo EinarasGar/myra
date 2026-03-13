@@ -6,7 +6,7 @@ import { DateTimeLanguagePicker } from "@/components/feature/date-time-language-
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAddIndividualTransaction } from "@/hooks/api/use-add-individual-transaction";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 import type { ExpandedAsset } from "@/types/assets";
 import type { ExpandedAccount } from "@/types/account";
 import type { Category } from "@/types/category";
@@ -23,7 +23,7 @@ export default function AddTransactionForm({
   onSuccess,
   onCollect,
 }: AddTransactionFormProps) {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const addTransaction = useAddIndividualTransaction(userId);
 
   const [assetAmount, setAssetAmount] = useState<{
@@ -57,12 +57,22 @@ export default function AddTransactionForm({
       date: Math.floor(selectedDate.getTime() / 1000),
       category_id: selectedCategory.id,
       description: description || undefined,
-      entry: { account_id: selectedAccount.id, asset_id: assetAmount.asset.id, amount: parsedAmount },
+      entry: {
+        account_id: selectedAccount.id,
+        asset_id: assetAmount.asset.id,
+        amount: parsedAmount,
+      },
     };
 
-    if (onCollect) { onCollect(transactionData); return; }
+    if (onCollect) {
+      onCollect(transactionData);
+      return;
+    }
 
-    addTransaction.mutate({ transaction: transactionData }, { onSuccess: () => onSuccess?.() });
+    addTransaction.mutate(
+      { transaction: transactionData },
+      { onSuccess: () => onSuccess?.() },
+    );
   };
 
   return (
@@ -84,8 +94,15 @@ export default function AddTransactionForm({
         value={description}
         onChange={(e) => setDescription(e.target.value)}
       />
-      <Button onClick={handleSave} disabled={!onCollect && addTransaction.isPending}>
-        {onCollect ? "Add to Group" : (addTransaction.isPending ? "Saving..." : "Save")}
+      <Button
+        onClick={handleSave}
+        disabled={!onCollect && addTransaction.isPending}
+      >
+        {onCollect
+          ? "Add to Group"
+          : addTransaction.isPending
+            ? "Saving..."
+            : "Save"}
       </Button>
     </div>
   );

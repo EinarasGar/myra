@@ -1,18 +1,21 @@
-import { Plus, Receipt, Layers } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Plus, Receipt, Layers } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 
 interface AddTransactionDropdownProps {
   onAddIndividual: () => void;
   onAddGroup: () => void;
 }
 
-export function AddTransactionDropdown({ onAddIndividual, onAddGroup }: AddTransactionDropdownProps) {
+export function AddTransactionDropdown({
+  onAddIndividual,
+  onAddGroup,
+}: AddTransactionDropdownProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger render={<Button />}>

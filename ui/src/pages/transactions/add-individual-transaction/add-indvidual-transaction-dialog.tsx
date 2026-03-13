@@ -20,14 +20,29 @@ import AddAssetTradeForm from "./add-asset-trade-form";
 import AddAssetBalanceTransferForm from "./add-asset-balance-transfer-form";
 import AddAccountFeesForm from "./add-account-fees-form";
 
-const SPECIALIZED_TYPES = ["asset_purchase", "asset_sale", "cash_transfer_in", "cash_transfer_out", "cash_dividend", "asset_dividend", "asset_transfer_out", "asset_transfer_in", "asset_trade", "asset_balance_transfer", "account_fees"];
+const SPECIALIZED_TYPES = [
+  "asset_purchase",
+  "asset_sale",
+  "cash_transfer_in",
+  "cash_transfer_out",
+  "cash_dividend",
+  "asset_dividend",
+  "asset_transfer_out",
+  "asset_transfer_in",
+  "asset_trade",
+  "asset_balance_transfer",
+  "account_fees",
+];
 
 interface AddIndividualTranscationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function AddIndividualTranscationDialog({ open, onOpenChange }: AddIndividualTranscationDialogProps) {
+export function AddIndividualTranscationDialog({
+  open,
+  onOpenChange,
+}: AddIndividualTranscationDialogProps) {
   const [selectedType, setSelectedType] = useState<string | null>(null);
 
   const handleOpenChange = (value: boolean) => {
@@ -42,7 +57,9 @@ export function AddIndividualTranscationDialog({ open, onOpenChange }: AddIndivi
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>New Transaction</DialogTitle>
-          {!selectedType && (<DialogDescription>Select transaction type.</DialogDescription>)}
+          {!selectedType && (
+            <DialogDescription>Select transaction type.</DialogDescription>
+          )}
         </DialogHeader>
         {!selectedType && (
           <TransactionTypeSelector
@@ -50,34 +67,22 @@ export function AddIndividualTranscationDialog({ open, onOpenChange }: AddIndivi
           />
         )}
         {selectedType === "asset_purchase" && (
-          <AddAssetPurchaseForm
-            onSuccess={() => handleOpenChange(false)}
-          />
+          <AddAssetPurchaseForm onSuccess={() => handleOpenChange(false)} />
         )}
         {selectedType === "asset_sale" && (
-          <AddAssetSaleForm
-            onSuccess={() => handleOpenChange(false)}
-          />
+          <AddAssetSaleForm onSuccess={() => handleOpenChange(false)} />
         )}
         {selectedType === "cash_transfer_in" && (
-          <AddCashTransferInForm
-            onSuccess={() => handleOpenChange(false)}
-          />
+          <AddCashTransferInForm onSuccess={() => handleOpenChange(false)} />
         )}
         {selectedType === "cash_transfer_out" && (
-          <AddCashTransferOutForm
-            onSuccess={() => handleOpenChange(false)}
-          />
+          <AddCashTransferOutForm onSuccess={() => handleOpenChange(false)} />
         )}
         {selectedType === "cash_dividend" && (
-          <AddCashDividendForm
-            onSuccess={() => handleOpenChange(false)}
-          />
+          <AddCashDividendForm onSuccess={() => handleOpenChange(false)} />
         )}
         {selectedType === "asset_dividend" && (
-          <AddAssetDividendForm
-            onSuccess={() => handleOpenChange(false)}
-          />
+          <AddAssetDividendForm onSuccess={() => handleOpenChange(false)} />
         )}
         {selectedType === "asset_transfer_out" && (
           <AddAssetTransferOutForm onSuccess={() => handleOpenChange(false)} />
@@ -89,7 +94,9 @@ export function AddIndividualTranscationDialog({ open, onOpenChange }: AddIndivi
           <AddAssetTradeForm onSuccess={() => handleOpenChange(false)} />
         )}
         {selectedType === "asset_balance_transfer" && (
-          <AddAssetBalanceTransferForm onSuccess={() => handleOpenChange(false)} />
+          <AddAssetBalanceTransferForm
+            onSuccess={() => handleOpenChange(false)}
+          />
         )}
         {selectedType === "account_fees" && (
           <AddAccountFeesForm onSuccess={() => handleOpenChange(false)} />

@@ -11,14 +11,18 @@ import { NavMain } from "@/pages/layout/nav-main";
 import { NavProjects } from "@/pages/layout/nav-projects";
 import { NavUser } from "@/pages/layout/nav-user";
 import { ProfileSwitcher } from "@/pages/layout/profile-switcher";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/use-auth";
-import { decodeJwt } from "@/lib/jwt";
 
 const navMain = [
   {
@@ -93,21 +97,71 @@ const tools = [
   },
 ];
 
+function ProfileSwitcherSkeleton() {
+  return (
+    <SidebarHeader>
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            size="lg"
+            className="cursor-default hover:bg-transparent active:bg-transparent"
+          >
+            <Skeleton className="size-8 rounded-md" />
+            <div className="grid flex-1 gap-1">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    </SidebarHeader>
+  );
+}
+
+function NavUserSkeleton() {
+  return (
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <SidebarMenuButton size="lg">
+          <Skeleton className="size-8 rounded-lg" />
+          <div className="grid flex-1">
+            <Skeleton className="h-4 w-24" />
+          </div>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
+  );
+}
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user: token } = useAuth();
-  const decoded = React.useMemo(() => (token ? decodeJwt(token) : null), [token]);
-  const username = decoded?.username ?? "User";
-  const role = decoded?.role ?? "";
+  const { userProfile, userId } = useAuth();
+  const isProfileLoaded = userId !== null;
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <ProfileSwitcher name={username} role={role} />
+      {isProfileLoaded ? (
+        <ProfileSwitcher
+          name={userProfile.displayName}
+          role={userProfile.role ?? ""}
+        />
+      ) : (
+        <ProfileSwitcherSkeleton />
+      )}
       <SidebarContent>
         <NavMain items={navMain} />
         <NavProjects projects={tools} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={{ name: username }} />
+        {isProfileLoaded ? (
+          <NavUser
+            user={{
+              name: userProfile.displayName,
+              imageUrl: userProfile.imageUrl,
+            }}
+          />
+        ) : (
+          <NavUserSkeleton />
+        )}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

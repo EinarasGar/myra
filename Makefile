@@ -17,8 +17,9 @@ help: ## Show this help message
 	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "$(YELLOW)%-20s$(NC) %s\n", $$1, $$2}'
 
 # Setup
+auth ?= noauth
 .PHONY: setup-env
-setup-env: ## Create .env file (worktree-aware: generates unique ports per worktree)
+setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk
 	@if [ "$$(git rev-parse --git-common-dir 2>/dev/null)" != "$$(git rev-parse --git-dir 2>/dev/null)" ]; then \
 		WORKTREE_NAME=$$(basename $$(pwd)); \
 		HASH=$$(printf '%s' "$$WORKTREE_NAME" | cksum | awk '{print $$1}'); \
@@ -39,8 +40,35 @@ setup-env: ## Create .env file (worktree-aware: generates unique ports per workt
 		"VITE_PORT=7$${PREFIX}3" \
 		"OTLP_PORT=7$${PREFIX}4" \
 		"JAEGER_UI_PORT=7$${PREFIX}5" \
+		"COOKIE_SECURE=false" \
 		> .env; \
-	echo "$(GREEN).env created:$(NC)"; \
+	case "$(auth)" in \
+		noauth|database) \
+			printf '\n%s\n' "AUTH_PROVIDER=$(auth)" >> .env; \
+			;; \
+		clerk) \
+			if [ ! -f .secrets ]; then \
+				echo "$(RED)Error: .secrets file not found. Copy .secrets.example to .secrets and fill in your Clerk keys.$(NC)"; \
+				exit 1; \
+			fi; \
+			. ./.secrets; \
+			if [ -z "$$CLERK_PUBLISHABLE_KEY" ] || [ -z "$$CLERK_SECRET_KEY" ]; then \
+				echo "$(RED)Error: CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY must be set in .secrets$(NC)"; \
+				exit 1; \
+			fi; \
+			printf '\n%s\n\n%s\n%s\n%s\n' \
+				"AUTH_PROVIDER=clerk" \
+				"# Required when AUTH_PROVIDER=clerk" \
+				"CLERK_PUBLISHABLE_KEY=$$CLERK_PUBLISHABLE_KEY" \
+				"CLERK_SECRET_KEY=$$CLERK_SECRET_KEY" \
+				>> .env; \
+			;; \
+		*) \
+			echo "$(RED)Error: Unknown auth provider '$(auth)'. Use noauth, database, or clerk.$(NC)"; \
+			exit 1; \
+			;; \
+	esac; \
+	echo "$(GREEN).env created (auth=$(auth)):$(NC)"; \
 	cat .env
 	@echo ""
 	@echo "$(GREEN)Installing UI dependencies...$(NC)"
@@ -49,16 +77,73 @@ setup-env: ## Create .env file (worktree-aware: generates unique ports per workt
 	cd server && cargo build
 	@echo "$(GREEN)Setup complete!$(NC)"
 
-# Ports
-.PHONY: ports
-ports: ## List all service ports
+# Status
+.PHONY: status
+status: ## Show service ports, status, and useful links
+	@echo "$(GREEN)Auth Provider:$(NC)    $(YELLOW)$(AUTH_PROVIDER)$(NC)"
+	@PROJ=$$(basename $$(pwd)); \
+	if docker volume inspect $${PROJ}_myra-postgres-data >/dev/null 2>&1; then \
+		echo "$(GREEN)Database Volume:$(NC)  $(GREEN)Yes$(NC)"; \
+	else \
+		echo "$(GREEN)Database Volume:$(NC)  $(RED)No$(NC)"; \
+	fi
+	@echo ""
+	@echo "$(GREEN)Links$(NC)"
+	@echo "=================================="
+	@echo "$(YELLOW)UI$(NC)              http://localhost:$(VITE_PORT)/"
+	@echo "$(YELLOW)Redoc$(NC)           http://localhost:$(SERVER_PORT)/redoc"
+	@echo "$(YELLOW)APIs$(NC)            http://localhost:$(SERVER_PORT)/api"
+	@echo ""
 	@echo "$(GREEN)Myra - Service Ports$(NC)"
 	@echo "=================================="
-	@echo "$(YELLOW)Postgres$(NC)        http://localhost:$(POSTGRES_PORT)"
-	@echo "$(YELLOW)API Server$(NC)      http://localhost:$(SERVER_PORT)"
-	@echo "$(YELLOW)Vite Dev$(NC)        http://localhost:$(VITE_PORT)"
-	@echo "$(YELLOW)OTLP Collector$(NC)  http://localhost:$(OTLP_PORT)"
-	@echo "$(YELLOW)Jaeger UI$(NC)       http://localhost:$(JAEGER_UI_PORT)"
+	@DOCKER_PS=$$(timeout 3 docker-compose ps --format json 2>/dev/null || true); \
+	check_docker() { \
+		echo "$$DOCKER_PS" | grep -q "\"$$1\"" && echo "$$DOCKER_PS" | grep "\"$$1\"" | grep -qi '"running"'; \
+	}; \
+	check_infra() { \
+		local name=$$1 port=$$2 service=$$3; \
+		if check_docker $$service; then \
+			echo "$(YELLOW)$$name$(NC)  http://localhost:$$port - $(GREEN)Running$(NC)"; \
+		elif nc -z -G 1 localhost $$port 2>/dev/null; then \
+			echo "$(YELLOW)$$name$(NC)  http://localhost:$$port - $(RED)Port in use (not docker!)$(NC)"; \
+		else \
+			echo "$(YELLOW)$$name$(NC)  http://localhost:$$port - $(RED)Not Running$(NC)"; \
+		fi; \
+	}; \
+	check_local() { \
+		local name=$$1 port=$$2; \
+		if nc -z -G 1 localhost $$port 2>/dev/null; then \
+			echo "$(YELLOW)$$name$(NC)  http://localhost:$$port - $(GREEN)Running$(NC)"; \
+		else \
+			echo "$(YELLOW)$$name$(NC)  http://localhost:$$port - $(RED)Not Running$(NC)"; \
+		fi; \
+	}; \
+	check_infra "Postgres      " $(POSTGRES_PORT) database; \
+	check_local "API Server    " $(SERVER_PORT); \
+	check_local "Vite Dev      " $(VITE_PORT); \
+	check_infra "OTLP Collector" $(OTLP_PORT) jaeger; \
+	check_infra "Jaeger UI     " $(JAEGER_UI_PORT) jaeger
+
+# Run
+.PHONY: run-backend
+run-backend: ## Start API server (kills existing process on SERVER_PORT first)
+	-@lsof -ti :$(SERVER_PORT) | xargs kill -9 2>/dev/null || true
+	cd server && cargo run -p api --no-default-features --features $(AUTH_PROVIDER),color-sql
+
+.PHONY: run-ui
+run-ui: ## Start Vite dev server (kills existing process on VITE_PORT first)
+	-@lsof -ti :$(VITE_PORT) | xargs kill -9 2>/dev/null || true
+	cd ui && bun run dev
+
+# Infrastructure
+.PHONY: start-infra
+start-infra: ## Start infrastructure services (Postgres, Jaeger, etc.)
+	docker-compose up -d
+
+.PHONY: refresh-infra
+refresh-infra: ## Wipe volumes and restart infrastructure services
+	docker-compose down -v
+	docker-compose up -d
 
 # Database
 .PHONY: export-db
@@ -81,7 +166,7 @@ import-db: ## Import database data from db_dump.sql (truncates existing data fir
 generate-api: ## Generate TypeScript API client from OpenAPI spec
 	@echo "$(GREEN)Compiling and generating OpenAPI spec...$(NC)"
 	@TEMP_FILE=$$(mktemp /tmp/openapi.XXXXXX.json); \
-	if (cd server && cargo run -p api -- --openapi) > $$TEMP_FILE 2>/dev/null; then \
+	if (cd server && cargo run -p api --no-default-features --features database,color-sql -- --openapi) > $$TEMP_FILE 2>/dev/null; then \
 		echo "$(GREEN)OpenAPI spec generated successfully$(NC)"; \
 		echo "$(YELLOW)Converting anyOf to oneOf...$(NC)"; \
 		sed -i '' 's/"anyOf"/"oneOf"/g' $$TEMP_FILE; \
@@ -99,7 +184,7 @@ generate-api: ## Generate TypeScript API client from OpenAPI spec
 		echo "$(GREEN)API client generated successfully!$(NC)"; \
 	else \
 		echo "$(RED)Error: Failed to generate OpenAPI spec. Check Rust compilation errors:$(NC)"; \
-		(cd server && cargo run -p api -- --openapi) 2>&1 || true; \
+		(cd server && cargo run -p api --no-default-features --features database,color-sql -- --openapi) 2>&1 || true; \
 		rm -f $$TEMP_FILE; \
 		exit 1; \
 	fi

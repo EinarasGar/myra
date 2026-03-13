@@ -23,13 +23,12 @@ export default function useGetAccountTransactions(
     count?: number,
     start?: number,
   ): Promise<PaginatedResponse<RequiredIdentifiableTransaction>> => {
-    const data =
-      await AccountPortfolioApiFactory().getAccountTransactions(
-        userId,
-        accountId,
-        count,
-        start,
-      );
+    const data = await AccountPortfolioApiFactory().getAccountTransactions(
+      userId,
+      accountId,
+      count,
+      start,
+    );
     addAsset(
       data.data.lookup_tables.assets.map((asset) => {
         return {

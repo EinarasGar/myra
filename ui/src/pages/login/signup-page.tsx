@@ -1,0 +1,18 @@
+import { GalleryVerticalEnd } from "lucide-react";
+import { SignUpForm } from "@/components/signup-form";
+
+export default function SignUpPage() {
+  return (
+    <div className="bg-zinc-100 flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10 dark:bg-zinc-800">
+      <div className="flex w-full max-w-sm flex-col gap-6">
+        <a href="#" className="flex items-center gap-2 self-center font-medium">
+          <div className="bg-zinc-900 text-zinc-50 flex size-6 items-center justify-center rounded-md dark:bg-zinc-50 dark:text-zinc-900">
+            <GalleryVerticalEnd className="size-4" />
+          </div>
+          Einaras Inc.
+        </a>
+        <SignUpForm />
+      </div>
+    </div>
+  );
+}

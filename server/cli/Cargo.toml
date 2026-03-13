@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.5.56", features = ["derive"] }
 tokio = { version = "1.49.0", features = ["full"] }
-business = {path="../business"}
+business = { path = "../business", default-features = false, features = ["noauth"] }
 yahoo_finance_api = "4.1.0"
 rust_decimal = "1.40.0"
 lazy_static = "1.5.0"

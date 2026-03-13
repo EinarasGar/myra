@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-business = {path="../business"}
+business = { path = "../business", default-features = false }
 macros = {path="../macros"}
 axum = { version = "0.8.8", features = ["query", "macros"] }
 serde = "1.0.228"
@@ -32,6 +32,7 @@ paste = "1.0.15"
 axum-extra = { version = "0.12.5", features = ["typed-header"] }
 itertools = "0.14.0"
 syntect = { optional = true, version = "5.3.0" }
+reqwest = { version = "0.12", features = ["json"], optional = true }
 async-trait = "0.1.89"
 syn = { version = "2.0", features = ["full", "extra-traits"] }
 quote = "1.0.44"
@@ -43,8 +44,11 @@ dotenvy = "0.15"
 thiserror = "2"
 
 [features]
-default = ["color-sql"]
+default = ["color-sql", "noauth"]
 color-sql = ["dep:syntect"]
+database = ["business/database"]
+clerk = ["dep:reqwest", "business/clerk"]
+noauth = ["business/noauth"]
 
 [build-dependencies]
 utoipa-config = "0.1.2"

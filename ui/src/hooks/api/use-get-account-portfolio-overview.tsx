@@ -17,12 +17,11 @@ export default function useGetAccountPortfolioOverview(
     accountId: string,
     defaultAssetId?: number | null,
   ) => {
-    const data =
-      await AccountPortfolioApiFactory().getAccountPortfolioOverview(
-        userId,
-        accountId,
-        { default_asset_id: defaultAssetId ?? 3 } as unknown as number,
-      );
+    const data = await AccountPortfolioApiFactory().getAccountPortfolioOverview(
+      userId,
+      accountId,
+      { default_asset_id: defaultAssetId ?? 3 } as unknown as number,
+    );
     addAsset(
       data.data.lookup_tables.assets.map((asset) => {
         return {

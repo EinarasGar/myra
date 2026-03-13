@@ -31,7 +31,7 @@ impl From<UserRoleModel> for UserRoleDto {
     fn from(p: UserRoleModel) -> Self {
         Self {
             role_id: p.id,
-            role: UserRoleEnumDto::from_str(&p.name).unwrap(),
+            role: UserRoleEnumDto::from_str(&p.name).unwrap_or(UserRoleEnumDto::User),
         }
     }
 }

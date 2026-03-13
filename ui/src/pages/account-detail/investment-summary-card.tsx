@@ -1,12 +1,7 @@
 import { useMemo, type ReactNode } from "react";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 import useGetAccountPortfolioOverview from "@/hooks/api/use-get-account-portfolio-overview";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 interface InvestmentSummaryCardProps {
@@ -44,7 +39,7 @@ function SummaryItem({ label, children }: SummaryItemProps) {
 export default function InvestmentSummaryCard({
   accountId,
 }: InvestmentSummaryCardProps) {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const { data } = useGetAccountPortfolioOverview(userId, accountId);
 
   const summary = useMemo(() => {

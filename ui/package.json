@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.1.0",
+    "@clerk/clerk-react": "^5.61.3",
     "@fontsource-variable/inter": "^5.2.8",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-query": "^5.90.20",

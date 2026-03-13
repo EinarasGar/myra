@@ -5,7 +5,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import useGetUserAssetPairRates from "@/hooks/api/use-get-user-asset-pair-rates";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
 const chartConfig = {
@@ -20,8 +20,13 @@ interface Props {
 }
 
 export default function AssetRateChart({ assetId, referenceId, range }: Props) {
-  const userId = useAuthUserId();
-  const { data } = useGetUserAssetPairRates(userId, assetId, referenceId, range);
+  const userId = useUserId();
+  const { data } = useGetUserAssetPairRates(
+    userId,
+    assetId,
+    referenceId,
+    range,
+  );
 
   const rates = data?.data?.rates ?? [];
   const rateValues = rates.map((r) => r.rate);
@@ -40,7 +45,10 @@ export default function AssetRateChart({ assetId, referenceId, range }: Props) {
   }
 
   return (
-    <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
+    <ChartContainer
+      config={chartConfig}
+      className="aspect-auto h-[250px] w-full"
+    >
       <LineChart
         accessibilityLayer
         data={rates}
@@ -69,7 +77,10 @@ export default function AssetRateChart({ assetId, referenceId, range }: Props) {
           content={
             <ChartTooltipContent
               className="w-[150px]"
-              labelFormatter={(_: string, payload: { payload?: { date: number } }[]) => {
+              labelFormatter={(
+                _: string,
+                payload: { payload?: { date: number } }[],
+              ) => {
                 const date = new Date((payload[0]?.payload?.date ?? 0) * 1000);
                 const pad = (n: number) => n.toString().padStart(2, "0");
                 return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;

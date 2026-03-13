@@ -11,7 +11,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import {
   Table,
@@ -43,7 +43,8 @@ function GainCell({ value, suffix }: { value: number; suffix?: string }) {
         value < 0 && "text-red-600 dark:text-red-400",
       )}
     >
-      {Number(value).toFixed(2)}{suffix}
+      {Number(value).toFixed(2)}
+      {suffix}
     </span>
   );
 }
@@ -126,7 +127,7 @@ export const AssetPortfoliosTableSkeleton = () => (
 );
 
 export default function AssetPortfoliosTable() {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const { data } = useGetPortfolioOverview(userId);
   const assets = useAssetStore((state) => state.assets);
   const accounts = useAccountStore((state) => state.accounts);
@@ -199,20 +200,14 @@ export default function AssetPortfoliosTable() {
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
-                    {flexRender(
-                      cell.column.columnDef.cell,
-                      cell.getContext(),
-                    )}
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
               </TableRow>
             ))
           ) : (
             <TableRow>
-              <TableCell
-                colSpan={columns.length}
-                className="h-24 text-center"
-              >
+              <TableCell colSpan={columns.length} className="h-24 text-center">
                 No results.
               </TableCell>
             </TableRow>

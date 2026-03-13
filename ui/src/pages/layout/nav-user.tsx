@@ -1,6 +1,6 @@
 import { ChevronsUpDown, LogOut } from "lucide-react";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,12 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Item,
-  ItemContent,
-  ItemMedia,
-  ItemTitle,
-} from "@/components/ui/item";
+import { Item, ItemContent, ItemMedia, ItemTitle } from "@/components/ui/item";
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -30,14 +25,15 @@ export function NavUser({
 }: {
   user: {
     name: string;
+    imageUrl?: string | null;
   };
 }) {
   const { logout } = useAuth();
   const initials = user.name.substring(0, 2).toUpperCase() || "?";
 
-  function logoutHandler() {
-    logout();
-    router.history.push("/");
+  async function logoutHandler() {
+    await logout();
+    router.navigate({ to: "/login" });
   }
 
   return (
@@ -51,6 +47,9 @@ export function NavUser({
                 className="data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground"
               >
                 <Avatar>
+                  {user.imageUrl && (
+                    <AvatarImage src={user.imageUrl} alt={user.name} />
+                  )}
                   <AvatarFallback className="rounded-lg">
                     {initials}
                   </AvatarFallback>
@@ -68,9 +67,10 @@ export function NavUser({
                 <Item size="xs">
                   <ItemMedia>
                     <Avatar>
-                      <AvatarFallback>
-                        {initials}
-                      </AvatarFallback>
+                      {user.imageUrl && (
+                        <AvatarImage src={user.imageUrl} alt={user.name} />
+                      )}
+                      <AvatarFallback>{initials}</AvatarFallback>
                     </Avatar>
                   </ItemMedia>
                   <ItemContent>

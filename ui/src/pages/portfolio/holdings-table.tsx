@@ -6,7 +6,7 @@ import { useAssetStore } from "@/hooks/store/use-asset-store";
 import useGetPortfolioHoldings from "@/hooks/api/use-get-holdings";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 export type Holding = {
   asset_name: string;
   account_name: string;
@@ -50,7 +50,7 @@ export const HoldingsTableSkeleton = () => (
 );
 
 export default function HoldingsTable() {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const { data: holdingData } = useGetPortfolioHoldings(userId);
   const assets = useAssetStore((state) => state.assets);
   const accounts = useAccountStore((state) => state.accounts);

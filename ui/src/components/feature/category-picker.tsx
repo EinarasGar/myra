@@ -4,7 +4,7 @@ import { useExpandedCategories } from "@/hooks/store/use-category-store";
 import { useSearchGlobalCategories } from "@/hooks/api/use-get-categories";
 import { useGetCategories } from "@/hooks/api/use-user-category-api";
 import { mapCategoryComboBoxProps, type Category } from "@/types/category";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 import useDebounce from "@/hooks/use-debounce";
 import type { ComboBoxElement } from "@/interfaces/combo-box-element";
 
@@ -17,7 +17,7 @@ export default function CategoryPicker({
   value,
   onChange,
 }: CategoryPickerProps) {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const categories = useExpandedCategories();
   const [searchValue, setSearchValue] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(

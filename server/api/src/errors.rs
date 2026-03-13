@@ -23,6 +23,9 @@ pub enum ApiError {
     #[error("Forbidden")]
     Forbidden,
 
+    #[error("Service unavailable")]
+    ServiceUnavailable,
+
     #[error("{0}")]
     Internal(#[from] anyhow::Error),
 }
@@ -74,6 +77,12 @@ impl IntoResponse for ApiError {
                 StatusCode::FORBIDDEN,
                 ErrorType::Forbidden,
                 "Forbidden".to_string(),
+                vec![],
+            ),
+            ApiError::ServiceUnavailable => (
+                StatusCode::SERVICE_UNAVAILABLE,
+                ErrorType::ServiceUnavailable,
+                "Service temporarily unavailable.".to_string(),
                 vec![],
             ),
             ApiError::Internal(_err) => (

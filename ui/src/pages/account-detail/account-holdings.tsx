@@ -1,8 +1,13 @@
 import { useMemo } from "react";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 import { useAssetStore } from "@/hooks/store/use-asset-store";
 import useGetAccountPortfolioOverview from "@/hooks/api/use-get-account-portfolio-overview";
-import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import {
   Table,
   TableBody,
@@ -149,10 +154,7 @@ function SimpleTable<TData>({
             ))
           ) : (
             <TableRow>
-              <TableCell
-                colSpan={columns.length}
-                className="h-24 text-center"
-              >
+              <TableCell colSpan={columns.length} className="h-24 text-center">
                 {emptyMessage}
               </TableCell>
             </TableRow>
@@ -164,7 +166,7 @@ function SimpleTable<TData>({
 }
 
 export default function AccountHoldings({ accountId }: AccountHoldingsProps) {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const { data } = useGetAccountPortfolioOverview(userId, accountId);
   const assets = useAssetStore((state) => state.assets);
 

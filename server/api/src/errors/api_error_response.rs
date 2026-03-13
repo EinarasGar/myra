@@ -23,4 +23,5 @@ pub enum ErrorType {
     Unauthorized,
     Forbidden,
     InternalServerError,
+    ServiceUnavailable,
 }

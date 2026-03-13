@@ -1,5 +1,5 @@
 import { Suspense, useState } from "react";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 import {
   useGetUserAccounts,
   useCreateAccount,
@@ -40,7 +40,7 @@ export function AccountsCardContent({
   isAdding,
   setIsAdding,
 }: AccountsCardContentProps) {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const [deleteAccount, setDeleteAccount] = useState<ExpandedAccount | null>(
     null,
   );
@@ -315,7 +315,11 @@ export function AccountsCardContent({
                     <Link
                       to="/accounts/$accountId"
                       params={{ accountId: account.id }}
-                      className={buttonVariants({ variant: "ghost", size: "icon", className: "h-8 w-8" })}
+                      className={buttonVariants({
+                        variant: "ghost",
+                        size: "icon",
+                        className: "h-8 w-8",
+                      })}
                     >
                       <Eye className="h-4 w-4" />
                     </Link>

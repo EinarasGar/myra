@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthRouteImport } from './routes/_auth'
@@ -27,6 +28,11 @@ import { Route as AuthSettingsCategoriesRouteImport } from './routes/_auth.setti
 import { Route as AuthSettingsAccountsRouteImport } from './routes/_auth.settings.accounts'
 import { Route as AuthAccountsAccountIdRouteImport } from './routes/_auth.accounts.$accountId'
 
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthIndexRoute
   '/about': typeof AboutRoute
   '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/component-testing': typeof AuthComponentTestingRoute
   '/portfolio': typeof AuthPortfolioRoute
   '/portfolio-overview': typeof AuthPortfolioOverviewRoute
@@ -134,6 +141,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/component-testing': typeof AuthComponentTestingRoute
   '/portfolio': typeof AuthPortfolioRoute
   '/portfolio-overview': typeof AuthPortfolioOverviewRoute
@@ -152,6 +160,7 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteWithChildren
   '/about': typeof AboutRoute
   '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/_auth/component-testing': typeof AuthComponentTestingRoute
   '/_auth/portfolio': typeof AuthPortfolioRoute
   '/_auth/portfolio-overview': typeof AuthPortfolioOverviewRoute
@@ -173,6 +182,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/login'
+    | '/signup'
     | '/component-testing'
     | '/portfolio'
     | '/portfolio-overview'
@@ -190,6 +200,7 @@ export interface FileRouteTypes {
   to:
     | '/about'
     | '/login'
+    | '/signup'
     | '/component-testing'
     | '/portfolio'
     | '/portfolio-overview'
@@ -207,6 +218,7 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/about'
     | '/login'
+    | '/signup'
     | '/_auth/component-testing'
     | '/_auth/portfolio'
     | '/_auth/portfolio-overview'
@@ -227,10 +239,18 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRouteWithChildren
   AboutRoute: typeof AboutRoute
   LoginRoute: typeof LoginRoute
+  SignupRoute: typeof SignupRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -422,6 +442,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRouteWithChildren,
   AboutRoute: AboutRoute,
   LoginRoute: LoginRoute,
+  SignupRoute: SignupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

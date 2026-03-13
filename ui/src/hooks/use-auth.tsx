@@ -1,80 +1,66 @@
 /* eslint-disable react-refresh/only-export-components */
-import axios from "axios";
 import * as React from "react";
-import { getUserIdFromToken } from "@/lib/jwt";
+import { useQueryClient } from "@tanstack/react-query";
+import { QueryKeys } from "@/constants/query-keys";
+import {
+  AuthProvider as AuthProviderImpl,
+  ProviderAuthContext,
+} from "@/hooks/auth/provider";
+
+export interface UserProfile {
+  displayName: string;
+  imageUrl: string | null;
+  role: string | null;
+}
 
 export interface AuthContext {
   isAuthenticated: boolean;
-  login: (username: string) => Promise<void>;
+  isLoading: boolean;
+  login: (token: string) => Promise<void>;
   logout: () => Promise<void>;
-  user: string | null;
+  userId: string | null;
+  userProfile: UserProfile;
 }
 
-const AuthContext = React.createContext<AuthContext | null>(null);
+export const AuthProvider = AuthProviderImpl;
 
-const key = "tanstack.auth.user";
-
-function getStoredUser() {
-  const user = localStorage.getItem(key);
-  axios.defaults.headers.common["Authorization"] = `Bearer ${user}`;
-  return user;
-}
-
-function setStoredUser(user: string | null) {
-  console.log(user);
-  if (user) {
-    localStorage.setItem(key, user);
-  } else {
-    localStorage.removeItem(key);
-  }
-}
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = React.useState<string | null>(getStoredUser());
-  const isAuthenticated = !!user;
-
-  const logout = React.useCallback(async () => {
-    setStoredUser(null);
-    setUser(null);
-  }, []);
-
-  const login = React.useCallback(async (username: string) => {
-    setStoredUser(username);
-    setUser(username);
-    axios.defaults.headers.common["Authorization"] = `Bearer ${username}`;
-  }, []);
-
-  React.useEffect(() => {
-    setUser(getStoredUser());
-  }, []);
-
-  return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
-export function useAuth() {
-  const context = React.useContext(AuthContext);
+export function useAuth(): AuthContext {
+  const context = React.useContext(ProviderAuthContext);
   if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }
 
-export function useAuthUserId(): string {
-  const context = React.useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  if (!context.user) {
-    throw new Error("User is not available");
-  }
-  const userId = getUserIdFromToken(context.user);
-  if (!userId) {
-    throw new Error("Failed to extract user ID from token");
-  }
+/**
+ * Returns the authenticated user's internal UUID.
+ * Suspends until the auth provider's /auth/me call populates the cache.
+ * Must be used inside a <Suspense> boundary (the _auth layout provides one).
+ *
+ * This hook only observes the query cache — it never fires its own API call.
+ * This is intentional: the auth provider controls when /auth/me is called
+ * (e.g. Clerk must set the bearer token first).
+ */
+export function useUserId(): string {
+  const { userId } = useAuth();
+  const queryClient = useQueryClient();
 
-  return userId;
+  if (userId) return userId;
+
+  const cached = queryClient.getQueryData<{ user_id: string }>([
+    QueryKeys.AUTH_ME,
+  ]);
+  if (cached?.user_id) return cached.user_id;
+
+  throw new Promise<void>((resolve) => {
+    const unsubscribe = queryClient.getQueryCache().subscribe(() => {
+      const data = queryClient.getQueryData<{ user_id: string }>([
+        QueryKeys.AUTH_ME,
+      ]);
+      if (data?.user_id) {
+        unsubscribe();
+        resolve();
+      }
+    });
+  });
 }

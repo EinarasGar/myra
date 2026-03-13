@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { useDeleteCategory } from "@/hooks/api/use-user-category-api";
 import { Category } from "@/types/category";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 
 interface DeleteCategoryDialogProps {
   category: Category | null;
@@ -22,7 +22,7 @@ export function DeleteCategoryDialog({
   open,
   onOpenChange,
 }: DeleteCategoryDialogProps) {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const deleteCategory = useDeleteCategory(userId);
 
   const handleDelete = async () => {

@@ -1,7 +1,7 @@
 import { ChartConfig, ChartContainer } from "@/components/ui/chart";
 import useGetProtfolioHistory from "@/hooks/api/use-get-portfolio-history";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 
 import { ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
@@ -20,7 +20,7 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export default function NetWorthHistoryChart({ range }: { range: string }) {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const { data } = useGetProtfolioHistory(userId, range);
 
   const rates = data?.data.sums.map((sum) => sum.rate) ?? [];
@@ -67,7 +67,10 @@ export default function NetWorthHistoryChart({ range }: { range: string }) {
           content={
             <ChartTooltipContent
               className="w-[150px]"
-              labelFormatter={(_: string, payload: { payload?: { date: number } }[]) => {
+              labelFormatter={(
+                _: string,
+                payload: { payload?: { date: number } }[],
+              ) => {
                 const date = new Date((payload[0]?.payload?.date ?? 0) * 1000);
                 const pad = (n: number) => n.toString().padStart(2, "0");
                 return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;

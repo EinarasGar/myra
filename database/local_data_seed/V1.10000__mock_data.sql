@@ -52,20 +52,22 @@ VALUES ('Income', 'attach_money', 1),
     ('Asset Trade', 'money_off', 3),
     ('Asset Balance Transfer', 'money_off', 3),
     ('Account Fees', 'money_off', 4);
-INSERT INTO users (
-        id,
-        username,
-        password_hash,
-        default_asset,
-        user_role
-    )
+INSERT INTO users (id, username, default_asset)
 VALUES (
-        '2396480f-0052-4cf0-81dc-8cedbde5ce13',
-        'einaras',
-        '$argon2id$v=19$m=19456,t=2,p=1$cA/2g90uUzqvdHXniTwyBA$WIbpl9GH5JD93dpkDT8gHkMQOMeeNZkqhI5OKUS8/uc',
-        3,
-        2
-    );
+    '2396480f-0052-4cf0-81dc-8cedbde5ce13',
+    'einaras',
+    3
+);
+INSERT INTO user_credentials (user_id, password_hash)
+VALUES (
+    '2396480f-0052-4cf0-81dc-8cedbde5ce13',
+    '$argon2id$v=19$m=19456,t=2,p=1$cA/2g90uUzqvdHXniTwyBA$WIbpl9GH5JD93dpkDT8gHkMQOMeeNZkqhI5OKUS8/uc'
+);
+INSERT INTO user_role_assignments (user_id, role_id)
+VALUES (
+    '2396480f-0052-4cf0-81dc-8cedbde5ce13',
+    2
+);
 INSERT INTO account_liquidity_types (id, liquidity_type_name)
 VALUES (1, 'Liquid');
 INSERT INTO account_types (id, account_type_name)

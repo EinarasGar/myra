@@ -14,9 +14,23 @@ export default defineConfig(({ mode }) => {
       react(),
     ],
     resolve: {
-      alias: {
-        "@": path.resolve(__dirname, "./src"),
-      },
+      alias: [
+        {
+          find: "@/hooks/auth/provider",
+          replacement: path.resolve(
+            __dirname,
+            `./src/hooks/auth/${env.AUTH_PROVIDER || "noauth"}-auth-provider`,
+          ),
+        },
+        { find: "@", replacement: path.resolve(__dirname, "./src") },
+      ],
+    },
+    envDir: path.resolve(__dirname, ".."),
+    define: {
+      __AUTH_PROVIDER__: JSON.stringify(env.AUTH_PROVIDER || "noauth"),
+      __CLERK_PUBLISHABLE_KEY__: JSON.stringify(
+        env.CLERK_PUBLISHABLE_KEY || "",
+      ),
     },
     server: {
       port: Number(env.VITE_PORT) || 5173,

@@ -1,5 +1,5 @@
 import { Suspense, useState } from "react";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 import {
   useGetCategories,
   useCreateCategory,
@@ -45,7 +45,7 @@ export function CategoriesCardContent({
   isAdding,
   setIsAdding,
 }: CategoriesCardContentProps) {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const [deleteCategory, setDeleteCategory] = useState<Category | null>(null);
 
   const [addingForm, setAddingForm] = useState<FormState>(INITIAL_FORM_STATE);

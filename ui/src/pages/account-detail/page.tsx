@@ -14,7 +14,7 @@ import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import ErrorBoundaryFallback from "@/components/error-boundary-fallback";
 import { useGetUserAccounts } from "@/hooks/api/use-user-account-api";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 import { useParams } from "@tanstack/react-router";
 import { LineChartSkeleton } from "@/components/line-chart-skeleton";
 
@@ -28,7 +28,7 @@ import AccountTransactions, {
 
 export default function AccountDetailPage() {
   const { accountId } = useParams({ from: "/_auth/accounts/$accountId" });
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const { data: accounts } = useGetUserAccounts(userId);
   const account = accounts.find((a) => a.id === accountId);
 

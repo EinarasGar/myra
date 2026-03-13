@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { useDeleteAccount } from "@/hooks/api/use-user-account-api";
 import { ExpandedAccount } from "@/types/account";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 
 interface DeleteAccountDialogProps {
   account: ExpandedAccount | null;
@@ -22,7 +22,7 @@ export function DeleteAccountDialog({
   open,
   onOpenChange,
 }: DeleteAccountDialogProps) {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const deleteAccount = useDeleteAccount(userId);
 
   const handleDelete = async () => {

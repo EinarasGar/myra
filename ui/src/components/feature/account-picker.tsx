@@ -5,7 +5,7 @@ import useGetAccounts from "@/hooks/api/use-get-accounts";
 import { mapAccountComboBoxProps } from "@/types/account";
 import type { ExpandedAccount } from "@/types/account";
 import type { ComboBoxElement } from "@/interfaces/combo-box-element";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 
 interface AccountPickerProps {
   value?: ExpandedAccount | null;
@@ -13,7 +13,7 @@ interface AccountPickerProps {
 }
 
 export default function AccountPicker({ value, onChange }: AccountPickerProps) {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const accounts = useExpandedAccounts();
   const [selectedAccount, setSelectedAccount] =
     useState<ExpandedAccount | null>(value ?? null);

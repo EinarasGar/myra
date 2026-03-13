@@ -58,7 +58,11 @@ export function NavMain({
                     <SidebarMenuSubItem key={subItem.title}>
                       <SidebarMenuSubButton
                         render={<Link to={subItem.url} />}
-                        className={subItem.disabled ? "opacity-50 pointer-events-none" : ""}
+                        className={
+                          subItem.disabled
+                            ? "opacity-50 pointer-events-none"
+                            : ""
+                        }
                       >
                         {subItem.title}
                       </SidebarMenuSubButton>

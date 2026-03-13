@@ -92,14 +92,45 @@ CREATE TABLE IF NOT EXISTS user_roles (
 CREATE TABLE IF NOT EXISTS users (
     id UUID DEFAULT uuidv7() NOT NULL,
     username TEXT NOT NULL,
-    password_hash TEXT NOT NULL,
     default_asset INT NOT NULL,
-    user_role INT DEFAULT 1 NOT NULL,
     CONSTRAINT users_pk PRIMARY KEY (id),
     CONSTRAINT users_username_key UNIQUE (username),
-    CONSTRAINT user_roles_fkey FOREIGN KEY (user_role) REFERENCES user_roles(id),
     CONSTRAINT users_default_asset_fkey FOREIGN KEY (default_asset) REFERENCES assets(id)
 );
+CREATE TABLE IF NOT EXISTS user_credentials (
+    user_id UUID NOT NULL,
+    password_hash TEXT NOT NULL,
+    CONSTRAINT user_credentials_pk PRIMARY KEY (user_id),
+    CONSTRAINT user_credentials_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS user_role_assignments (
+    user_id UUID NOT NULL,
+    role_id INT NOT NULL,
+    CONSTRAINT user_role_assignments_pk PRIMARY KEY (user_id),
+    CONSTRAINT user_role_assignments_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT user_role_assignments_role_id_fkey FOREIGN KEY (role_id) REFERENCES user_roles(id)
+);
+CREATE TABLE IF NOT EXISTS external_identity_mappings (
+    id SERIAL NOT NULL,
+    provider TEXT NOT NULL,
+    external_user_id TEXT NOT NULL,
+    user_id UUID NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT external_identity_mappings_pk PRIMARY KEY (id),
+    CONSTRAINT external_identity_mappings_provider_external_id_key UNIQUE (provider, external_user_id),
+    CONSTRAINT external_identity_mappings_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+    id SERIAL NOT NULL,
+    user_id UUID NOT NULL,
+    token_hash TEXT NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT refresh_tokens_pk PRIMARY KEY (id),
+    CONSTRAINT refresh_tokens_token_hash_key UNIQUE (token_hash),
+    CONSTRAINT refresh_tokens_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
 ALTER TABLE assets
 ADD CONSTRAINT assets_user_id_fkey FOREIGN KEY (user_id) REFERENCES users (id);
 CREATE TABLE IF NOT EXISTS account (

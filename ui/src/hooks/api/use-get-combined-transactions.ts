@@ -65,7 +65,7 @@ export default function useGetCombinedTransactions(
     },
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) =>
-      lastPage.has_more ? lastPage.next_cursor ?? undefined : undefined,
+      lastPage.has_more ? (lastPage.next_cursor ?? undefined) : undefined,
     throwOnError: true,
   });
 }

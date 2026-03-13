@@ -14,7 +14,7 @@ import ErrorBoundaryFallback from "@/components/error-boundary-fallback";
 import { LineChartSkeleton } from "@/components/line-chart-skeleton";
 import { Plus, Trash2 } from "lucide-react";
 import useGetUserAsset from "@/hooks/api/use-get-user-asset";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 import AssetPairInfo from "./asset-pair-info";
 import AssetRateChart from "./asset-rate-chart";
 import AddRateDialog from "./add-rate-dialog";
@@ -26,7 +26,7 @@ interface Props {
 }
 
 export default function AssetDetailContent({ assetId }: Props) {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const { data } = useGetUserAsset(userId, assetId);
   const asset = data?.data;
 
@@ -80,7 +80,11 @@ export default function AssetDetailContent({ assetId }: Props) {
             </SelectContent>
           </Select>
         )}
-        <Button variant="outline" size="sm" onClick={() => setIsAddPairOpen(true)}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsAddPairOpen(true)}
+        >
           <Plus className="h-4 w-4 mr-1" /> Add Pair
         </Button>
         {selectedPairId > 0 && selectedPair && (
@@ -187,8 +191,14 @@ export default function AssetDetailContent({ assetId }: Props) {
         referenceId={selectedPairId}
         referenceTicker={selectedPair?.ticker}
         onPairDeleted={() => {
-          const remaining = pairOptions.filter((p) => p.asset_id !== selectedPairId);
-          setSelectedPairId(remaining.length > 0 ? (asset?.base_asset?.asset_id ?? remaining[0].asset_id) : 0);
+          const remaining = pairOptions.filter(
+            (p) => p.asset_id !== selectedPairId,
+          );
+          setSelectedPairId(
+            remaining.length > 0
+              ? (asset?.base_asset?.asset_id ?? remaining[0].asset_id)
+              : 0,
+          );
         }}
       />
     </div>

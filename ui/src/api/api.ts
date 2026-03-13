@@ -538,6 +538,25 @@ export interface AddTransactionGroupResponse {
 /**
  *
  * @export
+ * @interface AddUser
+ */
+export interface AddUser {
+  /**
+   * User password. Must be between 8 and 200 characters. Whitespace is preserved.  **Deserialize-only** — this type intentionally does not implement `Serialize` to prevent raw passwords from being accidentally exposed in API responses or logs.
+   * @type {string}
+   * @memberof AddUser
+   */
+  password: string;
+  /**
+   * Username
+   * @type {string}
+   * @memberof AddUser
+   */
+  username: string;
+}
+/**
+ *
+ * @export
  * @interface ApiErrorResponse
  */
 export interface ApiErrorResponse {
@@ -2467,6 +2486,37 @@ export interface Auth {
 /**
  *
  * @export
+ * @interface AuthMe
+ */
+export interface AuthMe {
+  /**
+   *
+   * @type {number}
+   * @memberof AuthMe
+   */
+  default_asset_id: number;
+  /**
+   *
+   * @type {string}
+   * @memberof AuthMe
+   */
+  role: string;
+  /**
+   *
+   * @type {string}
+   * @memberof AuthMe
+   */
+  user_id: string;
+  /**
+   *
+   * @type {UserMetadata}
+   * @memberof AuthMe
+   */
+  user_metadata?: UserMetadata | null;
+}
+/**
+ *
+ * @export
  * @interface CashDividendIdentifiableTransaction
  */
 export interface CashDividendIdentifiableTransaction {
@@ -3359,6 +3409,7 @@ export const ErrorType = {
   Unauthorized: "Unauthorized",
   Forbidden: "Forbidden",
   InternalServerError: "InternalServerError",
+  ServiceUnavailable: "ServiceUnavailable",
 } as const;
 
 export type ErrorType = (typeof ErrorType)[keyof typeof ErrorType];
@@ -4031,6 +4082,25 @@ export interface PortfolioOverview {
    * @memberof PortfolioOverview
    */
   cash_portfolios: Array<CashPortfolio>;
+}
+/**
+ *
+ * @export
+ * @interface RegisteredUser
+ */
+export interface RegisteredUser {
+  /**
+   *
+   * @type {string}
+   * @memberof RegisteredUser
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof RegisteredUser
+   */
+  username: string;
 }
 /**
  *
@@ -4930,6 +5000,25 @@ export interface UserAssetPairMetadata {
    * @memberof UserAssetPairMetadata
    */
   exchange: string;
+}
+/**
+ *
+ * @export
+ * @interface UserMetadata
+ */
+export interface UserMetadata {
+  /**
+   *
+   * @type {string}
+   * @memberof UserMetadata
+   */
+  image_url?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof UserMetadata
+   */
+  username: string;
 }
 
 /**
@@ -7243,6 +7332,45 @@ export const AuthenticationApiAxiosParamCreator = function (
 ) {
   return {
     /**
+     * Returns the authenticated user\'s identity, role, and metadata.
+     * @summary Get current user
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getMe: async (
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      const localVarPath = `/api/auth/me`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
      * Posting login details to this query will return an authentication token used in most of the requests.
      * @summary Authenticate
      * @param {LoginDetails} loginDetails
@@ -7292,6 +7420,84 @@ export const AuthenticationApiAxiosParamCreator = function (
         options: localVarRequestOptions,
       };
     },
+    /**
+     * Revokes all refresh tokens for the authenticated user and clears the refresh token cookie.
+     * @summary Logout
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    postLogout: async (
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      const localVarPath = `/api/auth/logout`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "POST",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Uses the httpOnly refresh_token cookie to issue a new access token and rotate the refresh token.
+     * @summary Refresh access token
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    postRefreshToken: async (
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      const localVarPath = `/api/auth/refresh`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "POST",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
   };
 };
 
@@ -7303,6 +7509,31 @@ export const AuthenticationApiFp = function (configuration?: Configuration) {
   const localVarAxiosParamCreator =
     AuthenticationApiAxiosParamCreator(configuration);
   return {
+    /**
+     * Returns the authenticated user\'s identity, role, and metadata.
+     * @summary Get current user
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getMe(
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<AuthMe>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.getMe(options);
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["AuthenticationApi.getMe"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
     /**
      * Posting login details to this query will return an authentication token used in most of the requests.
      * @summary Authenticate
@@ -7331,6 +7562,58 @@ export const AuthenticationApiFp = function (configuration?: Configuration) {
           configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
+    /**
+     * Revokes all refresh tokens for the authenticated user and clears the refresh token cookie.
+     * @summary Logout
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async postLogout(
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.postLogout(options);
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["AuthenticationApi.postLogout"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Uses the httpOnly refresh_token cookie to issue a new access token and rotate the refresh token.
+     * @summary Refresh access token
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async postRefreshToken(
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<Auth>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.postRefreshToken(options);
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["AuthenticationApi.postRefreshToken"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
   };
 };
 
@@ -7346,6 +7629,17 @@ export const AuthenticationApiFactory = function (
   const localVarFp = AuthenticationApiFp(configuration);
   return {
     /**
+     * Returns the authenticated user\'s identity, role, and metadata.
+     * @summary Get current user
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getMe(options?: RawAxiosRequestConfig): AxiosPromise<AuthMe> {
+      return localVarFp
+        .getMe(options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
      * Posting login details to this query will return an authentication token used in most of the requests.
      * @summary Authenticate
      * @param {LoginDetails} loginDetails
@@ -7360,6 +7654,28 @@ export const AuthenticationApiFactory = function (
         .postLoginDetails(loginDetails, options)
         .then((request) => request(axios, basePath));
     },
+    /**
+     * Revokes all refresh tokens for the authenticated user and clears the refresh token cookie.
+     * @summary Logout
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    postLogout(options?: RawAxiosRequestConfig): AxiosPromise<void> {
+      return localVarFp
+        .postLogout(options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Uses the httpOnly refresh_token cookie to issue a new access token and rotate the refresh token.
+     * @summary Refresh access token
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    postRefreshToken(options?: RawAxiosRequestConfig): AxiosPromise<Auth> {
+      return localVarFp
+        .postRefreshToken(options)
+        .then((request) => request(axios, basePath));
+    },
   };
 };
 
@@ -7369,6 +7685,15 @@ export const AuthenticationApiFactory = function (
  * @interface AuthenticationApi
  */
 export interface AuthenticationApiInterface {
+  /**
+   * Returns the authenticated user\'s identity, role, and metadata.
+   * @summary Get current user
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AuthenticationApiInterface
+   */
+  getMe(options?: RawAxiosRequestConfig): AxiosPromise<AuthMe>;
+
   /**
    * Posting login details to this query will return an authentication token used in most of the requests.
    * @summary Authenticate
@@ -7381,6 +7706,24 @@ export interface AuthenticationApiInterface {
     loginDetails: LoginDetails,
     options?: RawAxiosRequestConfig,
   ): AxiosPromise<Auth>;
+
+  /**
+   * Revokes all refresh tokens for the authenticated user and clears the refresh token cookie.
+   * @summary Logout
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AuthenticationApiInterface
+   */
+  postLogout(options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+  /**
+   * Uses the httpOnly refresh_token cookie to issue a new access token and rotate the refresh token.
+   * @summary Refresh access token
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AuthenticationApiInterface
+   */
+  postRefreshToken(options?: RawAxiosRequestConfig): AxiosPromise<Auth>;
 }
 
 /**
@@ -7393,6 +7736,19 @@ export class AuthenticationApi
   extends BaseAPI
   implements AuthenticationApiInterface
 {
+  /**
+   * Returns the authenticated user\'s identity, role, and metadata.
+   * @summary Get current user
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AuthenticationApi
+   */
+  public getMe(options?: RawAxiosRequestConfig) {
+    return AuthenticationApiFp(this.configuration)
+      .getMe(options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
   /**
    * Posting login details to this query will return an authentication token used in most of the requests.
    * @summary Authenticate
@@ -7407,6 +7763,32 @@ export class AuthenticationApi
   ) {
     return AuthenticationApiFp(this.configuration)
       .postLoginDetails(loginDetails, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Revokes all refresh tokens for the authenticated user and clears the refresh token cookie.
+   * @summary Logout
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AuthenticationApi
+   */
+  public postLogout(options?: RawAxiosRequestConfig) {
+    return AuthenticationApiFp(this.configuration)
+      .postLogout(options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Uses the httpOnly refresh_token cookie to issue a new access token and rotate the refresh token.
+   * @summary Refresh access token
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AuthenticationApi
+   */
+  public postRefreshToken(options?: RawAxiosRequestConfig) {
+    return AuthenticationApiFp(this.configuration)
+      .postRefreshToken(options)
       .then((request) => request(this.axios, this.basePath));
   }
 }
@@ -13859,6 +14241,177 @@ export class UserCategoriesApi
   ) {
     return UserCategoriesApiFp(this.configuration)
       .putUserCategoryType(userId, typeId, createCategoryTypeRequest, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+}
+
+/**
+ * UsersApi - axios parameter creator
+ * @export
+ */
+export const UsersApiAxiosParamCreator = function (
+  configuration?: Configuration,
+) {
+  return {
+    /**
+     * Creates a new user account with the provided username and password.
+     * @summary Register a new user
+     * @param {AddUser} addUser
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    postUser: async (
+      addUser: AddUser,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'addUser' is not null or undefined
+      assertParamExists("postUser", "addUser", addUser);
+      const localVarPath = `/api/users`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "POST",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        addUser,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+  };
+};
+
+/**
+ * UsersApi - functional programming interface
+ * @export
+ */
+export const UsersApiFp = function (configuration?: Configuration) {
+  const localVarAxiosParamCreator = UsersApiAxiosParamCreator(configuration);
+  return {
+    /**
+     * Creates a new user account with the provided username and password.
+     * @summary Register a new user
+     * @param {AddUser} addUser
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async postUser(
+      addUser: AddUser,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<RegisteredUser>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.postUser(
+        addUser,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["UsersApi.postUser"]?.[localVarOperationServerIndex]
+          ?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+  };
+};
+
+/**
+ * UsersApi - factory interface
+ * @export
+ */
+export const UsersApiFactory = function (
+  configuration?: Configuration,
+  basePath?: string,
+  axios?: AxiosInstance,
+) {
+  const localVarFp = UsersApiFp(configuration);
+  return {
+    /**
+     * Creates a new user account with the provided username and password.
+     * @summary Register a new user
+     * @param {AddUser} addUser
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    postUser(
+      addUser: AddUser,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<RegisteredUser> {
+      return localVarFp
+        .postUser(addUser, options)
+        .then((request) => request(axios, basePath));
+    },
+  };
+};
+
+/**
+ * UsersApi - interface
+ * @export
+ * @interface UsersApi
+ */
+export interface UsersApiInterface {
+  /**
+   * Creates a new user account with the provided username and password.
+   * @summary Register a new user
+   * @param {AddUser} addUser
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UsersApiInterface
+   */
+  postUser(
+    addUser: AddUser,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<RegisteredUser>;
+}
+
+/**
+ * UsersApi - object-oriented interface
+ * @export
+ * @class UsersApi
+ * @extends {BaseAPI}
+ */
+export class UsersApi extends BaseAPI implements UsersApiInterface {
+  /**
+   * Creates a new user account with the provided username and password.
+   * @summary Register a new user
+   * @param {AddUser} addUser
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UsersApi
+   */
+  public postUser(addUser: AddUser, options?: RawAxiosRequestConfig) {
+    return UsersApiFp(this.configuration)
+      .postUser(addUser, options)
       .then((request) => request(this.axios, this.basePath));
   }
 }

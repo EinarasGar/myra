@@ -6,6 +6,7 @@ CLAUDE.md
 .claude/*
 
 .env
+.secrets
 .playwright-mcp/
 .seed_scripts/
 .DS_Store

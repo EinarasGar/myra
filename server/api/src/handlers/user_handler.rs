@@ -1,61 +1,65 @@
-use axum::{extract::Path, Json};
-use uuid::Uuid;
+use axum::Json;
 
+use crate::errors::ApiError;
+
+#[cfg(feature = "database")]
+use serde::Serialize;
+#[cfg(feature = "database")]
+use utoipa::ToSchema;
+
+#[cfg(feature = "database")]
 use crate::{
-    auth::AuthenticatedUserState,
-    errors::ApiError,
     extractors::ValidatedJson,
-    states::{AssetsServiceState, PortfolioServiceState, UsersServiceState},
-    view_models::users::{add_user_view_model::AddUserViewModel, user_view_model::UserViewModel},
+    states::UsersServiceState,
+    view_models::users::add_user_view_model::AddUserViewModel,
 };
 
-#[tracing::instrument(skip_all, err)]
-pub async fn post_user(
-    UsersServiceState(_users_service): UsersServiceState,
-    AssetsServiceState(_assets_service): AssetsServiceState,
-    ValidatedJson(_params): ValidatedJson<AddUserViewModel>,
-) -> Result<Json<UserViewModel>, ApiError> {
-    unimplemented!()
-    // let (user, default_account) = users_service.register_user(params.clone().into()).await?;
-
-    // let asset = assets_service.get_asset(user.default_asset_id).await?;
-
-    // let resp = UserViewModel {
-    //     id: user.id,
-    //     username: user.username,
-    //     default_asset_id: asset.into(),
-    //     portfolio_accounts: vec![default_account.into()],
-    //     custom_assets: vec![],
-    // };
-    // Ok(resp.into())
+#[cfg(feature = "database")]
+#[derive(Debug, Serialize, ToSchema)]
+pub struct RegisteredUserViewModel {
+    pub id: String,
+    pub username: String,
 }
 
+/// Register a new user
+///
+/// Creates a new user account with the provided username and password.
+#[cfg(feature = "database")]
+#[utoipa::path(
+    post,
+    path = "/api/users",
+    tag = "Users",
+    request_body(content = AddUserViewModel),
+    responses(
+        (status = 200, description = "User registered successfully.", body = RegisteredUserViewModel),
+    )
+)]
 #[tracing::instrument(skip_all, err)]
-pub async fn get_user_by_id(
-    Path(_): Path<Uuid>,
-    AssetsServiceState(_assets_service): AssetsServiceState,
-    PortfolioServiceState(_portfolio_service): PortfolioServiceState,
-    UsersServiceState(_users_service): UsersServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
-) -> Result<Json<UserViewModel>, ApiError> {
-    unimplemented!()
-    // let (user, portfolio_accounts) = tokio::try_join!(
-    //     users_service.get_full_user(user_id),
-    //     portfolio_service.get_portfolio_accounts(user_id)
-    // )?;
+pub async fn post_user(
+    UsersServiceState(users_service): UsersServiceState,
+    ValidatedJson(params): ValidatedJson<AddUserViewModel>,
+) -> Result<Json<RegisteredUserViewModel>, ApiError> {
+    let user = users_service.register_user(params.into()).await?;
+    Ok(Json(RegisteredUserViewModel {
+        id: user.id.to_string(),
+        username: user.username,
+    }))
+}
 
-    // let asset = assets_service.get_asset(user.default_asset_id).await?;
-    // let custom_assets = assets_service.get_all_user_assets(user_id).await?;
-
-    // let resp = UserViewModel {
-    //     id: user.id,
-    //     username: user.username,
-    //     default_asset_id: asset.into(),
-    //     portfolio_accounts: portfolio_accounts
-    //         .into_iter()
-    //         .map(|val| val.into())
-    //         .collect(),
-    //     custom_assets: custom_assets.into_iter().map(|val| val.into()).collect(),
-    // };
-    // Ok(resp.into())
+/// Register a new user
+///
+/// User registration is not available under this authentication provider.
+#[cfg(not(feature = "database"))]
+#[utoipa::path(
+    post,
+    path = "/api/users",
+    tag = "Users",
+    responses(
+        (status = 404, description = "Not available under this authentication provider."),
+    )
+)]
+pub async fn post_user() -> Result<Json<serde_json::Value>, ApiError> {
+    Err(ApiError::NotFound(
+        "User registration is not available under this authentication provider".to_string(),
+    ))
 }

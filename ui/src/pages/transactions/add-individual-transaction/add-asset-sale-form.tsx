@@ -4,10 +4,10 @@ import AssetAmountInput from "@/components/feature/asset-amount-input";
 import { DateTimeLanguagePicker } from "@/components/feature/date-time-language-picker";
 import { Button } from "@/components/ui/button";
 import { useAddIndividualTransaction } from "@/hooks/api/use-add-individual-transaction";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 import type { ExpandedAsset } from "@/types/assets";
 import type { ExpandedAccount } from "@/types/account";
-import type { TransactionInput } from '@/api';
+import type { TransactionInput } from "@/api";
 
 interface AddAssetSaleFormProps {
   onSuccess?: () => void;
@@ -18,7 +18,7 @@ export default function AddAssetSaleForm({
   onSuccess,
   onCollect,
 }: AddAssetSaleFormProps) {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const addTransaction = useAddIndividualTransaction(userId);
 
   const [selectedDate, setSelectedDate] = useState<Date>();
@@ -54,13 +54,27 @@ export default function AddAssetSaleForm({
     if (isNaN(saleAmount) || isNaN(proceedsAmount)) return;
 
     const transactionData: TransactionInput = {
-      type: 'asset_sale',
+      type: "asset_sale",
       date: Math.floor(selectedDate.getTime() / 1000),
-      sale_entry: { account_id: saleAccount.id, amount: saleAmount, asset_id: sale.asset.id },
-      proceeds_entry: { account_id: proceedsAccount.id, amount: proceedsAmount, asset_id: proceeds.asset.id },
+      sale_entry: {
+        account_id: saleAccount.id,
+        amount: saleAmount,
+        asset_id: sale.asset.id,
+      },
+      proceeds_entry: {
+        account_id: proceedsAccount.id,
+        amount: proceedsAmount,
+        asset_id: proceeds.asset.id,
+      },
     };
-    if (onCollect) { onCollect(transactionData); return; }
-    addTransaction.mutate({ transaction: transactionData }, { onSuccess: () => onSuccess?.() });
+    if (onCollect) {
+      onCollect(transactionData);
+      return;
+    }
+    addTransaction.mutate(
+      { transaction: transactionData },
+      { onSuccess: () => onSuccess?.() },
+    );
   };
 
   return (
@@ -74,12 +88,8 @@ export default function AddAssetSaleForm({
           value={sale}
           defaultSign="negative"
           lockSign
-          onAssetChange={(asset) =>
-            setSale((prev) => ({ ...prev, asset }))
-          }
-          onAmountChange={(amount) =>
-            setSale((prev) => ({ ...prev, amount }))
-          }
+          onAssetChange={(asset) => setSale((prev) => ({ ...prev, asset }))}
+          onAmountChange={(amount) => setSale((prev) => ({ ...prev, amount }))}
         />
       </div>
 
@@ -90,17 +100,22 @@ export default function AddAssetSaleForm({
           value={proceeds}
           defaultSign="positive"
           lockSign
-          onAssetChange={(asset) =>
-            setProceeds((prev) => ({ ...prev, asset }))
-          }
+          onAssetChange={(asset) => setProceeds((prev) => ({ ...prev, asset }))}
           onAmountChange={(amount) =>
             setProceeds((prev) => ({ ...prev, amount }))
           }
         />
       </div>
 
-      <Button onClick={handleSave} disabled={!onCollect && addTransaction.isPending}>
-        {onCollect ? 'Add to Group' : (addTransaction.isPending ? 'Saving...' : 'Save')}
+      <Button
+        onClick={handleSave}
+        disabled={!onCollect && addTransaction.isPending}
+      >
+        {onCollect
+          ? "Add to Group"
+          : addTransaction.isPending
+            ? "Saving..."
+            : "Save"}
       </Button>
     </div>
   );

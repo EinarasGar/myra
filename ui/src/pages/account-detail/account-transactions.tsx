@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
 import { ColumnDef, PaginationState } from "@tanstack/react-table";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 import useGetAccountTransactions from "@/hooks/api/use-get-account-transactions";
 import { MemoizedDataTable } from "@/components/ui/data-table";
 import { DataTableSkeleton } from "@/components/data-table-skeleton";
-import useTransactionViewModelConverter, { Transaction } from "@/hooks/use-transaction-converter";
+import useTransactionViewModelConverter, {
+  Transaction,
+} from "@/hooks/use-transaction-converter";
 
 interface AccountTransactionsProps {
   accountId: string;
@@ -53,7 +55,7 @@ export const AccountTransactionsSkeleton = () => (
 export default function AccountTransactions({
   accountId,
 }: AccountTransactionsProps) {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,

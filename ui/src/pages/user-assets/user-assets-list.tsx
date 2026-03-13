@@ -10,11 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import useGetUserAssets from "@/hooks/api/use-get-user-assets";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 import CreateAssetDialog from "./create-asset-dialog";
 
 export default function UserAssetsList() {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const { data } = useGetUserAssets(userId);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
@@ -75,10 +75,7 @@ export default function UserAssetsList() {
         </CardContent>
       </Card>
 
-      <CreateAssetDialog
-        open={isCreateOpen}
-        onOpenChange={setIsCreateOpen}
-      />
+      <CreateAssetDialog open={isCreateOpen} onOpenChange={setIsCreateOpen} />
     </>
   );
 }

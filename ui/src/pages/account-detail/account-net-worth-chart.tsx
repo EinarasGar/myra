@@ -18,7 +18,11 @@ import { ErrorBoundary } from "react-error-boundary";
 import ErrorBoundaryFallback from "@/components/error-boundary-fallback";
 import { LineChartSkeleton } from "@/components/line-chart-skeleton";
 
-export default function AccountNetWorthChart({ accountId }: { accountId: string }) {
+export default function AccountNetWorthChart({
+  accountId,
+}: {
+  accountId: string;
+}) {
   const [timeRange, setTimeRange] = useState("3m");
 
   const timeRangeLabels: Record<string, string> = {
@@ -38,7 +42,8 @@ export default function AccountNetWorthChart({ accountId }: { accountId: string 
           <div className="grid flex-1 gap-1 text-center sm:text-left">
             <CardTitle>Net Worth - History</CardTitle>
             <CardDescription>
-              Showing total net worth for {timeRangeLabels[timeRange]?.toLowerCase() ?? timeRange}
+              Showing total net worth for{" "}
+              {timeRangeLabels[timeRange]?.toLowerCase() ?? timeRange}
             </CardDescription>
           </div>
           <Select value={timeRange} onValueChange={(v) => v && setTimeRange(v)}>
@@ -76,7 +81,10 @@ export default function AccountNetWorthChart({ accountId }: { accountId: string 
         <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
           <ErrorBoundary fallback={<ErrorBoundaryFallback />}>
             <Suspense fallback={<LineChartSkeleton />}>
-              <AccountNetWorthChartContent accountId={accountId} range={timeRange} />
+              <AccountNetWorthChartContent
+                accountId={accountId}
+                range={timeRange}
+              />
             </Suspense>
           </ErrorBoundary>
         </CardContent>

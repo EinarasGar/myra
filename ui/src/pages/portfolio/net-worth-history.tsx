@@ -38,7 +38,8 @@ export default function NetWorthHistory() {
           <div className="grid flex-1 gap-1 text-center sm:text-left">
             <CardTitle>Net Worth - History</CardTitle>
             <CardDescription>
-              Showing total net worth for {timeRangeLabels[timeRange]?.toLowerCase() ?? timeRange}
+              Showing total net worth for{" "}
+              {timeRangeLabels[timeRange]?.toLowerCase() ?? timeRange}
             </CardDescription>
           </div>
           <Select value={timeRange} onValueChange={(v) => v && setTimeRange(v)}>

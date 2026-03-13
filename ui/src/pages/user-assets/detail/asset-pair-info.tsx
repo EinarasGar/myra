@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import useGetUserAssetPair from "@/hooks/api/use-get-user-asset-pair";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 
 interface Props {
   assetId: number;
@@ -8,7 +8,7 @@ interface Props {
 }
 
 export default function AssetPairInfo({ assetId, referenceId }: Props) {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const { data } = useGetUserAssetPair(userId, assetId, referenceId);
   const pair = data?.data;
 

@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DateTimeLanguagePicker } from "@/components/feature/date-time-language-picker";
 import usePostUserAssetRate from "@/hooks/api/use-post-user-asset-rate";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 import axios from "axios";
 
 interface Props {
@@ -28,7 +28,7 @@ export default function AddRateDialog({
   assetId,
   referenceId,
 }: Props) {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const mutation = usePostUserAssetRate(userId, assetId, referenceId);
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [rate, setRate] = useState("");

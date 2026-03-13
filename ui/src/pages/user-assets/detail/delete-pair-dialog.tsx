@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import useDeleteAssetPair from "@/hooks/api/use-delete-asset-pair";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 
 interface Props {
   open: boolean;
@@ -27,7 +27,7 @@ export default function DeletePairDialog({
   referenceTicker,
   onPairDeleted,
 }: Props) {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const mutation = useDeleteAssetPair(userId, assetId);
 
   const handleDelete = async () => {

@@ -1,6 +1,9 @@
-import type { RequiredIdentifiableTransaction, TransactionEntryWithRequiredEntryId } from "@/api";
+import type {
+  RequiredIdentifiableTransaction,
+  TransactionEntryWithRequiredEntryId,
+} from "@/api";
 import type { CombinedTransactionItem } from "@/api/api";
-import type { GroupTransactionItem } from '@/api/api';
+import type { GroupTransactionItem } from "@/api/api";
 import type { Account } from "@/types/account";
 import type { Asset } from "@/types/assets";
 
@@ -76,11 +79,17 @@ export function getTransactionAmount(
 export function getTransactionAccountId(
   transaction: RequiredIdentifiableTransaction,
 ): string | null {
-  if ("entry" in transaction) return (transaction.entry as TransactionEntryWithRequiredEntryId).account_id;
-  if (transaction.type === "asset_purchase") return transaction.cash_outgoings_change.account_id;
-  if (transaction.type === "asset_sale") return transaction.sale_entry.account_id;
-  if (transaction.type === "asset_trade") return transaction.outgoing_entry.account_id;
-  if (transaction.type === "asset_balance_transfer") return transaction.outgoing_change.account_id;
+  if ("entry" in transaction)
+    return (transaction.entry as TransactionEntryWithRequiredEntryId)
+      .account_id;
+  if (transaction.type === "asset_purchase")
+    return transaction.cash_outgoings_change.account_id;
+  if (transaction.type === "asset_sale")
+    return transaction.sale_entry.account_id;
+  if (transaction.type === "asset_trade")
+    return transaction.outgoing_entry.account_id;
+  if (transaction.type === "asset_balance_transfer")
+    return transaction.outgoing_change.account_id;
   return null;
 }
 
@@ -88,11 +97,15 @@ export function getTransactionAccountId(
 export function getTransactionAssetId(
   transaction: RequiredIdentifiableTransaction,
 ): number | null {
-  if ("entry" in transaction) return (transaction.entry as TransactionEntryWithRequiredEntryId).asset_id;
-  if (transaction.type === "asset_purchase") return transaction.purchase_change.asset_id;
+  if ("entry" in transaction)
+    return (transaction.entry as TransactionEntryWithRequiredEntryId).asset_id;
+  if (transaction.type === "asset_purchase")
+    return transaction.purchase_change.asset_id;
   if (transaction.type === "asset_sale") return transaction.sale_entry.asset_id;
-  if (transaction.type === "asset_trade") return transaction.outgoing_entry.asset_id;
-  if (transaction.type === "asset_balance_transfer") return transaction.outgoing_change.asset_id;
+  if (transaction.type === "asset_trade")
+    return transaction.outgoing_entry.asset_id;
+  if (transaction.type === "asset_balance_transfer")
+    return transaction.outgoing_change.asset_id;
   return null;
 }
 
@@ -111,33 +124,60 @@ export function getTransactionAmountEntries(
   transaction: RequiredIdentifiableTransaction,
   assets: Asset[],
 ): { amount: number; ticker: string }[] {
-  const findTicker = (id: number) => assets.find(a => a.id === id)?.ticker ?? '?';
+  const findTicker = (id: number) =>
+    assets.find((a) => a.id === id)?.ticker ?? "?";
 
   switch (transaction.type) {
-    case 'asset_purchase':
+    case "asset_purchase":
       return [
-        { amount: -Math.abs(Number(transaction.cash_outgoings_change.amount)), ticker: findTicker(transaction.cash_outgoings_change.asset_id) },
-        { amount: Math.abs(Number(transaction.purchase_change.amount)), ticker: findTicker(transaction.purchase_change.asset_id) },
+        {
+          amount: -Math.abs(Number(transaction.cash_outgoings_change.amount)),
+          ticker: findTicker(transaction.cash_outgoings_change.asset_id),
+        },
+        {
+          amount: Math.abs(Number(transaction.purchase_change.amount)),
+          ticker: findTicker(transaction.purchase_change.asset_id),
+        },
       ];
-    case 'asset_sale':
+    case "asset_sale":
       return [
-        { amount: -Math.abs(Number(transaction.sale_entry.amount)), ticker: findTicker(transaction.sale_entry.asset_id) },
-        { amount: Math.abs(Number(transaction.proceeds_entry.amount)), ticker: findTicker(transaction.proceeds_entry.asset_id) },
+        {
+          amount: -Math.abs(Number(transaction.sale_entry.amount)),
+          ticker: findTicker(transaction.sale_entry.asset_id),
+        },
+        {
+          amount: Math.abs(Number(transaction.proceeds_entry.amount)),
+          ticker: findTicker(transaction.proceeds_entry.asset_id),
+        },
       ];
-    case 'asset_trade':
+    case "asset_trade":
       return [
-        { amount: -Math.abs(Number(transaction.outgoing_entry.amount)), ticker: findTicker(transaction.outgoing_entry.asset_id) },
-        { amount: Math.abs(Number(transaction.incoming_entry.amount)), ticker: findTicker(transaction.incoming_entry.asset_id) },
+        {
+          amount: -Math.abs(Number(transaction.outgoing_entry.amount)),
+          ticker: findTicker(transaction.outgoing_entry.asset_id),
+        },
+        {
+          amount: Math.abs(Number(transaction.incoming_entry.amount)),
+          ticker: findTicker(transaction.incoming_entry.asset_id),
+        },
       ];
-    case 'asset_balance_transfer':
+    case "asset_balance_transfer":
       return [
-        { amount: -Math.abs(Number(transaction.outgoing_change.amount)), ticker: findTicker(transaction.outgoing_change.asset_id) },
-        { amount: Math.abs(Number(transaction.incoming_change.amount)), ticker: findTicker(transaction.incoming_change.asset_id) },
+        {
+          amount: -Math.abs(Number(transaction.outgoing_change.amount)),
+          ticker: findTicker(transaction.outgoing_change.asset_id),
+        },
+        {
+          amount: Math.abs(Number(transaction.incoming_change.amount)),
+          ticker: findTicker(transaction.incoming_change.asset_id),
+        },
       ];
     default: {
-      if ('entry' in transaction) {
+      if ("entry" in transaction) {
         const entry = transaction.entry as TransactionEntryWithRequiredEntryId;
-        return [{ amount: Number(entry.amount), ticker: findTicker(entry.asset_id) }];
+        return [
+          { amount: Number(entry.amount), ticker: findTicker(entry.asset_id) },
+        ];
       }
       return [];
     }
@@ -148,7 +188,7 @@ export function getGroupAccountSummary(
   group: GroupTransactionItem,
   accounts: Account[],
 ): string {
-  if (group.transactions.length === 0) return '—';
+  if (group.transactions.length === 0) return "—";
 
   const uniqueAccountIds = new Set<string>();
   for (const tx of group.transactions) {
@@ -156,10 +196,10 @@ export function getGroupAccountSummary(
     if (accountId) uniqueAccountIds.add(accountId);
   }
 
-  if (uniqueAccountIds.size === 0) return '—';
+  if (uniqueAccountIds.size === 0) return "—";
 
   const accountIds = Array.from(uniqueAccountIds);
-  const firstName = accounts.find(a => a.id === accountIds[0])?.name ?? '—';
+  const firstName = accounts.find((a) => a.id === accountIds[0])?.name ?? "—";
 
   if (accountIds.length === 1) return firstName;
   return `${firstName} +${accountIds.length - 1} more`;
@@ -176,12 +216,12 @@ export function findTransactionsByIds(
   const idSet = ids instanceof Set ? ids : new Set(ids);
   const found: RequiredIdentifiableTransaction[] = [];
   for (const item of allItems) {
-    if (item.item_type === 'individual') {
+    if (item.item_type === "individual") {
       const tx = item as unknown as RequiredIdentifiableTransaction;
       if (idSet.has(tx.transaction_id)) {
         found.push(tx);
       }
-    } else if (item.item_type === 'group') {
+    } else if (item.item_type === "group") {
       for (const child of item.transactions) {
         if (idSet.has(child.transaction_id)) {
           found.push(child);
@@ -192,8 +232,11 @@ export function findTransactionsByIds(
   return found;
 }
 
-export function getGroupAmountSummary(group: GroupTransactionItem, assets: Asset[]): string {
-  if (group.transactions.length === 0) return '—';
+export function getGroupAmountSummary(
+  group: GroupTransactionItem,
+  assets: Asset[],
+): string {
+  if (group.transactions.length === 0) return "—";
 
   // Aggregate amounts per ticker
   const totals = new Map<string, number>();
@@ -203,7 +246,7 @@ export function getGroupAmountSummary(group: GroupTransactionItem, assets: Asset
     }
   }
 
-  if (totals.size === 0) return '—';
+  if (totals.size === 0) return "—";
 
   // Format each ticker's total
   const formatEntry = (ticker: string, amount: number) => {
@@ -212,14 +255,19 @@ export function getGroupAmountSummary(group: GroupTransactionItem, assets: Asset
   };
 
   // Sort by absolute value descending so most significant amounts come first
-  const sorted = Array.from(totals.entries())
-    .sort(([, a], [, b]) => Math.abs(b) - Math.abs(a));
+  const sorted = Array.from(totals.entries()).sort(
+    ([, a], [, b]) => Math.abs(b) - Math.abs(a),
+  );
 
   if (sorted.length <= 2) {
-    return sorted.map(([ticker, amount]) => formatEntry(ticker, amount)).join(', ');
+    return sorted
+      .map(([ticker, amount]) => formatEntry(ticker, amount))
+      .join(", ");
   }
 
   // Show top 2 + "and N more"
-  const shown = sorted.slice(0, 2).map(([ticker, amount]) => formatEntry(ticker, amount));
-  return `${shown.join(', ')} +${sorted.length - 2} more`;
+  const shown = sorted
+    .slice(0, 2)
+    .map(([ticker, amount]) => formatEntry(ticker, amount));
+  return `${shown.join(", ")} +${sorted.length - 2} more`;
 }

@@ -6,7 +6,7 @@ import {
   useUpdateCategoryType,
   useDeleteCategoryType,
 } from "@/hooks/api/use-user-category-api";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 import { Pencil, Trash2, Check, X, Loader2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -19,7 +19,7 @@ export function CategoryTypesCardContent({
   isAdding,
   setIsAdding,
 }: CategoryTypesCardContentProps) {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const { data: allCategoryTypes } = useGetCategoryTypes(userId);
 
   // Filter to only show user-created category types

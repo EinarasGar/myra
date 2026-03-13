@@ -86,15 +86,23 @@ export default function useTransactionViewModelConverter(
     }
 
     if (viewModel.type === "asset_trade") {
-      const outgoingAsset = assets.find((a) => a.id === viewModel.outgoing_entry?.asset_id);
-      const incomingAsset = assets.find((a) => a.id === viewModel.incoming_entry?.asset_id);
+      const outgoingAsset = assets.find(
+        (a) => a.id === viewModel.outgoing_entry?.asset_id,
+      );
+      const incomingAsset = assets.find(
+        (a) => a.id === viewModel.incoming_entry?.asset_id,
+      );
       description = `Traded ${viewModel.outgoing_entry?.amount} units of ${outgoingAsset?.ticker} for ${viewModel.incoming_entry?.amount} units of ${incomingAsset?.ticker}`;
       delta = `${viewModel.outgoing_entry?.amount} ${outgoingAsset?.ticker} -> ${viewModel.incoming_entry?.amount} ${incomingAsset?.ticker}`;
     }
 
     if (viewModel.type === "asset_balance_transfer") {
-      const outgoingAsset = assets.find((a) => a.id === viewModel.outgoing_change?.asset_id);
-      const incomingAsset = assets.find((a) => a.id === viewModel.incoming_change?.asset_id);
+      const outgoingAsset = assets.find(
+        (a) => a.id === viewModel.outgoing_change?.asset_id,
+      );
+      const incomingAsset = assets.find(
+        (a) => a.id === viewModel.incoming_change?.asset_id,
+      );
       description = `Transferred ${viewModel.outgoing_change?.amount} ${outgoingAsset?.ticker} to ${viewModel.incoming_change?.amount} ${incomingAsset?.ticker}`;
       delta = `${viewModel.outgoing_change?.amount} ${outgoingAsset?.ticker} -> ${viewModel.incoming_change?.amount} ${incomingAsset?.ticker}`;
     }
@@ -105,8 +113,12 @@ export default function useTransactionViewModelConverter(
     }
 
     if (viewModel.type === "asset_sale") {
-      const saleAsset = assets.find((a) => a.id === viewModel.sale_entry?.asset_id);
-      const proceedsAsset = assets.find((a) => a.id === viewModel.proceeds_entry?.asset_id);
+      const saleAsset = assets.find(
+        (a) => a.id === viewModel.sale_entry?.asset_id,
+      );
+      const proceedsAsset = assets.find(
+        (a) => a.id === viewModel.proceeds_entry?.asset_id,
+      );
       description = `Sold ${viewModel.sale_entry?.amount} units of ${saleAsset?.ticker}`;
       delta = `${viewModel.sale_entry?.amount} ${saleAsset?.ticker} -> ${viewModel.proceeds_entry?.amount} ${proceedsAsset?.ticker}`;
     }

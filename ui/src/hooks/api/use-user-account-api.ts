@@ -1,7 +1,4 @@
-import {
-  AccountsApiFactory,
-  UpdateAccount,
-} from "@/api";
+import { AccountsApiFactory, UpdateAccount } from "@/api";
 import { QueryKeys } from "@/constants/query-keys";
 import {
   useMutation,

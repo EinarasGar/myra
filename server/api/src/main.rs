@@ -5,6 +5,7 @@ use tracing::info;
 use crate::states::AppState;
 use color_eyre::eyre::Result;
 
+mod auth_feature_check;
 pub mod auth;
 pub mod converters;
 pub mod errors;

@@ -8,9 +8,13 @@ export default function useDeleteAssetPair(userId: string, assetId: number) {
     mutationFn: (referenceId: number) =>
       UserAssetsApiFactory().deleteAssetPair(userId, assetId, referenceId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QueryKeys.USER_ASSET_DETAIL, assetId] });
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.USER_ASSET_DETAIL, assetId],
+      });
       queryClient.invalidateQueries({ queryKey: [QueryKeys.USER_ASSET_PAIR] });
-      queryClient.invalidateQueries({ queryKey: [QueryKeys.USER_ASSET_PAIR_RATES] });
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.USER_ASSET_PAIR_RATES],
+      });
     },
   });
 }

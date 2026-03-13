@@ -9,7 +9,9 @@ export default function usePostAssetPair(userId: string, assetId: number) {
     mutationFn: (body: AddAssetPairRequest) =>
       UserAssetsApiFactory().postAssetPair(userId, assetId, body),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QueryKeys.USER_ASSET_DETAIL, assetId] });
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.USER_ASSET_DETAIL, assetId],
+      });
     },
   });
 }

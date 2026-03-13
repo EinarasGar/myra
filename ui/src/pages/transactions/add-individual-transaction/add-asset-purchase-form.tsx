@@ -4,10 +4,10 @@ import AssetAmountInput from "@/components/feature/asset-amount-input";
 import { DateTimeLanguagePicker } from "@/components/feature/date-time-language-picker";
 import { Button } from "@/components/ui/button";
 import { useAddIndividualTransaction } from "@/hooks/api/use-add-individual-transaction";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 import type { ExpandedAsset } from "@/types/assets";
 import type { ExpandedAccount } from "@/types/account";
-import type { TransactionInput } from '@/api';
+import type { TransactionInput } from "@/api";
 
 interface AddAssetPurchaseFormProps {
   onSuccess?: () => void;
@@ -18,7 +18,7 @@ export default function AddAssetPurchaseForm({
   onSuccess,
   onCollect,
 }: AddAssetPurchaseFormProps) {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const addTransaction = useAddIndividualTransaction(userId);
 
   const [selectedDate, setSelectedDate] = useState<Date>();
@@ -54,13 +54,27 @@ export default function AddAssetPurchaseForm({
     if (isNaN(cashAmount) || isNaN(purchaseAmount)) return;
 
     const transactionData: TransactionInput = {
-      type: 'asset_purchase',
+      type: "asset_purchase",
       date: Math.floor(selectedDate.getTime() / 1000),
-      cash_outgoings_change: { account_id: cashAccount.id, amount: cashAmount, asset_id: cashOutgoings.asset.id },
-      purchase_change: { account_id: purchaseAccount.id, amount: purchaseAmount, asset_id: purchase.asset.id },
+      cash_outgoings_change: {
+        account_id: cashAccount.id,
+        amount: cashAmount,
+        asset_id: cashOutgoings.asset.id,
+      },
+      purchase_change: {
+        account_id: purchaseAccount.id,
+        amount: purchaseAmount,
+        asset_id: purchase.asset.id,
+      },
     };
-    if (onCollect) { onCollect(transactionData); return; }
-    addTransaction.mutate({ transaction: transactionData }, { onSuccess: () => onSuccess?.() });
+    if (onCollect) {
+      onCollect(transactionData);
+      return;
+    }
+    addTransaction.mutate(
+      { transaction: transactionData },
+      { onSuccess: () => onSuccess?.() },
+    );
   };
 
   return (
@@ -90,17 +104,22 @@ export default function AddAssetPurchaseForm({
           value={purchase}
           defaultSign="positive"
           lockSign
-          onAssetChange={(asset) =>
-            setPurchase((prev) => ({ ...prev, asset }))
-          }
+          onAssetChange={(asset) => setPurchase((prev) => ({ ...prev, asset }))}
           onAmountChange={(amount) =>
             setPurchase((prev) => ({ ...prev, amount }))
           }
         />
       </div>
 
-      <Button onClick={handleSave} disabled={!onCollect && addTransaction.isPending}>
-        {onCollect ? 'Add to Group' : (addTransaction.isPending ? 'Saving...' : 'Save')}
+      <Button
+        onClick={handleSave}
+        disabled={!onCollect && addTransaction.isPending}
+      >
+        {onCollect
+          ? "Add to Group"
+          : addTransaction.isPending
+            ? "Saving..."
+            : "Save"}
       </Button>
     </div>
   );

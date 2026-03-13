@@ -4,7 +4,7 @@ import AssetAmountInput from "@/components/feature/asset-amount-input";
 import { DateTimeLanguagePicker } from "@/components/feature/date-time-language-picker";
 import { Button } from "@/components/ui/button";
 import { useAddIndividualTransaction } from "@/hooks/api/use-add-individual-transaction";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 import type { ExpandedAsset } from "@/types/assets";
 import type { ExpandedAccount } from "@/types/account";
 import type { TransactionInput } from "@/api";
@@ -18,7 +18,7 @@ export default function AddAssetDividendForm({
   onSuccess,
   onCollect,
 }: AddAssetDividendFormProps) {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const addTransaction = useAddIndividualTransaction(userId);
 
   const [selectedDate, setSelectedDate] = useState<Date>();
@@ -42,12 +42,22 @@ export default function AddAssetDividendForm({
     const transactionData: TransactionInput = {
       type: "asset_dividend",
       date: Math.floor(selectedDate.getTime() / 1000),
-      entry: { account_id: entryAccount.id, asset_id: entry.asset.id, amount: parsedAmount },
+      entry: {
+        account_id: entryAccount.id,
+        asset_id: entry.asset.id,
+        amount: parsedAmount,
+      },
     };
 
-    if (onCollect) { onCollect(transactionData); return; }
+    if (onCollect) {
+      onCollect(transactionData);
+      return;
+    }
 
-    addTransaction.mutate({ transaction: transactionData }, { onSuccess: () => onSuccess?.() });
+    addTransaction.mutate(
+      { transaction: transactionData },
+      { onSuccess: () => onSuccess?.() },
+    );
   };
 
   return (
@@ -61,17 +71,20 @@ export default function AddAssetDividendForm({
           value={entry}
           defaultSign="positive"
           lockSign
-          onAssetChange={(asset) =>
-            setEntry((prev) => ({ ...prev, asset }))
-          }
-          onAmountChange={(amount) =>
-            setEntry((prev) => ({ ...prev, amount }))
-          }
+          onAssetChange={(asset) => setEntry((prev) => ({ ...prev, asset }))}
+          onAmountChange={(amount) => setEntry((prev) => ({ ...prev, amount }))}
         />
       </div>
 
-      <Button onClick={handleSave} disabled={!onCollect && addTransaction.isPending}>
-        {onCollect ? "Add to Group" : (addTransaction.isPending ? "Saving..." : "Save")}
+      <Button
+        onClick={handleSave}
+        disabled={!onCollect && addTransaction.isPending}
+      >
+        {onCollect
+          ? "Add to Group"
+          : addTransaction.isPending
+            ? "Saving..."
+            : "Save"}
       </Button>
     </div>
   );

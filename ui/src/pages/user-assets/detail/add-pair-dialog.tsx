@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import AssetPicker from "@/components/feature/asset-picker";
 import type { ExpandedAsset } from "@/types/assets";
 import usePostAssetPair from "@/hooks/api/use-post-asset-pair";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 import axios from "axios";
 
 interface Props {
@@ -27,9 +27,11 @@ export default function AddPairDialog({
   assetId,
   onPairAdded,
 }: Props) {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const mutation = usePostAssetPair(userId, assetId);
-  const [selectedAsset, setSelectedAsset] = useState<ExpandedAsset | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState<ExpandedAsset | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = () => {

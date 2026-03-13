@@ -1,7 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 import { getTransactionTypeLabel } from "./transaction-display-utils";
 
-const TYPE_VARIANTS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+const TYPE_VARIANTS: Record<
+  string,
+  "default" | "secondary" | "destructive" | "outline"
+> = {
   asset_purchase: "default",
   asset_sale: "destructive",
   cash_transfer_in: "default",
@@ -20,7 +23,9 @@ interface TransactionTypeBadgeProps {
   type: string;
 }
 
-export default function TransactionTypeBadge({ type }: TransactionTypeBadgeProps) {
+export default function TransactionTypeBadge({
+  type,
+}: TransactionTypeBadgeProps) {
   const variant = TYPE_VARIANTS[type] ?? "secondary";
   return <Badge variant={variant}>{getTransactionTypeLabel(type)}</Badge>;
 }

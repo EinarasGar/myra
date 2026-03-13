@@ -1,4 +1,5 @@
 export const QueryKeys = {
+  AUTH_ME: "auth-me",
   PORTFOLIO_HISTORY: "portfolio",
   PORTFOLIO_HOLDINGS: "holdings",
   ASSETS: "assets",

@@ -3,9 +3,7 @@ use sqlx::types::Uuid;
 #[derive(Debug)]
 pub struct AddUserModel {
     pub username: String,
-    pub password: String,
     pub default_asset: i32,
-    pub role_id: Option<i32>,
 }
 
 #[derive(Debug, sqlx::FromRow)]
@@ -26,7 +24,22 @@ pub struct UserFullModel {
 }
 
 #[derive(Debug, sqlx::FromRow)]
+pub struct UserBasicModel {
+    pub id: Uuid,
+    pub username: String,
+    pub default_asset: i32,
+}
+
+#[derive(Debug, sqlx::FromRow)]
 pub struct UserRoleModel {
     pub id: i32,
     pub name: String,
+}
+
+#[derive(Debug, sqlx::FromRow)]
+pub struct RefreshTokenModel {
+    pub id: i32,
+    pub user_id: Uuid,
+    pub token_hash: String,
+    pub expires_at: sqlx::types::time::OffsetDateTime,
 }

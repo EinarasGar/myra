@@ -5,7 +5,7 @@ import { useAssetStore } from "@/hooks/store/use-asset-store";
 import useGetPortfolioOverview from "@/hooks/api/use-get-portfolio-overview";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 
 export type CashPortfolioRow = {
   asset_name: string;
@@ -48,7 +48,7 @@ export const CashPortfoliosTableSkeleton = () => (
 );
 
 export default function CashPortfoliosTable() {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const { data } = useGetPortfolioOverview(userId);
   const assets = useAssetStore((state) => state.assets);
   const accounts = useAccountStore((state) => state.accounts);
@@ -69,10 +69,7 @@ export default function CashPortfoliosTable() {
     );
   }, [accounts, assets, data.cash_portfolios]);
 
-  const table = useMemo(
-    () => ({ data: tableData, columns }),
-    [tableData],
-  );
+  const table = useMemo(() => ({ data: tableData, columns }), [tableData]);
 
   return <MemoizedDataTable {...table} />;
 }

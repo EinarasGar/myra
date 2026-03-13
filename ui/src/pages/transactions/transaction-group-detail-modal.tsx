@@ -1,10 +1,18 @@
-import type { GroupTransactionItem } from '@/api/api';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Separator } from '@/components/ui/separator';
-import { useAssetStore } from '@/hooks/store/use-asset-store';
-import { useCategoryStore } from '@/hooks/store/use-category-store';
-import { formatTransactionDate, getTransactionAmount } from './transaction-display-utils';
-import TransactionTypeBadge from './transaction-type-badge';
+import type { GroupTransactionItem } from "@/api/api";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+import { useAssetStore } from "@/hooks/store/use-asset-store";
+import { useCategoryStore } from "@/hooks/store/use-category-store";
+import {
+  formatTransactionDate,
+  getTransactionAmount,
+} from "./transaction-display-utils";
+import TransactionTypeBadge from "./transaction-type-badge";
 
 interface TransactionGroupDetailModalProps {
   group: GroupTransactionItem | null;
@@ -12,13 +20,18 @@ interface TransactionGroupDetailModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export default function TransactionGroupDetailModal({ group, open, onOpenChange }: TransactionGroupDetailModalProps) {
+export default function TransactionGroupDetailModal({
+  group,
+  open,
+  onOpenChange,
+}: TransactionGroupDetailModalProps) {
   const assets = useAssetStore((state) => state.assets);
   const categories = useCategoryStore((state) => state.categorys);
 
   if (!group) return null;
 
-  const categoryName = categories.find(c => c.id === group.category_id)?.name ?? '—';
+  const categoryName =
+    categories.find((c) => c.id === group.category_id)?.name ?? "—";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -50,12 +63,19 @@ export default function TransactionGroupDetailModal({ group, open, onOpenChange 
             <p className="text-sm font-medium mb-3">Child Transactions</p>
             <div className="space-y-2">
               {group.transactions.map((tx) => (
-                <div key={tx.transaction_id} className="flex items-center justify-between p-2 rounded bg-muted/30">
+                <div
+                  key={tx.transaction_id}
+                  className="flex items-center justify-between p-2 rounded bg-muted/30"
+                >
                   <div className="flex items-center gap-2">
                     <TransactionTypeBadge type={tx.type} />
-                    <span className="text-sm">{formatTransactionDate(tx.date)}</span>
+                    <span className="text-sm">
+                      {formatTransactionDate(tx.date)}
+                    </span>
                   </div>
-                  <span className="text-sm font-medium">{getTransactionAmount(tx, assets)}</span>
+                  <span className="text-sm font-medium">
+                    {getTransactionAmount(tx, assets)}
+                  </span>
                 </div>
               ))}
             </div>

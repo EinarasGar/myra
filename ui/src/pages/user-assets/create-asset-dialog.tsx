@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import useCreateUserAsset from "@/hooks/api/use-create-user-asset";
-import { useAuthUserId } from "@/hooks/use-auth";
+import { useUserId } from "@/hooks/use-auth";
 import AssetPicker from "@/components/feature/asset-picker";
 import type { ExpandedAsset } from "@/types/assets";
 import axios from "axios";
@@ -33,7 +33,7 @@ interface Props {
 }
 
 export default function CreateAssetDialog({ open, onOpenChange }: Props) {
-  const userId = useAuthUserId();
+  const userId = useUserId();
   const mutation = useCreateUserAsset(userId);
   const { data: assetTypesData } = useQuery({
     queryKey: [QueryKeys.ASSET_TYPES],
