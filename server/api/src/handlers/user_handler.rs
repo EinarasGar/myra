@@ -9,8 +9,7 @@ use utoipa::ToSchema;
 
 #[cfg(feature = "database")]
 use crate::{
-    extractors::ValidatedJson,
-    states::UsersServiceState,
+    extractors::ValidatedJson, states::UsersServiceState,
     view_models::users::add_user_view_model::AddUserViewModel,
 };
 

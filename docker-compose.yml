@@ -1,6 +1,6 @@
 services:
   database:
-    image: postgres:latest
+    image: pgvector/pgvector:pg18
     restart: unless-stopped
     ports:
       - "${POSTGRES_PORT}:5432"

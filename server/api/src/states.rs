@@ -4,8 +4,9 @@ use axum::{
 };
 
 use business::service_collection::{
-    accounts_service::AccountsService, asset_rates_service::AssetRatesService,
-    asset_service::AssetsService, auth_service::AuthService, category_service::CategoryService,
+    accounts_service::AccountsService, ai_chat_service::AiChatService,
+    asset_rates_service::AssetRatesService, asset_service::AssetsService,
+    auth_service::AuthService, category_service::CategoryService,
     category_type_service::CategoryTypeService, entries_service::EntriesService,
     portfolio_overview_service::PortfolioOverviewService, portfolio_service::PortfolioService,
     transaction_group_service::TransactionGroupService,
@@ -67,3 +68,4 @@ service_state!(EntriesService);
 service_state!(AccountsService);
 service_state!(CategoryService);
 service_state!(CategoryTypeService);
+service_state!(AiChatService);

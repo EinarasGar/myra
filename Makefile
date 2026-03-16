@@ -32,7 +32,7 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk
 		"POSTGRES_USER=myradev" \
 		"POSTGRES_PASSWORD=devpassword" \
 		"POSTGRES_DB=myra" \
-		"RUST_LOG=dal=trace,business=trace,api=trace,tower_http=info" \
+		"RUST_LOG=dal=trace,business=trace,api=trace,ai=info,tower_http=info" \
 		"JWT_SECRET=devjwtsecret" \
 		"" \
 		"POSTGRES_PORT=7$${PREFIX}1" \
@@ -42,6 +42,16 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk
 		"JAEGER_UI_PORT=7$${PREFIX}5" \
 		"COOKIE_SECURE=false" \
 		> .env; \
+	printf '\n%s\n%s\n' \
+		"AI_MODEL=gemini-3-flash-preview" \
+		"AI_EMBEDDING_MODEL=gemini-embedding-2-preview" \
+		>> .env; \
+	if [ -f .secrets ]; then \
+		. ./.secrets; \
+		printf '%s\n' "AI_API_KEY=$${AI_API_KEY}" >> .env; \
+	else \
+		printf '%s\n' "AI_API_KEY=" >> .env; \
+	fi; \
 	case "$(auth)" in \
 		noauth|database) \
 			printf '\n%s\n' "AUTH_PROVIDER=$(auth)" >> .env; \

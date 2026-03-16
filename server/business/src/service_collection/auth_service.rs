@@ -270,10 +270,8 @@ impl AuthService {
         use dal::models::external_identity_models::ExternalIdentityModel;
         use dal::queries::user_queries;
 
-        let query = user_queries::get_user_by_external_id(
-            "clerk".to_string(),
-            clerk_user_id.to_string(),
-        );
+        let query =
+            user_queries::get_user_by_external_id("clerk".to_string(), clerk_user_id.to_string());
         let existing_user = self
             .db_context
             .fetch_optional::<ExternalIdentityModel>(query)

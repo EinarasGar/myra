@@ -1,5 +1,6 @@
 pub mod account_portfolio_handler;
 pub mod accounts_handler;
+pub mod ai_handler;
 pub mod asset_handler;
 pub mod auth_handler;
 pub mod category_handler;

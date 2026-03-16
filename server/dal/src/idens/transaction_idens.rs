@@ -32,6 +32,7 @@ pub enum TransactionDescriptionsIden {
     Table,
     TransactionId,
     Description,
+    Embedding,
 }
 
 #[allow(dead_code)]
@@ -49,6 +50,7 @@ pub enum TransactionGroupIden {
     CategoryId,
     Description,
     DateAdded,
+    DescriptionEmbedding,
 }
 
 #[allow(dead_code)]
@@ -111,6 +113,7 @@ impl Iden for TransactionDescriptionsIden {
             Self::Table => "transaction_descriptions",
             Self::TransactionId => "transaction_id",
             Self::Description => "description",
+            Self::Embedding => "embedding",
         }
     }
 }
@@ -134,6 +137,7 @@ impl Iden for TransactionGroupIden {
             Self::TransactionGroupId => "id",
             Self::Description => "description",
             Self::DateAdded => "date_added",
+            Self::DescriptionEmbedding => "description_embedding",
         }
     }
 }

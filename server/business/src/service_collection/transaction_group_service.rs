@@ -35,6 +35,7 @@ use crate::entities::transactions::transaction_types::{
 };
 
 use super::{
+    ai_embedding_service::AiEmbeddingService,
     transaction_management_service::TransactionManagementService,
     transaction_metadata_service::TransactionMetadataService,
 };
@@ -43,6 +44,7 @@ pub struct TransactionGroupService {
     db: MyraDb,
     management_service: TransactionManagementService,
     transaction_metadata_service: TransactionMetadataService,
+    embedding_service: AiEmbeddingService,
 }
 
 impl TransactionGroupService {
@@ -50,6 +52,7 @@ impl TransactionGroupService {
         Self {
             management_service: TransactionManagementService::new(db.clone()),
             transaction_metadata_service: TransactionMetadataService::new(db.clone()),
+            embedding_service: AiEmbeddingService::new(db.clone()),
             db,
         }
     }
@@ -116,6 +119,9 @@ impl TransactionGroupService {
         }
 
         self.db.commit_transaction().await?;
+
+        self.embedding_service
+            .spawn_embed_group(group_id, description.clone());
 
         // Fetch back full transactions
         let transaction_dtos = self.fetch_transactions_by_ids(created_ids).await?;
@@ -316,6 +322,8 @@ impl TransactionGroupService {
                 date_added: date,
             });
         self.db.execute(update_group_query).await?;
+        self.embedding_service
+            .spawn_embed_group(group_id, description.clone());
 
         // Collect all final transaction IDs and fetch back
         let all_ids: Vec<Uuid> = to_update

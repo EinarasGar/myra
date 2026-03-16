@@ -1,3 +1,4 @@
+pub mod ai_search_params;
 pub mod get_accounts_params;
 pub mod get_assets_params;
 pub mod get_binned_entries_params;

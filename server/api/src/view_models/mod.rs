@@ -2,6 +2,7 @@
 mod value_types;
 
 pub mod accounts;
+pub mod ai;
 pub mod assets;
 pub mod authentication;
 pub mod base_models;

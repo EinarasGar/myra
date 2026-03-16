@@ -6,8 +6,6 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 #[cfg(feature = "database")]
-use axum::http::{header, HeaderMap};
-#[cfg(feature = "database")]
 use crate::extractors::ValidatedJson;
 #[cfg(feature = "database")]
 use crate::states::AuthServiceState;
@@ -15,6 +13,8 @@ use crate::states::AuthServiceState;
 use crate::view_models::authentication::auth::AuthViewModel;
 #[cfg(feature = "database")]
 use crate::view_models::authentication::login_details::LoginDetailsViewModel;
+#[cfg(feature = "database")]
+use axum::http::{header, HeaderMap};
 
 use crate::view_models::errors::AuthResponses;
 
@@ -109,7 +109,9 @@ pub async fn post_login_details(
     let mut headers = HeaderMap::new();
     headers.insert(
         header::SET_COOKIE,
-        build_refresh_cookie(&raw_refresh, expires_at).parse().unwrap(),
+        build_refresh_cookie(&raw_refresh, expires_at)
+            .parse()
+            .unwrap(),
     );
 
     let return_model = AuthViewModel { token: auth };
@@ -118,7 +120,9 @@ pub async fn post_login_details(
 
 #[cfg(feature = "database")]
 fn build_refresh_cookie(raw_token: &str, expires_at: time::OffsetDateTime) -> String {
-    let max_age = (expires_at - time::OffsetDateTime::now_utc()).whole_seconds().max(0);
+    let max_age = (expires_at - time::OffsetDateTime::now_utc())
+        .whole_seconds()
+        .max(0);
     let secure = std::env::var("COOKIE_SECURE")
         .map(|v| v == "true")
         .unwrap_or(false);
@@ -137,7 +141,8 @@ fn clear_refresh_cookie() -> String {
     let secure = std::env::var("COOKIE_SECURE")
         .map(|v| v == "true")
         .unwrap_or(false);
-    let mut cookie = "refresh_token=; HttpOnly; SameSite=Lax; Path=/api/auth; Max-Age=0".to_string();
+    let mut cookie =
+        "refresh_token=; HttpOnly; SameSite=Lax; Path=/api/auth; Max-Age=0".to_string();
     if secure {
         cookie.push_str("; Secure");
     }
@@ -152,11 +157,7 @@ fn extract_refresh_token_from_cookie(headers: &HeaderMap) -> Option<String> {
         .filter_map(|v| v.to_str().ok())
         .flat_map(|s| s.split(';'))
         .map(|s| s.trim())
-        .find_map(|cookie| {
-            cookie
-                .strip_prefix("refresh_token=")
-                .map(|v| v.to_string())
-        })
+        .find_map(|cookie| cookie.strip_prefix("refresh_token=").map(|v| v.to_string()))
 }
 
 /// Refresh access token
@@ -177,8 +178,7 @@ pub async fn post_refresh_token(
     headers: HeaderMap,
     AuthServiceState(auth_service): AuthServiceState,
 ) -> Result<(HeaderMap, Json<AuthViewModel>), ApiError> {
-    let raw_token = extract_refresh_token_from_cookie(&headers)
-        .ok_or(ApiError::Unauthorized)?;
+    let raw_token = extract_refresh_token_from_cookie(&headers).ok_or(ApiError::Unauthorized)?;
 
     let (user_id, new_raw_token, new_expires_at) = auth_service
         .validate_and_rotate(&raw_token)
@@ -198,7 +198,12 @@ pub async fn post_refresh_token(
             .unwrap(),
     );
 
-    Ok((response_headers, Json(AuthViewModel { token: access_token })))
+    Ok((
+        response_headers,
+        Json(AuthViewModel {
+            token: access_token,
+        }),
+    ))
 }
 
 /// Refresh access token (Clerk)
@@ -263,10 +268,7 @@ pub async fn post_logout(
         .map_err(|e| ApiError::Internal(e))?;
 
     let mut headers = HeaderMap::new();
-    headers.insert(
-        header::SET_COOKIE,
-        clear_refresh_cookie().parse().unwrap(),
-    );
+    headers.insert(header::SET_COOKIE, clear_refresh_cookie().parse().unwrap());
 
     Ok((headers, Json(serde_json::json!({"message": "Logged out"}))))
 }

@@ -8,11 +8,14 @@ edition = "2021"
 [dependencies]
 anyhow = { version = "1.0.100", features = ["backtrace"] }
 async-trait = "0.1.89"
-sea-query = { version = "=1.0.0-rc.30", features = ["backend-postgres", "postgres-array", "with-uuid", "with-time", "with-rust_decimal"] }
-sea-query-sqlx = { version = "=0.8.0-rc.14", features = ["sqlx-postgres", "postgres-array", "with-uuid", "with-time", "with-rust_decimal"] }
+sea-query = { version = "=1.0.0-rc.30", features = ["backend-postgres", "postgres-array", "with-uuid", "with-time", "with-rust_decimal", "postgres-vector"] }
+sea-query-sqlx = { version = "=0.8.0-rc.14", features = ["sqlx-postgres", "postgres-array", "with-uuid", "with-time", "with-rust_decimal", "postgres-vector"] }
 sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "postgres", "uuid", "time", "rust_decimal", "macros"] }
 tokio = { version = "1.49.0", features = ["full"] }
 tracing = { version = "0.1.44", features = ["async-await", "log"] }
 mockall = "0.14.0"
 strum = { version = "0.27.2", features = ["derive"] }
 time = { version = "0.3.46"}
+uuid = { version = "1", features = ["serde"] }
+rust_decimal = "1"
+pgvector = { version = "0.4", features = ["sqlx"] }

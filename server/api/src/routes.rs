@@ -68,6 +68,7 @@ pub(crate) fn create_router(state: AppState) -> Router {
         .route("/api/auth/refresh",                                                     post(  handlers::auth_handler::post_refresh_token))
         .route("/api/auth/logout",                                                      post(  handlers::auth_handler::post_logout))
         .route("/api/auth/me",                                                          get(   handlers::auth_handler::get_me))
+        .route("/api/users/{user_id}/ai/chat",                                            post(  handlers::ai_handler::chat))
         .route("/api/users",                                                            post(  handlers::user_handler::post_user))
         .layer(observability::create_tower_http_tracing_layer())
         .with_state(state)

@@ -20,6 +20,7 @@ import { Route as AuthSettingsRouteImport } from './routes/_auth.settings'
 import { Route as AuthPortfolioOverviewRouteImport } from './routes/_auth.portfolio-overview'
 import { Route as AuthPortfolioRouteImport } from './routes/_auth.portfolio'
 import { Route as AuthComponentTestingRouteImport } from './routes/_auth.component-testing'
+import { Route as AuthAiChatRouteImport } from './routes/_auth.ai-chat'
 import { Route as AuthUserAssetsIndexRouteImport } from './routes/_auth.user-assets.index'
 import { Route as AuthTransactionsIndexRouteImport } from './routes/_auth.transactions.index'
 import { Route as AuthUserAssetsAssetIdRouteImport } from './routes/_auth.user-assets.$assetId'
@@ -82,6 +83,11 @@ const AuthComponentTestingRoute = AuthComponentTestingRouteImport.update({
   path: '/component-testing',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthAiChatRoute = AuthAiChatRouteImport.update({
+  id: '/ai-chat',
+  path: '/ai-chat',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthUserAssetsIndexRoute = AuthUserAssetsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/ai-chat': typeof AuthAiChatRoute
   '/component-testing': typeof AuthComponentTestingRoute
   '/portfolio': typeof AuthPortfolioRoute
   '/portfolio-overview': typeof AuthPortfolioOverviewRoute
@@ -142,6 +149,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/ai-chat': typeof AuthAiChatRoute
   '/component-testing': typeof AuthComponentTestingRoute
   '/portfolio': typeof AuthPortfolioRoute
   '/portfolio-overview': typeof AuthPortfolioOverviewRoute
@@ -161,6 +169,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/_auth/ai-chat': typeof AuthAiChatRoute
   '/_auth/component-testing': typeof AuthComponentTestingRoute
   '/_auth/portfolio': typeof AuthPortfolioRoute
   '/_auth/portfolio-overview': typeof AuthPortfolioOverviewRoute
@@ -183,6 +192,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/login'
     | '/signup'
+    | '/ai-chat'
     | '/component-testing'
     | '/portfolio'
     | '/portfolio-overview'
@@ -201,6 +211,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/login'
     | '/signup'
+    | '/ai-chat'
     | '/component-testing'
     | '/portfolio'
     | '/portfolio-overview'
@@ -219,6 +230,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/login'
     | '/signup'
+    | '/_auth/ai-chat'
     | '/_auth/component-testing'
     | '/_auth/portfolio'
     | '/_auth/portfolio-overview'
@@ -321,6 +333,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthComponentTestingRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/ai-chat': {
+      id: '/_auth/ai-chat'
+      path: '/ai-chat'
+      fullPath: '/ai-chat'
+      preLoaderRoute: typeof AuthAiChatRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/user-assets/': {
       id: '/_auth/user-assets/'
       path: '/'
@@ -415,6 +434,7 @@ const AuthUserAssetsRouteWithChildren = AuthUserAssetsRoute._addFileChildren(
 )
 
 interface AuthRouteChildren {
+  AuthAiChatRoute: typeof AuthAiChatRoute
   AuthComponentTestingRoute: typeof AuthComponentTestingRoute
   AuthPortfolioRoute: typeof AuthPortfolioRoute
   AuthPortfolioOverviewRoute: typeof AuthPortfolioOverviewRoute
@@ -426,6 +446,7 @@ interface AuthRouteChildren {
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
+  AuthAiChatRoute: AuthAiChatRoute,
   AuthComponentTestingRoute: AuthComponentTestingRoute,
   AuthPortfolioRoute: AuthPortfolioRoute,
   AuthPortfolioOverviewRoute: AuthPortfolioOverviewRoute,

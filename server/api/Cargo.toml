@@ -42,6 +42,8 @@ validator = { version = "0.20", features = ["derive"] }
 jsonwebtoken = { version = "10.3.0", features = ["rust_crypto"] }
 dotenvy = "0.15"
 thiserror = "2"
+futures = "0.3"
+async-stream = "0.3"
 
 [features]
 default = ["color-sql", "noauth"]

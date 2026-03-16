@@ -1,0 +1,17 @@
+[package]
+name = "ai"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rig-core = { git = "https://github.com/0xPlaygrounds/rig.git", rev = "cd40e8c2b2b5da6d957d4b8cc633eba8d85816d2" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+uuid = { version = "1", features = ["serde"] }
+anyhow = "1"
+tracing = "0.1"
+futures = "0.3"
+rust_decimal = { version = "1", features = ["serde-with-arbitrary-precision"] }
+time = { version = "0.3", features = ["serde", "formatting", "macros"] }
+async-stream = "0.3"

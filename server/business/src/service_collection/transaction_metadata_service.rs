@@ -12,13 +12,19 @@ use uuid::Uuid;
 
 use crate::entities::transactions::{metadata::MetadataField, transaction::Transaction};
 
+use super::ai_embedding_service::AiEmbeddingService;
+
 pub struct TransactionMetadataService {
     db: MyraDb,
+    embedding_service: AiEmbeddingService,
 }
 
 impl TransactionMetadataService {
     pub fn new(db: MyraDb) -> Self {
-        Self { db }
+        Self {
+            embedding_service: AiEmbeddingService::new(db.clone()),
+            db,
+        }
     }
 
     pub async fn write_metadata(&self, transactions: &mut [Transaction]) -> anyhow::Result<()> {
@@ -82,6 +88,8 @@ impl TransactionMetadataService {
                         new_val.clone(),
                     );
                     self.db.execute(query).await?;
+                    self.embedding_service
+                        .spawn_embed_transaction(transaction_id, new_val.clone());
                 }
             }
             (None, Some(new_val)) => {
@@ -92,6 +100,8 @@ impl TransactionMetadataService {
                     },
                 ]);
                 self.db.execute(query).await?;
+                self.embedding_service
+                    .spawn_embed_transaction(transaction_id, new_val.clone());
             }
             (Some(_), None) => {
                 let query = transaction_data_queries::delete_descriptions_by_transaction_ids(vec![
@@ -188,6 +198,11 @@ impl TransactionMetadataService {
         if !update_models.is_empty() {
             let query = transaction_data_queries::insert_descriptions(update_models.clone());
             self.db.execute(query).await?;
+
+            for model in &update_models {
+                self.embedding_service
+                    .spawn_embed_transaction(model.transaction_id, model.description.clone());
+            }
 
             update_models.into_iter().for_each(|model| {
                 transactions

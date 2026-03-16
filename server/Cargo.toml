@@ -8,4 +8,5 @@ members = [
   "dal",
   "cli",
   "macros",
+  "ai",
 ]

@@ -4,6 +4,7 @@ import {
   Coins,
   Frame,
   Settings2,
+  Sparkles,
   SquareTerminal,
 } from "lucide-react";
 
@@ -90,6 +91,11 @@ const navMain = [
 ];
 
 const tools = [
+  {
+    name: "AI Assistant",
+    url: "/ai-chat",
+    icon: Sparkles,
+  },
   {
     name: "COMPONENT TESTING",
     url: "/component-testing",

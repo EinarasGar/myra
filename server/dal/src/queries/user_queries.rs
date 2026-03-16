@@ -28,7 +28,10 @@ pub fn get_user_auth_info(username: String) -> DbQueryWithValues {
     Query::select()
         .column((UsersIden::Table, UsersIden::Id))
         .column((UsersIden::Table, UsersIden::Username))
-        .column((UserCredentialsIden::Table, UserCredentialsIden::PasswordHash))
+        .column((
+            UserCredentialsIden::Table,
+            UserCredentialsIden::PasswordHash,
+        ))
         .expr_as(
             Expr::col((UserRolesIden::Table, UserRolesIden::RoleName)),
             Alias::new("user_role_name"),
@@ -41,13 +44,18 @@ pub fn get_user_auth_info(username: String) -> DbQueryWithValues {
         )
         .inner_join(
             UserRoleAssignmentsIden::Table,
-            Expr::col((UsersIden::Table, UsersIden::Id))
-                .equals((UserRoleAssignmentsIden::Table, UserRoleAssignmentsIden::UserId)),
+            Expr::col((UsersIden::Table, UsersIden::Id)).equals((
+                UserRoleAssignmentsIden::Table,
+                UserRoleAssignmentsIden::UserId,
+            )),
         )
         .inner_join(
             UserRolesIden::Table,
-            Expr::col((UserRoleAssignmentsIden::Table, UserRoleAssignmentsIden::RoleId))
-                .equals((UserRolesIden::Table, UserRolesIden::Id)),
+            Expr::col((
+                UserRoleAssignmentsIden::Table,
+                UserRoleAssignmentsIden::RoleId,
+            ))
+            .equals((UserRolesIden::Table, UserRolesIden::Id)),
         )
         .and_where(Expr::col(UsersIden::Username).eq(username))
         .build_sqlx(PostgresQueryBuilder)
@@ -58,17 +66,23 @@ pub fn get_user_auth_info(username: String) -> DbQueryWithValues {
 pub fn get_user_role(user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .column(UserRolesIden::Id)
-        .expr_as(
-            Expr::col(UserRolesIden::RoleName),
-            Alias::new("name"),
-        )
+        .expr_as(Expr::col(UserRolesIden::RoleName), Alias::new("name"))
         .from(UserRoleAssignmentsIden::Table)
         .inner_join(
             UserRolesIden::Table,
-            Expr::col((UserRoleAssignmentsIden::Table, UserRoleAssignmentsIden::RoleId))
-                .equals((UserRolesIden::Table, UserRolesIden::Id)),
+            Expr::col((
+                UserRoleAssignmentsIden::Table,
+                UserRoleAssignmentsIden::RoleId,
+            ))
+            .equals((UserRolesIden::Table, UserRolesIden::Id)),
         )
-        .and_where(Expr::col((UserRoleAssignmentsIden::Table, UserRoleAssignmentsIden::UserId)).eq(user_id))
+        .and_where(
+            Expr::col((
+                UserRoleAssignmentsIden::Table,
+                UserRoleAssignmentsIden::UserId,
+            ))
+            .eq(user_id),
+        )
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }
@@ -93,19 +107,27 @@ pub fn get_user_full_info(user_id: Uuid) -> DbQueryWithValues {
         .column((UsersIden::Table, UsersIden::DefaultAsset))
         .column((UserRolesIden::Table, UserRolesIden::RoleName))
         .expr_as(
-            Expr::col((UserRoleAssignmentsIden::Table, UserRoleAssignmentsIden::RoleId)),
+            Expr::col((
+                UserRoleAssignmentsIden::Table,
+                UserRoleAssignmentsIden::RoleId,
+            )),
             Alias::new("role_id"),
         )
         .from(UsersIden::Table)
         .inner_join(
             UserRoleAssignmentsIden::Table,
-            Expr::col((UsersIden::Table, UsersIden::Id))
-                .equals((UserRoleAssignmentsIden::Table, UserRoleAssignmentsIden::UserId)),
+            Expr::col((UsersIden::Table, UsersIden::Id)).equals((
+                UserRoleAssignmentsIden::Table,
+                UserRoleAssignmentsIden::UserId,
+            )),
         )
         .inner_join(
             UserRolesIden::Table,
-            Expr::col((UserRoleAssignmentsIden::Table, UserRoleAssignmentsIden::RoleId))
-                .equals((UserRolesIden::Table, UserRolesIden::Id)),
+            Expr::col((
+                UserRoleAssignmentsIden::Table,
+                UserRoleAssignmentsIden::RoleId,
+            ))
+            .equals((UserRolesIden::Table, UserRolesIden::Id)),
         )
         .and_where(Expr::col((UsersIden::Table, UsersIden::Id)).eq(user_id))
         .build_sqlx(PostgresQueryBuilder)
@@ -116,7 +138,10 @@ pub fn get_user_full_info(user_id: Uuid) -> DbQueryWithValues {
 pub fn insert_user_credentials(user_id: Uuid, password_hash: String) -> DbQueryWithValues {
     Query::insert()
         .into_table(UserCredentialsIden::Table)
-        .columns([UserCredentialsIden::UserId, UserCredentialsIden::PasswordHash])
+        .columns([
+            UserCredentialsIden::UserId,
+            UserCredentialsIden::PasswordHash,
+        ])
         .values_panic([user_id.into(), password_hash.into()])
         .build_sqlx(PostgresQueryBuilder)
         .into()
@@ -126,7 +151,10 @@ pub fn insert_user_credentials(user_id: Uuid, password_hash: String) -> DbQueryW
 pub fn insert_user_role_assignment(user_id: Uuid, role_id: i32) -> DbQueryWithValues {
     Query::insert()
         .into_table(UserRoleAssignmentsIden::Table)
-        .columns([UserRoleAssignmentsIden::UserId, UserRoleAssignmentsIden::RoleId])
+        .columns([
+            UserRoleAssignmentsIden::UserId,
+            UserRoleAssignmentsIden::RoleId,
+        ])
         .values_panic([user_id.into(), role_id.into()])
         .build_sqlx(PostgresQueryBuilder)
         .into()
@@ -143,16 +171,25 @@ pub fn get_user_by_external_id(provider: String, external_user_id: String) -> Db
         .from(ExternalIdentityMappingsIden::Table)
         .inner_join(
             UsersIden::Table,
-            Expr::col((ExternalIdentityMappingsIden::Table, ExternalIdentityMappingsIden::UserId))
-                .equals((UsersIden::Table, UsersIden::Id)),
+            Expr::col((
+                ExternalIdentityMappingsIden::Table,
+                ExternalIdentityMappingsIden::UserId,
+            ))
+            .equals((UsersIden::Table, UsersIden::Id)),
         )
         .and_where(
-            Expr::col((ExternalIdentityMappingsIden::Table, ExternalIdentityMappingsIden::Provider))
-                .eq(provider),
+            Expr::col((
+                ExternalIdentityMappingsIden::Table,
+                ExternalIdentityMappingsIden::Provider,
+            ))
+            .eq(provider),
         )
         .and_where(
-            Expr::col((ExternalIdentityMappingsIden::Table, ExternalIdentityMappingsIden::ExternalUserId))
-                .eq(external_user_id),
+            Expr::col((
+                ExternalIdentityMappingsIden::Table,
+                ExternalIdentityMappingsIden::ExternalUserId,
+            ))
+            .eq(external_user_id),
         )
         .build_sqlx(PostgresQueryBuilder)
         .into()
@@ -217,7 +254,11 @@ pub fn delete_expired_refresh_tokens() -> DbQueryWithValues {
 }
 
 #[tracing::instrument(skip_all)]
-pub fn insert_external_identity_mapping(provider: String, external_user_id: String, user_id: Uuid) -> DbQueryWithValues {
+pub fn insert_external_identity_mapping(
+    provider: String,
+    external_user_id: String,
+    user_id: Uuid,
+) -> DbQueryWithValues {
     Query::insert()
         .into_table(ExternalIdentityMappingsIden::Table)
         .columns([

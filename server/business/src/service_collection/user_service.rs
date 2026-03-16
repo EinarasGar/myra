@@ -55,10 +55,16 @@ impl UsersService {
             let user_role = self.db.fetch_optional::<UserRoleModel>(query).await?;
             match user_role {
                 Some(role) => role.into(),
-                None => UserRoleDto { role_id: 1, role: UserRoleEnumDto::User },
+                None => UserRoleDto {
+                    role_id: 1,
+                    role: UserRoleEnumDto::User,
+                },
             }
         } else {
-            UserRoleDto { role_id: 0, role: UserRoleEnumDto::User }
+            UserRoleDto {
+                role_id: 0,
+                role: UserRoleEnumDto::User,
+            }
         };
 
         self.db.commit_transaction().await?;
