@@ -1,10 +1,11 @@
 use crate::{handlers, observability, openapi::build_openapi_json, AppState};
 use axum::{
-    http::header,
+    http::{header, HeaderValue, Method},
     response::{Html, IntoResponse},
     routing::{delete, get, post, put},
     Router,
 };
+use tower_http::cors::CorsLayer;
 use utoipa_rapidoc::RapiDoc;
 use utoipa_redoc::Redoc;
 
@@ -70,8 +71,33 @@ pub(crate) fn create_router(state: AppState) -> Router {
         .route("/api/auth/me",                                                          get(   handlers::auth_handler::get_me))
         .route("/api/users/{user_id}/ai/chat",                                            post(  handlers::ai_handler::chat))
         .route("/api/users",                                                            post(  handlers::user_handler::post_user))
+        .layer(build_cors_layer())
         .layer(observability::create_tower_http_tracing_layer())
         .with_state(state)
+}
+
+fn build_cors_layer() -> CorsLayer {
+    let allowed_origin = std::env::var("CORS_ORIGIN").ok();
+
+    let cors = CorsLayer::new()
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::DELETE,
+            Method::OPTIONS,
+        ])
+        .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION, header::COOKIE])
+        .allow_credentials(true);
+
+    match allowed_origin {
+        Some(origin) => cors.allow_origin(
+            origin
+                .parse::<HeaderValue>()
+                .expect("Invalid CORS_ORIGIN value"),
+        ),
+        None => cors.allow_origin(tower_http::cors::Any),
+    }
 }
 
 async fn serve_openapi_json() -> impl IntoResponse {
