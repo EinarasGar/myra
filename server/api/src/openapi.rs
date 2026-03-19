@@ -102,6 +102,12 @@ mod modifiers;
         super::handlers::user_category_handler::post_user_category_type,
         super::handlers::user_category_handler::put_user_category_type,
         super::handlers::user_category_handler::delete_user_category_type,
+        super::handlers::file_handler::create_file,
+        super::handlers::file_handler::get_file,
+        super::handlers::file_handler::delete_file,
+        super::handlers::file_handler::confirm_file,
+        super::handlers::file_handler::get_file_url,
+        super::handlers::file_handler::get_file_thumbnail,
     ),
     components(
         schemas(RequiredEntryId),
@@ -125,7 +131,7 @@ mod modifiers;
         schemas(ApiErrorResponse),
         schemas(FieldError),
         schemas(ErrorType),
-        schemas(RequiredCategoryTypeId)
+        schemas(RequiredCategoryTypeId),
     ),
     modifiers(
         &SecurityAddon,

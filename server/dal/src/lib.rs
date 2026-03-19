@@ -1,7 +1,10 @@
 pub mod database_connection;
 pub mod database_context;
 pub mod enums;
+pub mod file_provider;
 pub(crate) mod idens;
 pub mod models;
+pub mod noop_file_provider;
 pub mod queries;
 pub mod query_params;
+pub mod s3_file_provider;

@@ -69,3 +69,27 @@ service_state!(AccountsService);
 service_state!(CategoryService);
 service_state!(CategoryTypeService);
 service_state!(AiChatService);
+
+use business::service_collection::file_service::FileService;
+
+pub struct FileServiceState(pub FileService);
+
+impl FromRef<AppState> for FileService {
+    fn from_ref(state: &AppState) -> FileService {
+        let db = state.services_collection.get_db_instance();
+        FileService::new(db, state.services_collection.file_provider.clone())
+    }
+}
+
+impl<S> FromRequestParts<S> for FileServiceState
+where
+    FileService: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = (StatusCode, String);
+
+    async fn from_request_parts(_parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let svc = FileService::from_ref(state);
+        Ok(Self(svc))
+    }
+}

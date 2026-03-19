@@ -22,6 +22,7 @@ pub enum ErrorType {
     ValidationError,
     Unauthorized,
     Forbidden,
+    Conflict,
     InternalServerError,
     ServiceUnavailable,
 }

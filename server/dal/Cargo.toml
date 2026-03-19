@@ -19,3 +19,6 @@ time = { version = "0.3.46"}
 uuid = { version = "1", features = ["serde"] }
 rust_decimal = "1"
 pgvector = { version = "0.4", features = ["sqlx"] }
+rust-s3 = { version = "0.36", features = ["tokio-rustls-tls"], default-features = false }
+http = "1"
+thiserror = "2"

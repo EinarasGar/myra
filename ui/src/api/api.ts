@@ -3362,6 +3362,31 @@ export interface CombinedTransactionsPage {
 /**
  *
  * @export
+ * @interface ConfirmFileResponse
+ */
+export interface ConfirmFileResponse {
+  /**
+   *
+   * @type {string}
+   * @memberof ConfirmFileResponse
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConfirmFileResponse
+   */
+  status: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConfirmFileResponse
+   */
+  updated_at: string;
+}
+/**
+ *
+ * @export
  * @interface CreateCategoryRequest
  */
 export interface CreateCategoryRequest {
@@ -3400,6 +3425,92 @@ export interface CreateCategoryTypeRequest {
 /**
  *
  * @export
+ * @interface CreateFileRequest
+ */
+export interface CreateFileRequest {
+  /**
+   * MIME type. Must be non-empty, contain exactly one \'/\', and not include parameters.
+   * @type {string}
+   * @memberof CreateFileRequest
+   */
+  mime_type: string;
+  /**
+   * Original file name. Must be 1-255 characters and must not contain path separators.
+   * @type {string}
+   * @memberof CreateFileRequest
+   */
+  original_name: string;
+  /**
+   * File size in bytes. Must be between 1 and 20 MB (20,971,520 bytes).
+   * @type {number}
+   * @memberof CreateFileRequest
+   */
+  size_bytes: number;
+}
+/**
+ *
+ * @export
+ * @interface CreateFileResponse
+ */
+export interface CreateFileResponse {
+  /**
+   *
+   * @type {string}
+   * @memberof CreateFileResponse
+   */
+  created_at: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof CreateFileResponse
+   */
+  has_thumbnail: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateFileResponse
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateFileResponse
+   */
+  mime_type: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateFileResponse
+   */
+  original_name: string;
+  /**
+   *
+   * @type {number}
+   * @memberof CreateFileResponse
+   */
+  size_bytes: number;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateFileResponse
+   */
+  status: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateFileResponse
+   */
+  updated_at: string;
+  /**
+   *
+   * @type {UploadMetadata}
+   * @memberof CreateFileResponse
+   */
+  upload_metadata: UploadMetadata;
+}
+/**
+ *
+ * @export
  * @enum {string}
  */
 
@@ -3408,6 +3519,7 @@ export const ErrorType = {
   ValidationError: "ValidationError",
   Unauthorized: "Unauthorized",
   Forbidden: "Forbidden",
+  Conflict: "Conflict",
   InternalServerError: "InternalServerError",
   ServiceUnavailable: "ServiceUnavailable",
 } as const;
@@ -3432,6 +3544,25 @@ export interface FieldError {
    * @memberof FieldError
    */
   message: string;
+}
+/**
+ *
+ * @export
+ * @interface FileUrlResponse
+ */
+export interface FileUrlResponse {
+  /**
+   *
+   * @type {number}
+   * @memberof FileUrlResponse
+   */
+  expires_in_seconds: number;
+  /**
+   *
+   * @type {string}
+   * @memberof FileUrlResponse
+   */
+  url: string;
 }
 /**
  *
@@ -3608,6 +3739,61 @@ export interface GetCategoriesResponse {
    * @memberof GetCategoriesResponse
    */
   lookup_tables: CategoryMetadataLookupTables;
+}
+/**
+ *
+ * @export
+ * @interface GetFileResponse
+ */
+export interface GetFileResponse {
+  /**
+   *
+   * @type {string}
+   * @memberof GetFileResponse
+   */
+  created_at: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof GetFileResponse
+   */
+  has_thumbnail: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof GetFileResponse
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof GetFileResponse
+   */
+  mime_type: string;
+  /**
+   *
+   * @type {string}
+   * @memberof GetFileResponse
+   */
+  original_name: string;
+  /**
+   *
+   * @type {number}
+   * @memberof GetFileResponse
+   */
+  size_bytes: number;
+  /**
+   *
+   * @type {string}
+   * @memberof GetFileResponse
+   */
+  status: string;
+  /**
+   *
+   * @type {string}
+   * @memberof GetFileResponse
+   */
+  updated_at: string;
 }
 /**
  *
@@ -4987,6 +5173,37 @@ export interface UpdateTransactionResponse {
    * @memberof UpdateTransactionResponse
    */
   transaction: RequiredTransaction;
+}
+/**
+ *
+ * @export
+ * @interface UploadMetadata
+ */
+export interface UploadMetadata {
+  /**
+   *
+   * @type {number}
+   * @memberof UploadMetadata
+   */
+  upload_expires_in_seconds: number;
+  /**
+   *
+   * @type {{ [key: string]: string; }}
+   * @memberof UploadMetadata
+   */
+  upload_headers: { [key: string]: string };
+  /**
+   *
+   * @type {string}
+   * @memberof UploadMetadata
+   */
+  upload_method: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UploadMetadata
+   */
+  upload_url: string;
 }
 /**
  *
@@ -8122,6 +8339,901 @@ export class CategoriesApi extends BaseAPI implements CategoriesApiInterface {
   ) {
     return CategoriesApiFp(this.configuration)
       .searchCategories(count, start, query, typeId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+}
+
+/**
+ * FilesApi - axios parameter creator
+ * @export
+ */
+export const FilesApiAxiosParamCreator = function (
+  configuration?: Configuration,
+) {
+  return {
+    /**
+     * Transitions file to processing and triggers background verification.
+     * @summary Confirm File Upload
+     * @param {string} userId
+     * @param {string} fileId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    confirmFile: async (
+      userId: string,
+      fileId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("confirmFile", "userId", userId);
+      // verify required parameter 'fileId' is not null or undefined
+      assertParamExists("confirmFile", "fileId", fileId);
+      const localVarPath = `/api/users/{user_id}/files/{file_id}/confirm`
+        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+        .replace(`{${"file_id"}}`, encodeURIComponent(String(fileId)));
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "POST",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Creates a new file record and returns a presigned upload URL.
+     * @summary Create File
+     * @param {string} userId
+     * @param {CreateFileRequest} createFileRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    createFile: async (
+      userId: string,
+      createFileRequest: CreateFileRequest,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("createFile", "userId", userId);
+      // verify required parameter 'createFileRequest' is not null or undefined
+      assertParamExists("createFile", "createFileRequest", createFileRequest);
+      const localVarPath = `/api/users/{user_id}/files`.replace(
+        `{${"user_id"}}`,
+        encodeURIComponent(String(userId)),
+      );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "POST",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        createFileRequest,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Deletes a file record and associated storage objects.
+     * @summary Delete File
+     * @param {string} userId
+     * @param {string} fileId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    deleteFile: async (
+      userId: string,
+      fileId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("deleteFile", "userId", userId);
+      // verify required parameter 'fileId' is not null or undefined
+      assertParamExists("deleteFile", "fileId", fileId);
+      const localVarPath = `/api/users/{user_id}/files/{file_id}`
+        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+        .replace(`{${"file_id"}}`, encodeURIComponent(String(fileId)));
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "DELETE",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Retrieves a single file record.
+     * @summary Get File
+     * @param {string} userId
+     * @param {string} fileId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getFile: async (
+      userId: string,
+      fileId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("getFile", "userId", userId);
+      // verify required parameter 'fileId' is not null or undefined
+      assertParamExists("getFile", "fileId", fileId);
+      const localVarPath = `/api/users/{user_id}/files/{file_id}`
+        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+        .replace(`{${"file_id"}}`, encodeURIComponent(String(fileId)));
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Returns a signed URL for the file thumbnail.
+     * @summary Get File Thumbnail URL
+     * @param {string} userId
+     * @param {string} fileId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getFileThumbnail: async (
+      userId: string,
+      fileId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("getFileThumbnail", "userId", userId);
+      // verify required parameter 'fileId' is not null or undefined
+      assertParamExists("getFileThumbnail", "fileId", fileId);
+      const localVarPath = `/api/users/{user_id}/files/{file_id}/thumbnail`
+        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+        .replace(`{${"file_id"}}`, encodeURIComponent(String(fileId)));
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Returns a signed download URL for the file.
+     * @summary Get File Download URL
+     * @param {string} userId
+     * @param {string} fileId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getFileUrl: async (
+      userId: string,
+      fileId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("getFileUrl", "userId", userId);
+      // verify required parameter 'fileId' is not null or undefined
+      assertParamExists("getFileUrl", "fileId", fileId);
+      const localVarPath = `/api/users/{user_id}/files/{file_id}/url`
+        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+        .replace(`{${"file_id"}}`, encodeURIComponent(String(fileId)));
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+  };
+};
+
+/**
+ * FilesApi - functional programming interface
+ * @export
+ */
+export const FilesApiFp = function (configuration?: Configuration) {
+  const localVarAxiosParamCreator = FilesApiAxiosParamCreator(configuration);
+  return {
+    /**
+     * Transitions file to processing and triggers background verification.
+     * @summary Confirm File Upload
+     * @param {string} userId
+     * @param {string} fileId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async confirmFile(
+      userId: string,
+      fileId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<ConfirmFileResponse>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.confirmFile(
+        userId,
+        fileId,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["FilesApi.confirmFile"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Creates a new file record and returns a presigned upload URL.
+     * @summary Create File
+     * @param {string} userId
+     * @param {CreateFileRequest} createFileRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async createFile(
+      userId: string,
+      createFileRequest: CreateFileRequest,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<CreateFileResponse>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.createFile(
+        userId,
+        createFileRequest,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["FilesApi.createFile"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Deletes a file record and associated storage objects.
+     * @summary Delete File
+     * @param {string} userId
+     * @param {string} fileId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async deleteFile(
+      userId: string,
+      fileId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.deleteFile(
+        userId,
+        fileId,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["FilesApi.deleteFile"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Retrieves a single file record.
+     * @summary Get File
+     * @param {string} userId
+     * @param {string} fileId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getFile(
+      userId: string,
+      fileId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<GetFileResponse>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.getFile(
+        userId,
+        fileId,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["FilesApi.getFile"]?.[localVarOperationServerIndex]
+          ?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Returns a signed URL for the file thumbnail.
+     * @summary Get File Thumbnail URL
+     * @param {string} userId
+     * @param {string} fileId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getFileThumbnail(
+      userId: string,
+      fileId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<FileUrlResponse>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.getFileThumbnail(
+          userId,
+          fileId,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["FilesApi.getFileThumbnail"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Returns a signed download URL for the file.
+     * @summary Get File Download URL
+     * @param {string} userId
+     * @param {string} fileId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getFileUrl(
+      userId: string,
+      fileId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<FileUrlResponse>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.getFileUrl(
+        userId,
+        fileId,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["FilesApi.getFileUrl"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+  };
+};
+
+/**
+ * FilesApi - factory interface
+ * @export
+ */
+export const FilesApiFactory = function (
+  configuration?: Configuration,
+  basePath?: string,
+  axios?: AxiosInstance,
+) {
+  const localVarFp = FilesApiFp(configuration);
+  return {
+    /**
+     * Transitions file to processing and triggers background verification.
+     * @summary Confirm File Upload
+     * @param {string} userId
+     * @param {string} fileId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    confirmFile(
+      userId: string,
+      fileId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<ConfirmFileResponse> {
+      return localVarFp
+        .confirmFile(userId, fileId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Creates a new file record and returns a presigned upload URL.
+     * @summary Create File
+     * @param {string} userId
+     * @param {CreateFileRequest} createFileRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    createFile(
+      userId: string,
+      createFileRequest: CreateFileRequest,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<CreateFileResponse> {
+      return localVarFp
+        .createFile(userId, createFileRequest, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Deletes a file record and associated storage objects.
+     * @summary Delete File
+     * @param {string} userId
+     * @param {string} fileId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    deleteFile(
+      userId: string,
+      fileId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<void> {
+      return localVarFp
+        .deleteFile(userId, fileId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Retrieves a single file record.
+     * @summary Get File
+     * @param {string} userId
+     * @param {string} fileId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getFile(
+      userId: string,
+      fileId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<GetFileResponse> {
+      return localVarFp
+        .getFile(userId, fileId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Returns a signed URL for the file thumbnail.
+     * @summary Get File Thumbnail URL
+     * @param {string} userId
+     * @param {string} fileId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getFileThumbnail(
+      userId: string,
+      fileId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<FileUrlResponse> {
+      return localVarFp
+        .getFileThumbnail(userId, fileId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Returns a signed download URL for the file.
+     * @summary Get File Download URL
+     * @param {string} userId
+     * @param {string} fileId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getFileUrl(
+      userId: string,
+      fileId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<FileUrlResponse> {
+      return localVarFp
+        .getFileUrl(userId, fileId, options)
+        .then((request) => request(axios, basePath));
+    },
+  };
+};
+
+/**
+ * FilesApi - interface
+ * @export
+ * @interface FilesApi
+ */
+export interface FilesApiInterface {
+  /**
+   * Transitions file to processing and triggers background verification.
+   * @summary Confirm File Upload
+   * @param {string} userId
+   * @param {string} fileId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof FilesApiInterface
+   */
+  confirmFile(
+    userId: string,
+    fileId: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<ConfirmFileResponse>;
+
+  /**
+   * Creates a new file record and returns a presigned upload URL.
+   * @summary Create File
+   * @param {string} userId
+   * @param {CreateFileRequest} createFileRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof FilesApiInterface
+   */
+  createFile(
+    userId: string,
+    createFileRequest: CreateFileRequest,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<CreateFileResponse>;
+
+  /**
+   * Deletes a file record and associated storage objects.
+   * @summary Delete File
+   * @param {string} userId
+   * @param {string} fileId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof FilesApiInterface
+   */
+  deleteFile(
+    userId: string,
+    fileId: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<void>;
+
+  /**
+   * Retrieves a single file record.
+   * @summary Get File
+   * @param {string} userId
+   * @param {string} fileId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof FilesApiInterface
+   */
+  getFile(
+    userId: string,
+    fileId: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<GetFileResponse>;
+
+  /**
+   * Returns a signed URL for the file thumbnail.
+   * @summary Get File Thumbnail URL
+   * @param {string} userId
+   * @param {string} fileId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof FilesApiInterface
+   */
+  getFileThumbnail(
+    userId: string,
+    fileId: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<FileUrlResponse>;
+
+  /**
+   * Returns a signed download URL for the file.
+   * @summary Get File Download URL
+   * @param {string} userId
+   * @param {string} fileId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof FilesApiInterface
+   */
+  getFileUrl(
+    userId: string,
+    fileId: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<FileUrlResponse>;
+}
+
+/**
+ * FilesApi - object-oriented interface
+ * @export
+ * @class FilesApi
+ * @extends {BaseAPI}
+ */
+export class FilesApi extends BaseAPI implements FilesApiInterface {
+  /**
+   * Transitions file to processing and triggers background verification.
+   * @summary Confirm File Upload
+   * @param {string} userId
+   * @param {string} fileId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof FilesApi
+   */
+  public confirmFile(
+    userId: string,
+    fileId: string,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return FilesApiFp(this.configuration)
+      .confirmFile(userId, fileId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Creates a new file record and returns a presigned upload URL.
+   * @summary Create File
+   * @param {string} userId
+   * @param {CreateFileRequest} createFileRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof FilesApi
+   */
+  public createFile(
+    userId: string,
+    createFileRequest: CreateFileRequest,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return FilesApiFp(this.configuration)
+      .createFile(userId, createFileRequest, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Deletes a file record and associated storage objects.
+   * @summary Delete File
+   * @param {string} userId
+   * @param {string} fileId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof FilesApi
+   */
+  public deleteFile(
+    userId: string,
+    fileId: string,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return FilesApiFp(this.configuration)
+      .deleteFile(userId, fileId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Retrieves a single file record.
+   * @summary Get File
+   * @param {string} userId
+   * @param {string} fileId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof FilesApi
+   */
+  public getFile(
+    userId: string,
+    fileId: string,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return FilesApiFp(this.configuration)
+      .getFile(userId, fileId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Returns a signed URL for the file thumbnail.
+   * @summary Get File Thumbnail URL
+   * @param {string} userId
+   * @param {string} fileId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof FilesApi
+   */
+  public getFileThumbnail(
+    userId: string,
+    fileId: string,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return FilesApiFp(this.configuration)
+      .getFileThumbnail(userId, fileId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Returns a signed download URL for the file.
+   * @summary Get File Download URL
+   * @param {string} userId
+   * @param {string} fileId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof FilesApi
+   */
+  public getFileUrl(
+    userId: string,
+    fileId: string,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return FilesApiFp(this.configuration)
+      .getFileUrl(userId, fileId, options)
       .then((request) => request(this.axios, this.basePath));
   }
 }

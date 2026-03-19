@@ -41,6 +41,13 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk
 		"OTLP_PORT=7$${PREFIX}4" \
 		"JAEGER_UI_PORT=7$${PREFIX}5" \
 		"COOKIE_SECURE=false" \
+		"MINIO_PORT=7$${PREFIX}6" \
+		"MINIO_CONSOLE_PORT=7$${PREFIX}7" \
+		"S3_ENDPOINT=http://localhost:7$${PREFIX}6" \
+		"S3_BUCKET_NAME=myra-files" \
+		"S3_ACCESS_KEY=minioadmin" \
+		"S3_SECRET_KEY=minioadmin123" \
+		"S3_REGION=us-east-1" \
 		> .env; \
 	printf '\n%s\n%s\n' \
 		"AI_MODEL=gemini-3-flash-preview" \
@@ -132,7 +139,9 @@ status: ## Show service ports, status, and useful links
 	check_local "API Server    " $(SERVER_PORT); \
 	check_local "Vite Dev      " $(VITE_PORT); \
 	check_infra "OTLP Collector" $(OTLP_PORT) jaeger; \
-	check_infra "Jaeger UI     " $(JAEGER_UI_PORT) jaeger
+	check_infra "Jaeger UI     " $(JAEGER_UI_PORT) jaeger; \
+	check_infra "MinIO         " $(MINIO_PORT) minio; \
+	check_infra "MinIO Console " $(MINIO_CONSOLE_PORT) minio
 
 # Run
 .PHONY: run-backend

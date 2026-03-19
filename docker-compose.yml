@@ -17,6 +17,44 @@ services:
     ports:
       - "${JAEGER_UI_PORT}:16686"
       - "${OTLP_PORT}:4317"
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    ports:
+      - "${MINIO_PORT}:9000"
+      - "${MINIO_CONSOLE_PORT}:9001"
+    environment:
+      - MINIO_ROOT_USER=${S3_ACCESS_KEY}
+      - MINIO_ROOT_PASSWORD=${S3_SECRET_KEY}
+    volumes:
+      - myra-minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      RETRIES=0; MAX_RETRIES=30;
+      until mc alias set myminio http://minio:9000 $${S3_ACCESS_KEY} $${S3_SECRET_KEY}; do
+        RETRIES=$$((RETRIES+1));
+        if [ $$RETRIES -ge $$MAX_RETRIES ]; then echo \"Failed to connect to MinIO after $$MAX_RETRIES attempts\"; exit 1; fi;
+        sleep 1;
+      done;
+      mc mb --ignore-existing myminio/$${S3_BUCKET_NAME};
+      exit 0;
+      "
+    environment:
+      - S3_ACCESS_KEY=${S3_ACCESS_KEY}
+      - S3_SECRET_KEY=${S3_SECRET_KEY}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
 
 volumes:
   myra-postgres-data:
+  myra-minio-data:

@@ -23,6 +23,9 @@ pub enum ApiError {
     #[error("Forbidden")]
     Forbidden,
 
+    #[error("Conflict: {0}")]
+    Conflict(String),
+
     #[error("Service unavailable")]
     ServiceUnavailable,
 
@@ -46,6 +49,19 @@ impl ApiError {
                     })
                     .collect(),
             )
+        } else if let Some(not_found_err) =
+            err.downcast_ref::<business::dtos::not_found_error_dto::BusinessNotFoundError>()
+        {
+            ApiError::NotFound(not_found_err.message.clone())
+        } else if let Some(conflict_err) =
+            err.downcast_ref::<business::dtos::conflict_error_dto::BusinessConflictError>()
+        {
+            ApiError::Conflict(conflict_err.message.clone())
+        } else if err
+            .downcast_ref::<business::dtos::service_unavailable_error_dto::BusinessServiceUnavailableError>()
+            .is_some()
+        {
+            ApiError::ServiceUnavailable
         } else {
             ApiError::Internal(err)
         }
@@ -77,6 +93,12 @@ impl IntoResponse for ApiError {
                 StatusCode::FORBIDDEN,
                 ErrorType::Forbidden,
                 "Forbidden".to_string(),
+                vec![],
+            ),
+            ApiError::Conflict(msg) => (
+                StatusCode::CONFLICT,
+                ErrorType::Conflict,
+                msg.clone(),
                 vec![],
             ),
             ApiError::ServiceUnavailable => (

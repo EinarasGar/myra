@@ -8,6 +8,7 @@ pub mod asset_queries;
 pub mod category_queries;
 pub mod category_type_queries;
 pub mod entries_queries;
+pub mod file_queries;
 pub mod transaction_categories_queries;
 pub mod transaction_data_queries;
 pub mod transaction_group_queries;

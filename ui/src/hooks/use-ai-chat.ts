@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useCallback, useRef, useState } from "react";
 
 export type MessagePart =
@@ -53,7 +54,8 @@ export default function useAiChat(userId: string): UseAiChatReturn {
       abortRef.current = controller;
 
       try {
-        const response = await fetch(`/api/users/${userId}/ai/chat`, {
+        const url = new URL(`/api/users/${userId}/ai/chat`, axios.defaults.baseURL || window.location.origin).toString();
+        const response = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
