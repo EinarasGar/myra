@@ -1,46 +1,61 @@
--- DROP SCHEMA public CASCADE;
--- CREATE SCHEMA public;
+CREATE EXTENSION IF NOT EXISTS vector;
+
 CREATE TABLE IF NOT EXISTS transaction_types (
     id SERIAL NOT NULL,
     transaction_type_name TEXT NOT NULL,
     CONSTRAINT transaction_types_pk PRIMARY KEY (id)
 );
+
 CREATE TABLE IF NOT EXISTS asset_types (
     id SERIAL NOT NULL,
     asset_type_name TEXT NOT NULL,
     CONSTRAINT asset_types_pk PRIMARY KEY (id)
 );
+
 CREATE TABLE IF NOT EXISTS transaction_category_type (
     id SERIAL NOT NULL,
     category_type_name TEXT NOT NULL,
+    user_id UUID NULL,
     CONSTRAINT transaction_category_type_pk PRIMARY KEY (id)
 );
+CREATE UNIQUE INDEX unique_user_category_type ON transaction_category_type(user_id, LOWER(category_type_name));
+CREATE INDEX idx_transaction_category_type_user_id ON transaction_category_type(user_id) WHERE user_id IS NOT NULL;
+
 CREATE TABLE IF NOT EXISTS account_types (
     id SERIAL NOT NULL,
     account_type_name TEXT NOT NULL,
     CONSTRAINT account_types_pk PRIMARY KEY (id)
 );
+
 CREATE TABLE IF NOT EXISTS account_liquidity_types (
     id SERIAL NOT NULL,
     liquidity_type_name TEXT NOT NULL,
     CONSTRAINT account_liquidity_types_pk PRIMARY KEY (id)
 );
+
 CREATE TABLE IF NOT EXISTS transaction_categories (
     id SERIAL NOT NULL,
     category TEXT NOT NULL,
     icon TEXT NOT NULL,
     category_type INT NOT NULL,
+    user_id UUID NULL,
     CONSTRAINT transaction_categories_pk PRIMARY KEY (id),
     CONSTRAINT transaction_categories_type_fkey FOREIGN KEY (category_type) REFERENCES transaction_category_type(id)
 );
+CREATE UNIQUE INDEX unique_user_category ON transaction_categories(user_id, LOWER(category));
+CREATE INDEX idx_transaction_categories_user_id ON transaction_categories(user_id) WHERE user_id IS NOT NULL;
+
 CREATE TABLE IF NOT EXISTS transaction_group (
     id UUID DEFAULT uuidv7() NOT NULL,
     category_id INT NOT NULL,
     description TEXT NOT NULL,
     date_added TIMESTAMPTZ NOT NULL,
+    description_embedding vector(1536),
     CONSTRAINT transaction_group_id_pkey PRIMARY KEY (id),
     CONSTRAINT transaction_group_category_id_fkey FOREIGN KEY (category_id) REFERENCES transaction_categories(id)
 );
+CREATE INDEX idx_tg_embedding ON transaction_group USING hnsw (description_embedding vector_cosine_ops);
+
 CREATE TABLE IF NOT EXISTS assets (
     id SERIAL NOT NULL,
     asset_type INT NOT NULL,
@@ -51,6 +66,7 @@ CREATE TABLE IF NOT EXISTS assets (
     CONSTRAINT assets_pk PRIMARY KEY (id),
     CONSTRAINT asset_type_fkey FOREIGN KEY (asset_type) REFERENCES asset_types(id)
 );
+
 CREATE TABLE IF NOT EXISTS asset_pairs (
     id SERIAL NOT NULL,
     pair1 INT NOT NULL,
@@ -59,18 +75,21 @@ CREATE TABLE IF NOT EXISTS asset_pairs (
     CONSTRAINT asset_pairs_pair1_asset_id_fkey FOREIGN KEY (pair1) REFERENCES assets(id),
     CONSTRAINT asset_pairs_pair2_asset_id_fkey FOREIGN KEY (pair2) REFERENCES assets(id)
 );
+
 CREATE TABLE IF NOT EXISTS asset_pairs_shared_metadata (
     pair_id INT NOT NULL,
     volume DECIMAL NULL,
     CONSTRAINT asset_pairs_shared_metadata_pkey PRIMARY KEY (pair_id),
     CONSTRAINT asset_pairs_shared_metadata_pair_id_fkey FOREIGN KEY (pair_id) REFERENCES asset_pairs(id)
 );
+
 CREATE TABLE IF NOT EXISTS asset_pairs_user_metadata (
     pair_id INT NOT NULL,
     exchange TEXT NULL,
     CONSTRAINT asset_pairs_user_metadata_pkey PRIMARY KEY (pair_id),
     CONSTRAINT asset_pairs_user_metadata_pair_id_fkey FOREIGN KEY (pair_id) REFERENCES asset_pairs(id)
 );
+
 CREATE TABLE IF NOT EXISTS asset_history (
     id SERIAL NOT NULL,
     pair_id INT NOT NULL,
@@ -80,11 +99,14 @@ CREATE TABLE IF NOT EXISTS asset_history (
     CONSTRAINT asset_history_pk PRIMARY KEY (id),
     CONSTRAINT asset_history_pair_id_fkey FOREIGN KEY (pair_id) REFERENCES asset_pairs(id)
 );
+CREATE INDEX idx_asset_history_pair_date ON asset_history(pair_id, recorded_at DESC) INCLUDE (rate);
+
 CREATE TABLE IF NOT EXISTS user_roles (
     id SERIAL NOT NULL,
     role_name TEXT NOT NULL,
     CONSTRAINT user_roles_pk PRIMARY KEY (id)
 );
+
 CREATE TABLE IF NOT EXISTS users (
     id UUID DEFAULT uuidv7() NOT NULL,
     username TEXT NOT NULL,
@@ -93,12 +115,14 @@ CREATE TABLE IF NOT EXISTS users (
     CONSTRAINT users_username_key UNIQUE (username),
     CONSTRAINT users_default_asset_fkey FOREIGN KEY (default_asset) REFERENCES assets(id)
 );
+
 CREATE TABLE IF NOT EXISTS user_credentials (
     user_id UUID NOT NULL,
     password_hash TEXT NOT NULL,
     CONSTRAINT user_credentials_pk PRIMARY KEY (user_id),
     CONSTRAINT user_credentials_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
 CREATE TABLE IF NOT EXISTS user_role_assignments (
     user_id UUID NOT NULL,
     role_id INT NOT NULL,
@@ -106,8 +130,16 @@ CREATE TABLE IF NOT EXISTS user_role_assignments (
     CONSTRAINT user_role_assignments_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT user_role_assignments_role_id_fkey FOREIGN KEY (role_id) REFERENCES user_roles(id)
 );
+
 ALTER TABLE assets
 ADD CONSTRAINT assets_user_id_fkey FOREIGN KEY (user_id) REFERENCES users (id);
+
+ALTER TABLE transaction_categories
+ADD CONSTRAINT transaction_categories_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+
+ALTER TABLE transaction_category_type
+ADD CONSTRAINT transaction_category_type_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+
 CREATE TABLE IF NOT EXISTS account (
     id UUID DEFAULT uuidv7() NOT NULL,
     user_id UUID NOT NULL,
@@ -115,12 +147,16 @@ CREATE TABLE IF NOT EXISTS account (
     account_type INT NOT NULL,
     liquidity_type INT NOT NULL,
     active bool DEFAULT true NOT NULL,
+    ownership_share DECIMAL NOT NULL DEFAULT 1.0,
     CONSTRAINT account_pk PRIMARY KEY (id),
     CONSTRAINT account_user_id_name_key UNIQUE (user_id, account_name),
     CONSTRAINT account_liquidity_type_fkey FOREIGN KEY (liquidity_type) REFERENCES account_liquidity_types(id),
     CONSTRAINT account_type_fkey FOREIGN KEY (account_type) REFERENCES account_types(id),
-    CONSTRAINT account_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id)
+    CONSTRAINT account_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id),
+    CONSTRAINT account_ownership_share_range CHECK (ownership_share > 0 AND ownership_share <= 1.0)
 );
+CREATE INDEX idx_account_user_id ON account(user_id);
+
 CREATE TABLE IF NOT EXISTS transaction (
     id UUID DEFAULT uuidv7() NOT NULL,
     group_id UUID NULL,
@@ -132,6 +168,9 @@ CREATE TABLE IF NOT EXISTS transaction (
     CONSTRAINT transcation_type_fkey FOREIGN KEY (type_id) REFERENCES transaction_types(id),
     CONSTRAINT transcation_group_id_fkey FOREIGN KEY (group_id) REFERENCES transaction_group(id)
 );
+CREATE INDEX idx_transaction_user_id_date ON transaction(user_id, date_transacted DESC);
+CREATE INDEX idx_transaction_group_id ON transaction(group_id) WHERE group_id IS NOT NULL;
+
 CREATE TABLE IF NOT EXISTS transaction_dividends (
     transaction_id UUID NOT NULL,
     source_asset_id INT NOT NULL,
@@ -139,12 +178,16 @@ CREATE TABLE IF NOT EXISTS transaction_dividends (
     CONSTRAINT transaction_dividends_source_asset_id_fkey FOREIGN KEY (source_asset_id) REFERENCES assets(id),
     CONSTRAINT transaction_dividends_transaction_id_fkey FOREIGN KEY (transaction_id) REFERENCES transaction(id)
 );
+
 CREATE TABLE IF NOT EXISTS transaction_descriptions (
     transaction_id UUID NOT NULL,
     description TEXT NOT NULL,
+    embedding vector(1536),
     CONSTRAINT transaction_descriptions_transaction_id_pkey PRIMARY KEY (transaction_id),
     CONSTRAINT transaction_descriptions_transaction_id_fkey FOREIGN KEY (transaction_id) REFERENCES transaction(id)
 );
+CREATE INDEX idx_td_embedding ON transaction_descriptions USING hnsw (embedding vector_cosine_ops);
+
 CREATE TABLE IF NOT EXISTS entry (
     id SERIAL NOT NULL,
     asset_id INT NOT NULL,
@@ -158,6 +201,9 @@ CREATE TABLE IF NOT EXISTS entry (
     CONSTRAINT entry_transaction__id_fkey FOREIGN KEY (transaction_id) REFERENCES transaction(id),
     CONSTRAINT transaction_category_id_fkey FOREIGN KEY (category_id) REFERENCES transaction_categories(id)
 );
+CREATE INDEX idx_entry_transaction_id ON entry(transaction_id);
+CREATE INDEX idx_entry_account_id ON entry(account_id);
+
 CREATE TABLE IF NOT EXISTS transaction_categories_static_mapping (
     enum_id INT NOT NULL,
     enum_index INT NOT NULL,
@@ -165,3 +211,83 @@ CREATE TABLE IF NOT EXISTS transaction_categories_static_mapping (
     CONSTRAINT transaction_categories_fees_enum_pk PRIMARY KEY (enum_id, enum_index),
     CONSTRAINT transaction_categories_fees_enum_transaction_categories_fk FOREIGN KEY (category_mapping) REFERENCES transaction_categories(id)
 );
+
+CREATE TABLE IF NOT EXISTS external_identity_mappings (
+    id SERIAL NOT NULL,
+    provider TEXT NOT NULL,
+    external_user_id TEXT NOT NULL,
+    user_id UUID NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT external_identity_mappings_pk PRIMARY KEY (id),
+    CONSTRAINT external_identity_mappings_provider_external_id_key UNIQUE (provider, external_user_id),
+    CONSTRAINT external_identity_mappings_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+    id SERIAL NOT NULL,
+    user_id UUID NOT NULL,
+    token_hash TEXT NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT refresh_tokens_pk PRIMARY KEY (id),
+    CONSTRAINT refresh_tokens_token_hash_key UNIQUE (token_hash),
+    CONSTRAINT refresh_tokens_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+
+-- Required application data
+INSERT INTO user_roles (id, role_name)
+VALUES (1, 'User'),
+    (2, 'Admin');
+
+INSERT INTO transaction_category_type (id, category_type_name)
+VALUES (1, 'Income'),
+    (2, 'Expense'),
+    (3, 'Investments'),
+    (4, 'Fees');
+
+INSERT INTO transaction_categories (id, category, icon, category_type)
+VALUES (1, 'Exchange Fees', 'money_off', 4),
+    (2, 'Transaction Fees', 'money_off', 4),
+    (3, 'Asset Purchase', 'money_off', 3),
+    (4, 'Asset Sale', 'money_off', 3),
+    (5, 'Cash Transfer In', 'money_off', 3),
+    (6, 'Cash Dividend', 'money_off', 3),
+    (7, 'Asset Dividend', 'money_off', 3),
+    (8, 'Withholding Tax', 'money_off', 4),
+    (9, 'Cash Transfer Out', 'money_off', 3),
+    (10, 'Asset Transfer Out', 'money_off', 3),
+    (11, 'Asset Transfer In', 'money_off', 3),
+    (12, 'Asset Trade', 'money_off', 3),
+    (13, 'Asset Balance Transfer', 'money_off', 3),
+    (14, 'Account Fees', 'money_off', 4);
+
+INSERT INTO transaction_categories_static_mapping (enum_id, enum_index, category_mapping)
+VALUES (1, 1, 2),
+    (1, 2, 1),
+    (1, 3, 8),
+    (2, 1, 3),
+    (2, 2, 4),
+    (2, 3, 5),
+    (2, 4, 6),
+    (2, 5, 7),
+    (2, 6, 9),
+    (2, 7, 10),
+    (2, 8, 11),
+    (2, 9, 12),
+    (2, 10, 13),
+    (2, 11, 14);
+
+INSERT INTO transaction_types (id, transaction_type_name)
+VALUES (1, 'Regular'),
+    (2, 'Cash Transfer Out'),
+    (3, 'Cash Transfer In'),
+    (4, 'Cash Dividend'),
+    (5, 'Asset Transfer Out'),
+    (6, 'Asset Transfer In'),
+    (7, 'Asset Trade'),
+    (8, 'Asset Sale'),
+    (9, 'Asset Purchase'),
+    (10, 'Asset Dividend'),
+    (11, 'Asset Balance Transfer'),
+    (12, 'Account Fees');

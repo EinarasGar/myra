@@ -145,6 +145,7 @@ dependencies = [
  "axum-extra",
  "business",
  "color-eyre",
+ "dal",
  "dotenvy",
  "futures",
  "itertools",

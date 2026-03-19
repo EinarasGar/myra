@@ -1,4 +1,4 @@
-# Myra Personal Finance API
+# Sverto Personal Finance API
 
 A comprehensive REST API for personal finance management, enabling users to track investments, expenses, transactions, and monitor net worth over time.
 

@@ -53,7 +53,7 @@ where
         let user_id = paths
             .get("user_id")
             .and_then(|id| Uuid::parse_str(id).ok())
-            .unwrap_or_else(|| Uuid::parse_str("2396480f-0052-4cf0-81dc-8cedbde5ce13").unwrap());
+            .unwrap_or_else(|| Uuid::nil());
         Ok(Self(AuthenticatedUser {
             user_id,
             role: None,

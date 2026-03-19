@@ -6,7 +6,10 @@ import tailwindcss from "@tailwindcss/vite";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, path.resolve(__dirname, ".."), "");
+  const env = {
+    ...loadEnv(mode, path.resolve(__dirname, ".."), ""),
+    ...process.env,
+  };
   return {
     plugins: [
       tailwindcss(),

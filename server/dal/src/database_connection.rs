@@ -32,4 +32,33 @@ impl MyraDbConnection {
 
         Ok(Self { pool })
     }
+
+    pub async fn run_migrations(&self) -> anyhow::Result<()> {
+        let mut migrator = sqlx::migrate!("../../database/migrations");
+        let pending = migrator.iter().len();
+        tracing::info!("Running schema migrations ({pending} registered)...");
+        migrator.set_ignore_missing(true).run(&self.pool).await?;
+        tracing::info!("Schema migrations complete.");
+        Ok(())
+    }
+
+    pub async fn run_sample_seed(&self) -> anyhow::Result<()> {
+        tracing::info!("Running sample seed migrations...");
+        sqlx::migrate!("../../database/seed/sample")
+            .set_ignore_missing(true)
+            .run(&self.pool)
+            .await?;
+        tracing::info!("Sample seed migrations complete.");
+        Ok(())
+    }
+
+    pub async fn run_noauth_seed(&self) -> anyhow::Result<()> {
+        tracing::info!("Running noauth seed migrations...");
+        sqlx::migrate!("../../database/seed/noauth")
+            .set_ignore_missing(true)
+            .run(&self.pool)
+            .await?;
+        tracing::info!("Noauth seed migrations complete.");
+        Ok(())
+    }
 }

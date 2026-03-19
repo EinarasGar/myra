@@ -32,7 +32,7 @@ mod modifiers;
 #[derive(OpenApi)]
 #[openapi(
     info(
-        title = "Myra Personal Finance API",
+        title = "Sverto Personal Finance API",
         description = "A comprehensive personal finance management API for tracking investments, expenses, and net worth over time. Features include transaction management, portfolio tracking, asset management, and detailed financial reporting.",
         version = "1.0.0",
         contact(
@@ -134,7 +134,7 @@ mod modifiers;
     ),
     tags(
         (
-            name = "Myra Personal Finance API",
+            name = "Sverto Personal Finance API",
             description = include_str!("openapi/overview.md")
         )
     )

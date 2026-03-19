@@ -138,7 +138,7 @@ status: ## Show service ports, status, and useful links
 .PHONY: run-backend
 run-backend: ## Start API server (kills existing process on SERVER_PORT first)
 	-@lsof -ti :$(SERVER_PORT) | xargs kill -9 2>/dev/null || true
-	cd server && cargo run -p api --no-default-features --features $(AUTH_PROVIDER),color-sql
+	cd server && cargo run -p api --no-default-features --features $(AUTH_PROVIDER),color-sql,seed
 
 .PHONY: run-ui
 run-ui: ## Start Vite dev server (kills existing process on VITE_PORT first)
@@ -166,7 +166,7 @@ export-db: ## Export database data to db_dump.sql
 import-db: ## Import database data from db_dump.sql (truncates existing data first)
 	@echo "$(YELLOW)Truncating existing data...$(NC)"
 	@PGPASSWORD=$(POSTGRES_PASSWORD) psql -h localhost -p $(POSTGRES_PORT) -U $(POSTGRES_USER) -d $(POSTGRES_DB) -c \
-		"DO \$$\$$ DECLARE r RECORD; BEGIN FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename NOT LIKE 'flyway_%') LOOP EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE'; END LOOP; END \$$\$$;"
+		"DO \$$\$$ DECLARE r RECORD; BEGIN FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename NOT LIKE '_sqlx_%') LOOP EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE'; END LOOP; END \$$\$$;"
 	@echo "$(GREEN)Importing database data...$(NC)"
 	@PGPASSWORD=$(POSTGRES_PASSWORD) psql -h localhost -p $(POSTGRES_PORT) -U $(POSTGRES_USER) -d $(POSTGRES_DB) < db_dump.sql
 	@echo "$(GREEN)Database data imported from db_dump.sql$(NC)"

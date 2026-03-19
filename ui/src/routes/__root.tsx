@@ -1,4 +1,5 @@
 import { AuthContext } from "@/hooks/use-auth";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
 
 interface MyRouterContext {
@@ -6,6 +7,11 @@ interface MyRouterContext {
   auth: AuthContext;
 }
 
+function RootComponent() {
+  useDocumentTitle();
+  return <Outlet />;
+}
+
 export const Route = createRootRouteWithContext<MyRouterContext>()({
-  component: () => <Outlet />,
+  component: RootComponent,
 });

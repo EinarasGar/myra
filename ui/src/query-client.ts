@@ -3,7 +3,7 @@ import axios from "axios";
 
 export const queryClient = new QueryClient();
 
-axios.defaults.baseURL = "/";
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || "/";
 
 // Debug: add 500ms delay to all API calls
 // axios.interceptors.request.use(

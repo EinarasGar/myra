@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 business = { path = "../business", default-features = false }
+dal = { path = "../dal" }
 macros = {path="../macros"}
 axum = { version = "0.8.8", features = ["query", "macros"] }
 serde = "1.0.228"
@@ -46,8 +47,9 @@ futures = "0.3"
 async-stream = "0.3"
 
 [features]
-default = ["color-sql", "noauth"]
+default = ["color-sql", "noauth", "seed"]
 color-sql = ["dep:syntect"]
+seed = []
 database = ["business/database"]
 clerk = ["dep:reqwest", "business/clerk"]
 noauth = ["business/noauth"]

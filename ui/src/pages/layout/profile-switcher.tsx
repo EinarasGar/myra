@@ -25,33 +25,22 @@ export function ProfileSwitcher({
               size="icon-sm"
               render={<span />}
               nativeButton={false}
-              className="size-8"
+              className="size-8 shadow-sm"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
-                <rect width="256" height="256" fill="none"></rect>
-                <line
-                  x1="208"
-                  y1="128"
-                  x2="128"
-                  y2="208"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="32"
-                ></line>
-                <line
-                  x1="192"
-                  y1="40"
-                  x2="40"
-                  y2="192"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="32"
-                ></line>
-              </svg>
+              <span
+                aria-hidden="true"
+                className="block size-4 bg-current"
+                style={{
+                  WebkitMaskImage: "url(/sverto.svg)",
+                  maskImage: "url(/sverto.svg)",
+                  WebkitMaskPosition: "center",
+                  maskPosition: "center",
+                  WebkitMaskRepeat: "no-repeat",
+                  maskRepeat: "no-repeat",
+                  WebkitMaskSize: "contain",
+                  maskSize: "contain",
+                }}
+              />
             </Button>
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-medium">{name}</span>

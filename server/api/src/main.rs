@@ -34,6 +34,20 @@ async fn main() -> Result<()> {
     //Initialize logging and OpenTelemetry
     observability::initialize_tracing_subscriber();
 
+    // Run database migrations and feature-gated seed data
+    {
+        let db = dal::database_connection::MyraDbConnection::new()
+            .await
+            .unwrap();
+        db.run_migrations().await.unwrap();
+
+        #[cfg(feature = "seed")]
+        db.run_sample_seed().await.unwrap();
+
+        #[cfg(feature = "noauth")]
+        db.run_noauth_seed().await.unwrap();
+    }
+
     //Load all dynamic enums
     StartupLoader::load_all().await.unwrap();
 
@@ -51,7 +65,7 @@ async fn main() -> Result<()> {
         .parse::<u16>()
         .unwrap_or(5000);
 
-    let bind_address = format!("127.0.0.1:{}", port);
+    let bind_address = format!("0.0.0.0:{}", port);
     let listener = tokio::net::TcpListener::bind(&bind_address).await.unwrap();
     info!("Starting web server on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();

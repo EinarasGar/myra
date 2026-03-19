@@ -10,19 +10,6 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
-  flyway:
-    image: flyway/flyway:latest
-    environment:
-      - FLYWAY_URL=jdbc:postgresql://database/${POSTGRES_DB}
-      - FLYWAY_SCHEMAS=public
-      - FLYWAY_USER=${POSTGRES_USER}
-      - FLYWAY_PASSWORD=${POSTGRES_PASSWORD}
-      - FLYWAY_CONNECT_RETRIES=5
-    command: migrate
-    volumes:
-      - ./database:/flyway/sql
-    depends_on:
-      - database
   jaeger:
     image: jaegertracing/all-in-one:1.75.0
     environment:
