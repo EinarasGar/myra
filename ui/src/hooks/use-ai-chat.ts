@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useCallback, useRef, useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
 
 export type MessagePart =
   | { type: "text"; content: string }
@@ -35,6 +36,7 @@ export default function useAiChat(userId: string): UseAiChatReturn {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const { getAccessToken } = useAuth();
 
   const sendMessage = useCallback(
     async (message: string) => {
@@ -54,10 +56,16 @@ export default function useAiChat(userId: string): UseAiChatReturn {
       abortRef.current = controller;
 
       try {
-        const url = new URL(`/api/users/${userId}/ai/chat`, axios.defaults.baseURL || window.location.origin).toString();
+        const base = axios.defaults.baseURL?.startsWith("http") ? axios.defaults.baseURL : window.location.origin;
+        const url = new URL(`/api/users/${userId}/ai/chat`, base).toString();
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        const token = await getAccessToken();
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
         const response = await fetch(url, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          headers,
           body: JSON.stringify({
             message,
             history: newMessages.map((m) => ({
@@ -217,7 +225,7 @@ export default function useAiChat(userId: string): UseAiChatReturn {
         abortRef.current = null;
       }
     },
-    [messages, userId, isStreaming],
+    [messages, userId, isStreaming, getAccessToken],
   );
 
   const clearMessages = useCallback(() => {

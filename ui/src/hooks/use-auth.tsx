@@ -18,6 +18,7 @@ export interface AuthContext {
   isLoading: boolean;
   login: (token: string) => Promise<void>;
   logout: () => Promise<void>;
+  getAccessToken: () => Promise<string | null>;
   userId: string | null;
   userProfile: UserProfile;
 }

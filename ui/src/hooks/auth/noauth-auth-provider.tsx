@@ -26,6 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     userProfile,
     login: async () => {},
     logout: async () => {},
+    getAccessToken: async () => null,
   };
 
   return (

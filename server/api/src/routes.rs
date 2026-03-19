@@ -82,8 +82,6 @@ pub(crate) fn create_router(state: AppState) -> Router {
 }
 
 fn build_cors_layer() -> CorsLayer {
-    let allowed_origin = std::env::var("CORS_ORIGIN").ok();
-
     let cors = CorsLayer::new()
         .allow_methods([
             Method::GET,
@@ -92,15 +90,16 @@ fn build_cors_layer() -> CorsLayer {
             Method::DELETE,
             Method::OPTIONS,
         ])
-        .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION, header::COOKIE])
-        .allow_credentials(true);
+        .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION, header::COOKIE]);
 
-    match allowed_origin {
-        Some(origin) => cors.allow_origin(
-            origin
-                .parse::<HeaderValue>()
-                .expect("Invalid CORS_ORIGIN value"),
-        ),
+    match std::env::var("CORS_ORIGIN").ok() {
+        Some(origin) => cors
+            .allow_origin(
+                origin
+                    .parse::<HeaderValue>()
+                    .expect("Invalid CORS_ORIGIN value"),
+            )
+            .allow_credentials(true),
         None => cors.allow_origin(tower_http::cors::Any),
     }
 }

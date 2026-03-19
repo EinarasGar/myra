@@ -83,6 +83,7 @@ function ClerkAuthBridge({ children }: { children: React.ReactNode }) {
       // Interceptor cleanup and query removal happen in the effect
       // when isSignedIn transitions to false
     },
+    getAccessToken: async () => getToken(),
   };
 
   return (

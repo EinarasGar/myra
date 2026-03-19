@@ -127,6 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         userId,
         login,
         logout,
+        getAccessToken: async () => getStoredUser(),
         userProfile,
       }}
     >

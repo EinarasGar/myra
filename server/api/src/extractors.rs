@@ -7,8 +7,7 @@ use serde::de::DeserializeOwned;
 
 use crate::errors::{ApiError, FieldError};
 
-const DESER_PREFIX: &str =
-    "Failed to deserialize the JSON body into the target type: ";
+const DESER_PREFIX: &str = "Failed to deserialize the JSON body into the target type: ";
 
 fn parse_field_error(body_text: &str) -> FieldError {
     if let Some(rest) = body_text.strip_prefix(DESER_PREFIX) {
@@ -126,7 +125,8 @@ mod tests {
 
     #[test]
     fn test_parse_malformed_json_fallback() {
-        let input = "Failed to parse the request body as JSON: key must be a string at line 1 column 2";
+        let input =
+            "Failed to parse the request body as JSON: key must be a string at line 1 column 2";
         let error = parse_field_error(input);
         assert_eq!(error.field, "body");
         assert_eq!(error.message, input);
