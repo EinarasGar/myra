@@ -25,6 +25,7 @@ pub enum AssetsIden {
     Ticker,
     BasePairId,
     UserId,
+    Embedding,
 }
 
 #[allow(dead_code)]
@@ -106,6 +107,7 @@ impl Iden for AssetsIden {
             Self::Ticker => "ticker",
             Self::BasePairId => "base_pair_id",
             Self::UserId => "user_id",
+            Self::Embedding => "embedding",
         }
     }
 }

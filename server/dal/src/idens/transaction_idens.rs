@@ -17,6 +17,7 @@ pub enum TransactionCategoriesIden {
     Icon,
     CategoryType,
     UserId,
+    Embedding,
 }
 
 #[allow(dead_code)]
@@ -92,6 +93,7 @@ impl Iden for TransactionCategoriesIden {
             Self::Icon => "icon",
             Self::CategoryType => "category_type",
             Self::UserId => "user_id",
+            Self::Embedding => "embedding",
         }
     }
 }

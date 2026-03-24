@@ -9,6 +9,7 @@ use dal::query_params::get_categories_params::GetCategoriesParams;
 use itertools::Itertools;
 use uuid::Uuid;
 
+use super::ai_embedding_service::AiEmbeddingService;
 use super::category_validation_service::CategoryValidationService;
 use crate::dtos::{
     categories::{CategoryDto, CategoryError, CreateCategoryDto, UpdateCategoryDto},
@@ -18,12 +19,14 @@ use crate::dtos::{
 pub struct CategoryService {
     db: MyraDb,
     validation_service: CategoryValidationService,
+    embedding_service: AiEmbeddingService,
 }
 
 impl CategoryService {
     pub fn new(db: MyraDb) -> Self {
         Self {
             validation_service: CategoryValidationService::new(db.clone()),
+            embedding_service: AiEmbeddingService::new(db.clone()),
             db,
         }
     }
@@ -138,7 +141,14 @@ impl CategoryService {
             .await
             .context("Failed to create category")?;
 
-        self.get_category(created_id, user_id).await
+        let category = self.get_category(created_id, user_id).await?;
+        let embed_text = format!(
+            "Category: {} | Type: {}",
+            category.category, category.category_type_name
+        );
+        self.embedding_service
+            .spawn_embed_category(created_id, embed_text);
+        Ok(category)
     }
 
     pub async fn update_category(
@@ -165,14 +175,27 @@ impl CategoryService {
 
         // TODO: Validate icon when icon whitelist is available
 
+        let name_or_type_changed = request.category != existing.category
+            || request.category_type != existing.category_type;
+
         let update_query = category_queries::update_category(category_id, user_id, request.into());
         self.db
             .execute(update_query)
             .await
             .context("Failed to update category")?;
 
-        // Return updated category
-        self.get_category(category_id, user_id).await
+        let category = self.get_category(category_id, user_id).await?;
+
+        if name_or_type_changed {
+            let embed_text = format!(
+                "Category: {} | Type: {}",
+                category.category, category.category_type_name
+            );
+            self.embedding_service
+                .spawn_embed_category(category_id, embed_text);
+        }
+
+        Ok(category)
     }
 
     pub async fn delete_category(&self, category_id: i32, user_id: Uuid) -> anyhow::Result<()> {

@@ -4,7 +4,8 @@ mod asset_update;
 use asset_update::update_assets;
 
 use business::service_collection::{
-    asset_rates_service::AssetRatesService, asset_service::AssetsService, Services,
+    ai_embedding_service::AiEmbeddingService, asset_rates_service::AssetRatesService,
+    asset_service::AssetsService, Services,
 };
 use clap::{Parser, Subcommand};
 use tokio::sync::OnceCell;
@@ -51,6 +52,7 @@ enum Commands {
 
 static ASSET_SERVICE: OnceCell<AssetsService> = OnceCell::const_new();
 static ASSET_RATES_SERVICE: OnceCell<AssetRatesService> = OnceCell::const_new();
+static EMBEDDING_SERVICE: OnceCell<AiEmbeddingService> = OnceCell::const_new();
 
 fn assets_service() -> &'static AssetsService {
     ASSET_SERVICE.get().unwrap()
@@ -58,6 +60,10 @@ fn assets_service() -> &'static AssetsService {
 
 fn asset_rates_service() -> &'static AssetRatesService {
     ASSET_RATES_SERVICE.get().unwrap()
+}
+
+fn embedding_service() -> &'static AiEmbeddingService {
+    EMBEDDING_SERVICE.get().unwrap()
 }
 
 #[tokio::main]
@@ -77,7 +83,14 @@ async fn main() {
         .set(AssetRatesService::new(services.get_db_instance()))
         .is_err()
     {
-        eprintln!("Failed to set ASSET_SERVICE");
+        eprintln!("Failed to set ASSET_RATES_SERVICE");
+        return;
+    }
+    if EMBEDDING_SERVICE
+        .set(AiEmbeddingService::new(services.get_db_instance()))
+        .is_err()
+    {
+        eprintln!("Failed to set EMBEDDING_SERVICE");
         return;
     }
 

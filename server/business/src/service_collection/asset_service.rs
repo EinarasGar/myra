@@ -18,6 +18,8 @@ use dal::database_context::MyraDb;
 use mockall::automock;
 use uuid::Uuid;
 
+use super::ai_embedding_service::AiEmbeddingService;
+
 use crate::dtos::{
     self,
     add_custom_asset_dto::AddCustomAssetDto,
@@ -37,12 +39,16 @@ use crate::dtos::{
 
 pub struct AssetsService {
     db: MyraDb,
+    embedding_service: AiEmbeddingService,
 }
 
 #[automock]
 impl AssetsService {
     pub fn new(db: MyraDb) -> Self {
-        Self { db }
+        Self {
+            embedding_service: AiEmbeddingService::new(db.clone()),
+            db,
+        }
     }
 
     #[tracing::instrument(skip_all, err)]
@@ -217,22 +223,20 @@ impl AssetsService {
     pub async fn add_asset(&self, rate: AssetInsertDto) -> anyhow::Result<InsertAssetResultDto> {
         self.db.start_transaction().await?;
         let asset_id = self.insert_asset(rate.clone()).await?;
-        if let Some(base_pair_id) = rate.base_pair_id {
+        let new_asset_pair_id = if let Some(base_pair_id) = rate.base_pair_id {
             let pair = AssetPairInsertDto {
                 pair1: asset_id,
                 pair2: base_pair_id,
             };
-            let asset_pair_id = self.insert_asset_pair(pair).await?;
-            self.db.commit_transaction().await?;
-            return Ok(InsertAssetResultDto {
-                new_asset_id: asset_id,
-                new_asset_pair_id: Some(asset_pair_id),
-            });
-        }
+            Some(self.insert_asset_pair(pair).await?)
+        } else {
+            None
+        };
         self.db.commit_transaction().await?;
+
         Ok(InsertAssetResultDto {
             new_asset_id: asset_id,
-            new_asset_pair_id: None,
+            new_asset_pair_id,
         })
     }
 
@@ -262,6 +266,10 @@ impl AssetsService {
         let ret = self.get_asset(asset_id).await?;
 
         self.db.commit_transaction().await?;
+
+        let embed_text = format!("Asset: {} | Ticker: {}", asset_dto.name, asset_dto.ticker);
+        self.embedding_service
+            .spawn_embed_asset(asset_id, embed_text);
 
         Ok(ret)
     }
@@ -325,6 +333,12 @@ impl AssetsService {
 
     #[tracing::instrument(skip_all, err)]
     pub async fn update_asset(&self, dto: UpdateAssetDto) -> anyhow::Result<()> {
+        let existing = self.get_asset(dto.asset_id).await?;
+        let name_or_ticker_changed = existing.name != dto.name || existing.ticker != dto.ticker;
+
+        let name = dto.name.clone();
+        let ticker = dto.ticker.clone();
+        let asset_id = dto.asset_id;
         let query = asset_queries::update_asset(
             dto.asset_id,
             dto.name,
@@ -334,6 +348,13 @@ impl AssetsService {
             dto.user_id,
         );
         self.db.execute(query).await?;
+
+        if name_or_ticker_changed {
+            let embed_text = format!("Asset: {} | Ticker: {}", name, ticker);
+            self.embedding_service
+                .spawn_embed_asset(asset_id, embed_text);
+        }
+
         Ok(())
     }
 

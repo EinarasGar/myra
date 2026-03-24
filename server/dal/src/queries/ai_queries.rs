@@ -8,7 +8,7 @@ use crate::idens::account_idens::{AccountIden, AccountLiquidityTypesIden, Accoun
 use crate::idens::asset_idens::AssetsIden;
 use crate::idens::entries_idens::EntryIden;
 use crate::idens::transaction_idens::{
-    TransactionDescriptionsIden, TransactionGroupIden, TransactionIden,
+    TransactionCategoriesIden, TransactionDescriptionsIden, TransactionGroupIden, TransactionIden,
 };
 use crate::query_params::ai_search_params::{
     AggregateTransactionsParams, ListAccountsParams, SearchTransactionsParams,
@@ -395,6 +395,29 @@ pub fn update_transaction_group_embedding(group_id: Uuid, embedding: Vector) -> 
             sea_query::Value::from(embedding),
         )
         .and_where(Expr::col(TransactionGroupIden::TransactionGroupId).eq(group_id))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn update_asset_embedding(asset_id: i32, embedding: Vector) -> DbQueryWithValues {
+    Query::update()
+        .table(AssetsIden::Table)
+        .value(AssetsIden::Embedding, sea_query::Value::from(embedding))
+        .and_where(Expr::col(AssetsIden::Id).eq(asset_id))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn update_category_embedding(category_id: i32, embedding: Vector) -> DbQueryWithValues {
+    Query::update()
+        .table(TransactionCategoriesIden::Table)
+        .value(
+            TransactionCategoriesIden::Embedding,
+            sea_query::Value::from(embedding),
+        )
+        .and_where(Expr::col(TransactionCategoriesIden::Id).eq(category_id))
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }
