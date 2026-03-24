@@ -1,16 +1,3 @@
-INSERT INTO transaction_categories (id, category, icon, category_type)
-VALUES (15, 'Income', 'attach_money', 1),
-    (16, 'Investment', 'trending_up', 3),
-    (17, 'Fees', 'money_off', 4),
-    (18, 'Transport', 'directions_transit', 2),
-    (19, 'Entertainment', 'movie', 2),
-    (20, 'Bills', 'money_off', 2),
-    (21, 'Fast Food', 'fastfood', 2),
-    (22, 'Parking', 'parking', 2),
-    (23, 'Groceries', 'shopping_cart', 2),
-    (24, 'Fuel', 'local_gas_station', 2)
-;
-
 INSERT INTO asset_types (id, asset_type_name)
 VALUES (1, 'Currencies'),
     (2, 'Stocks'),
