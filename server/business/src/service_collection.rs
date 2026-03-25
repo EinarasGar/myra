@@ -6,6 +6,7 @@ use dal::noop_file_provider::NoOpFileProvider;
 use dal::s3_file_provider::S3FileProvider;
 use std::sync::Arc;
 pub mod accounts_service;
+pub mod ai_action_service;
 pub mod ai_chat_service;
 pub mod ai_data_service;
 pub mod ai_embedding_service;

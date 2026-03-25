@@ -30,4 +30,13 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    files: [
+      'src/components/ai-elements/**/*.{ts,tsx}',
+      'src/components/ui/**/*.{ts,tsx}',
+    ],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 )

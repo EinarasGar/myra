@@ -53,8 +53,7 @@ axios.interceptors.response.use(
         .then((res) => {
           const newToken = res.data.token;
           setStoredUser(newToken);
-          axios.defaults.headers.common["Authorization"] =
-            `Bearer ${newToken}`;
+          axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
           return newToken;
         })
         .catch((err) => {

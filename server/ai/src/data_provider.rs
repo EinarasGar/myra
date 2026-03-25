@@ -3,6 +3,7 @@ use uuid::Uuid;
 
 use crate::models::account::AccountResult;
 use crate::models::aggregate::{AggregateGroupResult, AggregateParams};
+use crate::models::reference::{AssetResult, CategoryResult};
 use crate::models::search::{SearchParams, TransactionSearchResult};
 
 pub trait AiDataProvider: Send + Sync + 'static {
@@ -34,4 +35,17 @@ pub trait AiDataProvider: Send + Sync + 'static {
         &self,
         user_id: Uuid,
     ) -> impl std::future::Future<Output = Result<Vec<AccountResult>>> + Send;
+
+    fn search_categories(
+        &self,
+        user_id: Uuid,
+        query_vector: Option<Vec<f64>>,
+    ) -> impl std::future::Future<Output = Result<Vec<CategoryResult>>> + Send;
+
+    fn search_assets(
+        &self,
+        user_id: Uuid,
+        query: Option<&str>,
+        query_vector: Option<Vec<f64>>,
+    ) -> impl std::future::Future<Output = Result<Vec<AssetResult>>> + Send;
 }

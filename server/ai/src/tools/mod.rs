@@ -1,5 +1,10 @@
-pub mod account_tools;
-pub mod transaction_tools;
+pub mod aggregate_transactions;
+pub mod create_transaction;
+pub mod create_transaction_group;
+pub mod list_accounts;
+pub mod search_assets;
+pub mod search_categories;
+pub mod search_transactions;
 
 use std::fmt;
 

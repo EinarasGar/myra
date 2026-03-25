@@ -5,13 +5,15 @@ use sea_query_sqlx::SqlxBinder;
 use uuid::Uuid;
 
 use crate::idens::account_idens::{AccountIden, AccountLiquidityTypesIden, AccountTypesIden};
-use crate::idens::asset_idens::AssetsIden;
+use crate::idens::asset_idens::{AssetTypesIden, AssetsIden};
 use crate::idens::entries_idens::EntryIden;
 use crate::idens::transaction_idens::{
-    TransactionCategoriesIden, TransactionDescriptionsIden, TransactionGroupIden, TransactionIden,
+    TransactionCategoriesIden, TransactionCategoryTypeIden, TransactionDescriptionsIden,
+    TransactionGroupIden, TransactionIden,
 };
 use crate::query_params::ai_search_params::{
-    AggregateTransactionsParams, ListAccountsParams, SearchTransactionsParams,
+    AggregateTransactionsParams, ListAccountsParams, SearchAssetsParams, SearchCategoriesParams,
+    SearchTransactionsParams,
 };
 
 use super::{escape_ilike_pattern, DbQueryWithValues};
@@ -420,4 +422,125 @@ pub fn update_category_embedding(category_id: i32, embedding: Vector) -> DbQuery
         .and_where(Expr::col(TransactionCategoriesIden::Id).eq(category_id))
         .build_sqlx(PostgresQueryBuilder)
         .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn search_categories(params: &SearchCategoriesParams) -> DbQueryWithValues {
+    let mut query = Query::select();
+    query
+        .column((
+            TransactionCategoriesIden::Table,
+            TransactionCategoriesIden::Id,
+        ))
+        .column((
+            TransactionCategoriesIden::Table,
+            TransactionCategoriesIden::Category,
+        ))
+        .expr_as(
+            Expr::col((
+                TransactionCategoryTypeIden::Table,
+                TransactionCategoryTypeIden::CategoryTypeName,
+            )),
+            Alias::new("category_type"),
+        )
+        .column((
+            TransactionCategoriesIden::Table,
+            TransactionCategoriesIden::Icon,
+        ))
+        .from(TransactionCategoriesIden::Table)
+        .inner_join(
+            TransactionCategoryTypeIden::Table,
+            Expr::col((
+                TransactionCategoryTypeIden::Table,
+                TransactionCategoryTypeIden::Id,
+            ))
+            .equals((
+                TransactionCategoriesIden::Table,
+                TransactionCategoriesIden::CategoryType,
+            )),
+        )
+        .and_where(
+            Expr::col((
+                TransactionCategoriesIden::Table,
+                TransactionCategoriesIden::UserId,
+            ))
+            .eq(params.user_id)
+            .or(Expr::col((
+                TransactionCategoriesIden::Table,
+                TransactionCategoriesIden::UserId,
+            ))
+            .is_null()),
+        );
+
+    if let Some(ref embedding) = params.embedding {
+        query.order_by_expr(
+            Expr::col((
+                TransactionCategoriesIden::Table,
+                TransactionCategoriesIden::Embedding,
+            ))
+            .binary(PgBinOper::CosineDistance, Expr::val(embedding.clone())),
+            Order::Asc,
+        );
+    } else {
+        query.order_by(
+            (
+                TransactionCategoriesIden::Table,
+                TransactionCategoriesIden::Category,
+            ),
+            Order::Asc,
+        );
+    }
+
+    if let Some(limit) = params.limit {
+        query.limit(limit as u64);
+    }
+
+    query.build_sqlx(PostgresQueryBuilder).into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn search_assets(params: &SearchAssetsParams) -> DbQueryWithValues {
+    let mut query = Query::select();
+    query
+        .column((AssetsIden::Table, AssetsIden::Id))
+        .column((AssetsIden::Table, AssetsIden::AssetName))
+        .column((AssetsIden::Table, AssetsIden::Ticker))
+        .expr_as(
+            Expr::col((AssetTypesIden::Table, AssetTypesIden::AssetTypeName)),
+            Alias::new("asset_type"),
+        )
+        .from(AssetsIden::Table)
+        .inner_join(
+            AssetTypesIden::Table,
+            Expr::col((AssetTypesIden::Table, AssetTypesIden::Id))
+                .equals((AssetsIden::Table, AssetsIden::AssetType)),
+        )
+        .and_where(
+            Expr::col((AssetsIden::Table, AssetsIden::UserId))
+                .eq(params.user_id)
+                .or(Expr::col((AssetsIden::Table, AssetsIden::UserId)).is_null()),
+        );
+
+    if let Some(ref q) = params.query {
+        let pattern = escape_ilike_pattern(q);
+        query.and_where(
+            Expr::col((AssetsIden::Table, AssetsIden::AssetName))
+                .ilike(&pattern)
+                .or(Expr::col((AssetsIden::Table, AssetsIden::Ticker)).ilike(&pattern)),
+        );
+    }
+
+    if let Some(ref embedding) = params.embedding {
+        query.order_by_expr(
+            Expr::col((AssetsIden::Table, AssetsIden::Embedding))
+                .binary(PgBinOper::CosineDistance, Expr::val(embedding.clone())),
+            Order::Asc,
+        );
+    } else {
+        query.order_by((AssetsIden::Table, AssetsIden::AssetName), Order::Asc);
+    }
+
+    query.limit(params.limit.unwrap_or(100) as u64);
+
+    query.build_sqlx(PostgresQueryBuilder).into()
 }

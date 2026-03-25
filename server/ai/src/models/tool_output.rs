@@ -47,3 +47,42 @@ pub struct AggregateGroup {
     pub total_amount: Decimal,
     pub transaction_count: i64,
 }
+
+#[derive(Deserialize)]
+pub struct SearchCategoriesArgs {
+    pub query: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct SearchAssetsArgs {
+    pub query: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct CreateTransactionArgs {
+    pub date: String,
+    pub description: String,
+    #[serde(with = "rust_decimal::serde::arbitrary_precision")]
+    pub amount: Decimal,
+    pub account_id: String,
+    pub category_id: i32,
+    pub asset_id: i32,
+}
+
+#[derive(Deserialize)]
+pub struct TransactionEntryArg {
+    #[serde(with = "rust_decimal::serde::arbitrary_precision")]
+    pub amount: Decimal,
+    pub account_id: String,
+    pub asset_id: i32,
+    pub description: Option<String>,
+    pub category_id: Option<i32>,
+}
+
+#[derive(Deserialize)]
+pub struct CreateTransactionGroupArgs {
+    pub date: String,
+    pub description: String,
+    pub category_id: i32,
+    pub entries: Vec<TransactionEntryArg>,
+}

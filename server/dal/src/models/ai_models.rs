@@ -20,3 +20,19 @@ pub struct AiAccountModel {
     pub liquidity_type: String,
     pub active: bool,
 }
+
+#[derive(sqlx::FromRow, Debug)]
+pub struct AiCategoryModel {
+    pub id: i32,
+    pub category: String,
+    pub category_type: String,
+    pub icon: Option<String>,
+}
+
+#[derive(sqlx::FromRow, Debug)]
+pub struct AiAssetModel {
+    pub id: i32,
+    pub asset_name: String,
+    pub ticker: Option<String>,
+    pub asset_type: String,
+}

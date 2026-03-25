@@ -77,6 +77,6 @@ async fn embed_and_store(
     let vector = Vector::from(vec.iter().map(|&x| x as f32).collect::<Vec<f32>>());
     let query = query_fn(vector);
     db.execute(query).await?;
-    tracing::info!("Stored embedding for: {}", text);
+    tracing::info!("Stored embedding ({} chars)", text.len());
     Ok(())
 }

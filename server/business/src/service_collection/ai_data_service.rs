@@ -1,10 +1,11 @@
 use ai::data_provider::AiDataProvider;
 use ai::models::account::AccountResult;
 use ai::models::aggregate::{AggregateGroupResult, AggregateParams};
+use ai::models::reference::{AssetResult, CategoryResult};
 use ai::models::search::{SearchParams, TransactionSearchResult};
 use anyhow::Result;
 use dal::database_context::MyraDb;
-use dal::models::ai_models::AiTransactionSearchModel;
+use dal::models::ai_models::{AiAssetModel, AiCategoryModel, AiTransactionSearchModel};
 use dal::queries::ai_queries;
 use dal::query_params::ai_search_params;
 use pgvector::Vector;
@@ -97,6 +98,46 @@ impl AiDataProvider for AiDataService {
             })
             .collect())
     }
+
+    async fn search_categories(
+        &self,
+        user_id: Uuid,
+        query_vector: Option<Vec<f64>>,
+    ) -> Result<Vec<CategoryResult>> {
+        let embedding =
+            query_vector.map(|qv| Vector::from(qv.iter().map(|&x| x as f32).collect::<Vec<f32>>()));
+        let params = ai_search_params::SearchCategoriesParams {
+            user_id,
+            limit: embedding.as_ref().map(|_| 20_i64),
+            embedding,
+        };
+        let rows = self
+            .db
+            .fetch_all::<AiCategoryModel>(ai_queries::search_categories(&params))
+            .await?;
+        Ok(rows.into_iter().map(to_category_result).collect())
+    }
+
+    async fn search_assets(
+        &self,
+        user_id: Uuid,
+        query: Option<&str>,
+        query_vector: Option<Vec<f64>>,
+    ) -> Result<Vec<AssetResult>> {
+        let embedding =
+            query_vector.map(|qv| Vector::from(qv.iter().map(|&x| x as f32).collect::<Vec<f32>>()));
+        let params = ai_search_params::SearchAssetsParams {
+            user_id,
+            query: query.map(|s| s.to_string()),
+            limit: embedding.as_ref().map(|_| 20_i64),
+            embedding,
+        };
+        let rows = self
+            .db
+            .fetch_all::<AiAssetModel>(ai_queries::search_assets(&params))
+            .await?;
+        Ok(rows.into_iter().map(to_asset_result).collect())
+    }
 }
 
 fn to_dal_search_params(params: &SearchParams) -> ai_search_params::SearchTransactionsParams {
@@ -106,6 +147,24 @@ fn to_dal_search_params(params: &SearchParams) -> ai_search_params::SearchTransa
         date_from: params.date_from.clone(),
         date_to: params.date_to.clone(),
         limit: params.limit,
+    }
+}
+
+fn to_category_result(r: AiCategoryModel) -> CategoryResult {
+    CategoryResult {
+        id: r.id,
+        category: r.category,
+        category_type: r.category_type,
+        icon: r.icon,
+    }
+}
+
+fn to_asset_result(r: AiAssetModel) -> AssetResult {
+    AssetResult {
+        id: r.id,
+        asset_name: r.asset_name,
+        ticker: r.ticker,
+        asset_type: r.asset_type,
     }
 }
 

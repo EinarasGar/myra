@@ -5,14 +5,14 @@ use axum::{
     response::sse::{Event, KeepAlive, Sse},
     Json,
 };
-use business::dtos::ai_chat_dto::{ChatHistoryMessageDto, ChatStreamEventDto};
+use business::dtos::ai_chat_dto::{Base64ImageDto, ChatHistoryMessageDto, ChatStreamEventDto};
 use futures::{Stream, StreamExt};
 use uuid::Uuid;
 
 use crate::{
     auth::AuthenticatedUserState,
     states::AiChatServiceState,
-    view_models::ai::chat::{ChatRequestViewModel, ChatRole},
+    view_models::ai::chat::{ChatMessageViewModel, ChatRequestViewModel},
 };
 
 pub async fn chat(
@@ -22,16 +22,34 @@ pub async fn chat(
     Json(request): Json<ChatRequestViewModel>,
 ) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
     let stream = async_stream::stream! {
+        let images: Option<Vec<Base64ImageDto>> = if request.images.is_empty() {
+            None
+        } else {
+            Some(request.images.iter().map(|i| Base64ImageDto {
+                media_type: i.media_type.clone(),
+                data: i.data.clone(),
+            }).collect())
+        };
+
         let chat_history: Vec<ChatHistoryMessageDto> = request
             .history
             .into_iter()
-            .map(|m| match m.role {
-                ChatRole::User => ChatHistoryMessageDto::User(m.content),
-                ChatRole::Assistant => ChatHistoryMessageDto::Assistant(m.content),
+            .map(|m| match m {
+                ChatMessageViewModel::User { content } => ChatHistoryMessageDto::User { content },
+                ChatMessageViewModel::Assistant { content } => ChatHistoryMessageDto::Assistant { content },
+                ChatMessageViewModel::AssistantToolCall { tool_call_id, name, args, signature } => {
+                    ChatHistoryMessageDto::AssistantToolCall { tool_call_id, name, args, signature }
+                }
+                ChatMessageViewModel::ToolResult { tool_call_id, content } => {
+                    ChatHistoryMessageDto::ToolResult { tool_call_id, content }
+                }
+                ChatMessageViewModel::ToolApproval { tool_call_id, approved } => {
+                    ChatHistoryMessageDto::ToolApproval { tool_call_id, approved }
+                }
             })
             .collect();
 
-        match service.stream_chat(user_id, request.message, chat_history).await {
+        match service.stream_chat(user_id, request.message.filter(|s| !s.is_empty()), images, chat_history).await {
             Ok(chat_stream) => {
                 let mut chat_stream = std::pin::pin!(chat_stream);
 
@@ -40,8 +58,11 @@ pub async fn chat(
                         ChatStreamEventDto::Text(text) => {
                             yield Ok(Event::default().event("text").data(text));
                         }
-                        ChatStreamEventDto::ToolCall { name, input } => {
-                            let data = serde_json::json!({ "name": name, "input": input });
+                        ChatStreamEventDto::ToolCall { call_id, name, input, signature } => {
+                            let mut data = serde_json::json!({ "call_id": call_id, "name": name, "input": input });
+                            if let Some(sig) = signature {
+                                data["signature"] = serde_json::Value::String(sig);
+                            }
                             yield Ok(Event::default().event("tool_call").data(data.to_string()));
                         }
                         ChatStreamEventDto::ToolResult { name, output } => {
@@ -53,6 +74,10 @@ pub async fn chat(
                         }
                         ChatStreamEventDto::Error(e) => {
                             yield Ok(Event::default().event("error").data(format!("AI error: {}", e)));
+                        }
+                        ChatStreamEventDto::ToolRequest { tool_call_id, name, args } => {
+                            let data = serde_json::json!({ "tool_call_id": tool_call_id, "name": name, "args": args });
+                            yield Ok(Event::default().event("tool_request").data(data.to_string()));
                         }
                     }
                 }

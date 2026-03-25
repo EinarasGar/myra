@@ -1,3 +1,4 @@
+pub mod action_provider;
 pub mod agents;
 pub mod config;
 pub mod data_provider;

@@ -88,7 +88,7 @@ const LINE_NUMBER_CLASSES = cn(
   "before:text-right",
   "before:text-muted-foreground/50",
   "before:font-mono",
-  "before:select-none"
+  "before:select-none",
 );
 
 // Line rendering component
@@ -149,7 +149,7 @@ const getTokensCacheKey = (code: string, language: BundledLanguage) => {
 };
 
 const getHighlighter = (
-  language: BundledLanguage
+  language: BundledLanguage,
 ): Promise<HighlighterGeneric<BundledLanguage, BundledTheme>> => {
   const cached = highlighterCache.get(language);
   if (cached) {
@@ -177,7 +177,7 @@ const createRawTokens = (code: string): TokenizedCode => ({
             color: "inherit",
             content: line,
           } as ThemedToken,
-        ]
+        ],
   ),
 });
 
@@ -186,7 +186,7 @@ export const highlightCode = (
   code: string,
   language: BundledLanguage,
   // oxlint-disable-next-line eslint-plugin-promise(prefer-await-to-callbacks)
-  callback?: (result: TokenizedCode) => void
+  callback?: (result: TokenizedCode) => void,
 ): TokenizedCode | null => {
   const tokensCacheKey = getTokensCacheKey(code, language);
 
@@ -261,26 +261,27 @@ const CodeBlockBody = memo(
         backgroundColor: tokenized.bg,
         color: tokenized.fg,
       }),
-      [tokenized.bg, tokenized.fg]
+      [tokenized.bg, tokenized.fg],
     );
 
     const keyedLines = useMemo(
       () => addKeysToTokens(tokenized.tokens),
-      [tokenized.tokens]
+      [tokenized.tokens],
     );
 
     return (
       <pre
         className={cn(
           "dark:!bg-[var(--shiki-dark-bg)] dark:!text-[var(--shiki-dark)] m-0 p-4 text-sm",
-          className
+          className,
         )}
         style={preStyle}
       >
         <code
           className={cn(
             "font-mono text-sm",
-            showLineNumbers && "[counter-increment:line_0] [counter-reset:line]"
+            showLineNumbers &&
+              "[counter-increment:line_0] [counter-reset:line]",
           )}
         >
           {keyedLines.map((keyedLine) => (
@@ -297,7 +298,7 @@ const CodeBlockBody = memo(
   (prevProps, nextProps) =>
     prevProps.tokenized === nextProps.tokenized &&
     prevProps.showLineNumbers === nextProps.showLineNumbers &&
-    prevProps.className === nextProps.className
+    prevProps.className === nextProps.className,
 );
 
 CodeBlockBody.displayName = "CodeBlockBody";
@@ -311,7 +312,7 @@ export const CodeBlockContainer = ({
   <div
     className={cn(
       "group relative w-full overflow-hidden rounded-md border bg-background text-foreground",
-      className
+      className,
     )}
     data-language={language}
     style={{
@@ -331,7 +332,7 @@ export const CodeBlockHeader = ({
   <div
     className={cn(
       "flex items-center justify-between border-b bg-muted/80 px-3 py-2 text-muted-foreground text-xs",
-      className
+      className,
     )}
     {...props}
   >
@@ -387,7 +388,7 @@ export const CodeBlockContent = ({
   // Synchronous cache lookup — avoids setState in effect for cached results
   const syncTokens = useMemo(
     () => highlightCode(code, language) ?? rawTokens,
-    [code, language, rawTokens]
+    [code, language, rawTokens],
   );
 
   // Async highlighting result (populated after shiki loads)
@@ -481,7 +482,7 @@ export const CodeBlockCopyButton = ({
         onCopy?.();
         timeoutRef.current = window.setTimeout(
           () => setIsCopied(false),
-          timeout
+          timeout,
         );
       }
     } catch (error) {
@@ -493,7 +494,7 @@ export const CodeBlockCopyButton = ({
     () => () => {
       window.clearTimeout(timeoutRef.current);
     },
-    []
+    [],
   );
 
   const Icon = isCopied ? CheckIcon : CopyIcon;
@@ -514,7 +515,7 @@ export const CodeBlockCopyButton = ({
 export type CodeBlockLanguageSelectorProps = ComponentProps<typeof Select>;
 
 export const CodeBlockLanguageSelector = (
-  props: CodeBlockLanguageSelectorProps
+  props: CodeBlockLanguageSelectorProps,
 ) => <Select {...props} />;
 
 export type CodeBlockLanguageSelectorTriggerProps = ComponentProps<
@@ -528,7 +529,7 @@ export const CodeBlockLanguageSelectorTrigger = ({
   <SelectTrigger
     className={cn(
       "h-7 border-none bg-transparent px-2 text-xs shadow-none",
-      className
+      className,
     )}
     size="sm"
     {...props}
@@ -540,7 +541,7 @@ export type CodeBlockLanguageSelectorValueProps = ComponentProps<
 >;
 
 export const CodeBlockLanguageSelectorValue = (
-  props: CodeBlockLanguageSelectorValueProps
+  props: CodeBlockLanguageSelectorValueProps,
 ) => <SelectValue {...props} />;
 
 export type CodeBlockLanguageSelectorContentProps = ComponentProps<
@@ -559,5 +560,5 @@ export type CodeBlockLanguageSelectorItemProps = ComponentProps<
 >;
 
 export const CodeBlockLanguageSelectorItem = (
-  props: CodeBlockLanguageSelectorItemProps
+  props: CodeBlockLanguageSelectorItemProps,
 ) => <SelectItem {...props} />;
