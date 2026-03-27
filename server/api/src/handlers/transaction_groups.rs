@@ -2,10 +2,16 @@ use axum::{extract::Path, http::StatusCode, Json};
 use business::dtos::paging_dto::PaginationModeDto;
 use business::dtos::transaction_dto::TransactionDto;
 use itertools::Itertools;
+use serde::Deserialize;
 use uuid::Uuid;
 
+#[derive(Deserialize)]
+pub(crate) struct GroupIdPath {
+    group_id: Uuid,
+}
+
 use crate::{
-    auth::AuthenticatedUserState,
+    auth::AuthenticatedUserId,
     converters::{transaction_dtos_to_account_ids_hashset, transaction_dtos_to_asset_ids_hashset},
     errors::ApiError,
     extractors::{ValidatedJson, ValidatedQuery},
@@ -50,8 +56,7 @@ use crate::{
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn add_transaction_group(
-    Path(user_id): Path<Uuid>,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
     TransactionGroupServiceState(service): TransactionGroupServiceState,
     AssetsServiceState(asset_service): AssetsServiceState,
     AccountsServiceState(accounts_service): AccountsServiceState,
@@ -125,8 +130,7 @@ pub async fn add_transaction_group(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn group_individual_transactions(
-    Path(user_id): Path<Uuid>,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
     TransactionGroupServiceState(service): TransactionGroupServiceState,
     AssetsServiceState(asset_service): AssetsServiceState,
     AccountsServiceState(accounts_service): AccountsServiceState,
@@ -201,8 +205,8 @@ pub async fn group_individual_transactions(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn update_transaction_group(
-    Path((user_id, group_id)): Path<(Uuid, Uuid)>,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(GroupIdPath { group_id }): Path<GroupIdPath>,
     TransactionGroupServiceState(service): TransactionGroupServiceState,
     AssetsServiceState(asset_service): AssetsServiceState,
     AccountsServiceState(accounts_service): AccountsServiceState,
@@ -272,8 +276,8 @@ pub async fn update_transaction_group(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn delete_transaction_group(
-    Path((user_id, group_id)): Path<(Uuid, Uuid)>,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(GroupIdPath { group_id }): Path<GroupIdPath>,
     TransactionGroupServiceState(service): TransactionGroupServiceState,
 ) -> Result<(), ApiError> {
     service
@@ -304,12 +308,11 @@ pub async fn delete_transaction_group(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_transaction_groups(
-    Path(user_id): Path<Uuid>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
     ValidatedQuery(query_params): ValidatedQuery<CursorOrPaginatedSearchQuery>,
     TransactionGroupServiceState(service): TransactionGroupServiceState,
     AssetsServiceState(asset_service): AssetsServiceState,
     AccountsServiceState(accounts_service): AccountsServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<TransactionGroupsPage>, ApiError> {
     let pagination = PaginationModeDto::from(&query_params);
 

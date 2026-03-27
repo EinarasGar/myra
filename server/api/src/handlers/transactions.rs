@@ -3,10 +3,16 @@ use business::dtos::combined_transaction_dto::CombinedTransactionItem;
 use business::dtos::paging_dto::PaginationModeDto;
 use business::dtos::transaction_dto::TransactionDto;
 use itertools::Itertools;
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+pub(crate) struct TransactionIdPath {
+    transaction_id: Uuid,
+}
 use uuid::Uuid;
 
 use crate::{
-    auth::AuthenticatedUserState,
+    auth::AuthenticatedUserId,
     converters::{
         combined_items_to_category_ids_hashset, transaction_dtos_to_account_ids_hashset,
         transaction_dtos_to_asset_ids_hashset,
@@ -58,8 +64,8 @@ use crate::{
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn update_transaction(
-    Path((user_id, transaction_id)): Path<(Uuid, Uuid)>,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(TransactionIdPath { transaction_id }): Path<TransactionIdPath>,
     TransactionManagementServiceState(service): TransactionManagementServiceState,
     AssetsServiceState(asset_service): AssetsServiceState,
     AccountsServiceState(accounts_service): AccountsServiceState,
@@ -115,8 +121,8 @@ pub async fn update_transaction(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn delete_transaction(
-    Path((user_id, transaction_id)): Path<(Uuid, Uuid)>,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(TransactionIdPath { transaction_id }): Path<TransactionIdPath>,
     TransactionManagementServiceState(service): TransactionManagementServiceState,
 ) -> Result<(), ApiError> {
     service
@@ -147,13 +153,12 @@ pub async fn delete_transaction(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_transactions(
-    Path(user_id): Path<Uuid>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
     ValidatedQuery(query_params): ValidatedQuery<CursorOrPaginatedSearchQuery>,
     TransactionManagementServiceState(service): TransactionManagementServiceState,
     AssetsServiceState(asset_service): AssetsServiceState,
     AccountsServiceState(accounts_service): AccountsServiceState,
     CategoryServiceState(category_service): CategoryServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<CombinedTransactionsPage>, ApiError> {
     let pagination = PaginationModeDto::from(&query_params);
 
@@ -161,7 +166,6 @@ pub async fn get_transactions(
         .get_combined_transactions(user_id, pagination, query_params.query)
         .await?;
 
-    // Build lookup tables from all transactions across all items
     let all_tx_refs: Vec<_> = result
         .results
         .iter()

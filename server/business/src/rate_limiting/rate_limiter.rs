@@ -57,7 +57,7 @@ impl RateLimiter {
                 self.try_reseed().await;
                 self.check_quota_db_fallback(user_id).await
             }
-            CheckQuotaRedisResult::Exceeded(exceeded) => Err(exceeded.into())
+            CheckQuotaRedisResult::Exceeded(exceeded) => Err(exceeded.into()),
         }
     }
 
@@ -439,10 +439,13 @@ mod tests {
 
     fn mock_redis_ok() -> RedisConnection {
         let mut redis = RedisConnection::default();
-        redis.expect_execute_script_string().returning(|_| Some("ok".to_string()));
+        redis
+            .expect_execute_script_string()
+            .returning(|_| Some("ok".to_string()));
         redis.expect_clone().returning(|| {
             let mut r = RedisConnection::default();
-            r.expect_execute_script_string().returning(|_| Some("ok".to_string()));
+            r.expect_execute_script_string()
+                .returning(|_| Some("ok".to_string()));
             r
         });
         redis
@@ -473,13 +476,20 @@ mod tests {
         let mut db = MyraDb::default();
         let dl = default_limits();
         let gl = global_limits();
-        db.expect_fetch_one::<TokenRateLimitModel>().returning(move |_| Ok(dl.clone()));
-        db.expect_fetch_one::<GlobalTokenRateLimitModel>().returning(move |_| Ok(gl.clone()));
-        db.expect_fetch_optional::<TokenUsageModel>().returning(|_| Ok(None));
-        db.expect_fetch_optional::<GlobalTokenUsageModel>().returning(|_| Ok(None));
-        db.expect_fetch_all::<TokenUsageModel>().returning(|_| Ok(vec![]));
-        db.expect_fetch_all::<GlobalTokenUsageModel>().returning(|_| Ok(vec![]));
-        db.expect_fetch_all::<TokenRateLimitModel>().returning(|_| Ok(vec![]));
+        db.expect_fetch_one::<TokenRateLimitModel>()
+            .returning(move |_| Ok(dl.clone()));
+        db.expect_fetch_one::<GlobalTokenRateLimitModel>()
+            .returning(move |_| Ok(gl.clone()));
+        db.expect_fetch_optional::<TokenUsageModel>()
+            .returning(|_| Ok(None));
+        db.expect_fetch_optional::<GlobalTokenUsageModel>()
+            .returning(|_| Ok(None));
+        db.expect_fetch_all::<TokenUsageModel>()
+            .returning(|_| Ok(vec![]));
+        db.expect_fetch_all::<GlobalTokenUsageModel>()
+            .returning(|_| Ok(vec![]));
+        db.expect_fetch_all::<TokenRateLimitModel>()
+            .returning(|_| Ok(vec![]));
         db.expect_execute().returning(|_| Ok(()));
         db.expect_clone().returning(|| {
             let mut d = MyraDb::default();
@@ -504,9 +514,12 @@ mod tests {
     #[tokio::test]
     async fn check_quota_redis_exceeded() {
         let mut redis = RedisConnection::default();
-        redis.expect_execute_script_string()
+        redis
+            .expect_execute_script_string()
             .returning(|_| Some("user:hourly:input:50000".to_string()));
-        redis.expect_clone().returning(|| RedisConnection::default());
+        redis
+            .expect_clone()
+            .returning(|| RedisConnection::default());
 
         let db = mock_db_with_limits();
         let limiter = RateLimiter::new(redis, db);
@@ -523,9 +536,12 @@ mod tests {
     #[tokio::test]
     async fn check_quota_redis_exceeded_global_monthly_output() {
         let mut redis = RedisConnection::default();
-        redis.expect_execute_script_string()
+        redis
+            .expect_execute_script_string()
             .returning(|_| Some("global:monthly:output:10000000".to_string()));
-        redis.expect_clone().returning(|| RedisConnection::default());
+        redis
+            .expect_clone()
+            .returning(|| RedisConnection::default());
 
         let db = mock_db_with_limits();
         let limiter = RateLimiter::new(redis, db);
@@ -541,10 +557,13 @@ mod tests {
     #[tokio::test]
     async fn check_quota_redis_reseed_falls_back_to_db() {
         let mut redis_with_reseed = RedisConnection::default();
-        redis_with_reseed.expect_execute_script_string()
+        redis_with_reseed
+            .expect_execute_script_string()
             .returning(|_| Some("reseed".to_string()));
         redis_with_reseed.expect_set_ex().returning(|_, _, _| ());
-        redis_with_reseed.expect_hset_with_expire().returning(|_, _, _| ());
+        redis_with_reseed
+            .expect_hset_with_expire()
+            .returning(|_, _, _| ());
         redis_with_reseed.expect_clone().returning(|| {
             let mut r = RedisConnection::default();
             r.expect_execute_script_string().returning(|_| None);
@@ -578,22 +597,29 @@ mod tests {
         let mut db = MyraDb::default();
         let dl = default_limits();
         let gl = global_limits();
-        db.expect_fetch_one::<TokenRateLimitModel>().returning(move |_| Ok(dl.clone()));
-        db.expect_fetch_one::<GlobalTokenRateLimitModel>().returning(move |_| Ok(gl.clone()));
-        db.expect_fetch_optional::<TokenUsageModel>().returning(|_| {
-            Ok(Some(TokenUsageModel {
-                id: 1,
-                user_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
-                window_type: "hourly".to_string(),
-                window_key: "2026032600".to_string(),
-                input_tokens: 999999,
-                output_tokens: 0,
-            }))
-        });
-        db.expect_fetch_optional::<GlobalTokenUsageModel>().returning(|_| Ok(None));
-        db.expect_fetch_all::<TokenUsageModel>().returning(|_| Ok(vec![]));
-        db.expect_fetch_all::<GlobalTokenUsageModel>().returning(|_| Ok(vec![]));
-        db.expect_fetch_all::<TokenRateLimitModel>().returning(|_| Ok(vec![]));
+        db.expect_fetch_one::<TokenRateLimitModel>()
+            .returning(move |_| Ok(dl.clone()));
+        db.expect_fetch_one::<GlobalTokenRateLimitModel>()
+            .returning(move |_| Ok(gl.clone()));
+        db.expect_fetch_optional::<TokenUsageModel>()
+            .returning(|_| {
+                Ok(Some(TokenUsageModel {
+                    id: 1,
+                    user_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+                    window_type: "hourly".to_string(),
+                    window_key: "2026032600".to_string(),
+                    input_tokens: 999999,
+                    output_tokens: 0,
+                }))
+            });
+        db.expect_fetch_optional::<GlobalTokenUsageModel>()
+            .returning(|_| Ok(None));
+        db.expect_fetch_all::<TokenUsageModel>()
+            .returning(|_| Ok(vec![]));
+        db.expect_fetch_all::<GlobalTokenUsageModel>()
+            .returning(|_| Ok(vec![]));
+        db.expect_fetch_all::<TokenRateLimitModel>()
+            .returning(|_| Ok(vec![]));
         db.expect_execute().returning(|_| Ok(()));
         db.expect_clone().returning(|| {
             let mut d = MyraDb::default();
@@ -619,9 +645,12 @@ mod tests {
             .returning(|_| Err(sqlx::Error::RowNotFound));
         db.expect_fetch_one::<GlobalTokenRateLimitModel>()
             .returning(|_| Err(sqlx::Error::RowNotFound));
-        db.expect_fetch_all::<TokenUsageModel>().returning(|_| Ok(vec![]));
-        db.expect_fetch_all::<GlobalTokenUsageModel>().returning(|_| Ok(vec![]));
-        db.expect_fetch_all::<TokenRateLimitModel>().returning(|_| Ok(vec![]));
+        db.expect_fetch_all::<TokenUsageModel>()
+            .returning(|_| Ok(vec![]));
+        db.expect_fetch_all::<GlobalTokenUsageModel>()
+            .returning(|_| Ok(vec![]));
+        db.expect_fetch_all::<TokenRateLimitModel>()
+            .returning(|_| Ok(vec![]));
         db.expect_execute().returning(|_| Ok(()));
         db.expect_clone().returning(|| {
             let mut d = MyraDb::default();
@@ -640,7 +669,9 @@ mod tests {
     async fn concurrency_slot_acquired_under_limit() {
         let mut redis = RedisConnection::default();
         redis.expect_execute_script_int().returning(|_| Some(1));
-        redis.expect_clone().returning(|| RedisConnection::default());
+        redis
+            .expect_clone()
+            .returning(|| RedisConnection::default());
 
         let db = mock_db_with_limits();
         let limiter = RateLimiter::new(redis, db);
@@ -653,7 +684,9 @@ mod tests {
         let mut redis = RedisConnection::default();
         redis.expect_execute_script_int().returning(|_| Some(3));
         redis.expect_decr().returning(|_| ());
-        redis.expect_clone().returning(|| RedisConnection::default());
+        redis
+            .expect_clone()
+            .returning(|| RedisConnection::default());
 
         let db = mock_db_with_limits();
         let limiter = RateLimiter::new(redis, db);
@@ -665,7 +698,9 @@ mod tests {
     async fn concurrency_slot_fails_open_when_redis_unavailable() {
         let mut redis = RedisConnection::default();
         redis.expect_execute_script_int().returning(|_| None);
-        redis.expect_clone().returning(|| RedisConnection::default());
+        redis
+            .expect_clone()
+            .returning(|| RedisConnection::default());
 
         let db = mock_db_with_limits();
         let limiter = RateLimiter::new(redis, db);
@@ -678,9 +713,12 @@ mod tests {
     #[tokio::test]
     async fn record_usage_with_redis() {
         let mut redis = RedisConnection::default();
-        redis.expect_execute_script_vec()
+        redis
+            .expect_execute_script_vec()
             .returning(|_| Some(vec![100, 50, 200, 100, 500000, 500000, 10000000, 10000000]));
-        redis.expect_clone().returning(|| RedisConnection::default());
+        redis
+            .expect_clone()
+            .returning(|| RedisConnection::default());
 
         let mut db = MyraDb::default();
         db.expect_execute().returning(|_| Ok(()));
@@ -698,7 +736,9 @@ mod tests {
     async fn record_usage_without_redis() {
         let mut redis = RedisConnection::default();
         redis.expect_execute_script_vec().returning(|_| None);
-        redis.expect_clone().returning(|| RedisConnection::default());
+        redis
+            .expect_clone()
+            .returning(|| RedisConnection::default());
 
         let mut db = MyraDb::default();
         db.expect_execute().returning(|_| Ok(()));

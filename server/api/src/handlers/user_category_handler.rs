@@ -1,10 +1,20 @@
 use std::collections::HashMap;
 
 use axum::{extract::Path, http::StatusCode, Json};
-use uuid::Uuid;
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+pub(crate) struct CategoryIdPath {
+    category_id: i32,
+}
+
+#[derive(Deserialize)]
+pub(crate) struct TypeIdPath {
+    type_id: i32,
+}
 
 use crate::{
-    auth::AuthenticatedUserState,
+    auth::AuthenticatedUserId,
     errors::ApiError,
     extractors::ValidatedJson,
     states::{CategoryServiceState, CategoryTypeServiceState},
@@ -55,9 +65,8 @@ use itertools::Itertools;
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_categories(
-    Path(user_id): Path<Uuid>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
     CategoryServiceState(category_service): CategoryServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetCategoriesResponseViewModel>, ApiError> {
     let result = category_service.get_all_user_categories(user_id).await?;
 
@@ -108,9 +117,9 @@ pub async fn get_categories(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_user_category(
-    Path((user_id, category_id)): Path<(Uuid, i32)>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(CategoryIdPath { category_id }): Path<CategoryIdPath>,
     CategoryServiceState(category_service): CategoryServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetCategoryResponseViewModel>, ApiError> {
     let category = category_service.get_category(category_id, user_id).await?;
 
@@ -142,9 +151,8 @@ pub async fn get_user_category(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn post_user_category(
-    Path(user_id): Path<Uuid>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
     CategoryServiceState(category_service): CategoryServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
     ValidatedJson(request): ValidatedJson<CreateCategoryRequestViewModel>,
 ) -> Result<(StatusCode, Json<CreateCategoryResponseViewModel>), ApiError> {
     let category = category_service
@@ -183,9 +191,9 @@ pub async fn post_user_category(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn put_user_category(
-    Path((user_id, category_id)): Path<(Uuid, i32)>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(CategoryIdPath { category_id }): Path<CategoryIdPath>,
     CategoryServiceState(category_service): CategoryServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
     ValidatedJson(request): ValidatedJson<UpdateCategoryRequestViewModel>,
 ) -> Result<Json<UpdateCategoryResponseViewModel>, ApiError> {
     let category = category_service
@@ -219,9 +227,9 @@ pub async fn put_user_category(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn delete_user_category(
-    Path((user_id, category_id)): Path<(Uuid, i32)>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(CategoryIdPath { category_id }): Path<CategoryIdPath>,
     CategoryServiceState(category_service): CategoryServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<StatusCode, ApiError> {
     category_service
         .delete_category(category_id, user_id)
@@ -251,9 +259,8 @@ pub async fn delete_user_category(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_user_category_types(
-    Path(user_id): Path<Uuid>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
     CategoryTypeServiceState(category_type_service): CategoryTypeServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetCategoryTypesResponseViewModel>, ApiError> {
     let types = category_type_service
         .get_user_category_types(user_id)
@@ -290,9 +297,8 @@ pub async fn get_user_category_types(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn post_user_category_type(
-    Path(user_id): Path<Uuid>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
     CategoryTypeServiceState(category_type_service): CategoryTypeServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
     ValidatedJson(request): ValidatedJson<CreateCategoryTypeRequestViewModel>,
 ) -> Result<(StatusCode, Json<CreateCategoryTypeResponseViewModel>), ApiError> {
     let category_type = category_type_service
@@ -330,9 +336,9 @@ pub async fn post_user_category_type(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn put_user_category_type(
-    Path((user_id, type_id)): Path<(Uuid, i32)>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(TypeIdPath { type_id }): Path<TypeIdPath>,
     CategoryTypeServiceState(category_type_service): CategoryTypeServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
     ValidatedJson(request): ValidatedJson<UpdateCategoryTypeRequestViewModel>,
 ) -> Result<Json<UpdateCategoryTypeResponseViewModel>, ApiError> {
     let category_type = category_type_service
@@ -366,9 +372,9 @@ pub async fn put_user_category_type(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn delete_user_category_type(
-    Path((user_id, type_id)): Path<(Uuid, i32)>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(TypeIdPath { type_id }): Path<TypeIdPath>,
     CategoryTypeServiceState(category_type_service): CategoryTypeServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<StatusCode, ApiError> {
     category_type_service
         .delete_category_type(type_id, user_id)

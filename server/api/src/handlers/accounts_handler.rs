@@ -3,10 +3,16 @@ use std::collections::HashMap;
 use axum::{extract::Path, Json};
 use business::dtos::accounts::account_amendment_dto::AccountAmendmentDto;
 use itertools::Itertools;
+use serde::Deserialize;
 use uuid::Uuid;
 
+#[derive(Deserialize)]
+pub(crate) struct AccountIdPath {
+    account_id: Uuid,
+}
+
 use crate::{
-    auth::AuthenticatedUserState,
+    auth::AuthenticatedUserId,
     errors::ApiError,
     extractors::ValidatedJson,
     states::AccountsServiceState,
@@ -51,12 +57,12 @@ use crate::{
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_account(
-    Path((_user_id, account_id)): Path<(Uuid, Uuid)>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(AccountIdPath { account_id }): Path<AccountIdPath>,
     AccountsServiceState(account_service): AccountsServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetAccountResponseViewModel>, ApiError> {
     let account = account_service
-        .get_account_with_metadata(account_id)
+        .get_account_with_metadata(user_id, account_id)
         .await?;
 
     let ret = GetAccountResponseViewModel {
@@ -89,12 +95,11 @@ pub async fn get_account(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_accounts(
-    Path(_user_id): Path<Uuid>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
     AccountsServiceState(account_service): AccountsServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetAccountsResponseViewModel>, ApiError> {
     let account = account_service
-        .get_user_accounts_with_metadata(_user_id)
+        .get_user_accounts_with_metadata(user_id)
         .await?;
 
     let mut account_types_hashmap: HashMap<i32, IdentifiableAccountTypeViewModel> = HashMap::new();
@@ -155,9 +160,9 @@ pub async fn get_accounts(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn update_account(
-    Path((user_id, account_id)): Path<(Uuid, Uuid)>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(AccountIdPath { account_id }): Path<AccountIdPath>,
     AccountsServiceState(account_service): AccountsServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
     ValidatedJson(body): ValidatedJson<UpdateAccountViewModel>,
 ) -> Result<Json<UpdateAccountViewModel>, ApiError> {
     let dto = AccountAmendmentDto {
@@ -198,9 +203,8 @@ pub async fn update_account(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn add_account(
-    Path(user_id): Path<Uuid>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
     AccountsServiceState(account_service): AccountsServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
     ValidatedJson(body): ValidatedJson<AddAccountRequestViewModel>,
 ) -> Result<Json<AddAccountResponseViewModel>, ApiError> {
     let dto = AccountAmendmentDto {
@@ -246,9 +250,9 @@ pub async fn add_account(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn delete_account(
-    Path((user_id, account_id)): Path<(Uuid, Uuid)>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(AccountIdPath { account_id }): Path<AccountIdPath>,
     AccountsServiceState(account_service): AccountsServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<(), ApiError> {
     account_service
         .deactivate_user_account(user_id, account_id)

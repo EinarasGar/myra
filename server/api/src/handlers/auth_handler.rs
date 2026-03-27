@@ -1,4 +1,4 @@
-use crate::auth::AuthenticatedUserState;
+use crate::auth::AuthenticatedUser;
 use crate::errors::ApiError;
 use crate::states::UsersServiceState;
 use axum::Json;
@@ -46,22 +46,22 @@ pub struct UserMetadataViewModel {
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_me(
-    auth: AuthenticatedUserState,
+    auth: AuthenticatedUser,
     UsersServiceState(users_service): UsersServiceState,
 ) -> Result<Json<AuthMeViewModel>, ApiError> {
     #[cfg(feature = "clerk")]
     {
-        let (_, _, default_asset_id) = users_service.get_basic_user(auth.0.user_id).await?;
+        let (_, _, default_asset_id) = users_service.get_basic_user(auth.user_id).await?;
         Ok(Json(AuthMeViewModel {
-            user_id: auth.0.user_id.to_string(),
+            user_id: auth.user_id.to_string(),
             default_asset_id,
-            role: auth.0.role.unwrap_or_else(|| "User".to_string()),
+            role: format!("{:?}", auth.role),
             user_metadata: None,
         }))
     }
     #[cfg(not(feature = "clerk"))]
     {
-        let user = users_service.get_full_user(auth.0.user_id).await?;
+        let user = users_service.get_full_user(auth.user_id).await?;
         Ok(Json(AuthMeViewModel {
             user_id: user.id.to_string(),
             default_asset_id: user.default_asset_id,
@@ -259,11 +259,11 @@ pub async fn post_refresh_token() -> Result<Json<serde_json::Value>, ApiError> {
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn post_logout(
-    auth: AuthenticatedUserState,
+    auth: AuthenticatedUser,
     AuthServiceState(auth_service): AuthServiceState,
 ) -> Result<(HeaderMap, Json<serde_json::Value>), ApiError> {
     auth_service
-        .revoke_all_refresh_tokens(auth.0.user_id)
+        .revoke_all_refresh_tokens(auth.user_id)
         .await
         .map_err(|e| ApiError::Internal(e))?;
 

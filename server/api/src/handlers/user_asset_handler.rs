@@ -19,11 +19,22 @@ use business::dtos::{
     },
     net_worth::range_dto::RangeDto,
 };
+use serde::Deserialize;
 use std::collections::HashSet;
-use uuid::Uuid;
+
+#[derive(Deserialize)]
+pub(crate) struct AssetIdPath {
+    asset_id: i32,
+}
+
+#[derive(Deserialize)]
+pub(crate) struct AssetPairPath {
+    asset_id: i32,
+    reference_id: i32,
+}
 
 use crate::{
-    auth::AuthenticatedUserState,
+    auth::AuthenticatedUserId,
     errors::{auth::AuthError, ApiError},
     extractors::{ValidatedJson, ValidatedQuery},
     states::{AssetRatesServiceState, AssetsServiceState},
@@ -72,9 +83,9 @@ use crate::{
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_user_asset(
-    Path((user_id, id)): Path<(Uuid, i32)>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(AssetIdPath { asset_id: id }): Path<AssetIdPath>,
     AssetsServiceState(assets_service): AssetsServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetAssetResponseViewModel>, ApiError> {
     let is_owned = assets_service.validate_asset_ownership(user_id, id).await?;
     if !is_owned {
@@ -90,7 +101,6 @@ pub async fn get_user_asset(
         .map(|p| p.iter().map(|x| x.0).collect())
         .unwrap_or_default();
 
-    // Collect all IDs to fetch: pair IDs + base asset ID
     let mut all_ids: HashSet<i32> = pair_ids.iter().copied().collect();
     all_ids.insert(base_asset_id);
 
@@ -157,10 +167,13 @@ pub async fn get_user_asset(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_user_asset_pair(
-    Path((user_id, pair1, pair2)): Path<(Uuid, i32, i32)>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(AssetPairPath {
+        asset_id: pair1,
+        reference_id: pair2,
+    }): Path<AssetPairPath>,
     AssetsServiceState(assets_service): AssetsServiceState,
     AssetRatesServiceState(asset_rates_service): AssetRatesServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetUserAssetPairResponseViewModel>, ApiError> {
     let is_owned = assets_service
         .validate_asset_ownership(user_id, pair1)
@@ -217,11 +230,14 @@ pub async fn get_user_asset_pair(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_user_asset_pair_rates(
-    Path((user_id, pair1, pair2)): Path<(Uuid, i32, i32)>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(AssetPairPath {
+        asset_id: pair1,
+        reference_id: pair2,
+    }): Path<AssetPairPath>,
     ValidatedQuery(query_params): ValidatedQuery<GetAssetPairRatesRequestParams>,
     AssetsServiceState(assets_service): AssetsServiceState,
     AssetRatesServiceState(asset_rates_service): AssetRatesServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetAssetPairRatesResponseViewModel>, ApiError> {
     let is_owned = assets_service
         .validate_asset_ownership(user_id, pair1)
@@ -273,9 +289,9 @@ pub async fn get_user_asset_pair_rates(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn put_custom_asset(
-    Path((user_id, asset_id)): Path<(Uuid, i32)>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(AssetIdPath { asset_id }): Path<AssetIdPath>,
     AssetsServiceState(assets_service): AssetsServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
     ValidatedJson(params): ValidatedJson<UpdateAssetRequestViewModel>,
 ) -> Result<Json<UpdateAssetResponseViewModel>, ApiError> {
     let is_owned = assets_service
@@ -332,9 +348,12 @@ pub async fn put_custom_asset(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn put_custom_asset_pair(
-    Path((user_id, pair1, pair2)): Path<(Uuid, i32, i32)>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(AssetPairPath {
+        asset_id: pair1,
+        reference_id: pair2,
+    }): Path<AssetPairPath>,
     AssetsServiceState(assets_service): AssetsServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
     ValidatedJson(params): ValidatedJson<UpdateAssetPairRequestViewModel>,
 ) -> Result<Json<UpdateAssetPairResponseViewModel>, ApiError> {
     let is_owned = assets_service
@@ -380,9 +399,8 @@ pub async fn put_custom_asset_pair(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn post_custom_asset(
-    Path(user_id): Path<Uuid>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
     AssetsServiceState(assets_service): AssetsServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
     ValidatedJson(params): ValidatedJson<AddAssetRequestViewModel>,
 ) -> Result<Json<AddAssetResponseViewModel>, ApiError> {
     let asset_dto = AddCustomAssetDto {
@@ -437,10 +455,13 @@ pub async fn post_custom_asset(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn post_custom_asset_rates(
-    Path((user_id, pair1, pair2)): Path<(Uuid, i32, i32)>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(AssetPairPath {
+        asset_id: pair1,
+        reference_id: pair2,
+    }): Path<AssetPairPath>,
     AssetsServiceState(assets_service): AssetsServiceState,
     AssetRatesServiceState(asset_rates_service): AssetRatesServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
     ValidatedJson(params): ValidatedJson<AddAssetPairRatesRequestViewModel>,
 ) -> Result<Json<AddAssetPairRatesResponseViewModel>, ApiError> {
     let is_owned = assets_service
@@ -496,11 +517,14 @@ pub async fn post_custom_asset_rates(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn delete_asset_pair_rates(
-    Path((user_id, pair1, pair2)): Path<(Uuid, i32, i32)>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(AssetPairPath {
+        asset_id: pair1,
+        reference_id: pair2,
+    }): Path<AssetPairPath>,
     ValidatedQuery(query_params): ValidatedQuery<DeleteAssetPairRatesParams>,
     AssetsServiceState(assets_service): AssetsServiceState,
     AssetRatesServiceState(asset_rates_service): AssetRatesServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<(), ApiError> {
     let is_owned = assets_service
         .validate_asset_ownership(user_id, pair1)
@@ -544,9 +568,12 @@ pub async fn delete_asset_pair_rates(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn delete_asset_pair(
-    Path((user_id, pair1, pair2)): Path<(Uuid, i32, i32)>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(AssetPairPath {
+        asset_id: pair1,
+        reference_id: pair2,
+    }): Path<AssetPairPath>,
     AssetsServiceState(assets_service): AssetsServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<(), ApiError> {
     assets_service
         .delete_asset_pair(user_id, pair1, pair2)
@@ -577,9 +604,9 @@ pub async fn delete_asset_pair(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn delete_asset(
-    Path((user_id, asset_id)): Path<(Uuid, i32)>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(AssetIdPath { asset_id }): Path<AssetIdPath>,
     AssetsServiceState(assets_service): AssetsServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<(), ApiError> {
     assets_service.delete_asset(user_id, asset_id).await?;
     Ok(())
@@ -605,9 +632,8 @@ pub async fn delete_asset(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_user_assets(
-    Path(user_id): Path<Uuid>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
     AssetsServiceState(assets_service): AssetsServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetUserAssetsResponseViewModel>, ApiError> {
     let assets = assets_service.get_all_user_assets(user_id).await?;
 
@@ -661,9 +687,9 @@ pub async fn get_user_assets(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn post_asset_pair(
-    Path((user_id, asset_id)): Path<(Uuid, i32)>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(AssetIdPath { asset_id }): Path<AssetIdPath>,
     AssetsServiceState(assets_service): AssetsServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
     ValidatedJson(params): ValidatedJson<AddAssetPairRequestViewModel>,
 ) -> Result<Json<AddAssetPairResponseViewModel>, ApiError> {
     assets_service

@@ -1,5 +1,5 @@
 use business::loader::StartupLoader;
-use std::env;
+use std::{env, net::SocketAddr};
 use tracing::info;
 
 use crate::states::AppState;
@@ -7,6 +7,7 @@ use color_eyre::eyre::Result;
 
 pub mod auth;
 mod auth_feature_check;
+pub(crate) mod auth_middleware;
 pub mod converters;
 pub mod errors;
 pub mod extractors;
@@ -65,10 +66,16 @@ async fn main() -> Result<()> {
         .parse::<u16>()
         .unwrap_or(5000);
 
-    let bind_address = format!("0.0.0.0:{}", port);
+    let bind_host = env::var("SERVER_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
+    let bind_address = format!("{}:{}", bind_host, port);
     let listener = tokio::net::TcpListener::bind(&bind_address).await.unwrap();
     info!("Starting web server on {}", listener.local_addr().unwrap());
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .unwrap();
 
     Ok(())
 }

@@ -1,8 +1,14 @@
 use axum::{extract::Path, http::StatusCode, Json};
+use serde::Deserialize;
 use uuid::Uuid;
 
+#[derive(Deserialize)]
+pub(crate) struct FileIdPath {
+    file_id: Uuid,
+}
+
 use crate::{
-    auth::AuthenticatedUserState,
+    auth::AuthenticatedUserId,
     errors::ApiError,
     extractors::ValidatedJson,
     states::FileServiceState,
@@ -37,8 +43,7 @@ use business::dtos::file_dto::CreateFileDto;
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn create_file(
-    Path(user_id): Path<Uuid>,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
     FileServiceState(service): FileServiceState,
     ValidatedJson(body): ValidatedJson<CreateFileRequestViewModel>,
 ) -> Result<(StatusCode, Json<CreateFileResponseViewModel>), ApiError> {
@@ -75,8 +80,8 @@ pub async fn create_file(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_file(
-    Path((user_id, file_id)): Path<(Uuid, Uuid)>,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(FileIdPath { file_id }): Path<FileIdPath>,
     FileServiceState(service): FileServiceState,
 ) -> Result<Json<GetFileResponseViewModel>, ApiError> {
     let file = service
@@ -106,8 +111,8 @@ pub async fn get_file(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn delete_file(
-    Path((user_id, file_id)): Path<(Uuid, Uuid)>,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(FileIdPath { file_id }): Path<FileIdPath>,
     FileServiceState(service): FileServiceState,
 ) -> Result<StatusCode, ApiError> {
     service
@@ -137,8 +142,8 @@ pub async fn delete_file(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn confirm_file(
-    Path((user_id, file_id)): Path<(Uuid, Uuid)>,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(FileIdPath { file_id }): Path<FileIdPath>,
     FileServiceState(service): FileServiceState,
 ) -> Result<Json<ConfirmFileResponseViewModel>, ApiError> {
     let file = service
@@ -169,8 +174,8 @@ pub async fn confirm_file(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_file_url(
-    Path((user_id, file_id)): Path<(Uuid, Uuid)>,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(FileIdPath { file_id }): Path<FileIdPath>,
     FileServiceState(service): FileServiceState,
 ) -> Result<Json<FileUrlResponseViewModel>, ApiError> {
     let file_url = service
@@ -204,8 +209,8 @@ pub async fn get_file_url(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_file_thumbnail(
-    Path((user_id, file_id)): Path<(Uuid, Uuid)>,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(FileIdPath { file_id }): Path<FileIdPath>,
     FileServiceState(service): FileServiceState,
 ) -> Result<Json<FileUrlResponseViewModel>, ApiError> {
     let file_url = service

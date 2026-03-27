@@ -68,6 +68,11 @@ pub fn get_accounts(params: GetAccountsParams) -> DbQueryWithValues {
         }
     };
 
+    if let Some(user_id) = params.user_id {
+        get_accounts_builder
+            .and_where(Expr::col((AccountIden::Table, AccountIden::UserId)).eq(user_id));
+    }
+
     get_accounts_builder.build_sqlx(PostgresQueryBuilder).into()
 }
 

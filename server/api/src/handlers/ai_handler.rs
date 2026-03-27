@@ -1,26 +1,20 @@
 use std::convert::Infallible;
 
-use axum::{
-    extract::Path,
-    response::sse::{Event, KeepAlive, Sse},
-    Json,
-};
+use axum::response::sse::{Event, KeepAlive, Sse};
 use business::dtos::ai_chat_dto::{Base64ImageDto, ChatHistoryMessageDto, ChatStreamEventDto};
 use futures::{Stream, StreamExt};
-use uuid::Uuid;
 
 use crate::{
-    auth::AuthenticatedUserState,
+    auth::AuthenticatedUserId,
     errors::ApiError,
     states::AiChatServiceState,
     view_models::ai::chat::{ChatMessageViewModel, ChatRequestViewModel},
 };
 
 pub async fn chat(
-    Path(user_id): Path<Uuid>,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
     AiChatServiceState(service): AiChatServiceState,
-    Json(request): Json<ChatRequestViewModel>,
+    axum::Json(request): axum::Json<ChatRequestViewModel>,
 ) -> Result<Sse<impl Stream<Item = Result<Event, Infallible>>>, ApiError> {
     let images: Option<Vec<Base64ImageDto>> = if request.images.is_empty() {
         None

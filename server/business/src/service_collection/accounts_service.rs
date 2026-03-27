@@ -31,8 +31,13 @@ impl AccountsService {
     }
 
     #[tracing::instrument(skip_all, err)]
-    pub async fn get_account_with_metadata(&self, id: Uuid) -> anyhow::Result<FullAccountDto> {
-        let query = account_queries::get_accounts(GetAccountsParams::by_id_with_metadata(id));
+    pub async fn get_account_with_metadata(
+        &self,
+        user_id: Uuid,
+        id: Uuid,
+    ) -> anyhow::Result<FullAccountDto> {
+        let query =
+            account_queries::get_accounts(GetAccountsParams::by_id_with_metadata(user_id, id));
         let model = self.db.fetch_optional::<AccountWithMetadata>(query).await?;
 
         if let Some(model) = model {

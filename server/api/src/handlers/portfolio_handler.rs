@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use axum::{extract::Path, Json};
+use axum::Json;
 use business::dtos::{
     assets::{asset_id_dto::AssetIdDto, asset_pair_ids_dto::AssetPairIdsDto},
     net_worth::range_dto::RangeDto,
@@ -11,7 +11,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::{
-    auth::AuthenticatedUserState,
+    auth::AuthenticatedUserId,
     errors::ApiError,
     extractors::ValidatedQuery,
     states::{
@@ -57,14 +57,13 @@ pub struct GetPortfolioQueryParams {
 #[allow(clippy::too_many_arguments)]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_holdings(
-    Path(user_id): Path<Uuid>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
     ValidatedQuery(query_params): ValidatedQuery<GetPortfolioQueryParams>,
     PortfolioOverviewServiceState(portfolio_service): PortfolioOverviewServiceState,
     AccountsServiceState(accounts_service): AccountsServiceState,
     AssetsServiceState(asset_service): AssetsServiceState,
     AssetRatesServiceState(asset_rates_service): AssetRatesServiceState,
     UsersServiceState(user_service): UsersServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetHoldingsResponseViewModel>, ApiError> {
     let default_asset = match query_params.default_asset_id {
         Some(id) => id,
@@ -132,11 +131,10 @@ pub async fn get_holdings(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_networth_history(
-    Path(user_id): Path<Uuid>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
     ValidatedQuery(query_params): ValidatedQuery<GetNetWorthHistoryRequestParams>,
     PortfolioServiceState(portfolio_service): PortfolioServiceState,
     UsersServiceState(user_service): UsersServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetNetWorthHistoryResponseViewModel>, ApiError> {
     let range = RangeDto::StringBased(query_params.range.clone());
     let default_asset = AssetIdDto(match &query_params.default_asset_id {
@@ -174,13 +172,12 @@ pub async fn get_networth_history(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_portfolio_overview(
-    Path(user_id): Path<Uuid>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
     ValidatedQuery(_query_params): ValidatedQuery<GetPortfolioOverviewQueryParams>,
     PortfolioOverviewServiceState(portfolio_service): PortfolioOverviewServiceState,
     UsersServiceState(_user_service): UsersServiceState,
     AccountsServiceState(accounts_service): AccountsServiceState,
     AssetsServiceState(asset_service): AssetsServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetPortfolioOverviewViewModel>, ApiError> {
     let default_asset = match _query_params.default_asset_id.0 {
         Some(id) => AssetIdDto(id),

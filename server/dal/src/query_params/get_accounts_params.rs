@@ -6,14 +6,16 @@ pub struct GetAccountsParams {
     pub search_type: GetAccountsParamsSeachType,
     pub include_metadata: bool,
     pub include_inactive: bool,
+    pub user_id: Option<Uuid>,
 }
 
 impl GetAccountsParams {
-    pub fn by_id_with_metadata(id: Uuid) -> Self {
+    pub fn by_id_with_metadata(user_id: Uuid, id: Uuid) -> Self {
         Self {
             search_type: GetAccountsParamsSeachType::ById(id),
             include_metadata: true,
             include_inactive: false,
+            user_id: Some(user_id),
         }
     }
 
@@ -22,6 +24,7 @@ impl GetAccountsParams {
             search_type: GetAccountsParamsSeachType::ByUserId(user_id),
             include_metadata: true,
             include_inactive: false,
+            user_id: None,
         }
     }
 
@@ -30,6 +33,7 @@ impl GetAccountsParams {
             search_type: GetAccountsParamsSeachType::ByIds(ids),
             include_metadata: false,
             include_inactive: false,
+            user_id: None,
         }
     }
 }

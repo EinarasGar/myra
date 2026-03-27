@@ -11,6 +11,9 @@ pub use api_error_response::{ApiErrorResponse, ErrorType, FieldError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum ApiError {
+    #[error("Bad request: {0}")]
+    BadRequest(String),
+
     #[error("Resource not found: {0}")]
     NotFound(String),
 
@@ -74,6 +77,13 @@ impl ApiError {
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let (status, error_type, message, errors, details) = match &self {
+            ApiError::BadRequest(msg) => (
+                StatusCode::BAD_REQUEST,
+                ErrorType::ValidationError,
+                msg.clone(),
+                vec![],
+                None,
+            ),
             ApiError::NotFound(msg) => (
                 StatusCode::NOT_FOUND,
                 ErrorType::NotFound,

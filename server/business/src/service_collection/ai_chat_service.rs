@@ -33,8 +33,7 @@ impl AiChatService {
         images: Option<Vec<Base64ImageDto>>,
         history: Vec<ChatHistoryMessageDto>,
     ) -> Result<impl Stream<Item = ChatStreamEventDto>, AiChatError> {
-        let estimated_tokens =
-            token_estimator::estimate_input_tokens(&message, &images, &history);
+        let estimated_tokens = token_estimator::estimate_input_tokens(&message, &images, &history);
         if token_estimator::exceeds_per_request_cap(estimated_tokens) {
             return Err(AiChatError::PerRequestInputLimit);
         }

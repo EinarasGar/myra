@@ -9,7 +9,6 @@ use business::dtos::{
 
 use crate::view_models::assets::get_asset_types::GetAssetTypesResponseViewModel;
 use crate::{
-    auth::AuthenticatedUserState,
     errors::ApiError,
     extractors::ValidatedQuery,
     states::{AssetRatesServiceState, AssetsServiceState},
@@ -61,7 +60,6 @@ use crate::{
 pub async fn search_assets(
     ValidatedQuery(query_params): ValidatedQuery<PaginatedSearchQuery>,
     AssetsServiceState(assets_service): AssetsServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<AssetsPage>, ApiError> {
     let paging_dto = PagingDto {
         start: query_params.start,
@@ -121,7 +119,6 @@ pub async fn search_assets(
 pub async fn get_asset(
     Path(id): Path<i32>,
     AssetsServiceState(assets_service): AssetsServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetAssetResponseViewModel>, ApiError> {
     let asset_dto = assets_service.get_asset_with_metadata(id).await?;
 
@@ -201,7 +198,6 @@ pub async fn get_asset_pair(
     Path((id, reference_id)): Path<(i32, i32)>,
     AssetsServiceState(assets_service): AssetsServiceState,
     AssetRatesServiceState(asset_rates_service): AssetRatesServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetAssetPairResponseViewModel>, ApiError> {
     let (pair_dtos, latest_rate, shared_metadata) = tokio::try_join!(
         assets_service.get_asset_pair(id, reference_id),
@@ -253,7 +249,6 @@ pub async fn get_asset_pair_rates(
     Path((id, reference_id)): Path<(i32, i32)>,
     ValidatedQuery(query_params): ValidatedQuery<GetAssetPairRatesRequestParams>,
     AssetRatesServiceState(asset_rates_service): AssetRatesServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetAssetPairRatesResponseViewModel>, ApiError> {
     let range = RangeDto::StringBased(query_params.range.clone());
     let rates = asset_rates_service

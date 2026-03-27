@@ -3,7 +3,6 @@ use itertools::Itertools;
 use std::collections::HashMap;
 
 use crate::{
-    auth::AuthenticatedUserState,
     errors::ApiError,
     extractors::ValidatedQuery,
     states::{CategoryServiceState, CategoryTypeServiceState},
@@ -49,7 +48,6 @@ pub async fn search_categories(
     ValidatedQuery(search_query): ValidatedQuery<PaginatedSearchQuery>,
     ValidatedQuery(query): ValidatedQuery<SearchCategoriesQuery>,
     CategoryServiceState(category_service): CategoryServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<SearchCategoriesResponseViewModel>, ApiError> {
     let result = category_service
         .search_categories(
@@ -107,7 +105,6 @@ pub async fn search_categories(
 #[tracing::instrument(skip_all, err)]
 pub async fn get_category_types(
     CategoryTypeServiceState(category_type_service): CategoryTypeServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetCategoryTypesResponseViewModel>, ApiError> {
     let types = category_type_service.get_category_types().await?;
 

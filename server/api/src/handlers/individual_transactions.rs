@@ -2,10 +2,16 @@ use axum::{extract::Path, Json};
 use business::dtos::paging_dto::PaginationModeDto;
 use business::dtos::transaction_dto::TransactionDto;
 use itertools::Itertools;
+use serde::Deserialize;
 use uuid::Uuid;
 
+#[derive(Deserialize)]
+pub(crate) struct TransactionIdPath {
+    transaction_id: Uuid,
+}
+
 use crate::{
-    auth::AuthenticatedUserState,
+    auth::AuthenticatedUserId,
     converters::{transaction_dtos_to_account_ids_hashset, transaction_dtos_to_asset_ids_hashset},
     errors::ApiError,
     extractors::{ValidatedJson, ValidatedQuery},
@@ -52,8 +58,7 @@ use crate::{
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn add_individual_transaction(
-    Path(user_id): Path<Uuid>,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
     TransactionManagementServiceState(transaction_service): TransactionManagementServiceState,
     ValidatedJson(params): ValidatedJson<AddIndividualTransactionRequestViewModel>,
 ) -> Result<Json<AddIndividualTransactionResponseViewModel>, ApiError> {
@@ -101,8 +106,8 @@ pub async fn add_individual_transaction(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn update_individual_transaction(
-    Path((user_id, transaction_id)): Path<(Uuid, Uuid)>,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(TransactionIdPath { transaction_id }): Path<TransactionIdPath>,
     TransactionManagementServiceState(service): TransactionManagementServiceState,
     AssetsServiceState(asset_service): AssetsServiceState,
     AccountsServiceState(accounts_service): AccountsServiceState,
@@ -154,12 +159,11 @@ pub async fn update_individual_transaction(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_individual_transactions(
-    Path(user_id): Path<Uuid>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
     ValidatedQuery(query_params): ValidatedQuery<CursorOrPaginatedSearchQuery>,
     AssetsServiceState(asset_service): AssetsServiceState,
     TransactionManagementServiceState(transaction_service): TransactionManagementServiceState,
     AccountsServiceState(accounts_service): AccountsServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<IndividualTransactionsPage>, ApiError> {
     let pagination = PaginationModeDto::from(&query_params);
 
@@ -219,11 +223,11 @@ pub async fn get_individual_transactions(
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn get_single(
-    Path((user_id, transaction_id)): Path<(Uuid, Uuid)>,
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(TransactionIdPath { transaction_id }): Path<TransactionIdPath>,
     TransactionManagementServiceState(transaction_service): TransactionManagementServiceState,
     AssetsServiceState(asset_service): AssetsServiceState,
     AccountsServiceState(accounts_service): AccountsServiceState,
-    AuthenticatedUserState(_auth): AuthenticatedUserState,
 ) -> Result<Json<GetIndividualTransactionViewModel>, ApiError> {
     let transaction = transaction_service
         .get_individual_transaction(user_id, transaction_id)
