@@ -43,6 +43,8 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk
 		"COOKIE_SECURE=false" \
 		"MINIO_PORT=7$${PREFIX}6" \
 		"MINIO_CONSOLE_PORT=7$${PREFIX}7" \
+		"REDIS_PORT=7$${PREFIX}8" \
+		"REDIS_URL=redis://localhost:7$${PREFIX}8" \
 		"S3_ENDPOINT=http://localhost:7$${PREFIX}6" \
 		"S3_BUCKET_NAME=myra-files" \
 		"S3_ACCESS_KEY=minioadmin" \
@@ -141,7 +143,8 @@ status: ## Show service ports, status, and useful links
 	check_infra "OTLP Collector" $(OTLP_PORT) jaeger; \
 	check_infra "Jaeger UI     " $(JAEGER_UI_PORT) jaeger; \
 	check_infra "MinIO         " $(MINIO_PORT) minio; \
-	check_infra "MinIO Console " $(MINIO_CONSOLE_PORT) minio
+	check_infra "MinIO Console " $(MINIO_CONSOLE_PORT) minio; \
+	check_infra "Redis         " $(REDIS_PORT) redis
 
 # Run
 .PHONY: run-backend

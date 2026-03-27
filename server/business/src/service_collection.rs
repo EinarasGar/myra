@@ -3,6 +3,7 @@ use dal::database_connection::MyraDbConnection;
 use dal::database_context::MyraDb;
 use dal::file_provider::FileProvider;
 use dal::noop_file_provider::NoOpFileProvider;
+use dal::redis_connection::RedisConnection;
 use dal::s3_file_provider::S3FileProvider;
 use std::sync::Arc;
 pub mod accounts_service;
@@ -30,6 +31,7 @@ pub mod user_service;
 pub struct Services {
     pub connection: MyraDbConnection,
     pub file_provider: Arc<dyn FileProvider>,
+    pub redis: RedisConnection,
 }
 
 impl Services {
@@ -47,13 +49,20 @@ impl Services {
             }
         };
 
+        let redis = RedisConnection::new().await;
+
         Ok(Services {
             connection,
             file_provider,
+            redis,
         })
     }
 
     pub fn get_db_instance(&self) -> MyraDb {
         MyraDb::new(self.connection.clone())
+    }
+
+    pub fn get_redis_instance(&self) -> RedisConnection {
+        self.redis.clone()
     }
 }

@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use anyhow::Context;
+#[mockall_double::double]
 use dal::database_context::MyraDb;
 use dal::models::base::TotalCount;
 use dal::models::category_models::CategoryWithTypeModel;

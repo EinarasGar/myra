@@ -7,4 +7,5 @@ pub mod models;
 pub mod noop_file_provider;
 pub mod queries;
 pub mod query_params;
+pub mod redis_connection;
 pub mod s3_file_provider;

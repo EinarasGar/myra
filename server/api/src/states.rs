@@ -68,7 +68,26 @@ service_state!(EntriesService);
 service_state!(AccountsService);
 service_state!(CategoryService);
 service_state!(CategoryTypeService);
-service_state!(AiChatService);
+pub struct AiChatServiceState(pub AiChatService);
+
+impl FromRef<AppState> for AiChatService {
+    fn from_ref(state: &AppState) -> AiChatService {
+        let db = state.services_collection.get_db_instance();
+        let redis = state.services_collection.get_redis_instance();
+        AiChatService::new(db, redis)
+    }
+}
+
+impl<S> FromRequestParts<S> for AiChatServiceState
+where
+    AiChatService: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = (StatusCode, String);
+    async fn from_request_parts(_parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        Ok(Self(AiChatService::from_ref(state)))
+    }
+}
 
 use business::service_collection::file_service::FileService;
 

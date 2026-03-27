@@ -1,0 +1,2 @@
+pub const PER_REQUEST_INPUT_TOKEN_CAP: i64 = 100_000;
+pub const WARNING_THRESHOLD_PCT: u8 = 80;

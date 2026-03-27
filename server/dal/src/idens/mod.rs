@@ -5,6 +5,7 @@ pub mod account_idens;
 pub mod asset_idens;
 pub mod entries_idens;
 pub(crate) mod file_idens;
+pub mod rate_limit_idens;
 pub(crate) mod transaction_idens;
 pub(crate) mod user_idens;
 

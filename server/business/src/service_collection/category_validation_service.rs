@@ -1,3 +1,4 @@
+#[mockall_double::double]
 use dal::database_context::MyraDb;
 use dal::models::category_models::{CategoryUsageCount, CategoryWithTypeModel};
 use dal::queries::{category_queries, category_type_queries};

@@ -1,3 +1,4 @@
+#[mockall_double::double]
 use dal::database_context::MyraDb;
 use dal::queries::ai_queries;
 use pgvector::Vector;

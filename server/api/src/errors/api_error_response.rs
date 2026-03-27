@@ -8,6 +8,9 @@ pub struct ApiErrorResponse {
     pub errors: Vec<FieldError>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub stack_trace: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(value_type = Option<Object>)]
+    pub details: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -25,4 +28,5 @@ pub enum ErrorType {
     Conflict,
     InternalServerError,
     ServiceUnavailable,
+    RateLimited,
 }

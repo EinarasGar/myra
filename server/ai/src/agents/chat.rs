@@ -280,6 +280,12 @@ pub async fn run_chat_stream<D: AiDataProvider, A: AiActionProvider>(
                         yield ChatStreamEvent::Reasoning(reasoning);
                     }
                 }
+                Ok(MultiTurnStreamItem::FinalResponse(final_resp)) => {
+                    yield ChatStreamEvent::Usage {
+                        input_tokens: final_resp.usage().input_tokens,
+                        output_tokens: final_resp.usage().output_tokens,
+                    };
+                }
                 Ok(_) => {}
                 Err(e) => {
                     let err_str = e.to_string();

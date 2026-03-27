@@ -88,6 +88,10 @@ pub enum ChatStreamEventDto {
         name: String,
         args: serde_json::Value,
     },
+    Usage {
+        input_tokens: u64,
+        output_tokens: u64,
+    },
 }
 
 impl From<ChatStreamEvent> for ChatStreamEventDto {
@@ -118,6 +122,13 @@ impl From<ChatStreamEvent> for ChatStreamEventDto {
                 tool_call_id,
                 name,
                 args,
+            },
+            ChatStreamEvent::Usage {
+                input_tokens,
+                output_tokens,
+            } => ChatStreamEventDto::Usage {
+                input_tokens,
+                output_tokens,
             },
         }
     }

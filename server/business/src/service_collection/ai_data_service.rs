@@ -4,6 +4,7 @@ use ai::models::aggregate::{AggregateGroupResult, AggregateParams};
 use ai::models::reference::{AssetResult, CategoryResult};
 use ai::models::search::{SearchParams, TransactionSearchResult};
 use anyhow::Result;
+#[mockall_double::double]
 use dal::database_context::MyraDb;
 use dal::models::ai_models::{AiAssetModel, AiCategoryModel, AiTransactionSearchModel};
 use dal::queries::ai_queries;

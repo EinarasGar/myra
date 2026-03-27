@@ -29,6 +29,9 @@ pub enum ApiError {
     #[error("Service unavailable")]
     ServiceUnavailable,
 
+    #[error("Rate limit exceeded")]
+    RateLimited(serde_json::Value),
+
     #[error("{0}")]
     Internal(#[from] anyhow::Error),
 }
@@ -70,48 +73,62 @@ impl ApiError {
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
-        let (status, error_type, message, errors) = match &self {
+        let (status, error_type, message, errors, details) = match &self {
             ApiError::NotFound(msg) => (
                 StatusCode::NOT_FOUND,
                 ErrorType::NotFound,
                 msg.clone(),
                 vec![],
+                None,
             ),
             ApiError::Validation(field_errors) => (
                 StatusCode::UNPROCESSABLE_ENTITY,
                 ErrorType::ValidationError,
                 "One or more fields failed validation.".to_string(),
                 field_errors.clone(),
+                None,
             ),
             ApiError::Unauthorized => (
                 StatusCode::UNAUTHORIZED,
                 ErrorType::Unauthorized,
                 "Unauthorized".to_string(),
                 vec![],
+                None,
             ),
             ApiError::Forbidden => (
                 StatusCode::FORBIDDEN,
                 ErrorType::Forbidden,
                 "Forbidden".to_string(),
                 vec![],
+                None,
             ),
             ApiError::Conflict(msg) => (
                 StatusCode::CONFLICT,
                 ErrorType::Conflict,
                 msg.clone(),
                 vec![],
+                None,
             ),
             ApiError::ServiceUnavailable => (
                 StatusCode::SERVICE_UNAVAILABLE,
                 ErrorType::ServiceUnavailable,
                 "Service temporarily unavailable.".to_string(),
                 vec![],
+                None,
+            ),
+            ApiError::RateLimited(details) => (
+                StatusCode::TOO_MANY_REQUESTS,
+                ErrorType::RateLimited,
+                "Rate limit exceeded.".to_string(),
+                vec![],
+                Some(details.clone()),
             ),
             ApiError::Internal(_err) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 ErrorType::InternalServerError,
                 "An internal server error occurred.".to_string(),
                 vec![],
+                None,
             ),
         };
 
@@ -129,8 +146,36 @@ impl IntoResponse for ApiError {
             message,
             errors,
             stack_trace,
+            details,
         };
 
         (status, Json(body)).into_response()
+    }
+}
+
+impl From<business::dtos::ai_chat_error_dto::AiChatError> for ApiError {
+    fn from(err: business::dtos::ai_chat_error_dto::AiChatError) -> Self {
+        use business::dtos::ai_chat_error_dto::AiChatError;
+        match err {
+            AiChatError::RateLimited(rl) => ApiError::RateLimited(serde_json::json!({
+                "reason": "quota_exceeded",
+                "window": rl.window.to_string(),
+                "token_type": rl.token_type.to_string(),
+                "scope": rl.scope.to_string(),
+                "limit": rl.limit,
+                "remaining": rl.remaining,
+                "reset_at": rl.reset_at
+                    .format(&time::format_description::well_known::Rfc3339)
+                    .unwrap_or_default(),
+            })),
+            AiChatError::PerRequestInputLimit => ApiError::RateLimited(serde_json::json!({
+                "reason": "per_request_input_limit",
+            })),
+            AiChatError::ConcurrencyLimitExceeded => ApiError::RateLimited(serde_json::json!({
+                "reason": "concurrency_limit",
+                "scope": "user",
+            })),
+            AiChatError::Internal(e) => ApiError::from_anyhow(e),
+        }
     }
 }

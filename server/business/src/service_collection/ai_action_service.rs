@@ -4,6 +4,7 @@ use ai::models::action::{
     CreateTransactionResult,
 };
 use anyhow::Result;
+#[mockall_double::double]
 use dal::database_context::MyraDb;
 use uuid::Uuid;
 

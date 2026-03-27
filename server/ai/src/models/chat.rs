@@ -100,4 +100,8 @@ pub enum ChatStreamEvent {
         name: String,
         args: serde_json::Value,
     },
+    Usage {
+        input_tokens: u64,
+        output_tokens: u64,
+    },
 }

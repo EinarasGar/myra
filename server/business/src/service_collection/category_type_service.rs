@@ -1,4 +1,5 @@
 use anyhow::Context;
+#[mockall_double::double]
 use dal::database_context::MyraDb;
 use dal::models::category_models::CategoryTypeModel;
 use dal::queries::category_type_queries;
