@@ -107,15 +107,15 @@ pub async fn get_account_networth_history(
 pub async fn get_account_portfolio_overview(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(AccountIdPath { account_id }): Path<AccountIdPath>,
-    ValidatedQuery(_query_params): ValidatedQuery<GetPortfolioOverviewQueryParams>,
+    ValidatedQuery(query_params): ValidatedQuery<GetPortfolioOverviewQueryParams>,
     PortfolioOverviewServiceState(portfolio_service): PortfolioOverviewServiceState,
-    UsersServiceState(_user_service): UsersServiceState,
+    UsersServiceState(user_service): UsersServiceState,
     AccountsServiceState(accounts_service): AccountsServiceState,
     AssetsServiceState(asset_service): AssetsServiceState,
 ) -> Result<Json<GetPortfolioOverviewViewModel>, ApiError> {
-    let default_asset = match _query_params.default_asset_id.0 {
+    let default_asset = match query_params.default_asset_id {
         Some(id) => AssetIdDto(id),
-        None => AssetIdDto(0),
+        None => AssetIdDto(user_service.get_full_user(user_id).await?.default_asset_id),
     };
 
     let overview = portfolio_service

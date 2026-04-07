@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::str::FromStr;
 
 use sqlx::{
@@ -49,6 +50,119 @@ impl MyraDbConnection {
             .run(&self.pool)
             .await?;
         tracing::info!("Sample seed migrations complete.");
+        Ok(())
+    }
+
+    pub async fn run_asset_seed(&self) -> anyhow::Result<()> {
+        let seed_dir = Path::new("../database/seed/raw-data/assets");
+        let assets_csv = seed_dir.join("assets.csv");
+        let pairs_csv = seed_dir.join("pairs.csv");
+
+        if !assets_csv.exists() {
+            tracing::warn!(
+                "Asset seed file not found at {}. Skipping asset seed.",
+                assets_csv.display()
+            );
+            return Ok(());
+        }
+
+        let has_assets: bool = sqlx::query_scalar(
+            "SELECT EXISTS(SELECT 1 FROM assets WHERE asset_type NOT IN (1))",
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        if has_assets {
+            tracing::info!("Assets already seeded. Skipping asset seed.");
+            return Ok(());
+        }
+
+        tracing::info!("Seeding assets from CSV...");
+        let mut conn = self.pool.acquire().await?;
+
+        // Import assets
+        sqlx::query(
+            "CREATE TEMP TABLE tmp_assets (
+                ticker TEXT,
+                asset_name TEXT,
+                asset_type_id INT,
+                isin TEXT,
+                base_currency TEXT
+            )",
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        let csv_data = std::fs::read(&assets_csv)?;
+        let mut copy = conn
+            .copy_in_raw(
+                "COPY tmp_assets (ticker, asset_name, asset_type_id, isin, base_currency) FROM STDIN WITH (FORMAT csv)",
+            )
+            .await?;
+        copy.send(csv_data).await?;
+        copy.finish().await?;
+
+        let inserted_assets = sqlx::query_scalar::<_, i32>(
+            "INSERT INTO assets (asset_type, asset_name, ticker, isin, base_pair_id)
+             SELECT t.asset_type_id, t.asset_name, t.ticker, NULLIF(t.isin, ''), c.id
+             FROM tmp_assets t
+             LEFT JOIN assets c ON c.ticker = t.base_currency
+             ON CONFLICT (ticker) DO NOTHING
+             RETURNING id",
+        )
+        .fetch_all(&mut *conn)
+        .await?;
+
+        sqlx::query("DROP TABLE tmp_assets")
+            .execute(&mut *conn)
+            .await?;
+
+        // Import pairs if file exists
+        let mut inserted_pairs_count = 0;
+        if pairs_csv.exists() {
+            sqlx::query(
+                "CREATE TEMP TABLE tmp_pairs (
+                    asset_ticker TEXT,
+                    quote_ticker TEXT
+                )",
+            )
+            .execute(&mut *conn)
+            .await?;
+
+            let pairs_data = std::fs::read(&pairs_csv)?;
+            let mut copy = conn
+                .copy_in_raw(
+                    "COPY tmp_pairs (asset_ticker, quote_ticker) FROM STDIN WITH (FORMAT csv)",
+                )
+                .await?;
+            copy.send(pairs_data).await?;
+            copy.finish().await?;
+
+            let inserted_pairs = sqlx::query_scalar::<_, i32>(
+                "INSERT INTO asset_pairs (pair1, pair2)
+                 SELECT a.id, q.id
+                 FROM tmp_pairs t
+                 JOIN assets a ON a.ticker = t.asset_ticker
+                 JOIN assets q ON q.ticker = t.quote_ticker
+                 ON CONFLICT (pair1, pair2) DO NOTHING
+                 RETURNING id",
+            )
+            .fetch_all(&mut *conn)
+            .await?;
+
+            inserted_pairs_count = inserted_pairs.len();
+
+            sqlx::query("DROP TABLE tmp_pairs")
+                .execute(&mut *conn)
+                .await?;
+        }
+
+        tracing::info!(
+            "Asset seed complete. {} assets, {} pairs inserted.",
+            inserted_assets.len(),
+            inserted_pairs_count
+        );
+
         Ok(())
     }
 

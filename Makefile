@@ -171,7 +171,7 @@ refresh-infra: ## Wipe volumes and restart infrastructure services
 .PHONY: export-db
 export-db: ## Export database data to db_dump.sql
 	@echo "$(GREEN)Exporting database data...$(NC)"
-	@PGPASSWORD=$(POSTGRES_PASSWORD) pg_dump -h localhost -p $(POSTGRES_PORT) -U $(POSTGRES_USER) -d $(POSTGRES_DB) --data-only > db_dump.sql
+	@PGPASSWORD=$(POSTGRES_PASSWORD) pg_dump -h localhost -p $(POSTGRES_PORT) -U $(POSTGRES_USER) -d $(POSTGRES_DB) --data-only --exclude-table='_sqlx_*' > db_dump.sql
 	@echo "$(GREEN)Database data exported to db_dump.sql$(NC)"
 
 .PHONY: import-db

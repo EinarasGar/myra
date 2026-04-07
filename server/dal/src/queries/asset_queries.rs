@@ -49,16 +49,41 @@ pub fn get_public_assets(page_length: u64, page: u64, search: Option<String>) ->
         .conditions(
             search.is_some(),
             |q| {
+                let s = search.clone().unwrap();
+                let s_lower = s.to_lowercase();
                 q.cond_where(
                     Cond::any()
-                        .add(
-                            Expr::col((AssetsIden::Table, AssetsIden::AssetName))
-                                .ilike(format!("%{}%", search.clone().unwrap())),
-                        )
+                        .add(Expr::cust_with_values(
+                            "LOWER(assets.ticker) = $1",
+                            [s_lower.clone()],
+                        ))
                         .add(
                             Expr::col((AssetsIden::Table, AssetsIden::Ticker))
-                                .ilike(format!("%{}%", search.unwrap())),
+                                .ilike(format!("{}%", s)),
+                        )
+                        .add(
+                            Expr::col((AssetsIden::Table, AssetsIden::AssetName))
+                                .ilike(format!("{}%", s)),
                         ),
+                );
+                q.order_by_expr(
+                    Expr::cust_with_values(
+                        "CASE \
+                         WHEN LOWER(assets.ticker) = $1 THEN 0 \
+                         WHEN LOWER(assets.asset_name) = $1 THEN 1 \
+                         WHEN LOWER(assets.asset_name) LIKE $2 THEN 2 \
+                         WHEN LOWER(assets.ticker) LIKE $2 THEN 3 \
+                         ELSE 4 END",
+                        [s_lower.clone(), format!("{}%", s_lower)],
+                    ),
+                    Order::Asc,
+                );
+                q.order_by_expr(
+                    Expr::cust_with_values(
+                        "GREATEST(similarity(assets.asset_name, $1), similarity(assets.ticker, $1))",
+                        [s_lower],
+                    ),
+                    Order::Desc,
                 );
             },
             |_| {},
@@ -168,14 +193,40 @@ pub fn get_asset_with_metadata(params: GetAssetsParams) -> DbQueryWithValues {
             );
         }
         GetAssetsParamsSeachType::All => {}
-        GetAssetsParamsSeachType::ByQuery(_query) => {
-            //Temporary logic to enable frontend development
+        GetAssetsParamsSeachType::ByQuery(ref query) => {
+            let query_lower = query.to_lowercase();
+
             get_assets_builder.and_where(
-                Expr::col((AssetsIden::Table, AssetsIden::AssetName))
-                    .ilike(format!("%{}%", _query))
-                    .or(Expr::col((AssetsIden::Table, AssetsIden::Ticker))
-                        .ilike(format!("%{}%", _query))),
+                Expr::cust_with_values(
+                    "LOWER(assets.ticker) = $1",
+                    [query_lower.clone()],
+                )
+                .or(Expr::col((AssetsIden::Table, AssetsIden::Ticker))
+                    .ilike(format!("{}%", query)))
+                .or(Expr::col((AssetsIden::Table, AssetsIden::AssetName))
+                    .ilike(format!("{}%", query))),
             );
+
+            get_assets_builder
+                .order_by_expr(
+                    Expr::cust_with_values(
+                        "CASE \
+                         WHEN LOWER(assets.ticker) = $1 THEN 0 \
+                         WHEN LOWER(assets.asset_name) = $1 THEN 1 \
+                         WHEN LOWER(assets.asset_name) LIKE $2 THEN 2 \
+                         WHEN LOWER(assets.ticker) LIKE $2 THEN 3 \
+                         ELSE 4 END",
+                        [query_lower.clone(), format!("{}%", query_lower)],
+                    ),
+                    Order::Asc,
+                )
+                .order_by_expr(
+                    Expr::cust_with_values(
+                        "GREATEST(similarity(assets.asset_name, $1), similarity(assets.ticker, $1))",
+                        [query_lower],
+                    ),
+                    Order::Desc,
+                );
         }
     };
 

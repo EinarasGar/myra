@@ -20,7 +20,7 @@ export default function useGetAccountPortfolioOverview(
     const data = await AccountPortfolioApiFactory().getAccountPortfolioOverview(
       userId,
       accountId,
-      { default_asset_id: defaultAssetId ?? 3 } as unknown as number,
+      defaultAssetId ?? undefined,
     );
     addAsset(
       data.data.lookup_tables.assets.map((asset) => {

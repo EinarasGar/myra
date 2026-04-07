@@ -2,6 +2,7 @@ myra.session.sql
 myra.backup
 notes.md
 database/scratchpad/*
+database/seed/raw-data/*
 CLAUDE.md
 .claude/*
 

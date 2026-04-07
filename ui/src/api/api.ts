@@ -562,6 +562,12 @@ export interface AddUser {
 export interface ApiErrorResponse {
   /**
    *
+   * @type {object}
+   * @memberof ApiErrorResponse
+   */
+  details?: object | null;
+  /**
+   *
    * @type {ErrorType}
    * @memberof ApiErrorResponse
    */
@@ -3522,6 +3528,7 @@ export const ErrorType = {
   Conflict: "Conflict",
   InternalServerError: "InternalServerError",
   ServiceUnavailable: "ServiceUnavailable",
+  RateLimited: "RateLimited",
 } as const;
 
 export type ErrorType = (typeof ErrorType)[keyof typeof ErrorType];
@@ -5317,26 +5324,20 @@ export const AccountPortfolioApiAxiosParamCreator = function (
      * @summary Get Account Portfolio Overview
      * @param {string} userId
      * @param {string} accountId
-     * @param {number | null} defaultAssetId
+     * @param {number} [defaultAssetId]
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     getAccountPortfolioOverview: async (
       userId: string,
       accountId: string,
-      defaultAssetId: number | null,
+      defaultAssetId?: number,
       options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("getAccountPortfolioOverview", "userId", userId);
       // verify required parameter 'accountId' is not null or undefined
       assertParamExists("getAccountPortfolioOverview", "accountId", accountId);
-      // verify required parameter 'defaultAssetId' is not null or undefined
-      assertParamExists(
-        "getAccountPortfolioOverview",
-        "defaultAssetId",
-        defaultAssetId,
-      );
       const localVarPath =
         `/api/users/{user_id}/accounts/{account_id}/portfolio/overview`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
@@ -5509,14 +5510,14 @@ export const AccountPortfolioApiFp = function (configuration?: Configuration) {
      * @summary Get Account Portfolio Overview
      * @param {string} userId
      * @param {string} accountId
-     * @param {number | null} defaultAssetId
+     * @param {number} [defaultAssetId]
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     async getAccountPortfolioOverview(
       userId: string,
       accountId: string,
-      defaultAssetId: number | null,
+      defaultAssetId?: number,
       options?: RawAxiosRequestConfig,
     ): Promise<
       (
@@ -5636,14 +5637,14 @@ export const AccountPortfolioApiFactory = function (
      * @summary Get Account Portfolio Overview
      * @param {string} userId
      * @param {string} accountId
-     * @param {number | null} defaultAssetId
+     * @param {number} [defaultAssetId]
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     getAccountPortfolioOverview(
       userId: string,
       accountId: string,
-      defaultAssetId: number | null,
+      defaultAssetId?: number,
       options?: RawAxiosRequestConfig,
     ): AxiosPromise<GetPortfolioOverview> {
       return localVarFp
@@ -5706,7 +5707,7 @@ export interface AccountPortfolioApiInterface {
    * @summary Get Account Portfolio Overview
    * @param {string} userId
    * @param {string} accountId
-   * @param {number | null} defaultAssetId
+   * @param {number} [defaultAssetId]
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    * @memberof AccountPortfolioApiInterface
@@ -5714,7 +5715,7 @@ export interface AccountPortfolioApiInterface {
   getAccountPortfolioOverview(
     userId: string,
     accountId: string,
-    defaultAssetId: number | null,
+    defaultAssetId?: number,
     options?: RawAxiosRequestConfig,
   ): AxiosPromise<GetPortfolioOverview>;
 
@@ -5784,7 +5785,7 @@ export class AccountPortfolioApi
    * @summary Get Account Portfolio Overview
    * @param {string} userId
    * @param {string} accountId
-   * @param {number | null} defaultAssetId
+   * @param {number} [defaultAssetId]
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    * @memberof AccountPortfolioApi
@@ -5792,7 +5793,7 @@ export class AccountPortfolioApi
   public getAccountPortfolioOverview(
     userId: string,
     accountId: string,
-    defaultAssetId: number | null,
+    defaultAssetId?: number,
     options?: RawAxiosRequestConfig,
   ) {
     return AccountPortfolioApiFp(this.configuration)
@@ -9397,26 +9398,20 @@ export const IndividualTransactionsApiAxiosParamCreator = function (
      * Retrieves a single transaction by specified id
      * @summary Get Single
      * @param {string} userId
-     * @param {string} transactionId
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     getSingle: async (
       userId: string,
-      transactionId: string,
       options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("getSingle", "userId", userId);
-      // verify required parameter 'transactionId' is not null or undefined
-      assertParamExists("getSingle", "transactionId", transactionId);
       const localVarPath =
-        `/api/users/{user_id}/transactions/individual/{transaction_id}`
-          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-          .replace(
-            `{${"transaction_id"}}`,
-            encodeURIComponent(String(transactionId)),
-          );
+        `/api/users/{user_id}/transactions/individual/{transaction_id}`.replace(
+          `{${"user_id"}}`,
+          encodeURIComponent(String(userId)),
+        );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
       let baseOptions;
@@ -9633,13 +9628,11 @@ export const IndividualTransactionsApiFp = function (
      * Retrieves a single transaction by specified id
      * @summary Get Single
      * @param {string} userId
-     * @param {string} transactionId
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     async getSingle(
       userId: string,
-      transactionId: string,
       options?: RawAxiosRequestConfig,
     ): Promise<
       (
@@ -9649,7 +9642,6 @@ export const IndividualTransactionsApiFp = function (
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getSingle(
         userId,
-        transactionId,
         options,
       );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
@@ -9777,17 +9769,15 @@ export const IndividualTransactionsApiFactory = function (
      * Retrieves a single transaction by specified id
      * @summary Get Single
      * @param {string} userId
-     * @param {string} transactionId
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     getSingle(
       userId: string,
-      transactionId: string,
       options?: RawAxiosRequestConfig,
     ): AxiosPromise<GetIndividualTransaction> {
       return localVarFp
-        .getSingle(userId, transactionId, options)
+        .getSingle(userId, options)
         .then((request) => request(axios, basePath));
     },
     /**
@@ -9865,14 +9855,12 @@ export interface IndividualTransactionsApiInterface {
    * Retrieves a single transaction by specified id
    * @summary Get Single
    * @param {string} userId
-   * @param {string} transactionId
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    * @memberof IndividualTransactionsApiInterface
    */
   getSingle(
     userId: string,
-    transactionId: string,
     options?: RawAxiosRequestConfig,
   ): AxiosPromise<GetIndividualTransaction>;
 
@@ -9966,18 +9954,13 @@ export class IndividualTransactionsApi
    * Retrieves a single transaction by specified id
    * @summary Get Single
    * @param {string} userId
-   * @param {string} transactionId
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    * @memberof IndividualTransactionsApi
    */
-  public getSingle(
-    userId: string,
-    transactionId: string,
-    options?: RawAxiosRequestConfig,
-  ) {
+  public getSingle(userId: string, options?: RawAxiosRequestConfig) {
     return IndividualTransactionsApiFp(this.configuration)
-      .getSingle(userId, transactionId, options)
+      .getSingle(userId, options)
       .then((request) => request(this.axios, this.basePath));
   }
 
@@ -10138,23 +10121,17 @@ export const PortfolioApiAxiosParamCreator = function (
      * Retunrs information about the entire portfolio and statistics such as gains/losses
      * @summary Get Portfolio Overview
      * @param {string} userId
-     * @param {number | null} defaultAssetId
+     * @param {number} [defaultAssetId]
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     getPortfolioOverview: async (
       userId: string,
-      defaultAssetId: number | null,
+      defaultAssetId?: number,
       options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("getPortfolioOverview", "userId", userId);
-      // verify required parameter 'defaultAssetId' is not null or undefined
-      assertParamExists(
-        "getPortfolioOverview",
-        "defaultAssetId",
-        defaultAssetId,
-      );
       const localVarPath = `/api/users/{user_id}/portfolio/overview`.replace(
         `{${"user_id"}}`,
         encodeURIComponent(String(userId)),
@@ -10287,13 +10264,13 @@ export const PortfolioApiFp = function (configuration?: Configuration) {
      * Retunrs information about the entire portfolio and statistics such as gains/losses
      * @summary Get Portfolio Overview
      * @param {string} userId
-     * @param {number | null} defaultAssetId
+     * @param {number} [defaultAssetId]
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     async getPortfolioOverview(
       userId: string,
-      defaultAssetId: number | null,
+      defaultAssetId?: number,
       options?: RawAxiosRequestConfig,
     ): Promise<
       (
@@ -10374,13 +10351,13 @@ export const PortfolioApiFactory = function (
      * Retunrs information about the entire portfolio and statistics such as gains/losses
      * @summary Get Portfolio Overview
      * @param {string} userId
-     * @param {number | null} defaultAssetId
+     * @param {number} [defaultAssetId]
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     getPortfolioOverview(
       userId: string,
-      defaultAssetId: number | null,
+      defaultAssetId?: number,
       options?: RawAxiosRequestConfig,
     ): AxiosPromise<GetPortfolioOverview> {
       return localVarFp
@@ -10432,14 +10409,14 @@ export interface PortfolioApiInterface {
    * Retunrs information about the entire portfolio and statistics such as gains/losses
    * @summary Get Portfolio Overview
    * @param {string} userId
-   * @param {number | null} defaultAssetId
+   * @param {number} [defaultAssetId]
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    * @memberof PortfolioApiInterface
    */
   getPortfolioOverview(
     userId: string,
-    defaultAssetId: number | null,
+    defaultAssetId?: number,
     options?: RawAxiosRequestConfig,
   ): AxiosPromise<GetPortfolioOverview>;
 }
@@ -10495,14 +10472,14 @@ export class PortfolioApi extends BaseAPI implements PortfolioApiInterface {
    * Retunrs information about the entire portfolio and statistics such as gains/losses
    * @summary Get Portfolio Overview
    * @param {string} userId
-   * @param {number | null} defaultAssetId
+   * @param {number} [defaultAssetId]
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    * @memberof PortfolioApi
    */
   public getPortfolioOverview(
     userId: string,
-    defaultAssetId: number | null,
+    defaultAssetId?: number,
     options?: RawAxiosRequestConfig,
   ) {
     return PortfolioApiFp(this.configuration)

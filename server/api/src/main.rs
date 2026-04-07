@@ -45,6 +45,9 @@ async fn main() -> Result<()> {
         #[cfg(feature = "seed")]
         db.run_sample_seed().await.unwrap();
 
+        #[cfg(feature = "seed")]
+        db.run_asset_seed().await.unwrap();
+
         #[cfg(feature = "noauth")]
         db.run_noauth_seed().await.unwrap();
     }

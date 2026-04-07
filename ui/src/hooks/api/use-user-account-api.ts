@@ -89,7 +89,7 @@ export function useUpdateAccount(userId: string) {
     }: {
       accountId: string;
       data: UpdateAccount;
-    }) => AccountsApiFactory().updateAccount(userId, accountId, data),
+    }) => AccountsApiFactory().updateAccount(accountId, userId, data),
     onMutate: async ({ accountId, data }) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<ExpandedAccount[]>(queryKey);
@@ -148,7 +148,7 @@ export function useDeleteAccount(userId: string) {
   return useMutation({
     mutationKey,
     mutationFn: (accountId: string) =>
-      AccountsApiFactory().deleteAccount(userId, accountId),
+      AccountsApiFactory().deleteAccount(accountId, userId),
     onMutate: async (accountId) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<ExpandedAccount[]>(queryKey);
