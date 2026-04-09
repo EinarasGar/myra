@@ -197,14 +197,11 @@ pub fn get_asset_with_metadata(params: GetAssetsParams) -> DbQueryWithValues {
             let query_lower = query.to_lowercase();
 
             get_assets_builder.and_where(
-                Expr::cust_with_values(
-                    "LOWER(assets.ticker) = $1",
-                    [query_lower.clone()],
-                )
-                .or(Expr::col((AssetsIden::Table, AssetsIden::Ticker))
-                    .ilike(format!("{}%", query)))
-                .or(Expr::col((AssetsIden::Table, AssetsIden::AssetName))
-                    .ilike(format!("{}%", query))),
+                Expr::cust_with_values("LOWER(assets.ticker) = $1", [query_lower.clone()])
+                    .or(Expr::col((AssetsIden::Table, AssetsIden::Ticker))
+                        .ilike(format!("{}%", query)))
+                    .or(Expr::col((AssetsIden::Table, AssetsIden::AssetName))
+                        .ilike(format!("{}%", query))),
             );
 
             get_assets_builder

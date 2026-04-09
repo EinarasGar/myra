@@ -1,0 +1,26 @@
+[package]
+name = "sverto-core"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+name = "sverto_core"
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "src/bin/uniffi-bindgen.rs"
+
+[dependencies]
+uniffi = { version = "0.31", features = ["cli", "tokio"] }
+reqwest = { version = "0.13", default-features = false, features = ["json", "rustls", "charset"] }
+webpki-root-certs = "1"
+rustls = { version = "0.23", default-features = false }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "sync"] }
+thiserror = "2"
+shared = { path = "../shared", default-features = false }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[build-dependencies]
+uniffi = { version = "0.31", features = ["build"] }

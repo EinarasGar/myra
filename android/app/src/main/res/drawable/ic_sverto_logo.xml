@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+
+    <!-- Circle ring -->
+    <path
+        android:pathData="M256,110a146,146 0,1 1,0 292a146,146 0,1 1,0 -292"
+        android:strokeWidth="28"
+        android:fillColor="#00000000"
+        android:strokeColor="#15BA81" />
+
+    <!-- Diagonal line -->
+    <path
+        android:pathData="M104,334L408,178"
+        android:strokeWidth="28"
+        android:fillColor="#00000000"
+        android:strokeColor="#15BA81"
+        android:strokeLineCap="round" />
+
+    <!-- Center dot -->
+    <path
+        android:pathData="M256,256m-28,0a28,28 0,1 1,56 0a28,28 0,1 1,-56 0"
+        android:fillColor="#15BA81" />
+</vector>

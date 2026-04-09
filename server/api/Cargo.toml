@@ -9,6 +9,7 @@ edition = "2021"
 business = { path = "../business", default-features = false }
 dal = { path = "../dal" }
 macros = {path="../macros"}
+shared = { path = "../shared", features = ["backend"] }
 axum = { version = "0.8.8", features = ["query", "macros"] }
 serde = "1.0.228"
 tokio = { version = "1.49.0", features = ["full"] }

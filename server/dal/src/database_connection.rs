@@ -66,11 +66,10 @@ impl MyraDbConnection {
             return Ok(());
         }
 
-        let has_assets: bool = sqlx::query_scalar(
-            "SELECT EXISTS(SELECT 1 FROM assets WHERE asset_type NOT IN (1))",
-        )
-        .fetch_one(&self.pool)
-        .await?;
+        let has_assets: bool =
+            sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM assets WHERE asset_type NOT IN (1))")
+                .fetch_one(&self.pool)
+                .await?;
 
         if has_assets {
             tracing::info!("Assets already seeded. Skipping asset seed.");

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- app_name is provided per flavor (src/dev/ and src/prod/) -->
+</resources>

@@ -9,4 +9,6 @@ members = [
   "cli",
   "macros",
   "ai",
+  "shared",
+  "app-core",
 ]

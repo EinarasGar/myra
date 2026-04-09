@@ -55,24 +55,20 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk
 		"AI_MODEL=gemini-3-flash-preview" \
 		"AI_EMBEDDING_MODEL=gemini-embedding-2-preview" \
 		>> .env; \
-	if [ -f .secrets ]; then \
-		. ./.secrets; \
-		printf '%s\n' "AI_API_KEY=$${AI_API_KEY}" >> .env; \
-	else \
-		printf '%s\n' "AI_API_KEY=" >> .env; \
+	SECRETS_FILE=".secrets.dev"; \
+	if [ ! -f "$$SECRETS_FILE" ]; then \
+		echo "$(RED)Error: $$SECRETS_FILE not found. Copy .secrets.example to $$SECRETS_FILE and fill in values.$(NC)"; \
+		exit 1; \
 	fi; \
+	. ./$$SECRETS_FILE; \
+	printf '%s\n' "AI_API_KEY=$${AI_API_KEY}" >> .env; \
 	case "$(auth)" in \
 		noauth|database) \
 			printf '\n%s\n' "AUTH_PROVIDER=$(auth)" >> .env; \
 			;; \
 		clerk) \
-			if [ ! -f .secrets ]; then \
-				echo "$(RED)Error: .secrets file not found. Copy .secrets.example to .secrets and fill in your Clerk keys.$(NC)"; \
-				exit 1; \
-			fi; \
-			. ./.secrets; \
-			if [ -z "$$CLERK_PUBLISHABLE_KEY" ] || [ -z "$$CLERK_SECRET_KEY" ]; then \
-				echo "$(RED)Error: CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY must be set in .secrets$(NC)"; \
+			if [ -z "$$CLERK_PUBLISHABLE_KEY" ]; then \
+				echo "$(RED)Error: CLERK_PUBLISHABLE_KEY not found in $$SECRETS_FILE$(NC)"; \
 				exit 1; \
 			fi; \
 			printf '\n%s\n\n%s\n%s\n%s\n' \
@@ -87,11 +83,19 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk
 			exit 1; \
 			;; \
 	esac; \
+	printf '\n%s\n%s\n%s\n%s\n%s\n' \
+		"# Android signing" \
+		"SVERTO_STORE_FILE=$${SVERTO_STORE_FILE}" \
+		"SVERTO_STORE_PASSWORD=$${SVERTO_STORE_PASSWORD}" \
+		"SVERTO_KEY_ALIAS=$${SVERTO_KEY_ALIAS}" \
+		"SVERTO_KEY_PASSWORD=$${SVERTO_KEY_PASSWORD}" \
+		>> .env; \
+	printf '\n%s\n' "APP_ENV=dev" >> .env; \
 	echo "$(GREEN).env created (auth=$(auth)):$(NC)"; \
 	cat .env
 	@echo ""
 	@echo "$(GREEN)Installing UI dependencies...$(NC)"
-	cd ui && bun install
+	cd web && bun install
 	@echo "$(GREEN)Building Rust workspace...$(NC)"
 	cd server && cargo build
 	@echo "$(GREEN)Setup complete!$(NC)"
@@ -147,15 +151,41 @@ status: ## Show service ports, status, and useful links
 	check_infra "Redis         " $(REDIS_PORT) redis
 
 # Run
-.PHONY: run-backend
-run-backend: ## Start API server (kills existing process on SERVER_PORT first)
+.PHONY: backend-run
+backend-run: ## Start API server (kills existing process on SERVER_PORT first)
 	-@lsof -ti :$(SERVER_PORT) | xargs kill -9 2>/dev/null || true
 	cd server && cargo run -p api --no-default-features --features $(AUTH_PROVIDER),color-sql,seed
 
-.PHONY: run-ui
-run-ui: ## Start Vite dev server (kills existing process on VITE_PORT first)
+.PHONY: web-run
+web-run: ## Start Vite dev server (kills existing process on VITE_PORT first)
 	-@lsof -ti :$(VITE_PORT) | xargs kill -9 2>/dev/null || true
-	cd ui && bun run dev
+	cd web && bun run dev
+
+.PHONY: android-run
+android-run: ## Build, install, and launch the dev Android app on all connected devices
+	cd android && ./gradlew installDevDebug
+	@ADB="$$HOME/Library/Android/sdk/platform-tools/adb"; \
+	for serial in $$($$ADB devices | tail -n +2 | grep -w device | awk '{print $$1}'); do \
+		"$$ADB" -s "$$serial" reverse tcp:$(SERVER_PORT) tcp:$(SERVER_PORT) >/dev/null 2>&1; \
+		echo "$(GREEN)Launching on $$serial$(NC)"; \
+		"$$ADB" -s "$$serial" shell am start -n com.sverto.app.dev/com.sverto.app.MainActivity; \
+	done
+
+.PHONY: android-install-prod
+android-install-prod: ## Build and install the prod Android app pointing at api.sverto.com
+	@if [ ! -f ".secrets.prod" ]; then \
+		echo "$(RED)Error: .secrets.prod not found.$(NC)"; \
+		exit 1; \
+	fi; \
+	. ./.secrets.prod; \
+	cd android && ./gradlew installProdRelease \
+		-PAPP_ENV=prod \
+		-PAPP_API_BASE_URL=https://api.sverto.com \
+		-PCLERK_PUBLISHABLE_KEY="$$CLERK_PUBLISHABLE_KEY" \
+		-PSVERTO_STORE_FILE="$$SVERTO_STORE_FILE" \
+		-PSVERTO_STORE_PASSWORD="$$SVERTO_STORE_PASSWORD" \
+		-PSVERTO_KEY_ALIAS="$$SVERTO_KEY_ALIAS" \
+		-PSVERTO_KEY_PASSWORD="$$SVERTO_KEY_PASSWORD"
 
 # Infrastructure
 .PHONY: start-infra
@@ -171,7 +201,7 @@ refresh-infra: ## Wipe volumes and restart infrastructure services
 .PHONY: export-db
 export-db: ## Export database data to db_dump.sql
 	@echo "$(GREEN)Exporting database data...$(NC)"
-	@PGPASSWORD=$(POSTGRES_PASSWORD) pg_dump -h localhost -p $(POSTGRES_PORT) -U $(POSTGRES_USER) -d $(POSTGRES_DB) --data-only --exclude-table='_sqlx_*' > db_dump.sql
+	@PGPASSWORD=$(POSTGRES_PASSWORD) pg_dump -h localhost -p $(POSTGRES_PORT) -U $(POSTGRES_USER) -d $(POSTGRES_DB) --data-only --exclude-table='_sqlx_*' --disable-triggers > db_dump.sql
 	@echo "$(GREEN)Database data exported to db_dump.sql$(NC)"
 
 .PHONY: import-db
@@ -193,7 +223,7 @@ generate-api: ## Generate TypeScript API client from OpenAPI spec
 		echo "$(YELLOW)Converting anyOf to oneOf...$(NC)"; \
 		sed -i '' 's/"anyOf"/"oneOf"/g' $$TEMP_FILE; \
 		echo "$(GREEN)Generating API client...$(NC)"; \
-		cd ui; \
+		cd web; \
 		npx @openapitools/openapi-generator-cli generate -i $$TEMP_FILE -g typescript-axios --skip-validate-spec -o src/api --additional-properties=withInterfaces=true,legacyDiscriminatorBehavior=true,supportsES6=true; \
 		echo "$(YELLOW)Cleaning up generated files...$(NC)"; \
 		rm -rf src/api/.openapi-generator src/api/.gitignore src/api/.npmignore src/api/.openapi-generator-ignore src/api/git_push.sh; \

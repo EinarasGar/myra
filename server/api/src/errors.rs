@@ -3,11 +3,16 @@ use axum::response::{IntoResponse, Response};
 use axum::Json;
 use business::dtos::validation_error_dto::BusinessValidationErrorDto;
 
-pub mod api_error_response;
 pub mod app;
 pub mod auth;
 
-pub use api_error_response::{ApiErrorResponse, ErrorType, FieldError};
+pub use shared::errors::{ApiErrorResponse, ErrorType, FieldError};
+
+impl From<Vec<FieldError>> for ApiError {
+    fn from(errors: Vec<FieldError>) -> Self {
+        ApiError::Validation(errors)
+    }
+}
 
 #[derive(Debug, thiserror::Error)]
 pub enum ApiError {

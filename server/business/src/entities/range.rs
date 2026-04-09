@@ -89,8 +89,8 @@ impl Range {
     fn parse_string_range(range: &str) -> Result<Self, RangeError> {
         let now = OffsetDateTime::now_utc();
         let (start_time, interval) = match range {
-            "1d" => Ok((now - Duration::days(1), Duration::minutes(2))),
-            "1w" => Ok((now - Duration::weeks(1), Duration::minutes(10))),
+            "1d" => Ok((now - Duration::days(1), Duration::minutes(5))),
+            "1w" => Ok((now - Duration::weeks(1), Duration::minutes(30))),
             "1m" => Ok((now - Duration::days(30), Duration::hours(1))),
             "3m" => Ok((now - Duration::days(90), Duration::days(1))),
             "6m" => Ok((now - Duration::days(180), Duration::days(1))),
@@ -110,9 +110,9 @@ impl Range {
 
     fn calculate_interval(start_time: OffsetDateTime, end_time: OffsetDateTime) -> Duration {
         if end_time - start_time <= Duration::days(1) {
-            Duration::minutes(2)
+            Duration::minutes(5)
         } else if end_time - start_time <= Duration::weeks(1) {
-            Duration::minutes(10)
+            Duration::minutes(30)
         } else if end_time - start_time <= Duration::days(30) {
             Duration::hours(1)
         } else if end_time - start_time <= Duration::days(365) {
@@ -220,7 +220,7 @@ mod tests {
         let dto = RangeDto::StringBased("1d".to_string());
         let range = Range::try_from(dto).unwrap();
         assert_eq!(range.end_time - range.start_time, Duration::days(1));
-        assert_eq!(range.interval, Duration::minutes(2));
+        assert_eq!(range.interval, Duration::minutes(5));
         assert!(!range.infinite_start);
         assert!(!range.infinite_end);
     }
@@ -258,7 +258,7 @@ mod tests {
         let range = Range::try_from(dto).unwrap();
         assert_eq!(range.start_time, start_time);
         assert_eq!(range.end_time, end_time);
-        assert_eq!(range.interval, Duration::minutes(2));
+        assert_eq!(range.interval, Duration::minutes(5));
         assert!(!range.infinite_start);
         assert!(!range.infinite_end);
     }
