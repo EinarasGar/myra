@@ -11,14 +11,19 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -99,5 +104,93 @@ fun PortfolioChartSkeleton(modifier: Modifier = Modifier) {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun TransactionListSkeleton(modifier: Modifier = Modifier) {
+    val brush = shimmerBrush()
+
+    Column(modifier) {
+        // First group — large, fills most of screen
+        DateHeaderSkeleton(brush, 100.dp)
+
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        ) {
+            Column {
+                repeat(7) {
+                    TransactionRowSkeleton(brush)
+                }
+            }
+        }
+
+        // Second group
+        DateHeaderSkeleton(brush, 80.dp)
+
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        ) {
+            Column {
+                repeat(4) {
+                    TransactionRowSkeleton(brush)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DateHeaderSkeleton(
+    brush: Brush,
+    labelWidth: androidx.compose.ui.unit.Dp,
+) {
+    Box(
+        Modifier
+            .padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
+            .width(labelWidth)
+            .height(12.dp)
+            .background(brush),
+    )
+}
+
+@Composable
+private fun TransactionRowSkeleton(brush: Brush) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier
+                .size(24.dp)
+                .background(brush, CircleShape),
+        )
+        Spacer(Modifier.width(16.dp))
+        Column(Modifier.weight(1f)) {
+            Box(
+                Modifier
+                    .fillMaxWidth(0.6f)
+                    .height(16.dp)
+                    .background(brush),
+            )
+            Spacer(Modifier.height(8.dp))
+            Box(
+                Modifier
+                    .fillMaxWidth(0.35f)
+                    .height(12.dp)
+                    .background(brush),
+            )
+        }
+        Spacer(Modifier.width(16.dp))
+        Box(
+            Modifier
+                .width(56.dp)
+                .height(16.dp)
+                .background(brush),
+        )
     }
 }

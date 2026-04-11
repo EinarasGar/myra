@@ -16,7 +16,6 @@ import com.clerk.api.Clerk
 import com.clerk.ui.auth.AuthView
 import com.sverto.app.core.theme.LocalClerkTheme
 import com.sverto.app.core.theme.SvertoTheme
-import com.sverto.app.feature.portfolio.HomeScreen
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -26,7 +25,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             SvertoTheme {
                 if (BuildConfig.CLERK_PUBLISHABLE_KEY.isBlank()) {
-                    HomeScreen()
+                    MainScreen()
                 } else {
                     val isInitialized by Clerk.isInitialized.collectAsStateWithLifecycle()
                     val user by Clerk.userFlow.collectAsStateWithLifecycle()
@@ -38,7 +37,7 @@ class MainActivity : ComponentActivity() {
                                 LoadingIndicator()
                             }
                         }
-                        user != null -> HomeScreen()
+                        user != null -> MainScreen()
                         else -> AuthView(clerkTheme = clerkTheme)
                     }
                 }

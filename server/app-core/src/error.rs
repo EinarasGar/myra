@@ -1,4 +1,3 @@
-// Field is named `reason` instead of `message` to avoid clashing with Kotlin's `Throwable.message`
 #[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum ApiError {
     #[error("Network error: {reason}")]

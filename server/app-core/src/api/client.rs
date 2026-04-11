@@ -2,8 +2,9 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
+use crate::api::transactions::extract_page;
 use crate::error::ApiError;
-use crate::models::{ApiResponse, AuthMe};
+use crate::models::{ApiResponse, AuthMe, TransactionsPage};
 use shared::view_models::portfolio::get_networth_history::GetNetWorthHistoryResponseViewModel;
 
 fn tls_config() -> &'static rustls::ClientConfig {
@@ -37,8 +38,6 @@ const INITIAL_BACKOFF_MS: u64 = 200;
 
 #[uniffi::export(async_runtime = "tokio")]
 impl ApiClient {
-    /// Create a new API client pointed at `base_url`.
-    /// Cache entries expire after `cache_ttl_secs` seconds (0 = no caching).
     #[uniffi::constructor]
     pub fn new(base_url: String, cache_ttl_secs: u64) -> Self {
         let http = reqwest::Client::builder()
@@ -56,21 +55,17 @@ impl ApiClient {
         }
     }
 
-    /// Set the bearer token used for authenticated requests.
     pub fn set_auth_token(&self, token: String) {
         *self.auth_token.lock().unwrap() = Some(token);
     }
 
-    /// Clear the bearer token.
     pub fn clear_auth_token(&self) {
         *self.auth_token.lock().unwrap() = None;
     }
 
-    /// GET `{base_url}{path}` with retry + caching.
     pub async fn get(&self, path: String) -> Result<ApiResponse, ApiError> {
         let url = format!("{}{}", self.base_url, path);
 
-        // Check cache
         if self.cache_ttl.as_secs() > 0 {
             let cache = self.cache.lock().unwrap();
             if let Some(entry) = cache.get(&url) {
@@ -87,7 +82,6 @@ impl ApiClient {
             .request_with_retry(reqwest::Method::GET, &url, None)
             .await?;
 
-        // Store in cache
         if self.cache_ttl.as_secs() > 0 {
             let mut cache = self.cache.lock().unwrap();
             cache.insert(
@@ -102,14 +96,12 @@ impl ApiClient {
         Ok(response)
     }
 
-    /// POST `{base_url}{path}` with JSON body and retry.
     pub async fn post(&self, path: String, body: String) -> Result<ApiResponse, ApiError> {
         let url = format!("{}{}", self.base_url, path);
         self.request_with_retry(reqwest::Method::POST, &url, Some(body))
             .await
     }
 
-    /// Get portfolio net worth history for a time range.
     pub async fn get_portfolio_history(
         &self,
         user_id: String,
@@ -121,12 +113,25 @@ impl ApiClient {
         .await
     }
 
-    /// Get the authenticated user's identity.
     pub async fn get_me(&self) -> Result<AuthMe, ApiError> {
         self.get_json("/api/auth/me".to_string()).await
     }
 
-    /// Evict all cached responses.
+    pub async fn get_transactions(
+        &self,
+        user_id: String,
+        limit: u32,
+        cursor: Option<String>,
+    ) -> Result<TransactionsPage, ApiError> {
+        let mut path = format!("/api/users/{user_id}/transactions?limit={limit}");
+        if let Some(ref c) = cursor {
+            path.push_str(&format!("&cursor={c}"));
+        }
+
+        let resp = self.get(path).await?;
+        extract_page(&resp.body).map_err(|e| ApiError::Parse { reason: e })
+    }
+
     pub fn clear_cache(&self) {
         self.cache.lock().unwrap().clear();
     }
