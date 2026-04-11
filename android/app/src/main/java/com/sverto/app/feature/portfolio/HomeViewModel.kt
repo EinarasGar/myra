@@ -14,10 +14,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import uniffi.sverto_core.ApiClient
 import uniffi.sverto_core.AuthMe
+import uniffi.sverto_core.HoldingItem
 
 data class HomeUiModel(
     val authMe: AuthMe?,
     val portfolioData: Map<TimePeriod, List<ChartPoint>>,
+    val holdings: List<HoldingItem> = emptyList(),
 )
 
 class HomeViewModel : ViewModel() {
@@ -75,12 +77,14 @@ class HomeViewModel : ViewModel() {
                 }
 
                 val portfolioData = loadPortfolioData(authMe.userId)
+                val holdings = loadHoldings(authMe.userId)
 
                 _uiState.value =
                     UiState.Success(
                         HomeUiModel(
                             authMe = authMe,
                             portfolioData = portfolioData,
+                            holdings = holdings,
                         ),
                     )
             } catch (
@@ -104,7 +108,13 @@ class HomeViewModel : ViewModel() {
                     } else {
                         emptyMap()
                     }
-                _uiState.value = UiState.Success(current.copy(portfolioData = portfolioData))
+                val holdings =
+                    if (current.authMe != null) {
+                        loadHoldings(current.authMe.userId)
+                    } else {
+                        emptyList()
+                    }
+                _uiState.value = UiState.Success(current.copy(portfolioData = portfolioData, holdings = holdings))
             } finally {
                 _isRefreshing.value = false
             }
@@ -123,4 +133,14 @@ class HomeViewModel : ViewModel() {
         }
         return result
     }
+
+    private suspend fun loadHoldings(userId: String): List<HoldingItem> =
+        try {
+            apiClient.getHoldings(userId)
+        } catch (
+            @Suppress("TooGenericExceptionCaught") e: Exception,
+        ) {
+            Log.e("HomeViewModel", "Failed to load holdings", e)
+            emptyList()
+        }
 }

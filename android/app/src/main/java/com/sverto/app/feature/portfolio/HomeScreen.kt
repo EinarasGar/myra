@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sverto.app.core.state.UiState
+import com.sverto.app.core.ui.HoldingsListSkeleton
 import com.sverto.app.core.ui.PortfolioChartSkeleton
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -69,6 +70,7 @@ fun PortfolioScreen(
             when (val state = uiState) {
                 is UiState.Loading -> {
                     PortfolioChartSkeleton()
+                    HoldingsListSkeleton()
                 }
 
                 is UiState.Error -> {
@@ -79,6 +81,7 @@ fun PortfolioScreen(
                     if (state.data.portfolioData.isNotEmpty()) {
                         PortfolioChart(portfolioData = state.data.portfolioData)
                     }
+                    HoldingsList(holdings = state.data.holdings)
                 }
             }
 

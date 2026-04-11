@@ -41,3 +41,12 @@ pub struct TransactionsPage {
     pub next_cursor: Option<String>,
     pub total_results: Option<i64>,
 }
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct HoldingItem {
+    pub asset_name: String,
+    pub ticker: String,
+    pub units: f64,
+    pub value: f64,
+    pub asset_type_id: i32,
+}

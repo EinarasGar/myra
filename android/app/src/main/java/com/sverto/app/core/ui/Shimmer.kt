@@ -25,6 +25,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -108,6 +109,77 @@ fun PortfolioChartSkeleton(modifier: Modifier = Modifier) {
 }
 
 @Composable
+fun HoldingsListSkeleton(modifier: Modifier = Modifier) {
+    val brush = shimmerBrush()
+    Column(modifier.fillMaxWidth()) {
+        Box(
+            Modifier
+                .padding(bottom = 8.dp)
+                .width(80.dp)
+                .height(20.dp)
+                .background(brush, RoundedCornerShape(4.dp)),
+        )
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column {
+                repeat(5) {
+                    HoldingRowSkeleton(brush)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HoldingRowSkeleton(brush: Brush) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier
+                .size(40.dp)
+                .background(brush, RoundedCornerShape(12.dp)),
+        )
+        Spacer(Modifier.width(16.dp))
+        Column(Modifier.weight(1f)) {
+            Box(
+                Modifier
+                    .fillMaxWidth(0.5f)
+                    .height(16.dp)
+                    .background(brush, RoundedCornerShape(4.dp)),
+            )
+            Spacer(Modifier.height(6.dp))
+            Box(
+                Modifier
+                    .fillMaxWidth(0.25f)
+                    .height(12.dp)
+                    .background(brush, RoundedCornerShape(4.dp)),
+            )
+        }
+        Spacer(Modifier.width(16.dp))
+        Column(horizontalAlignment = Alignment.End) {
+            Box(
+                Modifier
+                    .width(64.dp)
+                    .height(16.dp)
+                    .background(brush, RoundedCornerShape(4.dp)),
+            )
+            Spacer(Modifier.height(6.dp))
+            Box(
+                Modifier
+                    .width(48.dp)
+                    .height(12.dp)
+                    .background(brush, RoundedCornerShape(4.dp)),
+            )
+        }
+    }
+}
+
+@Composable
 fun TransactionListSkeleton(modifier: Modifier = Modifier) {
     val brush = shimmerBrush()
 
@@ -162,7 +234,7 @@ private fun DateHeaderSkeleton(
 private fun TransactionRowSkeleton(brush: Brush) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             Modifier

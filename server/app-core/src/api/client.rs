@@ -2,9 +2,10 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
+use crate::api::holdings::extract_holdings;
 use crate::api::transactions::extract_page;
 use crate::error::ApiError;
-use crate::models::{ApiResponse, AuthMe, TransactionsPage};
+use crate::models::{ApiResponse, AuthMe, HoldingItem, TransactionsPage};
 use shared::view_models::portfolio::get_networth_history::GetNetWorthHistoryResponseViewModel;
 
 fn tls_config() -> &'static rustls::ClientConfig {
@@ -130,6 +131,13 @@ impl ApiClient {
 
         let resp = self.get(path).await?;
         extract_page(&resp.body).map_err(|e| ApiError::Parse { reason: e })
+    }
+
+    pub async fn get_holdings(&self, user_id: String) -> Result<Vec<HoldingItem>, ApiError> {
+        let resp = self
+            .get(format!("/api/users/{user_id}/portfolio/holdings"))
+            .await?;
+        extract_holdings(&resp.body).map_err(|e| ApiError::Parse { reason: e })
     }
 
     pub fn clear_cache(&self) {
