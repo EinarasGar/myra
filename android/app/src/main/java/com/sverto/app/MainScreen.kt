@@ -51,9 +51,11 @@ import com.sverto.app.feature.accounts.AccountsScreen
 import com.sverto.app.feature.portfolio.PortfolioScreen
 import com.sverto.app.feature.transactions.TransactionDetailScreen
 import com.sverto.app.feature.transactions.TransactionsScreen
+import com.sverto.app.feature.transactions.create.CreateTransactionScreen
 import uniffi.sverto_core.TransactionListItem
 
 private const val TRANSACTION_DETAIL_ROUTE = "transactionDetail/{txId}"
+private const val CREATE_TRANSACTION_ROUTE = "createTransaction/{typeKey}"
 
 // Standard M3 component heights
 private val TOP_BAR_HEIGHT = 64.dp
@@ -101,6 +103,9 @@ fun MainScreen() {
                     TransactionsScreen(
                         modifier = Modifier.topLevelPadding(),
                         onTransactionClick = ::navigateToDetail,
+                        onCreateTransaction = { typeKey ->
+                            navController.navigate("createTransaction/$typeKey")
+                        },
                         sharedTransitionScope = sharedScope,
                         animatedVisibilityScope = this@composable,
                     )
@@ -123,6 +128,17 @@ fun MainScreen() {
                             animatedVisibilityScope = this@composable,
                         )
                     }
+                }
+                composable(
+                    route = CREATE_TRANSACTION_ROUTE,
+                    arguments = listOf(navArgument("typeKey") { type = NavType.StringType }),
+                ) { backStackEntry ->
+                    val typeKey = backStackEntry.arguments?.getString("typeKey") ?: return@composable
+                    CreateTransactionScreen(
+                        typeKey = typeKey,
+                        onDiscard = { navController.popBackStack() },
+                        onSuccess = { navController.popBackStack() },
+                    )
                 }
             }
 

@@ -4634,13 +4634,16 @@ name = "sverto-core"
 version = "0.1.0"
 dependencies = [
  "reqwest 0.13.2",
+ "rust_decimal",
  "rustls",
  "serde",
  "serde_json",
  "shared",
  "thiserror 2.0.18",
+ "time",
  "tokio",
  "uniffi",
+ "uuid",
  "webpki-root-certs",
 ]
 

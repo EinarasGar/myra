@@ -50,3 +50,41 @@ pub struct HoldingItem {
     pub value: f64,
     pub asset_type_id: i32,
 }
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct AccountItem {
+    pub id: String,
+    pub name: String,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct AssetItem {
+    pub id: i32,
+    pub name: String,
+    pub ticker: String,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct CategoryItem {
+    pub id: i32,
+    pub name: String,
+}
+
+/// Flat Kotlin-friendly payload for creating an individual transaction.
+/// The `type_key` matches the wire-format discriminator (e.g. "regular",
+/// "asset_purchase", "cash_transfer_in"). Fields that don't apply to a given
+/// type may be left as `None`.
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct CreateTransactionInput {
+    pub type_key: String,
+    pub date: i64,
+    pub primary_account_id: String,
+    pub primary_asset_id: i32,
+    pub primary_amount: f64,
+    pub secondary_account_id: Option<String>,
+    pub secondary_asset_id: Option<i32>,
+    pub secondary_amount: Option<f64>,
+    pub origin_asset_id: Option<i32>,
+    pub category_id: Option<i32>,
+    pub description: Option<String>,
+}

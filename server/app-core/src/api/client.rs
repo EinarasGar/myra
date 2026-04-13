@@ -2,10 +2,17 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
+use crate::api::accounts::extract_accounts;
+use crate::api::assets::extract_assets;
+use crate::api::categories::extract_categories;
+use crate::api::create_transaction::build_request_body;
 use crate::api::holdings::extract_holdings;
 use crate::api::transactions::extract_page;
 use crate::error::ApiError;
-use crate::models::{ApiResponse, AuthMe, HoldingItem, TransactionsPage};
+use crate::models::{
+    AccountItem, ApiResponse, AssetItem, AuthMe, CategoryItem, CreateTransactionInput, HoldingItem,
+    TransactionsPage,
+};
 use shared::view_models::portfolio::get_networth_history::GetNetWorthHistoryResponseViewModel;
 
 fn tls_config() -> &'static rustls::ClientConfig {
@@ -140,9 +147,78 @@ impl ApiClient {
         extract_holdings(&resp.body).map_err(|e| ApiError::Parse { reason: e })
     }
 
+    pub async fn get_accounts(&self, user_id: String) -> Result<Vec<AccountItem>, ApiError> {
+        let resp = self.get(format!("/api/users/{user_id}/accounts")).await?;
+        extract_accounts(&resp.body).map_err(|e| ApiError::Parse { reason: e })
+    }
+
+    pub async fn search_assets(
+        &self,
+        query: String,
+        count: u32,
+        start: u32,
+    ) -> Result<Vec<AssetItem>, ApiError> {
+        let encoded = urlencode(&query);
+        let resp = self
+            .get(format!(
+                "/api/assets?count={count}&start={start}&query={encoded}"
+            ))
+            .await?;
+        extract_assets(&resp.body).map_err(|e| ApiError::Parse { reason: e })
+    }
+
+    pub async fn search_categories(
+        &self,
+        query: String,
+        count: u32,
+        start: u32,
+    ) -> Result<Vec<CategoryItem>, ApiError> {
+        let encoded = urlencode(&query);
+        let resp = self
+            .get(format!(
+                "/api/categories?count={count}&start={start}&query={encoded}"
+            ))
+            .await?;
+        extract_categories(&resp.body).map_err(|e| ApiError::Parse { reason: e })
+    }
+
+    pub async fn create_individual_transaction(
+        &self,
+        user_id: String,
+        input: CreateTransactionInput,
+    ) -> Result<(), ApiError> {
+        let body = build_request_body(input)?;
+        let resp = self
+            .post(
+                format!("/api/users/{user_id}/transactions/individual"),
+                body,
+            )
+            .await?;
+        if (200..300).contains(&resp.status) {
+            Ok(())
+        } else {
+            Err(ApiError::Server {
+                reason: resp.body,
+                status: resp.status,
+            })
+        }
+    }
+
     pub fn clear_cache(&self) {
         self.cache.lock().unwrap().clear();
     }
+}
+
+fn urlencode(value: &str) -> String {
+    value
+        .bytes()
+        .flat_map(|b| match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                vec![b as char]
+            }
+            _ => format!("%{:02X}", b).chars().collect::<Vec<_>>(),
+        })
+        .collect()
 }
 
 impl ApiClient {

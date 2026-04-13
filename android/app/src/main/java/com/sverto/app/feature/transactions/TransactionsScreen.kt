@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.AccountBalance
 import androidx.compose.material.icons.outlined.CallMade
 import androidx.compose.material.icons.outlined.CallReceived
@@ -39,6 +40,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -47,8 +49,11 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,6 +80,7 @@ import java.util.Locale
 @Composable
 fun TransactionsScreen(
     onTransactionClick: (TransactionListItem) -> Unit,
+    onCreateTransaction: (String) -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier,
@@ -83,29 +89,53 @@ fun TransactionsScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val isLoadingMore by viewModel.isLoadingMore.collectAsStateWithLifecycle()
+    var showNewTransactionSheet by rememberSaveable { mutableStateOf(false) }
 
-    when (val state = uiState) {
-        is UiState.Loading -> {
-            TransactionListSkeleton(modifier.fillMaxSize())
+    Box(modifier = modifier.fillMaxSize()) {
+        when (val state = uiState) {
+            is UiState.Loading -> {
+                TransactionListSkeleton(Modifier.fillMaxSize())
+            }
+
+            is UiState.Error -> {
+                ErrorState(message = state.message, onRetry = viewModel::load)
+            }
+
+            is UiState.Success -> {
+                TransactionList(
+                    transactions = state.data.transactions,
+                    isRefreshing = isRefreshing,
+                    isLoadingMore = isLoadingMore,
+                    onRefresh = viewModel::refresh,
+                    onLoadMore = viewModel::loadMore,
+                    onTransactionClick = onTransactionClick,
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = animatedVisibilityScope,
+                )
+            }
         }
 
-        is UiState.Error -> {
-            ErrorState(modifier = modifier, message = state.message, onRetry = viewModel::load)
+        MediumFloatingActionButton(
+            onClick = { showNewTransactionSheet = true },
+            modifier =
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = 24.dp),
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Add transaction")
         }
+    }
 
-        is UiState.Success -> {
-            TransactionList(
-                modifier = modifier,
-                transactions = state.data.transactions,
-                isRefreshing = isRefreshing,
-                isLoadingMore = isLoadingMore,
-                onRefresh = viewModel::refresh,
-                onLoadMore = viewModel::loadMore,
-                onTransactionClick = onTransactionClick,
-                sharedTransitionScope = sharedTransitionScope,
-                animatedVisibilityScope = animatedVisibilityScope,
-            )
-        }
+    if (showNewTransactionSheet) {
+        NewTransactionSheet(
+            onDismiss = { showNewTransactionSheet = false },
+            onSelectType = { typeKey ->
+                showNewTransactionSheet = false
+                onCreateTransaction(typeKey)
+            },
+        )
     }
 }
 
