@@ -55,6 +55,3 @@ seed = []
 database = ["business/database"]
 clerk = ["dep:reqwest", "business/clerk"]
 noauth = ["business/noauth"]
-
-[build-dependencies]
-utoipa-config = "0.1.2"

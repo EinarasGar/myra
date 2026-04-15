@@ -24,3 +24,6 @@ business = { path = "../business", default-features = false, optional = true }
 [features]
 default = []
 backend = ["dep:business"]
+
+[build-dependencies]
+utoipa-config = "0.1.2"

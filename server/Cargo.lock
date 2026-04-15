@@ -175,7 +175,6 @@ dependencies = [
  "tracing-opentelemetry",
  "tracing-subscriber",
  "utoipa",
- "utoipa-config",
  "utoipa-rapidoc",
  "utoipa-redoc",
  "uuid",
@@ -4243,6 +4242,7 @@ dependencies = [
  "time",
  "uniffi",
  "utoipa",
+ "utoipa-config",
  "uuid",
  "validator",
 ]
