@@ -59,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import uniffi.sverto_core.TransactionListItem
 
 private enum class SearchTarget { PRIMARY_ASSET, SECONDARY_ASSET, ORIGIN_ASSET }
 
@@ -91,8 +92,9 @@ private const val CATEGORY_SHARED_KEY = "category_field"
 fun CreateTransactionScreen(
     typeKey: String,
     onDiscard: () -> Unit,
-    onSuccess: () -> Unit,
+    onSuccess: (TransactionListItem?) -> Unit,
     modifier: Modifier = Modifier,
+    editTransactionId: String? = null,
     viewModel: CreateTransactionViewModel = viewModel(),
 ) {
     val config = remember(typeKey) { getTransactionTypeConfig(typeKey) }
@@ -101,6 +103,8 @@ fun CreateTransactionScreen(
     val assetResults by viewModel.assetResults.collectAsStateWithLifecycle()
     val categoryResults by viewModel.categoryResults.collectAsStateWithLifecycle()
     val submitState by viewModel.submitState.collectAsStateWithLifecycle()
+    val submittedTransaction by viewModel.submittedTransaction.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val currentOnSuccess by rememberUpdatedState(onSuccess)
@@ -108,108 +112,137 @@ fun CreateTransactionScreen(
     var scene by rememberSaveable(stateSaver = sceneSaver()) { mutableStateOf<Scene>(Scene.Form) }
     var showAccountPicker by remember { mutableStateOf<AccountTarget?>(null) }
 
-    LaunchedEffect(typeKey) { viewModel.init(typeKey) }
-    LaunchedEffect(submitState) { if (submitState == SubmitState.SUCCESS) currentOnSuccess() }
-    LaunchedEffect(errorMessage) { errorMessage?.let { snackbarHostState.showSnackbar(it) } }
-
-    SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
-        val sharedScope = this
-        AnimatedContent(
-            targetState = scene,
-            transitionSpec = { fadeIn() togetherWith fadeOut() },
-            label = "create_tx_scene",
-        ) { current ->
-            val avScope = this
-            when (current) {
-                Scene.Form ->
-                    CreateTransactionForm(
-                        config = config,
-                        formState = formState,
-                        submitState = submitState,
-                        snackbarHostState = snackbarHostState,
-                        sharedScope = sharedScope,
-                        animatedVisibilityScope = avScope,
-                        onDiscard = onDiscard,
-                        onSubmit = { viewModel.submit(config) },
-                        onSelectDate = viewModel::updateDate,
-                        onPickPrimaryAccount = { showAccountPicker = AccountTarget.PRIMARY },
-                        onPickSecondaryAccount = { showAccountPicker = AccountTarget.SECONDARY },
-                        onPickPrimaryAsset = {
-                            viewModel.searchAssets("")
-                            scene = Scene.AssetSearch(SearchTarget.PRIMARY_ASSET)
-                        },
-                        onPickSecondaryAsset = {
-                            viewModel.searchAssets("")
-                            scene = Scene.AssetSearch(SearchTarget.SECONDARY_ASSET)
-                        },
-                        onPickOriginAsset = {
-                            viewModel.searchAssets("")
-                            scene = Scene.AssetSearch(SearchTarget.ORIGIN_ASSET)
-                        },
-                        onPickCategory = {
-                            viewModel.searchCategories("")
-                            scene = Scene.CategorySearch
-                        },
-                        onChangePrimaryAmount = viewModel::updatePrimaryAmount,
-                        onChangeSecondaryAmount = viewModel::updateSecondaryAmount,
-                        onChangeDescription = viewModel::updateDescription,
-                    )
-
-                is Scene.AssetSearch ->
-                    with(sharedScope) {
-                        AssetSearchScene(
-                            sharedKey = assetSharedKey(current.target),
-                            results = assetResults,
-                            onQueryChange = viewModel::searchAssets,
-                            onSelect = { asset ->
-                                when (current.target) {
-                                    SearchTarget.PRIMARY_ASSET -> viewModel.updatePrimaryAsset(asset)
-                                    SearchTarget.SECONDARY_ASSET ->
-                                        viewModel.updateSecondaryAsset(asset)
-                                    SearchTarget.ORIGIN_ASSET -> viewModel.selectOriginAsset(asset)
-                                }
-                                scene = Scene.Form
-                            },
-                            onBack = { scene = Scene.Form },
-                            animatedVisibilityScope = avScope,
-                        )
-                    }
-
-                Scene.CategorySearch ->
-                    with(sharedScope) {
-                        CategorySearchScene(
-                            sharedKey = CATEGORY_SHARED_KEY,
-                            results = categoryResults,
-                            onQueryChange = viewModel::searchCategories,
-                            onSelect = { category ->
-                                viewModel.selectCategory(category)
-                                scene = Scene.Form
-                            },
-                            onBack = { scene = Scene.Form },
-                            animatedVisibilityScope = avScope,
-                        )
-                    }
-            }
+    LaunchedEffect(typeKey, editTransactionId) {
+        if (editTransactionId == null) {
+            viewModel.init()
+        } else {
+            viewModel.initForEdit(editTransactionId)
         }
     }
+    LaunchedEffect(submitState) {
+        if (submitState == SubmitState.SUCCESS) {
+            currentOnSuccess(submittedTransaction)
+        }
+    }
+    LaunchedEffect(errorMessage) { errorMessage?.let { snackbarHostState.showSnackbar(it) } }
 
-    showAccountPicker?.let { target ->
-        AccountPickerSheet(
-            accounts = accounts,
-            selectedAccountId =
-                when (target) {
-                    AccountTarget.PRIMARY -> formState.primaryEntry.accountId
-                    AccountTarget.SECONDARY -> formState.secondaryEntry.accountId
-                },
-            onSelect = { account ->
-                when (target) {
-                    AccountTarget.PRIMARY -> viewModel.updatePrimaryAccount(account)
-                    AccountTarget.SECONDARY -> viewModel.updateSecondaryAccount(account)
+    Box(modifier = modifier.fillMaxSize()) {
+        SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
+            val sharedScope = this
+            AnimatedContent(
+                targetState = scene,
+                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                label = "create_tx_scene",
+            ) { current ->
+                val avScope = this
+                when (current) {
+                    Scene.Form ->
+                        CreateTransactionForm(
+                            config = config,
+                            formState = formState,
+                            submitState = submitState,
+                            isEditMode = editTransactionId != null,
+                            snackbarHostState = snackbarHostState,
+                            sharedScope = sharedScope,
+                            animatedVisibilityScope = avScope,
+                            onDiscard = onDiscard,
+                            onSubmit = { viewModel.submit(config) },
+                            onSelectDate = viewModel::updateDate,
+                            onPickPrimaryAccount = { showAccountPicker = AccountTarget.PRIMARY },
+                            onPickSecondaryAccount = { showAccountPicker = AccountTarget.SECONDARY },
+                            onPickPrimaryAsset = {
+                                viewModel.searchAssets("")
+                                scene = Scene.AssetSearch(SearchTarget.PRIMARY_ASSET)
+                            },
+                            onPickSecondaryAsset = {
+                                viewModel.searchAssets("")
+                                scene = Scene.AssetSearch(SearchTarget.SECONDARY_ASSET)
+                            },
+                            onPickOriginAsset = {
+                                viewModel.searchAssets("")
+                                scene = Scene.AssetSearch(SearchTarget.ORIGIN_ASSET)
+                            },
+                            onPickCategory = {
+                                viewModel.searchCategories("")
+                                scene = Scene.CategorySearch
+                            },
+                            onChangePrimaryAmount = viewModel::updatePrimaryAmount,
+                            onChangeSecondaryAmount = viewModel::updateSecondaryAmount,
+                            onChangeDescription = viewModel::updateDescription,
+                        )
+
+                    is Scene.AssetSearch ->
+                        with(sharedScope) {
+                            AssetSearchScene(
+                                sharedKey = assetSharedKey(current.target),
+                                results = assetResults,
+                                onQueryChange = viewModel::searchAssets,
+                                onSelect = { asset ->
+                                    when (current.target) {
+                                        SearchTarget.PRIMARY_ASSET ->
+                                            viewModel.updatePrimaryAsset(asset)
+                                        SearchTarget.SECONDARY_ASSET ->
+                                            viewModel.updateSecondaryAsset(asset)
+                                        SearchTarget.ORIGIN_ASSET ->
+                                            viewModel.selectOriginAsset(asset)
+                                    }
+                                    scene = Scene.Form
+                                },
+                                onBack = { scene = Scene.Form },
+                                animatedVisibilityScope = avScope,
+                            )
+                        }
+
+                    Scene.CategorySearch ->
+                        with(sharedScope) {
+                            CategorySearchScene(
+                                sharedKey = CATEGORY_SHARED_KEY,
+                                results = categoryResults,
+                                onQueryChange = viewModel::searchCategories,
+                                onSelect = { category ->
+                                    viewModel.selectCategory(category)
+                                    scene = Scene.Form
+                                },
+                                onBack = { scene = Scene.Form },
+                                animatedVisibilityScope = avScope,
+                            )
+                        }
                 }
-                showAccountPicker = null
-            },
-            onDismiss = { showAccountPicker = null },
-        )
+            }
+        }
+
+        showAccountPicker?.let { target ->
+            AccountPickerSheet(
+                accounts = accounts,
+                selectedAccountId =
+                    when (target) {
+                        AccountTarget.PRIMARY -> formState.primaryEntry.accountId
+                        AccountTarget.SECONDARY -> formState.secondaryEntry.accountId
+                    },
+                onSelect = { account ->
+                    when (target) {
+                        AccountTarget.PRIMARY -> viewModel.updatePrimaryAccount(account)
+                        AccountTarget.SECONDARY -> viewModel.updateSecondaryAccount(account)
+                    }
+                    showAccountPicker = null
+                },
+                onDismiss = { showAccountPicker = null },
+            )
+        }
+
+        if (isLoading) {
+            Surface(
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    LoadingIndicator()
+                }
+            }
+        }
     }
 }
 
@@ -226,6 +259,7 @@ private fun CreateTransactionForm(
     config: TransactionTypeConfig,
     formState: TransactionFormState,
     submitState: SubmitState,
+    isEditMode: Boolean,
     snackbarHostState: SnackbarHostState,
     sharedScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
@@ -268,6 +302,7 @@ private fun CreateTransactionForm(
         bottomBar = {
             SaveBar(
                 submitState = submitState,
+                isEditMode = isEditMode,
                 onSubmit = onSubmit,
             )
         },
@@ -574,6 +609,7 @@ private fun DescriptionField(
 @Composable
 private fun SaveBar(
     submitState: SubmitState,
+    isEditMode: Boolean,
     onSubmit: () -> Unit,
 ) {
     Surface(
@@ -609,7 +645,7 @@ private fun SaveBar(
                         LoadingIndicator()
                         Spacer(Modifier.width(12.dp))
                         Text(
-                            text = "Saving…",
+                            text = if (isEditMode) "Updating..." else "Saving...",
                             style = MaterialTheme.typography.titleMedium,
                         )
                     } else {
@@ -619,7 +655,7 @@ private fun SaveBar(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            text = "Save transaction",
+                            text = if (isEditMode) "Update transaction" else "Save transaction",
                             style = MaterialTheme.typography.titleMedium,
                         )
                     }

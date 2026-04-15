@@ -12,10 +12,16 @@ pub(crate) struct TransactionIdPath {
 
 use crate::{
     auth::AuthenticatedUserId,
-    converters::{transaction_dtos_to_account_ids_hashset, transaction_dtos_to_asset_ids_hashset},
+    converters::{
+        transaction_dtos_to_account_ids_hashset, transaction_dtos_to_asset_ids_hashset,
+        transaction_dtos_to_category_ids_hashset,
+    },
     errors::ApiError,
     extractors::{ValidatedJson, ValidatedQuery},
-    states::{AccountsServiceState, AssetsServiceState, TransactionManagementServiceState},
+    states::{
+        AccountsServiceState, AssetsServiceState, CategoryServiceState,
+        TransactionManagementServiceState,
+    },
     view_models::errors::{CreateResponses, GetResponses, UpdateResponses},
     view_models::{
         base_models::search::{CursorOrPaginatedSearchQuery, IndividualTransactionsPage},
@@ -111,6 +117,7 @@ pub async fn update_individual_transaction(
     TransactionManagementServiceState(service): TransactionManagementServiceState,
     AssetsServiceState(asset_service): AssetsServiceState,
     AccountsServiceState(accounts_service): AccountsServiceState,
+    CategoryServiceState(category_service): CategoryServiceState,
     ValidatedJson(params): ValidatedJson<UpdateIndividualTransactionRequestViewModel>,
 ) -> Result<Json<UpdateIndividualTransactionResponseViewModel>, ApiError> {
     params.transaction.validate()?;
@@ -121,10 +128,12 @@ pub async fn update_individual_transaction(
 
     let asset_ids = transaction_dtos_to_asset_ids_hashset(&[&result]);
     let account_ids = transaction_dtos_to_account_ids_hashset(&[&result]);
+    let category_ids = transaction_dtos_to_category_ids_hashset(&[&result]);
 
-    let (assets, accounts) = tokio::try_join!(
+    let (assets, accounts, categories) = tokio::try_join!(
         asset_service.get_assets(asset_ids),
         accounts_service.get_accounts(account_ids),
+        category_service.get_categories(category_ids),
     )?;
 
     Ok(Json(UpdateIndividualTransactionResponseViewModel {
@@ -132,7 +141,7 @@ pub async fn update_individual_transaction(
         metadata: MetadataLookupTables {
             assets: assets.into_iter().map_into().collect(),
             accounts: accounts.into_iter().map_into().collect(),
-            ..Default::default()
+            categories: categories.into_iter().map_into().collect(),
         },
     }))
 }
@@ -228,6 +237,7 @@ pub async fn get_single(
     TransactionManagementServiceState(transaction_service): TransactionManagementServiceState,
     AssetsServiceState(asset_service): AssetsServiceState,
     AccountsServiceState(accounts_service): AccountsServiceState,
+    CategoryServiceState(category_service): CategoryServiceState,
 ) -> Result<Json<GetIndividualTransactionViewModel>, ApiError> {
     let transaction = transaction_service
         .get_individual_transaction(user_id, transaction_id)
@@ -235,11 +245,13 @@ pub async fn get_single(
 
     let asset_ids = transaction_dtos_to_asset_ids_hashset(&[&transaction]);
     let account_ids = transaction_dtos_to_account_ids_hashset(&[&transaction]);
+    let category_ids = transaction_dtos_to_category_ids_hashset(&[&transaction]);
     let view_model = transaction.into();
 
-    let (assets, accounts) = tokio::try_join!(
+    let (assets, accounts, categories) = tokio::try_join!(
         asset_service.get_assets(asset_ids),
         accounts_service.get_accounts(account_ids),
+        category_service.get_categories(category_ids),
     )?;
 
     let ret = GetIndividualTransactionViewModel {
@@ -247,7 +259,7 @@ pub async fn get_single(
         lookup_tables: MetadataLookupTables {
             assets: assets.into_iter().map_into().collect(),
             accounts: accounts.into_iter().map_into().collect(),
-            ..Default::default()
+            categories: categories.into_iter().map_into().collect(),
         },
     };
     Ok(ret.into())

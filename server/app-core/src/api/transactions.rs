@@ -6,7 +6,10 @@ use shared::view_models::{
         base_models::metadata_lookup::MetadataLookupTables,
         get_transaction_group::GetTransactionGroupLineResponseViewModel,
         get_transactions::CombinedTransactionItemViewModel,
-        transaction_types::RequiredIdentifiableTransactionWithIdentifiableEntries as TxEnum,
+        transaction_types::{
+            RequiredIdentifiableTransactionWithIdentifiableEntries as TxEnum,
+            RequiredTransactionWithIdentifiableEntries as ReqTxEnum,
+        },
     },
 };
 
@@ -39,8 +42,31 @@ pub fn extract_page(body: &str) -> Result<TransactionsPage, String> {
     })
 }
 
-fn to_list_item(tx: &TxEnum, tables: &MetadataLookupTables) -> TransactionListItem {
+pub(crate) fn to_list_item(tx: &TxEnum, tables: &MetadataLookupTables) -> TransactionListItem {
     let (id, date, tx_type, desc, cat_id, entries) = flatten(tx);
+    build_list_item(id, date, tx_type, desc, cat_id, entries, tables)
+}
+
+/// Build a list item for the update-individual-transaction response, which returns the
+/// variant without a top-level transaction_id (the caller already has it from the URL).
+pub(crate) fn to_list_item_with_id(
+    transaction_id: String,
+    tx: &ReqTxEnum,
+    tables: &MetadataLookupTables,
+) -> TransactionListItem {
+    let (date, tx_type, desc, cat_id, entries) = flatten_required(tx);
+    build_list_item(transaction_id, date, tx_type, desc, cat_id, entries, tables)
+}
+
+fn build_list_item(
+    id: String,
+    date: i64,
+    tx_type: &str,
+    desc: Option<String>,
+    cat_id: Option<i32>,
+    entries: Vec<ET>,
+    tables: &MetadataLookupTables,
+) -> TransactionListItem {
     let first = entries.first();
 
     TransactionListItem {
@@ -74,6 +100,64 @@ fn entry(e: &Entry, out: bool) -> ET {
         e.entry.amount.0.to_string().parse().unwrap_or(0.0),
         out,
     )
+}
+
+fn flatten_required(tx: &ReqTxEnum) -> (i64, &str, Option<String>, Option<i32>, Vec<ET>) {
+    macro_rules! base {
+        ($t:expr, $type:expr, $entries:expr) => {
+            ($t.base.date.unix_timestamp(), $type, None, None, $entries)
+        };
+    }
+
+    match tx {
+        ReqTxEnum::RegularTransaction(t) => (
+            t.base.date.unix_timestamp(),
+            "regular",
+            t.description.as_ref().map(|d| d.as_str().to_string()),
+            Some(t.category_id.0),
+            vec![entry(&t.entry, false)],
+        ),
+        ReqTxEnum::CashTransferIn(t) => base!(t, "cash_transfer_in", vec![entry(&t.entry, false)]),
+        ReqTxEnum::CashTransferOut(t) => base!(t, "cash_transfer_out", vec![entry(&t.entry, true)]),
+        ReqTxEnum::CashDividend(t) => base!(t, "cash_dividend", vec![entry(&t.entry, false)]),
+        ReqTxEnum::AssetDividend(t) => base!(t, "asset_dividend", vec![entry(&t.entry, false)]),
+        ReqTxEnum::AssetTransferIn(t) => {
+            base!(t, "asset_transfer_in", vec![entry(&t.entry, false)])
+        }
+        ReqTxEnum::AssetTransferOut(t) => {
+            base!(t, "asset_transfer_out", vec![entry(&t.entry, true)])
+        }
+        ReqTxEnum::AccountFees(t) => base!(t, "account_fees", vec![entry(&t.entry, true)]),
+        ReqTxEnum::AssetPurchase(t) => base!(
+            t,
+            "asset_purchase",
+            vec![
+                entry(&t.cash_outgoings_change, true),
+                entry(&t.purchase_change, false)
+            ]
+        ),
+        ReqTxEnum::AssetSale(t) => base!(
+            t,
+            "asset_sale",
+            vec![entry(&t.sale_entry, true), entry(&t.proceeds_entry, false)]
+        ),
+        ReqTxEnum::AssetTrade(t) => base!(
+            t,
+            "asset_trade",
+            vec![
+                entry(&t.outgoing_entry, true),
+                entry(&t.incoming_entry, false)
+            ]
+        ),
+        ReqTxEnum::AssetBalanceTransfer(t) => base!(
+            t,
+            "asset_balance_transfer",
+            vec![
+                entry(&t.outgoing_change, true),
+                entry(&t.incoming_change, false)
+            ]
+        ),
+    }
 }
 
 fn flatten(tx: &TxEnum) -> (String, i64, &str, Option<String>, Option<i32>, Vec<ET>) {
@@ -213,14 +297,14 @@ fn group_to_list_item(
     }
 }
 
-fn find_account(t: &MetadataLookupTables, id: &str) -> Option<String> {
+pub(crate) fn find_account(t: &MetadataLookupTables, id: &str) -> Option<String> {
     t.accounts
         .iter()
         .find(|a| a.account_id.0.to_string() == id)
         .map(|a| a.account.name.as_str().to_string())
 }
 
-fn find_asset_display(t: &MetadataLookupTables, id: i32) -> Option<String> {
+pub(crate) fn find_asset_display(t: &MetadataLookupTables, id: i32) -> Option<String> {
     t.assets.iter().find(|a| a.asset_id.0 == id).map(|a| {
         let tk = a.asset.ticker.as_str();
         let nm = a.asset.name.as_str();
@@ -240,7 +324,7 @@ fn find_ticker(t: &MetadataLookupTables, id: i32) -> String {
         .unwrap_or_else(|| "?".into())
 }
 
-fn find_category(t: &MetadataLookupTables, id: i32) -> Option<String> {
+pub(crate) fn find_category(t: &MetadataLookupTables, id: i32) -> Option<String> {
     t.categories
         .iter()
         .find(|c| c.id.0 == id)

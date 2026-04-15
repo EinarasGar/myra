@@ -6,12 +6,14 @@ use crate::api::accounts::extract_accounts;
 use crate::api::assets::extract_assets;
 use crate::api::categories::extract_categories;
 use crate::api::create_transaction::build_request_body;
+use crate::api::get_transaction::extract_editable_transaction;
 use crate::api::holdings::extract_holdings;
-use crate::api::transactions::extract_page;
+use crate::api::transactions::{extract_page, to_list_item_with_id};
+use crate::api::update_transaction::build_update_request_body;
 use crate::error::ApiError;
 use crate::models::{
-    AccountItem, ApiResponse, AssetItem, AuthMe, CategoryItem, CreateTransactionInput, HoldingItem,
-    TransactionsPage,
+    AccountItem, ApiResponse, AssetItem, AuthMe, CategoryItem, CreateTransactionInput,
+    EditableTransaction, HoldingItem, TransactionListItem, TransactionsPage,
 };
 use shared::view_models::portfolio::get_networth_history::GetNetWorthHistoryResponseViewModel;
 
@@ -110,6 +112,18 @@ impl ApiClient {
             .await
     }
 
+    pub async fn put(&self, path: String, body: String) -> Result<ApiResponse, ApiError> {
+        let url = format!("{}{}", self.base_url, path);
+        self.request_with_retry(reqwest::Method::PUT, &url, Some(body))
+            .await
+    }
+
+    pub async fn delete(&self, path: String) -> Result<ApiResponse, ApiError> {
+        let url = format!("{}{}", self.base_url, path);
+        self.request_with_retry(reqwest::Method::DELETE, &url, None)
+            .await
+    }
+
     pub async fn get_portfolio_history(
         &self,
         user_id: String,
@@ -195,6 +209,73 @@ impl ApiClient {
             )
             .await?;
         if (200..300).contains(&resp.status) {
+            self.clear_cache();
+            Ok(())
+        } else {
+            Err(ApiError::Server {
+                reason: resp.body,
+                status: resp.status,
+            })
+        }
+    }
+
+    pub async fn get_individual_transaction(
+        &self,
+        user_id: String,
+        transaction_id: String,
+    ) -> Result<EditableTransaction, ApiError> {
+        let resp = self
+            .get(format!(
+                "/api/users/{user_id}/transactions/individual/{transaction_id}"
+            ))
+            .await?;
+        extract_editable_transaction(&resp.body).map_err(|e| ApiError::Parse { reason: e })
+    }
+
+    pub async fn update_individual_transaction(
+        &self,
+        user_id: String,
+        transaction_id: String,
+        input: CreateTransactionInput,
+    ) -> Result<TransactionListItem, ApiError> {
+        let body = build_update_request_body(input)?;
+        let resp = self
+            .put(
+                format!("/api/users/{user_id}/transactions/individual/{transaction_id}"),
+                body,
+            )
+            .await?;
+        if (200..300).contains(&resp.status) {
+            self.clear_cache();
+            let response: shared::view_models::transactions::update_individual_transaction::UpdateIndividualTransactionResponseViewModel =
+                serde_json::from_str(&resp.body).map_err(|e| ApiError::Parse {
+                    reason: e.to_string(),
+                })?;
+            Ok(to_list_item_with_id(
+                transaction_id,
+                &response.transaction,
+                &response.metadata,
+            ))
+        } else {
+            Err(ApiError::Server {
+                reason: resp.body,
+                status: resp.status,
+            })
+        }
+    }
+
+    pub async fn delete_individual_transaction(
+        &self,
+        user_id: String,
+        transaction_id: String,
+    ) -> Result<(), ApiError> {
+        let resp = self
+            .delete(format!(
+                "/api/users/{user_id}/transactions/{transaction_id}"
+            ))
+            .await?;
+        if (200..300).contains(&resp.status) {
+            self.clear_cache();
             Ok(())
         } else {
             Err(ApiError::Server {

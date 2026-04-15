@@ -158,3 +158,9 @@ fun getTransactionTypeConfig(typeKey: String): TransactionTypeConfig =
             )
         else -> error("Unknown transaction type: $typeKey")
     }
+
+fun apiTypeToConfigKey(apiType: String): String =
+    when (apiType) {
+        "regular" -> "regular_transaction"
+        else -> apiType
+    }

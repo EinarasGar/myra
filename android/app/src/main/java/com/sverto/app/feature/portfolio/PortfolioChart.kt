@@ -6,20 +6,22 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.ButtonGroup
+import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -117,10 +119,12 @@ fun PortfolioChart(
             MaterialTheme.colorScheme.error
         }
 
-    // Animate line drawing on period change
-    val animationProgress = remember { Animatable(0f) }
+    // Animate line drawing on period change.
+    // `remember(selectedPeriod)` creates a fresh Animatable at 0f synchronously in the same
+    // composition that receives the new `points`, so the canvas never renders one full frame of
+    // new data before the sweep starts.
+    val animationProgress = remember(selectedPeriod) { Animatable(0f) }
     LaunchedEffect(selectedPeriod) {
-        animationProgress.snapTo(0f)
         animationProgress.animateTo(1f, animationSpec = tween(600))
     }
 
@@ -174,24 +178,26 @@ fun PortfolioChart(
 
             Spacer(Modifier.height(16.dp))
 
-            // Time period chips
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            // Time period selector — M3 Expressive connected button group.
+            // Each button toggles its own checked state; exactly one is checked at a time.
+            // ButtonGroup's default expandedRatio makes the pressed/checked item nudge its
+            // neighbours out of the way (expressive spatial motion). ToggleButton's
+            // shapes morph between pill and squircle on press/check.
+            ButtonGroup(
+                horizontalArrangement = ButtonGroupDefaults.HorizontalArrangement,
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
             ) {
                 TimePeriod.entries.forEach { period ->
-                    FilterChip(
-                        selected = selectedPeriod == period,
-                        onClick = {
+                    ToggleButton(
+                        checked = selectedPeriod == period,
+                        onCheckedChange = {
                             selectedPeriod = period
                             scrubPosition = null
                         },
-                        label = { Text(period.label) },
-                        colors =
-                            FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            ),
-                    )
+                        shapes = ToggleButtonDefaults.shapes(),
+                    ) {
+                        Text(period.label)
+                    }
                 }
             }
         }

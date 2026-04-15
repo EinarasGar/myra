@@ -107,6 +107,16 @@ pub fn transaction_dtos_to_account_ids_hashset(transactions: &[&TransactionDto])
     account_ids
 }
 
+pub fn transaction_dtos_to_category_ids_hashset(transactions: &[&TransactionDto]) -> HashSet<i32> {
+    let mut category_ids = HashSet::new();
+    for transaction in transactions {
+        if let TransactionTypeDto::Regular(m) = &transaction.transaction_type {
+            category_ids.insert(m.category_id);
+        }
+    }
+    category_ids
+}
+
 pub fn combined_items_to_category_ids_hashset(items: &[CombinedTransactionItem]) -> HashSet<i32> {
     let mut category_ids = HashSet::new();
     for item in items {

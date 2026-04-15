@@ -6,6 +6,7 @@ import uniffi.sverto_core.AssetItem
 val AssetItem.display: String get() = "$ticker — $name"
 
 data class EntryFormState(
+    val entryId: Int? = null,
     val accountId: String? = null,
     val accountName: String = "",
     val assetId: Int? = null,

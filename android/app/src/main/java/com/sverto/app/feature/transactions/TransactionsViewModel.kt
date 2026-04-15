@@ -127,6 +127,25 @@ class TransactionsViewModel : ViewModel() {
         }
     }
 
+    fun deleteTransaction(
+        transactionId: String,
+        onSuccess: () -> Unit,
+    ) {
+        val current = (_uiState.value as? UiState.Success)?.data ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                refreshAuthToken()
+                apiClient.deleteIndividualTransaction(current.userId, transactionId)
+                refresh()
+                onSuccess()
+            } catch (
+                @Suppress("TooGenericExceptionCaught") e: Exception,
+            ) {
+                Log.e("TransactionsVM", "Failed to delete", e)
+            }
+        }
+    }
+
     companion object {
         private const val PAGE_SIZE: UInt = 25u
     }

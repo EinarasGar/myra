@@ -70,6 +70,31 @@ pub struct CategoryItem {
     pub name: String,
 }
 
+/// Flat Kotlin-friendly representation of an existing transaction, used to
+/// pre-fill the edit form on the client side.
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct EditableTransaction {
+    pub type_key: String,
+    pub date: i64,
+    pub description: String,
+    pub category_id: Option<i32>,
+    pub category_name: String,
+    pub origin_asset_id: Option<i32>,
+    pub origin_asset_display: String,
+    pub primary_entry_id: Option<i32>,
+    pub primary_account_id: String,
+    pub primary_account_name: String,
+    pub primary_asset_id: i32,
+    pub primary_asset_display: String,
+    pub primary_amount: f64,
+    pub secondary_entry_id: Option<i32>,
+    pub secondary_account_id: Option<String>,
+    pub secondary_account_name: Option<String>,
+    pub secondary_asset_id: Option<i32>,
+    pub secondary_asset_display: Option<String>,
+    pub secondary_amount: Option<f64>,
+}
+
 /// Flat Kotlin-friendly payload for creating an individual transaction.
 /// The `type_key` matches the wire-format discriminator (e.g. "regular",
 /// "asset_purchase", "cash_transfer_in"). Fields that don't apply to a given
@@ -78,9 +103,11 @@ pub struct CategoryItem {
 pub struct CreateTransactionInput {
     pub type_key: String,
     pub date: i64,
+    pub primary_entry_id: Option<i32>,
     pub primary_account_id: String,
     pub primary_asset_id: i32,
     pub primary_amount: f64,
+    pub secondary_entry_id: Option<i32>,
     pub secondary_account_id: Option<String>,
     pub secondary_asset_id: Option<i32>,
     pub secondary_amount: Option<f64>,
