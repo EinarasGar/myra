@@ -32,7 +32,7 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk
 		"POSTGRES_USER=myradev" \
 		"POSTGRES_PASSWORD=devpassword" \
 		"POSTGRES_DB=myra" \
-		"RUST_LOG=dal=trace,business=trace,api=trace,ai=info,tower_http=info" \
+		"RUST_LOG=dal=trace,business=trace,api=trace,worker=trace,ai=info,tower_http=info" \
 		"JWT_SECRET=devjwtsecret" \
 		"" \
 		"POSTGRES_PORT=7$${PREFIX}1" \
@@ -141,8 +141,16 @@ status: ## Show service ports, status, and useful links
 			echo "$(YELLOW)$$name$(NC)  http://localhost:$$port - $(RED)Not Running$(NC)"; \
 		fi; \
 	}; \
+	check_worker() { \
+		if pgrep -f "target/debug/worker" >/dev/null 2>&1 || pgrep -f "cargo run -p worker" >/dev/null 2>&1; then \
+			echo "$(YELLOW)Worker        $(NC)  (no port) - $(GREEN)Running$(NC)"; \
+		else \
+			echo "$(YELLOW)Worker        $(NC)  (no port) - $(RED)Not Running$(NC)"; \
+		fi; \
+	}; \
 	check_infra "Postgres      " $(POSTGRES_PORT) database; \
 	check_local "API Server    " $(SERVER_PORT); \
+	check_worker; \
 	check_local "Vite Dev      " $(VITE_PORT); \
 	check_infra "OTLP Collector" $(OTLP_PORT) jaeger; \
 	check_infra "Jaeger UI     " $(JAEGER_UI_PORT) jaeger; \
@@ -155,6 +163,12 @@ status: ## Show service ports, status, and useful links
 backend-run: ## Start API server (kills existing process on SERVER_PORT first)
 	-@lsof -ti :$(SERVER_PORT) | xargs kill -9 2>/dev/null || true
 	cd server && cargo run -p api --no-default-features --features $(AUTH_PROVIDER),color-sql,seed
+
+.PHONY: worker-run
+worker-run: ## Start background worker (kills existing worker first). Shares this worktree's .env — no port needed.
+	-@pkill -f "target/debug/worker" 2>/dev/null || true
+	-@pkill -f "cargo run -p worker" 2>/dev/null || true
+	cd server && cargo run -p worker
 
 .PHONY: web-run
 web-run: ## Start Vite dev server (kills existing process on VITE_PORT first)

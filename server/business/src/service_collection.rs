@@ -2,10 +2,13 @@ use dal::database_connection::MyraDbConnection;
 #[mockall_double::double]
 use dal::database_context::MyraDb;
 use dal::file_provider::FileProvider;
+use dal::job_queue::JobQueueHandle;
 use dal::noop_file_provider::NoOpFileProvider;
 use dal::redis_connection::RedisConnection;
 use dal::s3_file_provider::S3FileProvider;
 use std::sync::Arc;
+
+use crate::jobs::MyraJob;
 pub mod accounts_service;
 pub mod ai_action_service;
 pub mod ai_chat_service;
@@ -32,6 +35,16 @@ pub struct Services {
     pub connection: MyraDbConnection,
     pub file_provider: Arc<dyn FileProvider>,
     pub redis: RedisConnection,
+    pub job_queue: JobQueueHandle<MyraJob>,
+}
+
+#[derive(Clone)]
+pub struct ServiceProviders {
+    pub db: MyraDb,
+    pub job_queue: JobQueueHandle<MyraJob>,
+    pub file_provider: Arc<dyn FileProvider>,
+    pub redis: RedisConnection,
+    pub services: Services,
 }
 
 impl Services {
@@ -50,19 +63,27 @@ impl Services {
         };
 
         let redis = RedisConnection::new().await;
+        let job_queue = JobQueueHandle::<MyraJob>::new(connection.pool.clone());
 
         Ok(Services {
             connection,
             file_provider,
             redis,
+            job_queue,
         })
     }
 
-    pub fn get_db_instance(&self) -> MyraDb {
-        MyraDb::new(self.connection.clone())
+    pub fn create_providers(&self) -> ServiceProviders {
+        ServiceProviders {
+            db: MyraDb::new(self.connection.clone()),
+            job_queue: self.job_queue.clone(),
+            file_provider: self.file_provider.clone(),
+            redis: self.redis.clone(),
+            services: self.clone(),
+        }
     }
 
-    pub fn get_redis_instance(&self) -> RedisConnection {
-        self.redis.clone()
+    pub fn get_job_queue_instance(&self) -> JobQueueHandle<MyraJob> {
+        self.job_queue.clone()
     }
 }

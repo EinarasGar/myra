@@ -17,8 +17,10 @@ pub struct AiDataService {
 }
 
 impl AiDataService {
-    pub fn new(db: MyraDb) -> Self {
-        Self { db }
+    pub fn new(providers: &super::ServiceProviders) -> Self {
+        Self {
+            db: providers.db.clone(),
+        }
     }
 }
 

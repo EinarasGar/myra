@@ -71,23 +71,21 @@ async fn main() {
     dotenvy::dotenv().ok();
     let cli = Cli::parse();
     let services = Services::new().await.unwrap();
+    let providers = services.create_providers();
 
-    if ASSET_SERVICE
-        .set(AssetsService::new(services.get_db_instance()))
-        .is_err()
-    {
+    if ASSET_SERVICE.set(AssetsService::new(&providers)).is_err() {
         eprintln!("Failed to set ASSET_SERVICE");
         return;
     }
     if ASSET_RATES_SERVICE
-        .set(AssetRatesService::new(services.get_db_instance()))
+        .set(AssetRatesService::new(&providers))
         .is_err()
     {
         eprintln!("Failed to set ASSET_RATES_SERVICE");
         return;
     }
     if EMBEDDING_SERVICE
-        .set(AiEmbeddingService::new(services.get_db_instance()))
+        .set(AiEmbeddingService::new(&providers))
         .is_err()
     {
         eprintln!("Failed to set EMBEDDING_SERVICE");

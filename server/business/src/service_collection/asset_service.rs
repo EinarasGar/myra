@@ -44,10 +44,10 @@ pub struct AssetsService {
 
 #[automock]
 impl AssetsService {
-    pub fn new(db: MyraDb) -> Self {
+    pub fn new(providers: &super::ServiceProviders) -> Self {
         Self {
-            embedding_service: AiEmbeddingService::new(db.clone()),
-            db,
+            embedding_service: AiEmbeddingService::new(providers),
+            db: providers.db.clone(),
         }
     }
 
@@ -269,7 +269,8 @@ impl AssetsService {
 
         let embed_text = format!("Asset: {} | Ticker: {}", asset_dto.name, asset_dto.ticker);
         self.embedding_service
-            .spawn_embed_asset(asset_id, embed_text);
+            .enqueue_embed_asset(asset_id, embed_text)
+            .await?;
 
         Ok(ret)
     }
@@ -352,7 +353,8 @@ impl AssetsService {
         if name_or_ticker_changed {
             let embed_text = format!("Asset: {} | Ticker: {}", name, ticker);
             self.embedding_service
-                .spawn_embed_asset(asset_id, embed_text);
+                .enqueue_embed_asset(asset_id, embed_text)
+                .await?;
         }
 
         Ok(())

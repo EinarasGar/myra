@@ -18,10 +18,10 @@ pub struct CategoryTypeService {
 }
 
 impl CategoryTypeService {
-    pub fn new(db: MyraDb) -> Self {
+    pub fn new(providers: &super::ServiceProviders) -> Self {
         Self {
-            validation_service: CategoryValidationService::new(db.clone()),
-            db,
+            validation_service: CategoryValidationService::new(providers),
+            db: providers.db.clone(),
         }
     }
 

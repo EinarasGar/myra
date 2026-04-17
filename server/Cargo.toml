@@ -11,4 +11,6 @@ members = [
   "ai",
   "shared",
   "app-core",
+  "observability",
+  "worker",
 ]

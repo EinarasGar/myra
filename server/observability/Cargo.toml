@@ -1,0 +1,17 @@
+[package]
+name = "observability"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tracing = { version = "0.1.44", features = ["async-await", "log"] }
+tracing-subscriber = { version = "0.3.22", features = ["std", "env-filter"] }
+tracing-opentelemetry = { version = "0.32.1" }
+opentelemetry = { version = "0.31.0", features = ["metrics"] }
+opentelemetry_sdk = { version = "0.31.0", features = ["rt-tokio"] }
+opentelemetry-otlp = { version = "0.31.0", features = ["grpc-tonic"] }
+syntect = { optional = true, version = "5.3.0" }
+
+[features]
+default = []
+color-sql = ["dep:syntect"]

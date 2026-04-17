@@ -13,7 +13,6 @@ pub mod errors;
 pub mod extractors;
 mod fallback;
 pub(crate) mod handlers;
-mod observability;
 pub mod openapi;
 pub mod parsers;
 pub(crate) mod routes;
@@ -33,7 +32,7 @@ async fn main() -> Result<()> {
     color_eyre::install()?;
 
     //Initialize logging and OpenTelemetry
-    observability::initialize_tracing_subscriber();
+    observability::initialize_tracing_subscriber("myra_api");
 
     // Run database migrations and feature-gated seed data
     {

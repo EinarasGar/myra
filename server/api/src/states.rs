@@ -30,8 +30,8 @@ macro_rules! service_state {
 
             impl FromRef<AppState> for $service {
                 fn from_ref(state: &AppState) -> $service {
-                    let db = state.services_collection.get_db_instance();
-                    <$service>::new(db)
+                    let providers = state.services_collection.create_providers();
+                    <$service>::new(&providers)
                 }
             }
 
@@ -54,7 +54,6 @@ macro_rules! service_state {
     };
 }
 
-// Usage
 service_state!(UsersService);
 service_state!(AuthService);
 service_state!(TransactionService);
@@ -68,47 +67,7 @@ service_state!(EntriesService);
 service_state!(AccountsService);
 service_state!(CategoryService);
 service_state!(CategoryTypeService);
-pub struct AiChatServiceState(pub AiChatService);
-
-impl FromRef<AppState> for AiChatService {
-    fn from_ref(state: &AppState) -> AiChatService {
-        let db = state.services_collection.get_db_instance();
-        let redis = state.services_collection.get_redis_instance();
-        AiChatService::new(db, redis)
-    }
-}
-
-impl<S> FromRequestParts<S> for AiChatServiceState
-where
-    AiChatService: FromRef<S>,
-    S: Send + Sync,
-{
-    type Rejection = (StatusCode, String);
-    async fn from_request_parts(_parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        Ok(Self(AiChatService::from_ref(state)))
-    }
-}
+service_state!(AiChatService);
 
 use business::service_collection::file_service::FileService;
-
-pub struct FileServiceState(pub FileService);
-
-impl FromRef<AppState> for FileService {
-    fn from_ref(state: &AppState) -> FileService {
-        let db = state.services_collection.get_db_instance();
-        FileService::new(db, state.services_collection.file_provider.clone())
-    }
-}
-
-impl<S> FromRequestParts<S> for FileServiceState
-where
-    FileService: FromRef<S>,
-    S: Send + Sync,
-{
-    type Rejection = (StatusCode, String);
-
-    async fn from_request_parts(_parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        let svc = FileService::from_ref(state);
-        Ok(Self(svc))
-    }
-}
+service_state!(FileService);

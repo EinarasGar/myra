@@ -16,6 +16,7 @@ use crate::{
             AssetPairUserMetadataIden, AssetPairsIden, AssetTypesIden, AssetsAliasIden, AssetsIden,
             OrdinalIden,
         },
+        entries_idens::EntryIden,
         ArrayFunc, CustomFunc, Unnest,
     },
     models::asset_models::{AssetPair, AssetPairDate, AssetPairRateInsert, InsertAsset},
@@ -1412,6 +1413,42 @@ pub fn delete_asset_pair_by_id(pair_id: i32) -> DbQueryWithValues {
     Query::delete()
         .from_table(AssetPairsIden::Table)
         .and_where(Expr::col(AssetPairsIden::Id).eq(pair_id))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn get_distinct_held_asset_pairs() -> DbQueryWithValues {
+    Query::select()
+        .distinct()
+        .expr_as(
+            Expr::col((AssetPairsIden::Table, AssetPairsIden::Id)),
+            Alias::new("pair_id"),
+        )
+        .column((AssetsIden::Table, AssetsIden::Ticker))
+        .column((
+            AssetPairUserMetadataIden::Table,
+            AssetPairUserMetadataIden::Exchange,
+        ))
+        .from(EntryIden::Table)
+        .inner_join(
+            AssetsIden::Table,
+            Expr::col((AssetsIden::Table, AssetsIden::Id))
+                .equals((EntryIden::Table, EntryIden::AssetId)),
+        )
+        .inner_join(
+            AssetPairsIden::Table,
+            Expr::col((AssetPairsIden::Table, AssetPairsIden::Id))
+                .equals((AssetsIden::Table, AssetsIden::BasePairId)),
+        )
+        .left_join(
+            AssetPairUserMetadataIden::Table,
+            Expr::col((
+                AssetPairUserMetadataIden::Table,
+                AssetPairUserMetadataIden::Id,
+            ))
+            .equals((AssetPairsIden::Table, AssetPairsIden::Id)),
+        )
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }

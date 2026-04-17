@@ -59,9 +59,6 @@ impl SqlHighlighter {
 
 pub fn create_tracing_formatter() -> impl for<'writer> FormatFields<'writer> {
     format::debug_fn(|writer, field, value| {
-        // This code is not nice as it would pick up other params with name "query", plus it doesnt follow sepeartion of concerns
-        // as it is in API layer and know about DAL layer.
-        // But this is only intended for debugging console logs, so its fine.
         if field.to_string() == "query" {
             let highlighter = SqlHighlighter::get();
             let query = format!("{:?}", value);

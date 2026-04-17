@@ -44,13 +44,13 @@ impl JwtKeys {
 
 #[cfg(feature = "database")]
 impl AuthService {
-    pub fn new(db: MyraDb) -> Self {
+    pub fn new(providers: &super::ServiceProviders) -> Self {
         let secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
         let jwt_keys = JwtKeys::new(secret.as_bytes());
         Self {
-            db_context: db.clone(),
+            db_context: providers.db.clone(),
             jwt_keys,
-            user_service: UsersService::new(db),
+            user_service: UsersService::new(providers),
         }
     }
 
@@ -198,14 +198,14 @@ pub struct AuthService {
 
 #[cfg(feature = "clerk")]
 impl AuthService {
-    pub fn new(db: MyraDb) -> Self {
+    pub fn new(providers: &super::ServiceProviders) -> Self {
         let clerk_secret_key = std::env::var("CLERK_SECRET_KEY")
             .expect("CLERK_SECRET_KEY must be set when using clerk auth feature");
         std::env::var("CLERK_PUBLISHABLE_KEY")
             .expect("CLERK_PUBLISHABLE_KEY must be set when using clerk auth feature");
         Self {
-            db_context: db.clone(),
-            user_service: UsersService::new(db),
+            db_context: providers.db.clone(),
+            user_service: UsersService::new(providers),
             clerk_secret_key,
             jwks_cache: Arc::new(RwLock::new(None)),
             identity_cache: Arc::new(RwLock::new(HashMap::new())),
@@ -396,8 +396,10 @@ pub struct AuthService {
 
 #[cfg(feature = "noauth")]
 impl AuthService {
-    pub fn new(db: MyraDb) -> Self {
+    pub fn new(providers: &super::ServiceProviders) -> Self {
         tracing::warn!("⚠️  SECURITY WARNING: Authentication is DISABLED. All requests will be accepted without authentication. Do NOT use this in production!");
-        Self { _db_context: db }
+        Self {
+            _db_context: providers.db.clone(),
+        }
     }
 }

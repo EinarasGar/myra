@@ -2,9 +2,7 @@ use opentelemetry::trace::TracerProvider;
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::trace::Tracer;
 use opentelemetry_sdk::Resource;
-use tower_http::classify::{ServerErrorsAsFailures, SharedClassifier};
-use tower_http::trace::{DefaultMakeSpan, TraceLayer};
-use tracing::{Level, Subscriber};
+use tracing::Subscriber;
 use tracing_opentelemetry::OpenTelemetryLayer;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::registry::LookupSpan;
@@ -13,18 +11,20 @@ use tracing_subscriber::Registry;
 use tracing_subscriber::{prelude::*, EnvFilter};
 
 #[cfg(all(feature = "color-sql", debug_assertions))]
-pub(crate) mod sql_highlighter;
+pub mod sql_highlighter;
 
-pub fn initialize_tracing_subscriber() {
+pub fn initialize_tracing_subscriber(service_name: &'static str) {
     Registry::default()
         .with(create_print_layer())
         .with(create_env_filter_layer())
-        .with(create_opentelemetry_layer())
+        .with(create_opentelemetry_layer(service_name))
         .init();
 }
 
 #[allow(clippy::type_complexity)]
-fn create_opentelemetry_layer<S>() -> Option<OpenTelemetryLayer<S, Tracer>>
+fn create_opentelemetry_layer<S>(
+    service_name: &'static str,
+) -> Option<OpenTelemetryLayer<S, Tracer>>
 where
     S: Subscriber + for<'span> LookupSpan<'span>,
 {
@@ -39,7 +39,7 @@ where
 
             match exporter {
                 Ok(exporter) => {
-                    let resource = Resource::builder().with_service_name("myra_api").build();
+                    let resource = Resource::builder().with_service_name(service_name).build();
 
                     let tracer_provider = opentelemetry_sdk::trace::SdkTracerProvider::builder()
                         .with_batch_exporter(exporter)
@@ -47,7 +47,7 @@ where
                         .build();
 
                     opentelemetry::global::set_tracer_provider(tracer_provider.clone());
-                    let telemetry = OpenTelemetryLayer::new(tracer_provider.tracer("myra_api"));
+                    let telemetry = OpenTelemetryLayer::new(tracer_provider.tracer(service_name));
                     Some(telemetry)
                 }
                 Err(err) => {
@@ -78,7 +78,8 @@ fn create_print_layer() -> Box<dyn Layer<Registry> + Send + Sync> {
     layer.boxed()
 }
 
-//Creates an env filter from RUST_LOG. If its invalid - panics. If its empty or unset - defaults to erros only
+/// Creates an env filter from `RUST_LOG`. If invalid, panics. If empty or unset,
+/// falls back to the default (errors only).
 fn create_env_filter_layer() -> Option<EnvFilter> {
     let rust_log = std::env::var("RUST_LOG").unwrap_or_else(|_| {
         println!("RUST_LOG not set. Error environment filter will be used.");
@@ -94,18 +95,4 @@ fn create_env_filter_layer() -> Option<EnvFilter> {
             None
         }
     }
-}
-
-pub fn create_tower_http_tracing_layer() -> TraceLayer<SharedClassifier<ServerErrorsAsFailures>> {
-    TraceLayer::new_for_http().make_span_with(
-        DefaultMakeSpan::new()
-            .include_headers(false)
-            .level(Level::INFO),
-    )
-    // .on_request(DefaultOnRequest::new().level(Level::INFO))
-    // .on_response(
-    //     DefaultOnResponse::new()
-    //         .level(Level::INFO)
-    //         .latency_unit(LatencyUnit::Micros),
-    // )
 }

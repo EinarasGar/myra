@@ -24,3 +24,6 @@ http = "1"
 thiserror = "2"
 redis = { version = "0.28", features = ["tokio-comp", "connection-manager"] }
 once_cell = "1.21.3"
+apalis = { version = "0.7", features = ["tracing"] }
+apalis-sql = { version = "0.7", features = ["postgres"] }
+serde = { version = "1", features = ["derive"] }

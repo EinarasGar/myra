@@ -5,6 +5,7 @@ use dal::database_context::MyraDb;
 use dal::{
     models::asset_models::{
         AssetPair, AssetPairRate, AssetPairRateDate, AssetPairRateOption, AssetRate,
+        HeldAssetPairModel,
     },
     queries::asset_queries::{self, get_asset_pairs_rates_with_conversions},
     query_params::get_rates_params::{GetRatesParams, GetRatesSeachType, GetRatesTimeParams},
@@ -29,8 +30,10 @@ pub struct AssetRatesService {
 
 #[automock]
 impl AssetRatesService {
-    pub fn new(db: MyraDb) -> Self {
-        Self { db }
+    pub fn new(providers: &super::ServiceProviders) -> Self {
+        Self {
+            db: providers.db.clone(),
+        }
     }
 
     #[tracing::instrument(skip_all, err)]
@@ -329,5 +332,11 @@ impl AssetRatesService {
         }
 
         Ok(mapped_prices)
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn list_held_pairs(&self) -> anyhow::Result<Vec<HeldAssetPairModel>> {
+        let query = asset_queries::get_distinct_held_asset_pairs();
+        Ok(self.db.fetch_all::<HeldAssetPairModel>(query).await?)
     }
 }

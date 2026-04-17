@@ -13,8 +13,10 @@ pub struct CategoryValidationService {
 }
 
 impl CategoryValidationService {
-    pub fn new(db: MyraDb) -> Self {
-        Self { db }
+    pub fn new(providers: &super::ServiceProviders) -> Self {
+        Self {
+            db: providers.db.clone(),
+        }
     }
 
     pub async fn validate_category_name_uniqueness(

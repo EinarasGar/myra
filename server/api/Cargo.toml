@@ -10,6 +10,7 @@ business = { path = "../business", default-features = false }
 dal = { path = "../dal" }
 macros = {path="../macros"}
 shared = { path = "../shared", features = ["backend"] }
+observability = { path = "../observability" }
 axum = { version = "0.8.8", features = ["query", "macros"] }
 serde = "1.0.228"
 tokio = { version = "1.49.0", features = ["full"] }
@@ -19,12 +20,7 @@ uuid = { version = "1.20.0", features = ["serde", "v4"] }
 anyhow = { version = "1.0.100", features = ["backtrace"] }
 rust_decimal = { version = "1.40.0", features = ["serde-with-arbitrary-precision"] }
 time = { version = "0.3.46", features = ["macros", "formatting", "serde"] }
-tracing-subscriber = { version = "0.3.22", features = ["std", "env-filter"] }
 tracing = { version = "0.1.44", features = ["async-await", "log"] }
-tracing-opentelemetry = { version = "0.32.1" }
-opentelemetry = { version = "0.31.0", features = ["metrics"] }
-opentelemetry_sdk = { version = "0.31.0", features = ["rt-tokio"] }
-opentelemetry-otlp = { version = "0.31.0", features = ["grpc-tonic"] }
 serde_json = "1.0.149"
 utoipa = { version = "5.4.0", features = ["axum_extras", "time", "uuid", "decimal_float", "config", "debug"] }
 utoipa-redoc = { version = "6.0.0", features = ["axum"] }
@@ -33,7 +29,6 @@ rust_decimal_macros = "1.40.0"
 paste = "1.0.15"
 axum-extra = { version = "0.12.5", features = ["typed-header"] }
 itertools = "0.14.0"
-syntect = { optional = true, version = "5.3.0" }
 reqwest = { version = "0.12", features = ["json"], optional = true }
 async-trait = "0.1.89"
 syn = { version = "2.0", features = ["full", "extra-traits"] }
@@ -50,7 +45,7 @@ tower_governor = { version = "0.6", features = ["tracing"] }
 
 [features]
 default = ["color-sql", "noauth", "seed"]
-color-sql = ["dep:syntect"]
+color-sql = ["observability/color-sql"]
 seed = []
 database = ["business/database"]
 clerk = ["dep:reqwest", "business/clerk"]

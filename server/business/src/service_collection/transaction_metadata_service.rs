@@ -20,10 +20,10 @@ pub struct TransactionMetadataService {
 }
 
 impl TransactionMetadataService {
-    pub fn new(db: MyraDb) -> Self {
+    pub fn new(providers: &super::ServiceProviders) -> Self {
         Self {
-            embedding_service: AiEmbeddingService::new(db.clone()),
-            db,
+            embedding_service: AiEmbeddingService::new(providers),
+            db: providers.db.clone(),
         }
     }
 
@@ -89,7 +89,8 @@ impl TransactionMetadataService {
                     );
                     self.db.execute(query).await?;
                     self.embedding_service
-                        .spawn_embed_transaction(transaction_id, new_val.clone());
+                        .enqueue_embed_transaction(transaction_id, new_val.clone())
+                        .await?;
                 }
             }
             (None, Some(new_val)) => {
@@ -101,7 +102,8 @@ impl TransactionMetadataService {
                 ]);
                 self.db.execute(query).await?;
                 self.embedding_service
-                    .spawn_embed_transaction(transaction_id, new_val.clone());
+                    .enqueue_embed_transaction(transaction_id, new_val.clone())
+                    .await?;
             }
             (Some(_), None) => {
                 let query = transaction_data_queries::delete_descriptions_by_transaction_ids(vec![
@@ -201,7 +203,8 @@ impl TransactionMetadataService {
 
             for model in &update_models {
                 self.embedding_service
-                    .spawn_embed_transaction(model.transaction_id, model.description.clone());
+                    .enqueue_embed_transaction(model.transaction_id, model.description.clone())
+                    .await?;
             }
 
             update_models.into_iter().for_each(|model| {

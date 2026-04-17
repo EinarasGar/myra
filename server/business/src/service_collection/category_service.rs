@@ -24,11 +24,11 @@ pub struct CategoryService {
 }
 
 impl CategoryService {
-    pub fn new(db: MyraDb) -> Self {
+    pub fn new(providers: &super::ServiceProviders) -> Self {
         Self {
-            validation_service: CategoryValidationService::new(db.clone()),
-            embedding_service: AiEmbeddingService::new(db.clone()),
-            db,
+            validation_service: CategoryValidationService::new(providers),
+            embedding_service: AiEmbeddingService::new(providers),
+            db: providers.db.clone(),
         }
     }
 
@@ -148,7 +148,8 @@ impl CategoryService {
             category.category, category.category_type_name
         );
         self.embedding_service
-            .spawn_embed_category(created_id, embed_text);
+            .enqueue_embed_category(created_id, embed_text)
+            .await?;
         Ok(category)
     }
 
@@ -193,7 +194,8 @@ impl CategoryService {
                 category.category, category.category_type_name
             );
             self.embedding_service
-                .spawn_embed_category(category_id, embed_text);
+                .enqueue_embed_category(category_id, embed_text)
+                .await?;
         }
 
         Ok(category)

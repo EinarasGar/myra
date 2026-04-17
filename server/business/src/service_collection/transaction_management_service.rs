@@ -56,12 +56,12 @@ pub struct TransactionManagementService {
 
 #[automock]
 impl TransactionManagementService {
-    pub fn new(db: MyraDb) -> Self {
+    pub fn new(providers: &super::ServiceProviders) -> Self {
         Self {
-            entries_service: EntriesService::new(db.clone()),
-            transaction_metadata_service: TransactionMetadataService::new(db.clone()),
-            transaction_service: TransactionService::new(db.clone()),
-            db,
+            entries_service: EntriesService::new(providers),
+            transaction_metadata_service: TransactionMetadataService::new(providers),
+            transaction_service: TransactionService::new(providers),
+            db: providers.db.clone(),
         }
     }
 

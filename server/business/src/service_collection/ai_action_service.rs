@@ -4,8 +4,6 @@ use ai::models::action::{
     CreateTransactionResult,
 };
 use anyhow::Result;
-#[mockall_double::double]
-use dal::database_context::MyraDb;
 use uuid::Uuid;
 
 use crate::{
@@ -25,10 +23,10 @@ pub struct AiActionService {
 }
 
 impl AiActionService {
-    pub fn new(db: MyraDb) -> Self {
+    pub fn new(providers: &super::ServiceProviders) -> Self {
         Self {
-            transaction_service: TransactionManagementService::new(db.clone()),
-            group_service: TransactionGroupService::new(db),
+            transaction_service: TransactionManagementService::new(providers),
+            group_service: TransactionGroupService::new(providers),
         }
     }
 }

@@ -48,12 +48,12 @@ pub struct TransactionGroupService {
 }
 
 impl TransactionGroupService {
-    pub fn new(db: MyraDb) -> Self {
+    pub fn new(providers: &super::ServiceProviders) -> Self {
         Self {
-            management_service: TransactionManagementService::new(db.clone()),
-            transaction_metadata_service: TransactionMetadataService::new(db.clone()),
-            embedding_service: AiEmbeddingService::new(db.clone()),
-            db,
+            management_service: TransactionManagementService::new(providers),
+            transaction_metadata_service: TransactionMetadataService::new(providers),
+            embedding_service: AiEmbeddingService::new(providers),
+            db: providers.db.clone(),
         }
     }
 
@@ -121,7 +121,8 @@ impl TransactionGroupService {
         self.db.commit_transaction().await?;
 
         self.embedding_service
-            .spawn_embed_group(group_id, description.clone());
+            .enqueue_embed_group(group_id, description.clone())
+            .await?;
 
         // Fetch back full transactions
         let transaction_dtos = self.fetch_transactions_by_ids(created_ids).await?;
@@ -323,7 +324,8 @@ impl TransactionGroupService {
             });
         self.db.execute(update_group_query).await?;
         self.embedding_service
-            .spawn_embed_group(group_id, description.clone());
+            .enqueue_embed_group(group_id, description.clone())
+            .await?;
 
         // Collect all final transaction IDs and fetch back
         let all_ids: Vec<Uuid> = to_update

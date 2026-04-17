@@ -26,8 +26,10 @@ pub struct EntriesService {
 }
 
 impl EntriesService {
-    pub fn new(db: MyraDb) -> Self {
-        Self { db: db.clone() }
+    pub fn new(providers: &super::ServiceProviders) -> Self {
+        Self {
+            db: providers.db.clone(),
+        }
     }
 
     #[tracing::instrument(skip_all, err)]

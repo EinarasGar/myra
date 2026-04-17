@@ -3,6 +3,7 @@ pub mod database_context;
 pub mod enums;
 pub mod file_provider;
 pub(crate) mod idens;
+pub mod job_queue;
 pub mod models;
 pub mod noop_file_provider;
 pub mod queries;

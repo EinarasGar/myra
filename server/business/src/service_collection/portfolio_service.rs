@@ -18,11 +18,11 @@ pub struct PortfolioService {
 }
 
 impl PortfolioService {
-    pub fn new(db: MyraDb) -> Self {
+    pub fn new(providers: &super::ServiceProviders) -> Self {
         Self {
-            _db_context: db.clone(),
-            entries_service: EntriesService::new(db.clone()),
-            asset_rates_service: AssetRatesService::new(db.clone()),
+            _db_context: providers.db.clone(),
+            entries_service: EntriesService::new(providers),
+            asset_rates_service: AssetRatesService::new(providers),
         }
     }
 

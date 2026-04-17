@@ -1,83 +1,106 @@
 #[mockall_double::double]
 use dal::database_context::MyraDb;
+use dal::job_queue::JobQueueHandle;
 use dal::queries::ai_queries;
 use pgvector::Vector;
 use uuid::Uuid;
 
-use ai::config::AiConfig;
-use ai::embedding::embed_text;
+use crate::jobs::MyraJob;
 
-use dal::queries::DbQueryWithValues;
-
+#[derive(Clone)]
 pub struct AiEmbeddingService {
     db: MyraDb,
+    queue: JobQueueHandle<MyraJob>,
 }
 
 impl AiEmbeddingService {
-    pub fn new(db: MyraDb) -> Self {
-        Self { db }
+    pub fn new(providers: &super::ServiceProviders) -> Self {
+        Self {
+            db: providers.db.clone(),
+            queue: providers.job_queue.clone(),
+        }
     }
 
-    pub fn spawn_embed_transaction(&self, transaction_id: Uuid, description: String) {
-        let db = self.db.clone();
-        tokio::spawn(async move {
-            let query_fn = |embedding| {
-                ai_queries::update_transaction_description_embedding(transaction_id, embedding)
-            };
-            if let Err(e) = embed_and_store(&db, &description, query_fn).await {
-                tracing::error!("Failed to embed transaction {}: {}", transaction_id, e);
-            }
-        });
+    pub async fn enqueue_embed_transaction(
+        &self,
+        transaction_id: Uuid,
+        text: String,
+    ) -> anyhow::Result<()> {
+        self.queue
+            .push(MyraJob::EmbedTransaction {
+                transaction_id,
+                text,
+            })
+            .await
     }
 
-    pub fn spawn_embed_group(&self, group_id: Uuid, description: String) {
-        let db = self.db.clone();
-        tokio::spawn(async move {
-            let query_fn =
-                |embedding| ai_queries::update_transaction_group_embedding(group_id, embedding);
-            if let Err(e) = embed_and_store(&db, &description, query_fn).await {
-                tracing::error!("Failed to embed group {}: {}", group_id, e);
-            }
-        });
+    pub async fn enqueue_embed_group(&self, group_id: Uuid, text: String) -> anyhow::Result<()> {
+        self.queue
+            .push(MyraJob::EmbedTransactionGroup { group_id, text })
+            .await
     }
 
-    pub fn spawn_embed_asset(&self, asset_id: i32, text: String) {
-        let db = self.db.clone();
-        tokio::spawn(async move {
-            let query_fn = |embedding| ai_queries::update_asset_embedding(asset_id, embedding);
-            if let Err(e) = embed_and_store(&db, &text, query_fn).await {
-                tracing::error!("Failed to embed asset {}: {}", asset_id, e);
-            }
-        });
+    pub async fn enqueue_embed_asset(&self, asset_id: i32, text: String) -> anyhow::Result<()> {
+        self.queue
+            .push(MyraJob::EmbedAsset { asset_id, text })
+            .await
     }
 
-    pub async fn embed_asset(&self, asset_id: i32, text: &str) -> anyhow::Result<()> {
-        let query_fn = |embedding| ai_queries::update_asset_embedding(asset_id, embedding);
-        embed_and_store(&self.db, text, query_fn).await
+    pub async fn enqueue_embed_category(
+        &self,
+        category_id: i32,
+        text: String,
+    ) -> anyhow::Result<()> {
+        self.queue
+            .push(MyraJob::EmbedCategory { category_id, text })
+            .await
     }
 
-    pub fn spawn_embed_category(&self, category_id: i32, text: String) {
-        let db = self.db.clone();
-        tokio::spawn(async move {
-            let query_fn =
-                |embedding| ai_queries::update_category_embedding(category_id, embedding);
-            if let Err(e) = embed_and_store(&db, &text, query_fn).await {
-                tracing::error!("Failed to embed category {}: {}", category_id, e);
-            }
-        });
+    #[tracing::instrument(skip(self, embedding), err)]
+    pub async fn store_transaction_embedding(
+        &self,
+        transaction_id: Uuid,
+        embedding: Vec<f32>,
+    ) -> anyhow::Result<()> {
+        let query = ai_queries::update_transaction_description_embedding(
+            transaction_id,
+            Vector::from(embedding),
+        );
+        self.db.execute(query).await?;
+        Ok(())
     }
-}
 
-async fn embed_and_store(
-    db: &MyraDb,
-    text: &str,
-    query_fn: impl FnOnce(Vector) -> DbQueryWithValues,
-) -> anyhow::Result<()> {
-    let config = AiConfig::try_from_env()?;
-    let vec = embed_text(&config, text).await?;
-    let vector = Vector::from(vec.iter().map(|&x| x as f32).collect::<Vec<f32>>());
-    let query = query_fn(vector);
-    db.execute(query).await?;
-    tracing::info!("Stored embedding ({} chars)", text.len());
-    Ok(())
+    #[tracing::instrument(skip(self, embedding), err)]
+    pub async fn store_group_embedding(
+        &self,
+        group_id: Uuid,
+        embedding: Vec<f32>,
+    ) -> anyhow::Result<()> {
+        let query =
+            ai_queries::update_transaction_group_embedding(group_id, Vector::from(embedding));
+        self.db.execute(query).await?;
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self, embedding), err)]
+    pub async fn store_asset_embedding(
+        &self,
+        asset_id: i32,
+        embedding: Vec<f32>,
+    ) -> anyhow::Result<()> {
+        let query = ai_queries::update_asset_embedding(asset_id, Vector::from(embedding));
+        self.db.execute(query).await?;
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self, embedding), err)]
+    pub async fn store_category_embedding(
+        &self,
+        category_id: i32,
+        embedding: Vec<f32>,
+    ) -> anyhow::Result<()> {
+        let query = ai_queries::update_category_embedding(category_id, Vector::from(embedding));
+        self.db.execute(query).await?;
+        Ok(())
+    }
 }

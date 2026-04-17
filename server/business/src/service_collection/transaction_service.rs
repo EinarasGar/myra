@@ -20,10 +20,10 @@ pub struct TransactionService {
 
 #[automock]
 impl TransactionService {
-    pub fn new(db: MyraDb) -> Self {
+    pub fn new(providers: &super::ServiceProviders) -> Self {
         Self {
-            _asset_service: AssetsService::new(db.clone()),
-            db,
+            _asset_service: AssetsService::new(providers),
+            db: providers.db.clone(),
         }
     }
 

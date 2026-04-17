@@ -34,12 +34,12 @@ pub struct PortfolioOverviewService {
 }
 
 impl PortfolioOverviewService {
-    pub fn new(db: MyraDb) -> Self {
+    pub fn new(providers: &super::ServiceProviders) -> Self {
         Self {
-            db: db.clone(),
-            _transaction_service: TransactionService::new(db.clone()),
-            asset_rates_service: AssetRatesService::new(db.clone()),
-            transaction_metadata_service: TransactionMetadataService::new(db.clone()),
+            db: providers.db.clone(),
+            _transaction_service: TransactionService::new(providers),
+            asset_rates_service: AssetRatesService::new(providers),
+            transaction_metadata_service: TransactionMetadataService::new(providers),
         }
     }
 

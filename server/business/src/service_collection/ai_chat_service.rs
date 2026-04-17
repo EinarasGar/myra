@@ -8,22 +8,21 @@ use crate::rate_limiting::token_estimator;
 use crate::service_collection::ai_action_service::AiActionService;
 use crate::service_collection::ai_data_service::AiDataService;
 use ai::models::chat::Base64Image;
-#[mockall_double::double]
-use dal::database_context::MyraDb;
-#[mockall_double::double]
-use dal::redis_connection::RedisConnection;
 use futures::{Stream, StreamExt};
 use uuid::Uuid;
 
 pub struct AiChatService {
-    db: MyraDb,
+    services: super::Services,
     rate_limiter: RateLimiter,
 }
 
 impl AiChatService {
-    pub fn new(db: MyraDb, redis: RedisConnection) -> Self {
-        let rate_limiter = RateLimiter::new(redis, db.clone());
-        Self { db, rate_limiter }
+    pub fn new(providers: &super::ServiceProviders) -> Self {
+        let rate_limiter = RateLimiter::new(providers.redis.clone(), providers.db.clone());
+        Self {
+            services: providers.services.clone(),
+            rate_limiter,
+        }
     }
 
     pub async fn stream_chat(
@@ -51,8 +50,9 @@ impl AiChatService {
             return Err(AiChatError::ConcurrencyLimitExceeded);
         }
 
-        let data = Arc::new(AiDataService::new(self.db.clone()));
-        let actions = Arc::new(AiActionService::new(self.db.clone()));
+        let providers = self.services.create_providers();
+        let data = Arc::new(AiDataService::new(&providers));
+        let actions = Arc::new(AiActionService::new(&providers));
 
         let ai_images = images.map(|imgs| {
             imgs.into_iter()

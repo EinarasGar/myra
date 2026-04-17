@@ -1,6 +1,6 @@
 use crate::{
     auth_middleware::{authenticate, enforce_user_ownership},
-    handlers, observability,
+    handlers,
     openapi::build_openapi_json,
     AppState,
 };
@@ -15,6 +15,8 @@ use tower_governor::{
     governor::GovernorConfigBuilder, key_extractor::SmartIpKeyExtractor, GovernorLayer,
 };
 use tower_http::cors::CorsLayer;
+use tower_http::trace::{DefaultMakeSpan, TraceLayer};
+use tracing::Level;
 use utoipa_rapidoc::RapiDoc;
 use utoipa_redoc::Redoc;
 
@@ -102,7 +104,13 @@ pub(crate) fn create_router(state: AppState) -> Router {
         .merge(build_public_auth_routes())
         .merge(authenticated_routes)
         .layer(build_cors_layer())
-        .layer(observability::create_tower_http_tracing_layer())
+        .layer(
+            TraceLayer::new_for_http().make_span_with(
+                DefaultMakeSpan::new()
+                    .include_headers(false)
+                    .level(Level::INFO),
+            ),
+        )
         .with_state(state)
 }
 
