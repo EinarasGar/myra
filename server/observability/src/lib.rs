@@ -1,7 +1,8 @@
 use opentelemetry::trace::TracerProvider;
 use opentelemetry_otlp::WithExportConfig;
-use opentelemetry_sdk::trace::Tracer;
+use opentelemetry_sdk::trace::{SdkTracerProvider, Tracer};
 use opentelemetry_sdk::Resource;
+use std::sync::OnceLock;
 use tracing::Subscriber;
 use tracing_opentelemetry::OpenTelemetryLayer;
 use tracing_subscriber::layer::SubscriberExt;
@@ -13,12 +14,33 @@ use tracing_subscriber::{prelude::*, EnvFilter};
 #[cfg(all(feature = "color-sql", debug_assertions))]
 pub mod sql_highlighter;
 
+static TRACER_PROVIDER: OnceLock<SdkTracerProvider> = OnceLock::new();
+
 pub fn initialize_tracing_subscriber(service_name: &'static str) {
+    opentelemetry::global::set_text_map_propagator(
+        opentelemetry_sdk::propagation::TraceContextPropagator::new(),
+    );
+
     Registry::default()
         .with(create_print_layer())
         .with(create_env_filter_layer())
         .with(create_opentelemetry_layer(service_name))
         .init();
+}
+
+pub use reqwest_middleware::ClientWithMiddleware as TracedHttpClient;
+pub use reqwest_middleware::RequestBuilder as TracedRequestBuilder;
+
+pub fn create_http_client() -> TracedHttpClient {
+    reqwest_middleware::ClientBuilder::new(reqwest::Client::new())
+        .with(reqwest_tracing::TracingMiddleware::default())
+        .build()
+}
+
+pub fn shutdown_tracing() {
+    if let Some(provider) = TRACER_PROVIDER.get() {
+        let _ = provider.shutdown();
+    }
 }
 
 #[allow(clippy::type_complexity)]
@@ -48,6 +70,7 @@ where
 
                     opentelemetry::global::set_tracer_provider(tracer_provider.clone());
                     let telemetry = OpenTelemetryLayer::new(tracer_provider.tracer(service_name));
+                    let _ = TRACER_PROVIDER.set(tracer_provider);
                     Some(telemetry)
                 }
                 Err(err) => {

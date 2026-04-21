@@ -2,14 +2,14 @@
   "eslint.workingDirectories": ["web"],
   "files.exclude": {
     "**/build": true,
-    "**/bin": true,
+    "android/**/bin": true,
     "**/obj": true,
     "**/node_modules": true,
     "server/target": true
   },
   "search.exclude": {
     "**/build": true,
-    "**/bin": true,
+    "android/**/bin": true,
     "**/obj": true,
     "**/node_modules": true,
     "server/target": true

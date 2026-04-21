@@ -22,6 +22,9 @@ db_dump.sql
 # Rust
 server/target/
 
+# Private repos
+market-data-api/
+
 # Android
 android/.gradle/
 android/build/

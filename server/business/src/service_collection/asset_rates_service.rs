@@ -5,7 +5,7 @@ use dal::database_context::MyraDb;
 use dal::{
     models::asset_models::{
         AssetPair, AssetPairRate, AssetPairRateDate, AssetPairRateOption, AssetRate,
-        HeldAssetPairModel,
+        HeldAssetPairDetailModel,
     },
     queries::asset_queries::{self, get_asset_pairs_rates_with_conversions},
     query_params::get_rates_params::{GetRatesParams, GetRatesSeachType, GetRatesTimeParams},
@@ -207,8 +207,9 @@ impl AssetRatesService {
             return Ok(());
         }
 
-        let query = asset_queries::insert_pair_rates(rates.into_iter().map(|x| x.into()).collect());
-        self.db.execute(query).await?;
+        let command =
+            asset_queries::copy_in_pair_rates(rates.into_iter().map(|x| x.into()).collect());
+        self.db.copy_in(command).await?;
         Ok(())
     }
 
@@ -335,8 +336,21 @@ impl AssetRatesService {
     }
 
     #[tracing::instrument(skip_all, err)]
-    pub async fn list_held_pairs(&self) -> anyhow::Result<Vec<HeldAssetPairModel>> {
-        let query = asset_queries::get_distinct_held_asset_pairs();
-        Ok(self.db.fetch_all::<HeldAssetPairModel>(query).await?)
+    pub async fn list_held_pair_details(
+        &self,
+        has_rates: bool,
+    ) -> anyhow::Result<Vec<HeldAssetPairDetailModel>> {
+        let query = asset_queries::get_held_asset_pair_details(has_rates);
+        Ok(self.db.fetch_all::<HeldAssetPairDetailModel>(query).await?)
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn list_currency_cross_pairs(
+        &self,
+        tickers: Vec<String>,
+        has_rates: bool,
+    ) -> anyhow::Result<Vec<HeldAssetPairDetailModel>> {
+        let query = asset_queries::get_currency_cross_pairs(tickers, has_rates);
+        Ok(self.db.fetch_all::<HeldAssetPairDetailModel>(query).await?)
     }
 }

@@ -32,7 +32,7 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk
 		"POSTGRES_USER=myradev" \
 		"POSTGRES_PASSWORD=devpassword" \
 		"POSTGRES_DB=myra" \
-		"RUST_LOG=dal=trace,business=trace,api=trace,worker=trace,ai=info,tower_http=info" \
+		"RUST_LOG=error,dal=trace,business=trace,api=trace,worker=trace,ai=info,tower_http=info" \
 		"JWT_SECRET=devjwtsecret" \
 		"" \
 		"POSTGRES_PORT=7$${PREFIX}1" \
@@ -45,6 +45,9 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk
 		"MINIO_CONSOLE_PORT=7$${PREFIX}7" \
 		"REDIS_PORT=7$${PREFIX}8" \
 		"REDIS_URL=redis://localhost:7$${PREFIX}8" \
+		"MARKET_DATA_PORT=7$${PREFIX}9" \
+		"MARKET_DATA_URL=http://localhost:7$${PREFIX}9" \
+		"MARKET_DATA_API_KEY=dev-market-data-key" \
 		"S3_ENDPOINT=http://localhost:7$${PREFIX}6" \
 		"S3_BUCKET_NAME=myra-files" \
 		"S3_ACCESS_KEY=minioadmin" \
@@ -151,6 +154,7 @@ status: ## Show service ports, status, and useful links
 	check_infra "Postgres      " $(POSTGRES_PORT) database; \
 	check_local "API Server    " $(SERVER_PORT); \
 	check_worker; \
+	check_local "Market Data   " $(MARKET_DATA_PORT); \
 	check_local "Vite Dev      " $(VITE_PORT); \
 	check_infra "OTLP Collector" $(OTLP_PORT) jaeger; \
 	check_infra "Jaeger UI     " $(JAEGER_UI_PORT) jaeger; \
@@ -169,6 +173,11 @@ worker-run: ## Start background worker (kills existing worker first). Shares thi
 	-@pkill -f "target/debug/worker" 2>/dev/null || true
 	-@pkill -f "cargo run -p worker" 2>/dev/null || true
 	cd server && cargo run -p worker
+
+.PHONY: market-data-run
+market-data-run: ## Start market data API (kills existing process on MARKET_DATA_PORT first)
+	-@lsof -ti :$(MARKET_DATA_PORT) | xargs kill -9 2>/dev/null || true
+	cd market-data-api && cargo run
 
 .PHONY: web-run
 web-run: ## Start Vite dev server (kills existing process on VITE_PORT first)

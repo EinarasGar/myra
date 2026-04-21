@@ -127,9 +127,9 @@ pub struct AssetTypeModel {
     pub asset_type_name: String,
 }
 
-#[derive(sqlx::FromRow, Debug, Clone)]
-pub struct HeldAssetPairModel {
+#[derive(Clone, sqlx::FromRow, Debug)]
+pub struct HeldAssetPairDetailModel {
     pub pair_id: i32,
-    pub ticker: String,
-    pub exchange: Option<String>,
+    pub asset_ticker: String,
+    pub base_ticker: String,
 }

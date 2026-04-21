@@ -1,5 +1,5 @@
-pub mod category_stats;
 pub mod refresh_assets;
+pub mod seed_asset_history;
 
 use chrono::{DateTime, Utc};
 
@@ -12,6 +12,7 @@ impl From<DateTime<Utc>> for CronTick {
     }
 }
 
+#[allow(unused_macros)]
 macro_rules! cron_worker {
     ($name:expr, $schedule:expr, $services:expr, $handler:expr) => {
         apalis::prelude::WorkerBuilder::new($name)
@@ -25,4 +26,5 @@ macro_rules! cron_worker {
     };
 }
 
+#[allow(unused_imports)]
 pub(crate) use cron_worker;

@@ -348,25 +348,19 @@ pub fn get_pair_id(pair1: i32, pair2: i32) -> DbQueryWithValues {
 }
 
 #[tracing::instrument(skip_all)]
-pub fn insert_pair_rates(rates: Vec<AssetPairRateInsert>) -> DbQueryWithValues {
-    let mut query_builder = Query::insert()
-        .into_table(AssetHistoryIden::Table)
-        .columns([
-            AssetHistoryIden::PairId,
-            AssetHistoryIden::Rate,
-            AssetHistoryIden::RecordedAt,
-        ])
-        .to_owned();
+pub fn copy_in_pair_rates(rates: Vec<AssetPairRateInsert>) -> super::DbCopyCommand {
+    use std::fmt::Write;
 
-    rates.into_iter().for_each(|rate| {
-        query_builder.values_panic([
-            rate.pair_id.into(),
-            rate.rate.into(),
-            rate.recorded_at.into(),
-        ]);
-    });
+    let mut csv = String::new();
+    for rate in &rates {
+        writeln!(csv, "{},{},{}", rate.pair_id, rate.rate, rate.recorded_at).unwrap();
+    }
 
-    query_builder.build_sqlx(PostgresQueryBuilder).into()
+    super::DbCopyCommand {
+        statement: "COPY asset_history (pair_id, rate, recorded_at) FROM STDIN WITH (FORMAT csv)"
+            .to_string(),
+        csv_data: csv.into_bytes(),
+    }
 }
 
 #[tracing::instrument(skip_all)]
@@ -1418,18 +1412,41 @@ pub fn delete_asset_pair_by_id(pair_id: i32) -> DbQueryWithValues {
 }
 
 #[tracing::instrument(skip_all)]
-pub fn get_distinct_held_asset_pairs() -> DbQueryWithValues {
+pub fn get_held_asset_pair_details(has_rates: bool) -> DbQueryWithValues {
+    let base_asset = Alias::new("base_asset");
+
+    let exists_subquery = Expr::exists(
+        Query::select()
+            .expr(Expr::val(1))
+            .from(AssetHistoryIden::Table)
+            .and_where(
+                Expr::col((AssetHistoryIden::Table, AssetHistoryIden::PairId))
+                    .equals((AssetPairsIden::Table, AssetPairsIden::Id)),
+            )
+            .limit(1)
+            .to_owned(),
+    );
+
+    let rates_filter = if has_rates {
+        exists_subquery
+    } else {
+        exists_subquery.not()
+    };
+
     Query::select()
         .distinct()
         .expr_as(
             Expr::col((AssetPairsIden::Table, AssetPairsIden::Id)),
             Alias::new("pair_id"),
         )
-        .column((AssetsIden::Table, AssetsIden::Ticker))
-        .column((
-            AssetPairUserMetadataIden::Table,
-            AssetPairUserMetadataIden::Exchange,
-        ))
+        .expr_as(
+            Expr::col((AssetsIden::Table, AssetsIden::Ticker)),
+            Alias::new("asset_ticker"),
+        )
+        .expr_as(
+            Expr::col((base_asset.clone(), AssetsIden::Ticker)),
+            Alias::new("base_ticker"),
+        )
         .from(EntryIden::Table)
         .inner_join(
             AssetsIden::Table,
@@ -1438,17 +1455,87 @@ pub fn get_distinct_held_asset_pairs() -> DbQueryWithValues {
         )
         .inner_join(
             AssetPairsIden::Table,
-            Expr::col((AssetPairsIden::Table, AssetPairsIden::Id))
-                .equals((AssetsIden::Table, AssetsIden::BasePairId)),
+            Cond::all()
+                .add(
+                    Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair1))
+                        .equals((AssetsIden::Table, AssetsIden::Id)),
+                )
+                .add(
+                    Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair2))
+                        .equals((AssetsIden::Table, AssetsIden::BasePairId)),
+                ),
         )
-        .left_join(
-            AssetPairUserMetadataIden::Table,
-            Expr::col((
-                AssetPairUserMetadataIden::Table,
-                AssetPairUserMetadataIden::Id,
-            ))
-            .equals((AssetPairsIden::Table, AssetPairsIden::Id)),
+        .join_as(
+            sea_query::JoinType::InnerJoin,
+            AssetsIden::Table,
+            base_asset.clone(),
+            Expr::col((base_asset.clone(), AssetsIden::Id))
+                .equals((AssetPairsIden::Table, AssetPairsIden::Pair2)),
         )
+        .and_where(Expr::col((AssetsIden::Table, AssetsIden::UserId)).is_null())
+        .and_where(rates_filter)
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn get_currency_cross_pairs(tickers: Vec<String>, has_rates: bool) -> DbQueryWithValues {
+    let base_asset = Alias::new("base_asset");
+    let currency_type = 1;
+
+    let exists_subquery = Expr::exists(
+        Query::select()
+            .expr(Expr::val(1))
+            .from(AssetHistoryIden::Table)
+            .and_where(
+                Expr::col((AssetHistoryIden::Table, AssetHistoryIden::PairId))
+                    .equals((AssetPairsIden::Table, AssetPairsIden::Id)),
+            )
+            .limit(1)
+            .to_owned(),
+    );
+
+    let rates_filter = if has_rates {
+        exists_subquery
+    } else {
+        exists_subquery.not()
+    };
+
+    Query::select()
+        .expr_as(
+            Expr::col((AssetPairsIden::Table, AssetPairsIden::Id)),
+            Alias::new("pair_id"),
+        )
+        .expr_as(
+            Expr::col((AssetsIden::Table, AssetsIden::Ticker)),
+            Alias::new("asset_ticker"),
+        )
+        .expr_as(
+            Expr::col((base_asset.clone(), AssetsIden::Ticker)),
+            Alias::new("base_ticker"),
+        )
+        .from(AssetPairsIden::Table)
+        .inner_join(
+            AssetsIden::Table,
+            Expr::col((AssetsIden::Table, AssetsIden::Id))
+                .equals((AssetPairsIden::Table, AssetPairsIden::Pair1)),
+        )
+        .join_as(
+            sea_query::JoinType::InnerJoin,
+            AssetsIden::Table,
+            base_asset.clone(),
+            Expr::col((base_asset.clone(), AssetsIden::Id))
+                .equals((AssetPairsIden::Table, AssetPairsIden::Pair2)),
+        )
+        .and_where(Expr::col((AssetsIden::Table, AssetsIden::AssetType)).eq(currency_type))
+        .and_where(Expr::col((base_asset.clone(), AssetsIden::AssetType)).eq(currency_type))
+        .and_where(Expr::col((AssetsIden::Table, AssetsIden::Ticker)).is_in(&tickers))
+        .and_where(Expr::col((base_asset.clone(), AssetsIden::Ticker)).is_in(&tickers))
+        .and_where(
+            Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair1))
+                .ne(Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair2))),
+        )
+        .and_where(rates_filter)
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }

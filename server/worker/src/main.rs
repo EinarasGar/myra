@@ -4,6 +4,7 @@ use business::jobs::MyraJob;
 use business::service_collection::Services;
 
 mod events;
+mod models;
 mod scheduled;
 
 #[tokio::main]
@@ -25,23 +26,22 @@ async fn main() -> anyhow::Result<()> {
 
     let refresh_assets = scheduled::cron_worker!(
         "refresh-assets",
-        "0 * * * * *",
+        "0 */5 * * * *",
         services,
         scheduled::refresh_assets::tick
     );
-    let category_stats = scheduled::cron_worker!(
-        "category-stats",
-        "0 */5 * * * *",
+    let seed_history = scheduled::cron_worker!(
+        "seed-asset-history",
+        "0 * * * * *",
         services,
-        scheduled::category_stats::tick
+        scheduled::seed_asset_history::tick
     );
-
     tracing::info!("Worker starting");
 
     Monitor::new()
         .register(event_worker)
         .register(refresh_assets)
-        .register(category_stats)
+        .register(seed_history)
         .run()
         .await?;
 

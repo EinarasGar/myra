@@ -1,4 +1,5 @@
 use mockall::mock;
+use sqlx::postgres::PgPoolCopyExt;
 use sqlx::{postgres::PgRow, FromRow, PgPool, Postgres, Transaction};
 
 use anyhow::Result;
@@ -8,7 +9,7 @@ use tracing::Level;
 use tokio::sync::Mutex as AsyncMutex;
 
 use crate::database_connection::MyraDbConnection;
-use crate::queries::DbQueryWithValues;
+use crate::queries::{DbCopyCommand, DbQueryWithValues};
 
 #[derive(Clone)]
 pub struct MyraDb {
@@ -182,6 +183,14 @@ impl MyraDb {
         }
     }
 
+    #[tracing::instrument(skip(self, command), err)]
+    pub async fn copy_in(&self, command: DbCopyCommand) -> Result<u64, sqlx::Error> {
+        let mut copy = self.pool.copy_in_raw(&command.statement).await?;
+        copy.send(command.csv_data.as_slice()).await?;
+        let rows = copy.finish().await?;
+        Ok(rows)
+    }
+
     #[tracing::instrument(skip(self), err, ret(level = Level::TRACE))]
     pub async fn execute_with_rows_affected(
         &self,
@@ -222,6 +231,7 @@ mock! {
         pub async fn fetch_optional<T: 'static>(&self, query: DbQueryWithValues) -> Result<Option<T>, sqlx::Error>;
         pub async fn execute(&self, query: DbQueryWithValues) -> Result<(), sqlx::Error>;
         pub async fn execute_with_rows_affected(&self, query: DbQueryWithValues) -> Result<u64, sqlx::Error>;
+        pub async fn copy_in(&self, command: DbCopyCommand) -> Result<u64, sqlx::Error>;
     }
 
     impl Clone for MyraDb {

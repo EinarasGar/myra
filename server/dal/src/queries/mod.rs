@@ -45,6 +45,17 @@ impl From<(String, SqlxValues)> for DbQueryWithValues {
     }
 }
 
+pub struct DbCopyCommand {
+    pub statement: String,
+    pub csv_data: Vec<u8>,
+}
+
+impl Debug for DbCopyCommand {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} ({} bytes)", self.statement, self.csv_data.len())
+    }
+}
+
 /// Escapes ILIKE metacharacters (% and _) in a search string and wraps it in %...% for partial matching.
 pub fn escape_ilike_pattern(query: &str) -> String {
     let escaped = query
