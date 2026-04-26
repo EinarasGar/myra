@@ -18,8 +18,9 @@ help: ## Show this help message
 
 # Setup
 auth ?= noauth
+telemetry ?= local
 .PHONY: setup-env
-setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk
+setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk telemetry=local|axiom
 	@if [ "$$(git rev-parse --git-common-dir 2>/dev/null)" != "$$(git rev-parse --git-dir 2>/dev/null)" ]; then \
 		WORKTREE_NAME=$$(basename $$(pwd)); \
 		HASH=$$(printf '%s' "$$WORKTREE_NAME" | cksum | awk '{print $$1}'); \
@@ -28,6 +29,20 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk
 	else \
 		PREFIX="00"; \
 	fi; \
+	case "$(telemetry)" in \
+		local) \
+			OTLP_TRACES_ENDPOINT_VALUE="http://localhost:7$${PREFIX}4/v1/traces"; \
+			OTLP_LOGS_ENDPOINT_VALUE="http://localhost:7$${PREFIX}0/ingest/otlp/v1/logs"; \
+			;; \
+		axiom) \
+			OTLP_TRACES_ENDPOINT_VALUE="https://us-east-1.aws.edge.axiom.co/v1/traces"; \
+			OTLP_LOGS_ENDPOINT_VALUE="https://us-east-1.aws.edge.axiom.co/v1/logs"; \
+			;; \
+		*) \
+			echo "$(RED)Error: Unknown telemetry provider '$(telemetry)'. Use local or axiom.$(NC)"; \
+			exit 1; \
+			;; \
+	esac; \
 	printf '%s\n' \
 		"POSTGRES_USER=myradev" \
 		"POSTGRES_PASSWORD=devpassword" \
@@ -39,7 +54,10 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk
 		"SERVER_PORT=7$${PREFIX}2" \
 		"VITE_PORT=7$${PREFIX}3" \
 		"OTLP_PORT=7$${PREFIX}4" \
+		"OTLP_TRACES_ENDPOINT=$${OTLP_TRACES_ENDPOINT_VALUE}" \
+		"OTLP_LOGS_ENDPOINT=$${OTLP_LOGS_ENDPOINT_VALUE}" \
 		"JAEGER_UI_PORT=7$${PREFIX}5" \
+		"SEQ_PORT=7$${PREFIX}0" \
 		"COOKIE_SECURE=false" \
 		"MINIO_PORT=7$${PREFIX}6" \
 		"MINIO_CONSOLE_PORT=7$${PREFIX}7" \
@@ -65,6 +83,17 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk
 	fi; \
 	. ./$$SECRETS_FILE; \
 	printf '%s\n' "AI_API_KEY=$${AI_API_KEY}" >> .env; \
+	if [ "$(telemetry)" = "axiom" ]; then \
+		if [ -z "$${AXIOM_API_TOKEN}" ]; then \
+			echo "$(RED)Error: AXIOM_API_TOKEN not found in $$SECRETS_FILE$(NC)"; \
+			exit 1; \
+		fi; \
+		printf '\n%s\n%s\n%s\n' \
+			"# Axiom telemetry" \
+			"OTLP_AUTH_TOKEN=$${AXIOM_API_TOKEN}" \
+			"AXIOM_DATASET=sverto-dev" \
+			>> .env; \
+	fi; \
 	case "$(auth)" in \
 		noauth|database) \
 			printf '\n%s\n' "AUTH_PROVIDER=$(auth)" >> .env; \
@@ -94,7 +123,7 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk
 		"SVERTO_KEY_PASSWORD=$${SVERTO_KEY_PASSWORD}" \
 		>> .env; \
 	printf '\n%s\n' "APP_ENV=dev" >> .env; \
-	echo "$(GREEN).env created (auth=$(auth)):$(NC)"; \
+	echo "$(GREEN).env created (auth=$(auth), telemetry=$(telemetry)):$(NC)"; \
 	cat .env
 	@echo ""
 	@echo "$(GREEN)Installing UI dependencies...$(NC)"
@@ -119,6 +148,8 @@ status: ## Show service ports, status, and useful links
 	@echo "$(YELLOW)UI$(NC)              http://localhost:$(VITE_PORT)/"
 	@echo "$(YELLOW)Redoc$(NC)           http://localhost:$(SERVER_PORT)/redoc"
 	@echo "$(YELLOW)APIs$(NC)            http://localhost:$(SERVER_PORT)/api"
+	@echo "$(YELLOW)Jaeger$(NC)          http://localhost:$(JAEGER_UI_PORT)/"
+	@echo "$(YELLOW)Seq$(NC)             http://localhost:$(SEQ_PORT)/"
 	@echo ""
 	@echo "$(GREEN)Myra - Service Ports$(NC)"
 	@echo "=================================="
@@ -158,6 +189,7 @@ status: ## Show service ports, status, and useful links
 	check_local "Vite Dev      " $(VITE_PORT); \
 	check_infra "OTLP Collector" $(OTLP_PORT) jaeger; \
 	check_infra "Jaeger UI     " $(JAEGER_UI_PORT) jaeger; \
+	check_infra "Seq Logs      " $(SEQ_PORT) seq; \
 	check_infra "MinIO         " $(MINIO_PORT) minio; \
 	check_infra "MinIO Console " $(MINIO_CONSOLE_PORT) minio; \
 	check_infra "Redis         " $(REDIS_PORT) redis

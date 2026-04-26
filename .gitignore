@@ -4,6 +4,7 @@ notes.md
 database/scratchpad/*
 database/seed/raw-data/*
 CLAUDE.md
+AGENTS.md
 .claude/*
 
 .env

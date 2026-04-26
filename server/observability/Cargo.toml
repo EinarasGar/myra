@@ -7,9 +7,10 @@ edition = "2021"
 tracing = { version = "0.1.44", features = ["async-await", "log"] }
 tracing-subscriber = { version = "0.3.22", features = ["std", "env-filter"] }
 tracing-opentelemetry = { version = "0.32.1" }
-opentelemetry = { version = "0.31.0", features = ["metrics"] }
-opentelemetry_sdk = { version = "0.31.0", features = ["rt-tokio"] }
-opentelemetry-otlp = { version = "0.31.0", features = ["grpc-tonic"] }
+opentelemetry = { version = "0.31.0", features = ["logs", "metrics"] }
+opentelemetry_sdk = { version = "0.31.0", features = ["logs", "rt-tokio"] }
+opentelemetry-otlp = { version = "0.31.0", features = ["http-proto", "logs", "reqwest-rustls-webpki-roots"] }
+opentelemetry-appender-tracing = "0.31.1"
 reqwest = { version = "0.13", default-features = false, features = ["json"] }
 reqwest-middleware = "0.5"
 reqwest-tracing = { version = "0.7", features = ["opentelemetry_0_31"] }

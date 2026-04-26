@@ -2051,19 +2051,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hyper-timeout"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b90d566bffbce6a75bd8b09a05aa8c2cb1fabb6cb348f8840c9e4c90a0d83b0"
-dependencies = [
- "hyper",
- "hyper-util",
- "pin-project-lite",
- "tokio",
- "tower-service",
-]
-
-[[package]]
 name = "hyper-tls"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2773,6 +2760,7 @@ name = "observability"
 version = "0.1.0"
 dependencies = [
  "opentelemetry",
+ "opentelemetry-appender-tracing",
  "opentelemetry-otlp",
  "opentelemetry_sdk",
  "reqwest 0.13.2",
@@ -2883,6 +2871,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "opentelemetry-appender-tracing"
+version = "0.31.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ef6a1ac5ca3accf562b8c306fa8483c85f4390f768185ab775f242f7fe8fdcc2"
+dependencies = [
+ "opentelemetry",
+ "tracing",
+ "tracing-core",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "opentelemetry-http"
 version = "0.31.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2909,8 +2909,6 @@ dependencies = [
  "prost",
  "reqwest 0.12.28",
  "thiserror 2.0.18",
- "tokio",
- "tonic",
  "tracing",
 ]
 
@@ -5122,15 +5120,10 @@ dependencies = [
  "http",
  "http-body",
  "http-body-util",
- "hyper",
- "hyper-timeout",
- "hyper-util",
  "percent-encoding",
  "pin-project",
  "sync_wrapper",
- "tokio",
  "tokio-stream",
- "tower",
  "tower-layer",
  "tower-service",
  "tracing",
