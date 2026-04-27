@@ -1,68 +1,123 @@
-# Myra
+<p align="center">
+  <img src="web/public/sverto.svg" alt="Sverto" width="120" />
+</p>
 
-## Overview
-### What is myra?
-Myra is an open source web application which lets you track all your finances in a single place, providing real time informaton of your assets and spending history.
+<h1 align="center">Sverto</h1>
 
-With myra you can:
-* Track your assets, such as stocks, ETFs, crypto, commodities, etc. 
-* Track your daily income/expenses
-* See your real time net worth as well as historical graph of it
+<p align="center">
+  <strong>The open source personal finance app that puts you in control.</strong><br />
+  Track your entire financial life — spending, investments, and net worth — all in one place.<br />
+  <a href="https://sverto.com"><strong>Try it at sverto.com</strong></a>
+</p>
 
-### Why is myra?
-There exists apps which can help you track your investments, such as [Delta](https://delta.app/en), or many other expense tracking apps. However, there is no app which lets you see it all in once place.
+<p align="center">
+  <a href="https://github.com/EinarasGar/myra/stargazers"><img src="https://img.shields.io/github/stars/EinarasGar/myra?style=social" alt="Stars" /></a>
+  <a href="https://github.com/EinarasGar/myra/commits/main"><img src="https://img.shields.io/github/last-commit/EinarasGar/myra" alt="Last commit" /></a>
+  <img src="https://img.shields.io/badge/self--hosted-ready-green" alt="Self-hosted ready" />
+</p>
 
-So what sets myra appart from other finance apps:
-* All your financial management needs in one place
-* Open source, so users can add their own features
-* Can be self hosted and used on any device
-* Modular - designed to be easily extensible
+---
 
-### Running the project
-Just run `docker-compose up`
+## Your finances, your way
 
-## Project outline 
+Most finance apps force you into a box. Investment trackers ignore your daily spending. Budgeting apps can't handle your portfolio. You end up juggling three different tools, manually reconciling numbers, and never seeing the full picture.
 
-### Domain model
+**Sverto is different.** It's the only open source app that tracks everything in one unified view:
 
-```mermaid
-flowchart
-  User --- Statistics
-  User --- Transactions
-  Transactions --- Currencies
-  Transactions --- Files
-  Currencies --- Assets
-  Assets --- Transactions
-  Transactions --- Statistics
-  HistoricalData --- Assets
-  HistoricalData --- Currencies
-  HistoricalData --- Exchanges
-```
+- **Daily spending** — every purchase, subscription, and bill
+- **Investment portfolio** — stocks, ETFs, crypto, commodities
+- **Net worth** — real-time and historical, across all your accounts
 
-### Minimum viable product:
-1. User can create an account
-1. User can enter income and or expenses and see history
-1. User can enter owned aseets and purchase history to see their assets worth
-1. User can see history of their net worth in graph or statistics form
+No vendor lock-in. No data mining. Your financial data stays on your machine.
 
-### Stretch Goals:
-1. Specific statistics for different categories, for instance information about car expenses (maintenance, fuel, €/l or €/km)
-1. Integration with Open Banking
-1. Integration with blockchain
-1. Import export featues
-1. Various calculators (for example compound interest calculator)
-1. FIDO2 passwordless authentication
-1. Native mobile app
-1. Notifications
+---
 
-### Technological requiremens:
-The application will use react for frontend. Rust will be used for the backend. It was chosen for performance and cross-platform capabilities. Postgres will be used for database. Jenkins or GitHub actions for CI/CD.
+## What you can do with Sverto
 
-1. The project must be able to be run using a single docker-compose command
-1. The development enviroment must be fully functional under a [dev container](https://containers.dev/).
-1. The code must be modular - users should be able to create small modules that interface with the application. For example, a module for importing transactions using specific .csv file or a module for some kind of market data API integration.
-1. The project utilizes OpenTelemetry
-1. The project utilizes OpenApi or swagger
-1. The project uses CI/CD and deploys automatically to prod, beta an dev enviroments
-1. Both frontend and backend code must be covered by unit and integration tests
-1. The code should be designed in a way where it can both run independently for each user or in a centralised way as a public web application.
+### Track everything
+
+Record purchases, sales, dividends, transfers, and fees — from your morning coffee to an ETF dividend reinvestment.
+
+### See your full financial picture
+
+A real-time net worth chart across all accounts. Drill down by time range — last 24 hours, last month, or your entire history.
+
+### Manage your investment portfolio
+
+See every holding across every account. Track cost basis, unrealized and realized gains, dividends, and fees. Drill into individual positions.
+
+### Ask your finances anything
+
+Sverto comes with **Myra**, a built-in AI assistant that understands your data — ask questions in plain English or have it draft transactions for you. [More on Myra below.](#myra--ai-that-works-for-you)
+
+### Organize your way
+
+Create custom categories, manage multiple accounts (bank, brokerage, wallet, joint), and track assets with real-time market rates.
+
+---
+
+## Myra — AI that works for you
+
+The AI assistant has full context of your financial data through a set of tools:
+
+- **Semantic search** — find transactions by meaning, not just keywords
+- **Aggregation** — ask "what did I spend by category?" and get real answers
+- **Transaction creation** — the AI can draft transactions for your approval
+- **Portfolio questions** — inquire about holdings, gains, and asset performance
+
+The AI assistant uses Gemini and stores embeddings in your PostgreSQL database. When self-hosting, you'll need your own Gemini API key. Hosted users get AI and market data included.
+
+> *Example: "I paid 50€ for dinner with friends, 30€ of that was my share. Create a transaction for my portion."*
+
+---
+
+## Available everywhere
+
+- **Web** — Full-featured web app. Run it on your own server or access it from any browser.
+- **Android** — Native Kotlin app with Jetpack Compose, powered by the shared Rust core.
+- **iOS** — Coming soon
+
+---
+
+## Powered by modern technology
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white" alt="Rust" />
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
+  <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/OpenTelemetry-FFD23F?style=for-the-badge&logo=opentelemetry&logoColor=black" alt="OpenTelemetry" />
+  <img src="https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android" />
+</p>
+
+The backend is written in Rust for speed and reliability. The web frontend uses React with TypeScript. The Android app is native Kotlin + Jetpack Compose, sharing the same Rust business logic via UniFFI. iOS support is on the roadmap — the shared Rust core makes it straightforward.
+
+---
+
+## Why open source matters for your finances
+
+- **Your data stays yours.** Self-host and your financial data never leaves your server.
+- **No subscriptions.** No monthly fees, no premium tiers. All features are free.
+- **Transparent and auditable.** Every line of code is public — you can verify exactly what happens with your data.
+- **Free for everyone.** AGPLv3 licensed — download it, run it, modify it however you want.
+- **Community-driven roadmap.** Features are built based on what users actually need, not what maximizes revenue.
+
+---
+
+## Want the easy way?
+
+Running open source software yourself can be rewarding, but it comes with friction — especially when you need market data feeds and AI API keys. **[sverto.com](https://sverto.com)** is the managed version of Sverto, with everything handled for you: automatic updates, live market data, and AI integration built in.
+
+No setup. No API keys to manage. And every subscription directly supports Sverto's development.
+
+We collect only the telemetry needed to keep the service fast and reliable — error traces and performance metrics, nothing more. Your financial data is never sold, shared, or mined for advertising.
+
+→ [**Try it at sverto.com**](https://sverto.com)
+
+---
+
+→ [**Star on GitHub**][stars] &nbsp;|&nbsp; → [**Report an issue**][issues] &nbsp;|&nbsp; → [**Contribute**][pulls]
+
+[stars]: https://github.com/EinarasGar/myra/stargazers
+[issues]: https://github.com/EinarasGar/myra/issues
+[pulls]: https://github.com/EinarasGar/myra/pulls
