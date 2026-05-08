@@ -6,15 +6,12 @@ const IMAGE_TOKEN_ESTIMATE: i64 = 258;
 
 pub fn estimate_input_tokens(
     message: &Option<String>,
-    images: &Option<Vec<Base64ImageDto>>,
+    images: &[Base64ImageDto],
     history: &[ChatHistoryMessageDto],
 ) -> i64 {
     let msg_chars = message.as_ref().map(|s| s.len()).unwrap_or(0);
 
-    let image_tokens: i64 = images
-        .as_ref()
-        .map(|imgs| imgs.len() as i64 * IMAGE_TOKEN_ESTIMATE)
-        .unwrap_or(0);
+    let image_tokens: i64 = images.len() as i64 * IMAGE_TOKEN_ESTIMATE;
 
     let history_chars: usize = history
         .iter()
@@ -41,7 +38,7 @@ mod tests {
     #[test]
     fn test_estimates_message_only() {
         let msg = Some("12345678901234567890".to_string());
-        assert_eq!(estimate_input_tokens(&msg, &None, &[]), 5);
+        assert_eq!(estimate_input_tokens(&msg, &[], &[]), 5);
     }
 
     #[test]
@@ -56,13 +53,13 @@ mod tests {
             },
         ];
         // (4 + 5 + 5) / 4 = 3
-        assert_eq!(estimate_input_tokens(&msg, &None, &history), 3);
+        assert_eq!(estimate_input_tokens(&msg, &[], &history), 3);
     }
 
     #[test]
     fn test_estimates_with_images() {
         let msg = Some("describe".to_string());
-        let images = Some(vec![
+        let images = vec![
             Base64ImageDto {
                 media_type: "image/png".to_string(),
                 data: "base64data".to_string(),
@@ -71,7 +68,7 @@ mod tests {
                 media_type: "image/jpeg".to_string(),
                 data: "base64data".to_string(),
             },
-        ]);
+        ];
         // 8 chars / 4 = 2 + 2 * 258 = 518
         assert_eq!(estimate_input_tokens(&msg, &images, &[]), 518);
     }
@@ -92,12 +89,12 @@ mod tests {
             },
         ];
         // (4 + 6 + 11 + 11) / 4 = 8
-        assert_eq!(estimate_input_tokens(&msg, &None, &history), 8);
+        assert_eq!(estimate_input_tokens(&msg, &[], &history), 8);
     }
 
     #[test]
     fn test_estimates_none_message() {
-        assert_eq!(estimate_input_tokens(&None, &None, &[]), 0);
+        assert_eq!(estimate_input_tokens(&None, &[], &[]), 0);
     }
 
     #[test]

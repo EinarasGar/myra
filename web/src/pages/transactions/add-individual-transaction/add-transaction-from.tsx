@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AccountPicker from "@/components/feature/account-picker";
 import AssetAmountInput from "@/components/feature/asset-amount-input";
 import CategoryPicker from "@/components/feature/category-picker";
@@ -12,16 +12,29 @@ import type { ExpandedAccount } from "@/types/account";
 import type { Category } from "@/types/category";
 import type { TransactionInput } from "@/api";
 
+export interface IndividualFormInitialValues {
+  asset?: ExpandedAsset | null;
+  amount?: number | string | null;
+  date?: Date;
+  account?: ExpandedAccount | null;
+  category?: Category | null;
+  description?: string;
+}
+
 interface AddTransactionFormProps {
   type: string;
   onSuccess?: () => void;
   onCollect?: (transaction: TransactionInput) => void;
+  initialValues?: IndividualFormInitialValues;
+  initialValuesKey?: string;
 }
 
 export default function AddTransactionForm({
   type: _type,
   onSuccess,
   onCollect,
+  initialValues,
+  initialValuesKey,
 }: AddTransactionFormProps) {
   const userId = useUserId();
   const addTransaction = useAddIndividualTransaction(userId);
@@ -29,14 +42,34 @@ export default function AddTransactionForm({
   const [assetAmount, setAssetAmount] = useState<{
     asset: ExpandedAsset | null;
     amount: number | string | null;
-  }>({ asset: null, amount: null });
-  const [selectedDate, setSelectedDate] = useState<Date>();
-  const [selectedAccount, setSelectedAccount] =
-    useState<ExpandedAccount | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
-    null,
+  }>({
+    asset: initialValues?.asset ?? null,
+    amount: initialValues?.amount ?? null,
+  });
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    initialValues?.date,
   );
-  const [description, setDescription] = useState("");
+  const [selectedAccount, setSelectedAccount] =
+    useState<ExpandedAccount | null>(initialValues?.account ?? null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    initialValues?.category ?? null,
+  );
+  const [description, setDescription] = useState(
+    initialValues?.description ?? "",
+  );
+
+  useEffect(() => {
+    if (!initialValuesKey) return;
+    setAssetAmount({
+      asset: initialValues?.asset ?? null,
+      amount: initialValues?.amount ?? null,
+    });
+    setSelectedDate(initialValues?.date);
+    setSelectedAccount(initialValues?.account ?? null);
+    setSelectedCategory(initialValues?.category ?? null);
+    setDescription(initialValues?.description ?? "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialValuesKey]);
 
   const handleSave = () => {
     if (

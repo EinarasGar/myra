@@ -6,16 +6,14 @@ use crate::models::aggregate::AggregateParams;
 use crate::models::tool_output::{AggregateGroup, AggregateResult, AggregateTransactionsArgs};
 use rig::{completion::request::ToolDefinition, tool::Tool};
 use serde_json::json;
-use uuid::Uuid;
 
 pub struct AggregateTransactionsTool<D: AiDataProvider> {
     data: Arc<D>,
-    user_id: Uuid,
 }
 
 impl<D: AiDataProvider> AggregateTransactionsTool<D> {
-    pub fn new(data: Arc<D>, user_id: Uuid) -> Self {
-        Self { data, user_id }
+    pub fn new(data: Arc<D>) -> Self {
+        Self { data }
     }
 }
 
@@ -58,7 +56,6 @@ impl<D: AiDataProvider> Tool for AggregateTransactionsTool<D> {
 
     async fn call(&self, args: Self::Args) -> std::result::Result<Self::Output, Self::Error> {
         let params = AggregateParams {
-            user_id: self.user_id,
             group_by: args.group_by,
             date_from: args.date_from,
             date_to: args.date_to,

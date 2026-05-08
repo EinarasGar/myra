@@ -4,6 +4,7 @@ use dal::database_context::MyraDb;
 use dal::file_provider::FileProvider;
 use dal::job_queue::JobQueueHandle;
 use dal::noop_file_provider::NoOpFileProvider;
+use dal::pg_notify_connection::PgNotifyConnection;
 use dal::redis_connection::RedisConnection;
 use dal::s3_file_provider::S3FileProvider;
 use std::sync::Arc;
@@ -12,8 +13,10 @@ use crate::jobs::MyraJob;
 pub mod accounts_service;
 pub mod ai_action_service;
 pub mod ai_chat_service;
+pub mod ai_conversation_service;
 pub mod ai_data_service;
 pub mod ai_embedding_service;
+pub mod ai_quick_upload_service;
 pub mod asset_rates_service;
 pub mod asset_service;
 pub mod auth_service;
@@ -36,6 +39,7 @@ pub struct Services {
     pub file_provider: Arc<dyn FileProvider>,
     pub redis: RedisConnection,
     pub job_queue: JobQueueHandle<MyraJob>,
+    pub pg_notify: PgNotifyConnection,
 }
 
 #[derive(Clone)]
@@ -44,6 +48,7 @@ pub struct ServiceProviders {
     pub job_queue: JobQueueHandle<MyraJob>,
     pub file_provider: Arc<dyn FileProvider>,
     pub redis: RedisConnection,
+    pub pg_notify: PgNotifyConnection,
     pub services: Services,
 }
 
@@ -64,12 +69,14 @@ impl Services {
 
         let redis = RedisConnection::new().await;
         let job_queue = JobQueueHandle::<MyraJob>::new(connection.pool.clone());
+        let pg_notify = PgNotifyConnection::new(connection.pool.clone());
 
         Ok(Services {
             connection,
             file_provider,
             redis,
             job_queue,
+            pg_notify,
         })
     }
 
@@ -79,6 +86,7 @@ impl Services {
             job_queue: self.job_queue.clone(),
             file_provider: self.file_provider.clone(),
             redis: self.redis.clone(),
+            pg_notify: self.pg_notify.clone(),
             services: self.clone(),
         }
     }

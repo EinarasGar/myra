@@ -13,7 +13,6 @@ pub struct TransactionSearchResult {
 }
 
 pub struct SearchParams {
-    pub user_id: Uuid,
     pub query: String,
     pub date_from: Option<String>,
     pub date_to: Option<String>,

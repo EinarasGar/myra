@@ -21,4 +21,6 @@ export const QueryKeys = {
   USER_ASSET_PAIR_RATES: "user-asset-pair-rates",
   ASSET_TYPES: "asset-types",
   COMBINED_TRANSACTIONS: "combined-transactions",
+  QUICK_UPLOADS: "quick-uploads",
+  QUICK_UPLOAD: "quick-upload",
 };

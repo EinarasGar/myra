@@ -3,13 +3,24 @@ use rig::completion::message::{
 };
 use rig::OneOrMany;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
+#[derive(Clone)]
 pub struct Base64Image {
     pub media_type: String,
     pub data: String,
 }
 
-#[derive(Serialize, Deserialize)]
+pub struct HistoryEntry {
+    pub message: ChatHistoryMessage,
+    pub file_ids: Vec<Uuid>,
+}
+
+pub struct PromptOutput {
+    pub output: String,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ChatHistoryMessage {
     User {
@@ -56,7 +67,9 @@ impl From<ChatHistoryMessage> for Message {
                                 .unwrap_or(serde_json::Value::Object(Default::default())),
                         ),
                     )
-                    .with_signature(signature),
+                    .with_signature(Some(
+                        signature.unwrap_or_else(|| "skip_thought_signature_validator".to_string()),
+                    )),
                 )),
             },
             ChatHistoryMessage::ToolResult {

@@ -1,8 +1,12 @@
-use ai::data_provider::AiDataProvider;
+//! Stateless data-access service used by AI tools (via the user-scoped
+//! adapter in `providers::user_data_provider`). Methods take `user_id`
+//! explicitly because `AiDataService` itself is shared across users; the
+//! per-user `AiDataProvider` impl lives in the providers module.
+
 use ai::models::account::AccountResult;
-use ai::models::aggregate::{AggregateGroupResult, AggregateParams};
+use ai::models::aggregate::AggregateGroupResult;
 use ai::models::reference::{AssetResult, CategoryResult};
-use ai::models::search::{SearchParams, TransactionSearchResult};
+use ai::models::search::TransactionSearchResult;
 use anyhow::Result;
 #[mockall_double::double]
 use dal::database_context::MyraDb;
@@ -22,20 +26,28 @@ impl AiDataService {
             db: providers.db.clone(),
         }
     }
-}
 
-impl AiDataProvider for AiDataService {
-    async fn search_transactions_by_text(
+    pub async fn search_transactions_by_text(
         &self,
-        params: &SearchParams,
+        user_id: Uuid,
+        query: &str,
+        date_from: Option<&str>,
+        date_to: Option<&str>,
+        limit: i64,
     ) -> Result<Vec<TransactionSearchResult>> {
-        let dal_params = to_dal_search_params(params);
-        let query = ai_queries::search_transactions_by_description(&dal_params);
-        let rows = self.db.fetch_all::<AiTransactionSearchModel>(query).await?;
+        let dal_params = ai_search_params::SearchTransactionsParams {
+            user_id,
+            query: query.to_string(),
+            date_from: date_from.map(str::to_string),
+            date_to: date_to.map(str::to_string),
+            limit,
+        };
+        let q = ai_queries::search_transactions_by_description(&dal_params);
+        let rows = self.db.fetch_all::<AiTransactionSearchModel>(q).await?;
         Ok(rows.into_iter().map(to_search_result).collect())
     }
 
-    async fn search_transactions_by_vector(
+    pub async fn search_transactions_by_vector(
         &self,
         user_id: Uuid,
         query_vector: Vec<f64>,
@@ -44,35 +56,52 @@ impl AiDataProvider for AiDataService {
         limit: i64,
     ) -> Result<Vec<TransactionSearchResult>> {
         let vector = Vector::from(query_vector.iter().map(|&x| x as f32).collect::<Vec<f32>>());
-        let query = ai_queries::search_transactions_by_embedding(
+        let q = ai_queries::search_transactions_by_embedding(
             user_id, vector, date_from, date_to, limit,
         );
-        let rows = self.db.fetch_all::<AiTransactionSearchModel>(query).await?;
+        let rows = self.db.fetch_all::<AiTransactionSearchModel>(q).await?;
         Ok(rows.into_iter().map(to_search_result).collect())
     }
 
-    async fn count_transactions_by_text(&self, params: &SearchParams) -> Result<i64> {
-        let dal_params = to_dal_search_params(params);
-        let query = ai_queries::count_transactions_by_description(&dal_params);
-        let count = self.db.fetch_one_scalar::<i64>(query).await?;
+    pub async fn count_transactions_by_text(
+        &self,
+        user_id: Uuid,
+        query: &str,
+        date_from: Option<&str>,
+        date_to: Option<&str>,
+        limit: i64,
+    ) -> Result<i64> {
+        let dal_params = ai_search_params::SearchTransactionsParams {
+            user_id,
+            query: query.to_string(),
+            date_from: date_from.map(str::to_string),
+            date_to: date_to.map(str::to_string),
+            limit,
+        };
+        let q = ai_queries::count_transactions_by_description(&dal_params);
+        let count = self.db.fetch_one_scalar::<i64>(q).await?;
         Ok(count)
     }
 
-    async fn aggregate_transactions(
+    pub async fn aggregate_transactions(
         &self,
-        params: &AggregateParams,
+        user_id: Uuid,
+        group_by: &str,
+        date_from: Option<&str>,
+        date_to: Option<&str>,
+        description_filter: Option<&str>,
     ) -> Result<Vec<AggregateGroupResult>> {
         let dal_params = ai_search_params::AggregateTransactionsParams {
-            user_id: params.user_id,
-            group_by: params.group_by.clone(),
-            date_from: params.date_from.clone(),
-            date_to: params.date_to.clone(),
-            description_filter: params.description_filter.clone(),
+            user_id,
+            group_by: group_by.to_string(),
+            date_from: date_from.map(str::to_string),
+            date_to: date_to.map(str::to_string),
+            description_filter: description_filter.map(str::to_string),
         };
-        let query = ai_queries::aggregate_transactions(&dal_params);
+        let q = ai_queries::aggregate_transactions(&dal_params);
         let rows = self
             .db
-            .fetch_all::<(String, rust_decimal::Decimal, i64)>(query)
+            .fetch_all::<(String, rust_decimal::Decimal, i64)>(q)
             .await?;
         Ok(rows
             .into_iter()
@@ -84,12 +113,12 @@ impl AiDataProvider for AiDataService {
             .collect())
     }
 
-    async fn list_accounts(&self, user_id: Uuid) -> Result<Vec<AccountResult>> {
+    pub async fn list_accounts(&self, user_id: Uuid) -> Result<Vec<AccountResult>> {
         let dal_params = ai_search_params::ListAccountsParams { user_id };
-        let query = ai_queries::get_active_accounts(&dal_params);
+        let q = ai_queries::get_active_accounts(&dal_params);
         let rows = self
             .db
-            .fetch_all::<dal::models::ai_models::AiAccountModel>(query)
+            .fetch_all::<dal::models::ai_models::AiAccountModel>(q)
             .await?;
         Ok(rows
             .into_iter()
@@ -102,7 +131,7 @@ impl AiDataProvider for AiDataService {
             .collect())
     }
 
-    async fn search_categories(
+    pub async fn search_categories(
         &self,
         user_id: Uuid,
         query_vector: Option<Vec<f64>>,
@@ -121,7 +150,7 @@ impl AiDataProvider for AiDataService {
         Ok(rows.into_iter().map(to_category_result).collect())
     }
 
-    async fn search_assets(
+    pub async fn search_assets(
         &self,
         user_id: Uuid,
         query: Option<&str>,
@@ -140,16 +169,6 @@ impl AiDataProvider for AiDataService {
             .fetch_all::<AiAssetModel>(ai_queries::search_assets(&params))
             .await?;
         Ok(rows.into_iter().map(to_asset_result).collect())
-    }
-}
-
-fn to_dal_search_params(params: &SearchParams) -> ai_search_params::SearchTransactionsParams {
-    ai_search_params::SearchTransactionsParams {
-        user_id: params.user_id,
-        query: params.query.clone(),
-        date_from: params.date_from.clone(),
-        date_to: params.date_to.clone(),
-        limit: params.limit,
     }
 }
 

@@ -1,4 +1,6 @@
-use ai::action_provider::AiActionProvider;
+//! Stateless action service used by AI tools (via the user-scoped adapter
+//! in `providers::user_action_provider`). Methods take `user_id` explicitly.
+
 use ai::models::action::{
     CreateTransactionGroupParams, CreateTransactionGroupResult, CreateTransactionParams,
     CreateTransactionResult,
@@ -29,10 +31,8 @@ impl AiActionService {
             group_service: TransactionGroupService::new(providers),
         }
     }
-}
 
-impl AiActionProvider for AiActionService {
-    async fn create_transaction(
+    pub async fn create_transaction(
         &self,
         user_id: Uuid,
         params: CreateTransactionParams,
@@ -72,7 +72,7 @@ impl AiActionProvider for AiActionService {
         })
     }
 
-    async fn create_transaction_group(
+    pub async fn create_transaction_group(
         &self,
         user_id: Uuid,
         params: CreateTransactionGroupParams,

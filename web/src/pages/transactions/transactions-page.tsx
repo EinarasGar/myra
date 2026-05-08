@@ -23,9 +23,12 @@ import { useTransactionSelectionStore } from "@/hooks/store/use-transaction-sele
 import useDeleteTransaction from "@/hooks/api/use-delete-transaction";
 import useDeleteTransactionGroup from "@/hooks/api/use-delete-transaction-group";
 import { useUserId } from "@/hooks/use-auth";
+import { useQuickUploads } from "@/hooks/use-quick-uploads";
+import { QuickUploadsSection } from "./quick-upload/quick-uploads-section";
 
 export default function TransactionsPage() {
   const userId = useUserId();
+  const { createFromFile: createQuickUpload } = useQuickUploads();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedQuery = useDebounce(searchQuery, 300);
   const [showIndividualDialog, setShowIndividualDialog] = useState(false);
@@ -118,8 +121,11 @@ export default function TransactionsPage() {
         <AddTransactionDropdown
           onAddIndividual={() => setShowIndividualDialog(true)}
           onAddGroup={() => setShowGroupDialog(true)}
+          onQuickSnap={(file) => void createQuickUpload(file)}
         />
       </div>
+
+      <QuickUploadsSection />
 
       {bulkDeleteError && (
         <div className="px-4 mb-2">

@@ -1,4 +1,5 @@
 pub mod account_models;
+pub mod ai_conversation_models;
 pub mod ai_models;
 pub mod asset_models;
 pub mod base;

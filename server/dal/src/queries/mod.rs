@@ -3,7 +3,9 @@ use std::fmt::Debug;
 use sea_query_sqlx::SqlxValues;
 
 pub mod account_queries;
+pub mod ai_conversation_queries;
 pub mod ai_queries;
+pub mod ai_quick_upload_queries;
 pub mod asset_queries;
 pub mod category_queries;
 pub mod category_type_queries;

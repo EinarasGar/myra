@@ -36,6 +36,7 @@ export function DateTimeLanguagePicker({
     if (propValue && !isUserTyping) {
       setDate(propValue);
       setMonth(propValue);
+      setValue(format(propValue, "MMMM d, yyyy 'at' h:mm a"));
     }
   }, [propValue, isUserTyping]);
 

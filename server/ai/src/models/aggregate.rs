@@ -1,6 +1,5 @@
 use rust_decimal::Decimal;
 use serde::Serialize;
-use uuid::Uuid;
 
 #[derive(Serialize)]
 pub struct AggregateGroupResult {
@@ -10,7 +9,6 @@ pub struct AggregateGroupResult {
 }
 
 pub struct AggregateParams {
-    pub user_id: Uuid,
     pub group_by: String,
     pub date_from: Option<String>,
     pub date_to: Option<String>,

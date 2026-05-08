@@ -1,7 +1,7 @@
 use ai::models::chat::{ChatHistoryMessage, ChatStreamEvent};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ChatHistoryMessageDto {
     User {
@@ -25,6 +25,52 @@ pub enum ChatHistoryMessageDto {
         tool_call_id: String,
         approved: bool,
     },
+}
+
+impl ChatHistoryMessageDto {
+    pub fn role(&self) -> &'static str {
+        match self {
+            Self::User { .. } => "user",
+            Self::Assistant { .. } => "assistant",
+            Self::AssistantToolCall { .. } => "tool_call",
+            Self::ToolResult { .. } => "tool_result",
+            Self::ToolApproval { .. } => "tool_approval",
+        }
+    }
+}
+
+impl From<ChatHistoryMessage> for ChatHistoryMessageDto {
+    fn from(msg: ChatHistoryMessage) -> Self {
+        match msg {
+            ChatHistoryMessage::User { content } => Self::User { content },
+            ChatHistoryMessage::Assistant { content } => Self::Assistant { content },
+            ChatHistoryMessage::AssistantToolCall {
+                tool_call_id,
+                name,
+                args,
+                signature,
+            } => Self::AssistantToolCall {
+                tool_call_id,
+                name,
+                args,
+                signature,
+            },
+            ChatHistoryMessage::ToolResult {
+                tool_call_id,
+                content,
+            } => Self::ToolResult {
+                tool_call_id,
+                content,
+            },
+            ChatHistoryMessage::ToolApproval {
+                tool_call_id,
+                approved,
+            } => Self::ToolApproval {
+                tool_call_id,
+                approved,
+            },
+        }
+    }
 }
 
 impl From<ChatHistoryMessageDto> for ChatHistoryMessage {
@@ -69,6 +115,13 @@ pub struct Base64ImageDto {
     pub data: String,
 }
 
+impl From<(String, String)> for Base64ImageDto {
+    fn from((media_type, data): (String, String)) -> Self {
+        Self { media_type, data }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub enum ChatStreamEventDto {
     Text(String),
     ToolCall {
@@ -92,6 +145,7 @@ pub enum ChatStreamEventDto {
         input_tokens: u64,
         output_tokens: u64,
     },
+    Done,
 }
 
 impl From<ChatStreamEvent> for ChatStreamEventDto {

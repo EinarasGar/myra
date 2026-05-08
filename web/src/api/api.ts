@@ -3368,6 +3368,19 @@ export interface CombinedTransactionsPage {
 /**
  *
  * @export
+ * @interface CompleteQuickUploadRequest
+ */
+export interface CompleteQuickUploadRequest {
+  /**
+   *
+   * @type {boolean}
+   * @memberof CompleteQuickUploadRequest
+   */
+  accepted: boolean;
+}
+/**
+ *
+ * @export
  * @interface ConfirmFileResponse
  */
 export interface ConfirmFileResponse {
@@ -3387,6 +3400,31 @@ export interface ConfirmFileResponse {
    *
    * @type {string}
    * @memberof ConfirmFileResponse
+   */
+  updated_at: string;
+}
+/**
+ *
+ * @export
+ * @interface ConversationResponse
+ */
+export interface ConversationResponse {
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationResponse
+   */
+  created_at: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationResponse
+   */
+  title?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationResponse
    */
   updated_at: string;
 }
@@ -3427,6 +3465,19 @@ export interface CreateCategoryTypeRequest {
    * @memberof CreateCategoryTypeRequest
    */
   name: string;
+}
+/**
+ *
+ * @export
+ * @interface CreateConversationRequest
+ */
+export interface CreateConversationRequest {
+  /**
+   *
+   * @type {string}
+   * @memberof CreateConversationRequest
+   */
+  title?: string | null;
 }
 /**
  *
@@ -3513,6 +3564,19 @@ export interface CreateFileResponse {
    * @memberof CreateFileResponse
    */
   upload_metadata: UploadMetadata;
+}
+/**
+ *
+ * @export
+ * @interface CreateQuickUploadRequest
+ */
+export interface CreateQuickUploadRequest {
+  /**
+   *
+   * @type {string}
+   * @memberof CreateQuickUploadRequest
+   */
+  file_id: string;
 }
 /**
  *
@@ -4136,6 +4200,123 @@ export interface IdentifiableCategoryType {
   name: string;
 }
 /**
+ *
+ * @export
+ * @interface IdentifiableConversationResponse
+ */
+export interface IdentifiableConversationResponse {
+  /**
+   *
+   * @type {string}
+   * @memberof IdentifiableConversationResponse
+   */
+  created_at: string;
+  /**
+   *
+   * @type {string}
+   * @memberof IdentifiableConversationResponse
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof IdentifiableConversationResponse
+   */
+  title?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof IdentifiableConversationResponse
+   */
+  updated_at: string;
+}
+/**
+ *
+ * @export
+ * @interface IdentifiableMessageResponse
+ */
+export interface IdentifiableMessageResponse {
+  /**
+   *
+   * @type {any}
+   * @memberof IdentifiableMessageResponse
+   */
+  content: any;
+  /**
+   *
+   * @type {string}
+   * @memberof IdentifiableMessageResponse
+   */
+  created_at: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof IdentifiableMessageResponse
+   */
+  file_ids: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof IdentifiableMessageResponse
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof IdentifiableMessageResponse
+   */
+  role: string;
+}
+/**
+ *
+ * @export
+ * @interface IdentifiableQuickUploadResponse
+ */
+export interface IdentifiableQuickUploadResponse {
+  /**
+   *
+   * @type {string}
+   * @memberof IdentifiableQuickUploadResponse
+   */
+  created_at: string;
+  /**
+   *
+   * @type {string}
+   * @memberof IdentifiableQuickUploadResponse
+   */
+  id: string;
+  /**
+   *
+   * @type {any}
+   * @memberof IdentifiableQuickUploadResponse
+   */
+  proposal_data?: any;
+  /**
+   *
+   * @type {string}
+   * @memberof IdentifiableQuickUploadResponse
+   */
+  proposal_type?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof IdentifiableQuickUploadResponse
+   */
+  source_file_id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof IdentifiableQuickUploadResponse
+   */
+  status: string;
+  /**
+   *
+   * @type {string}
+   * @memberof IdentifiableQuickUploadResponse
+   */
+  updated_at: string;
+}
+/**
  * @type IdentifiableTransaction
  * @export
  */
@@ -4294,6 +4475,112 @@ export interface PortfolioOverview {
    * @memberof PortfolioOverview
    */
   cash_portfolios: Array<CashPortfolio>;
+}
+/**
+ *
+ * @export
+ * @interface QuickUploadLookupTables
+ */
+export interface QuickUploadLookupTables {
+  /**
+   *
+   * @type {Array<AccountAccountAccountTypeIdWithId>}
+   * @memberof QuickUploadLookupTables
+   */
+  accounts: Array<AccountAccountAccountTypeIdWithId>;
+  /**
+   *
+   * @type {Array<AssetAssetRequiredAssetTypeIdWithId>}
+   * @memberof QuickUploadLookupTables
+   */
+  assets: Array<AssetAssetRequiredAssetTypeIdWithId>;
+  /**
+   *
+   * @type {Array<CategoryRequiredCategoryTypeIdWithId>}
+   * @memberof QuickUploadLookupTables
+   */
+  categories: Array<CategoryRequiredCategoryTypeIdWithId>;
+}
+/**
+ *
+ * @export
+ * @interface QuickUploadMessageRequest
+ */
+export interface QuickUploadMessageRequest {
+  /**
+   *
+   * @type {string}
+   * @memberof QuickUploadMessageRequest
+   */
+  message: string;
+}
+/**
+ *
+ * @export
+ * @interface QuickUploadMessageResponse
+ */
+export interface QuickUploadMessageResponse {
+  /**
+   *
+   * @type {string}
+   * @memberof QuickUploadMessageResponse
+   */
+  message_id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof QuickUploadMessageResponse
+   */
+  status: string;
+}
+/**
+ *
+ * @export
+ * @interface QuickUploadResponse
+ */
+export interface QuickUploadResponse {
+  /**
+   *
+   * @type {string}
+   * @memberof QuickUploadResponse
+   */
+  created_at: string;
+  /**
+   *
+   * @type {QuickUploadLookupTables}
+   * @memberof QuickUploadResponse
+   */
+  lookup_tables: QuickUploadLookupTables;
+  /**
+   *
+   * @type {any}
+   * @memberof QuickUploadResponse
+   */
+  proposal_data?: any;
+  /**
+   *
+   * @type {string}
+   * @memberof QuickUploadResponse
+   */
+  proposal_type?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof QuickUploadResponse
+   */
+  source_file_id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof QuickUploadResponse
+   */
+  status: string;
+  /**
+   *
+   * @type {string}
+   * @memberof QuickUploadResponse
+   */
+  updated_at: string;
 }
 /**
  *
@@ -5262,6 +5549,1391 @@ export interface UserMetadata {
    * @memberof UserMetadata
    */
   username: string;
+}
+
+/**
+ * AIConversationsApi - axios parameter creator
+ * @export
+ */
+export const AIConversationsApiAxiosParamCreator = function (
+  configuration?: Configuration,
+) {
+  return {
+    /**
+     *
+     * @param {string} userId
+     * @param {CreateConversationRequest} createConversationRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    createConversation: async (
+      userId: string,
+      createConversationRequest: CreateConversationRequest,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("createConversation", "userId", userId);
+      // verify required parameter 'createConversationRequest' is not null or undefined
+      assertParamExists(
+        "createConversation",
+        "createConversationRequest",
+        createConversationRequest,
+      );
+      const localVarPath = `/api/users/{user_id}/ai/conversations`.replace(
+        `{${"user_id"}}`,
+        encodeURIComponent(String(userId)),
+      );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "POST",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        createConversationRequest,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {string} conversationId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getConversation: async (
+      userId: string,
+      conversationId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("getConversation", "userId", userId);
+      // verify required parameter 'conversationId' is not null or undefined
+      assertParamExists("getConversation", "conversationId", conversationId);
+      const localVarPath =
+        `/api/users/{user_id}/ai/conversations/{conversation_id}`
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+          .replace(
+            `{${"conversation_id"}}`,
+            encodeURIComponent(String(conversationId)),
+          );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {string} conversationId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getMessages: async (
+      userId: string,
+      conversationId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("getMessages", "userId", userId);
+      // verify required parameter 'conversationId' is not null or undefined
+      assertParamExists("getMessages", "conversationId", conversationId);
+      const localVarPath =
+        `/api/users/{user_id}/ai/conversations/{conversation_id}/messages`
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+          .replace(
+            `{${"conversation_id"}}`,
+            encodeURIComponent(String(conversationId)),
+          );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    listConversations: async (
+      userId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("listConversations", "userId", userId);
+      const localVarPath = `/api/users/{user_id}/ai/conversations`.replace(
+        `{${"user_id"}}`,
+        encodeURIComponent(String(userId)),
+      );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+  };
+};
+
+/**
+ * AIConversationsApi - functional programming interface
+ * @export
+ */
+export const AIConversationsApiFp = function (configuration?: Configuration) {
+  const localVarAxiosParamCreator =
+    AIConversationsApiAxiosParamCreator(configuration);
+  return {
+    /**
+     *
+     * @param {string} userId
+     * @param {CreateConversationRequest} createConversationRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async createConversation(
+      userId: string,
+      createConversationRequest: CreateConversationRequest,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<IdentifiableConversationResponse>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.createConversation(
+          userId,
+          createConversationRequest,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["AIConversationsApi.createConversation"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {string} conversationId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getConversation(
+      userId: string,
+      conversationId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<ConversationResponse>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.getConversation(
+        userId,
+        conversationId,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["AIConversationsApi.getConversation"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {string} conversationId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getMessages(
+      userId: string,
+      conversationId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<Array<IdentifiableMessageResponse>>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.getMessages(
+        userId,
+        conversationId,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["AIConversationsApi.getMessages"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async listConversations(
+      userId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<Array<IdentifiableConversationResponse>>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.listConversations(userId, options);
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["AIConversationsApi.listConversations"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+  };
+};
+
+/**
+ * AIConversationsApi - factory interface
+ * @export
+ */
+export const AIConversationsApiFactory = function (
+  configuration?: Configuration,
+  basePath?: string,
+  axios?: AxiosInstance,
+) {
+  const localVarFp = AIConversationsApiFp(configuration);
+  return {
+    /**
+     *
+     * @param {string} userId
+     * @param {CreateConversationRequest} createConversationRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    createConversation(
+      userId: string,
+      createConversationRequest: CreateConversationRequest,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<IdentifiableConversationResponse> {
+      return localVarFp
+        .createConversation(userId, createConversationRequest, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {string} conversationId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getConversation(
+      userId: string,
+      conversationId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<ConversationResponse> {
+      return localVarFp
+        .getConversation(userId, conversationId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {string} conversationId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getMessages(
+      userId: string,
+      conversationId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<Array<IdentifiableMessageResponse>> {
+      return localVarFp
+        .getMessages(userId, conversationId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    listConversations(
+      userId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<Array<IdentifiableConversationResponse>> {
+      return localVarFp
+        .listConversations(userId, options)
+        .then((request) => request(axios, basePath));
+    },
+  };
+};
+
+/**
+ * AIConversationsApi - interface
+ * @export
+ * @interface AIConversationsApi
+ */
+export interface AIConversationsApiInterface {
+  /**
+   *
+   * @param {string} userId
+   * @param {CreateConversationRequest} createConversationRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AIConversationsApiInterface
+   */
+  createConversation(
+    userId: string,
+    createConversationRequest: CreateConversationRequest,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<IdentifiableConversationResponse>;
+
+  /**
+   *
+   * @param {string} userId
+   * @param {string} conversationId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AIConversationsApiInterface
+   */
+  getConversation(
+    userId: string,
+    conversationId: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<ConversationResponse>;
+
+  /**
+   *
+   * @param {string} userId
+   * @param {string} conversationId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AIConversationsApiInterface
+   */
+  getMessages(
+    userId: string,
+    conversationId: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<Array<IdentifiableMessageResponse>>;
+
+  /**
+   *
+   * @param {string} userId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AIConversationsApiInterface
+   */
+  listConversations(
+    userId: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<Array<IdentifiableConversationResponse>>;
+}
+
+/**
+ * AIConversationsApi - object-oriented interface
+ * @export
+ * @class AIConversationsApi
+ * @extends {BaseAPI}
+ */
+export class AIConversationsApi
+  extends BaseAPI
+  implements AIConversationsApiInterface
+{
+  /**
+   *
+   * @param {string} userId
+   * @param {CreateConversationRequest} createConversationRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AIConversationsApi
+   */
+  public createConversation(
+    userId: string,
+    createConversationRequest: CreateConversationRequest,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return AIConversationsApiFp(this.configuration)
+      .createConversation(userId, createConversationRequest, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @param {string} userId
+   * @param {string} conversationId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AIConversationsApi
+   */
+  public getConversation(
+    userId: string,
+    conversationId: string,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return AIConversationsApiFp(this.configuration)
+      .getConversation(userId, conversationId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @param {string} userId
+   * @param {string} conversationId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AIConversationsApi
+   */
+  public getMessages(
+    userId: string,
+    conversationId: string,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return AIConversationsApiFp(this.configuration)
+      .getMessages(userId, conversationId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @param {string} userId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AIConversationsApi
+   */
+  public listConversations(userId: string, options?: RawAxiosRequestConfig) {
+    return AIConversationsApiFp(this.configuration)
+      .listConversations(userId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+}
+
+/**
+ * AIQuickUploadApi - axios parameter creator
+ * @export
+ */
+export const AIQuickUploadApiAxiosParamCreator = function (
+  configuration?: Configuration,
+) {
+  return {
+    /**
+     *
+     * @param {string} userId
+     * @param {string} quickUploadId
+     * @param {CompleteQuickUploadRequest} completeQuickUploadRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    complete: async (
+      userId: string,
+      quickUploadId: string,
+      completeQuickUploadRequest: CompleteQuickUploadRequest,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("complete", "userId", userId);
+      // verify required parameter 'quickUploadId' is not null or undefined
+      assertParamExists("complete", "quickUploadId", quickUploadId);
+      // verify required parameter 'completeQuickUploadRequest' is not null or undefined
+      assertParamExists(
+        "complete",
+        "completeQuickUploadRequest",
+        completeQuickUploadRequest,
+      );
+      const localVarPath =
+        `/api/users/{user_id}/ai/quick-upload/{quick_upload_id}/complete`
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+          .replace(
+            `{${"quick_upload_id"}}`,
+            encodeURIComponent(String(quickUploadId)),
+          );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "POST",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        completeQuickUploadRequest,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {CreateQuickUploadRequest} createQuickUploadRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    createQuickUpload: async (
+      userId: string,
+      createQuickUploadRequest: CreateQuickUploadRequest,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("createQuickUpload", "userId", userId);
+      // verify required parameter 'createQuickUploadRequest' is not null or undefined
+      assertParamExists(
+        "createQuickUpload",
+        "createQuickUploadRequest",
+        createQuickUploadRequest,
+      );
+      const localVarPath = `/api/users/{user_id}/ai/quick-upload`.replace(
+        `{${"user_id"}}`,
+        encodeURIComponent(String(userId)),
+      );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "POST",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        createQuickUploadRequest,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {string} quickUploadId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getQuickUpload: async (
+      userId: string,
+      quickUploadId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("getQuickUpload", "userId", userId);
+      // verify required parameter 'quickUploadId' is not null or undefined
+      assertParamExists("getQuickUpload", "quickUploadId", quickUploadId);
+      const localVarPath =
+        `/api/users/{user_id}/ai/quick-upload/{quick_upload_id}`
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+          .replace(
+            `{${"quick_upload_id"}}`,
+            encodeURIComponent(String(quickUploadId)),
+          );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    listQuickUploads: async (
+      userId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("listQuickUploads", "userId", userId);
+      const localVarPath = `/api/users/{user_id}/ai/quick-upload`.replace(
+        `{${"user_id"}}`,
+        encodeURIComponent(String(userId)),
+      );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {string} quickUploadId
+     * @param {QuickUploadMessageRequest} quickUploadMessageRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    sendCorrection: async (
+      userId: string,
+      quickUploadId: string,
+      quickUploadMessageRequest: QuickUploadMessageRequest,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("sendCorrection", "userId", userId);
+      // verify required parameter 'quickUploadId' is not null or undefined
+      assertParamExists("sendCorrection", "quickUploadId", quickUploadId);
+      // verify required parameter 'quickUploadMessageRequest' is not null or undefined
+      assertParamExists(
+        "sendCorrection",
+        "quickUploadMessageRequest",
+        quickUploadMessageRequest,
+      );
+      const localVarPath =
+        `/api/users/{user_id}/ai/quick-upload/{quick_upload_id}/message`
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+          .replace(
+            `{${"quick_upload_id"}}`,
+            encodeURIComponent(String(quickUploadId)),
+          );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "POST",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        quickUploadMessageRequest,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+  };
+};
+
+/**
+ * AIQuickUploadApi - functional programming interface
+ * @export
+ */
+export const AIQuickUploadApiFp = function (configuration?: Configuration) {
+  const localVarAxiosParamCreator =
+    AIQuickUploadApiAxiosParamCreator(configuration);
+  return {
+    /**
+     *
+     * @param {string} userId
+     * @param {string} quickUploadId
+     * @param {CompleteQuickUploadRequest} completeQuickUploadRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async complete(
+      userId: string,
+      quickUploadId: string,
+      completeQuickUploadRequest: CompleteQuickUploadRequest,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.complete(
+        userId,
+        quickUploadId,
+        completeQuickUploadRequest,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["AIQuickUploadApi.complete"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {CreateQuickUploadRequest} createQuickUploadRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async createQuickUpload(
+      userId: string,
+      createQuickUploadRequest: CreateQuickUploadRequest,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<IdentifiableQuickUploadResponse>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.createQuickUpload(
+          userId,
+          createQuickUploadRequest,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["AIQuickUploadApi.createQuickUpload"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {string} quickUploadId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getQuickUpload(
+      userId: string,
+      quickUploadId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<QuickUploadResponse>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.getQuickUpload(
+        userId,
+        quickUploadId,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["AIQuickUploadApi.getQuickUpload"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async listQuickUploads(
+      userId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<Array<IdentifiableQuickUploadResponse>>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.listQuickUploads(userId, options);
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["AIQuickUploadApi.listQuickUploads"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {string} quickUploadId
+     * @param {QuickUploadMessageRequest} quickUploadMessageRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async sendCorrection(
+      userId: string,
+      quickUploadId: string,
+      quickUploadMessageRequest: QuickUploadMessageRequest,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<QuickUploadMessageResponse>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.sendCorrection(
+        userId,
+        quickUploadId,
+        quickUploadMessageRequest,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["AIQuickUploadApi.sendCorrection"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+  };
+};
+
+/**
+ * AIQuickUploadApi - factory interface
+ * @export
+ */
+export const AIQuickUploadApiFactory = function (
+  configuration?: Configuration,
+  basePath?: string,
+  axios?: AxiosInstance,
+) {
+  const localVarFp = AIQuickUploadApiFp(configuration);
+  return {
+    /**
+     *
+     * @param {string} userId
+     * @param {string} quickUploadId
+     * @param {CompleteQuickUploadRequest} completeQuickUploadRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    complete(
+      userId: string,
+      quickUploadId: string,
+      completeQuickUploadRequest: CompleteQuickUploadRequest,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<void> {
+      return localVarFp
+        .complete(userId, quickUploadId, completeQuickUploadRequest, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {CreateQuickUploadRequest} createQuickUploadRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    createQuickUpload(
+      userId: string,
+      createQuickUploadRequest: CreateQuickUploadRequest,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<IdentifiableQuickUploadResponse> {
+      return localVarFp
+        .createQuickUpload(userId, createQuickUploadRequest, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {string} quickUploadId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getQuickUpload(
+      userId: string,
+      quickUploadId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<QuickUploadResponse> {
+      return localVarFp
+        .getQuickUpload(userId, quickUploadId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    listQuickUploads(
+      userId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<Array<IdentifiableQuickUploadResponse>> {
+      return localVarFp
+        .listQuickUploads(userId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {string} quickUploadId
+     * @param {QuickUploadMessageRequest} quickUploadMessageRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    sendCorrection(
+      userId: string,
+      quickUploadId: string,
+      quickUploadMessageRequest: QuickUploadMessageRequest,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<QuickUploadMessageResponse> {
+      return localVarFp
+        .sendCorrection(
+          userId,
+          quickUploadId,
+          quickUploadMessageRequest,
+          options,
+        )
+        .then((request) => request(axios, basePath));
+    },
+  };
+};
+
+/**
+ * AIQuickUploadApi - interface
+ * @export
+ * @interface AIQuickUploadApi
+ */
+export interface AIQuickUploadApiInterface {
+  /**
+   *
+   * @param {string} userId
+   * @param {string} quickUploadId
+   * @param {CompleteQuickUploadRequest} completeQuickUploadRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AIQuickUploadApiInterface
+   */
+  complete(
+    userId: string,
+    quickUploadId: string,
+    completeQuickUploadRequest: CompleteQuickUploadRequest,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<void>;
+
+  /**
+   *
+   * @param {string} userId
+   * @param {CreateQuickUploadRequest} createQuickUploadRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AIQuickUploadApiInterface
+   */
+  createQuickUpload(
+    userId: string,
+    createQuickUploadRequest: CreateQuickUploadRequest,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<IdentifiableQuickUploadResponse>;
+
+  /**
+   *
+   * @param {string} userId
+   * @param {string} quickUploadId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AIQuickUploadApiInterface
+   */
+  getQuickUpload(
+    userId: string,
+    quickUploadId: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<QuickUploadResponse>;
+
+  /**
+   *
+   * @param {string} userId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AIQuickUploadApiInterface
+   */
+  listQuickUploads(
+    userId: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<Array<IdentifiableQuickUploadResponse>>;
+
+  /**
+   *
+   * @param {string} userId
+   * @param {string} quickUploadId
+   * @param {QuickUploadMessageRequest} quickUploadMessageRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AIQuickUploadApiInterface
+   */
+  sendCorrection(
+    userId: string,
+    quickUploadId: string,
+    quickUploadMessageRequest: QuickUploadMessageRequest,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<QuickUploadMessageResponse>;
+}
+
+/**
+ * AIQuickUploadApi - object-oriented interface
+ * @export
+ * @class AIQuickUploadApi
+ * @extends {BaseAPI}
+ */
+export class AIQuickUploadApi
+  extends BaseAPI
+  implements AIQuickUploadApiInterface
+{
+  /**
+   *
+   * @param {string} userId
+   * @param {string} quickUploadId
+   * @param {CompleteQuickUploadRequest} completeQuickUploadRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AIQuickUploadApi
+   */
+  public complete(
+    userId: string,
+    quickUploadId: string,
+    completeQuickUploadRequest: CompleteQuickUploadRequest,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return AIQuickUploadApiFp(this.configuration)
+      .complete(userId, quickUploadId, completeQuickUploadRequest, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @param {string} userId
+   * @param {CreateQuickUploadRequest} createQuickUploadRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AIQuickUploadApi
+   */
+  public createQuickUpload(
+    userId: string,
+    createQuickUploadRequest: CreateQuickUploadRequest,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return AIQuickUploadApiFp(this.configuration)
+      .createQuickUpload(userId, createQuickUploadRequest, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @param {string} userId
+   * @param {string} quickUploadId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AIQuickUploadApi
+   */
+  public getQuickUpload(
+    userId: string,
+    quickUploadId: string,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return AIQuickUploadApiFp(this.configuration)
+      .getQuickUpload(userId, quickUploadId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @param {string} userId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AIQuickUploadApi
+   */
+  public listQuickUploads(userId: string, options?: RawAxiosRequestConfig) {
+    return AIQuickUploadApiFp(this.configuration)
+      .listQuickUploads(userId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @param {string} userId
+   * @param {string} quickUploadId
+   * @param {QuickUploadMessageRequest} quickUploadMessageRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AIQuickUploadApi
+   */
+  public sendCorrection(
+    userId: string,
+    quickUploadId: string,
+    quickUploadMessageRequest: QuickUploadMessageRequest,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return AIQuickUploadApiFp(this.configuration)
+      .sendCorrection(userId, quickUploadId, quickUploadMessageRequest, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
 }
 
 /**

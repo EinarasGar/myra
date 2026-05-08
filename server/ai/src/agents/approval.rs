@@ -1,10 +1,14 @@
+//! Tool-call approval gate for the chat workflow. Builds a parallel toolset
+//! containing only the gated tools (used to replay them after the user has
+//! approved or declined), and a `PromptHook` that intercepts gated tool calls
+//! mid-stream so the UI can ask the user before they execute.
+
 use std::collections::HashSet;
 use std::sync::Arc;
 
 use rig::agent::{PromptHook, ToolCallHookAction};
 use rig::providers::gemini;
 use rig::tool::Tool;
-use uuid::Uuid;
 
 use crate::action_provider::AiActionProvider;
 use crate::models::chat::ToolRequestPayload;
@@ -16,13 +20,10 @@ pub(crate) struct GatedToolSet {
     pub gated_names: HashSet<String>,
 }
 
-pub(crate) fn build_gated_toolset<A: AiActionProvider>(
-    actions: Arc<A>,
-    user_id: Uuid,
-) -> GatedToolSet {
+pub(crate) fn build_gated_toolset<A: AiActionProvider>(actions: Arc<A>) -> GatedToolSet {
     let mut toolset = rig::tool::ToolSet::default();
-    toolset.add_tool(CreateTransactionTool::new(actions.clone(), user_id));
-    toolset.add_tool(CreateTransactionGroupTool::new(actions, user_id));
+    toolset.add_tool(CreateTransactionTool::new(actions.clone()));
+    toolset.add_tool(CreateTransactionGroupTool::new(actions));
 
     let gated_names: HashSet<String> = [
         CreateTransactionTool::<A>::NAME,

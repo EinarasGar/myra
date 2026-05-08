@@ -60,6 +60,33 @@ pub fn get_file_by_id_and_user(file_id: Uuid, user_id: Uuid) -> DbQueryWithValue
 }
 
 #[tracing::instrument(skip_all)]
+pub fn get_files_by_ids_and_user(file_ids: Vec<Uuid>, user_id: Uuid) -> DbQueryWithValues {
+    Query::select()
+        .column(UserFilesIden::Id)
+        .column(UserFilesIden::UserId)
+        .column(UserFilesIden::OriginalName)
+        .column(UserFilesIden::MimeType)
+        .column(UserFilesIden::SizeBytes)
+        .column(UserFilesIden::Status)
+        .column(UserFilesIden::StorageKey)
+        .column(UserFilesIden::ThumbnailKey)
+        .column(UserFilesIden::CreatedAt)
+        .column(UserFilesIden::UpdatedAt)
+        .from(UserFilesIden::Table)
+        .and_where(
+            Expr::col(UserFilesIden::Id).is_in(
+                file_ids
+                    .into_iter()
+                    .map(|id| sea_query::Value::Uuid(Some(id)))
+                    .collect::<Vec<_>>(),
+            ),
+        )
+        .and_where(Expr::col(UserFilesIden::UserId).eq(user_id))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
 pub fn get_file_status_by_id_and_user(file_id: Uuid, user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .column(UserFilesIden::Status)
