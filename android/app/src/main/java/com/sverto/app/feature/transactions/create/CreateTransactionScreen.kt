@@ -59,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sverto.app.core.SvertoViewModelFactory
 import uniffi.sverto_core.TransactionListItem
 
 private enum class SearchTarget { PRIMARY_ASSET, SECONDARY_ASSET, ORIGIN_ASSET }
@@ -95,7 +96,7 @@ fun CreateTransactionScreen(
     onSuccess: (TransactionListItem?) -> Unit,
     modifier: Modifier = Modifier,
     editTransactionId: String? = null,
-    viewModel: CreateTransactionViewModel = viewModel(),
+    viewModel: CreateTransactionViewModel = viewModel(factory = SvertoViewModelFactory),
 ) {
     val config = remember(typeKey) { getTransactionTypeConfig(typeKey) }
     val formState by viewModel.formState.collectAsStateWithLifecycle()

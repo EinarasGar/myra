@@ -1,5 +1,6 @@
 mod accounts;
 mod assets;
+mod cache;
 mod categories;
 pub mod client;
 mod create_transaction;

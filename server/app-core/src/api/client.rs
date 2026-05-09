@@ -1,6 +1,9 @@
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{Duration, Instant};
+
+use crate::api::cache::PersistentCache;
 
 use crate::api::accounts::extract_accounts;
 use crate::api::assets::extract_assets;
@@ -12,8 +15,9 @@ use crate::api::transactions::{extract_page, to_list_item_with_id};
 use crate::api::update_transaction::build_update_request_body;
 use crate::error::ApiError;
 use crate::models::{
-    AccountItem, ApiResponse, AssetItem, AuthMe, CategoryItem, CreateTransactionInput,
-    EditableTransaction, HoldingItem, TransactionListItem, TransactionsPage,
+    AccountItem, ApiResponse, AssetItem, AuthMe, CategoryItem, ConnectionStatus,
+    CreateTransactionInput, EditableTransaction, HoldingItem, TransactionListItem,
+    TransactionsPage,
 };
 use shared::view_models::portfolio::get_networth_history::GetNetWorthHistoryResponseViewModel;
 
@@ -41,6 +45,9 @@ pub struct ApiClient {
     http: reqwest::Client,
     cache: Arc<Mutex<HashMap<String, CacheEntry>>>,
     cache_ttl: Duration,
+    persistent_cache: PersistentCache,
+    is_offline: AtomicBool,
+    has_connectivity: AtomicBool,
 }
 
 const MAX_RETRIES: u32 = 3;
@@ -49,7 +56,7 @@ const INITIAL_BACKOFF_MS: u64 = 200;
 #[uniffi::export(async_runtime = "tokio")]
 impl ApiClient {
     #[uniffi::constructor]
-    pub fn new(base_url: String, cache_ttl_secs: u64) -> Self {
+    pub fn new(base_url: String, cache_ttl_secs: u64, db_path: String) -> Self {
         let http = reqwest::Client::builder()
             .use_preconfigured_tls(tls_config().clone())
             .timeout(Duration::from_secs(30))
@@ -62,6 +69,9 @@ impl ApiClient {
             http,
             cache: Arc::new(Mutex::new(HashMap::new())),
             cache_ttl: Duration::from_secs(cache_ttl_secs),
+            persistent_cache: PersistentCache::open(&db_path),
+            is_offline: AtomicBool::new(false),
+            has_connectivity: AtomicBool::new(true),
         }
     }
 
@@ -71,6 +81,23 @@ impl ApiClient {
 
     pub fn clear_auth_token(&self) {
         *self.auth_token.lock().unwrap() = None;
+        self.clear_cache();
+        self.persistent_cache.clear();
+    }
+
+    pub fn connection_status(&self) -> ConnectionStatus {
+        if !self.is_offline.load(Ordering::Relaxed) {
+            return ConnectionStatus::Online;
+        }
+        if !self.has_connectivity.load(Ordering::Relaxed) {
+            ConnectionStatus::DeviceOffline
+        } else {
+            ConnectionStatus::ServerUnreachable
+        }
+    }
+
+    pub fn set_connectivity(&self, connected: bool) {
+        self.has_connectivity.store(connected, Ordering::Relaxed);
     }
 
     pub async fn get(&self, path: String) -> Result<ApiResponse, ApiError> {
@@ -88,22 +115,46 @@ impl ApiClient {
             }
         }
 
-        let response = self
-            .request_with_retry(reqwest::Method::GET, &url, None)
-            .await?;
-
-        if self.cache_ttl.as_secs() > 0 {
-            let mut cache = self.cache.lock().unwrap();
-            cache.insert(
-                url,
-                CacheEntry {
-                    body: response.body.clone(),
-                    inserted_at: Instant::now(),
-                },
-            );
+        if !self.has_connectivity.load(Ordering::Relaxed) {
+            return self.serve_from_persistent_cache(&url);
         }
 
-        Ok(response)
+        let cached_body = self.persistent_cache.get(&url);
+
+        let result = if cached_body.is_some() {
+            self.request_with_short_timeout(&url).await
+        } else {
+            self.request_with_retry(reqwest::Method::GET, &url, None)
+                .await
+        };
+
+        match result {
+            Ok(response) => {
+                self.persistent_cache.put(&url, &response.body);
+                self.is_offline.store(false, Ordering::Relaxed);
+                if self.cache_ttl.as_secs() > 0 {
+                    let mut cache = self.cache.lock().unwrap();
+                    cache.insert(
+                        url,
+                        CacheEntry {
+                            body: response.body.clone(),
+                            inserted_at: Instant::now(),
+                        },
+                    );
+                }
+                Ok(response)
+            }
+            Err(ref err) => {
+                if let Some(body) = cached_body {
+                    if err.is_unreachable() {
+                        self.is_offline.store(true, Ordering::Relaxed);
+                    }
+                    Ok(ApiResponse { status: 200, body })
+                } else {
+                    Err(err.clone())
+                }
+            }
+        }
     }
 
     pub async fn post(&self, path: String, body: String) -> Result<ApiResponse, ApiError> {
@@ -288,6 +339,59 @@ impl ApiClient {
     pub fn clear_cache(&self) {
         self.cache.lock().unwrap().clear();
     }
+
+    pub fn get_cached(&self, path: String) -> Option<ApiResponse> {
+        let url = format!("{}{}", self.base_url, path);
+        self.persistent_cache
+            .get(&url)
+            .map(|body| ApiResponse { status: 200, body })
+    }
+
+    pub fn get_cached_me(&self) -> Option<AuthMe> {
+        let resp = self.get_cached("/api/auth/me".to_string())?;
+        serde_json::from_str(&resp.body).ok()
+    }
+
+    pub fn get_cached_transactions(
+        &self,
+        user_id: String,
+        limit: u32,
+        cursor: Option<String>,
+    ) -> Option<TransactionsPage> {
+        let mut path = format!("/api/users/{user_id}/transactions?limit={limit}");
+        if let Some(ref c) = cursor {
+            path.push_str(&format!("&cursor={c}"));
+        }
+        let resp = self.get_cached(path)?;
+        extract_page(&resp.body).ok()
+    }
+
+    pub fn get_cached_holdings(&self, user_id: String) -> Option<Vec<HoldingItem>> {
+        let resp = self.get_cached(format!("/api/users/{user_id}/portfolio/holdings"))?;
+        extract_holdings(&resp.body).ok()
+    }
+
+    pub fn get_cached_portfolio_history(
+        &self,
+        user_id: String,
+        range: String,
+    ) -> Option<GetNetWorthHistoryResponseViewModel> {
+        let resp = self.get_cached(format!(
+            "/api/users/{user_id}/portfolio/history?range={range}"
+        ))?;
+        serde_json::from_str(&resp.body).ok()
+    }
+
+    fn serve_from_persistent_cache(&self, url: &str) -> Result<ApiResponse, ApiError> {
+        if let Some(body) = self.persistent_cache.get(url) {
+            self.is_offline.store(true, Ordering::Relaxed);
+            Ok(ApiResponse { status: 200, body })
+        } else {
+            Err(ApiError::Network {
+                reason: "no connectivity and no cached data".into(),
+            })
+        }
+    }
 }
 
 fn urlencode(value: &str) -> String {
@@ -310,6 +414,14 @@ impl ApiClient {
         })
     }
 
+    fn build_request(&self, method: reqwest::Method, url: &str) -> reqwest::RequestBuilder {
+        let mut req = self.http.request(method, url);
+        if let Some(ref token) = *self.auth_token.lock().unwrap() {
+            req = req.bearer_auth(token);
+        }
+        req
+    }
+
     async fn request_with_retry(
         &self,
         method: reqwest::Method,
@@ -324,11 +436,7 @@ impl ApiClient {
                 tokio::time::sleep(backoff).await;
             }
 
-            let mut req = self.http.request(method.clone(), url);
-
-            if let Some(ref token) = *self.auth_token.lock().unwrap() {
-                req = req.bearer_auth(token);
-            }
+            let mut req = self.build_request(method.clone(), url);
 
             if let Some(ref b) = body {
                 req = req
@@ -360,5 +468,29 @@ impl ApiClient {
         Err(last_error.unwrap_or(ApiError::Network {
             reason: "unknown error after retries".into(),
         }))
+    }
+
+    async fn request_with_short_timeout(&self, url: &str) -> Result<ApiResponse, ApiError> {
+        let req = self
+            .build_request(reqwest::Method::GET, url)
+            .timeout(Duration::from_secs(5));
+
+        match req.send().await {
+            Ok(resp) => {
+                let status = resp.status().as_u16();
+                let text = resp.text().await.map_err(|e| ApiError::Parse {
+                    reason: e.to_string(),
+                })?;
+                if status >= 500 {
+                    Err(ApiError::Server {
+                        reason: format!("HTTP {status}"),
+                        status,
+                    })
+                } else {
+                    Ok(ApiResponse { status, body: text })
+                }
+            }
+            Err(e) => Err(e.into()),
+        }
     }
 }

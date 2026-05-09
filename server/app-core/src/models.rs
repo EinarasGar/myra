@@ -1,3 +1,10 @@
+#[derive(Debug, Clone, uniffi::Enum)]
+pub enum ConnectionStatus {
+    Online,
+    DeviceOffline,
+    ServerUnreachable,
+}
+
 #[derive(Debug, Clone, uniffi::Record)]
 pub struct ApiResponse {
     pub status: u16,

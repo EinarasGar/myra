@@ -22,9 +22,9 @@ data class HomeUiModel(
     val holdings: List<HoldingItem> = emptyList(),
 )
 
-class HomeViewModel : ViewModel() {
-    private val apiClient = ApiClient(BuildConfig.API_BASE_URL, 60u)
-
+class HomeViewModel(
+    private val apiClient: ApiClient,
+) : ViewModel() {
     private val _uiState = MutableStateFlow<UiState<HomeUiModel>>(UiState.Loading)
     val uiState: StateFlow<UiState<HomeUiModel>> = _uiState.asStateFlow()
 
@@ -37,48 +37,28 @@ class HomeViewModel : ViewModel() {
 
     private suspend fun refreshAuthToken() {
         if (BuildConfig.CLERK_PUBLISHABLE_KEY.isBlank()) {
-            Log.d("HomeViewModel", "No Clerk key, skipping auth")
             return
         }
-        val result = Clerk.auth.getToken()
-        when (result) {
-            is ClerkResult.Success -> {
-                Log.d("HomeViewModel", "Got Clerk token, setting on API client")
-                apiClient.setAuthToken(result.value)
-            }
-            is ClerkResult.Failure -> {
-                Log.e("HomeViewModel", "Failed to get Clerk token: ${result.error}")
-            }
+        when (val result = Clerk.auth.getToken()) {
+            is ClerkResult.Success -> apiClient.setAuthToken(result.value)
+            is ClerkResult.Failure -> Log.e("HomeViewModel", "Failed to get Clerk token: ${result.error}")
         }
     }
 
     fun load() {
-        _uiState.value = UiState.Loading
         viewModelScope.launch(Dispatchers.IO) {
+            val cached = loadFromCache()
+            if (cached != null) {
+                _uiState.value = UiState.Success(cached)
+            } else {
+                _uiState.value = UiState.Loading
+            }
+
             try {
                 refreshAuthToken()
-
-                val authMe =
-                    try {
-                        Log.d("HomeViewModel", "Calling getMe at ${BuildConfig.API_BASE_URL}")
-                        val result = apiClient.getMe()
-                        Log.d("HomeViewModel", "getMe success: ${result.userId}")
-                        result
-                    } catch (
-                        @Suppress("TooGenericExceptionCaught") e: Exception,
-                    ) {
-                        Log.e("HomeViewModel", "getMe failed", e)
-                        null
-                    }
-
-                if (authMe == null) {
-                    _uiState.value = UiState.Error("Unable to connect to server")
-                    return@launch
-                }
-
+                val authMe = apiClient.getMe()
                 val portfolioData = loadPortfolioData(authMe.userId)
                 val holdings = loadHoldings(authMe.userId)
-
                 _uiState.value =
                     UiState.Success(
                         HomeUiModel(
@@ -90,7 +70,10 @@ class HomeViewModel : ViewModel() {
             } catch (
                 @Suppress("TooGenericExceptionCaught") e: Exception,
             ) {
-                _uiState.value = UiState.Error(e.message ?: "Unknown error")
+                Log.e("HomeViewModel", "Background refresh failed", e)
+                if (_uiState.value is UiState.Loading) {
+                    _uiState.value = UiState.Error(e.message ?: "Unknown error")
+                }
             }
         }
     }
@@ -119,6 +102,21 @@ class HomeViewModel : ViewModel() {
                 _isRefreshing.value = false
             }
         }
+    }
+
+    private fun loadFromCache(): HomeUiModel? {
+        val authMe = apiClient.getCachedMe() ?: return null
+        val portfolioData = mutableMapOf<TimePeriod, List<ChartPoint>>()
+        for (period in TimePeriod.entries) {
+            val history = apiClient.getCachedPortfolioHistory(authMe.userId, period.apiRange)
+            portfolioData[period] = history?.sums?.map { ChartPoint(it.date, it.rate) } ?: emptyList()
+        }
+        val holdings = apiClient.getCachedHoldings(authMe.userId) ?: emptyList()
+        return HomeUiModel(
+            authMe = authMe,
+            portfolioData = portfolioData,
+            holdings = holdings,
+        )
     }
 
     private suspend fun loadPortfolioData(userId: String): Map<TimePeriod, List<ChartPoint>> {

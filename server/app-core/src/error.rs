@@ -1,4 +1,4 @@
-#[derive(Debug, thiserror::Error, uniffi::Error)]
+#[derive(Debug, Clone, thiserror::Error, uniffi::Error)]
 pub enum ApiError {
     #[error("Network error: {reason}")]
     Network { reason: String },
@@ -11,6 +11,12 @@ pub enum ApiError {
 
     #[error("Failed to parse response: {reason}")]
     Parse { reason: String },
+}
+
+impl ApiError {
+    pub fn is_unreachable(&self) -> bool {
+        matches!(self, ApiError::Network { .. } | ApiError::Timeout { .. })
+    }
 }
 
 impl From<reqwest::Error> for ApiError {

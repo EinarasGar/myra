@@ -23,9 +23,9 @@ data class TransactionsUiModel(
     val totalResults: Long?,
 )
 
-class TransactionsViewModel : ViewModel() {
-    private val apiClient = ApiClient(BuildConfig.API_BASE_URL, 60u)
-
+class TransactionsViewModel(
+    private val apiClient: ApiClient,
+) : ViewModel() {
     private val _uiState = MutableStateFlow<UiState<TransactionsUiModel>>(UiState.Loading)
     val uiState: StateFlow<UiState<TransactionsUiModel>> = _uiState.asStateFlow()
 
@@ -48,8 +48,14 @@ class TransactionsViewModel : ViewModel() {
     }
 
     fun load() {
-        _uiState.value = UiState.Loading
         viewModelScope.launch(Dispatchers.IO) {
+            val cached = loadFromCache()
+            if (cached != null) {
+                _uiState.value = UiState.Success(cached)
+            } else {
+                _uiState.value = UiState.Loading
+            }
+
             try {
                 refreshAuthToken()
                 val authMe = apiClient.getMe()
@@ -68,7 +74,9 @@ class TransactionsViewModel : ViewModel() {
                 @Suppress("TooGenericExceptionCaught") e: Exception,
             ) {
                 Log.e("TransactionsVM", "Failed to load", e)
-                _uiState.value = UiState.Error(e.message ?: "Unknown error")
+                if (_uiState.value is UiState.Loading) {
+                    _uiState.value = UiState.Error(e.message ?: "Unknown error")
+                }
             }
         }
     }
@@ -144,6 +152,19 @@ class TransactionsViewModel : ViewModel() {
                 Log.e("TransactionsVM", "Failed to delete", e)
             }
         }
+    }
+
+    @Suppress("ReturnCount")
+    private fun loadFromCache(): TransactionsUiModel? {
+        val authMe = apiClient.getCachedMe() ?: return null
+        val page = apiClient.getCachedTransactions(authMe.userId, PAGE_SIZE, null) ?: return null
+        return TransactionsUiModel(
+            userId = authMe.userId,
+            transactions = page.items,
+            hasMore = page.hasMore,
+            nextCursor = page.nextCursor,
+            totalResults = page.totalResults,
+        )
     }
 
     companion object {

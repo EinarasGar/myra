@@ -27,8 +27,9 @@ private const val TAG = "CreateTransactionVM"
 private const val SEARCH_DEBOUNCE_MS = 300L
 private const val SEARCH_PAGE_SIZE = 20u
 
-class CreateTransactionViewModel : ViewModel() {
-    private val apiClient = ApiClient(BuildConfig.API_BASE_URL, 60u)
+class CreateTransactionViewModel(
+    private val apiClient: ApiClient,
+) : ViewModel() {
     private var userId: String? = null
     private var editTransactionId: String? = null
 

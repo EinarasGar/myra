@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -28,10 +29,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -43,8 +47,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.clerk.ui.userbutton.UserButton
+import com.sverto.app.core.SvertoViewModelFactory
 import com.sverto.app.core.navigation.TopLevelRoute
 import com.sverto.app.core.theme.LocalClerkTheme
+import com.sverto.app.core.ui.OfflineBanner
 import com.sverto.app.feature.accounts.AccountsScreen
 import com.sverto.app.feature.portfolio.PortfolioScreen
 import com.sverto.app.feature.transactions.TransactionDetailScreen
@@ -52,6 +58,9 @@ import com.sverto.app.feature.transactions.TransactionsScreen
 import com.sverto.app.feature.transactions.TransactionsViewModel
 import com.sverto.app.feature.transactions.create.CreateTransactionScreen
 import com.sverto.app.feature.transactions.create.apiTypeToConfigKey
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import uniffi.sverto_core.ConnectionStatus
 import uniffi.sverto_core.TransactionListItem
 
 private const val TRANSACTION_DETAIL_ROUTE = "transactionDetail/{txId}"
@@ -66,7 +75,7 @@ private data class TransactionDetailState(
 @Suppress("LongMethod", "ModifierMissing")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
-fun MainScreen(transactionsViewModel: TransactionsViewModel = viewModel()) {
+fun MainScreen(transactionsViewModel: TransactionsViewModel = viewModel(factory = SvertoViewModelFactory)) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -87,6 +96,20 @@ fun MainScreen(transactionsViewModel: TransactionsViewModel = viewModel()) {
         navController.navigate("transactionDetail/${transaction.id}")
     }
 
+    val context = LocalContext.current
+    val apiClient = remember { (context.applicationContext as SvertoApp).apiClient }
+    val connectionStatus = remember { mutableStateOf(ConnectionStatus.ONLINE) }
+
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            val newStatus = apiClient.connectionStatus()
+            if (newStatus != connectionStatus.value) {
+                connectionStatus.value = newStatus
+            }
+            delay(3_000)
+        }
+    }
+
     SharedTransitionLayout {
         val sharedScope = this
 
@@ -94,39 +117,42 @@ fun MainScreen(transactionsViewModel: TransactionsViewModel = viewModel()) {
             modifier = Modifier.fillMaxSize(),
             containerColor = MaterialTheme.colorScheme.surface,
             topBar = {
-                AnimatedVisibility(
-                    visible = isTopLevel,
-                    enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
-                    exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
-                ) {
-                    CenterAlignedTopAppBar(
-                        navigationIcon = {
-                            IconButton(onClick = { /* drawer */ }) {
-                                Icon(Icons.Default.Menu, contentDescription = "Menu")
-                            }
-                        },
-                        title = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_sverto_logo),
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.height(24.dp),
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Text("Sverto")
-                            }
-                        },
-                        actions = {
-                            if (BuildConfig.CLERK_PUBLISHABLE_KEY.isNotBlank()) {
-                                UserButton(clerkTheme = LocalClerkTheme.current)
-                            }
-                        },
-                        colors =
-                            TopAppBarDefaults.topAppBarColors(
-                                containerColor = MaterialTheme.colorScheme.surface,
-                            ),
-                    )
+                Column {
+                    AnimatedVisibility(
+                        visible = isTopLevel,
+                        enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
+                        exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
+                    ) {
+                        CenterAlignedTopAppBar(
+                            navigationIcon = {
+                                IconButton(onClick = { /* drawer */ }) {
+                                    Icon(Icons.Default.Menu, contentDescription = "Menu")
+                                }
+                            },
+                            title = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_sverto_logo),
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.height(24.dp),
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Sverto")
+                                }
+                            },
+                            actions = {
+                                if (BuildConfig.CLERK_PUBLISHABLE_KEY.isNotBlank()) {
+                                    UserButton(clerkTheme = LocalClerkTheme.current)
+                                }
+                            },
+                            colors =
+                                TopAppBarDefaults.topAppBarColors(
+                                    containerColor = MaterialTheme.colorScheme.surface,
+                                ),
+                        )
+                    }
+                    OfflineBanner(status = connectionStatus.value)
                 }
             },
             bottomBar = {

@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sverto.app.core.SvertoViewModelFactory
 import com.sverto.app.core.state.UiState
 import com.sverto.app.core.ui.HoldingsListSkeleton
 import com.sverto.app.core.ui.PortfolioChartSkeleton
@@ -37,7 +38,7 @@ import com.sverto.app.core.ui.PortfolioChartSkeleton
 @Composable
 fun PortfolioScreen(
     modifier: Modifier = Modifier,
-    viewModel: HomeViewModel = viewModel(),
+    viewModel: HomeViewModel = viewModel(factory = SvertoViewModelFactory),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
