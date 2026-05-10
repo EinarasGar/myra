@@ -9,15 +9,17 @@ use crate::api::accounts::extract_accounts;
 use crate::api::assets::extract_assets;
 use crate::api::categories::extract_categories;
 use crate::api::create_transaction::build_request_body;
+use crate::api::create_transaction_group::build_create_group_request_body;
 use crate::api::get_transaction::extract_editable_transaction;
 use crate::api::holdings::extract_holdings;
 use crate::api::transactions::{extract_page, to_list_item_with_id};
 use crate::api::update_transaction::build_update_request_body;
+use crate::api::update_transaction_group::build_update_group_request_body;
 use crate::error::ApiError;
 use crate::models::{
     AccountItem, ApiResponse, AssetItem, AuthMe, CategoryItem, ConnectionStatus,
-    CreateTransactionInput, EditableTransaction, HoldingItem, TransactionListItem,
-    TransactionsPage,
+    CreateTransactionGroupInput, CreateTransactionInput, EditableTransaction, HoldingItem,
+    TransactionListItem, TransactionsPage,
 };
 use shared::view_models::portfolio::get_networth_history::GetNetWorthHistoryResponseViewModel;
 
@@ -323,6 +325,71 @@ impl ApiClient {
         let resp = self
             .delete(format!(
                 "/api/users/{user_id}/transactions/{transaction_id}"
+            ))
+            .await?;
+        if (200..300).contains(&resp.status) {
+            self.clear_cache();
+            Ok(())
+        } else {
+            Err(ApiError::Server {
+                reason: resp.body,
+                status: resp.status,
+            })
+        }
+    }
+
+    pub async fn create_transaction_group(
+        &self,
+        user_id: String,
+        input: CreateTransactionGroupInput,
+    ) -> Result<(), ApiError> {
+        let body = build_create_group_request_body(input)?;
+        let resp = self
+            .post(format!("/api/users/{user_id}/transactions/groups"), body)
+            .await?;
+        if (200..300).contains(&resp.status) {
+            self.clear_cache();
+            Ok(())
+        } else {
+            Err(ApiError::Server {
+                reason: resp.body,
+                status: resp.status,
+            })
+        }
+    }
+
+    pub async fn update_transaction_group(
+        &self,
+        user_id: String,
+        group_id: String,
+        input: CreateTransactionGroupInput,
+    ) -> Result<(), ApiError> {
+        let body = build_update_group_request_body(input)?;
+        let resp = self
+            .put(
+                format!("/api/users/{user_id}/transactions/groups/{group_id}"),
+                body,
+            )
+            .await?;
+        if (200..300).contains(&resp.status) {
+            self.clear_cache();
+            Ok(())
+        } else {
+            Err(ApiError::Server {
+                reason: resp.body,
+                status: resp.status,
+            })
+        }
+    }
+
+    pub async fn delete_transaction_group(
+        &self,
+        user_id: String,
+        group_id: String,
+    ) -> Result<(), ApiError> {
+        let resp = self
+            .delete(format!(
+                "/api/users/{user_id}/transactions/groups/{group_id}"
             ))
             .await?;
         if (200..300).contains(&resp.status) {

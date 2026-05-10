@@ -7,6 +7,7 @@ import com.sverto.app.SvertoApp
 import com.sverto.app.feature.portfolio.HomeViewModel
 import com.sverto.app.feature.transactions.TransactionsViewModel
 import com.sverto.app.feature.transactions.create.CreateTransactionViewModel
+import com.sverto.app.feature.transactions.group.CreateTransactionGroupViewModel
 
 object SvertoViewModelFactory : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
@@ -23,6 +24,8 @@ object SvertoViewModelFactory : ViewModelProvider.Factory {
                 TransactionsViewModel(apiClient) as T
             modelClass.isAssignableFrom(CreateTransactionViewModel::class.java) ->
                 CreateTransactionViewModel(apiClient) as T
+            modelClass.isAssignableFrom(CreateTransactionGroupViewModel::class.java) ->
+                CreateTransactionGroupViewModel(apiClient) as T
             else -> throw IllegalArgumentException("Unknown ViewModel: ${modelClass.name}")
         }
     }

@@ -25,6 +25,16 @@ use crate::error::ApiError;
 use crate::models::CreateTransactionInput;
 
 pub fn build_request_body(input: CreateTransactionInput) -> Result<String, ApiError> {
+    let transaction = build_transaction(input)?;
+    let request = AddIndividualTransactionRequestViewModel { transaction };
+    serde_json::to_string(&request).map_err(|e| ApiError::Parse {
+        reason: e.to_string(),
+    })
+}
+
+pub fn build_transaction(
+    input: CreateTransactionInput,
+) -> Result<TransactionWithEntries, ApiError> {
     let date = OffsetDateTime::from_unix_timestamp(input.date).map_err(|e| ApiError::Parse {
         reason: format!("invalid date: {e}"),
     })?;
@@ -145,10 +155,7 @@ pub fn build_request_body(input: CreateTransactionInput) -> Result<String, ApiEr
         }
     };
 
-    let request = AddIndividualTransactionRequestViewModel { transaction };
-    serde_json::to_string(&request).map_err(|e| ApiError::Parse {
-        reason: e.to_string(),
-    })
+    Ok(transaction)
 }
 
 fn secondary_entry(input: &CreateTransactionInput) -> Result<AccountAssetEntryViewModel, ApiError> {

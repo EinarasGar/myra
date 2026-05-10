@@ -21,6 +21,8 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -49,6 +51,10 @@ private data class GroupPalette(
 private sealed interface GridItem {
     val animIndex: Int
 
+    data class GroupPill(
+        override val animIndex: Int,
+    ) : GridItem
+
     data class Header(
         val label: String,
         val isFirst: Boolean,
@@ -63,11 +69,14 @@ private sealed interface GridItem {
     ) : GridItem
 }
 
-private val flatGridItems: List<GridItem> =
+private fun buildGridItems(showGroupOption: Boolean): List<GridItem> =
     buildList {
         var index = 0
+        if (showGroupOption) {
+            add(GridItem.GroupPill(index++))
+        }
         TransactionTypeGroups.forEachIndexed { groupIndex, group ->
-            add(GridItem.Header(group.label, groupIndex == 0, index++))
+            add(GridItem.Header(group.label, groupIndex == 0 && !showGroupOption, index++))
             group.types.forEachIndexed { indexInGroup, type ->
                 add(GridItem.Card(type, groupIndex, indexInGroup, index++))
             }
@@ -80,6 +89,8 @@ fun NewTransactionSheet(
     onDismiss: () -> Unit,
     onSelectType: (String) -> Unit,
     modifier: Modifier = Modifier,
+    showGroupOption: Boolean = true,
+    onSelectGroup: () -> Unit = {},
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -111,6 +122,7 @@ fun NewTransactionSheet(
             Spacer(Modifier.height(20.dp))
         }
 
+        val gridItems = remember(showGroupOption) { buildGridItems(showGroupOption) }
         val palettes = groupPalettes()
 
         LazyVerticalGrid(
@@ -120,15 +132,17 @@ fun NewTransactionSheet(
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             items(
-                items = flatGridItems,
+                items = gridItems,
                 key = { item ->
                     when (item) {
+                        is GridItem.GroupPill -> "group_pill"
                         is GridItem.Header -> "header_${item.label}"
                         is GridItem.Card -> item.type.key
                     }
                 },
                 span = { item ->
                     when (item) {
+                        is GridItem.GroupPill -> GridItemSpan(2)
                         is GridItem.Header -> GridItemSpan(2)
                         is GridItem.Card -> GridItemSpan(1)
                     }
@@ -136,6 +150,12 @@ fun NewTransactionSheet(
             ) { item ->
                 AnimatedItem(index = item.animIndex) {
                     when (item) {
+                        is GridItem.GroupPill -> {
+                            GroupPillCard(onClick = {
+                                onDismiss()
+                                onSelectGroup()
+                            })
+                        }
                         is GridItem.Header -> GroupHeader(item)
                         is GridItem.Card -> {
                             val palette = palettes[item.groupIndex]
@@ -229,6 +249,56 @@ private fun AnimatedItem(
                 .graphicsLayer { this.translationY = translationY.value },
     ) {
         content()
+    }
+}
+
+@Composable
+private fun GroupPillCard(onClick: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.primaryContainer,
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick),
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier =
+                    Modifier
+                        .size(44.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f),
+                            shape = RoundedCornerShape(14.dp),
+                        ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Layers,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
+            Spacer(Modifier.width(14.dp))
+            Column {
+                Text(
+                    text = "Group",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = "Bundle related transactions together",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                )
+            }
+        }
     }
 }
 

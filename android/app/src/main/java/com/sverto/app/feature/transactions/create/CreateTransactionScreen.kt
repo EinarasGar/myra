@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sverto.app.core.SvertoViewModelFactory
+import com.sverto.app.feature.transactions.group.GroupTransactionItem
 import uniffi.sverto_core.TransactionListItem
 
 private enum class SearchTarget { PRIMARY_ASSET, SECONDARY_ASSET, ORIGIN_ASSET }
@@ -96,6 +97,8 @@ fun CreateTransactionScreen(
     onSuccess: (TransactionListItem?) -> Unit,
     modifier: Modifier = Modifier,
     editTransactionId: String? = null,
+    isGroupMode: Boolean = false,
+    onGroupTransactionReady: ((GroupTransactionItem) -> Unit)? = null,
     viewModel: CreateTransactionViewModel = viewModel(factory = SvertoViewModelFactory),
 ) {
     val config = remember(typeKey) { getTransactionTypeConfig(typeKey) }
@@ -114,6 +117,7 @@ fun CreateTransactionScreen(
     var showAccountPicker by remember { mutableStateOf<AccountTarget?>(null) }
 
     LaunchedEffect(typeKey, editTransactionId) {
+        viewModel.setGroupCallback(onGroupTransactionReady)
         if (editTransactionId == null) {
             viewModel.init()
         } else {
@@ -143,6 +147,7 @@ fun CreateTransactionScreen(
                             formState = formState,
                             submitState = submitState,
                             isEditMode = editTransactionId != null,
+                            isGroupMode = isGroupMode,
                             snackbarHostState = snackbarHostState,
                             sharedScope = sharedScope,
                             animatedVisibilityScope = avScope,
@@ -261,6 +266,7 @@ private fun CreateTransactionForm(
     formState: TransactionFormState,
     submitState: SubmitState,
     isEditMode: Boolean,
+    isGroupMode: Boolean,
     snackbarHostState: SnackbarHostState,
     sharedScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
@@ -304,6 +310,7 @@ private fun CreateTransactionForm(
             SaveBar(
                 submitState = submitState,
                 isEditMode = isEditMode,
+                isGroupMode = isGroupMode,
                 onSubmit = onSubmit,
             )
         },
@@ -611,6 +618,7 @@ private fun DescriptionField(
 private fun SaveBar(
     submitState: SubmitState,
     isEditMode: Boolean,
+    isGroupMode: Boolean = false,
     onSubmit: () -> Unit,
 ) {
     Surface(
@@ -656,7 +664,13 @@ private fun SaveBar(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            text = if (isEditMode) "Update transaction" else "Save transaction",
+                            text =
+                                when {
+                                    isGroupMode && isEditMode -> "Update"
+                                    isGroupMode -> "Add to Group"
+                                    isEditMode -> "Update transaction"
+                                    else -> "Save transaction"
+                                },
                             style = MaterialTheme.typography.titleMedium,
                         )
                     }

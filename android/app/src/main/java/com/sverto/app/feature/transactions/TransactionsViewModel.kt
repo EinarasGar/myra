@@ -154,6 +154,25 @@ class TransactionsViewModel(
         }
     }
 
+    fun deleteTransactionGroup(
+        groupId: String,
+        onSuccess: () -> Unit,
+    ) {
+        val current = (_uiState.value as? UiState.Success)?.data ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                refreshAuthToken()
+                apiClient.deleteTransactionGroup(current.userId, groupId)
+                refresh()
+                onSuccess()
+            } catch (
+                @Suppress("TooGenericExceptionCaught") e: Exception,
+            ) {
+                Log.e("TransactionsVM", "Failed to delete group", e)
+            }
+        }
+    }
+
     @Suppress("ReturnCount")
     private fun loadFromCache(): TransactionsUiModel? {
         val authMe = apiClient.getCachedMe() ?: return null

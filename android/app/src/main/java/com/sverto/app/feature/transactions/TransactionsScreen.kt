@@ -81,6 +81,7 @@ import java.util.Locale
 fun TransactionsScreen(
     onTransactionClick: (TransactionListItem) -> Unit,
     onCreateTransaction: (String) -> Unit,
+    onCreateGroup: () -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier,
@@ -134,6 +135,10 @@ fun TransactionsScreen(
             onSelectType = { typeKey ->
                 showNewTransactionSheet = false
                 onCreateTransaction(typeKey)
+            },
+            onSelectGroup = {
+                showNewTransactionSheet = false
+                onCreateGroup()
             },
         )
     }

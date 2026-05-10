@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.clerk.api.Clerk
 import com.clerk.api.network.serialization.ClerkResult
 import com.sverto.app.BuildConfig
+import com.sverto.app.feature.transactions.group.GroupTransactionItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -32,6 +33,12 @@ class CreateTransactionViewModel(
 ) : ViewModel() {
     private var userId: String? = null
     private var editTransactionId: String? = null
+
+    private var groupTransactionCallback: ((GroupTransactionItem) -> Unit)? = null
+
+    fun setGroupCallback(callback: ((GroupTransactionItem) -> Unit)?) {
+        groupTransactionCallback = callback
+    }
 
     private val _accounts = MutableStateFlow<List<AccountItem>>(emptyList())
     val accounts: StateFlow<List<AccountItem>> = _accounts.asStateFlow()
@@ -85,7 +92,7 @@ class CreateTransactionViewModel(
             try {
                 val me = loadSessionContext()
                 val editable = apiClient.getIndividualTransaction(me.userId, transactionId)
-                _formState.value = editable.toFormState()
+                _formState.value = editable.toFormState(transactionId = transactionId)
             } catch (
                 @Suppress("TooGenericExceptionCaught") e: Exception,
             ) {
@@ -93,6 +100,52 @@ class CreateTransactionViewModel(
                 _errorMessage.value = e.message ?: "Unknown error"
             } finally {
                 _isLoading.value = false
+            }
+        }
+    }
+
+    fun initForGroupEdit(
+        existingInput: CreateTransactionInput,
+        displayData: GroupEditDisplayData,
+    ) {
+        editTransactionId = existingInput.transactionId
+        resetUiState()
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                loadSessionContext()
+                _formState.value =
+                    TransactionFormState(
+                        transactionId = existingInput.transactionId,
+                        date = existingInput.date,
+                        description = existingInput.description.orEmpty(),
+                        categoryId = existingInput.categoryId,
+                        categoryName = displayData.categoryName,
+                        originAssetId = existingInput.originAssetId,
+                        originAssetDisplay = displayData.originAssetDisplay,
+                        primaryEntry =
+                            EntryFormState(
+                                entryId = existingInput.primaryEntryId,
+                                accountId = existingInput.primaryAccountId,
+                                accountName = displayData.primaryAccountName,
+                                assetId = existingInput.primaryAssetId,
+                                assetDisplay = displayData.primaryAssetDisplay,
+                                amount = editableAmount(existingInput.primaryAmount),
+                            ),
+                        secondaryEntry =
+                            EntryFormState(
+                                entryId = existingInput.secondaryEntryId,
+                                accountId = existingInput.secondaryAccountId,
+                                accountName = displayData.secondaryAccountName.orEmpty(),
+                                assetId = existingInput.secondaryAssetId,
+                                assetDisplay = displayData.secondaryAssetDisplay.orEmpty(),
+                                amount = existingInput.secondaryAmount?.let(::editableAmount).orEmpty(),
+                            ),
+                    )
+            } catch (
+                @Suppress("TooGenericExceptionCaught") e: Exception,
+            ) {
+                Log.e(TAG, "Group edit init failed", e)
+                _errorMessage.value = e.message ?: "Failed to load transaction"
             }
         }
     }
@@ -248,40 +301,61 @@ class CreateTransactionViewModel(
     }
 
     fun submit(config: TransactionTypeConfig) {
-        val uid = userId ?: return
-        val input =
-            buildInput(config, _formState.value) ?: run {
+        val uid = userId
+        val input = buildInput(config, _formState.value)
+        if (uid == null || input == null) {
+            if (input == null) {
                 _errorMessage.value = "Missing required fields"
-                return
             }
-        _submitState.value = SubmitState.SUBMITTING
-        _errorMessage.value = null
+            return
+        }
 
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                refreshAuthToken()
-                val transactionId = editTransactionId
-                _submittedTransaction.value =
-                    if (transactionId == null) {
-                        apiClient.createIndividualTransaction(uid, input)
-                        null
-                    } else {
-                        apiClient.updateIndividualTransaction(uid, transactionId, input)
-                    }
-                _submitState.value = SubmitState.SUCCESS
-            } catch (
-                @Suppress("TooGenericExceptionCaught") e: Exception,
-            ) {
-                Log.e(TAG, "Submit failed", e)
-                _errorMessage.value = e.message ?: "Unknown error"
-                _submitState.value = SubmitState.IDLE
+        val callback = groupTransactionCallback
+        if (callback != null) {
+            _submitState.value = SubmitState.SUBMITTING
+            val state = _formState.value
+            callback(
+                GroupTransactionItem(
+                    input = input,
+                    descriptionDisplay = state.description.ifBlank { config.label },
+                    typeLabel = config.label,
+                    amountDisplay = formatAmount(input),
+                    accountName = state.primaryEntry.accountName,
+                    assetDisplay = state.primaryEntry.assetDisplay,
+                ),
+            )
+            _submitState.value = SubmitState.SUCCESS
+        } else {
+            _submitState.value = SubmitState.SUBMITTING
+            _errorMessage.value = null
+
+            viewModelScope.launch(Dispatchers.IO) {
+                try {
+                    refreshAuthToken()
+                    val transactionId = editTransactionId
+                    _submittedTransaction.value =
+                        if (transactionId == null) {
+                            apiClient.createIndividualTransaction(uid, input)
+                            null
+                        } else {
+                            apiClient.updateIndividualTransaction(uid, transactionId, input)
+                        }
+                    _submitState.value = SubmitState.SUCCESS
+                } catch (
+                    @Suppress("TooGenericExceptionCaught") e: Exception,
+                ) {
+                    Log.e(TAG, "Submit failed", e)
+                    _errorMessage.value = e.message ?: "Unknown error"
+                    _submitState.value = SubmitState.IDLE
+                }
             }
         }
     }
 }
 
-private fun EditableTransaction.toFormState(): TransactionFormState =
+private fun EditableTransaction.toFormState(transactionId: String? = null): TransactionFormState =
     TransactionFormState(
+        transactionId = transactionId,
         date = date,
         description = description,
         categoryId = categoryId,
@@ -342,6 +416,7 @@ private fun buildInput(
     }
 
     return CreateTransactionInput(
+        transactionId = state.transactionId,
         typeKey = config.apiType,
         date = date,
         primaryEntryId = state.primaryEntry.entryId,
@@ -375,3 +450,5 @@ private fun signedAmount(
         AmountSign.ANY -> parsed
     }
 }
+
+private fun formatAmount(input: CreateTransactionInput): String = editableAmount(input.primaryAmount)

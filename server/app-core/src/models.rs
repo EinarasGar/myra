@@ -36,6 +36,7 @@ pub struct TransactionListItem {
     pub account_name: String,
     pub asset_display: String,
     pub category_name: String,
+    pub category_id: Option<i32>,
     pub is_group: bool,
     pub group_size: u32,
     pub children: Vec<TransactionListItem>,
@@ -108,6 +109,7 @@ pub struct EditableTransaction {
 /// type may be left as `None`.
 #[derive(Debug, Clone, uniffi::Record)]
 pub struct CreateTransactionInput {
+    pub transaction_id: Option<String>,
     pub type_key: String,
     pub date: i64,
     pub primary_entry_id: Option<i32>,
@@ -121,4 +123,12 @@ pub struct CreateTransactionInput {
     pub origin_asset_id: Option<i32>,
     pub category_id: Option<i32>,
     pub description: Option<String>,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct CreateTransactionGroupInput {
+    pub date: i64,
+    pub description: String,
+    pub category_id: i32,
+    pub transactions: Vec<CreateTransactionInput>,
 }
