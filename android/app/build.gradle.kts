@@ -264,6 +264,7 @@ dependencies {
     // Navigation
     implementation(libs.navigation.compose)
 
+
     // JNA is required by UniFFI-generated Kotlin code to call into native libraries
     implementation(libs.jna) { artifact { type = "aar" } }
 

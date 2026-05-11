@@ -17,6 +17,7 @@ data class GroupTransactionItem(
     val amountDisplay: String,
     val accountName: String,
     val assetDisplay: String,
+    val categoryName: String = "",
 )
 
 enum class GroupSubmitState {

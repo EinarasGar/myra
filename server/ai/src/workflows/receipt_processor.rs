@@ -38,15 +38,15 @@ After gathering information, produce your final output as a structured JSON obje
 If the receipt has multiple distinct items with different categories, output a transaction_group.
 If it's a single purchase or all items share the same category, output a single transaction.
 
-Each transaction has exactly ONE entry — the account the money was spent from, the amount (as a positive number), and the asset (currency). The system handles the accounting automatically.
+Each transaction has exactly ONE entry — the account the money was spent from, the amount, and the asset (currency). The amount must be negative to represent cash going out (e.g. "-73.59" for a purchase). The system handles the accounting automatically.
 
 Your final message MUST be ONLY a valid JSON object (no markdown, no explanation) with this structure:
 
 For a single transaction:
-{"proposal_type":"transaction","proposal":{"description":"...","date":"YYYY-MM-DD","account_id":"uuid","amount":"X.XX","asset_id":N,"category_id":N}}
+{"proposal_type":"transaction","proposal":{"description":"...","date":"YYYY-MM-DD","account_id":"uuid","amount":"-X.XX","asset_id":N,"category_id":N}}
 
 For a transaction group:
-{"proposal_type":"transaction_group","proposal":{"description":"...","date":"YYYY-MM-DD","category_id":N,"transactions":[{"description":"...","date":"YYYY-MM-DD","account_id":"uuid","amount":"X.XX","asset_id":N,"category_id":N}]}}
+{"proposal_type":"transaction_group","proposal":{"description":"...","date":"YYYY-MM-DD","category_id":N,"transactions":[{"description":"...","date":"YYYY-MM-DD","account_id":"uuid","amount":"-X.XX","asset_id":N,"category_id":N}]}}
 
 If you cannot determine a field, set it to null.
 "#;

@@ -1,5 +1,9 @@
 package com.sverto.app
 
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
@@ -31,6 +35,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -41,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -60,6 +66,7 @@ import com.sverto.app.feature.portfolio.PortfolioScreen
 import com.sverto.app.feature.transactions.TransactionDetailScreen
 import com.sverto.app.feature.transactions.TransactionsScreen
 import com.sverto.app.feature.transactions.TransactionsViewModel
+import com.sverto.app.feature.transactions.create.CorrectionTypeChange
 import com.sverto.app.feature.transactions.create.CreateTransactionScreen
 import com.sverto.app.feature.transactions.create.CreateTransactionViewModel
 import com.sverto.app.feature.transactions.create.GroupEditDisplayData
@@ -67,8 +74,8 @@ import com.sverto.app.feature.transactions.create.apiTypeToConfigKey
 import com.sverto.app.feature.transactions.group.CreateTransactionGroupScreen
 import com.sverto.app.feature.transactions.group.CreateTransactionGroupViewModel
 import com.sverto.app.feature.transactions.group.GroupTransactionItem
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
+import com.sverto.app.feature.transactions.quickupload.QuickUploadViewModel
+import com.sverto.app.feature.transactions.quickupload.QuickUploadUiItem
 import uniffi.sverto_core.ConnectionStatus
 import uniffi.sverto_core.TransactionListItem
 
@@ -88,16 +95,52 @@ private data class TransactionDetailState(
 @Suppress("LongMethod", "ModifierMissing", "ViewModelForwarding")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
-fun MainScreen(transactionsViewModel: TransactionsViewModel = viewModel(factory = SvertoViewModelFactory)) {
+fun MainScreen(
+    transactionsViewModel: TransactionsViewModel = viewModel(factory = SvertoViewModelFactory),
+    quickUploadViewModel: QuickUploadViewModel = viewModel(factory = SvertoViewModelFactory),
+) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val isTopLevel = TopLevelRoute.entries.any { it.route == currentRoute }
 
-    // Cache transactions by ID so each detail route instance reads its own data
     val transactionCache = remember { mutableMapOf<String, TransactionDetailState>() }
     val pendingGroupTransaction = remember { mutableStateOf<GroupTransactionItem?>(null) }
-    val editingGroupTransaction = remember { mutableStateOf<Pair<Int, GroupTransactionItem>?>(null) }
+    val editingGroupIndex = remember { mutableStateOf<Int?>(null) }
+
+    val quickUploadItems by quickUploadViewModel.items.collectAsStateWithLifecycle()
+
+    val context = LocalContext.current
+    val appStore = remember { (context.applicationContext as SvertoApp).appStore }
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        Log.d("MainScreen", "Photo picker result: uri=$uri")
+        if (uri != null) {
+            val contentResolver = context.contentResolver
+            val mimeType = contentResolver.getType(uri) ?: "image/jpeg"
+            val inputStream = contentResolver.openInputStream(uri)
+            val imageBytes = inputStream?.readBytes()
+            inputStream?.close()
+            Log.d("MainScreen", "Image bytes: ${imageBytes?.size}, mimeType=$mimeType")
+            if (imageBytes != null && imageBytes.size <= 10 * 1024 * 1024) {
+                val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                if (bitmap != null) {
+                    val thumbWidth = 200
+                    val thumbHeight = (bitmap.height * thumbWidth / bitmap.width.coerceAtLeast(1))
+                    val thumbBitmap = android.graphics.Bitmap.createScaledBitmap(bitmap, thumbWidth, thumbHeight, true)
+                    val thumbStream = java.io.ByteArrayOutputStream()
+                    thumbBitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 60, thumbStream)
+                    val thumbnailBytes = thumbStream.toByteArray()
+                    Log.d("MainScreen", "Queuing upload, thumbnail=${thumbnailBytes.size}")
+                    quickUploadViewModel.queueUpload(imageBytes, thumbnailBytes, mimeType)
+                } else {
+                    Log.e("MainScreen", "BitmapFactory.decodeByteArray returned null")
+                }
+            }
+        }
+    }
 
     fun navigateToDetail(
         transaction: TransactionListItem,
@@ -111,17 +154,17 @@ fun MainScreen(transactionsViewModel: TransactionsViewModel = viewModel(factory 
         navController.navigate("transactionDetail/${transaction.id}")
     }
 
-    val context = LocalContext.current
-    val apiClient = remember { (context.applicationContext as SvertoApp).apiClient }
     val connectionStatus = remember { mutableStateOf(ConnectionStatus.ONLINE) }
 
-    LaunchedEffect(Unit) {
-        while (isActive) {
-            val newStatus = apiClient.connectionStatus()
-            if (newStatus != connectionStatus.value) {
-                connectionStatus.value = newStatus
+    DisposableEffect(Unit) {
+        val observer = object : uniffi.sverto_core.ConnectionObserver {
+            override fun onConnectionStatusChanged(status: ConnectionStatus) {
+                connectionStatus.value = status
             }
-            delay(3_000)
+        }
+        appStore.observeConnection(observer)
+        onDispose {
+            appStore.unobserveConnection()
         }
     }
 
@@ -213,9 +256,23 @@ fun MainScreen(transactionsViewModel: TransactionsViewModel = viewModel(factory 
                 innerPadding = innerPadding,
                 sharedScope = sharedScope,
                 transactionsViewModel = transactionsViewModel,
+                quickUploadItems = quickUploadItems,
+                photoPickerLauncher = photoPickerLauncher,
+                onQuickUploadItemClick = { item ->
+                    val route = if (item.proposalType == "transaction_group") {
+                        "createTransactionGroup?quickUploadId=${item.id}"
+                    } else {
+                        "createTransaction/regular_transaction?quickUploadId=${item.id}"
+                    }
+                    navController.navigate(route)
+                },
+                onQuickUploadRetry = { quickUploadViewModel.retry(it) },
+                onQuickUploadDismiss = { quickUploadViewModel.dismiss(it) },
+                onRefreshQuickUploads = { quickUploadViewModel.refresh() },
+                onProposalCompleted = { quickUploadViewModel.onProposalCompleted(it) },
                 transactionCache = transactionCache,
                 pendingGroupTransaction = pendingGroupTransaction,
-                editingGroupTransaction = editingGroupTransaction,
+                editingGroupIndex = editingGroupIndex,
                 onNavigateToDetail = ::navigateToDetail,
             )
         }
@@ -236,9 +293,16 @@ private fun MainNavGraph(
     innerPadding: PaddingValues,
     sharedScope: SharedTransitionScope,
     transactionsViewModel: TransactionsViewModel,
+    quickUploadItems: List<QuickUploadUiItem>,
+    photoPickerLauncher: androidx.activity.result.ActivityResultLauncher<PickVisualMediaRequest>,
+    onQuickUploadItemClick: (QuickUploadUiItem) -> Unit,
+    onQuickUploadRetry: (String) -> Unit,
+    onQuickUploadDismiss: (String) -> Unit,
+    onRefreshQuickUploads: () -> Unit,
+    onProposalCompleted: (String) -> Unit,
     transactionCache: MutableMap<String, TransactionDetailState>,
     pendingGroupTransaction: MutableState<GroupTransactionItem?>,
-    editingGroupTransaction: MutableState<Pair<Int, GroupTransactionItem>?>,
+    editingGroupIndex: MutableState<Int?>,
     onNavigateToDetail: (TransactionListItem, Boolean) -> Unit,
 ) {
     NavHost(
@@ -272,6 +336,14 @@ private fun MainNavGraph(
                 onCreateGroup = {
                     navController.navigate("createTransactionGroup")
                 },
+                onQuickUpload = {
+                    photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                },
+                quickUploadItems = quickUploadItems,
+                onQuickUploadItemClick = onQuickUploadItemClick,
+                onQuickUploadRetry = onQuickUploadRetry,
+                onQuickUploadDismiss = onQuickUploadDismiss,
+                onRefreshQuickUploads = onRefreshQuickUploads,
                 sharedTransitionScope = sharedScope,
                 animatedVisibilityScope = this@composable,
                 viewModel = transactionsViewModel,
@@ -330,16 +402,33 @@ private fun MainNavGraph(
             }
         }
         composable(
-            route = CREATE_TRANSACTION_ROUTE,
-            arguments = listOf(navArgument("typeKey") { type = NavType.StringType }),
+            route = "createTransaction/{typeKey}?quickUploadId={quickUploadId}",
+            arguments = listOf(
+                navArgument("typeKey") { type = NavType.StringType },
+                navArgument("quickUploadId") { type = NavType.StringType; nullable = true; defaultValue = null },
+            ),
         ) { backStackEntry ->
             val typeKey = backStackEntry.arguments?.getString("typeKey") ?: return@composable
+            val quickUploadId = backStackEntry.arguments?.getString("quickUploadId")
             CreateTransactionScreen(
                 typeKey = typeKey,
+                quickUploadId = quickUploadId,
                 onDiscard = { navController.popBackStack() },
                 onSuccess = { _ ->
                     transactionsViewModel.refresh()
+                    if (quickUploadId != null) {
+                        onProposalCompleted(quickUploadId)
+                    }
                     navController.popBackStack()
+                },
+                onCorrectionTypeChanged = { change ->
+                    navController.popBackStack()
+                    val route = if (change.newProposalType == "transaction_group") {
+                        "createTransactionGroup?quickUploadId=${change.quickUploadId}"
+                    } else {
+                        "createTransaction/${change.newProposalType}?quickUploadId=${change.quickUploadId}"
+                    }
+                    navController.navigate(route)
                 },
             )
         }
@@ -371,16 +460,28 @@ private fun MainNavGraph(
                 },
             )
         }
-        composable(route = CREATE_GROUP_ROUTE) {
+        composable(
+            route = "createTransactionGroup?quickUploadId={quickUploadId}",
+            arguments = listOf(
+                navArgument("quickUploadId") { type = NavType.StringType; nullable = true; defaultValue = null },
+            ),
+        ) { backStackEntry ->
+            val quickUploadId = backStackEntry.arguments?.getString("quickUploadId")
             val pending = pendingGroupTransaction.value
             val vm: CreateTransactionGroupViewModel = viewModel(factory = SvertoViewModelFactory)
 
+            LaunchedEffect(quickUploadId) {
+                if (quickUploadId != null) {
+                    vm.initFromProposal(quickUploadId)
+                }
+            }
+
             LaunchedEffect(pending) {
                 if (pending != null) {
-                    val editing = editingGroupTransaction.value
-                    if (editing != null) {
-                        vm.updateTransaction(editing.first, pending)
-                        editingGroupTransaction.value = null
+                    val idx = editingGroupIndex.value
+                    if (idx != null) {
+                        vm.updateTransaction(idx, pending)
+                        editingGroupIndex.value = null
                     } else {
                         vm.addTransaction(pending)
                     }
@@ -389,20 +490,30 @@ private fun MainNavGraph(
             }
 
             CreateTransactionGroupScreen(
+                quickUploadId = quickUploadId,
                 onDiscard = { navController.popBackStack() },
                 onSuccess = {
                     transactionsViewModel.refresh()
+                    if (quickUploadId != null) {
+                        onProposalCompleted(quickUploadId)
+                    }
                     navController.popBackStack()
                 },
                 onAddTransaction = { typeKey ->
                     navController.navigate("groupAddTransaction/$typeKey")
                 },
                 onEditTransaction = { index, typeKey ->
-                    val items = vm.formState.value.transactions
-                    if (index in items.indices) {
-                        editingGroupTransaction.value = Pair(index, items[index])
-                        navController.navigate("groupEditTransaction/$typeKey/$index")
+                    editingGroupIndex.value = index
+                    navController.navigate("groupEditTransaction/$typeKey/$index")
+                },
+                onCorrectionTypeChanged = { change ->
+                    navController.popBackStack()
+                    val route = if (change.newProposalType == "transaction_group") {
+                        "createTransactionGroup?quickUploadId=${change.quickUploadId}"
+                    } else {
+                        "createTransaction/regular_transaction?quickUploadId=${change.quickUploadId}"
                     }
+                    navController.navigate(route)
                 },
                 viewModel = vm,
             )
@@ -418,10 +529,10 @@ private fun MainNavGraph(
 
             LaunchedEffect(pending) {
                 if (pending != null) {
-                    val editing = editingGroupTransaction.value
-                    if (editing != null) {
-                        vm.updateTransaction(editing.first, pending)
-                        editingGroupTransaction.value = null
+                    val idx = editingGroupIndex.value
+                    if (idx != null) {
+                        vm.updateTransaction(idx, pending)
+                        editingGroupIndex.value = null
                     } else {
                         vm.addTransaction(pending)
                     }
@@ -442,11 +553,8 @@ private fun MainNavGraph(
                     navController.navigate("groupAddTransaction/$typeKey")
                 },
                 onEditTransaction = { index, typeKey ->
-                    val items = vm.formState.value.transactions
-                    if (index in items.indices) {
-                        editingGroupTransaction.value = Pair(index, items[index])
-                        navController.navigate("groupEditTransaction/$typeKey/$index")
-                    }
+                    editingGroupIndex.value = index
+                    navController.navigate("groupEditTransaction/$typeKey/$index")
                 },
                 viewModel = vm,
             )
@@ -476,33 +584,32 @@ private fun MainNavGraph(
         ) { backStackEntry ->
             val typeKey = backStackEntry.arguments?.getString("typeKey") ?: return@composable
             val index = backStackEntry.arguments?.getInt("index") ?: return@composable
-            val existing = editingGroupTransaction.value
-            if (existing != null && existing.first == index) {
-                val item = existing.second
-                val vm: CreateTransactionViewModel = viewModel(factory = SvertoViewModelFactory)
 
-                LaunchedEffect(Unit) {
-                    vm.setGroupCallback { pendingGroupTransaction.value = it }
-                    vm.initForGroupEdit(
-                        item.input,
-                        GroupEditDisplayData(
-                            categoryName = "",
-                            primaryAccountName = item.accountName,
-                            primaryAssetDisplay = item.assetDisplay,
-                        ),
-                    )
-                }
+            val parentEntry = remember(backStackEntry) { navController.previousBackStackEntry }
+            val groupVm: CreateTransactionGroupViewModel? = parentEntry?.let {
+                viewModel(it, factory = SvertoViewModelFactory)
+            }
+            val item = remember { groupVm?.formState?.value?.transactions?.getOrNull(index) }
+
+            if (item != null) {
+                val vm: CreateTransactionViewModel = viewModel(factory = SvertoViewModelFactory)
+                vm.initForGroupEdit(
+                    item.input,
+                    GroupEditDisplayData(
+                        categoryName = item.categoryName,
+                        primaryAccountName = item.accountName,
+                        primaryAssetDisplay = item.assetDisplay,
+                    ),
+                )
 
                 CreateTransactionScreen(
                     typeKey = typeKey,
                     isGroupMode = true,
                     editTransactionId = item.input.transactionId,
-                    onDiscard = {
-                        editingGroupTransaction.value = null
-                        navController.popBackStack()
-                    },
+                    onDiscard = { navController.popBackStack() },
                     onSuccess = { navController.popBackStack() },
                     viewModel = vm,
+                    onGroupTransactionReady = { pendingGroupTransaction.value = it },
                 )
             } else {
                 LaunchedEffect(Unit) { navController.popBackStack() }

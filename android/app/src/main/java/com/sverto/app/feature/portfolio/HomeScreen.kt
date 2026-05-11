@@ -30,7 +30,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sverto.app.core.SvertoViewModelFactory
-import com.sverto.app.core.state.UiState
 import com.sverto.app.core.ui.HoldingsListSkeleton
 import com.sverto.app.core.ui.PortfolioChartSkeleton
 
@@ -40,7 +39,7 @@ fun PortfolioScreen(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel(factory = SvertoViewModelFactory),
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
     val pullToRefreshState = rememberPullToRefreshState()
@@ -68,21 +67,29 @@ fun PortfolioScreen(
         ) {
             Spacer(Modifier.height(8.dp))
 
-            when (val state = uiState) {
-                is UiState.Loading -> {
+            when {
+                state.isLoading && state.holdings.isEmpty() -> {
                     PortfolioChartSkeleton()
                     HoldingsListSkeleton()
                 }
 
-                is UiState.Error -> {
-                    ErrorState(message = state.message, onRetry = viewModel::load)
+                state.error != null && state.holdings.isEmpty() -> {
+                    ErrorState(message = state.error!!, onRetry = viewModel::load)
                 }
 
-                is UiState.Success -> {
-                    if (state.data.portfolioData.isNotEmpty()) {
-                        PortfolioChart(portfolioData = state.data.portfolioData)
+                else -> {
+                    val portfolioData: Map<TimePeriod, List<ChartPoint>> = state.chartData
+                        .mapNotNull { period ->
+                            val tp = TimePeriod.entries.find { it.label == period.period }
+                                ?: return@mapNotNull null
+                            tp to period.points.map { ChartPoint(it.timestamp, it.value) }
+                        }
+                        .toMap()
+
+                    if (portfolioData.isNotEmpty()) {
+                        PortfolioChart(portfolioData = portfolioData)
                     }
-                    HoldingsList(holdings = state.data.holdings)
+                    HoldingsList(holdings = state.holdings)
                 }
             }
 

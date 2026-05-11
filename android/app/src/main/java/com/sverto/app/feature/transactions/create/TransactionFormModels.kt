@@ -32,6 +32,11 @@ enum class SubmitState {
     SUCCESS,
 }
 
+data class CorrectionTypeChange(
+    val quickUploadId: String,
+    val newProposalType: String,
+)
+
 data class GroupEditDisplayData(
     val categoryName: String = "",
     val originAssetDisplay: String = "",

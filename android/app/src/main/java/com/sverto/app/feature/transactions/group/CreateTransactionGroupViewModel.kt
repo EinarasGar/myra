@@ -3,11 +3,11 @@ package com.sverto.app.feature.transactions.group
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.clerk.api.Clerk
-import com.clerk.api.network.serialization.ClerkResult
-import com.sverto.app.BuildConfig
+import com.sverto.app.feature.transactions.create.CorrectionState
+import com.sverto.app.feature.transactions.create.CorrectionTypeChange
 import com.sverto.app.feature.transactions.create.apiTypeToConfigKey
 import com.sverto.app.feature.transactions.create.getTransactionTypeConfig
+import com.sverto.app.feature.transactions.quickupload.proposalToGroupFormState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import uniffi.sverto_core.ApiClient
+import uniffi.sverto_core.AppStore
 import uniffi.sverto_core.CategoryItem
 import uniffi.sverto_core.CreateTransactionGroupInput
 import uniffi.sverto_core.CreateTransactionInput
@@ -26,12 +26,10 @@ import java.math.BigDecimal
 
 private const val TAG = "CreateGroupVM"
 private const val SEARCH_DEBOUNCE_MS = 300L
-private const val SEARCH_PAGE_SIZE = 20u
 
 class CreateTransactionGroupViewModel(
-    private val apiClient: ApiClient,
+    private val store: AppStore,
 ) : ViewModel() {
-    private var userId: String? = null
     private var editGroupId: String? = null
     private var initialized = false
 
@@ -50,6 +48,15 @@ class CreateTransactionGroupViewModel(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    private val _quickUploadId = MutableStateFlow<String?>(null)
+    val quickUploadId: StateFlow<String?> = _quickUploadId.asStateFlow()
+
+    private val _correctionState = MutableStateFlow(CorrectionState.IDLE)
+    val correctionState: StateFlow<CorrectionState> = _correctionState.asStateFlow()
+
+    private val _correctionTypeChange = MutableStateFlow<CorrectionTypeChange?>(null)
+    val correctionTypeChange: StateFlow<CorrectionTypeChange?> = _correctionTypeChange.asStateFlow()
+
     private var categorySearchJob: Job? = null
 
     fun init() {
@@ -61,16 +68,6 @@ class CreateTransactionGroupViewModel(
         _categoryResults.value = emptyList()
         _isLoading.value = false
         _formState.value = GroupFormState(date = System.currentTimeMillis() / 1000)
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                loadSessionContext()
-            } catch (
-                @Suppress("TooGenericExceptionCaught") e: Exception,
-            ) {
-                Log.e(TAG, "Init failed", e)
-                _errorMessage.value = e.message ?: "Failed to initialize"
-            }
-        }
     }
 
     fun initForEdit(group: TransactionListItem) {
@@ -92,12 +89,11 @@ class CreateTransactionGroupViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val me = loadSessionContext()
                 val items =
                     group.children
                         .map { child ->
                             async {
-                                val editable = apiClient.getIndividualTransaction(me.userId, child.id)
+                                val editable = store.getEditableTransaction(child.id)
                                 val config = getTransactionTypeConfig(apiTypeToConfigKey(editable.typeKey))
                                 GroupTransactionItem(
                                     input =
@@ -126,6 +122,7 @@ class CreateTransactionGroupViewModel(
                                             .toPlainString(),
                                     accountName = editable.primaryAccountName,
                                     assetDisplay = editable.primaryAssetDisplay,
+                                    categoryName = editable.categoryName,
                                 )
                             }
                         }.awaitAll()
@@ -141,19 +138,56 @@ class CreateTransactionGroupViewModel(
         }
     }
 
-    private suspend fun refreshAuthToken() {
-        if (BuildConfig.CLERK_PUBLISHABLE_KEY.isBlank()) return
-        when (val result = Clerk.auth.getToken()) {
-            is ClerkResult.Success -> apiClient.setAuthToken(result.value)
-            is ClerkResult.Failure -> Log.e(TAG, "Auth failed: ${result.error}")
+    fun initFromProposal(quickUploadId: String) {
+        if (initialized) return
+        initialized = true
+        editGroupId = null
+        _submitState.value = GroupSubmitState.IDLE
+        _errorMessage.value = null
+        _categoryResults.value = emptyList()
+        _isLoading.value = true
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val detail = store.getQuickUploadDetail(quickUploadId)
+                val formState = proposalToGroupFormState(
+                    detail.proposalData ?: "{}",
+                    detail.lookupTables,
+                )
+                _formState.value = formState
+                _quickUploadId.value = quickUploadId
+            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                Log.e(TAG, "Proposal init failed", e)
+                _errorMessage.value = e.message ?: "Failed to load proposal"
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
-    private suspend fun loadSessionContext(): uniffi.sverto_core.AuthMe {
-        refreshAuthToken()
-        val me = apiClient.getMe()
-        userId = me.userId
-        return me
+    fun sendCorrection(message: String) {
+        val uploadId = _quickUploadId.value ?: return
+        _correctionState.value = CorrectionState.SENDING
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val detail = store.sendQuickUploadCorrection(uploadId, message)
+                if (detail.proposalType != null && detail.proposalType != "transaction_group") {
+                    _correctionState.value = CorrectionState.IDLE
+                    _correctionTypeChange.value = CorrectionTypeChange(uploadId, detail.proposalType!!)
+                    return@launch
+                }
+                _formState.value = proposalToGroupFormState(
+                    detail.proposalData ?: "{}",
+                    detail.lookupTables,
+                )
+                _correctionState.value = CorrectionState.UPDATED
+                delay(2000)
+                _correctionState.value = CorrectionState.IDLE
+            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                Log.e(TAG, "Correction failed", e)
+                _correctionState.value = CorrectionState.IDLE
+            }
+        }
     }
 
     fun updateDate(millis: Long) {
@@ -183,8 +217,7 @@ class CreateTransactionGroupViewModel(
             viewModelScope.launch(Dispatchers.IO) {
                 delay(SEARCH_DEBOUNCE_MS)
                 try {
-                    _categoryResults.value =
-                        apiClient.searchCategories(query, SEARCH_PAGE_SIZE, 0u)
+                    _categoryResults.value = store.searchCategories(query)
                 } catch (
                     @Suppress("TooGenericExceptionCaught") e: Exception,
                 ) {
@@ -247,14 +280,16 @@ class CreateTransactionGroupViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                if (userId == null) loadSessionContext()
-                val uid = checkNotNull(userId) { "Session not ready" }
-                refreshAuthToken()
                 val groupId = editGroupId
                 if (groupId == null) {
-                    apiClient.createTransactionGroup(uid, input)
+                    store.createTransactionGroup(input)
                 } else {
-                    apiClient.updateTransactionGroup(uid, groupId, input)
+                    store.updateTransactionGroup(groupId, input)
+                }
+                val qId = _quickUploadId.value
+                if (qId != null) {
+                    store.completeQuickUpload(qId, true)
+                    _quickUploadId.value = null
                 }
                 _submitState.value = GroupSubmitState.SUCCESS
             } catch (

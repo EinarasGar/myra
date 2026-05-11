@@ -10,6 +10,8 @@ pub struct PersistentCache {
 impl PersistentCache {
     pub fn open(path: &str) -> Self {
         let conn = Connection::open(path).expect("failed to open cache database");
+        conn.execute_batch("PRAGMA journal_mode=WAL;")
+            .expect("failed to set WAL mode");
         conn.execute_batch(
             "CREATE TABLE IF NOT EXISTS response_cache (
                 url       TEXT PRIMARY KEY,

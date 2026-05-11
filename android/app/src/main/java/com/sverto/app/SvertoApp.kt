@@ -4,10 +4,30 @@ import android.app.Application
 import android.net.ConnectivityManager
 import android.net.Network
 import com.clerk.api.Clerk
-import uniffi.sverto_core.ApiClient
+import com.clerk.api.network.serialization.ClerkResult
+import kotlinx.coroutines.runBlocking
+import uniffi.sverto_core.AppStore
+import uniffi.sverto_core.AuthProvider
+
+class SvertoAuthProvider : AuthProvider {
+    override fun getToken(): String? {
+        if (BuildConfig.CLERK_PUBLISHABLE_KEY.isBlank()) return null
+        return runBlocking {
+            when (val result = Clerk.auth.getToken()) {
+                is ClerkResult.Success -> result.value
+                is ClerkResult.Failure -> null
+            }
+        }
+    }
+
+    override fun getUserId(): String? {
+        if (BuildConfig.CLERK_PUBLISHABLE_KEY.isBlank()) return null
+        return Clerk.user?.id
+    }
+}
 
 class SvertoApp : Application() {
-    lateinit var apiClient: ApiClient
+    lateinit var appStore: AppStore
         private set
 
     override fun onCreate() {
@@ -15,12 +35,14 @@ class SvertoApp : Application() {
         System.loadLibrary("jnidispatch")
         System.loadLibrary("sverto_core")
 
-        apiClient =
-            ApiClient(
-                BuildConfig.API_BASE_URL,
-                60u,
-                "${filesDir.absolutePath}/sverto_cache.db",
-            )
+        val dbPath = "${filesDir.absolutePath}/sverto_cache.db"
+
+        appStore = AppStore(
+            BuildConfig.API_BASE_URL,
+            60u,
+            dbPath,
+            SvertoAuthProvider(),
+        )
 
         registerConnectivityCallback()
 
@@ -32,15 +54,16 @@ class SvertoApp : Application() {
 
     private fun registerConnectivityCallback() {
         val cm = getSystemService(ConnectivityManager::class.java)
-        apiClient.setConnectivity(cm.activeNetwork != null)
+        val connected = cm.activeNetwork != null
+        appStore.setConnectivity(connected)
         cm.registerDefaultNetworkCallback(
             object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
-                    apiClient.setConnectivity(true)
+                    appStore.setConnectivity(true)
                 }
 
                 override fun onLost(network: Network) {
-                    apiClient.setConnectivity(false)
+                    appStore.setConnectivity(false)
                 }
             },
         )

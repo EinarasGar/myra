@@ -17,6 +17,10 @@ impl ApiError {
     pub fn is_unreachable(&self) -> bool {
         matches!(self, ApiError::Network { .. } | ApiError::Timeout { .. })
     }
+
+    pub fn is_client_error(&self) -> bool {
+        matches!(self, ApiError::Server { status, .. } if (400..500).contains(status))
+    }
 }
 
 impl From<reqwest::Error> for ApiError {

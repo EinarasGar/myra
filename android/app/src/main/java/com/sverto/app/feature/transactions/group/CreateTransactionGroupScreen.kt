@@ -70,6 +70,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sverto.app.core.SvertoViewModelFactory
 import com.sverto.app.feature.transactions.NewTransactionSheet
+import com.sverto.app.feature.transactions.create.CorrectionInput
+import com.sverto.app.feature.transactions.create.CorrectionTypeChange
 import com.sverto.app.feature.transactions.create.apiTypeToConfigKey
 import uniffi.sverto_core.CategoryItem
 import uniffi.sverto_core.TransactionListItem
@@ -93,6 +95,8 @@ fun CreateTransactionGroupScreen(
     modifier: Modifier = Modifier,
     editGroupId: String? = null,
     editGroup: TransactionListItem? = null,
+    quickUploadId: String? = null,
+    onCorrectionTypeChanged: ((CorrectionTypeChange) -> Unit)? = null,
     viewModel: CreateTransactionGroupViewModel = viewModel(factory = SvertoViewModelFactory),
 ) {
     val formState by viewModel.formState.collectAsStateWithLifecycle()
@@ -100,7 +104,14 @@ fun CreateTransactionGroupScreen(
     val submitState by viewModel.submitState.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
+    val qUploadId by viewModel.quickUploadId.collectAsStateWithLifecycle()
+    val correctionState by viewModel.correctionState.collectAsStateWithLifecycle()
+    val correctionTypeChange by viewModel.correctionTypeChange.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(correctionTypeChange) {
+        correctionTypeChange?.let { onCorrectionTypeChanged?.invoke(it) }
+    }
     val currentOnSuccess by rememberUpdatedState(onSuccess)
     val isEditMode = editGroupId != null
 
@@ -111,7 +122,7 @@ fun CreateTransactionGroupScreen(
     LaunchedEffect(editGroupId) {
         if (editGroup != null) {
             viewModel.initForEdit(editGroup)
-        } else {
+        } else if (quickUploadId == null) {
             viewModel.init()
         }
     }
@@ -354,6 +365,16 @@ fun CreateTransactionGroupScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.fillMaxWidth(),
                     )
+
+                    val effectiveQuickUploadId = qUploadId ?: quickUploadId
+                    if (effectiveQuickUploadId != null) {
+                        Spacer(Modifier.height(16.dp))
+                        CorrectionInput(
+                            state = correctionState,
+                            onSend = { viewModel.sendCorrection(it) },
+                        )
+                    }
+
                     Spacer(Modifier.height(24.dp))
                 }
             }
@@ -440,20 +461,19 @@ private fun GroupTransactionRow(
             )
         },
         trailingContent = {
-            IconButton(onClick = onRemove, modifier = Modifier.size(36.dp)) {
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.35f),
-                    modifier = Modifier.size(28.dp),
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Default.Close,
-                            contentDescription = "Remove",
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(16.dp),
-                        )
-                    }
+            Surface(
+                onClick = onRemove,
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.35f),
+                modifier = Modifier.size(28.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = "Remove",
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(16.dp),
+                    )
                 }
             }
         },

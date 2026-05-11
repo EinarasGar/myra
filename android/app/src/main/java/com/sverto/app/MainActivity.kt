@@ -12,6 +12,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -31,14 +32,22 @@ class MainActivity : ComponentActivity() {
         setContent {
             SvertoTheme {
                 if (BuildConfig.CLERK_PUBLISHABLE_KEY.isBlank()) {
-                    MainScreen()
+                    val appStore = remember { (applicationContext as SvertoApp).appStore }
+                    var signedIn by remember { mutableStateOf(false) }
+                    LaunchedEffect(Unit) {
+                        appStore.onSignIn()
+                        signedIn = true
+                    }
+                    if (signedIn) {
+                        MainScreen()
+                    }
                 } else {
                     val isInitialized by Clerk.isInitialized.collectAsStateWithLifecycle()
                     val user by Clerk.userFlow.collectAsStateWithLifecycle()
                     val clerkTheme = LocalClerkTheme.current
                     val timedOut = remember { mutableStateOf(false) }
-                    val apiClient = remember { (applicationContext as SvertoApp).apiClient }
-                    val hasCachedSession = remember { apiClient.getCachedMe() != null }
+                    val appStore = remember { (applicationContext as SvertoApp).appStore }
+                    val hasCachedSession = remember { appStore.getCachedMe() != null }
 
                     LaunchedEffect(isInitialized) {
                         if (!isInitialized) {
@@ -50,9 +59,35 @@ class MainActivity : ComponentActivity() {
                     }
 
                     when {
-                        isInitialized && user != null -> MainScreen()
+                        isInitialized && user != null -> {
+                            var signedIn by remember { mutableStateOf(false) }
+                            LaunchedEffect(user) {
+                                appStore.onSignIn()
+                                signedIn = true
+                            }
+                            if (signedIn) {
+                                MainScreen()
+                            } else {
+                                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    LoadingIndicator()
+                                }
+                            }
+                        }
                         isInitialized -> AuthView(clerkTheme = clerkTheme)
-                        timedOut.value && hasCachedSession -> MainScreen()
+                        timedOut.value && hasCachedSession -> {
+                            var signedIn by remember { mutableStateOf(false) }
+                            LaunchedEffect(Unit) {
+                                appStore.onSignIn()
+                                signedIn = true
+                            }
+                            if (signedIn) {
+                                MainScreen()
+                            } else {
+                                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    LoadingIndicator()
+                                }
+                            }
+                        }
                         else -> {
                             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                 LoadingIndicator()
