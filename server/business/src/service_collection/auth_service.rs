@@ -329,10 +329,25 @@ impl AuthService {
             .as_array()
             .ok_or_else(|| anyhow::anyhow!("Invalid JWKS format"))?;
 
-        let header = jsonwebtoken::decode_header(&token)
-            .map_err(|e| anyhow::anyhow!("Failed to decode JWT header: {}", e))?;
+        // Clerk added non-string fields (oiat) to JWT headers, which breaks
+        // jsonwebtoken::decode_header()'s HashMap<String, String> extras.
+        // let header = jsonwebtoken::decode_header(&token)
+        //     .map_err(|e| anyhow::anyhow!("Failed to decode JWT header: {}", e))?;
+        use base64::Engine;
+        let header_json: serde_json::Value = {
+            let segment = token
+                .split('.')
+                .next()
+                .ok_or_else(|| anyhow::anyhow!("Invalid JWT: no header segment"))?;
+            let bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
+                .decode(segment)
+                .map_err(|e| anyhow::anyhow!("Failed to decode JWT header: {}", e))?;
+            serde_json::from_slice(&bytes)
+                .map_err(|e| anyhow::anyhow!("Failed to parse JWT header: {}", e))?
+        };
+        let kid = header_json.get("kid").and_then(|v| v.as_str());
 
-        let key = if let Some(kid) = &header.kid {
+        let key = if let Some(kid) = kid {
             keys.iter()
                 .find(|k| k["kid"].as_str() == Some(kid))
                 .ok_or_else(|| anyhow::anyhow!("No matching key found for kid: {}", kid))?
