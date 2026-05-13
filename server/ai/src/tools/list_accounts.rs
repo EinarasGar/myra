@@ -5,16 +5,14 @@ use crate::data_provider::AiDataProvider;
 use crate::models::tool_output::ListAccountsArgs;
 use rig::{completion::request::ToolDefinition, tool::Tool};
 use serde_json::json;
-use uuid::Uuid;
 
 pub struct ListAccountsTool<D: AiDataProvider> {
     data: Arc<D>,
-    user_id: Uuid,
 }
 
 impl<D: AiDataProvider> ListAccountsTool<D> {
-    pub fn new(data: Arc<D>, user_id: Uuid) -> Self {
-        Self { data, user_id }
+    pub fn new(data: Arc<D>) -> Self {
+        Self { data }
     }
 }
 
@@ -40,7 +38,7 @@ impl<D: AiDataProvider> Tool for ListAccountsTool<D> {
     async fn call(&self, _args: Self::Args) -> std::result::Result<Self::Output, Self::Error> {
         let accounts = self
             .data
-            .list_accounts(self.user_id)
+            .list_accounts()
             .await
             .map_err(|e| ToolError(e.to_string()))?;
 

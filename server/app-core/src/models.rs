@@ -1,3 +1,10 @@
+#[derive(Debug, Clone, uniffi::Enum)]
+pub enum ConnectionStatus {
+    Online,
+    DeviceOffline,
+    ServerUnreachable,
+}
+
 #[derive(Debug, Clone, uniffi::Record)]
 pub struct ApiResponse {
     pub status: u16,
@@ -29,6 +36,7 @@ pub struct TransactionListItem {
     pub account_name: String,
     pub asset_display: String,
     pub category_name: String,
+    pub category_id: Option<i32>,
     pub is_group: bool,
     pub group_size: u32,
     pub children: Vec<TransactionListItem>,
@@ -101,6 +109,7 @@ pub struct EditableTransaction {
 /// type may be left as `None`.
 #[derive(Debug, Clone, uniffi::Record)]
 pub struct CreateTransactionInput {
+    pub transaction_id: Option<String>,
     pub type_key: String,
     pub date: i64,
     pub primary_entry_id: Option<i32>,
@@ -114,4 +123,87 @@ pub struct CreateTransactionInput {
     pub origin_asset_id: Option<i32>,
     pub category_id: Option<i32>,
     pub description: Option<String>,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct CreateTransactionGroupInput {
+    pub date: i64,
+    pub description: String,
+    pub category_id: i32,
+    pub transactions: Vec<CreateTransactionInput>,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct PendingUpload {
+    pub local_id: String,
+    pub mime_type: String,
+    pub status: String,
+    pub server_upload_id: Option<String>,
+    pub retry_count: u32,
+    pub created_at: i64,
+    pub error_message: Option<String>,
+    pub thumbnail: Option<Vec<u8>>,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct UnifiedQuickUploadItem {
+    pub id: String,
+    pub status: String,
+    pub proposal_type: Option<String>,
+    pub proposal_data: Option<String>,
+    pub error_message: Option<String>,
+    pub thumbnail: Option<Vec<u8>>,
+    pub created_at: i64,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct QuickUploadDetail {
+    pub status: String,
+    pub source_file_id: String,
+    pub proposal_type: Option<String>,
+    pub proposal_data: Option<String>,
+    pub created_at: i64,
+    pub updated_at: i64,
+    pub lookup_tables: String,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct ChartPeriodData {
+    pub period: String,
+    pub points: Vec<ChartPoint>,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct ChartPoint {
+    pub timestamp: i64,
+    pub value: f64,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct PortfolioState {
+    pub is_loading: bool,
+    pub error: Option<String>,
+    pub holdings: Vec<HoldingItem>,
+    pub chart_data: Vec<ChartPeriodData>,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct TransactionsState {
+    pub is_loading: bool,
+    pub is_loading_more: bool,
+    pub error: Option<String>,
+    pub items: Vec<TransactionListItem>,
+    pub has_more: bool,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct QuickUploadsState {
+    pub items: Vec<UnifiedQuickUploadItem>,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct AccountsState {
+    pub is_loading: bool,
+    pub error: Option<String>,
+    pub accounts: Vec<AccountItem>,
 }

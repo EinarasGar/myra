@@ -319,7 +319,7 @@ impl AuthService {
     /// On first login, auto-provisions an internal user record.
     #[tracing::instrument(skip_all, err)]
     pub async fn verify_clerk_token(&self, token: String) -> anyhow::Result<ClaimsDto> {
-        use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
+        use jsonwebtoken::{Algorithm, DecodingKey};
 
         // 1. Get JWKS (from cache or Clerk API)
         let jwks = self.get_jwks().await?;
@@ -329,10 +329,25 @@ impl AuthService {
             .as_array()
             .ok_or_else(|| anyhow::anyhow!("Invalid JWKS format"))?;
 
-        let header = jsonwebtoken::decode_header(&token)
-            .map_err(|e| anyhow::anyhow!("Failed to decode JWT header: {}", e))?;
+        // Clerk added non-string fields (oiat) to JWT headers, which breaks
+        // jsonwebtoken::decode_header()'s HashMap<String, String> extras.
+        // let header = jsonwebtoken::decode_header(&token)
+        //     .map_err(|e| anyhow::anyhow!("Failed to decode JWT header: {}", e))?;
+        use base64::Engine;
+        let header_json: serde_json::Value = {
+            let segment = token
+                .split('.')
+                .next()
+                .ok_or_else(|| anyhow::anyhow!("Invalid JWT: no header segment"))?;
+            let bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
+                .decode(segment)
+                .map_err(|e| anyhow::anyhow!("Failed to decode JWT header: {}", e))?;
+            serde_json::from_slice(&bytes)
+                .map_err(|e| anyhow::anyhow!("Failed to parse JWT header: {}", e))?
+        };
+        let kid = header_json.get("kid").and_then(|v| v.as_str());
 
-        let key = if let Some(kid) = &header.kid {
+        let key = if let Some(kid) = kid {
             keys.iter()
                 .find(|k| k["kid"].as_str() == Some(kid))
                 .ok_or_else(|| anyhow::anyhow!("No matching key found for kid: {}", kid))?
@@ -351,17 +366,31 @@ impl AuthService {
         )
         .map_err(|e| anyhow::anyhow!("Failed to create decoding key: {}", e))?;
 
-        // 3. Validate the JWT
-        let mut validation = Validation::new(Algorithm::RS256);
-        validation.validate_exp = true;
-        // Clerk tokens use the Clerk instance URL as audience which varies per environment;
-        // audience is implicitly trusted because we validate the signature against Clerk's JWKS.
-        validation.validate_aud = false;
+        // 3. Verify signature manually (decode() also chokes on the oiat header)
+        let parts: Vec<&str> = token.splitn(4, '.').collect();
+        if parts.len() < 3 {
+            return Err(anyhow::anyhow!("Invalid JWT: expected 3 segments"));
+        }
+        let message = format!("{}.{}", parts[0], parts[1]);
+        // let token_data = decode::<serde_json::Value>(&token, &decoding_key, &validation)
+        //     .map_err(|e| anyhow::anyhow!("Failed to validate Clerk token: {}", e))?;
+        jsonwebtoken::crypto::verify(parts[2], message.as_bytes(), &decoding_key, Algorithm::RS256)
+            .map_err(|e| anyhow::anyhow!("Clerk token signature verification failed: {}", e))?;
 
-        let token_data = decode::<serde_json::Value>(&token, &decoding_key, &validation)
-            .map_err(|e| anyhow::anyhow!("Failed to validate Clerk token: {}", e))?;
+        let payload_bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
+            .decode(parts[1])
+            .map_err(|e| anyhow::anyhow!("Failed to decode JWT payload: {}", e))?;
+        let claims: serde_json::Value = serde_json::from_slice(&payload_bytes)
+            .map_err(|e| anyhow::anyhow!("Failed to parse JWT claims: {}", e))?;
 
-        let claims = token_data.claims;
+        let exp = claims["exp"].as_u64().unwrap_or(0);
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .unwrap_or(0);
+        if exp < now {
+            return Err(anyhow::anyhow!("Clerk token expired"));
+        }
 
         // 4. Extract clerk_user_id from "sub" claim
         let clerk_user_id = claims["sub"]

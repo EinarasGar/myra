@@ -6,6 +6,7 @@ pub(crate) mod idens;
 pub mod job_queue;
 pub mod models;
 pub mod noop_file_provider;
+pub mod pg_notify_connection;
 pub mod queries;
 pub mod query_params;
 pub mod redis_connection;

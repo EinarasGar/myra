@@ -6,19 +6,16 @@ use crate::embedding::embed_query;
 use crate::models::tool_output::SearchAssetsArgs;
 use rig::{completion::request::ToolDefinition, embeddings::EmbeddingModel, tool::Tool};
 use serde_json::json;
-use uuid::Uuid;
 
 pub struct SearchAssetsTool<M: EmbeddingModel, D: AiDataProvider> {
     data: Arc<D>,
-    user_id: Uuid,
     embedding_model: M,
 }
 
 impl<M: EmbeddingModel, D: AiDataProvider> SearchAssetsTool<M, D> {
-    pub fn new(data: Arc<D>, user_id: Uuid, embedding_model: M) -> Self {
+    pub fn new(data: Arc<D>, embedding_model: M) -> Self {
         Self {
             data,
-            user_id,
             embedding_model,
         }
     }
@@ -61,7 +58,7 @@ impl<M: EmbeddingModel + Send + Sync, D: AiDataProvider> Tool for SearchAssetsTo
 
         let assets = self
             .data
-            .search_assets(self.user_id, args.query.as_deref(), query_vec)
+            .search_assets(args.query.as_deref(), query_vec)
             .await
             .map_err(|e| ToolError(e.to_string()))?;
 

@@ -3,9 +3,8 @@ package com.sverto.app.feature.transactions.create
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.clerk.api.Clerk
-import com.clerk.api.network.serialization.ClerkResult
-import com.sverto.app.BuildConfig
+import com.sverto.app.feature.transactions.group.GroupTransactionItem
+import com.sverto.app.feature.transactions.quickupload.proposalToFormState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -14,7 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import uniffi.sverto_core.AccountItem
-import uniffi.sverto_core.ApiClient
+import uniffi.sverto_core.AppStore
 import uniffi.sverto_core.AssetItem
 import uniffi.sverto_core.CategoryItem
 import uniffi.sverto_core.CreateTransactionInput
@@ -25,12 +24,18 @@ import kotlin.math.abs
 
 private const val TAG = "CreateTransactionVM"
 private const val SEARCH_DEBOUNCE_MS = 300L
-private const val SEARCH_PAGE_SIZE = 20u
 
-class CreateTransactionViewModel : ViewModel() {
-    private val apiClient = ApiClient(BuildConfig.API_BASE_URL, 60u)
-    private var userId: String? = null
+class CreateTransactionViewModel(
+    private val store: AppStore,
+) : ViewModel() {
+    private var initialized = false
     private var editTransactionId: String? = null
+
+    private var groupTransactionCallback: ((GroupTransactionItem) -> Unit)? = null
+
+    fun setGroupCallback(callback: ((GroupTransactionItem) -> Unit)?) {
+        groupTransactionCallback = callback
+    }
 
     private val _accounts = MutableStateFlow<List<AccountItem>>(emptyList())
     val accounts: StateFlow<List<AccountItem>> = _accounts.asStateFlow()
@@ -56,15 +61,26 @@ class CreateTransactionViewModel : ViewModel() {
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    private val _quickUploadId = MutableStateFlow<String?>(null)
+    val quickUploadId: StateFlow<String?> = _quickUploadId.asStateFlow()
+
+    private val _correctionState = MutableStateFlow(CorrectionState.IDLE)
+    val correctionState: StateFlow<CorrectionState> = _correctionState.asStateFlow()
+
+    private val _correctionTypeChange = MutableStateFlow<CorrectionTypeChange?>(null)
+    val correctionTypeChange: StateFlow<CorrectionTypeChange?> = _correctionTypeChange.asStateFlow()
+
     private var assetSearchJob: Job? = null
     private var categorySearchJob: Job? = null
 
     fun init() {
+        if (initialized) return
+        initialized = true
         editTransactionId = null
         resetUiState()
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                loadSessionContext()
+                _accounts.value = store.getAccountsList()
                 _formState.value = TransactionFormState(date = System.currentTimeMillis() / 1000)
             } catch (
                 @Suppress("TooGenericExceptionCaught") e: Exception,
@@ -75,6 +91,8 @@ class CreateTransactionViewModel : ViewModel() {
     }
 
     fun initForEdit(transactionId: String) {
+        if (initialized) return
+        initialized = true
         editTransactionId = transactionId
         resetUiState()
         _isLoading.value = true
@@ -82,9 +100,9 @@ class CreateTransactionViewModel : ViewModel() {
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val me = loadSessionContext()
-                val editable = apiClient.getIndividualTransaction(me.userId, transactionId)
-                _formState.value = editable.toFormState()
+                _accounts.value = store.getAccountsList()
+                val editable = store.getEditableTransaction(transactionId)
+                _formState.value = editable.toFormState(transactionId = transactionId)
             } catch (
                 @Suppress("TooGenericExceptionCaught") e: Exception,
             ) {
@@ -96,20 +114,102 @@ class CreateTransactionViewModel : ViewModel() {
         }
     }
 
-    private suspend fun refreshAuthToken() {
-        if (BuildConfig.CLERK_PUBLISHABLE_KEY.isBlank()) return
-        when (val result = Clerk.auth.getToken()) {
-            is ClerkResult.Success -> apiClient.setAuthToken(result.value)
-            is ClerkResult.Failure -> Log.e(TAG, "Auth failed: ${result.error}")
+    fun initForGroupEdit(
+        existingInput: CreateTransactionInput,
+        displayData: GroupEditDisplayData,
+    ) {
+        if (initialized) return
+        initialized = true
+        editTransactionId = existingInput.transactionId
+        resetUiState()
+        _formState.value =
+            TransactionFormState(
+                transactionId = existingInput.transactionId,
+                date = existingInput.date,
+                description = existingInput.description.orEmpty(),
+                categoryId = existingInput.categoryId,
+                categoryName = displayData.categoryName,
+                originAssetId = existingInput.originAssetId,
+                originAssetDisplay = displayData.originAssetDisplay,
+                primaryEntry =
+                    EntryFormState(
+                        entryId = existingInput.primaryEntryId,
+                        accountId = existingInput.primaryAccountId,
+                        accountName = displayData.primaryAccountName,
+                        assetId = existingInput.primaryAssetId,
+                        assetDisplay = displayData.primaryAssetDisplay,
+                        amount = editableAmount(existingInput.primaryAmount),
+                    ),
+                secondaryEntry =
+                    EntryFormState(
+                        entryId = existingInput.secondaryEntryId,
+                        accountId = existingInput.secondaryAccountId,
+                        accountName = displayData.secondaryAccountName.orEmpty(),
+                        assetId = existingInput.secondaryAssetId,
+                        assetDisplay = displayData.secondaryAssetDisplay.orEmpty(),
+                        amount = existingInput.secondaryAmount?.let(::editableAmount).orEmpty(),
+                    ),
+            )
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                _accounts.value = store.getAccountsList()
+            } catch (
+                @Suppress("TooGenericExceptionCaught") e: Exception,
+            ) {
+                Log.e(TAG, "Group edit init failed", e)
+            }
         }
     }
 
-    private suspend fun loadSessionContext(): uniffi.sverto_core.AuthMe {
-        refreshAuthToken()
-        val me = apiClient.getMe()
-        userId = me.userId
-        _accounts.value = apiClient.getAccounts(me.userId)
-        return me
+    fun initFromProposal(quickUploadId: String) {
+        if (initialized) return
+        initialized = true
+        editTransactionId = null
+        resetUiState()
+        _isLoading.value = true
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                _accounts.value = store.getAccountsList()
+                val detail = store.getQuickUploadDetail(quickUploadId)
+                val formState = proposalToFormState(
+                    detail.proposalData ?: "{}",
+                    detail.lookupTables,
+                )
+                _formState.value = formState
+                _quickUploadId.value = quickUploadId
+            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                Log.e(TAG, "Proposal init failed", e)
+                _errorMessage.value = e.message ?: "Failed to load proposal"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun sendCorrection(message: String) {
+        val uploadId = _quickUploadId.value ?: return
+        _correctionState.value = CorrectionState.SENDING
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val detail = store.sendQuickUploadCorrection(uploadId, message)
+                if (detail.proposalType == "transaction_group") {
+                    _correctionState.value = CorrectionState.IDLE
+                    _correctionTypeChange.value = CorrectionTypeChange(uploadId, detail.proposalType!!)
+                    return@launch
+                }
+                _formState.value = proposalToFormState(
+                    detail.proposalData ?: "{}",
+                    detail.lookupTables,
+                )
+                _correctionState.value = CorrectionState.UPDATED
+                delay(2000)
+                _correctionState.value = CorrectionState.IDLE
+            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                Log.e(TAG, "Correction failed", e)
+                _correctionState.value = CorrectionState.IDLE
+            }
+        }
     }
 
     private fun resetUiState() {
@@ -131,7 +231,7 @@ class CreateTransactionViewModel : ViewModel() {
             viewModelScope.launch(Dispatchers.IO) {
                 delay(SEARCH_DEBOUNCE_MS)
                 try {
-                    _assetResults.value = apiClient.searchAssets(query, SEARCH_PAGE_SIZE, 0u)
+                    _assetResults.value = store.searchAssets(query)
                 } catch (
                     @Suppress("TooGenericExceptionCaught") e: Exception,
                 ) {
@@ -150,8 +250,7 @@ class CreateTransactionViewModel : ViewModel() {
             viewModelScope.launch(Dispatchers.IO) {
                 delay(SEARCH_DEBOUNCE_MS)
                 try {
-                    _categoryResults.value =
-                        apiClient.searchCategories(query, SEARCH_PAGE_SIZE, 0u)
+                    _categoryResults.value = store.searchCategories(query)
                 } catch (
                     @Suppress("TooGenericExceptionCaught") e: Exception,
                 ) {
@@ -247,40 +346,63 @@ class CreateTransactionViewModel : ViewModel() {
     }
 
     fun submit(config: TransactionTypeConfig) {
-        val uid = userId ?: return
-        val input =
-            buildInput(config, _formState.value) ?: run {
-                _errorMessage.value = "Missing required fields"
-                return
-            }
-        _submitState.value = SubmitState.SUBMITTING
-        _errorMessage.value = null
+        val input = buildInput(config, _formState.value)
+        if (input == null) {
+            _errorMessage.value = "Missing required fields"
+            return
+        }
 
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                refreshAuthToken()
-                val transactionId = editTransactionId
-                _submittedTransaction.value =
-                    if (transactionId == null) {
-                        apiClient.createIndividualTransaction(uid, input)
-                        null
-                    } else {
-                        apiClient.updateIndividualTransaction(uid, transactionId, input)
+        val callback = groupTransactionCallback
+        if (callback != null) {
+            _submitState.value = SubmitState.SUBMITTING
+            val state = _formState.value
+            callback(
+                GroupTransactionItem(
+                    input = input,
+                    descriptionDisplay = state.description.ifBlank { config.label },
+                    typeLabel = config.label,
+                    amountDisplay = formatAmount(input),
+                    accountName = state.primaryEntry.accountName,
+                    assetDisplay = state.primaryEntry.assetDisplay,
+                    categoryName = state.categoryName,
+                ),
+            )
+            _submitState.value = SubmitState.SUCCESS
+        } else {
+            _submitState.value = SubmitState.SUBMITTING
+            _errorMessage.value = null
+
+            viewModelScope.launch(Dispatchers.IO) {
+                try {
+                    val transactionId = editTransactionId
+                    _submittedTransaction.value =
+                        if (transactionId == null) {
+                            store.createIndividualTransaction(input)
+                            null
+                        } else {
+                            store.updateIndividualTransaction(transactionId, input)
+                        }
+                    val qId = _quickUploadId.value
+                    if (qId != null) {
+                        store.completeQuickUpload(qId, true)
+                        _quickUploadId.value = null
                     }
-                _submitState.value = SubmitState.SUCCESS
-            } catch (
-                @Suppress("TooGenericExceptionCaught") e: Exception,
-            ) {
-                Log.e(TAG, "Submit failed", e)
-                _errorMessage.value = e.message ?: "Unknown error"
-                _submitState.value = SubmitState.IDLE
+                    _submitState.value = SubmitState.SUCCESS
+                } catch (
+                    @Suppress("TooGenericExceptionCaught") e: Exception,
+                ) {
+                    Log.e(TAG, "Submit failed", e)
+                    _errorMessage.value = e.message ?: "Unknown error"
+                    _submitState.value = SubmitState.IDLE
+                }
             }
         }
     }
 }
 
-private fun EditableTransaction.toFormState(): TransactionFormState =
+private fun EditableTransaction.toFormState(transactionId: String? = null): TransactionFormState =
     TransactionFormState(
+        transactionId = transactionId,
         date = date,
         description = description,
         categoryId = categoryId,
@@ -341,6 +463,7 @@ private fun buildInput(
     }
 
     return CreateTransactionInput(
+        transactionId = state.transactionId,
         typeKey = config.apiType,
         date = date,
         primaryEntryId = state.primaryEntry.entryId,
@@ -374,3 +497,5 @@ private fun signedAmount(
         AmountSign.ANY -> parsed
     }
 }
+
+private fun formatAmount(input: CreateTransactionInput): String = editableAmount(input.primaryAmount)

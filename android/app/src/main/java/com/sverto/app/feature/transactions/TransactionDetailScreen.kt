@@ -146,17 +146,15 @@ fun TransactionDetailScreen(
                         )
                     }
 
-                    if (!transaction.isGroup) {
-                        Spacer(Modifier.height(24.dp))
-                        QuickActionRow(
-                            quickActionLabel = quickActionLabel,
-                            onEdit = onEdit,
-                            onGroup = {},
-                            onShare = {},
-                            onDelete = { showDeleteConfirmation = true },
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                        )
-                    }
+                    Spacer(Modifier.height(24.dp))
+                    QuickActionRow(
+                        quickActionLabel = quickActionLabel,
+                        onEdit = onEdit,
+                        onGroup = {},
+                        onShare = {},
+                        onDelete = { showDeleteConfirmation = true },
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
 
                     Spacer(Modifier.height(28.dp))
 

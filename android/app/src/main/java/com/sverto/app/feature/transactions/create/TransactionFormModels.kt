@@ -15,6 +15,7 @@ data class EntryFormState(
 )
 
 data class TransactionFormState(
+    val transactionId: String? = null,
     val date: Long? = null,
     val description: String = "",
     val categoryId: Int? = null,
@@ -30,3 +31,17 @@ enum class SubmitState {
     SUBMITTING,
     SUCCESS,
 }
+
+data class CorrectionTypeChange(
+    val quickUploadId: String,
+    val newProposalType: String,
+)
+
+data class GroupEditDisplayData(
+    val categoryName: String = "",
+    val originAssetDisplay: String = "",
+    val primaryAccountName: String = "",
+    val primaryAssetDisplay: String = "",
+    val secondaryAccountName: String? = null,
+    val secondaryAssetDisplay: String? = null,
+)

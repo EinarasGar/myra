@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use base64::Engine;
 #[mockall_double::double]
 use dal::database_context::MyraDb;
 use dal::file_provider::{FileProvider, FileProviderUnavailableError};
@@ -235,6 +236,32 @@ impl FileService {
         })
     }
 
+    pub async fn download_files_as_base64(
+        &self,
+        user_id: Uuid,
+        file_ids: &[Uuid],
+    ) -> Result<Vec<(String, String)>> {
+        if file_ids.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let query = file_queries::get_files_by_ids_and_user(file_ids.to_vec(), user_id);
+        let files: Vec<FileModel> = self.db.fetch_all(query).await?;
+
+        let mut results = Vec::with_capacity(files.len());
+        for file in files {
+            let bytes = self
+                .file_provider
+                .download(&file.storage_key)
+                .await
+                .map_err(convert_provider_error)?;
+            let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
+            results.push((file.mime_type, b64));
+        }
+
+        Ok(results)
+    }
+
     pub async fn delete_file(&self, user_id: Uuid, file_id: Uuid) -> Result<()> {
         let query = file_queries::get_file_by_id_and_user(file_id, user_id);
         let file: Option<FileModel> = self.db.fetch_optional(query).await?;
@@ -257,5 +284,18 @@ impl FileService {
         self.db.execute(delete_query).await?;
 
         Ok(())
+    }
+
+    pub async fn fetch_images_for_ai(
+        &self,
+        user_id: Uuid,
+        file_ids: &[Uuid],
+    ) -> Result<Vec<ai::models::chat::Base64Image>> {
+        Ok(self
+            .download_files_as_base64(user_id, file_ids)
+            .await?
+            .into_iter()
+            .map(|(media_type, data)| ai::models::chat::Base64Image { media_type, data })
+            .collect())
     }
 }

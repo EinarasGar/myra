@@ -222,6 +222,7 @@ android-run: ## Build, install, and launch the dev Android app on all connected 
 	@ADB="$$HOME/Library/Android/sdk/platform-tools/adb"; \
 	for serial in $$($$ADB devices | tail -n +2 | grep -w device | awk '{print $$1}'); do \
 		"$$ADB" -s "$$serial" reverse tcp:$(SERVER_PORT) tcp:$(SERVER_PORT) >/dev/null 2>&1; \
+		"$$ADB" -s "$$serial" reverse tcp:$(MINIO_PORT) tcp:$(MINIO_PORT) >/dev/null 2>&1; \
 		echo "$(GREEN)Launching on $$serial$(NC)"; \
 		"$$ADB" -s "$$serial" shell am start -n com.sverto.app.dev/com.sverto.app.MainActivity; \
 	done

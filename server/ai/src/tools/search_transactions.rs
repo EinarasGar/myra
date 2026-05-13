@@ -13,15 +13,13 @@ use uuid::Uuid;
 
 pub struct SearchTransactionsTool<M: EmbeddingModel, D: AiDataProvider> {
     data: Arc<D>,
-    user_id: Uuid,
     embedding_model: M,
 }
 
 impl<M: EmbeddingModel, D: AiDataProvider> SearchTransactionsTool<M, D> {
-    pub fn new(data: Arc<D>, user_id: Uuid, embedding_model: M) -> Self {
+    pub fn new(data: Arc<D>, embedding_model: M) -> Self {
         Self {
             data,
-            user_id,
             embedding_model,
         }
     }
@@ -66,7 +64,6 @@ impl<M: EmbeddingModel + Send + Sync, D: AiDataProvider> Tool for SearchTransact
     async fn call(&self, args: Self::Args) -> std::result::Result<Self::Output, Self::Error> {
         let limit = args.limit.unwrap_or(500);
         let params = SearchParams {
-            user_id: self.user_id,
             query: args.query.clone(),
             date_from: args.date_from.clone(),
             date_to: args.date_to.clone(),
@@ -80,7 +77,6 @@ impl<M: EmbeddingModel + Send + Sync, D: AiDataProvider> Tool for SearchTransact
         let (ilike_results, vector_results, total_count) = tokio::join!(
             self.data.search_transactions_by_text(&params),
             self.data.search_transactions_by_vector(
-                self.user_id,
                 query_vec,
                 args.date_from.as_deref(),
                 args.date_to.as_deref(),

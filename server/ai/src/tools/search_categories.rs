@@ -6,19 +6,16 @@ use crate::embedding::embed_query;
 use crate::models::tool_output::SearchCategoriesArgs;
 use rig::{completion::request::ToolDefinition, embeddings::EmbeddingModel, tool::Tool};
 use serde_json::json;
-use uuid::Uuid;
 
 pub struct SearchCategoriesTool<M: EmbeddingModel, D: AiDataProvider> {
     data: Arc<D>,
-    user_id: Uuid,
     embedding_model: M,
 }
 
 impl<M: EmbeddingModel, D: AiDataProvider> SearchCategoriesTool<M, D> {
-    pub fn new(data: Arc<D>, user_id: Uuid, embedding_model: M) -> Self {
+    pub fn new(data: Arc<D>, embedding_model: M) -> Self {
         Self {
             data,
-            user_id,
             embedding_model,
         }
     }
@@ -61,7 +58,7 @@ impl<M: EmbeddingModel + Send + Sync, D: AiDataProvider> Tool for SearchCategori
 
         let categories = self
             .data
-            .search_categories(self.user_id, query_vec)
+            .search_categories(query_vec)
             .await
             .map_err(|e| ToolError(e.to_string()))?;
 

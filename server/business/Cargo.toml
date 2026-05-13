@@ -26,7 +26,7 @@ itertools = "0.14.0"
 once_cell = "1.21.3"
 rand = { version = "0.9", optional = true }
 sha2 = { version = "0.10", optional = true }
-base64 = { version = "0.22", optional = true }
+base64 = "0.22"
 thiserror = "2.0.18"
 async-trait = "0.1.89"
 futures = "0.3"
@@ -39,6 +39,6 @@ sqlx = { version = "0.8.6", features = ["postgres"] }
 
 [features]
 default = ["noauth"]
-database = ["dep:rand", "dep:sha2", "dep:base64"]
+database = ["dep:rand", "dep:sha2"]
 clerk = ["dep:reqwest"]
 noauth = []

@@ -1,3 +1,4 @@
+pub mod ai_conversation_params;
 pub mod ai_search_params;
 pub mod get_accounts_params;
 pub mod get_assets_params;

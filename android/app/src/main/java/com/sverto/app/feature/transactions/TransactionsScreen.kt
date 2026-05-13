@@ -1,10 +1,9 @@
 package com.sverto.app.feature.transactions
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,7 +20,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.AccountBalance
 import androidx.compose.material.icons.outlined.CallMade
 import androidx.compose.material.icons.outlined.CallReceived
@@ -40,7 +38,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MediumFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -62,8 +59,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.sverto.app.core.state.UiState
 import com.sverto.app.core.ui.TransactionListSkeleton
+import com.sverto.app.feature.transactions.quickupload.QuickUploadUiItem
+import com.sverto.app.feature.transactions.quickupload.QuickUploadsSection
 import kotlinx.coroutines.flow.distinctUntilChanged
 import uniffi.sverto_core.TransactionListItem
 import java.time.Instant
@@ -81,51 +79,65 @@ import java.util.Locale
 fun TransactionsScreen(
     onTransactionClick: (TransactionListItem) -> Unit,
     onCreateTransaction: (String) -> Unit,
+    onCreateGroup: () -> Unit,
+    onQuickUpload: () -> Unit,
+    quickUploadItems: List<QuickUploadUiItem>,
+    onQuickUploadItemClick: (QuickUploadUiItem) -> Unit,
+    onQuickUploadRetry: (String) -> Unit,
+    onQuickUploadDismiss: (String) -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier,
+    onRefreshQuickUploads: (() -> Unit)? = null,
     viewModel: TransactionsViewModel = viewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
-    val isLoadingMore by viewModel.isLoadingMore.collectAsStateWithLifecycle()
     var showNewTransactionSheet by rememberSaveable { mutableStateOf(false) }
+    var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
+
+    BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
 
     Box(modifier = modifier.fillMaxSize()) {
-        when (val state = uiState) {
-            is UiState.Loading -> {
+        when {
+            state.isLoading && state.items.isEmpty() -> {
                 TransactionListSkeleton(Modifier.fillMaxSize())
             }
 
-            is UiState.Error -> {
-                ErrorState(message = state.message, onRetry = viewModel::load)
+            state.error != null && state.items.isEmpty() -> {
+                ErrorState(message = state.error!!, onRetry = viewModel::load)
             }
 
-            is UiState.Success -> {
+            else -> {
                 TransactionList(
-                    transactions = state.data.transactions,
+                    transactions = state.items,
+                    quickUploadItems = quickUploadItems,
                     isRefreshing = isRefreshing,
-                    isLoadingMore = isLoadingMore,
-                    onRefresh = viewModel::refresh,
+                    isLoadingMore = state.isLoadingMore,
+                    onRefresh = {
+                        viewModel.refresh()
+                        onRefreshQuickUploads?.invoke()
+                    },
                     onLoadMore = viewModel::loadMore,
                     onTransactionClick = onTransactionClick,
+                    onQuickUploadItemClick = onQuickUploadItemClick,
+                    onQuickUploadRetry = onQuickUploadRetry,
+                    onQuickUploadDismiss = onQuickUploadDismiss,
                     sharedTransitionScope = sharedTransitionScope,
                     animatedVisibilityScope = animatedVisibilityScope,
                 )
             }
         }
 
-        MediumFloatingActionButton(
-            onClick = { showNewTransactionSheet = true },
-            modifier =
-                Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 24.dp),
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        ) {
-            Icon(Icons.Default.Add, contentDescription = "Add transaction")
-        }
+        FabMenu(
+            expanded = fabMenuExpanded,
+            onToggle = { fabMenuExpanded = !fabMenuExpanded },
+            onQuickUpload = onQuickUpload,
+            onManualEntry = { showNewTransactionSheet = true },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = 24.dp),
+        )
     }
 
     if (showNewTransactionSheet) {
@@ -134,6 +146,10 @@ fun TransactionsScreen(
             onSelectType = { typeKey ->
                 showNewTransactionSheet = false
                 onCreateTransaction(typeKey)
+            },
+            onSelectGroup = {
+                showNewTransactionSheet = false
+                onCreateGroup()
             },
         )
     }
@@ -148,11 +164,15 @@ fun TransactionsScreen(
 @Suppress("LongParameterList")
 private fun TransactionList(
     transactions: List<TransactionListItem>,
+    quickUploadItems: List<QuickUploadUiItem>,
     isRefreshing: Boolean,
     isLoadingMore: Boolean,
     onRefresh: () -> Unit,
     onLoadMore: () -> Unit,
     onTransactionClick: (TransactionListItem) -> Unit,
+    onQuickUploadItemClick: (QuickUploadUiItem) -> Unit,
+    onQuickUploadRetry: (String) -> Unit,
+    onQuickUploadDismiss: (String) -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier,
@@ -172,6 +192,15 @@ private fun TransactionList(
             .collect { (nearEnd, _) ->
                 if (nearEnd) currentOnLoadMore()
             }
+    }
+
+    val itemCount = quickUploadItems.size
+    var previousItemCount by remember { mutableStateOf(itemCount) }
+    LaunchedEffect(itemCount) {
+        if (itemCount > previousItemCount) {
+            listState.animateScrollToItem(0)
+        }
+        previousItemCount = itemCount
     }
 
     val grouped = remember(transactions) { groupByDate(transactions) }
@@ -203,6 +232,16 @@ private fun TransactionList(
                 contentPadding = PaddingValues(bottom = 16.dp),
                 modifier = Modifier.fillMaxSize(),
             ) {
+                item(key = "quick_uploads") {
+                    QuickUploadsSection(
+                        items = quickUploadItems,
+                        onItemClick = onQuickUploadItemClick,
+                        onRetry = onQuickUploadRetry,
+                        onDismiss = onQuickUploadDismiss,
+                        modifier = Modifier.padding(bottom = 8.dp),
+                    )
+                }
+
                 grouped.forEach { (dateLabel, groupItems) ->
                     stickyHeader(key = dateLabel) {
                         DateHeader(dateLabel)
@@ -214,14 +253,7 @@ private fun TransactionList(
                             modifier =
                                 Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
-                                    .animateItem(
-                                        placementSpec =
-                                            spring(
-                                                dampingRatio = Spring.DampingRatioLowBouncy,
-                                                stiffness = Spring.StiffnessLow,
-                                            ),
-                                    ),
+                                    .padding(horizontal = 16.dp),
                         ) {
                             Column {
                                 groupItems.forEachIndexed { index, transaction ->

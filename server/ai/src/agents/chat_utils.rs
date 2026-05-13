@@ -19,6 +19,9 @@ pub(crate) fn attachment_to_user_content(att: &Base64Image) -> Option<UserConten
     None
 }
 
+/// Walk rig history newest-first looking for the assistant tool call that
+/// produced `call_id`. Returns the tool name and serialized args, ready to
+/// replay through a tool set after the user has approved/declined.
 pub(crate) fn find_tool_call_in_history(
     history: &[Message],
     call_id: &str,

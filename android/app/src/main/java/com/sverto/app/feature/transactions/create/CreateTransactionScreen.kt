@@ -59,6 +59,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sverto.app.core.SvertoViewModelFactory
+import com.sverto.app.feature.transactions.group.GroupTransactionItem
 import uniffi.sverto_core.TransactionListItem
 
 private enum class SearchTarget { PRIMARY_ASSET, SECONDARY_ASSET, ORIGIN_ASSET }
@@ -95,7 +97,11 @@ fun CreateTransactionScreen(
     onSuccess: (TransactionListItem?) -> Unit,
     modifier: Modifier = Modifier,
     editTransactionId: String? = null,
-    viewModel: CreateTransactionViewModel = viewModel(),
+    isGroupMode: Boolean = false,
+    quickUploadId: String? = null,
+    onGroupTransactionReady: ((GroupTransactionItem) -> Unit)? = null,
+    onCorrectionTypeChanged: ((CorrectionTypeChange) -> Unit)? = null,
+    viewModel: CreateTransactionViewModel = viewModel(factory = SvertoViewModelFactory),
 ) {
     val config = remember(typeKey) { getTransactionTypeConfig(typeKey) }
     val formState by viewModel.formState.collectAsStateWithLifecycle()
@@ -112,8 +118,11 @@ fun CreateTransactionScreen(
     var scene by rememberSaveable(stateSaver = sceneSaver()) { mutableStateOf<Scene>(Scene.Form) }
     var showAccountPicker by remember { mutableStateOf<AccountTarget?>(null) }
 
-    LaunchedEffect(typeKey, editTransactionId) {
-        if (editTransactionId == null) {
+    LaunchedEffect(typeKey, editTransactionId, quickUploadId) {
+        viewModel.setGroupCallback(onGroupTransactionReady)
+        if (quickUploadId != null) {
+            viewModel.initFromProposal(quickUploadId)
+        } else if (editTransactionId == null) {
             viewModel.init()
         } else {
             viewModel.initForEdit(editTransactionId)
@@ -125,6 +134,14 @@ fun CreateTransactionScreen(
         }
     }
     LaunchedEffect(errorMessage) { errorMessage?.let { snackbarHostState.showSnackbar(it) } }
+
+    val qUploadId by viewModel.quickUploadId.collectAsStateWithLifecycle()
+    val correctionState by viewModel.correctionState.collectAsStateWithLifecycle()
+    val correctionTypeChange by viewModel.correctionTypeChange.collectAsStateWithLifecycle()
+
+    LaunchedEffect(correctionTypeChange) {
+        correctionTypeChange?.let { onCorrectionTypeChanged?.invoke(it) }
+    }
 
     Box(modifier = modifier.fillMaxSize()) {
         SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
@@ -142,6 +159,9 @@ fun CreateTransactionScreen(
                             formState = formState,
                             submitState = submitState,
                             isEditMode = editTransactionId != null,
+                            isGroupMode = isGroupMode,
+                            quickUploadId = qUploadId ?: quickUploadId,
+                            correctionState = correctionState,
                             snackbarHostState = snackbarHostState,
                             sharedScope = sharedScope,
                             animatedVisibilityScope = avScope,
@@ -169,6 +189,7 @@ fun CreateTransactionScreen(
                             onChangePrimaryAmount = viewModel::updatePrimaryAmount,
                             onChangeSecondaryAmount = viewModel::updateSecondaryAmount,
                             onChangeDescription = viewModel::updateDescription,
+                            onSendCorrection = { viewModel.sendCorrection(it) },
                         )
 
                     is Scene.AssetSearch ->
@@ -260,6 +281,9 @@ private fun CreateTransactionForm(
     formState: TransactionFormState,
     submitState: SubmitState,
     isEditMode: Boolean,
+    isGroupMode: Boolean,
+    quickUploadId: String?,
+    correctionState: CorrectionState,
     snackbarHostState: SnackbarHostState,
     sharedScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
@@ -275,6 +299,7 @@ private fun CreateTransactionForm(
     onChangePrimaryAmount: (String) -> Unit,
     onChangeSecondaryAmount: (String) -> Unit,
     onChangeDescription: (String) -> Unit,
+    onSendCorrection: (String) -> Unit,
 ) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -303,6 +328,7 @@ private fun CreateTransactionForm(
             SaveBar(
                 submitState = submitState,
                 isEditMode = isEditMode,
+                isGroupMode = isGroupMode,
                 onSubmit = onSubmit,
             )
         },
@@ -353,6 +379,14 @@ private fun CreateTransactionForm(
                         onChangePrimaryAmount = onChangePrimaryAmount,
                         onChangeSecondaryAmount = onChangeSecondaryAmount,
                     )
+            }
+
+            if (quickUploadId != null) {
+                Spacer(Modifier.height(16.dp))
+                CorrectionInput(
+                    state = correctionState,
+                    onSend = onSendCorrection,
+                )
             }
 
             Spacer(Modifier.height(24.dp))
@@ -610,6 +644,7 @@ private fun DescriptionField(
 private fun SaveBar(
     submitState: SubmitState,
     isEditMode: Boolean,
+    isGroupMode: Boolean = false,
     onSubmit: () -> Unit,
 ) {
     Surface(
@@ -655,7 +690,13 @@ private fun SaveBar(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            text = if (isEditMode) "Update transaction" else "Save transaction",
+                            text =
+                                when {
+                                    isGroupMode && isEditMode -> "Update"
+                                    isGroupMode -> "Add to Group"
+                                    isEditMode -> "Update transaction"
+                                    else -> "Save transaction"
+                                },
                             style = MaterialTheme.typography.titleMedium,
                         )
                     }

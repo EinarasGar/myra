@@ -10,12 +10,11 @@ use uuid::Uuid;
 
 pub struct CreateTransactionTool<A: AiActionProvider> {
     action: Arc<A>,
-    user_id: Uuid,
 }
 
 impl<A: AiActionProvider> CreateTransactionTool<A> {
-    pub fn new(action: Arc<A>, user_id: Uuid) -> Self {
-        Self { action, user_id }
+    pub fn new(action: Arc<A>) -> Self {
+        Self { action }
     }
 }
 
@@ -78,7 +77,7 @@ impl<A: AiActionProvider> Tool for CreateTransactionTool<A> {
         };
         let result = self
             .action
-            .create_transaction(self.user_id, params)
+            .create_transaction(params)
             .await
             .map_err(|e| ToolError(e.to_string()))?;
         serde_json::to_string(&result).map_err(Into::into)

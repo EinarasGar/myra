@@ -28,6 +28,20 @@ pub async fn handle_job(job: MyraJob, services: Data<Services>) -> Result<(), Bo
         MyraJob::ProcessUploadedFile { file_id, user_id } => {
             super::file_processing::handle(&providers, file_id, user_id).await?;
         }
+        MyraJob::ProcessQuickUpload {
+            quick_upload_id,
+            user_id,
+        } => {
+            super::quick_upload::handle(&providers, quick_upload_id, user_id).await;
+        }
+        MyraJob::ProcessQuickUploadCorrection {
+            quick_upload_id,
+            user_id,
+            message,
+        } => {
+            super::quick_upload::handle_correction(&providers, quick_upload_id, user_id, message)
+                .await;
+        }
     };
 
     Ok(())

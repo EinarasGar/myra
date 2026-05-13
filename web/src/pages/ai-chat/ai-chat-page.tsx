@@ -49,9 +49,15 @@ import {
 } from "@/components/ai-elements/reasoning";
 import { Suggestions, Suggestion } from "@/components/ai-elements/suggestion";
 import { Button } from "@/components/ui/button";
-import { CheckIcon, Loader2, Sparkles, XIcon } from "lucide-react";
+import { CheckIcon, Loader2, Plus, Sparkles, XIcon } from "lucide-react";
 import useAiChat, { type ChatMessage } from "@/hooks/use-ai-chat";
 import { useUserId } from "@/hooks/use-auth";
+import { useState, useEffect } from "react";
+import {
+  AIConversationsApiFactory,
+  type IdentifiableConversationResponse,
+} from "@/api";
+import { cn } from "@/lib/utils";
 
 const suggestions = [
   "What did I spend this month?",
@@ -234,12 +240,100 @@ function MessageParts({
   );
 }
 
+function ConversationSidebar({
+  userId,
+  activeConversationId,
+  onSelect,
+  onNew,
+}: {
+  userId: string;
+  activeConversationId: string | null;
+  onSelect: (id: string) => void;
+  onNew: () => void;
+}) {
+  const [conversations, setConversations] = useState<
+    IdentifiableConversationResponse[]
+  >([]);
+
+  useEffect(() => {
+    AIConversationsApiFactory()
+      .listConversations(userId)
+      .then((res) => setConversations(res.data.filter((c) => c.title !== null)))
+      .catch(() => {});
+  }, [userId, activeConversationId]);
+
+  function formatDate(dateStr: string) {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diff = now.getTime() - d.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    if (days === 0) return "Today";
+    if (days === 1) return "Yesterday";
+    if (days < 7) return `${days}d ago`;
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  }
+
+  return (
+    <div className="flex h-full w-56 shrink-0 flex-col border-r">
+      <div className="flex items-center justify-between p-3 border-b">
+        <span className="text-sm font-semibold">Conversations</span>
+        <Button size="icon" variant="ghost" className="size-7" onClick={onNew}>
+          <Plus className="size-4" />
+        </Button>
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        {conversations.length === 0 ? (
+          <p className="px-3 py-4 text-xs text-muted-foreground">
+            No conversations yet
+          </p>
+        ) : (
+          conversations.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => onSelect(c.id)}
+              className={cn(
+                "w-full px-3 py-2.5 text-left text-sm hover:bg-accent transition-colors",
+                activeConversationId === c.id && "bg-accent font-medium",
+              )}
+            >
+              <div className="truncate">{c.title ?? "New conversation"}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                {formatDate(c.updated_at)}
+              </div>
+            </button>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function AiChatPage() {
   const userId = useUserId();
-  const { messages, isStreaming, sendMessage, approveToolCall } =
-    useAiChat(userId);
+  const [selectedConversationId, setSelectedConversationId] = useState<
+    string | null
+  >(null);
+
+  const {
+    messages,
+    isStreaming,
+    conversationId,
+    sendMessage,
+    approveToolCall,
+    clearMessages,
+  } = useAiChat(userId, selectedConversationId);
 
   const hasMessages = messages.length > 0;
+
+  function handleSelectConversation(id: string) {
+    clearMessages();
+    setSelectedConversationId(id);
+  }
+
+  function handleNewConversation() {
+    clearMessages();
+    setSelectedConversationId(null);
+  }
 
   return (
     <>
@@ -263,94 +357,105 @@ export default function AiChatPage() {
         </div>
       </header>
 
-      <div className="mx-auto flex h-[calc(100vh-4rem)] w-full max-w-5xl flex-col px-4 pb-4">
-        <Conversation className="min-h-0 flex-1">
-          <ConversationContent>
-            {!hasMessages ? (
-              <ConversationEmptyState
-                title="How can I help?"
-                description="Ask questions about your transactions, spending, income, and more."
-                icon={
-                  <div className="flex size-12 items-center justify-center rounded-full bg-primary/10">
-                    <Sparkles className="size-6 text-primary" />
-                  </div>
-                }
-              />
-            ) : (
-              messages.map((msg, i) => {
-                const fileParts = msg.parts.filter(
-                  (p): p is Extract<typeof p, { type: "file" }> =>
-                    p.type === "file",
-                );
-                return (
-                  <Message
-                    key={i}
-                    from={msg.role}
-                    avatar={
-                      msg.role === "assistant" ? <AssistantAvatar /> : undefined
-                    }
-                  >
-                    {fileParts.length > 0 && (
-                      <Attachments variant="grid">
-                        {fileParts.map((part, j) => (
-                          <Attachment
-                            key={`file-${j}`}
-                            data={{ ...part.file, id: `file-${j}` }}
-                          >
-                            <AttachmentPreview />
-                          </Attachment>
-                        ))}
-                      </Attachments>
-                    )}
-                    <MessageContent>
-                      <MessageParts
-                        msg={msg}
-                        isStreaming={isStreaming}
-                        isLast={i === messages.length - 1}
-                        onApprove={approveToolCall}
-                      />
-                    </MessageContent>
-                  </Message>
-                );
-              })
-            )}
-          </ConversationContent>
-          <ConversationScrollButton />
-        </Conversation>
+      <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
+        <ConversationSidebar
+          userId={userId}
+          activeConversationId={conversationId}
+          onSelect={handleSelectConversation}
+          onNew={handleNewConversation}
+        />
 
-        {!hasMessages && (
-          <Suggestions className="mb-4 justify-center">
-            {suggestions.map((s) => (
-              <Suggestion key={s} suggestion={s} onClick={sendMessage} />
-            ))}
-          </Suggestions>
-        )}
-
-        <div className="shrink-0 pt-2">
-          <PromptInputProvider>
-            <PromptInput
-              onSubmit={({ text, files }) => {
-                sendMessage(text, files);
-              }}
-              accept="image/*,application/pdf"
-              multiple
-              className="w-full"
-            >
-              <PromptInputAttachmentsDisplay />
-              <PromptInputTextarea placeholder="Ask about your finances..." />
-              <PromptInputFooter>
-                <PromptInputActionMenu>
-                  <PromptInputActionMenuTrigger />
-                  <PromptInputActionMenuContent>
-                    <PromptInputActionAddAttachments />
-                  </PromptInputActionMenuContent>
-                </PromptInputActionMenu>
-                <PromptInputSubmit
-                  status={isStreaming ? "streaming" : "ready"}
+        <div className="mx-auto flex h-full w-full max-w-5xl flex-col px-4 pb-4 min-w-0">
+          <Conversation className="min-h-0 flex-1">
+            <ConversationContent>
+              {!hasMessages ? (
+                <ConversationEmptyState
+                  title="How can I help?"
+                  description="Ask questions about your transactions, spending, income, and more."
+                  icon={
+                    <div className="flex size-12 items-center justify-center rounded-full bg-primary/10">
+                      <Sparkles className="size-6 text-primary" />
+                    </div>
+                  }
                 />
-              </PromptInputFooter>
-            </PromptInput>
-          </PromptInputProvider>
+              ) : (
+                messages.map((msg, i) => {
+                  const fileParts = msg.parts.filter(
+                    (p): p is Extract<typeof p, { type: "file" }> =>
+                      p.type === "file",
+                  );
+                  return (
+                    <Message
+                      key={i}
+                      from={msg.role}
+                      avatar={
+                        msg.role === "assistant" ? (
+                          <AssistantAvatar />
+                        ) : undefined
+                      }
+                    >
+                      {fileParts.length > 0 && (
+                        <Attachments variant="grid">
+                          {fileParts.map((part, j) => (
+                            <Attachment
+                              key={`file-${j}`}
+                              data={{ ...part.file, id: `file-${j}` }}
+                            >
+                              <AttachmentPreview />
+                            </Attachment>
+                          ))}
+                        </Attachments>
+                      )}
+                      <MessageContent>
+                        <MessageParts
+                          msg={msg}
+                          isStreaming={isStreaming}
+                          isLast={i === messages.length - 1}
+                          onApprove={approveToolCall}
+                        />
+                      </MessageContent>
+                    </Message>
+                  );
+                })
+              )}
+            </ConversationContent>
+            <ConversationScrollButton />
+          </Conversation>
+
+          {!hasMessages && (
+            <Suggestions className="mb-4 justify-center">
+              {suggestions.map((s) => (
+                <Suggestion key={s} suggestion={s} onClick={sendMessage} />
+              ))}
+            </Suggestions>
+          )}
+
+          <div className="shrink-0 pt-2">
+            <PromptInputProvider>
+              <PromptInput
+                onSubmit={({ text, files }) => {
+                  sendMessage(text, files);
+                }}
+                accept="image/*,application/pdf"
+                multiple
+                className="w-full"
+              >
+                <PromptInputAttachmentsDisplay />
+                <PromptInputTextarea placeholder="Ask about your finances..." />
+                <PromptInputFooter>
+                  <PromptInputActionMenu>
+                    <PromptInputActionMenuTrigger />
+                    <PromptInputActionMenuContent>
+                      <PromptInputActionAddAttachments />
+                    </PromptInputActionMenuContent>
+                  </PromptInputActionMenu>
+                  <PromptInputSubmit
+                    status={isStreaming ? "streaming" : "ready"}
+                  />
+                </PromptInputFooter>
+              </PromptInput>
+            </PromptInputProvider>
+          </div>
         </div>
       </div>
     </>

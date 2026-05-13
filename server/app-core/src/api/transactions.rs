@@ -85,6 +85,7 @@ fn build_list_item(
         category_name: cat_id
             .and_then(|id| find_category(tables, id))
             .unwrap_or_default(),
+        category_id: cat_id,
         is_group: false,
         group_size: 1,
         children: vec![],
@@ -286,6 +287,7 @@ fn group_to_list_item(
             .unwrap_or_default(),
         asset_display: String::new(),
         category_name: find_category(tables, tg.group.category_id.0).unwrap_or_default(),
+        category_id: Some(tg.group.category_id.0),
         is_group: true,
         group_size,
         children: tg

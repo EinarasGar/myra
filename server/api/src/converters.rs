@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use business::dtos::combined_transaction_dto::CombinedTransactionItem;
 use business::dtos::transaction_dto::{TransactionDto, TransactionTypeDto};
+use dal::query_params::ai_conversation_params::ProposalType;
 use uuid::Uuid;
 pub fn transaction_dtos_to_asset_ids_hashset(transactions: &[&TransactionDto]) -> HashSet<i32> {
     let mut asset_ids = HashSet::new();
@@ -115,6 +116,54 @@ pub fn transaction_dtos_to_category_ids_hashset(transactions: &[&TransactionDto]
         }
     }
     category_ids
+}
+
+pub fn extract_ids_from_proposal(
+    proposal_type: Option<&ProposalType>,
+    proposal_data: Option<&serde_json::Value>,
+) -> (HashSet<Uuid>, HashSet<i32>, HashSet<i32>) {
+    let mut account_ids: HashSet<Uuid> = HashSet::new();
+    let mut asset_ids: HashSet<i32> = HashSet::new();
+    let mut category_ids: HashSet<i32> = HashSet::new();
+
+    let Some(data) = proposal_data else {
+        return (account_ids, asset_ids, category_ids);
+    };
+
+    let extract_single = |data: &serde_json::Value,
+                          account_ids: &mut HashSet<Uuid>,
+                          asset_ids: &mut HashSet<i32>,
+                          category_ids: &mut HashSet<i32>| {
+        if let Some(id_str) = data["account_id"].as_str() {
+            if let Ok(id) = Uuid::parse_str(id_str) {
+                account_ids.insert(id);
+            }
+        }
+        if let Some(id) = data["asset_id"].as_i64() {
+            asset_ids.insert(id as i32);
+        }
+        if let Some(id) = data["category_id"].as_i64() {
+            category_ids.insert(id as i32);
+        }
+    };
+
+    match proposal_type {
+        Some(ProposalType::TransactionGroup) => {
+            if let Some(id) = data["category_id"].as_i64() {
+                category_ids.insert(id as i32);
+            }
+            if let Some(transactions) = data["transactions"].as_array() {
+                for txn in transactions {
+                    extract_single(txn, &mut account_ids, &mut asset_ids, &mut category_ids);
+                }
+            }
+        }
+        _ => {
+            extract_single(data, &mut account_ids, &mut asset_ids, &mut category_ids);
+        }
+    }
+
+    (account_ids, asset_ids, category_ids)
 }
 
 pub fn combined_items_to_category_ids_hashset(items: &[CombinedTransactionItem]) -> HashSet<i32> {
