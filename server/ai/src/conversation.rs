@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 use crate::action_provider::AiActionProvider;
 use crate::agents::approval::{build_gated_toolset, ApprovalHook};
-use crate::agents::chat_utils::{find_tool_call_in_history, parse_image_media_type};
+use crate::agents::chat_utils::{attachment_to_user_content, find_tool_call_in_history};
 use crate::conversation_provider::ConversationProvider;
 use crate::models::chat::{
     Base64Image, ChatHistoryMessage, ChatStreamEvent, HistoryEntry, PromptOutput,
@@ -395,19 +395,19 @@ struct PreparedTurn {
     images_by_id: HashMap<Uuid, Base64Image>,
 }
 
-fn build_user_message(text: &str, images: &[Base64Image]) -> Message {
-    if images.is_empty() {
+fn build_user_message(text: &str, attachments: &[Base64Image]) -> Message {
+    if attachments.is_empty() {
         return Message::user(text);
     }
 
     let mut contents: Vec<UserContent> = vec![UserContent::text(text)];
-    for img in images {
-        if let Some(media_type) = parse_image_media_type(&img.media_type) {
-            contents.push(UserContent::image_base64(
-                img.data.clone(),
-                Some(media_type),
-                None,
-            ));
+    for att in attachments {
+        match attachment_to_user_content(att) {
+            Some(uc) => contents.push(uc),
+            None => tracing::warn!(
+                media_type = %att.media_type,
+                "Skipping unsupported attachment"
+            ),
         }
     }
     Message::User {
