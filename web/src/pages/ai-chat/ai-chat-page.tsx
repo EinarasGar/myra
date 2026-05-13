@@ -332,7 +332,7 @@ export default function AiChatPage() {
               onSubmit={({ text, files }) => {
                 sendMessage(text, files);
               }}
-              accept="image/*"
+              accept="image/*,application/pdf"
               multiple
               className="w-full"
             >

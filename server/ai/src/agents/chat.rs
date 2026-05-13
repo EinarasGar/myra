@@ -28,7 +28,7 @@ use gemini::completion::gemini_api_types::{
 };
 
 use super::approval::{build_gated_toolset, ApprovalHook};
-use super::chat_utils::{find_tool_call_in_history, parse_image_media_type};
+use super::chat_utils::{attachment_to_user_content, find_tool_call_in_history};
 
 const SYSTEM_PROMPT: &str = r#"You are Myra, a personal finance assistant. You help users understand their spending, income, and financial patterns by querying their transaction data.
 
@@ -187,13 +187,13 @@ pub async fn run_chat_stream<D: AiDataProvider, A: AiActionProvider>(
             if let Some(imgs) = images {
                 if !imgs.is_empty() {
                     let mut user_contents: Vec<UserContent> = vec![UserContent::text(msg)];
-                    for img in &imgs {
-                        if let Some(media_type) = parse_image_media_type(&img.media_type) {
-                            user_contents.push(UserContent::image_base64(
-                                img.data.clone(),
-                                Some(media_type),
-                                None,
-                            ));
+                    for att in &imgs {
+                        match attachment_to_user_content(att) {
+                            Some(uc) => user_contents.push(uc),
+                            None => tracing::warn!(
+                                media_type = %att.media_type,
+                                "Skipping unsupported attachment"
+                            ),
                         }
                     }
                     Message::User {
