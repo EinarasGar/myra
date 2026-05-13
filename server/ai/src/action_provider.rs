@@ -1,8 +1,9 @@
 use anyhow::Result;
 
 use crate::models::action::{
-    CreateTransactionGroupParams, CreateTransactionGroupResult, CreateTransactionParams,
-    CreateTransactionResult,
+    CreateCustomAssetParams, CreateCustomAssetResult, CreateTransactionGroupParams,
+    CreateTransactionGroupResult, CreateTransactionParams, CreateTransactionResult,
+    RecordAssetTradeParams, RecordAssetTradeResult,
 };
 
 /// Mutating operations available to AI tools. Implementers are user-scoped —
@@ -18,4 +19,14 @@ pub trait AiActionProvider: Send + Sync + 'static {
         &self,
         params: CreateTransactionGroupParams,
     ) -> impl std::future::Future<Output = Result<CreateTransactionGroupResult>> + Send;
+
+    fn create_custom_asset(
+        &self,
+        params: CreateCustomAssetParams,
+    ) -> impl std::future::Future<Output = Result<CreateCustomAssetResult>> + Send;
+
+    fn record_asset_trade(
+        &self,
+        params: RecordAssetTradeParams,
+    ) -> impl std::future::Future<Output = Result<RecordAssetTradeResult>> + Send;
 }

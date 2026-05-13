@@ -4,8 +4,9 @@
 
 use ai::action_provider::AiActionProvider;
 use ai::models::action::{
-    CreateTransactionGroupParams, CreateTransactionGroupResult, CreateTransactionParams,
-    CreateTransactionResult,
+    CreateCustomAssetParams, CreateCustomAssetResult, CreateTransactionGroupParams,
+    CreateTransactionGroupResult, CreateTransactionParams, CreateTransactionResult,
+    RecordAssetTradeParams, RecordAssetTradeResult,
 };
 use anyhow::Result;
 use uuid::Uuid;
@@ -38,5 +39,21 @@ impl AiActionProvider for UserActionProvider {
         self.service
             .create_transaction_group(self.user_id, params)
             .await
+    }
+
+    async fn create_custom_asset(
+        &self,
+        params: CreateCustomAssetParams,
+    ) -> Result<CreateCustomAssetResult> {
+        self.service
+            .create_custom_asset(self.user_id, params)
+            .await
+    }
+
+    async fn record_asset_trade(
+        &self,
+        params: RecordAssetTradeParams,
+    ) -> Result<RecordAssetTradeResult> {
+        self.service.record_asset_trade(self.user_id, params).await
     }
 }

@@ -1,7 +1,9 @@
 pub mod aggregate_transactions;
+pub mod create_custom_asset;
 pub mod create_transaction;
 pub mod create_transaction_group;
 pub mod list_accounts;
+pub mod record_asset_trade;
 pub mod search_assets;
 pub mod search_categories;
 pub mod search_transactions;
