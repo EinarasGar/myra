@@ -15,7 +15,10 @@ use crate::{
         add_custom_asset_dto::AddCustomAssetDto,
         entry_dto::EntryDto,
         paging_dto::PagingDto,
-        transaction_dto::{RegularTransactionMetadataDto, TransactionDto, TransactionTypeDto},
+        transaction_dto::{
+            AssetPurchaseMetadataDto, AssetSaleMetadataDto, RegularTransactionMetadataDto,
+            TransactionDto, TransactionTypeDto,
+        },
     },
     service_collection::{
         accounts_service::AccountsService, asset_service::AssetsService,
@@ -25,8 +28,6 @@ use crate::{
 };
 
 const ACCOUNT_TYPE_INVESTMENT: i32 = 3;
-const CATEGORY_ID_ASSET_PURCHASE: i32 = 3;
-const CATEGORY_ID_ASSET_SALE: i32 = 4;
 
 pub struct AiActionService {
     transaction_service: TransactionManagementService,
@@ -212,54 +213,48 @@ impl AiActionService {
 
         let (asset_id, asset_ticker) = asset;
 
-        let (cash_qty, asset_qty, category_id, action_word) = match params.side {
+        let make_entry = |asset_id: i32, qty: Decimal| EntryDto {
+            entry_id: None,
+            asset_id,
+            quantity: qty,
+            account_id,
+        };
+
+        let (transaction_type, action_word) = match params.side {
             RecordAssetTradeSide::Buy => (
-                -params.total_amount,
-                params.quantity,
-                CATEGORY_ID_ASSET_PURCHASE,
+                TransactionTypeDto::AssetPurchase(AssetPurchaseMetadataDto {
+                    purchase: make_entry(asset_id, params.quantity),
+                    sale: make_entry(currency_id, -params.total_amount),
+                }),
                 "Buy",
             ),
             RecordAssetTradeSide::Sell => (
-                params.total_amount,
-                -params.quantity,
-                CATEGORY_ID_ASSET_SALE,
+                TransactionTypeDto::AssetSale(AssetSaleMetadataDto {
+                    sale: make_entry(asset_id, -params.quantity),
+                    proceeds: make_entry(currency_id, params.total_amount),
+                }),
                 "Sell",
             ),
         };
 
-        let description = format!(
-            "{} {} {} for {} {}",
-            action_word, params.quantity, asset_ticker, params.total_amount, currency_ticker
-        );
-
-        let make_dto = |asset_id: i32, qty: Decimal| TransactionDto {
+        let dto = TransactionDto {
             transaction_id: None,
             date: datetime,
             fee_entries: vec![],
-            transaction_type: TransactionTypeDto::Regular(RegularTransactionMetadataDto {
-                description: Some(description.clone()),
-                entry: EntryDto {
-                    entry_id: None,
-                    asset_id,
-                    quantity: qty,
-                    account_id,
-                },
-                category_id,
-            }),
+            transaction_type,
         };
-        let transactions = vec![make_dto(currency_id, cash_qty), make_dto(asset_id, asset_qty)];
 
         let result = self
-            .group_service
-            .create_transaction_group(user_id, description, category_id, datetime, transactions)
+            .transaction_service
+            .add_individual_transaction(user_id, dto)
             .await?;
 
-        let group_id = result
-            .group_id
-            .ok_or_else(|| anyhow::anyhow!("Transaction group created but no ID returned"))?;
+        let transaction_id = result
+            .transaction_id
+            .ok_or_else(|| anyhow::anyhow!("Transaction was created but no ID was returned"))?;
 
         Ok(RecordAssetTradeResult {
-            group_id,
+            transaction_id,
             account_used: account_name,
             asset_ticker,
             currency_ticker,

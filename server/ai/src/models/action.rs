@@ -71,7 +71,7 @@ pub struct RecordAssetTradeParams {
 
 #[derive(Serialize)]
 pub struct RecordAssetTradeResult {
-    pub group_id: Uuid,
+    pub transaction_id: Uuid,
     pub account_used: String,
     pub asset_ticker: String,
     pub currency_ticker: String,
