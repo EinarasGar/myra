@@ -12,8 +12,10 @@ use rig::tool::Tool;
 
 use crate::action_provider::AiActionProvider;
 use crate::models::chat::ToolRequestPayload;
+use crate::tools::create_custom_asset::CreateCustomAssetTool;
 use crate::tools::create_transaction::CreateTransactionTool;
 use crate::tools::create_transaction_group::CreateTransactionGroupTool;
+use crate::tools::record_asset_trade::RecordAssetTradeTool;
 
 pub(crate) struct GatedToolSet {
     pub toolset: rig::tool::ToolSet,
@@ -23,11 +25,15 @@ pub(crate) struct GatedToolSet {
 pub(crate) fn build_gated_toolset<A: AiActionProvider>(actions: Arc<A>) -> GatedToolSet {
     let mut toolset = rig::tool::ToolSet::default();
     toolset.add_tool(CreateTransactionTool::new(actions.clone()));
-    toolset.add_tool(CreateTransactionGroupTool::new(actions));
+    toolset.add_tool(CreateTransactionGroupTool::new(actions.clone()));
+    toolset.add_tool(CreateCustomAssetTool::new(actions.clone()));
+    toolset.add_tool(RecordAssetTradeTool::new(actions));
 
     let gated_names: HashSet<String> = [
         CreateTransactionTool::<A>::NAME,
         CreateTransactionGroupTool::<A>::NAME,
+        CreateCustomAssetTool::<A>::NAME,
+        RecordAssetTradeTool::<A>::NAME,
     ]
     .iter()
     .map(|s: &&str| s.to_string())
