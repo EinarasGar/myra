@@ -14,26 +14,21 @@ use crate::{
     dtos::{
         add_custom_asset_dto::AddCustomAssetDto,
         entry_dto::EntryDto,
-        paging_dto::PagingDto,
         transaction_dto::{
             AssetPurchaseMetadataDto, AssetSaleMetadataDto, RegularTransactionMetadataDto,
             TransactionDto, TransactionTypeDto,
         },
     },
     service_collection::{
-        accounts_service::AccountsService, asset_service::AssetsService,
-        transaction_group_service::TransactionGroupService,
+        asset_service::AssetsService, transaction_group_service::TransactionGroupService,
         transaction_management_service::TransactionManagementService, user_service::UsersService,
     },
 };
-
-const ACCOUNT_TYPE_INVESTMENT: i32 = 3;
 
 pub struct AiActionService {
     transaction_service: TransactionManagementService,
     group_service: TransactionGroupService,
     asset_service: AssetsService,
-    accounts_service: AccountsService,
     users_service: UsersService,
 }
 
@@ -43,7 +38,6 @@ impl AiActionService {
             transaction_service: TransactionManagementService::new(providers),
             group_service: TransactionGroupService::new(providers),
             asset_service: AssetsService::new(providers),
-            accounts_service: AccountsService::new(providers),
             users_service: UsersService::new(providers),
         }
     }
@@ -172,46 +166,27 @@ impl AiActionService {
             return Err(anyhow::anyhow!("Total amount must be positive."));
         }
 
-        let datetime = parse_date_or_today(params.date.as_deref())?;
+        let datetime = parse_datetime_or_now(params.date.as_deref())?;
 
-        let asset = self
-            .lookup_asset_by_ticker(user_id, &params.ticker)
-            .await?
-            .ok_or_else(|| {
-                anyhow::anyhow!(
-                    "Asset '{}' not found. Use create_custom_asset to add it first.",
-                    params.ticker
-                )
-            })?;
+        let asset = self.asset_service.get_asset(params.asset_id).await?;
 
-        let (currency_id, currency_ticker) = match &params.currency_ticker {
-            Some(ticker) => {
-                let asset = self
-                    .lookup_asset_by_ticker(user_id, ticker)
-                    .await?
-                    .ok_or_else(|| anyhow::anyhow!("Currency '{}' not found.", ticker))?;
-                (asset.0, asset.1)
-            }
+        let currency = match params.currency_asset_id {
+            Some(id) => self.asset_service.get_asset(id).await?,
             None => {
                 let (_, _, default_asset_id) =
                     self.users_service.get_basic_user(user_id).await?;
-                let default = self.asset_service.get_asset(default_asset_id).await?;
-                (default.asset_id, default.ticker)
+                self.asset_service.get_asset(default_asset_id).await?
             }
         };
 
-        if currency_id == asset.0 {
+        if currency.asset_id == asset.asset_id {
             return Err(anyhow::anyhow!(
                 "Asset and currency cannot be the same ({}).",
-                currency_ticker
+                currency.ticker
             ));
         }
 
-        let (account_id, account_name) = self
-            .resolve_trade_account(user_id, params.account_id, params.account_name.as_deref())
-            .await?;
-
-        let (asset_id, asset_ticker) = asset;
+        let account_id = params.account_id;
 
         let make_entry = |asset_id: i32, qty: Decimal| EntryDto {
             entry_id: None,
@@ -223,15 +198,15 @@ impl AiActionService {
         let (transaction_type, action_word) = match params.side {
             RecordAssetTradeSide::Buy => (
                 TransactionTypeDto::AssetPurchase(AssetPurchaseMetadataDto {
-                    purchase: make_entry(asset_id, params.quantity),
-                    sale: make_entry(currency_id, -params.total_amount),
+                    purchase: make_entry(asset.asset_id, params.quantity),
+                    sale: make_entry(currency.asset_id, -params.total_amount),
                 }),
                 "Buy",
             ),
             RecordAssetTradeSide::Sell => (
                 TransactionTypeDto::AssetSale(AssetSaleMetadataDto {
-                    sale: make_entry(asset_id, -params.quantity),
-                    proceeds: make_entry(currency_id, params.total_amount),
+                    sale: make_entry(asset.asset_id, -params.quantity),
+                    proceeds: make_entry(currency.asset_id, params.total_amount),
                 }),
                 "Sell",
             ),
@@ -255,94 +230,25 @@ impl AiActionService {
 
         Ok(RecordAssetTradeResult {
             transaction_id,
-            account_used: account_name,
-            asset_ticker,
-            currency_ticker,
+            asset_ticker: asset.ticker,
+            currency_ticker: currency.ticker,
             message: format!("{} recorded successfully.", action_word),
         })
     }
-
-    async fn lookup_asset_by_ticker(
-        &self,
-        _user_id: Uuid,
-        ticker: &str,
-    ) -> Result<Option<(i32, String)>> {
-        let page = self
-            .asset_service
-            .search_assets(PagingDto { start: 0, count: 5 }, Some(ticker.to_string()))
-            .await?;
-        let target = ticker.to_uppercase();
-        let hit = page
-            .results
-            .into_iter()
-            .find(|a| a.ticker.to_uppercase() == target);
-        Ok(hit.map(|a| (a.id.0, a.ticker)))
-    }
-
-    async fn resolve_trade_account(
-        &self,
-        user_id: Uuid,
-        explicit_id: Option<Uuid>,
-        explicit_name: Option<&str>,
-    ) -> Result<(Uuid, String)> {
-        let accounts = self
-            .accounts_service
-            .get_user_accounts_with_metadata(user_id)
-            .await?;
-
-        if let Some(id) = explicit_id {
-            let acc = accounts
-                .iter()
-                .find(|a| a.id == id)
-                .ok_or_else(|| anyhow::anyhow!("Account {} not found for user.", id))?;
-            return Ok((acc.id, acc.account_name.clone()));
-        }
-
-        if let Some(name) = explicit_name {
-            let needle = name.to_lowercase();
-            let matches: Vec<_> = accounts
-                .iter()
-                .filter(|a| a.account_name.to_lowercase().contains(&needle))
-                .collect();
-            return match matches.as_slice() {
-                [] => Err(anyhow::anyhow!("No account matching name '{}'.", name)),
-                [a] => Ok((a.id, a.account_name.clone())),
-                many => Err(anyhow::anyhow!(
-                    "Multiple accounts match '{}': {}. Please specify which one.",
-                    name,
-                    many.iter()
-                        .map(|a| a.account_name.as_str())
-                        .collect::<Vec<_>>()
-                        .join(", ")
-                )),
-            };
-        }
-
-        let investment: Vec<_> = accounts
-            .iter()
-            .filter(|a| a.account_type.id == ACCOUNT_TYPE_INVESTMENT)
-            .collect();
-        match investment.as_slice() {
-            [] => Err(anyhow::anyhow!(
-                "No investment account found. Please create one (account type 'Investment') before recording asset trades."
-            )),
-            [a] => Ok((a.id, a.account_name.clone())),
-            many => Err(anyhow::anyhow!(
-                "Multiple investment accounts found: {}. Please ask the user which one and pass it as account_name or account_id.",
-                many.iter()
-                    .map(|a| a.account_name.as_str())
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            )),
-        }
-    }
 }
 
-fn parse_date_or_today(date: Option<&str>) -> Result<time::OffsetDateTime> {
-    let format = time::format_description::parse("[year]-[month]-[day]").unwrap();
-    let date = match date {
-        Some(d) => time::Date::parse(d, &format)?,
-        None => time::OffsetDateTime::now_utc().date(),
+fn parse_datetime_or_now(date: Option<&str>) -> Result<time::OffsetDateTime> {
+    let Some(s) = date else {
+        return Ok(time::OffsetDateTime::now_utc());
     };
+
+    if let Ok(dt) =
+        time::OffsetDateTime::parse(s, &time::format_description::well_known::Rfc3339)
+    {
+        return Ok(dt);
+    }
+
+    let date_format = time::format_description::parse("[year]-[month]-[day]").unwrap();
+    let date = time::Date::parse(s, &date_format)?;
     Ok(date.with_time(time::Time::MIDNIGHT).assume_utc())
 }

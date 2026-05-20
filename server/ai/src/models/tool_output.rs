@@ -98,13 +98,12 @@ pub struct CreateCustomAssetArgs {
 #[derive(Deserialize)]
 pub struct RecordAssetTradeArgs {
     pub side: String,
-    pub ticker: String,
+    pub asset_id: i32,
     #[serde(with = "rust_decimal::serde::arbitrary_precision")]
     pub quantity: Decimal,
     #[serde(with = "rust_decimal::serde::arbitrary_precision")]
     pub total_amount: Decimal,
-    pub currency_ticker: Option<String>,
-    pub account_id: Option<String>,
-    pub account_name: Option<String>,
+    pub currency_asset_id: Option<i32>,
+    pub account_id: String,
     pub date: Option<String>,
 }

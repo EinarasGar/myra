@@ -60,19 +60,17 @@ pub enum RecordAssetTradeSide {
 
 pub struct RecordAssetTradeParams {
     pub side: RecordAssetTradeSide,
-    pub ticker: String,
+    pub asset_id: i32,
     pub quantity: Decimal,
     pub total_amount: Decimal,
-    pub currency_ticker: Option<String>,
-    pub account_id: Option<Uuid>,
-    pub account_name: Option<String>,
+    pub currency_asset_id: Option<i32>,
+    pub account_id: Uuid,
     pub date: Option<String>,
 }
 
 #[derive(Serialize)]
 pub struct RecordAssetTradeResult {
     pub transaction_id: Uuid,
-    pub account_used: String,
     pub asset_ticker: String,
     pub currency_ticker: String,
     pub message: String,
