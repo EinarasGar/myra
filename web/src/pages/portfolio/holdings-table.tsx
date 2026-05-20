@@ -37,6 +37,15 @@ const columns: ColumnDef<Holding>[] = [
   {
     accessorKey: "price",
     header: () => <span>Price</span>,
+    cell: (info) => {
+      const raw = info.getValue<number | string | null | undefined>();
+      const num = typeof raw === "string" ? Number(raw) : raw;
+      if (num == null || Number.isNaN(num)) return "—";
+      return num.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    },
     footer: (props) => props.column.id,
   },
 ];

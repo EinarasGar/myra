@@ -352,34 +352,29 @@ export default function TransactionsList({
           : `${allItems.length} items`}
       </div>
 
-      {/* Table with fixed header */}
-      <div className="border rounded-md">
-        <table className="w-full table-fixed text-sm">
-          {colgroup}
-          <TableHeader>
-            <ShadTableRow>
-              <TableHead className="w-[40px]" />
-              <TableHead>Date</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Account</TableHead>
-              <TableHead>Asset</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
-              <TableHead />
-            </ShadTableRow>
-          </TableHeader>
-        </table>
-
-        {/* Scrollable body */}
+      {/* Single table with sticky header */}
+      <div className="border rounded-md overflow-x-auto">
         <div
           ref={scrollContainerRef}
-          className="overflow-auto"
+          className="min-w-[900px] overflow-y-auto overflow-x-hidden"
           style={{ maxHeight: "calc(100vh - 300px)" }}
           onScroll={handleScroll}
         >
-          <table className="w-full table-fixed text-sm">
+          <table className="w-full table-fixed text-sm [&_td]:overflow-hidden [&_td]:text-ellipsis [&_th]:overflow-hidden [&_th]:text-ellipsis">
             {colgroup}
+            <TableHeader className="sticky top-0 z-10 bg-background">
+              <ShadTableRow>
+                <TableHead className="w-[40px]" />
+                <TableHead>Date</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Account</TableHead>
+                <TableHead>Asset</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+                <TableHead />
+              </ShadTableRow>
+            </TableHeader>
             <TableBody>
               {useVirtual ? (
                 <>
