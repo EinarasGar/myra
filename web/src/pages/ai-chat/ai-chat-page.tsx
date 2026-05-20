@@ -40,6 +40,7 @@ import {
   Attachments,
   Attachment,
   AttachmentPreview,
+  AttachmentInfo,
   AttachmentRemove,
 } from "@/components/ai-elements/attachments";
 import {
@@ -49,7 +50,22 @@ import {
 } from "@/components/ai-elements/reasoning";
 import { Suggestions, Suggestion } from "@/components/ai-elements/suggestion";
 import { Button } from "@/components/ui/button";
-import { CheckIcon, Loader2, Plus, Sparkles, XIcon } from "lucide-react";
+import {
+  CheckIcon,
+  FileTextIcon,
+  History,
+  Loader2,
+  Plus,
+  Sparkles,
+  XIcon,
+} from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import useAiChat, { type ChatMessage } from "@/hooks/use-ai-chat";
 import { useUserId } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
@@ -72,17 +88,32 @@ function PromptInputAttachmentsDisplay() {
   const attachments = usePromptInputAttachments();
   if (attachments.files.length === 0) return null;
   return (
-    <Attachments variant="inline" className="px-3 pt-2">
-      {attachments.files.map((file) => (
-        <Attachment
-          key={file.id}
-          data={file}
-          onRemove={() => attachments.remove(file.id)}
-        >
-          <AttachmentPreview />
-          <AttachmentRemove />
-        </Attachment>
-      ))}
+    <Attachments
+      variant="list"
+      className="grid w-full grid-cols-1 gap-2 px-3 pt-2 sm:grid-cols-2"
+    >
+      {attachments.files.map((file) => {
+        const isImage = file.mediaType?.startsWith("image/") ?? false;
+        return (
+          <Attachment
+            key={file.id}
+            data={file}
+            onRemove={() => attachments.remove(file.id)}
+          >
+            <AttachmentPreview
+              className="size-16"
+              fallbackIcon={
+                <FileTextIcon className="size-8 text-muted-foreground" />
+              }
+            />
+            <AttachmentInfo
+              className={isImage ? "hidden sm:block" : undefined}
+              showMediaType
+            />
+            <AttachmentRemove />
+          </Attachment>
+        );
+      })}
     </Attachments>
   );
 }
@@ -240,17 +271,21 @@ function MessageParts({
   );
 }
 
-function ConversationSidebar({
-  userId,
-  activeConversationId,
-  onSelect,
-  onNew,
-}: {
-  userId: string;
-  activeConversationId: string | null;
-  onSelect: (id: string) => void;
-  onNew: () => void;
-}) {
+function formatConversationDate(dateStr: string) {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diff = now.getTime() - d.getTime();
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 7) return `${days}d ago`;
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function useConversations(
+  userId: string,
+  activeConversationId: string | null,
+) {
   const [conversations, setConversations] = useState<
     IdentifiableConversationResponse[]
   >([]);
@@ -262,19 +297,61 @@ function ConversationSidebar({
       .catch(() => {});
   }, [userId, activeConversationId]);
 
-  function formatDate(dateStr: string) {
-    const d = new Date(dateStr);
-    const now = new Date();
-    const diff = now.getTime() - d.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    if (days === 0) return "Today";
-    if (days === 1) return "Yesterday";
-    if (days < 7) return `${days}d ago`;
-    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return conversations;
+}
+
+function ConversationListBody({
+  conversations,
+  activeConversationId,
+  onSelect,
+}: {
+  conversations: IdentifiableConversationResponse[];
+  activeConversationId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  if (conversations.length === 0) {
+    return (
+      <p className="px-3 py-4 text-xs text-muted-foreground">
+        No conversations yet
+      </p>
+    );
   }
+  return (
+    <>
+      {conversations.map((c) => (
+        <button
+          key={c.id}
+          onClick={() => onSelect(c.id)}
+          className={cn(
+            "w-full px-3 py-2.5 text-left text-sm hover:bg-accent transition-colors",
+            activeConversationId === c.id && "bg-accent font-medium",
+          )}
+        >
+          <div className="truncate">{c.title ?? "New conversation"}</div>
+          <div className="text-xs text-muted-foreground mt-0.5">
+            {formatConversationDate(c.updated_at)}
+          </div>
+        </button>
+      ))}
+    </>
+  );
+}
+
+function ConversationSidebar({
+  userId,
+  activeConversationId,
+  onSelect,
+  onNew,
+}: {
+  userId: string;
+  activeConversationId: string | null;
+  onSelect: (id: string) => void;
+  onNew: () => void;
+}) {
+  const conversations = useConversations(userId, activeConversationId);
 
   return (
-    <div className="flex h-full w-56 shrink-0 flex-col border-r">
+    <div className="hidden h-full w-56 shrink-0 flex-col border-r lg:flex">
       <div className="flex items-center justify-between p-3 border-b">
         <span className="text-sm font-semibold">Conversations</span>
         <Button size="icon" variant="ghost" className="size-7" onClick={onNew}>
@@ -282,29 +359,70 @@ function ConversationSidebar({
         </Button>
       </div>
       <div className="flex-1 overflow-y-auto">
-        {conversations.length === 0 ? (
-          <p className="px-3 py-4 text-xs text-muted-foreground">
-            No conversations yet
-          </p>
-        ) : (
-          conversations.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => onSelect(c.id)}
-              className={cn(
-                "w-full px-3 py-2.5 text-left text-sm hover:bg-accent transition-colors",
-                activeConversationId === c.id && "bg-accent font-medium",
-              )}
-            >
-              <div className="truncate">{c.title ?? "New conversation"}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">
-                {formatDate(c.updated_at)}
-              </div>
-            </button>
-          ))
-        )}
+        <ConversationListBody
+          conversations={conversations}
+          activeConversationId={activeConversationId}
+          onSelect={onSelect}
+        />
       </div>
     </div>
+  );
+}
+
+function ConversationDrawer({
+  userId,
+  activeConversationId,
+  onSelect,
+  onNew,
+}: {
+  userId: string;
+  activeConversationId: string | null;
+  onSelect: (id: string) => void;
+  onNew: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const conversations = useConversations(userId, activeConversationId);
+
+  function handleSelect(id: string) {
+    onSelect(id);
+    setOpen(false);
+  }
+
+  function handleNew() {
+    onNew();
+    setOpen(false);
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger className="inline-flex size-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground lg:hidden">
+        <History className="size-4" />
+        <span className="sr-only">Conversations</span>
+      </SheetTrigger>
+      <SheetContent side="left" className="flex w-72 flex-col p-0">
+        <SheetHeader className="flex flex-row items-center justify-between gap-2 border-b p-3 space-y-0">
+          <SheetTitle className="text-sm font-semibold">
+            Conversations
+          </SheetTitle>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="size-7"
+            onClick={handleNew}
+          >
+            <Plus className="size-4" />
+            <span className="sr-only">New conversation</span>
+          </Button>
+        </SheetHeader>
+        <div className="flex-1 overflow-y-auto">
+          <ConversationListBody
+            conversations={conversations}
+            activeConversationId={activeConversationId}
+            onSelect={handleSelect}
+          />
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -338,11 +456,17 @@ export default function AiChatPage() {
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-        <div className="flex items-center gap-2 px-4">
+        <div className="flex w-full items-center gap-2 px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator
             orientation="vertical"
             className="mr-2 data-[orientation=vertical]:h-4"
+          />
+          <ConversationDrawer
+            userId={userId}
+            activeConversationId={conversationId}
+            onSelect={handleSelectConversation}
+            onNew={handleNewConversation}
           />
           <Breadcrumb>
             <BreadcrumbList>

@@ -36,11 +36,15 @@ export default function TransactionGroupRow({
   return (
     <TableRow className="cursor-pointer bg-muted/30" onClick={onToggleExpand}>
       {avatarCell}
-      <TableCell className="text-sm">
+      <TableCell
+        className="text-sm"
+        title={formatTransactionDate(group.date)}
+      >
         {formatTransactionDate(group.date)}
       </TableCell>
       <TableCell
         className="text-sm font-medium max-w-0 truncate hover:underline"
+        title={group.description}
         onClick={(e) => {
           e.stopPropagation();
           onDetailClick();
@@ -48,14 +52,22 @@ export default function TransactionGroupRow({
       >
         {group.description}
       </TableCell>
-      <TableCell>
+      <TableCell title={`Group · ${group.transactions.length}`}>
         <Badge variant="outline">Group · {group.transactions.length}</Badge>
       </TableCell>
-      <TableCell className="text-sm max-w-0 truncate">
+      <TableCell
+        className="text-sm max-w-0 truncate"
+        title={getGroupAccountSummary(group, accounts)}
+      >
         {getGroupAccountSummary(group, accounts)}
       </TableCell>
       <TableCell className="text-sm">—</TableCell>
-      <TableCell className="text-sm max-w-0 truncate">{categoryName}</TableCell>
+      <TableCell
+        className="text-sm max-w-0 truncate"
+        title={categoryName}
+      >
+        {categoryName}
+      </TableCell>
       <TableCell
         className="text-sm text-right font-medium max-w-0 truncate"
         title={getGroupAmountSummary(group, assets)}

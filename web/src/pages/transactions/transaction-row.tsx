@@ -60,18 +60,36 @@ export default function TransactionRow({
       onClick={onClick}
     >
       {avatarCell}
-      <TableCell className="text-sm">
+      <TableCell
+        className="text-sm"
+        title={formatTransactionDate(transaction.date)}
+      >
         {formatTransactionDate(transaction.date)}
       </TableCell>
-      <TableCell className={cn("text-sm max-w-0 truncate", isChild && "pl-6")}>
+      <TableCell
+        className={cn("text-sm max-w-0 truncate", isChild && "pl-6")}
+        title={description}
+      >
         {description}
       </TableCell>
-      <TableCell>
+      <TableCell title={getTransactionTypeLabel(transaction.type)}>
         <TransactionTypeBadge type={transaction.type} />
       </TableCell>
-      <TableCell className="text-sm max-w-0 truncate">{accountName}</TableCell>
-      <TableCell className="text-sm">{assetTicker}</TableCell>
-      <TableCell className="text-sm max-w-0 truncate">{categoryName}</TableCell>
+      <TableCell
+        className="text-sm max-w-0 truncate"
+        title={accountName}
+      >
+        {accountName}
+      </TableCell>
+      <TableCell className="text-sm" title={assetTicker}>
+        {assetTicker}
+      </TableCell>
+      <TableCell
+        className="text-sm max-w-0 truncate"
+        title={categoryName}
+      >
+        {categoryName}
+      </TableCell>
       <TableCell
         className="text-sm text-right font-medium max-w-0 truncate"
         title={getTransactionAmount(transaction, assets)}
