@@ -49,7 +49,15 @@ import {
 } from "@/components/ai-elements/reasoning";
 import { Suggestions, Suggestion } from "@/components/ai-elements/suggestion";
 import { Button } from "@/components/ui/button";
-import { CheckIcon, Loader2, Plus, Sparkles, XIcon } from "lucide-react";
+import {
+  CheckIcon,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Plus,
+  Sparkles,
+  XIcon,
+} from "lucide-react";
 import useAiChat, { type ChatMessage } from "@/hooks/use-ai-chat";
 import { useUserId } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
@@ -58,6 +66,9 @@ import {
   type IdentifiableConversationResponse,
 } from "@/api";
 import { cn } from "@/lib/utils";
+import { useAccountStore } from "@/hooks/store/use-account-store";
+import { useAssetStore } from "@/hooks/store/use-asset-store";
+import { useCategoryStore } from "@/hooks/store/use-category-store";
 
 const suggestions = [
   "What did I spend this month?",
@@ -122,6 +133,240 @@ function ToolInputTable({ input }: { input: unknown }) {
   );
 }
 
+type ToolCallPart = Extract<ChatMessage["parts"][number], { type: "tool_call" }>;
+
+function extractGroupEntries(input: unknown): Record<string, unknown>[] | null {
+  if (!input || typeof input !== "object") return null;
+  const entries = (input as { entries?: unknown }).entries;
+  if (!Array.isArray(entries) || entries.length < 2) return null;
+  return entries.filter(
+    (e): e is Record<string, unknown> => !!e && typeof e === "object",
+  );
+}
+
+function extractGroupMeta(input: unknown): Record<string, unknown> {
+  if (!input || typeof input !== "object") return {};
+  const { entries: _entries, ...rest } = input as Record<string, unknown>;
+  return rest;
+}
+
+function useIdResolver() {
+  const accounts = useAccountStore((s) => s.accounts);
+  const assets = useAssetStore((s) => s.assets);
+  const categories = useCategoryStore((s) => s.categorys);
+
+  return (record: Record<string, unknown>): Record<string, unknown> => {
+    const out: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(record)) {
+      if (key === "account_id" && typeof value === "string") {
+        const account = accounts.find((a) => a.id === value);
+        out["Account"] = account?.name ?? value;
+      } else if (
+        key === "asset_id" &&
+        (typeof value === "number" || typeof value === "string")
+      ) {
+        const id = typeof value === "string" ? Number(value) : value;
+        const asset = assets.find((a) => a.id === id);
+        out["Asset"] = asset
+          ? `${asset.ticker} — ${asset.name}`
+          : String(value);
+      } else if (
+        key === "category_id" &&
+        (typeof value === "number" || typeof value === "string")
+      ) {
+        const id = typeof value === "string" ? Number(value) : value;
+        const category = categories.find((c) => c.id === id);
+        out["Category"] = category?.name ?? String(value);
+      } else {
+        out[key] = value;
+      }
+    }
+    return out;
+  };
+}
+
+function GroupEntriesApprovalCard({
+  part,
+  entries,
+  onApprove,
+}: {
+  part: ToolCallPart;
+  entries: Record<string, unknown>[];
+  onApprove: (callId: string, approved: boolean) => Promise<void>;
+}) {
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const resolve = useIdResolver();
+
+  const safeIdx = Math.min(currentIdx, Math.max(0, entries.length - 1));
+  const current = entries[safeIdx];
+  const meta = resolve(extractGroupMeta(part.input));
+  const resolvedCurrent = current ? resolve(current) : null;
+
+  async function handle(approved: boolean) {
+    if (!part.callId) return;
+    setSubmitting(true);
+    try {
+      await onApprove(part.callId, approved);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (!current) return null;
+
+  return (
+    <div className="space-y-3 rounded-md border p-3">
+      {Object.keys(meta).length > 0 && <ToolInputTable input={meta} />}
+
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-xs font-medium text-muted-foreground">
+          Entry {safeIdx + 1} of {entries.length}
+        </div>
+        <div className="flex items-center gap-1">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="size-7"
+            disabled={safeIdx === 0 || submitting}
+            onClick={() => setCurrentIdx((i) => Math.max(0, i - 1))}
+          >
+            <ChevronLeft className="size-4" />
+            <span className="sr-only">Previous entry</span>
+          </Button>
+          <span className="min-w-12 text-center text-xs tabular-nums text-muted-foreground">
+            {safeIdx + 1} / {entries.length}
+          </span>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="size-7"
+            disabled={safeIdx === entries.length - 1 || submitting}
+            onClick={() =>
+              setCurrentIdx((i) => Math.min(entries.length - 1, i + 1))
+            }
+          >
+            <ChevronRight className="size-4" />
+            <span className="sr-only">Next entry</span>
+          </Button>
+        </div>
+      </div>
+
+      <ToolInputTable input={resolvedCurrent} />
+
+      <div className="flex items-center justify-between rounded-md border p-3">
+        <span className="text-sm text-muted-foreground">
+          Approving creates all {entries.length} entries at once.
+        </span>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={submitting}
+            onClick={() => handle(false)}
+          >
+            Reject
+          </Button>
+          <Button size="sm" disabled={submitting} onClick={() => handle(true)}>
+            {submitting && <Loader2 className="size-4 animate-spin" />}
+            Accept all
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BulkApprovalCard({
+  parts,
+  onApprove,
+}: {
+  parts: ToolCallPart[];
+  onApprove: (callId: string, approved: boolean) => Promise<void>;
+}) {
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+
+  const safeIdx = Math.min(currentIdx, Math.max(0, parts.length - 1));
+  const current = parts[safeIdx];
+
+  async function handleAll(approved: boolean) {
+    setSubmitting(true);
+    try {
+      for (const part of parts) {
+        if (part.callId) {
+          await onApprove(part.callId, approved);
+        }
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (!current) return null;
+
+  return (
+    <div className="space-y-3 rounded-md border p-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-sm font-medium">
+          Review {parts.length} actions
+        </div>
+        <div className="flex items-center gap-1">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="size-7"
+            disabled={safeIdx === 0 || submitting}
+            onClick={() => setCurrentIdx((i) => Math.max(0, i - 1))}
+          >
+            <ChevronLeft className="size-4" />
+            <span className="sr-only">Previous</span>
+          </Button>
+          <span className="min-w-12 text-center text-xs tabular-nums text-muted-foreground">
+            {safeIdx + 1} / {parts.length}
+          </span>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="size-7"
+            disabled={safeIdx === parts.length - 1 || submitting}
+            onClick={() =>
+              setCurrentIdx((i) => Math.min(parts.length - 1, i + 1))
+            }
+          >
+            <ChevronRight className="size-4" />
+            <span className="sr-only">Next</span>
+          </Button>
+        </div>
+      </div>
+
+      <div className="text-xs font-medium text-muted-foreground">
+        {current.name}
+      </div>
+      <ToolInputTable input={current.input} />
+
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={submitting}
+          onClick={() => handleAll(false)}
+        >
+          Reject all
+        </Button>
+        <Button
+          size="sm"
+          disabled={submitting}
+          onClick={() => handleAll(true)}
+        >
+          {submitting && <Loader2 className="size-4 animate-spin" />}
+          Accept all
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function MessageParts({
   msg,
   isStreaming,
@@ -131,7 +376,7 @@ function MessageParts({
   msg: ChatMessage;
   isStreaming: boolean;
   isLast: boolean;
-  onApprove: (callId: string, approved: boolean) => void;
+  onApprove: (callId: string, approved: boolean) => Promise<void>;
 }) {
   const isLastAssistant = isStreaming && msg.role === "assistant" && isLast;
   const hasParts = msg.parts.length > 0;
@@ -145,6 +390,12 @@ function MessageParts({
       </div>
     );
   }
+
+  const pendingApprovals = msg.parts.filter(
+    (p): p is ToolCallPart =>
+      p.type === "tool_call" && p.state === "approval-requested" && !!p.callId,
+  );
+  const useBulkApproval = pendingApprovals.length > 1;
 
   return (
     <>
@@ -172,40 +423,60 @@ function MessageParts({
               </Reasoning>
             );
           case "tool_call": {
+            // When there are 2+ pending approvals, hide their inline cards
+            // and let the BulkApprovalCard render them together below.
+            if (useBulkApproval && part.state === "approval-requested") {
+              return null;
+            }
             const isApprovalFlow =
               part.state === "approval-requested" ||
               part.state === "approval-responded" ||
               part.state === "output-denied";
+            const groupEntries =
+              part.state === "approval-requested" &&
+              part.name === "create_transaction_group"
+                ? extractGroupEntries(part.input)
+                : null;
             return (
               <Tool key={j} defaultOpen={part.state === "approval-requested"}>
                 <ToolHeader type={`tool-${part.name}`} state={part.state} />
                 <ToolContent>
-                  {isApprovalFlow ? (
-                    <ToolInputTable input={part.input} />
+                  {groupEntries ? (
+                    <GroupEntriesApprovalCard
+                      part={part}
+                      entries={groupEntries}
+                      onApprove={onApprove}
+                    />
                   ) : (
-                    <ToolInput input={part.input} />
-                  )}
-                  {part.state === "approval-requested" && part.callId && (
-                    <div className="flex items-center justify-between rounded-md border p-3">
-                      <span className="text-sm text-muted-foreground">
-                        This action requires your approval.
-                      </span>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onApprove(part.callId!, false)}
-                        >
-                          Reject
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => onApprove(part.callId!, true)}
-                        >
-                          Accept
-                        </Button>
-                      </div>
-                    </div>
+                    <>
+                      {isApprovalFlow ? (
+                        <ToolInputTable input={part.input} />
+                      ) : (
+                        <ToolInput input={part.input} />
+                      )}
+                      {part.state === "approval-requested" && part.callId && (
+                        <div className="flex items-center justify-between rounded-md border p-3">
+                          <span className="text-sm text-muted-foreground">
+                            This action requires your approval.
+                          </span>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => onApprove(part.callId!, false)}
+                            >
+                              Reject
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => onApprove(part.callId!, true)}
+                            >
+                              Accept
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                   {part.state === "approval-responded" && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -236,6 +507,9 @@ function MessageParts({
             return null;
         }
       })}
+      {useBulkApproval && (
+        <BulkApprovalCard parts={pendingApprovals} onApprove={onApprove} />
+      )}
     </>
   );
 }
