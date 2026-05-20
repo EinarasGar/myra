@@ -38,7 +38,7 @@ export interface UseAiChatReturn {
   isStreaming: boolean;
   conversationId: string | null;
   sendMessage: (message: string, files?: FileUIPart[]) => void;
-  approveToolCall: (callId: string, approved: boolean) => void;
+  approveToolCall: (callId: string, approved: boolean) => Promise<void>;
   clearMessages: () => void;
 }
 
