@@ -86,3 +86,24 @@ pub struct CreateTransactionGroupArgs {
     pub category_id: i32,
     pub entries: Vec<TransactionEntryArg>,
 }
+
+#[derive(Deserialize)]
+pub struct CreateCustomAssetArgs {
+    pub ticker: String,
+    pub name: String,
+    pub asset_type: i32,
+    pub base_pair_id: i32,
+}
+
+#[derive(Deserialize)]
+pub struct RecordAssetTradeArgs {
+    pub side: String,
+    pub asset_id: i32,
+    #[serde(with = "rust_decimal::serde::arbitrary_precision")]
+    pub quantity: Decimal,
+    #[serde(with = "rust_decimal::serde::arbitrary_precision")]
+    pub total_amount: Decimal,
+    pub currency_asset_id: Option<i32>,
+    pub account_id: String,
+    pub date: Option<String>,
+}

@@ -38,3 +38,40 @@ pub struct CreateTransactionGroupResult {
     pub transaction_count: usize,
     pub message: String,
 }
+
+pub struct CreateCustomAssetParams {
+    pub ticker: String,
+    pub name: String,
+    pub asset_type: i32,
+    pub base_pair_id: i32,
+}
+
+#[derive(Serialize)]
+pub struct CreateCustomAssetResult {
+    pub asset_id: i32,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum RecordAssetTradeSide {
+    Buy,
+    Sell,
+}
+
+pub struct RecordAssetTradeParams {
+    pub side: RecordAssetTradeSide,
+    pub asset_id: i32,
+    pub quantity: Decimal,
+    pub total_amount: Decimal,
+    pub currency_asset_id: Option<i32>,
+    pub account_id: Uuid,
+    pub date: Option<String>,
+}
+
+#[derive(Serialize)]
+pub struct RecordAssetTradeResult {
+    pub transaction_id: Uuid,
+    pub asset_ticker: String,
+    pub currency_ticker: String,
+    pub message: String,
+}

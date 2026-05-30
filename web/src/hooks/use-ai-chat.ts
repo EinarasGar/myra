@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { AIConversationsApiFactory, FilesApiFactory } from "@/api";
+import { QueryKeys } from "@/constants/query-keys";
 import { getBaseUrl } from "@/lib/api-utils";
 import type { FileUIPart } from "ai";
 
@@ -101,8 +103,26 @@ export default function useAiChat(
   );
   const abortRef = useRef<AbortController | null>(null);
   const { getAccessToken } = useAuth();
+  const queryClient = useQueryClient();
   const messagesRef = useRef<ChatMessage[]>([]);
   messagesRef.current = messages;
+
+  const invalidateDataQueries = useCallback(() => {
+    const keys = [
+      QueryKeys.PORTFOLIO_OVERVIEW,
+      QueryKeys.ACCOUNT_PORTFOLIO_OVERVIEW,
+      QueryKeys.PORTFOLIO_HISTORY,
+      QueryKeys.ACCOUNT_PORTFOLIO_HISTORY,
+      QueryKeys.PORTFOLIO_HOLDINGS,
+      QueryKeys.INDIVIDUAL_TRANSACTIONS,
+      QueryKeys.COMBINED_TRANSACTIONS,
+      QueryKeys.ACCOUNT_TRANSACTIONS,
+      QueryKeys.USER_ASSETS,
+    ];
+    for (const key of keys) {
+      queryClient.invalidateQueries({ queryKey: [key] });
+    }
+  }, [queryClient]);
 
   // Load messages when a conversation is selected
   useEffect(() => {
@@ -492,9 +512,10 @@ export default function useAiChat(
       } finally {
         setIsStreaming(false);
         abortRef.current = null;
+        invalidateDataQueries();
       }
     },
-    [conversationId, userId, isStreaming, streamSse],
+    [conversationId, userId, isStreaming, streamSse, invalidateDataQueries],
   );
 
   const approveToolCall = useCallback(
@@ -615,9 +636,10 @@ export default function useAiChat(
       } finally {
         setIsStreaming(false);
         abortRef.current = null;
+        invalidateDataQueries();
       }
     },
-    [userId, conversationId, isStreaming, streamSse],
+    [userId, conversationId, isStreaming, streamSse, invalidateDataQueries],
   );
 
   const clearMessages = useCallback(() => {

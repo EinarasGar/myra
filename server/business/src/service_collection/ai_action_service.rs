@@ -2,26 +2,34 @@
 //! in `providers::user_action_provider`). Methods take `user_id` explicitly.
 
 use ai::models::action::{
-    CreateTransactionGroupParams, CreateTransactionGroupResult, CreateTransactionParams,
-    CreateTransactionResult,
+    CreateCustomAssetParams, CreateCustomAssetResult, CreateTransactionGroupParams,
+    CreateTransactionGroupResult, CreateTransactionParams, CreateTransactionResult,
+    RecordAssetTradeParams, RecordAssetTradeResult, RecordAssetTradeSide,
 };
 use anyhow::Result;
+use rust_decimal::Decimal;
 use uuid::Uuid;
 
 use crate::{
     dtos::{
+        add_custom_asset_dto::AddCustomAssetDto,
         entry_dto::EntryDto,
-        transaction_dto::{RegularTransactionMetadataDto, TransactionDto, TransactionTypeDto},
+        transaction_dto::{
+            AssetPurchaseMetadataDto, AssetSaleMetadataDto, RegularTransactionMetadataDto,
+            TransactionDto, TransactionTypeDto,
+        },
     },
     service_collection::{
-        transaction_group_service::TransactionGroupService,
-        transaction_management_service::TransactionManagementService,
+        asset_service::AssetsService, transaction_group_service::TransactionGroupService,
+        transaction_management_service::TransactionManagementService, user_service::UsersService,
     },
 };
 
 pub struct AiActionService {
     transaction_service: TransactionManagementService,
     group_service: TransactionGroupService,
+    asset_service: AssetsService,
+    users_service: UsersService,
 }
 
 impl AiActionService {
@@ -29,6 +37,8 @@ impl AiActionService {
         Self {
             transaction_service: TransactionManagementService::new(providers),
             group_service: TransactionGroupService::new(providers),
+            asset_service: AssetsService::new(providers),
+            users_service: UsersService::new(providers),
         }
     }
 
@@ -122,4 +132,123 @@ impl AiActionService {
             message: "Transaction group created successfully".to_string(),
         })
     }
+
+    pub async fn create_custom_asset(
+        &self,
+        user_id: Uuid,
+        params: CreateCustomAssetParams,
+    ) -> Result<CreateCustomAssetResult> {
+        let dto = AddCustomAssetDto {
+            ticker: params.ticker,
+            name: params.name,
+            asset_type: params.asset_type,
+            base_pair_id: params.base_pair_id,
+            user_id,
+        };
+
+        let asset = self.asset_service.add_custom_asset(dto).await?;
+
+        Ok(CreateCustomAssetResult {
+            asset_id: asset.asset_id,
+            message: "Custom asset created successfully".to_string(),
+        })
+    }
+
+    pub async fn record_asset_trade(
+        &self,
+        user_id: Uuid,
+        params: RecordAssetTradeParams,
+    ) -> Result<RecordAssetTradeResult> {
+        if params.quantity <= Decimal::ZERO {
+            return Err(anyhow::anyhow!("Quantity must be positive."));
+        }
+        if params.total_amount <= Decimal::ZERO {
+            return Err(anyhow::anyhow!("Total amount must be positive."));
+        }
+
+        let datetime = parse_datetime_or_now(params.date.as_deref())?;
+
+        let asset = self.asset_service.get_asset(params.asset_id).await?;
+
+        let currency = match params.currency_asset_id {
+            Some(id) => self.asset_service.get_asset(id).await?,
+            None => {
+                let (_, _, default_asset_id) =
+                    self.users_service.get_basic_user(user_id).await?;
+                self.asset_service.get_asset(default_asset_id).await?
+            }
+        };
+
+        if currency.asset_id == asset.asset_id {
+            return Err(anyhow::anyhow!(
+                "Asset and currency cannot be the same ({}).",
+                currency.ticker
+            ));
+        }
+
+        let account_id = params.account_id;
+
+        let make_entry = |asset_id: i32, qty: Decimal| EntryDto {
+            entry_id: None,
+            asset_id,
+            quantity: qty,
+            account_id,
+        };
+
+        let (transaction_type, action_word) = match params.side {
+            RecordAssetTradeSide::Buy => (
+                TransactionTypeDto::AssetPurchase(AssetPurchaseMetadataDto {
+                    purchase: make_entry(asset.asset_id, params.quantity),
+                    sale: make_entry(currency.asset_id, -params.total_amount),
+                }),
+                "Buy",
+            ),
+            RecordAssetTradeSide::Sell => (
+                TransactionTypeDto::AssetSale(AssetSaleMetadataDto {
+                    sale: make_entry(asset.asset_id, -params.quantity),
+                    proceeds: make_entry(currency.asset_id, params.total_amount),
+                }),
+                "Sell",
+            ),
+        };
+
+        let dto = TransactionDto {
+            transaction_id: None,
+            date: datetime,
+            fee_entries: vec![],
+            transaction_type,
+        };
+
+        let result = self
+            .transaction_service
+            .add_individual_transaction(user_id, dto)
+            .await?;
+
+        let transaction_id = result
+            .transaction_id
+            .ok_or_else(|| anyhow::anyhow!("Transaction was created but no ID was returned"))?;
+
+        Ok(RecordAssetTradeResult {
+            transaction_id,
+            asset_ticker: asset.ticker,
+            currency_ticker: currency.ticker,
+            message: format!("{} recorded successfully.", action_word),
+        })
+    }
+}
+
+fn parse_datetime_or_now(date: Option<&str>) -> Result<time::OffsetDateTime> {
+    let Some(s) = date else {
+        return Ok(time::OffsetDateTime::now_utc());
+    };
+
+    if let Ok(dt) =
+        time::OffsetDateTime::parse(s, &time::format_description::well_known::Rfc3339)
+    {
+        return Ok(dt);
+    }
+
+    let date_format = time::format_description::parse("[year]-[month]-[day]").unwrap();
+    let date = time::Date::parse(s, &date_format)?;
+    Ok(date.with_time(time::Time::MIDNIGHT).assume_utc())
 }
