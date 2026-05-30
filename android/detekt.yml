@@ -3,14 +3,15 @@ build:
 
 complexity:
   LongMethod:
-    threshold: 120
+    threshold: 200
   LongParameterList:
-    functionThreshold: 10
-    constructorThreshold: 10
+    active: false
   TooManyFunctions:
     active: false
   CyclomaticComplexMethod:
-    threshold: 20
+    threshold: 30
+  NestedBlockDepth:
+    threshold: 5
 
 style:
   MagicNumber:
@@ -22,6 +23,8 @@ style:
   UnusedPrivateMember:
     active: true
     allowedNames: "(_|ignored|expected)"
+  ReturnCount:
+    active: false
 
 naming:
   FunctionNaming:

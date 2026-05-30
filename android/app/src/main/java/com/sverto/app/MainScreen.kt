@@ -61,12 +61,14 @@ import com.sverto.app.core.SvertoViewModelFactory
 import com.sverto.app.core.navigation.TopLevelRoute
 import com.sverto.app.core.theme.LocalClerkTheme
 import com.sverto.app.core.ui.OfflineBanner
+import com.sverto.app.feature.accounts.AccountDetailScreen
+import com.sverto.app.feature.accounts.AccountTransactionsScreen
 import com.sverto.app.feature.accounts.AccountsScreen
+import com.sverto.app.feature.accounts.AssetDetailScreen
 import com.sverto.app.feature.portfolio.PortfolioScreen
 import com.sverto.app.feature.transactions.TransactionDetailScreen
 import com.sverto.app.feature.transactions.TransactionsScreen
 import com.sverto.app.feature.transactions.TransactionsViewModel
-import com.sverto.app.feature.transactions.create.CorrectionTypeChange
 import com.sverto.app.feature.transactions.create.CreateTransactionScreen
 import com.sverto.app.feature.transactions.create.CreateTransactionViewModel
 import com.sverto.app.feature.transactions.create.GroupEditDisplayData
@@ -74,18 +76,19 @@ import com.sverto.app.feature.transactions.create.apiTypeToConfigKey
 import com.sverto.app.feature.transactions.group.CreateTransactionGroupScreen
 import com.sverto.app.feature.transactions.group.CreateTransactionGroupViewModel
 import com.sverto.app.feature.transactions.group.GroupTransactionItem
-import com.sverto.app.feature.transactions.quickupload.QuickUploadViewModel
 import com.sverto.app.feature.transactions.quickupload.QuickUploadUiItem
+import com.sverto.app.feature.transactions.quickupload.QuickUploadViewModel
 import uniffi.sverto_core.ConnectionStatus
 import uniffi.sverto_core.TransactionListItem
 
 private const val TRANSACTION_DETAIL_ROUTE = "transactionDetail/{txId}"
-private const val CREATE_TRANSACTION_ROUTE = "createTransaction/{typeKey}"
 private const val EDIT_TRANSACTION_ROUTE = "editTransaction/{typeKey}/{txId}"
-private const val CREATE_GROUP_ROUTE = "createTransactionGroup"
 private const val EDIT_GROUP_ROUTE = "editTransactionGroup/{groupId}"
 private const val GROUP_ADD_TXN_ROUTE = "groupAddTransaction/{typeKey}"
 private const val GROUP_EDIT_TXN_ROUTE = "groupEditTransaction/{typeKey}/{index}"
+private const val ACCOUNT_DETAIL_ROUTE = "accountDetail/{accountId}"
+private const val ASSET_DETAIL_ROUTE = "assetDetail/{accountId}/{holdingId}"
+private const val ACCOUNT_TRANSACTIONS_ROUTE = "accountTransactions/{accountId}"
 
 private data class TransactionDetailState(
     val transaction: TransactionListItem,
@@ -113,34 +116,35 @@ fun MainScreen(
     val context = LocalContext.current
     val appStore = remember { (context.applicationContext as SvertoApp).appStore }
 
-    val photoPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri ->
-        Log.d("MainScreen", "Photo picker result: uri=$uri")
-        if (uri != null) {
-            val contentResolver = context.contentResolver
-            val mimeType = contentResolver.getType(uri) ?: "image/jpeg"
-            val inputStream = contentResolver.openInputStream(uri)
-            val imageBytes = inputStream?.readBytes()
-            inputStream?.close()
-            Log.d("MainScreen", "Image bytes: ${imageBytes?.size}, mimeType=$mimeType")
-            if (imageBytes != null && imageBytes.size <= 10 * 1024 * 1024) {
-                val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                if (bitmap != null) {
-                    val thumbWidth = 200
-                    val thumbHeight = (bitmap.height * thumbWidth / bitmap.width.coerceAtLeast(1))
-                    val thumbBitmap = android.graphics.Bitmap.createScaledBitmap(bitmap, thumbWidth, thumbHeight, true)
-                    val thumbStream = java.io.ByteArrayOutputStream()
-                    thumbBitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 60, thumbStream)
-                    val thumbnailBytes = thumbStream.toByteArray()
-                    Log.d("MainScreen", "Queuing upload, thumbnail=${thumbnailBytes.size}")
-                    quickUploadViewModel.queueUpload(imageBytes, thumbnailBytes, mimeType)
-                } else {
-                    Log.e("MainScreen", "BitmapFactory.decodeByteArray returned null")
+    val photoPickerLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.PickVisualMedia(),
+        ) { uri ->
+            Log.d("MainScreen", "Photo picker result: uri=$uri")
+            if (uri != null) {
+                val contentResolver = context.contentResolver
+                val mimeType = contentResolver.getType(uri) ?: "image/jpeg"
+                val inputStream = contentResolver.openInputStream(uri)
+                val imageBytes = inputStream?.readBytes()
+                inputStream?.close()
+                Log.d("MainScreen", "Image bytes: ${imageBytes?.size}, mimeType=$mimeType")
+                if (imageBytes != null && imageBytes.size <= 10 * 1024 * 1024) {
+                    val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                    if (bitmap != null) {
+                        val thumbWidth = 200
+                        val thumbHeight = (bitmap.height * thumbWidth / bitmap.width.coerceAtLeast(1))
+                        val thumbBitmap = android.graphics.Bitmap.createScaledBitmap(bitmap, thumbWidth, thumbHeight, true)
+                        val thumbStream = java.io.ByteArrayOutputStream()
+                        thumbBitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 60, thumbStream)
+                        val thumbnailBytes = thumbStream.toByteArray()
+                        Log.d("MainScreen", "Queuing upload, thumbnail=${thumbnailBytes.size}")
+                        quickUploadViewModel.queueUpload(imageBytes, thumbnailBytes, mimeType)
+                    } else {
+                        Log.e("MainScreen", "BitmapFactory.decodeByteArray returned null")
+                    }
                 }
             }
         }
-    }
 
     fun navigateToDetail(
         transaction: TransactionListItem,
@@ -157,11 +161,12 @@ fun MainScreen(
     val connectionStatus = remember { mutableStateOf(ConnectionStatus.ONLINE) }
 
     DisposableEffect(Unit) {
-        val observer = object : uniffi.sverto_core.ConnectionObserver {
-            override fun onConnectionStatusChanged(status: ConnectionStatus) {
-                connectionStatus.value = status
+        val observer =
+            object : uniffi.sverto_core.ConnectionObserver {
+                override fun onConnectionStatusChanged(status: ConnectionStatus) {
+                    connectionStatus.value = status
+                }
             }
-        }
         appStore.observeConnection(observer)
         onDispose {
             appStore.unobserveConnection()
@@ -259,11 +264,12 @@ fun MainScreen(
                 quickUploadItems = quickUploadItems,
                 photoPickerLauncher = photoPickerLauncher,
                 onQuickUploadItemClick = { item ->
-                    val route = if (item.proposalType == "transaction_group") {
-                        "createTransactionGroup?quickUploadId=${item.id}"
-                    } else {
-                        "createTransaction/regular_transaction?quickUploadId=${item.id}"
-                    }
+                    val route =
+                        if (item.proposalType == "transaction_group") {
+                            "createTransactionGroup?quickUploadId=${item.id}"
+                        } else {
+                            "createTransaction/regular_transaction?quickUploadId=${item.id}"
+                        }
                     navController.navigate(route)
                 },
                 onQuickUploadRetry = { quickUploadViewModel.retry(it) },
@@ -287,6 +293,7 @@ fun MainScreen(
     "MutableParams",
     "MutableStateParam",
     "ViewModelForwarding",
+    "ParameterNaming",
 )
 private fun MainNavGraph(
     navController: NavHostController,
@@ -351,6 +358,11 @@ private fun MainNavGraph(
         }
         composable(TopLevelRoute.Accounts.route) {
             AccountsScreen(
+                onAccountClick = { accountId ->
+                    navController.navigate("accountDetail/$accountId")
+                },
+                sharedTransitionScope = sharedScope,
+                animatedVisibilityScope = this@composable,
                 modifier =
                     Modifier
                         .fillMaxSize()
@@ -403,10 +415,15 @@ private fun MainNavGraph(
         }
         composable(
             route = "createTransaction/{typeKey}?quickUploadId={quickUploadId}",
-            arguments = listOf(
-                navArgument("typeKey") { type = NavType.StringType },
-                navArgument("quickUploadId") { type = NavType.StringType; nullable = true; defaultValue = null },
-            ),
+            arguments =
+                listOf(
+                    navArgument("typeKey") { type = NavType.StringType },
+                    navArgument("quickUploadId") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
         ) { backStackEntry ->
             val typeKey = backStackEntry.arguments?.getString("typeKey") ?: return@composable
             val quickUploadId = backStackEntry.arguments?.getString("quickUploadId")
@@ -423,11 +440,12 @@ private fun MainNavGraph(
                 },
                 onCorrectionTypeChanged = { change ->
                     navController.popBackStack()
-                    val route = if (change.newProposalType == "transaction_group") {
-                        "createTransactionGroup?quickUploadId=${change.quickUploadId}"
-                    } else {
-                        "createTransaction/${change.newProposalType}?quickUploadId=${change.quickUploadId}"
-                    }
+                    val route =
+                        if (change.newProposalType == "transaction_group") {
+                            "createTransactionGroup?quickUploadId=${change.quickUploadId}"
+                        } else {
+                            "createTransaction/${change.newProposalType}?quickUploadId=${change.quickUploadId}"
+                        }
                     navController.navigate(route)
                 },
             )
@@ -462,9 +480,14 @@ private fun MainNavGraph(
         }
         composable(
             route = "createTransactionGroup?quickUploadId={quickUploadId}",
-            arguments = listOf(
-                navArgument("quickUploadId") { type = NavType.StringType; nullable = true; defaultValue = null },
-            ),
+            arguments =
+                listOf(
+                    navArgument("quickUploadId") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
         ) { backStackEntry ->
             val quickUploadId = backStackEntry.arguments?.getString("quickUploadId")
             val pending = pendingGroupTransaction.value
@@ -508,11 +531,12 @@ private fun MainNavGraph(
                 },
                 onCorrectionTypeChanged = { change ->
                     navController.popBackStack()
-                    val route = if (change.newProposalType == "transaction_group") {
-                        "createTransactionGroup?quickUploadId=${change.quickUploadId}"
-                    } else {
-                        "createTransaction/regular_transaction?quickUploadId=${change.quickUploadId}"
-                    }
+                    val route =
+                        if (change.newProposalType == "transaction_group") {
+                            "createTransactionGroup?quickUploadId=${change.quickUploadId}"
+                        } else {
+                            "createTransaction/regular_transaction?quickUploadId=${change.quickUploadId}"
+                        }
                     navController.navigate(route)
                 },
                 viewModel = vm,
@@ -586,10 +610,18 @@ private fun MainNavGraph(
             val index = backStackEntry.arguments?.getInt("index") ?: return@composable
 
             val parentEntry = remember(backStackEntry) { navController.previousBackStackEntry }
-            val groupVm: CreateTransactionGroupViewModel? = parentEntry?.let {
-                viewModel(it, factory = SvertoViewModelFactory)
-            }
-            val item = remember { groupVm?.formState?.value?.transactions?.getOrNull(index) }
+            val groupVm: CreateTransactionGroupViewModel? =
+                parentEntry?.let {
+                    viewModel(it, factory = SvertoViewModelFactory)
+                }
+            val item =
+                remember {
+                    groupVm
+                        ?.formState
+                        ?.value
+                        ?.transactions
+                        ?.getOrNull(index)
+                }
 
             if (item != null) {
                 val vm: CreateTransactionViewModel = viewModel(factory = SvertoViewModelFactory)
@@ -614,6 +646,55 @@ private fun MainNavGraph(
             } else {
                 LaunchedEffect(Unit) { navController.popBackStack() }
             }
+        }
+        composable(
+            route = ACCOUNT_DETAIL_ROUTE,
+            arguments = listOf(navArgument("accountId") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val accountId = backStackEntry.arguments?.getString("accountId") ?: return@composable
+            AccountDetailScreen(
+                accountId = accountId,
+                onBack = { navController.popBackStack() },
+                onHoldingClick = { holdingId ->
+                    navController.navigate("assetDetail/$accountId/$holdingId")
+                },
+                onViewAllTransactions = {
+                    navController.navigate("accountTransactions/$accountId")
+                },
+                onTransactionClick = { tx -> onNavigateToDetail(tx, false) },
+                sharedTransitionScope = sharedScope,
+                animatedVisibilityScope = this@composable,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+        composable(
+            route = ASSET_DETAIL_ROUTE,
+            arguments =
+                listOf(
+                    navArgument("accountId") { type = NavType.StringType },
+                    navArgument("holdingId") { type = NavType.StringType },
+                ),
+        ) { backStackEntry ->
+            val holdingId = backStackEntry.arguments?.getString("holdingId") ?: return@composable
+            AssetDetailScreen(
+                holdingId = holdingId,
+                onBack = { navController.popBackStack() },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+        composable(
+            route = ACCOUNT_TRANSACTIONS_ROUTE,
+            arguments = listOf(navArgument("accountId") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val accountId = backStackEntry.arguments?.getString("accountId") ?: return@composable
+            AccountTransactionsScreen(
+                accountId = accountId,
+                onBack = { navController.popBackStack() },
+                onTransactionClick = { tx -> onNavigateToDetail(tx, false) },
+                sharedTransitionScope = sharedScope,
+                animatedVisibilityScope = this@composable,
+                modifier = Modifier.fillMaxSize(),
+            )
         }
     }
 }

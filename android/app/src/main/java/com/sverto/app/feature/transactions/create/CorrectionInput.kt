@@ -34,12 +34,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-enum class CorrectionState {
-    IDLE,
-    SENDING,
-    UPDATED,
-}
-
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CorrectionInput(
@@ -118,9 +112,10 @@ fun CorrectionInput(
                                 }
                             },
                             enabled = text.isNotBlank() && state != CorrectionState.SENDING,
-                            colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                            ),
+                            colors =
+                                IconButtonDefaults.filledIconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                ),
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.Send,

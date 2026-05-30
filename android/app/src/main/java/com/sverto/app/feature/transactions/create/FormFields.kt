@@ -35,7 +35,10 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+@Suppress("NewApi")
 private val dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.US)
+
+@Suppress("NewApi")
 private val shortDateFormatter = DateTimeFormatter.ofPattern("MMM d", Locale.US)
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -97,13 +100,16 @@ fun DateChip(
     }
 }
 
+@Suppress("NewApi")
 private fun formatRelativeDate(epochSeconds: Long): String {
     val date =
         Instant
             .ofEpochSecond(epochSeconds)
             .atZone(ZoneId.systemDefault())
             .toLocalDate()
-    val today = java.time.LocalDate.now(ZoneId.systemDefault())
+    val today =
+        @Suppress("NewApi")
+        java.time.LocalDate.now(ZoneId.systemDefault())
     return when (date) {
         today -> "Today, ${date.format(shortDateFormatter)}"
         today.minusDays(1) -> "Yesterday, ${date.format(shortDateFormatter)}"

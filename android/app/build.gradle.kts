@@ -241,13 +241,13 @@ tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configure
 }
 
 dependencies {
-    detektPlugins("io.nlopez.compose.rules:detekt:0.4.22")
+    detektPlugins(libs.compose.detekt)
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.graphics)
     implementation(libs.compose.ui.tooling.preview)
-    implementation("androidx.compose.material:material-icons-core")
-    implementation("androidx.compose.material:material-icons-extended")
+    implementation(libs.composeMaterialIconsCore)
+    implementation(libs.composeMaterialIconsExtended)
     implementation(libs.activity.compose)
     implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.lifecycle.viewmodel.compose)
@@ -255,7 +255,7 @@ dependencies {
     implementation(libs.core.ktx)
 
     // Pin material3 to alpha for M3 Expressive (MaterialExpressiveTheme, MotionScheme, new shapes)
-    implementation("androidx.compose.material3:material3:1.5.0-alpha16")
+    implementation(libs.composeMaterial3)
 
     // Clerk authentication
     implementation(libs.clerk.api)
@@ -263,7 +263,6 @@ dependencies {
 
     // Navigation
     implementation(libs.navigation.compose)
-
 
     // JNA is required by UniFFI-generated Kotlin code to call into native libraries
     implementation(libs.jna) { artifact { type = "aar" } }

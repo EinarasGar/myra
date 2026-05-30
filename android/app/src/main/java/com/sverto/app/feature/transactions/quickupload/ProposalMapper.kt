@@ -10,6 +10,7 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.ZoneOffset
 
+@Suppress("NewApi")
 fun parseProposalSummary(proposalData: String?): ProposalSummary? {
     if (proposalData == null) return null
     return try {
@@ -24,21 +25,26 @@ fun parseProposalSummary(proposalData: String?): ProposalSummary? {
     }
 }
 
-fun proposalToFormState(proposalData: String, lookupTables: String): TransactionFormState {
+@Suppress("NewApi")
+fun proposalToFormState(
+    proposalData: String,
+    lookupTables: String,
+): TransactionFormState {
     val data = JSONObject(proposalData)
     val lookups = JSONObject(lookupTables)
 
-    val date = data.optString("date", "").let { dateStr ->
-        if (dateStr.isNotEmpty()) {
-            try {
-                LocalDate.parse(dateStr).atStartOfDay().toEpochSecond(ZoneOffset.UTC)
-            } catch (_: Exception) {
+    val date =
+        data.optString("date", "").let { dateStr ->
+            if (dateStr.isNotEmpty()) {
+                try {
+                    LocalDate.parse(dateStr).atStartOfDay().toEpochSecond(ZoneOffset.UTC)
+                } catch (_: Exception) {
+                    System.currentTimeMillis() / 1000
+                }
+            } else {
                 System.currentTimeMillis() / 1000
             }
-        } else {
-            System.currentTimeMillis() / 1000
         }
-    }
 
     val accountId = data.optString("account_id", "")
     val accountName = findAccountName(accountId, lookups)
@@ -53,26 +59,39 @@ fun proposalToFormState(proposalData: String, lookupTables: String): Transaction
         description = data.optString("description", ""),
         categoryId = categoryId,
         categoryName = categoryName,
-        primaryEntry = EntryFormState(
-            accountId = accountId,
-            accountName = accountName,
-            assetId = assetId,
-            assetDisplay = assetDisplay,
-            amount = amount,
-        ),
+        primaryEntry =
+            EntryFormState(
+                accountId = accountId,
+                accountName = accountName,
+                assetId = assetId,
+                assetDisplay = assetDisplay,
+                amount = amount,
+            ),
     )
 }
 
-private fun findAccountName(id: String, lookups: JSONObject): String {
-    val accounts = lookups.optJSONArray("accounts") ?: return ""
-    for (i in 0 until accounts.length()) {
-        val acc = accounts.getJSONObject(i)
-        if (acc.optString("account_id") == id) return acc.optString("name", "")
+private fun findAccountName(
+    id: String,
+    lookups: JSONObject,
+): String {
+    var found = ""
+    val accounts = lookups.optJSONArray("accounts")
+    if (accounts != null) {
+        for (i in 0 until accounts.length()) {
+            val acc = accounts.getJSONObject(i)
+            if (acc.optString("account_id") == id) {
+                found = acc.optString("name", "")
+                break
+            }
+        }
     }
-    return ""
+    return found
 }
 
-private fun findAssetDisplay(id: Int, lookups: JSONObject): String {
+private fun findAssetDisplay(
+    id: Int,
+    lookups: JSONObject,
+): String {
     if (id == 0) return ""
     val assets = lookups.optJSONArray("assets") ?: return ""
     for (i in 0 until assets.length()) {
@@ -86,31 +105,46 @@ private fun findAssetDisplay(id: Int, lookups: JSONObject): String {
     return ""
 }
 
-private fun findCategoryName(id: Int?, lookups: JSONObject): String {
-    if (id == null) return ""
-    val categories = lookups.optJSONArray("categories") ?: return ""
-    for (i in 0 until categories.length()) {
-        val cat = categories.getJSONObject(i)
-        if (cat.optInt("id") == id) return cat.optString("category", "")
+private fun findCategoryName(
+    id: Int?,
+    lookups: JSONObject,
+): String {
+    var found = ""
+    if (id != null) {
+        val categories = lookups.optJSONArray("categories")
+        if (categories != null) {
+            for (i in 0 until categories.length()) {
+                val cat = categories.getJSONObject(i)
+                if (cat.optInt("id") == id) {
+                    found = cat.optString("category", "")
+                    break
+                }
+            }
+        }
     }
-    return ""
+    return found
 }
 
-fun proposalToGroupFormState(proposalData: String, lookupTables: String): GroupFormState {
+@Suppress("NewApi")
+fun proposalToGroupFormState(
+    proposalData: String,
+    lookupTables: String,
+): GroupFormState {
     val data = JSONObject(proposalData)
     val lookups = JSONObject(lookupTables)
 
-    val date = data.optString("date", "").let { dateStr ->
-        if (dateStr.isNotEmpty()) {
-            try {
-                LocalDate.parse(dateStr).atStartOfDay().toEpochSecond(ZoneOffset.UTC)
-            } catch (_: Exception) {
+    val date =
+        data.optString("date", "").let { dateStr ->
+            if (dateStr.isNotEmpty()) {
+                try {
+                    LocalDate.parse(dateStr).atStartOfDay().toEpochSecond(ZoneOffset.UTC)
+                } catch (_: Exception) {
+                    System.currentTimeMillis() / 1000
+                }
+            } else {
                 System.currentTimeMillis() / 1000
             }
-        } else {
-            System.currentTimeMillis() / 1000
         }
-    }
 
     val categoryId = if (data.has("category_id")) data.optInt("category_id") else null
     val categoryName = findCategoryName(categoryId, lookups)
@@ -128,22 +162,23 @@ fun proposalToGroupFormState(proposalData: String, lookupTables: String): GroupF
 
             transactions.add(
                 GroupTransactionItem(
-                    input = CreateTransactionInput(
-                        transactionId = null,
-                        typeKey = "regular",
-                        date = date,
-                        primaryEntryId = null,
-                        primaryAccountId = accountId,
-                        primaryAssetId = assetId,
-                        primaryAmount = amount.toDoubleOrNull() ?: 0.0,
-                        secondaryEntryId = null,
-                        secondaryAccountId = null,
-                        secondaryAssetId = null,
-                        secondaryAmount = null,
-                        originAssetId = null,
-                        categoryId = txCategoryId,
-                        description = description.ifBlank { null },
-                    ),
+                    input =
+                        CreateTransactionInput(
+                            transactionId = null,
+                            typeKey = "regular",
+                            date = date,
+                            primaryEntryId = null,
+                            primaryAccountId = accountId,
+                            primaryAssetId = assetId,
+                            primaryAmount = amount.toDoubleOrNull() ?: 0.0,
+                            secondaryEntryId = null,
+                            secondaryAccountId = null,
+                            secondaryAssetId = null,
+                            secondaryAmount = null,
+                            originAssetId = null,
+                            categoryId = txCategoryId,
+                            description = description.ifBlank { null },
+                        ),
                     descriptionDisplay = description.ifBlank { "Transaction ${i + 1}" },
                     typeLabel = "Regular Transaction",
                     amountDisplay = BigDecimal(amount).stripTrailingZeros().toPlainString(),

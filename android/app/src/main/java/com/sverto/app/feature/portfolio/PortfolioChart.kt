@@ -91,9 +91,9 @@ fun PortfolioChart(
         if (scrubIdx != null) {
             val dateFormat =
                 if (selectedPeriod == TimePeriod.DAY) {
-                    SimpleDateFormat("MMM d, h:mm a", Locale.getDefault())
+                    SimpleDateFormat("MMM d, h:mm a", Locale.US)
                 } else {
-                    SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
+                    SimpleDateFormat("MMM d, yyyy", Locale.US)
                 }
             dateFormat.format(Date(points[scrubIdx].date * 1000))
         } else {

@@ -13,29 +13,31 @@ import uniffi.sverto_core.TransactionsState
 class TransactionsViewModel(
     private val store: AppStore,
 ) : ViewModel() {
-    private val _state = MutableStateFlow(
-        TransactionsState(
-            isLoading = true,
-            isLoadingMore = false,
-            error = null,
-            items = emptyList(),
-            hasMore = false,
-        ),
-    )
+    private val _state =
+        MutableStateFlow(
+            TransactionsState(
+                isLoading = true,
+                isLoadingMore = false,
+                error = null,
+                items = emptyList(),
+                hasMore = false,
+            ),
+        )
     val state: StateFlow<TransactionsState> = _state.asStateFlow()
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
-    private val observer = object : TransactionsObserver {
-        override fun onTransactionsChanged(state: TransactionsState) {
-            val wasRefreshing = _isRefreshing.value
-            _state.value = state
-            if (wasRefreshing && !state.isLoading) {
-                _isRefreshing.value = false
+    private val observer =
+        object : TransactionsObserver {
+            override fun onTransactionsChanged(state: TransactionsState) {
+                val wasRefreshing = _isRefreshing.value
+                _state.value = state
+                if (wasRefreshing && !state.isLoading) {
+                    _isRefreshing.value = false
+                }
             }
         }
-    }
 
     init {
         store.observeTransactions(observer)
@@ -55,21 +57,29 @@ class TransactionsViewModel(
         viewModelScope.launch { store.refreshTransactions() }
     }
 
-    fun deleteTransaction(transactionId: String, onSuccess: () -> Unit) {
+    fun deleteTransaction(
+        transactionId: String,
+        onSuccess: () -> Unit,
+    ) {
         viewModelScope.launch {
             try {
                 store.deleteTransaction(transactionId)
                 onSuccess()
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
         }
     }
 
-    fun deleteTransactionGroup(groupId: String, onSuccess: () -> Unit) {
+    fun deleteTransactionGroup(
+        groupId: String,
+        onSuccess: () -> Unit,
+    ) {
         viewModelScope.launch {
             try {
                 store.deleteTransactionGroup(groupId)
                 onSuccess()
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
         }
     }
 

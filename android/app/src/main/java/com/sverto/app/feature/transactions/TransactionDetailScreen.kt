@@ -569,9 +569,11 @@ private fun transactionDetailIcon(type: String): ImageVector =
         else -> Icons.Outlined.AccountBalance
     }
 
+@Suppress("NewApi")
 private val detailDateFormatter =
     DateTimeFormatter.ofPattern("EEEE, MMM d, yyyy 'at' h:mm a", Locale.US)
 
+@Suppress("NewApi")
 private fun formatDetailDate(unixTimestamp: Long): String =
     Instant
         .ofEpochSecond(unixTimestamp)

@@ -13,28 +13,30 @@ import uniffi.sverto_core.PortfolioState
 class HomeViewModel(
     private val store: AppStore,
 ) : ViewModel() {
-    private val _state = MutableStateFlow(
-        PortfolioState(
-            isLoading = true,
-            error = null,
-            holdings = emptyList(),
-            chartData = emptyList(),
-        ),
-    )
+    private val _state =
+        MutableStateFlow(
+            PortfolioState(
+                isLoading = true,
+                error = null,
+                holdings = emptyList(),
+                chartData = emptyList(),
+            ),
+        )
     val state: StateFlow<PortfolioState> = _state.asStateFlow()
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
-    private val observer = object : PortfolioObserver {
-        override fun onPortfolioChanged(state: PortfolioState) {
-            val wasRefreshing = _isRefreshing.value
-            _state.value = state
-            if (wasRefreshing && !state.isLoading) {
-                _isRefreshing.value = false
+    private val observer =
+        object : PortfolioObserver {
+            override fun onPortfolioChanged(state: PortfolioState) {
+                val wasRefreshing = _isRefreshing.value
+                _state.value = state
+                if (wasRefreshing && !state.isLoading) {
+                    _isRefreshing.value = false
+                }
             }
         }
-    }
 
     init {
         store.observePortfolio(observer)

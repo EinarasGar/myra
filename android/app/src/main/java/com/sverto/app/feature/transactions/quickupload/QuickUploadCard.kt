@@ -1,7 +1,6 @@
 package com.sverto.app.feature.transactions.quickupload
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,6 +33,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import java.util.Locale
 import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -46,19 +46,21 @@ fun QuickUploadCard(
     modifier: Modifier = Modifier,
 ) {
     val isClickable = item.status == QuickUploadStatus.READY
-    val a11yDescription = when (item.status) {
-        QuickUploadStatus.QUEUED -> "Quick upload, waiting for connection"
-        QuickUploadStatus.UPLOADING -> "Quick upload, uploading"
-        QuickUploadStatus.PROCESSING -> "Quick upload, processing"
-        QuickUploadStatus.READY -> "Quick upload ready, ${item.proposalSummary?.description ?: "receipt"}"
-        QuickUploadStatus.FAILED -> "Quick upload failed"
-    }
+    val a11yDescription =
+        when (item.status) {
+            QuickUploadStatus.QUEUED -> "Quick upload, waiting for connection"
+            QuickUploadStatus.UPLOADING -> "Quick upload, uploading"
+            QuickUploadStatus.PROCESSING -> "Quick upload, processing"
+            QuickUploadStatus.READY -> "Quick upload ready, ${item.proposalSummary?.description ?: "receipt"}"
+            QuickUploadStatus.FAILED -> "Quick upload failed"
+        }
 
     ElevatedCard(
         onClick = { if (isClickable) onClick() },
-        modifier = modifier
-            .fillMaxWidth()
-            .semantics { contentDescription = a11yDescription },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .semantics { contentDescription = a11yDescription },
         shape = RoundedCornerShape(16.dp),
         enabled = isClickable,
     ) {
@@ -69,16 +71,20 @@ fun QuickUploadCard(
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (item.thumbnailBytes != null) {
-                    val bitmap = android.graphics.BitmapFactory.decodeByteArray(
-                        item.thumbnailBytes, 0, item.thumbnailBytes.size
-                    )
+                    val bitmap =
+                        android.graphics.BitmapFactory.decodeByteArray(
+                            item.thumbnailBytes,
+                            0,
+                            item.thumbnailBytes.size,
+                        )
                     if (bitmap != null) {
                         Image(
                             bitmap = bitmap.asImageBitmap(),
                             contentDescription = null,
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(RoundedCornerShape(10.dp)),
+                            modifier =
+                                Modifier
+                                    .size(44.dp)
+                                    .clip(RoundedCornerShape(10.dp)),
                         )
                     }
                 } else {
@@ -182,33 +188,39 @@ fun QuickUploadCard(
 
 @Composable
 private fun StatusBadge(status: QuickUploadStatus) {
-    val (text, color, icon) = when (status) {
-        QuickUploadStatus.QUEUED -> Triple(
-            "Waiting for connection",
-            MaterialTheme.colorScheme.secondaryContainer,
-            Icons.Outlined.CloudOff,
-        )
-        QuickUploadStatus.UPLOADING -> Triple(
-            "Uploading…",
-            MaterialTheme.colorScheme.primaryContainer,
-            null,
-        )
-        QuickUploadStatus.PROCESSING -> Triple(
-            "Reading receipt…",
-            MaterialTheme.colorScheme.primaryContainer,
-            null,
-        )
-        QuickUploadStatus.READY -> Triple(
-            "Ready to review",
-            MaterialTheme.colorScheme.tertiaryContainer,
-            null,
-        )
-        QuickUploadStatus.FAILED -> Triple(
-            "Failed",
-            MaterialTheme.colorScheme.errorContainer,
-            Icons.Outlined.ErrorOutline,
-        )
-    }
+    val (text, color, icon) =
+        when (status) {
+            QuickUploadStatus.QUEUED ->
+                Triple(
+                    "Waiting for connection",
+                    MaterialTheme.colorScheme.secondaryContainer,
+                    Icons.Outlined.CloudOff,
+                )
+            QuickUploadStatus.UPLOADING ->
+                Triple(
+                    "Uploading…",
+                    MaterialTheme.colorScheme.primaryContainer,
+                    null,
+                )
+            QuickUploadStatus.PROCESSING ->
+                Triple(
+                    "Reading receipt…",
+                    MaterialTheme.colorScheme.primaryContainer,
+                    null,
+                )
+            QuickUploadStatus.READY ->
+                Triple(
+                    "Ready to review",
+                    MaterialTheme.colorScheme.tertiaryContainer,
+                    null,
+                )
+            QuickUploadStatus.FAILED ->
+                Triple(
+                    "Failed",
+                    MaterialTheme.colorScheme.errorContainer,
+                    Icons.Outlined.ErrorOutline,
+                )
+        }
 
     Surface(
         shape = RoundedCornerShape(50),
@@ -238,5 +250,5 @@ private fun StatusBadge(status: QuickUploadStatus) {
 private fun formatAmount(amount: String): String {
     val value = amount.toDoubleOrNull() ?: return amount
     val prefix = if (value < 0) "-" else "+"
-    return "$prefix\$${String.format("%.2f", abs(value))}"
+    return "$prefix\$${String.format(Locale.US, "%.2f", abs(value))}"
 }

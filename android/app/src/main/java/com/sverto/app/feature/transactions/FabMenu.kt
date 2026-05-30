@@ -34,17 +34,21 @@ fun FabMenu(
         expanded = expanded,
         button = {
             ToggleFloatingActionButton(
-                modifier = Modifier.animateFloatingActionButton(
-                    visible = true,
-                    alignment = Alignment.BottomEnd,
-                ),
+                modifier =
+                    Modifier.animateFloatingActionButton(
+                        visible = true,
+                        alignment = Alignment.BottomEnd,
+                    ),
                 checked = expanded,
                 onCheckedChange = { onToggle() },
             ) {
                 val imageVector by remember {
                     derivedStateOf {
-                        if (checkedProgress > 0.5f) Icons.Filled.Close
-                        else Icons.Filled.Add
+                        if (checkedProgress > 0.5f) {
+                            Icons.Filled.Close
+                        } else {
+                            Icons.Filled.Add
+                        }
                     }
                 }
                 Icon(

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.sverto.app.SvertoApp
+import com.sverto.app.feature.accounts.AccountsViewModel
 import com.sverto.app.feature.portfolio.HomeViewModel
 import com.sverto.app.feature.transactions.TransactionsViewModel
 import com.sverto.app.feature.transactions.create.CreateTransactionViewModel
@@ -29,6 +30,8 @@ object SvertoViewModelFactory : ViewModelProvider.Factory {
                 CreateTransactionGroupViewModel(appStore) as T
             modelClass.isAssignableFrom(QuickUploadViewModel::class.java) ->
                 QuickUploadViewModel(appStore) as T
+            modelClass.isAssignableFrom(AccountsViewModel::class.java) ->
+                AccountsViewModel() as T
             else -> throw IllegalArgumentException("Unknown ViewModel: ${modelClass.name}")
         }
     }

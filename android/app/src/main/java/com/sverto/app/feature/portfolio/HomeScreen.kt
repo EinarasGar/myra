@@ -78,13 +78,14 @@ fun PortfolioScreen(
                 }
 
                 else -> {
-                    val portfolioData: Map<TimePeriod, List<ChartPoint>> = state.chartData
-                        .mapNotNull { period ->
-                            val tp = TimePeriod.entries.find { it.label == period.period }
-                                ?: return@mapNotNull null
-                            tp to period.points.map { ChartPoint(it.timestamp, it.value) }
-                        }
-                        .toMap()
+                    val portfolioData: Map<TimePeriod, List<ChartPoint>> =
+                        state.chartData
+                            .mapNotNull { period ->
+                                val tp =
+                                    TimePeriod.entries.find { it.label == period.period }
+                                        ?: return@mapNotNull null
+                                tp to period.points.map { ChartPoint(it.timestamp, it.value) }
+                            }.toMap()
 
                     if (portfolioData.isNotEmpty()) {
                         PortfolioChart(portfolioData = portfolioData)

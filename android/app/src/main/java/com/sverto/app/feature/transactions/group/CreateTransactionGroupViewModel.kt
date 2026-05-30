@@ -150,13 +150,16 @@ class CreateTransactionGroupViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val detail = store.getQuickUploadDetail(quickUploadId)
-                val formState = proposalToGroupFormState(
-                    detail.proposalData ?: "{}",
-                    detail.lookupTables,
-                )
+                val formState =
+                    proposalToGroupFormState(
+                        detail.proposalData ?: "{}",
+                        detail.lookupTables,
+                    )
                 _formState.value = formState
                 _quickUploadId.value = quickUploadId
-            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            } catch (
+                @Suppress("TooGenericExceptionCaught") e: Exception,
+            ) {
                 Log.e(TAG, "Proposal init failed", e)
                 _errorMessage.value = e.message ?: "Failed to load proposal"
             } finally {
@@ -176,14 +179,17 @@ class CreateTransactionGroupViewModel(
                     _correctionTypeChange.value = CorrectionTypeChange(uploadId, detail.proposalType!!)
                     return@launch
                 }
-                _formState.value = proposalToGroupFormState(
-                    detail.proposalData ?: "{}",
-                    detail.lookupTables,
-                )
+                _formState.value =
+                    proposalToGroupFormState(
+                        detail.proposalData ?: "{}",
+                        detail.lookupTables,
+                    )
                 _correctionState.value = CorrectionState.UPDATED
                 delay(2000)
                 _correctionState.value = CorrectionState.IDLE
-            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            } catch (
+                @Suppress("TooGenericExceptionCaught") e: Exception,
+            ) {
                 Log.e(TAG, "Correction failed", e)
                 _correctionState.value = CorrectionState.IDLE
             }

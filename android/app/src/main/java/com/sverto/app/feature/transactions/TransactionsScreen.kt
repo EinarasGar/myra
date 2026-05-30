@@ -46,6 +46,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -134,9 +135,10 @@ fun TransactionsScreen(
             onToggle = { fabMenuExpanded = !fabMenuExpanded },
             onQuickUpload = onQuickUpload,
             onManualEntry = { showNewTransactionSheet = true },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 16.dp, bottom = 24.dp),
+            modifier =
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = 24.dp),
         )
     }
 
@@ -195,7 +197,7 @@ private fun TransactionList(
     }
 
     val itemCount = quickUploadItems.size
-    var previousItemCount by remember { mutableStateOf(itemCount) }
+    var previousItemCount by remember { mutableIntStateOf(itemCount) }
     LaunchedEffect(itemCount) {
         if (itemCount > previousItemCount) {
             listState.animateScrollToItem(0)
@@ -432,8 +434,10 @@ private fun ErrorState(
 
 private const val LOAD_MORE_BUFFER = 3
 
+@Suppress("NewApi")
 private val dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.US)
 
+@Suppress("NewApi")
 private fun groupByDate(transactions: List<TransactionListItem>): List<Pair<String, List<TransactionListItem>>> {
     val today = LocalDate.now()
     val yesterday = today.minusDays(1)

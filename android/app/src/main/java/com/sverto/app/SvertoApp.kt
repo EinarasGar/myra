@@ -37,12 +37,13 @@ class SvertoApp : Application() {
 
         val dbPath = "${filesDir.absolutePath}/sverto_cache.db"
 
-        appStore = AppStore(
-            BuildConfig.API_BASE_URL,
-            60u,
-            dbPath,
-            SvertoAuthProvider(),
-        )
+        appStore =
+            AppStore(
+                BuildConfig.API_BASE_URL,
+                60u,
+                dbPath,
+                SvertoAuthProvider(),
+            )
 
         registerConnectivityCallback()
 

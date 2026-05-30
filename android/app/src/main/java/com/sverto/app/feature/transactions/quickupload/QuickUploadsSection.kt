@@ -33,9 +33,10 @@ fun QuickUploadsSection(
     if (items.isEmpty()) return
 
     Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
         shape = RoundedCornerShape(28.dp),
         color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f),
     ) {

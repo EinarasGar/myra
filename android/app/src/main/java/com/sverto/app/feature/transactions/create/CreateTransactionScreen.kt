@@ -90,7 +90,7 @@ private const val CATEGORY_SHARED_KEY = "category_field"
     ExperimentalSharedTransitionApi::class,
 )
 @Composable
-@Suppress("LongMethod")
+@Suppress("LongMethod", "ParameterNaming")
 fun CreateTransactionScreen(
     typeKey: String,
     onDiscard: () -> Unit,

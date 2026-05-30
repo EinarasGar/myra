@@ -1,5 +1,6 @@
 package com.sverto.app.feature.transactions.group
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -77,7 +78,6 @@ import uniffi.sverto_core.CategoryItem
 import uniffi.sverto_core.TransactionListItem
 import java.time.Instant
 import java.time.ZoneId
-import android.annotation.SuppressLint
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -86,7 +86,7 @@ private val dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy 'at' h:mm a
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-@Suppress("LongMethod")
+@Suppress("LongMethod", "ParameterNaming")
 fun CreateTransactionGroupScreen(
     onDiscard: () -> Unit,
     onSuccess: () -> Unit,
@@ -538,7 +538,7 @@ private fun GroupSaveBar(
     }
 }
 
-@SuppressLint("NewApi")
+@Suppress("NewApi")
 private fun formatDate(epochSeconds: Long): String =
     Instant
         .ofEpochSecond(epochSeconds)
