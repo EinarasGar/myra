@@ -32,7 +32,10 @@ impl QuickUploadsModule {
     }
 
     pub fn set_observer(&mut self, observer: Box<dyn QuickUploadsObserver>) {
-        tracing::debug!("QuickUploads: set_observer, current items={}", self.state.items.len());
+        tracing::debug!(
+            "QuickUploads: set_observer, current items={}",
+            self.state.items.len()
+        );
         self.observer = Some(observer);
         self.notify();
     }
@@ -42,7 +45,8 @@ impl QuickUploadsModule {
     }
 
     pub fn clear_state(&mut self) {
-        self.cancelled.store(true, std::sync::atomic::Ordering::Relaxed);
+        self.cancelled
+            .store(true, std::sync::atomic::Ordering::Relaxed);
         self.cancelled = Arc::new(AtomicBool::new(false));
         self.state = QuickUploadsState { items: vec![] };
         self.sse_subscriptions.clear();
@@ -56,7 +60,12 @@ impl QuickUploadsModule {
     fn notify(&self) {
         let count = self.state.items.len();
         let statuses: Vec<&str> = self.state.items.iter().map(|i| i.status.as_str()).collect();
-        tracing::debug!("QuickUploads: notify {} items, statuses={:?}, has_observer={}", count, statuses, self.observer.is_some());
+        tracing::debug!(
+            "QuickUploads: notify {} items, statuses={:?}, has_observer={}",
+            count,
+            statuses,
+            self.observer.is_some()
+        );
         if let Some(ref obs) = self.observer {
             obs.on_quick_uploads_changed(self.state.clone());
         }
@@ -100,7 +109,10 @@ pub async fn flush_and_subscribe(
     module: &Arc<Mutex<QuickUploadsModule>>,
     auth_token: Option<&str>,
 ) {
-    tracing::info!("QuickUploads: flush_and_subscribe called, connectivity={}", infra.has_connectivity());
+    tracing::info!(
+        "QuickUploads: flush_and_subscribe called, connectivity={}",
+        infra.has_connectivity()
+    );
     if !infra.has_connectivity() {
         tracing::info!("QuickUploads: no connectivity, skipping flush");
         return;
@@ -120,17 +132,31 @@ pub async fn flush_and_subscribe(
 
     tracing::info!("QuickUploads: {} flushable items", flushable.len());
     for (local_id, image_data, mime_type) in flushable {
-        tracing::info!("QuickUploads: flushing {} ({} bytes, {})", local_id, image_data.len(), mime_type);
+        tracing::info!(
+            "QuickUploads: flushing {} ({} bytes, {})",
+            local_id,
+            image_data.len(),
+            mime_type
+        );
         quick_upload::update_status(&conn, &local_id, "uploading");
         refresh_local_state(infra, module);
 
         match upload_single(infra, &user_id, &image_data, &mime_type, auth_token).await {
             Ok(server_id) => {
-                tracing::info!("QuickUploads: uploaded {} -> server_id={}", local_id, server_id);
+                tracing::info!(
+                    "QuickUploads: uploaded {} -> server_id={}",
+                    local_id,
+                    server_id
+                );
                 quick_upload::set_server_id_and_delete(&conn, &local_id, &server_id);
             }
             Err((error, permanent)) => {
-                tracing::error!("QuickUploads: upload failed for {}: {} (permanent={})", local_id, error, permanent);
+                tracing::error!(
+                    "QuickUploads: upload failed for {}: {} (permanent={})",
+                    local_id,
+                    error,
+                    permanent
+                );
                 quick_upload::mark_failed(&conn, &local_id, &error, permanent);
                 refresh_local_state(infra, module);
             }
@@ -161,11 +187,18 @@ pub async fn fetch_and_update(
     let server_resp = infra.get(&path, auth_token).await;
     let server_items: Vec<ServerQuickUploadItem> = match &server_resp {
         Ok(resp) if resp.status == 200 => {
-            tracing::info!("QuickUploads: fetch_and_update server response: {} bytes", resp.body.len());
+            tracing::info!(
+                "QuickUploads: fetch_and_update server response: {} bytes",
+                resp.body.len()
+            );
             match serde_json::from_str(&resp.body) {
                 Ok(items) => items,
                 Err(e) => {
-                    tracing::error!("QuickUploads: failed to parse server items: {}, body={}", e, &resp.body[..resp.body.len().min(200)]);
+                    tracing::error!(
+                        "QuickUploads: failed to parse server items: {}, body={}",
+                        e,
+                        &resp.body[..resp.body.len().min(200)]
+                    );
                     vec![]
                 }
             }
@@ -180,7 +213,11 @@ pub async fn fetch_and_update(
         }
     };
 
-    tracing::info!("QuickUploads: fetch_and_update: {} local, {} server items", local_items.len(), server_items.len());
+    tracing::info!(
+        "QuickUploads: fetch_and_update: {} local, {} server items",
+        local_items.len(),
+        server_items.len()
+    );
 
     let mut unified: Vec<UnifiedQuickUploadItem> = Vec::new();
 
@@ -230,18 +267,14 @@ pub async fn subscribe_processing_items(
             .items
             .iter()
             .filter(|item| {
-                matches!(
-                    item.status.as_str(),
-                    "pending" | "created" | "processing"
-                ) && !lock.has_sse(&item.id)
+                matches!(item.status.as_str(), "pending" | "created" | "processing")
+                    && !lock.has_sse(&item.id)
             })
             .map(|item| item.id.clone())
             .collect()
     };
 
-    let cancelled = {
-        module.lock().unwrap().cancelled()
-    };
+    let cancelled = { module.lock().unwrap().cancelled() };
 
     for upload_id in items_to_subscribe {
         {
@@ -372,7 +405,10 @@ pub async fn get_quick_upload_detail(
         proposal_data: detail.proposal_data.as_ref().map(|v| v.to_string()),
         created_at: parse_rfc3339_to_epoch(&detail.created_at).unwrap_or(0),
         updated_at: parse_rfc3339_to_epoch(&detail.updated_at).unwrap_or(0),
-        lookup_tables: detail.lookup_tables.map(|v| v.to_string()).unwrap_or_default(),
+        lookup_tables: detail
+            .lookup_tables
+            .map(|v| v.to_string())
+            .unwrap_or_default(),
     })
 }
 
@@ -477,13 +513,15 @@ async fn upload_single(
     let upload_url = upload_meta["upload_url"]
         .as_str()
         .ok_or_else(|| ("missing upload_url".to_string(), true))?;
-    let upload_method = upload_meta["upload_method"]
-        .as_str()
-        .unwrap_or("PUT");
+    let upload_method = upload_meta["upload_method"].as_str().unwrap_or("PUT");
 
     // Step 2: Upload file bytes to presigned URL
-    let method = upload_method.parse::<reqwest::Method>().unwrap_or(reqwest::Method::PUT);
-    let mut upload_req = infra.http.request(method, upload_url)
+    let method = upload_method
+        .parse::<reqwest::Method>()
+        .unwrap_or(reqwest::Method::PUT);
+    let mut upload_req = infra
+        .http
+        .request(method, upload_url)
         .body(image_data.to_vec());
 
     if let Some(headers) = upload_meta["upload_headers"].as_object() {
@@ -561,12 +599,7 @@ fn refresh_local_state(infra: &SharedInfra, module: &Mutex<QuickUploadsModule>) 
         .state
         .items
         .iter()
-        .filter(|item| {
-            !matches!(
-                item.status.as_str(),
-                "queued" | "uploading" | "failed"
-            )
-        })
+        .filter(|item| !matches!(item.status.as_str(), "queued" | "uploading" | "failed"))
         .cloned()
         .collect();
 

@@ -25,11 +25,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.sverto.app.feature.accounts.AccountType
-import com.sverto.app.feature.accounts.MockAccount
+import uniffi.sverto_core.AccountListItem
 import kotlin.math.abs
 
 internal fun formatCurrency(value: Double): String {
@@ -52,29 +52,39 @@ internal fun formatCurrency(value: Double): String {
 
 internal fun formatPercent(value: Double): String = "%.1f".format(abs(value))
 
+private fun accountTypeLabel(accountTypeId: Int): String =
+    when (accountTypeId) {
+        1 -> "Current"
+        2 -> "Savings"
+        3 -> "Investment"
+        else -> "Account"
+    }
+
 @Composable
-fun accountTypeColor(type: AccountType): Color =
-    when (type) {
-        AccountType.CURRENT -> MaterialTheme.colorScheme.primary
-        AccountType.BROKERAGE -> MaterialTheme.colorScheme.tertiary
-        AccountType.SAVINGS -> MaterialTheme.colorScheme.secondary
+fun accountTypeColor(accountTypeId: Int): Color =
+    when (accountTypeId) {
+        1 -> MaterialTheme.colorScheme.primary
+        3 -> MaterialTheme.colorScheme.tertiary
+        2 -> MaterialTheme.colorScheme.secondary
+        else -> MaterialTheme.colorScheme.primary
     }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun AccountCard(
-    account: MockAccount,
+    account: AccountListItem,
     onClick: () -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier,
 ) {
-    val tintColor = accountTypeColor(account.type)
+    val tintColor = accountTypeColor(account.accountTypeId)
     val icon =
-        when (account.type) {
-            AccountType.CURRENT -> Icons.Outlined.AccountBalance
-            AccountType.BROKERAGE -> Icons.AutoMirrored.Outlined.ShowChart
-            AccountType.SAVINGS -> Icons.Outlined.Savings
+        when (account.accountTypeId) {
+            1 -> Icons.Outlined.AccountBalance
+            3 -> Icons.AutoMirrored.Outlined.ShowChart
+            2 -> Icons.Outlined.Savings
+            else -> Icons.Outlined.AccountBalance
         }
 
     with(sharedTransitionScope) {
@@ -121,34 +131,47 @@ fun AccountCard(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = account.type.label,
+                        text = accountTypeLabel(account.accountTypeId),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
 
                 Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = formatCurrency(account.balance),
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    when (account.type) {
-                        AccountType.BROKERAGE -> {
-                            val gain = account.gainAmount ?: 0.0
-                            val pct = account.gainPercent ?: 0.0
+                    val balance = account.balance
+                    if (balance != null) {
+                        Text(
+                            text = formatCurrency(balance),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        val gain = account.unrealizedGain
+                        if (account.accountTypeId == 3 && gain != null) {
                             val gainColor = if (gain >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                             val sign = if (gain >= 0) "+" else "-"
+                            val pct = if (balance > 0) {
+                                (gain / balance) * 100.0
+                            } else {
+                                0.0
+                            }
                             Text(
                                 text = "$sign${formatCurrency(abs(gain))} (${formatPercent(pct)}%)",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = gainColor,
                             )
                         }
-                        AccountType.CURRENT -> {}
-                        AccountType.SAVINGS -> {}
+                    } else {
+                        // Skeleton loading for balance
+                        Box(
+                            modifier =
+                                Modifier
+                                    .width(80.dp)
+                                    .height(20.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                        )
                     }
                 }
             }

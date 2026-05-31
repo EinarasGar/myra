@@ -348,8 +348,8 @@ pub async fn update_individual_transaction(
         });
     }
 
-    let parsed: UpdateIndividualTransactionResponseViewModel =
-        serde_json::from_str(&resp.body).map_err(|e| ApiError::Parse {
+    let parsed: UpdateIndividualTransactionResponseViewModel = serde_json::from_str(&resp.body)
+        .map_err(|e| ApiError::Parse {
             reason: e.to_string(),
         })?;
 
@@ -462,5 +462,15 @@ pub async fn get_accounts_list(
             status: resp.status,
         });
     }
-    extract_accounts(&resp.body).map_err(|e| ApiError::Parse { reason: e })
+    extract_accounts(&resp.body)
+        .map(|items| {
+            items
+                .into_iter()
+                .map(|item| AccountItem {
+                    id: item.id,
+                    name: item.name,
+                })
+                .collect()
+        })
+        .map_err(|e| ApiError::Parse { reason: e })
 }

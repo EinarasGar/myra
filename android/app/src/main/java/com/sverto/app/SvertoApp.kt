@@ -10,14 +10,34 @@ import uniffi.sverto_core.AppStore
 import uniffi.sverto_core.AuthProvider
 
 class SvertoAuthProvider : AuthProvider {
+    private var cachedToken: String? = null
+    private var tokenExpiryMs: Long = 0L
+
     override fun getToken(): String? {
         if (BuildConfig.CLERK_PUBLISHABLE_KEY.isBlank()) return null
-        return runBlocking {
+
+        val now = System.currentTimeMillis()
+        if (cachedToken != null && now < tokenExpiryMs) {
+            return cachedToken
+        }
+
+        val token = runBlocking {
             when (val result = Clerk.auth.getToken()) {
                 is ClerkResult.Success -> result.value
                 is ClerkResult.Failure -> null
             }
         }
+
+        if (token != null) {
+            cachedToken = token
+            // Clerk JWT tokens last 15 min; cache conservatively at 60s
+            // so the tokio worker thread is never blocked for long
+            tokenExpiryMs = now + 60_000L
+        } else {
+            cachedToken = null
+        }
+
+        return token
     }
 
     override fun getUserId(): String? {
@@ -70,3 +90,4 @@ class SvertoApp : Application() {
         )
     }
 }
+

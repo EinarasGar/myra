@@ -14,3 +14,9 @@ pub fn extract_assets(body: &str) -> Result<Vec<AssetItem>, String> {
         })
         .collect())
 }
+
+pub fn extract_asset_base_pair_id(body: &str) -> Result<i32, String> {
+    let resp: shared::view_models::assets::get_asset::GetAssetResponseViewModel =
+        serde_json::from_str(body).map_err(|e| e.to_string())?;
+    Ok(resp.metadata.base_asset.asset_id.0)
+}

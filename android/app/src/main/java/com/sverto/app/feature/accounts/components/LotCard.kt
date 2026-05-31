@@ -16,17 +16,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.sverto.app.feature.accounts.MockLot
+import uniffi.sverto_core.LotItem
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import kotlin.math.abs
 
 @Composable
 fun LotCard(
-    lot: MockLot,
+    lot: LotItem,
     modifier: Modifier = Modifier,
 ) {
     val gainColor = if (lot.gainPercent >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
     val gainSign = if (lot.gainPercent >= 0) "+" else "-"
-    val pnlSign = if (lot.pnl >= 0) "+" else "-"
+    val pnlSign = if (lot.unrealizedGains >= 0) "+" else "-"
+    val buyDateStr = Instant.ofEpochSecond(lot.buyDate)
+        .atZone(ZoneId.systemDefault())
+        .toLocalDate()
+        .format(DateTimeFormatter.ofPattern("MMM d, yyyy"))
 
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -43,7 +51,7 @@ fun LotCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "%.1f units".format(lot.units),
+                    text = "%.4f units".format(lot.units),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -70,7 +78,7 @@ fun LotCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
-                    text = "Bought ${lot.buyDate}",
+                    text = "Bought $buyDateStr",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -86,7 +94,7 @@ fun LotCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
-                    text = "P&L: $pnlSign${formatCurrency(abs(lot.pnl))}",
+                    text = "P&L: $pnlSign${formatCurrency(abs(lot.unrealizedGains))}",
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Medium,
                     color = gainColor,

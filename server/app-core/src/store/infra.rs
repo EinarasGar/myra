@@ -35,6 +35,7 @@ pub struct SharedInfra {
     pub connectivity: AtomicBool,
     pub is_offline: AtomicBool,
     pub user_id: Mutex<Option<String>>,
+    pub default_asset_id: Mutex<Option<i32>>,
     pub db_path: String,
     on_offline_changed: Mutex<Option<OnOfflineChangedCallback>>,
 }
@@ -58,6 +59,7 @@ impl SharedInfra {
             connectivity: AtomicBool::new(true),
             is_offline: AtomicBool::new(false),
             user_id: Mutex::new(None),
+            default_asset_id: Mutex::new(None),
             db_path,
             on_offline_changed: Mutex::new(None),
         }
@@ -80,6 +82,14 @@ impl SharedInfra {
         self.user_id.lock().unwrap().clone()
     }
 
+    pub fn default_asset_id(&self) -> Option<i32> {
+        self.default_asset_id.lock().unwrap().clone()
+    }
+
+    pub fn set_default_asset_id(&self, id: i32) {
+        *self.default_asset_id.lock().unwrap() = Some(id);
+    }
+
     pub fn has_connectivity(&self) -> bool {
         self.connectivity.load(Ordering::Relaxed)
     }
@@ -100,14 +110,13 @@ impl SharedInfra {
 
     pub fn evict_memory_cache_prefix(&self, url_prefix: &str) {
         let prefix = format!("{}{}", self.base_url, url_prefix);
-        self.cache.lock().unwrap().retain(|k, _| !k.starts_with(&prefix));
+        self.cache
+            .lock()
+            .unwrap()
+            .retain(|k, _| !k.starts_with(&prefix));
     }
 
-    pub async fn get(
-        &self,
-        path: &str,
-        auth_token: Option<&str>,
-    ) -> Result<ApiResponse, ApiError> {
+    pub async fn get(&self, path: &str, auth_token: Option<&str>) -> Result<ApiResponse, ApiError> {
         let url = format!("{}{}", self.base_url, path);
 
         // 1. Check memory cache (TTL-based)
@@ -133,8 +142,14 @@ impl SharedInfra {
 
         let result = if cached_body.is_some() {
             // If we have cached data, use short timeout
-            self.do_request(reqwest::Method::GET, &url, None, auth_token, Some(Duration::from_secs(5)))
-                .await
+            self.do_request(
+                reqwest::Method::GET,
+                &url,
+                None,
+                auth_token,
+                Some(Duration::from_secs(5)),
+            )
+            .await
         } else {
             self.do_request(reqwest::Method::GET, &url, None, auth_token, None)
                 .await

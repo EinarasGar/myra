@@ -22,9 +22,7 @@ pub async fn subscribe_sse(
         base_url, user_id, upload_id
     );
 
-    let mut builder = http
-        .get(&url)
-        .header("Accept", "text/event-stream");
+    let mut builder = http.get(&url).header("Accept", "text/event-stream");
     if let Some(token) = auth_token {
         builder = builder.bearer_auth(token);
     }

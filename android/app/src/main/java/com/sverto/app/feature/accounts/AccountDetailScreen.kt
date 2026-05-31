@@ -5,6 +5,7 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -26,6 +27,7 @@ import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.outlined.SwapHoriz
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
@@ -41,17 +43,22 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sverto.app.core.SvertoViewModelFactory
 import com.sverto.app.feature.accounts.components.HoldingRow
 import com.sverto.app.feature.accounts.components.MetricItem
 import com.sverto.app.feature.accounts.components.MetricsGrid
 import com.sverto.app.feature.accounts.components.formatCurrency
+import com.sverto.app.feature.portfolio.ChartPoint
 import com.sverto.app.feature.portfolio.PortfolioChart
 import com.sverto.app.feature.portfolio.TimePeriod
 import uniffi.sverto_core.TransactionListItem
@@ -61,44 +68,35 @@ import uniffi.sverto_core.TransactionListItem
 @Composable
 fun AccountDetailScreen(
     accountId: String,
+    accountName: String,
+    accountTypeId: Int,
     onBack: () -> Unit,
-    onHoldingClick: (String) -> Unit,
+    onHoldingClick: (String, Int) -> Unit,
     onViewAllTransactions: () -> Unit,
     onTransactionClick: (TransactionListItem) -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier,
+    viewModel: AccountDetailViewModel = viewModel(factory = SvertoViewModelFactory),
 ) {
-    val account = remember(accountId) { MockData.accounts.find { it.id == accountId } }
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
-    if (account == null) {
-        onBack()
-        return
+    LaunchedEffect(accountId) {
+        viewModel.load(accountId, accountName, accountTypeId)
     }
 
-    val isBrokerage = account.type == AccountType.BROKERAGE
+    val isBrokerage = accountTypeId == 3 // Investment account
 
-    val chartData =
-        remember {
-            val raw = MockData.generateChartData()
-            raw
-                .mapNotNull { (key, points) ->
-                    val period = TimePeriod.entries.find { it.apiRange == key }
-                    period?.let { it to points }
-                }.toMap()
-        }
+    // Convert chart data from UniFFI to portfolio ChartPoint
+    val chartData: Map<TimePeriod, List<ChartPoint>> = state.chartData.associate { periodData ->
+        val period = TimePeriod.entries.find { it.apiRange == periodData.period.lowercase() }
+            ?: return@associate TimePeriod.MONTH to emptyList()
+        val points = periodData.points.map { ChartPoint(date = it.timestamp, value = it.value) }
+        period to points
+    }
 
-    val holdings = remember { MockData.holdings }
-
-    val transactions =
-        remember(accountId) {
-            MockData.transactionsForAccount(accountId).take(5)
-        }
-
-    val totalValue = remember { holdings.sumOf { it.currentValue } }
-    val costBasis = remember { holdings.sumOf { it.costBasis } }
-    val unrealizedPnl = remember { holdings.sumOf { it.unrealizedPnl } }
-    val totalFees = remember { holdings.sumOf { it.totalFees } }
+    val holdings = state.holdings
+    val transactions = state.recentTransactions
 
     val listState = rememberLazyListState()
 
@@ -107,7 +105,7 @@ fun AccountDetailScreen(
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             TopAppBar(
-                title = { Text(account.name) },
+                title = { Text(accountName) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -123,179 +121,208 @@ fun AccountDetailScreen(
             )
         },
     ) { padding ->
-        with(sharedTransitionScope) {
-            LazyColumn(
-                state = listState,
-                modifier =
-                    Modifier
+        when {
+            state.isLoading -> {
+                Box(
+                    modifier = Modifier
                         .fillMaxSize()
-                        .padding(padding)
-                        .padding(horizontal = 16.dp),
-            ) {
-                item(key = "chart") {
-                    PortfolioChart(portfolioData = chartData)
-                    Spacer(modifier = Modifier.height(24.dp))
+                        .padding(padding),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
                 }
-
-                if (isBrokerage) {
-                    item(key = "investment_summary") {
-                        Text(
-                            text = "Investment Summary",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        val pnlColor =
-                            if (unrealizedPnl >= 0) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.error
+            }
+            state.error != null -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = "Error: ${state.error}",
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+            else -> {
+                with(sharedTransitionScope) {
+                    LazyColumn(
+                        state = listState,
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(padding)
+                                .padding(horizontal = 16.dp),
+                    ) {
+                        item(key = "chart") {
+                            if (chartData.isNotEmpty()) {
+                                PortfolioChart(portfolioData = chartData)
+                                Spacer(modifier = Modifier.height(24.dp))
                             }
-                        MetricsGrid(
-                            items =
-                                listOf(
-                                    MetricItem(label = "Total Value", value = formatCurrency(totalValue)),
-                                    MetricItem(label = "Cost Basis", value = formatCurrency(costBasis)),
-                                    MetricItem(
-                                        label = "Unrealized P&L",
-                                        value = formatCurrency(unrealizedPnl),
-                                        valueColor = pnlColor,
-                                    ),
-                                    MetricItem(label = "Total Fees", value = formatCurrency(totalFees)),
-                                ),
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-                    }
+                        }
 
-                    item(key = "holdings") {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
+                        if (isBrokerage) {
+                            item(key = "investment_summary") {
+                                Text(
+                                    text = "Investment Summary",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                val pnlColor =
+                                    if (state.unrealizedGains >= 0) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.error
+                                    }
+                                MetricsGrid(
+                                    items =
+                                        listOf(
+                                            MetricItem(label = "Total Value", value = formatCurrency(state.totalValue)),
+                                            MetricItem(label = "Cost Basis", value = formatCurrency(state.totalCostBasis)),
+                                            MetricItem(
+                                                label = "Unrealized P&L",
+                                                value = formatCurrency(state.unrealizedGains),
+                                                valueColor = pnlColor,
+                                            ),
+                                            MetricItem(label = "Total Fees", value = formatCurrency(state.totalFees)),
+                                        ),
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                            }
+
+                            item(key = "holdings") {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        text = "Holdings",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                    Text(
+                                        text = "${holdings.size} assets",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                Surface(
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                ) {
+                                    Column {
+                                        holdings.forEachIndexed { index, holding ->
+                                            HoldingRow(
+                                                holding = holding,
+                                                onClick = { onHoldingClick(accountId, holding.assetId) },
+                                            )
+                                            if (index < holdings.size - 1) {
+                                                HorizontalDivider(
+                                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(24.dp))
+                            }
+                        }
+
+                        item(key = "transactions") {
                             Text(
-                                text = "Holdings",
+                                text = "Transactions",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
                             )
-                            Text(
-                                text = "${holdings.size} assets",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
 
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        ) {
-                            Column {
-                                holdings.forEachIndexed { index, holding ->
-                                    HoldingRow(
-                                        holding = holding,
-                                        onClick = { onHoldingClick(holding.id) },
-                                    )
-                                    if (index < holdings.size - 1) {
-                                        HorizontalDivider(
-                                            modifier = Modifier.padding(horizontal = 16.dp),
-                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            ) {
+                                Column {
+                                    transactions.forEachIndexed { index, tx ->
+                                        val icon = transactionIcon(tx.transactionType)
+                                        val subtitle = tx.categoryName.ifEmpty { tx.typeLabel }
+                                        ListItem(
+                                            modifier =
+                                                Modifier
+                                                    .sharedBounds(
+                                                        sharedContentState = rememberSharedContentState(key = "tx_${tx.id}"),
+                                                        animatedVisibilityScope = animatedVisibilityScope,
+                                                    ).clickable { onTransactionClick(tx) },
+                                            leadingContent = {
+                                                Icon(
+                                                    imageVector = icon,
+                                                    contentDescription = tx.typeLabel,
+                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    modifier = Modifier.size(24.dp),
+                                                )
+                                            },
+                                            headlineContent = {
+                                                Text(
+                                                    text = tx.description,
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                )
+                                            },
+                                            supportingContent = {
+                                                if (subtitle.isNotEmpty()) {
+                                                    Text(
+                                                        text = subtitle,
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis,
+                                                    )
+                                                }
+                                            },
+                                            trailingContent = {
+                                                Text(
+                                                    text = tx.amountDisplay,
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    color = MaterialTheme.colorScheme.onSurface,
+                                                    maxLines = 1,
+                                                )
+                                            },
+                                            colors =
+                                                ListItemDefaults.colors(
+                                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                                ),
                                         )
-                                    }
-                                }
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(24.dp))
-                    }
-                }
-
-                item(key = "transactions") {
-                    Text(
-                        text = "Transactions",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    ) {
-                        Column {
-                            transactions.forEachIndexed { index, tx ->
-                                val icon = transactionIcon(tx.transactionType)
-                                val subtitle = tx.categoryName.ifEmpty { tx.typeLabel }
-                                ListItem(
-                                    modifier =
-                                        Modifier
-                                            .sharedBounds(
-                                                sharedContentState = rememberSharedContentState(key = "tx_${tx.id}"),
-                                                animatedVisibilityScope = animatedVisibilityScope,
-                                            ).clickable { onTransactionClick(tx) },
-                                    leadingContent = {
-                                        Icon(
-                                            imageVector = icon,
-                                            contentDescription = tx.typeLabel,
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.size(24.dp),
-                                        )
-                                    },
-                                    headlineContent = {
-                                        Text(
-                                            text = tx.description,
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                        )
-                                    },
-                                    supportingContent = {
-                                        if (subtitle.isNotEmpty()) {
-                                            Text(
-                                                text = subtitle,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
+                                        if (index < transactions.size - 1) {
+                                            HorizontalDivider(
+                                                modifier = Modifier.padding(horizontal = 16.dp),
+                                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                                             )
                                         }
-                                    },
-                                    trailingContent = {
-                                        Text(
-                                            text = tx.amountDisplay,
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            maxLines = 1,
-                                        )
-                                    },
-                                    colors =
-                                        ListItemDefaults.colors(
-                                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                        ),
-                                )
-                                if (index < transactions.size - 1) {
+                                    }
                                     HorizontalDivider(
                                         modifier = Modifier.padding(horizontal = 16.dp),
                                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                                     )
+                                    TextButton(
+                                        onClick = onViewAllTransactions,
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) {
+                                        Text("View more transactions")
+                                    }
                                 }
                             }
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                            )
-                            TextButton(
-                                onClick = onViewAllTransactions,
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                Text("View more transactions")
-                            }
+                        }
+
+                        item(key = "bottom_spacer") {
+                            Spacer(modifier = Modifier.height(24.dp))
                         }
                     }
-                }
-
-                item(key = "bottom_spacer") {
-                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
         }

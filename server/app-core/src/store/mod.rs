@@ -1,16 +1,24 @@
+pub mod account_detail;
+pub mod account_transactions;
+pub mod accounts;
+pub mod asset_detail;
 pub mod infra;
 pub mod portfolio;
-pub mod accounts;
-pub mod transactions;
 pub mod quick_uploads;
 pub mod sse;
+pub mod transactions;
 
 use std::sync::{Arc, Mutex};
 
-use crate::api::quick_upload;
-use crate::models::{AuthMe, ConnectionStatus, QuickUploadDetail};
-use crate::error::ApiError;
 use self::infra::SharedInfra;
+use crate::api::quick_upload;
+use crate::error::ApiError;
+use crate::models::{AuthMe, ConnectionStatus, QuickUploadDetail};
+
+/// Chart period ranges and their display labels.
+/// Shared between account_detail and asset_detail modules.
+pub(crate) const CHART_RANGES: &[&str] = &["1d", "1w", "1m", "3m", "6m", "1y", "all"];
+pub(crate) const CHART_LABELS: &[&str] = &["1D", "1W", "1M", "3M", "6M", "1Y", "ALL"];
 
 fn compute_connection_status_from(infra: &SharedInfra) -> ConnectionStatus {
     use std::sync::atomic::Ordering;
@@ -41,6 +49,9 @@ pub struct AppStore {
     connection_observer: Arc<Mutex<Option<Box<dyn ConnectionObserver>>>>,
     portfolio: Mutex<portfolio::PortfolioModule>,
     accounts: Mutex<accounts::AccountsModule>,
+    account_detail: Mutex<account_detail::AccountDetailModule>,
+    account_transactions: Mutex<account_transactions::AccountTransactionsModule>,
+    asset_detail: Mutex<asset_detail::AssetDetailModule>,
     transactions: Mutex<transactions::TransactionsModule>,
     quick_uploads: Arc<Mutex<quick_uploads::QuickUploadsModule>>,
 }
@@ -62,11 +73,7 @@ impl AppStore {
             }
         }
 
-        tracing::info!(
-            "AppStore::new base_url={} db_path={}",
-            base_url,
-            db_path
-        );
+        tracing::info!("AppStore::new base_url={} db_path={}", base_url, db_path);
 
         // Initialize quick upload tables
         {
@@ -99,13 +106,18 @@ impl AppStore {
             connection_observer,
             portfolio: Mutex::new(portfolio::PortfolioModule::new()),
             accounts: Mutex::new(accounts::AccountsModule::new()),
+            account_detail: Mutex::new(account_detail::AccountDetailModule::new()),
+            account_transactions: Mutex::new(account_transactions::AccountTransactionsModule::new()),
+            asset_detail: Mutex::new(asset_detail::AssetDetailModule::new()),
             transactions: Mutex::new(transactions::TransactionsModule::new()),
             quick_uploads: Arc::new(Mutex::new(quick_uploads::QuickUploadsModule::new())),
         }
     }
 
     pub fn set_connectivity(&self, connected: bool) {
-        self.infra.connectivity.store(connected, std::sync::atomic::Ordering::Relaxed);
+        self.infra
+            .connectivity
+            .store(connected, std::sync::atomic::Ordering::Relaxed);
         if connected {
             self.infra.set_is_offline(false);
         }
@@ -135,18 +147,29 @@ impl AppStore {
     pub async fn on_sign_in(&self) {
         let token = self.get_auth_token();
 
-        // Fetch user_id from the server (works in all auth modes including noauth)
-        let user_id = match self.infra.get("/api/auth/me", token.as_deref()).await {
-            Ok(resp) => {
-                serde_json::from_str::<serde_json::Value>(&resp.body)
-                    .ok()
-                    .and_then(|v| v["user_id"].as_str().map(|s| s.to_string()))
-            }
-            Err(_) => self.auth_provider.get_user_id(),
-        };
+        // Fetch user_id and default_asset_id from the server (works in all auth modes including noauth)
+        let (user_id, default_asset_id) =
+            match self.infra.get("/api/auth/me", token.as_deref()).await {
+                Ok(resp) => match serde_json::from_str::<serde_json::Value>(&resp.body) {
+                    Ok(v) => {
+                        let user_id = v["user_id"].as_str().map(|s| s.to_string());
+                        let default_asset_id = v["default_asset_id"].as_i64().map(|id| id as i32);
+                        (user_id, default_asset_id)
+                    }
+                    Err(_) => (self.auth_provider.get_user_id(), None),
+                },
+                Err(_) => (self.auth_provider.get_user_id(), None),
+            };
 
-        tracing::info!("AppStore::on_sign_in user_id={:?}", user_id);
+        tracing::info!(
+            "AppStore::on_sign_in user_id={:?} default_asset_id={:?}",
+            user_id,
+            default_asset_id
+        );
         *self.infra.user_id.lock().unwrap() = user_id;
+        if let Some(id) = default_asset_id {
+            self.infra.set_default_asset_id(id);
+        }
 
         // Trigger initial quick uploads fetch
         let infra = Arc::clone(&self.infra);
@@ -163,6 +186,9 @@ impl AppStore {
         self.infra.clear_memory_cache();
         self.portfolio.lock().unwrap().clear_state();
         self.accounts.lock().unwrap().clear_state();
+        self.account_detail.lock().unwrap().clear_state();
+        self.account_transactions.lock().unwrap().clear_state();
+        self.asset_detail.lock().unwrap().clear_state();
         self.transactions.lock().unwrap().clear_state();
         self.quick_uploads.lock().unwrap().clear_state();
     }
@@ -202,6 +228,119 @@ impl AppStore {
         accounts::load_accounts(&self.infra, &self.accounts, token.as_deref()).await;
     }
 
+    pub async fn refresh_accounts(&self) {
+        let token = self.get_auth_token();
+        accounts::refresh_accounts(&self.infra, &self.accounts, token.as_deref()).await;
+    }
+
+    // ── Account Detail ───────────────────────────────────────────────
+
+    pub fn observe_account_detail(&self, observer: Box<dyn account_detail::AccountDetailObserver>) {
+        self.account_detail.lock().unwrap().set_observer(observer);
+    }
+
+    pub fn unobserve_account_detail(&self) {
+        self.account_detail.lock().unwrap().clear_observer();
+    }
+
+    pub async fn load_account_detail(
+        &self,
+        account_id: String,
+        account_name: String,
+        account_type_id: i32,
+    ) {
+        let token = self.get_auth_token();
+        account_detail::load_account_detail(
+            &self.infra,
+            &self.account_detail,
+            &account_id,
+            &account_name,
+            account_type_id,
+            token.as_deref(),
+        )
+        .await;
+    }
+
+    pub async fn refresh_account_detail(&self) {
+        let token = self.get_auth_token();
+        account_detail::refresh_account_detail(&self.infra, &self.account_detail, token.as_deref())
+            .await;
+    }
+
+    // ── Account Transactions ─────────────────────────────────────────
+
+    pub fn observe_account_transactions(
+        &self,
+        observer: Box<dyn account_transactions::AccountTransactionsObserver>,
+    ) {
+        self.account_transactions
+            .lock()
+            .unwrap()
+            .set_observer(observer);
+    }
+
+    pub fn unobserve_account_transactions(&self) {
+        self.account_transactions.lock().unwrap().clear_observer();
+    }
+
+    pub async fn load_account_transactions(&self, account_id: String) {
+        let token = self.get_auth_token();
+        account_transactions::load_account_transactions(
+            &self.infra,
+            &self.account_transactions,
+            &account_id,
+            token.as_deref(),
+        )
+        .await;
+    }
+
+    pub async fn load_more_account_transactions(&self) {
+        let token = self.get_auth_token();
+        account_transactions::load_more_account_transactions(
+            &self.infra,
+            &self.account_transactions,
+            token.as_deref(),
+        )
+        .await;
+    }
+
+    pub async fn refresh_account_transactions(&self) {
+        let token = self.get_auth_token();
+        account_transactions::refresh_account_transactions(
+            &self.infra,
+            &self.account_transactions,
+            token.as_deref(),
+        )
+        .await;
+    }
+
+    // ── Asset Detail ─────────────────────────────────────────────────
+
+    pub fn observe_asset_detail(&self, observer: Box<dyn asset_detail::AssetDetailObserver>) {
+        self.asset_detail.lock().unwrap().set_observer(observer);
+    }
+
+    pub fn unobserve_asset_detail(&self) {
+        self.asset_detail.lock().unwrap().clear_observer();
+    }
+
+    pub async fn load_asset_detail(&self, account_id: String, asset_id: i32) {
+        let token = self.get_auth_token();
+        asset_detail::load_asset_detail(
+            &self.infra,
+            &self.asset_detail,
+            &account_id,
+            asset_id,
+            token.as_deref(),
+        )
+        .await;
+    }
+
+    pub async fn refresh_asset_detail(&self) {
+        let token = self.get_auth_token();
+        asset_detail::refresh_asset_detail(&self.infra, &self.asset_detail, token.as_deref()).await;
+    }
+
     // ── Transactions (observer-based) ────────────────────────────────────
 
     pub fn observe_transactions(&self, observer: Box<dyn transactions::TransactionsObserver>) {
@@ -225,8 +364,7 @@ impl AppStore {
 
     pub async fn refresh_transactions(&self) {
         let token = self.get_auth_token();
-        transactions::refresh_transactions(&self.infra, &self.transactions, token.as_deref())
-            .await;
+        transactions::refresh_transactions(&self.infra, &self.transactions, token.as_deref()).await;
     }
 
     pub async fn delete_transaction(&self, tx_id: String) -> Result<(), crate::error::ApiError> {
@@ -366,8 +504,13 @@ impl AppStore {
 
     pub async fn dismiss_quick_upload(&self, id: String) {
         let token = self.get_auth_token();
-        quick_uploads::dismiss_quick_upload(&self.infra, &self.quick_uploads, &id, token.as_deref())
-            .await;
+        quick_uploads::dismiss_quick_upload(
+            &self.infra,
+            &self.quick_uploads,
+            &id,
+            token.as_deref(),
+        )
+        .await;
     }
 
     pub async fn complete_quick_upload(&self, upload_id: String, accepted: bool) {

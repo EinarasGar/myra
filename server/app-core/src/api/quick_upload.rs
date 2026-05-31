@@ -37,7 +37,12 @@ pub fn reset_uploading(conn: &Connection) {
     );
 }
 
-pub fn insert(conn: &Connection, image_data: &[u8], thumbnail: Option<&[u8]>, mime_type: &str) -> String {
+pub fn insert(
+    conn: &Connection,
+    image_data: &[u8],
+    thumbnail: Option<&[u8]>,
+    mime_type: &str,
+) -> String {
     let local_id = Uuid::new_v4().to_string();
     let now = now_secs();
     conn.execute(
@@ -148,8 +153,10 @@ pub fn mark_failed(conn: &Connection, local_id: &str, error: &str, permanent: bo
 }
 
 pub fn delete(conn: &Connection, local_id: &str) -> bool {
-    conn.execute("DELETE FROM pending_uploads WHERE local_id = ?1", [local_id])
-        .map(|n| n > 0)
-        .unwrap_or(false)
+    conn.execute(
+        "DELETE FROM pending_uploads WHERE local_id = ?1",
+        [local_id],
+    )
+    .map(|n| n > 0)
+    .unwrap_or(false)
 }
-

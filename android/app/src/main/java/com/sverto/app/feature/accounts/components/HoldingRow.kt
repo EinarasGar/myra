@@ -15,16 +15,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.sverto.app.feature.accounts.MockHolding
+import uniffi.sverto_core.AccountHoldingItem
 
 @Composable
 fun HoldingRow(
-    holding: MockHolding,
+    holding: AccountHoldingItem,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val gainColor = if (holding.gainPercent >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-    val gainSign = if (holding.gainPercent >= 0) "+" else "-"
+    val gainPercent = if (holding.costBasis != 0.0) holding.unrealizedGains / holding.costBasis * 100 else 0.0
+    val gainColor = if (gainPercent >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+    val gainSign = if (gainPercent >= 0) "+" else "-"
 
     ListItem(
         modifier = modifier.clickable(onClick = onClick),
@@ -44,7 +45,7 @@ fun HoldingRow(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = holding.ticker.first().toString(),
+                    text = holding.ticker.firstOrNull()?.toString() ?: "?",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.tertiary,
@@ -60,7 +61,7 @@ fun HoldingRow(
         },
         supportingContent = {
             Text(
-                text = "%.1f units".format(holding.units),
+                text = "%.4f units".format(holding.units),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -68,13 +69,13 @@ fun HoldingRow(
         trailingContent = {
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = formatCurrency(holding.currentValue),
+                    text = formatCurrency(holding.value),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    text = "$gainSign${formatPercent(holding.gainPercent)}%",
+                    text = "$gainSign${formatPercent(gainPercent)}%",
                     style = MaterialTheme.typography.labelSmall,
                     color = gainColor,
                 )

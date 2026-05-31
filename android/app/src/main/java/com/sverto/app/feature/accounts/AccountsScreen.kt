@@ -36,12 +36,14 @@ import com.sverto.app.feature.accounts.components.AllocationBar
 import com.sverto.app.feature.accounts.components.AllocationLegend
 import com.sverto.app.feature.accounts.components.AllocationSegment
 import com.sverto.app.feature.accounts.components.accountTypeColor
+import uniffi.sverto_core.AccountListItem
+import uniffi.sverto_core.AccountsState
 
 @Suppress("MultipleEmitters")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun AccountsScreen(
-    onAccountClick: (String) -> Unit,
+    onAccountClick: (AccountListItem) -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier,
@@ -95,8 +97,8 @@ fun AccountsScreen(
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun AccountsContent(
-    state: AccountsScreenState,
-    onAccountClick: (String) -> Unit,
+    state: AccountsState,
+    onAccountClick: (AccountListItem) -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
 ) {
@@ -109,7 +111,7 @@ private fun AccountsContent(
     state.accounts.forEach { account ->
         AccountCard(
             account = account,
-            onClick = { onAccountClick(account.id) },
+            onClick = { onAccountClick(account) },
             sharedTransitionScope = sharedTransitionScope,
             animatedVisibilityScope = animatedVisibilityScope,
         )
@@ -118,18 +120,24 @@ private fun AccountsContent(
 
 @Composable
 private fun buildAllocationSegments(
-    accounts: List<MockAccount>,
+    accounts: List<AccountListItem>,
     totalNetWorth: Double,
 ): List<AllocationSegment> {
     if (totalNetWorth <= 0.0) return emptyList()
 
-    val grouped = accounts.groupBy { it.type }
-    return grouped.map { (type, accs) ->
-        val typeTotal = accs.sumOf { it.balance }
+    val grouped = accounts.groupBy { it.accountTypeId }
+    return grouped.map { (typeId, accs) ->
+        val typeTotal = accs.sumOf { it.balance ?: 0.0 }
+        val label = when (typeId) {
+            1 -> "Current"
+            2 -> "Savings"
+            3 -> "Investment"
+            else -> "Other"
+        }
         AllocationSegment(
-            label = type.label,
+            label = label,
             fraction = (typeTotal / totalNetWorth).toFloat(),
-            color = accountTypeColor(type),
+            color = accountTypeColor(typeId),
         )
     }
 }

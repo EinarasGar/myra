@@ -20,7 +20,9 @@ import com.clerk.api.Clerk
 import com.clerk.ui.auth.AuthView
 import com.sverto.app.core.theme.LocalClerkTheme
 import com.sverto.app.core.theme.SvertoTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 private const val CLERK_INIT_TIMEOUT_MS = 3_000L
 
@@ -47,7 +49,10 @@ class MainActivity : ComponentActivity() {
                     val clerkTheme = LocalClerkTheme.current
                     val timedOut = remember { mutableStateOf(false) }
                     val appStore = remember { (applicationContext as SvertoApp).appStore }
-                    val hasCachedSession = remember { appStore.getCachedMe() != null }
+                    val hasCachedSession = remember { mutableStateOf(false) }
+                    LaunchedEffect(Unit) {
+                        hasCachedSession.value = withContext(Dispatchers.IO) { appStore.getCachedMe() != null }
+                    }
 
                     LaunchedEffect(isInitialized) {
                         if (!isInitialized) {
@@ -74,7 +79,7 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         isInitialized -> AuthView(clerkTheme = clerkTheme)
-                        timedOut.value && hasCachedSession -> {
+                        timedOut.value && hasCachedSession.value -> {
                             var signedIn by remember { mutableStateOf(false) }
                             LaunchedEffect(Unit) {
                                 appStore.onSignIn()

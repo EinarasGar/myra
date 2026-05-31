@@ -66,6 +66,18 @@ pub struct AccountItem {
 }
 
 #[derive(Debug, Clone, uniffi::Record)]
+pub struct AccountListItem {
+    pub id: String,
+    pub name: String,
+    pub account_type_id: i32,
+    pub liquidity_type_id: i32,
+    pub ownership_share: f64,
+    pub balance: Option<f64>,
+    pub unrealized_gain: Option<f64>,
+    pub holdings_count: Option<u32>,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
 pub struct AssetItem {
     pub id: i32,
     pub name: String,
@@ -204,6 +216,78 @@ pub struct QuickUploadsState {
 #[derive(Debug, Clone, uniffi::Record)]
 pub struct AccountsState {
     pub is_loading: bool,
+    pub is_loading_balances: bool,
     pub error: Option<String>,
-    pub accounts: Vec<AccountItem>,
+    pub accounts: Vec<AccountListItem>,
+    pub total_net_worth: f64,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct AccountHoldingItem {
+    pub asset_id: i32,
+    pub ticker: String,
+    pub name: String,
+    pub asset_type_id: i32,
+    pub units: f64,
+    pub value: f64,
+    pub cost_basis: f64,
+    pub unrealized_gains: f64,
+    pub realized_gains: f64,
+    pub total_fees: f64,
+    pub current_price: f64,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct AccountDetailState {
+    pub is_loading: bool,
+    pub error: Option<String>,
+    pub account_id: String,
+    pub account_name: String,
+    pub account_type_id: i32,
+    pub chart_data: Vec<ChartPeriodData>,
+    pub holdings: Vec<AccountHoldingItem>,
+    pub cash_balance: f64,
+    pub total_value: f64,
+    pub total_cost_basis: f64,
+    pub unrealized_gains: f64,
+    pub realized_gains: f64,
+    pub total_fees: f64,
+    pub recent_transactions: Vec<TransactionListItem>,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct AccountTransactionsState {
+    pub is_loading: bool,
+    pub is_loading_more: bool,
+    pub error: Option<String>,
+    pub items: Vec<TransactionListItem>,
+    pub has_more: bool,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct LotItem {
+    pub units: f64,
+    pub buy_date: i64,
+    pub buy_price_per_unit: f64,
+    pub cost_basis: f64,
+    pub unrealized_gains: f64,
+    pub gain_percent: f64,
+    pub current_value: f64,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct AssetDetailState {
+    pub is_loading: bool,
+    pub error: Option<String>,
+    pub asset_id: i32,
+    pub ticker: String,
+    pub name: String,
+    pub units: f64,
+    pub value: f64,
+    pub cost_basis: f64,
+    pub unrealized_gains: f64,
+    pub total_fees: f64,
+    pub current_price: f64,
+    pub chart_data: Vec<ChartPeriodData>,
+    pub lots: Vec<LotItem>,
 }

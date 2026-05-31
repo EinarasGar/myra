@@ -86,8 +86,8 @@ private const val EDIT_TRANSACTION_ROUTE = "editTransaction/{typeKey}/{txId}"
 private const val EDIT_GROUP_ROUTE = "editTransactionGroup/{groupId}"
 private const val GROUP_ADD_TXN_ROUTE = "groupAddTransaction/{typeKey}"
 private const val GROUP_EDIT_TXN_ROUTE = "groupEditTransaction/{typeKey}/{index}"
-private const val ACCOUNT_DETAIL_ROUTE = "accountDetail/{accountId}"
-private const val ASSET_DETAIL_ROUTE = "assetDetail/{accountId}/{holdingId}"
+private const val ACCOUNT_DETAIL_ROUTE = "accountDetail/{accountId}/{accountName}/{accountTypeId}"
+private const val ASSET_DETAIL_ROUTE = "assetDetail/{accountId}/{assetId}"
 private const val ACCOUNT_TRANSACTIONS_ROUTE = "accountTransactions/{accountId}"
 
 private data class TransactionDetailState(
@@ -358,8 +358,8 @@ private fun MainNavGraph(
         }
         composable(TopLevelRoute.Accounts.route) {
             AccountsScreen(
-                onAccountClick = { accountId ->
-                    navController.navigate("accountDetail/$accountId")
+                onAccountClick = { account ->
+                    navController.navigate("accountDetail/${account.id}/${account.name}/${account.accountTypeId}")
                 },
                 sharedTransitionScope = sharedScope,
                 animatedVisibilityScope = this@composable,
@@ -649,14 +649,22 @@ private fun MainNavGraph(
         }
         composable(
             route = ACCOUNT_DETAIL_ROUTE,
-            arguments = listOf(navArgument("accountId") { type = NavType.StringType }),
+            arguments = listOf(
+                navArgument("accountId") { type = NavType.StringType },
+                navArgument("accountName") { type = NavType.StringType },
+                navArgument("accountTypeId") { type = NavType.IntType },
+            ),
         ) { backStackEntry ->
             val accountId = backStackEntry.arguments?.getString("accountId") ?: return@composable
+            val accountName = backStackEntry.arguments?.getString("accountName") ?: return@composable
+            val accountTypeId = backStackEntry.arguments?.getInt("accountTypeId") ?: return@composable
             AccountDetailScreen(
                 accountId = accountId,
+                accountName = accountName,
+                accountTypeId = accountTypeId,
                 onBack = { navController.popBackStack() },
-                onHoldingClick = { holdingId ->
-                    navController.navigate("assetDetail/$accountId/$holdingId")
+                onHoldingClick = { _, assetId ->
+                    navController.navigate("assetDetail/$accountId/$assetId")
                 },
                 onViewAllTransactions = {
                     navController.navigate("accountTransactions/$accountId")
@@ -672,12 +680,14 @@ private fun MainNavGraph(
             arguments =
                 listOf(
                     navArgument("accountId") { type = NavType.StringType },
-                    navArgument("holdingId") { type = NavType.StringType },
+                    navArgument("assetId") { type = NavType.IntType },
                 ),
         ) { backStackEntry ->
-            val holdingId = backStackEntry.arguments?.getString("holdingId") ?: return@composable
+            val accountId = backStackEntry.arguments?.getString("accountId") ?: return@composable
+            val assetId = backStackEntry.arguments?.getInt("assetId") ?: return@composable
             AssetDetailScreen(
-                holdingId = holdingId,
+                accountId = accountId,
+                assetId = assetId,
                 onBack = { navController.popBackStack() },
                 modifier = Modifier.fillMaxSize(),
             )

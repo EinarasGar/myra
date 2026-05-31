@@ -1,8 +1,9 @@
 use std::sync::Mutex;
 
+use super::infra::SharedInfra;
+use crate::api::account_overview::extract_account_balance;
 use crate::api::accounts::extract_accounts;
 use crate::models::AccountsState;
-use super::infra::SharedInfra;
 
 #[uniffi::export(callback_interface)]
 pub trait AccountsObserver: Send + Sync {
@@ -19,8 +20,10 @@ impl AccountsModule {
         Self {
             state: AccountsState {
                 is_loading: false,
+                is_loading_balances: false,
                 error: None,
                 accounts: vec![],
+                total_net_worth: 0.0,
             },
             observer: None,
         }
@@ -38,8 +41,10 @@ impl AccountsModule {
     pub fn clear_state(&mut self) {
         self.state = AccountsState {
             is_loading: false,
+            is_loading_balances: false,
             error: None,
             accounts: vec![],
+            total_net_worth: 0.0,
         };
         self.notify();
     }
@@ -61,6 +66,7 @@ pub async fn load_accounts(
         None => return,
     };
 
+    // Phase 1: Load accounts list
     {
         let mut m = module.lock().unwrap();
         m.state.is_loading = true;
@@ -68,20 +74,15 @@ pub async fn load_accounts(
     }
 
     let path = format!("/api/users/{user_id}/accounts");
-    match infra.get(&path, auth_token).await {
+    let accounts = match infra.get(&path, auth_token).await {
         Ok(resp) => match extract_accounts(&resp.body) {
-            Ok(items) => {
-                let mut m = module.lock().unwrap();
-                m.state.accounts = items;
-                m.state.error = None;
-                m.state.is_loading = false;
-                m.notify();
-            }
+            Ok(items) => items,
             Err(e) => {
                 let mut m = module.lock().unwrap();
                 m.state.error = Some(e);
                 m.state.is_loading = false;
                 m.notify();
+                return;
             }
         },
         Err(e) => {
@@ -89,6 +90,75 @@ pub async fn load_accounts(
             m.state.error = Some(e.to_string());
             m.state.is_loading = false;
             m.notify();
+            return;
+        }
+    };
+
+    // Emit accounts with balance=None, start loading balances
+    {
+        let mut m = module.lock().unwrap();
+        m.state.accounts = accounts.clone();
+        m.state.error = None;
+        m.state.is_loading = false;
+        m.state.is_loading_balances = true;
+        m.notify();
+    }
+
+    // Phase 2: Fetch portfolio overview for each account concurrently
+    let balance_paths: Vec<String> = accounts
+        .iter()
+        .map(|acc| {
+            format!(
+                "/api/users/{user_id}/accounts/{}/portfolio/overview",
+                acc.id
+            )
+        })
+        .collect();
+
+    let balance_futures: Vec<_> = balance_paths
+        .iter()
+        .map(|path| infra.get(path, auth_token))
+        .collect();
+
+    let balance_results = futures_util::future::join_all(balance_futures).await;
+
+    // Update accounts with balance data
+    let mut updated_accounts = accounts;
+    let mut total_net_worth = 0.0;
+
+    for (i, result) in balance_results.into_iter().enumerate() {
+        if let Ok(resp) = result {
+            if let Ok(summary) = extract_account_balance(&resp.body) {
+                if i < updated_accounts.len() {
+                    updated_accounts[i].balance = Some(summary.balance);
+                    updated_accounts[i].unrealized_gain = Some(summary.unrealized_gain);
+                    updated_accounts[i].holdings_count = Some(summary.holdings_count);
+                    total_net_worth += summary.balance;
+                }
+            }
         }
     }
+
+    // Emit final state
+    {
+        let mut m = module.lock().unwrap();
+        m.state.accounts = updated_accounts;
+        m.state.total_net_worth = total_net_worth;
+        m.state.is_loading_balances = false;
+        m.notify();
+    }
+}
+
+pub async fn refresh_accounts(
+    infra: &SharedInfra,
+    module: &Mutex<AccountsModule>,
+    auth_token: Option<&str>,
+) {
+    let user_id = match infra.user_id() {
+        Some(id) => id,
+        None => return,
+    };
+
+    infra.evict_memory_cache_prefix(&format!("/api/users/{}/accounts", user_id));
+    load_accounts(infra, module, auth_token).await;
 }

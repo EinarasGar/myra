@@ -2,9 +2,9 @@ use std::sync::Mutex;
 
 use shared::view_models::portfolio::get_networth_history::GetNetWorthHistoryResponseViewModel;
 
+use super::infra::SharedInfra;
 use crate::api::holdings::extract_holdings;
 use crate::models::{ChartPeriodData, ChartPoint, HoldingItem, PortfolioState};
-use super::infra::SharedInfra;
 
 const RANGES: &[&str] = &["1d", "1w", "1m", "3m", "6m", "1y", "all"];
 const LABELS: &[&str] = &["1D", "1W", "1M", "3M", "6M", "1Y", "ALL"];
@@ -114,7 +114,14 @@ pub async fn load_portfolio(
     }
 
     // Fetch fresh data
-    fetch_fresh(infra, module, &user_id, auth_token, cached_holdings.is_some()).await;
+    fetch_fresh(
+        infra,
+        module,
+        &user_id,
+        auth_token,
+        cached_holdings.is_some(),
+    )
+    .await;
 }
 
 pub async fn refresh_portfolio(
