@@ -66,6 +66,12 @@ pub struct AccountItem {
 }
 
 #[derive(Debug, Clone, uniffi::Record)]
+pub struct AccountTypeItem {
+    pub id: i32,
+    pub name: String,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
 pub struct AccountListItem {
     pub id: String,
     pub name: String,
@@ -75,6 +81,14 @@ pub struct AccountListItem {
     pub balance: Option<f64>,
     pub unrealized_gain: Option<f64>,
     pub holdings_count: Option<u32>,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct CreateAccountInput {
+    pub name: String,
+    pub account_type_id: i32,
+    pub liquidity_type_id: i32,
+    pub ownership_share: f64,
 }
 
 #[derive(Debug, Clone, uniffi::Record)]

@@ -7,23 +7,30 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -32,10 +39,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sverto.app.core.SvertoViewModelFactory
 import com.sverto.app.core.ui.shimmerBrush
 import com.sverto.app.feature.accounts.components.AccountCard
-import com.sverto.app.feature.accounts.components.AllocationBar
-import com.sverto.app.feature.accounts.components.AllocationLegend
-import com.sverto.app.feature.accounts.components.AllocationSegment
-import com.sverto.app.feature.accounts.components.accountTypeColor
+import com.sverto.app.feature.accounts.components.accountTypeDisplayOrder
+import com.sverto.app.feature.accounts.components.accountTypeLabel
 import uniffi.sverto_core.AccountListItem
 import uniffi.sverto_core.AccountsState
 
@@ -44,6 +49,7 @@ import uniffi.sverto_core.AccountsState
 @Composable
 fun AccountsScreen(
     onAccountClick: (AccountListItem) -> Unit,
+    onAddAccount: () -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier,
@@ -87,6 +93,21 @@ fun AccountsScreen(
                     animatedVisibilityScope = animatedVisibilityScope,
                 )
             }
+            FilledTonalButton(
+                onClick = onAddAccount,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text("Add account")
+            }
 
             Spacer(Modifier.height(16.dp))
         }
@@ -102,102 +123,68 @@ private fun AccountsContent(
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
 ) {
-    val segments = buildAllocationSegments(state.accounts, state.totalNetWorth)
-    AllocationBar(segments = segments)
-    AllocationLegend(segments = segments)
+    val sections =
+        remember(state.accounts) {
+            val grouped = state.accounts.groupBy { it.accountTypeId }
+            val orderedTypeIds =
+                accountTypeDisplayOrder.filter(grouped::containsKey) +
+                    grouped.keys.filterNot(accountTypeDisplayOrder::contains)
+            orderedTypeIds.map { typeId -> typeId to grouped.getValue(typeId) }
+        }
 
-    Spacer(Modifier.height(8.dp))
-
-    state.accounts.forEach { account ->
-        AccountCard(
-            account = account,
-            onClick = { onAccountClick(account) },
+    sections.forEach { (typeId, accounts) ->
+        AccountTypeSection(
+            label = accountTypeLabel(typeId),
+            accounts = accounts,
+            onAccountClick = onAccountClick,
             sharedTransitionScope = sharedTransitionScope,
             animatedVisibilityScope = animatedVisibilityScope,
         )
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun buildAllocationSegments(
+private fun AccountTypeSection(
+    label: String,
     accounts: List<AccountListItem>,
-    totalNetWorth: Double,
-): List<AllocationSegment> {
-    if (totalNetWorth <= 0.0) return emptyList()
-
-    val grouped = accounts.groupBy { it.accountTypeId }
-    return grouped.map { (typeId, accs) ->
-        val typeTotal = accs.sumOf { it.balance ?: 0.0 }
-        val label =
-            when (typeId) {
-                1 -> "Current"
-                2 -> "Savings"
-                3 -> "Investment"
-                else -> "Other"
-            }
-        AllocationSegment(
-            label = label,
-            fraction = (typeTotal / totalNetWorth).toFloat(),
-            color = accountTypeColor(typeId),
+    onAccountClick: (AccountListItem) -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp),
         )
+        accounts.forEach { account ->
+            AccountCard(
+                account = account,
+                onClick = { onAccountClick(account) },
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = animatedVisibilityScope,
+            )
+        }
     }
 }
 
-@Suppress("MultipleEmitters")
 @Composable
 private fun AccountsScreenSkeleton() {
     val brush = shimmerBrush()
 
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Box(
-            Modifier
-                .width(100.dp)
-                .height(16.dp)
-                .background(brush, RoundedCornerShape(4.dp)),
-        )
-        Spacer(Modifier.height(8.dp))
-        Box(
-            Modifier
-                .width(180.dp)
-                .height(32.dp)
-                .background(brush, RoundedCornerShape(4.dp)),
-        )
-    }
-
-    Spacer(Modifier.height(16.dp))
-
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .height(6.dp)
-            .background(brush, RoundedCornerShape(3.dp)),
-    )
-
-    Spacer(Modifier.height(8.dp))
-
-    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        repeat(3) {
+        repeat(5) {
             Box(
                 Modifier
-                    .width(80.dp)
-                    .height(12.dp)
-                    .background(brush, RoundedCornerShape(4.dp)),
+                    .fillMaxWidth()
+                    .height(80.dp)
+                    .background(brush, RoundedCornerShape(28.dp)),
             )
         }
-    }
-
-    Spacer(Modifier.height(16.dp))
-
-    repeat(3) {
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(72.dp)
-                .background(brush, RoundedCornerShape(12.dp)),
-        )
-        Spacer(Modifier.height(12.dp))
     }
 }

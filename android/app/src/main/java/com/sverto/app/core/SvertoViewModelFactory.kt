@@ -7,6 +7,7 @@ import com.sverto.app.SvertoApp
 import com.sverto.app.feature.accounts.AccountDetailViewModel
 import com.sverto.app.feature.accounts.AccountTransactionsViewModel
 import com.sverto.app.feature.accounts.AccountsViewModel
+import com.sverto.app.feature.accounts.AddAccountViewModel
 import com.sverto.app.feature.accounts.AssetDetailViewModel
 import com.sverto.app.feature.aichat.AiChatViewModel
 import com.sverto.app.feature.portfolio.HomeViewModel
@@ -44,6 +45,8 @@ object SvertoViewModelFactory : ViewModelProvider.Factory {
                 AssetDetailViewModel(appStore) as T
             modelClass.isAssignableFrom(AiChatViewModel::class.java) ->
                 AiChatViewModel(appStore) as T
+            modelClass.isAssignableFrom(AddAccountViewModel::class.java) ->
+                AddAccountViewModel(appStore) as T
             else -> throw IllegalArgumentException("Unknown ViewModel: ${modelClass.name}")
         }
     }

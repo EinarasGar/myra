@@ -1,6 +1,7 @@
+use shared::view_models::accounts::get_account_types::GetAccountTypesResponseViewModel;
 use shared::view_models::accounts::get_accounts::GetAccountsResponseViewModel;
 
-use crate::models::AccountListItem;
+use crate::models::{AccountListItem, AccountTypeItem};
 
 pub fn extract_accounts(body: &str) -> Result<Vec<AccountListItem>, String> {
     let resp: GetAccountsResponseViewModel =
@@ -26,4 +27,17 @@ pub fn extract_accounts(body: &str) -> Result<Vec<AccountListItem>, String> {
         .collect();
     items.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
     Ok(items)
+}
+
+pub fn extract_account_types(body: &str) -> Result<Vec<AccountTypeItem>, String> {
+    let resp: GetAccountTypesResponseViewModel =
+        serde_json::from_str(body).map_err(|e| e.to_string())?;
+    Ok(resp
+        .account_types
+        .into_iter()
+        .map(|t| AccountTypeItem {
+            id: t.id.0,
+            name: t.name,
+        })
+        .collect())
 }

@@ -68,6 +68,7 @@ import com.sverto.app.core.ui.OfflineBanner
 import com.sverto.app.feature.accounts.AccountDetailScreen
 import com.sverto.app.feature.accounts.AccountTransactionsScreen
 import com.sverto.app.feature.accounts.AccountsScreen
+import com.sverto.app.feature.accounts.AddAccountScreen
 import com.sverto.app.feature.accounts.AssetDetailScreen
 import com.sverto.app.feature.aichat.AiChatScreen
 import com.sverto.app.feature.aichat.AiChatViewModel
@@ -97,6 +98,7 @@ private const val GROUP_EDIT_TXN_ROUTE = "groupEditTransaction/{typeKey}/{index}
 private const val ACCOUNT_DETAIL_ROUTE = "accountDetail/{accountId}/{accountName}/{accountTypeId}"
 private const val ASSET_DETAIL_ROUTE = "assetDetail/{accountId}/{assetId}"
 private const val ACCOUNT_TRANSACTIONS_ROUTE = "accountTransactions/{accountId}"
+private const val ADD_ACCOUNT_ROUTE = "addAccount"
 
 private data class TransactionDetailState(
     val transaction: TransactionListItem,
@@ -406,6 +408,7 @@ private fun MainNavGraph(
                 onAccountClick = { account ->
                     navController.navigate("accountDetail/${account.id}/${account.name}/${account.accountTypeId}")
                 },
+                onAddAccount = { navController.navigate(ADD_ACCOUNT_ROUTE) },
                 sharedTransitionScope = sharedScope,
                 animatedVisibilityScope = this@composable,
                 modifier =
@@ -423,6 +426,12 @@ private fun MainNavGraph(
                         .fillMaxSize()
                         .padding(innerPadding)
                         .consumeWindowInsets(innerPadding),
+            )
+        }
+        composable(ADD_ACCOUNT_ROUTE) {
+            AddAccountScreen(
+                onBack = { navController.popBackStack() },
+                onSuccess = { navController.popBackStack() },
             )
         }
         composable(

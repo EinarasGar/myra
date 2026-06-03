@@ -1,9 +1,33 @@
 use std::sync::Mutex;
 
+use shared::errors::ApiErrorResponse;
+
 use super::infra::SharedInfra;
 use crate::api::account_overview::extract_account_balance;
-use crate::api::accounts::extract_accounts;
-use crate::models::AccountsState;
+use crate::api::accounts::{extract_account_types, extract_accounts};
+use crate::error::ApiError;
+use crate::models::{AccountTypeItem, AccountsState, CreateAccountInput};
+
+/// Build a `Server` error from a non-success response, preferring the server's
+/// own message (and per-field validation detail) over a bare status code.
+fn server_error(status: u16, body: &str) -> ApiError {
+    let reason = serde_json::from_str::<ApiErrorResponse>(body)
+        .ok()
+        .map(|err| {
+            if err.errors.is_empty() {
+                err.message
+            } else {
+                err.errors
+                    .iter()
+                    .map(|f| format!("{}: {}", f.field, f.message))
+                    .collect::<Vec<_>>()
+                    .join("; ")
+            }
+        })
+        .filter(|reason| !reason.is_empty())
+        .unwrap_or_else(|| format!("HTTP {status}"));
+    ApiError::Server { reason, status }
+}
 
 #[uniffi::export(callback_interface)]
 pub trait AccountsObserver: Send + Sync {
@@ -167,4 +191,46 @@ pub async fn refresh_accounts(
 
     infra.evict_memory_cache_prefix(&format!("/api/users/{}/accounts", user_id));
     load_accounts(infra, module, auth_token).await;
+}
+
+pub async fn create_account(
+    infra: &SharedInfra,
+    module: &Mutex<AccountsModule>,
+    input: CreateAccountInput,
+    auth_token: Option<&str>,
+) -> Result<(), ApiError> {
+    let user_id = infra.user_id().ok_or_else(|| ApiError::Parse {
+        reason: "no user_id".into(),
+    })?;
+
+    let body = serde_json::json!({
+        "name": input.name,
+        "account_type": input.account_type_id,
+        "liquidity_type": input.liquidity_type_id,
+        "ownership_share": input.ownership_share,
+    })
+    .to_string();
+
+    let path = format!("/api/users/{user_id}/accounts");
+    let resp = infra.post(&path, &body, auth_token).await?;
+
+    if resp.status >= 400 {
+        return Err(server_error(resp.status, &resp.body));
+    }
+
+    // Reuse the standard refresh path: evict the accounts caches and reload observer state.
+    refresh_accounts(infra, module, auth_token).await;
+
+    Ok(())
+}
+
+pub async fn get_account_types(
+    infra: &SharedInfra,
+    auth_token: Option<&str>,
+) -> Result<Vec<AccountTypeItem>, ApiError> {
+    let resp = infra.get("/api/accounts/types", auth_token).await?;
+    if resp.status >= 400 {
+        return Err(server_error(resp.status, &resp.body));
+    }
+    extract_account_types(&resp.body).map_err(|e| ApiError::Parse { reason: e })
 }

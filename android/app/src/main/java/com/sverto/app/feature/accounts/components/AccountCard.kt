@@ -13,12 +13,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ShowChart
-import androidx.compose.material.icons.outlined.AccountBalance
-import androidx.compose.material.icons.outlined.Savings
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import uniffi.sverto_core.AccountListItem
@@ -52,23 +49,6 @@ internal fun formatCurrency(value: Double): String {
 
 internal fun formatPercent(value: Double): String = "%.1f".format(abs(value))
 
-private fun accountTypeLabel(accountTypeId: Int): String =
-    when (accountTypeId) {
-        1 -> "Current"
-        2 -> "Savings"
-        3 -> "Investment"
-        else -> "Account"
-    }
-
-@Composable
-fun accountTypeColor(accountTypeId: Int): Color =
-    when (accountTypeId) {
-        1 -> MaterialTheme.colorScheme.primary
-        3 -> MaterialTheme.colorScheme.tertiary
-        2 -> MaterialTheme.colorScheme.secondary
-        else -> MaterialTheme.colorScheme.primary
-    }
-
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun AccountCard(
@@ -78,18 +58,14 @@ fun AccountCard(
     animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier,
 ) {
-    val tintColor = accountTypeColor(account.accountTypeId)
-    val icon =
-        when (account.accountTypeId) {
-            1 -> Icons.Outlined.AccountBalance
-            3 -> Icons.AutoMirrored.Outlined.ShowChart
-            2 -> Icons.Outlined.Savings
-            else -> Icons.Outlined.AccountBalance
-        }
-
     with(sharedTransitionScope) {
-        ElevatedCard(
+        Card(
             onClick = onClick,
+            shape = RoundedCornerShape(28.dp),
+            colors =
+                CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                ),
             modifier =
                 modifier
                     .fillMaxWidth()
@@ -99,57 +75,64 @@ fun AccountCard(
                     ),
         ) {
             Row(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(
                     modifier =
                         Modifier
-                            .size(40.dp)
+                            .size(52.dp)
                             .background(
-                                color = tintColor.copy(alpha = 0.12f),
-                                shape = RoundedCornerShape(12.dp),
+                                color = accountTypeContainerColor(account.accountTypeId),
+                                shape = CircleShape,
                             ),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        imageVector = icon,
-                        contentDescription = account.name,
-                        tint = tintColor,
-                        modifier = Modifier.size(20.dp),
+                        imageVector = accountTypeIcon(account.accountTypeId),
+                        contentDescription = null,
+                        tint = accountTypeOnContainerColor(account.accountTypeId),
+                        modifier = Modifier.size(26.dp),
                     )
                 }
 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(16.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = account.name,
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = accountTypeLabel(account.accountTypeId),
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
+
+                Spacer(modifier = Modifier.width(12.dp))
 
                 Column(horizontalAlignment = Alignment.End) {
                     val balance = account.balance
                     if (balance != null) {
                         Text(
                             text = formatCurrency(balance),
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
                         val gain = account.unrealizedGain
                         if (account.accountTypeId == 3 && gain != null) {
-                            val gainColor = if (gain >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                            Spacer(modifier = Modifier.height(2.dp))
+                            val gainColor =
+                                if (gain >= 0) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.error
+                                }
                             val sign = if (gain >= 0) "+" else "-"
                             val pct =
                                 if (balance > 0) {
@@ -159,7 +142,7 @@ fun AccountCard(
                                 }
                             Text(
                                 text = "$sign${formatCurrency(abs(gain))} (${formatPercent(pct)}%)",
-                                style = MaterialTheme.typography.labelSmall,
+                                style = MaterialTheme.typography.labelMedium,
                                 color = gainColor,
                             )
                         }

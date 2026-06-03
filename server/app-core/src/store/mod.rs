@@ -14,7 +14,7 @@ use std::sync::{Arc, Mutex};
 use self::infra::SharedInfra;
 use crate::api::quick_upload;
 use crate::error::ApiError;
-use crate::models::{AuthMe, ConnectionStatus, QuickUploadDetail};
+use crate::models::{AuthMe, ConnectionStatus, CreateAccountInput, QuickUploadDetail};
 
 /// Chart period ranges and their display labels.
 /// Shared between account_detail and asset_detail modules.
@@ -235,6 +235,21 @@ impl AppStore {
     pub async fn refresh_accounts(&self) {
         let token = self.get_auth_token();
         accounts::refresh_accounts(&self.infra, &self.accounts, token.as_deref()).await;
+    }
+
+    pub async fn create_account(
+        &self,
+        input: CreateAccountInput,
+    ) -> Result<(), crate::error::ApiError> {
+        let token = self.get_auth_token();
+        accounts::create_account(&self.infra, &self.accounts, input, token.as_deref()).await
+    }
+
+    pub async fn get_account_types(
+        &self,
+    ) -> Result<Vec<crate::models::AccountTypeItem>, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        accounts::get_account_types(&self.infra, token.as_deref()).await
     }
 
     // ── Account Detail ───────────────────────────────────────────────
