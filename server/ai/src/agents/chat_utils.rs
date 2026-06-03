@@ -2,14 +2,14 @@ use rig::completion::message::{
     AssistantContent, DocumentMediaType, ImageMediaType, Message, MimeType, UserContent,
 };
 
-use crate::models::chat::Base64Image;
+use crate::models::chat::Base64Attachment;
 
 /// Map an inbound base64 attachment to a rig `UserContent` part.
 ///
 /// Returns `None` when the MIME type isn't supported by either the image or
 /// document branch — the caller decides whether to skip + log or surface an
 /// error.
-pub(crate) fn attachment_to_user_content(att: &Base64Image) -> Option<UserContent> {
+pub(crate) fn attachment_to_user_content(att: &Base64Attachment) -> Option<UserContent> {
     if let Some(mt) = ImageMediaType::from_mime_type(&att.media_type) {
         return Some(UserContent::image_base64(att.data.clone(), Some(mt), None));
     }

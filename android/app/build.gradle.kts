@@ -267,5 +267,14 @@ dependencies {
     // JNA is required by UniFFI-generated Kotlin code to call into native libraries
     implementation(libs.jna) { artifact { type = "aar" } }
 
+    // Image loading for chat attachments (coil-network-okhttp is required for remote https URLs;
+    // coil-compose alone only handles local content:// uris)
+    implementation("io.coil-kt.coil3:coil-compose:3.4.0")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.4.0")
+
+    // Markdown rendering for assistant chat messages (Material3 theme + Coil3 image transformer)
+    implementation("com.mikepenz:multiplatform-markdown-renderer-m3:0.41.0")
+    implementation("com.mikepenz:multiplatform-markdown-renderer-coil3:0.41.0")
+
     debugImplementation(libs.compose.ui.tooling)
 }

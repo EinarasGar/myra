@@ -68,47 +68,48 @@ export interface AccountAccountAccountTypeIdWithId {
 /**
  *
  * @export
- * @interface AccountFeesIdentifiableTransaction
+ * @interface AccountFeesIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
  */
-export interface AccountFeesIdentifiableTransaction {
+export interface AccountFeesIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId {
   /**
    * Date when the transaction occured.
    * @type {number}
-   * @memberof AccountFeesIdentifiableTransaction
+   * @memberof AccountFeesIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   date: number;
   /**
    *
    * @type {TransactionEntryWithEntryId}
-   * @memberof AccountFeesIdentifiableTransaction
+   * @memberof AccountFeesIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   entry: TransactionEntryWithEntryId;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
-   * @memberof AccountFeesIdentifiableTransaction
+   * @memberof AccountFeesIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   fees?: Array<TransactionFeeItemWithEntryId> | null;
   /**
-   * Id representing the full transaction.
+   *
    * @type {string}
-   * @memberof AccountFeesIdentifiableTransaction
+   * @memberof AccountFeesIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   transaction_id: string | null;
   /**
    *
    * @type {string}
-   * @memberof AccountFeesIdentifiableTransaction
+   * @memberof AccountFeesIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
-  type: AccountFeesIdentifiableTransactionTypeEnum;
+  type: AccountFeesIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum;
 }
 
-export const AccountFeesIdentifiableTransactionTypeEnum = {
-  AccountFees: "account_fees",
-} as const;
+export const AccountFeesIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  {
+    AccountFees: "account_fees",
+  } as const;
 
-export type AccountFeesIdentifiableTransactionTypeEnum =
-  (typeof AccountFeesIdentifiableTransactionTypeEnum)[keyof typeof AccountFeesIdentifiableTransactionTypeEnum];
+export type AccountFeesIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  (typeof AccountFeesIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum)[keyof typeof AccountFeesIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum];
 
 /**
  *
@@ -135,7 +136,7 @@ export interface AccountFeesRequiredIdentifiableTransaction {
    */
   fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
   /**
-   * Id representing the full transaction.
+   *
    * @type {string}
    * @memberof AccountFeesRequiredIdentifiableTransaction
    */
@@ -280,16 +281,16 @@ export type AccountFeesTransactionWithEntryIdsTypeEnum =
 export interface AccountMetadataLookupTables {
   /**
    *
-   * @type {Array<IdentifiableAccountType>}
+   * @type {Array<AccountType>}
    * @memberof AccountMetadataLookupTables
    */
-  account_liquidity_types: Array<IdentifiableAccountType>;
+  account_liquidity_types: Array<AccountType>;
   /**
    *
-   * @type {Array<IdentifiableAccountType>}
+   * @type {Array<AccountType>}
    * @memberof AccountMetadataLookupTables
    */
-  account_types: Array<IdentifiableAccountType>;
+  account_types: Array<AccountType>;
 }
 /**
  *
@@ -315,6 +316,25 @@ export interface AccountTransactionsPage {
    * @memberof AccountTransactionsPage
    */
   total_results: number;
+}
+/**
+ *
+ * @export
+ * @interface AccountType
+ */
+export interface AccountType {
+  /**
+   * The id of the Account type
+   * @type {number}
+   * @memberof AccountType
+   */
+  id: number;
+  /**
+   * The name of the Account type
+   * @type {string}
+   * @memberof AccountType
+   */
+  name: string;
 }
 /**
  *
@@ -626,53 +646,54 @@ export interface AssetAssetRequiredAssetTypeIdWithId {
 /**
  *
  * @export
- * @interface AssetBalanceTransferIdentifiableTransaction
+ * @interface AssetBalanceTransferIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
  */
-export interface AssetBalanceTransferIdentifiableTransaction {
+export interface AssetBalanceTransferIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId {
   /**
    * Date when the transaction occured.
    * @type {number}
-   * @memberof AssetBalanceTransferIdentifiableTransaction
+   * @memberof AssetBalanceTransferIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
-   * @memberof AssetBalanceTransferIdentifiableTransaction
+   * @memberof AssetBalanceTransferIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   fees?: Array<TransactionFeeItemWithEntryId> | null;
   /**
    *
    * @type {TransactionEntryWithEntryId}
-   * @memberof AssetBalanceTransferIdentifiableTransaction
+   * @memberof AssetBalanceTransferIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   incoming_change: TransactionEntryWithEntryId;
   /**
    *
    * @type {TransactionEntryWithEntryId}
-   * @memberof AssetBalanceTransferIdentifiableTransaction
+   * @memberof AssetBalanceTransferIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   outgoing_change: TransactionEntryWithEntryId;
   /**
-   * Id representing the full transaction.
+   *
    * @type {string}
-   * @memberof AssetBalanceTransferIdentifiableTransaction
+   * @memberof AssetBalanceTransferIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   transaction_id: string | null;
   /**
    *
    * @type {string}
-   * @memberof AssetBalanceTransferIdentifiableTransaction
+   * @memberof AssetBalanceTransferIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
-  type: AssetBalanceTransferIdentifiableTransactionTypeEnum;
+  type: AssetBalanceTransferIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum;
 }
 
-export const AssetBalanceTransferIdentifiableTransactionTypeEnum = {
-  AssetBalanceTransfer: "asset_balance_transfer",
-} as const;
+export const AssetBalanceTransferIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  {
+    AssetBalanceTransfer: "asset_balance_transfer",
+  } as const;
 
-export type AssetBalanceTransferIdentifiableTransactionTypeEnum =
-  (typeof AssetBalanceTransferIdentifiableTransactionTypeEnum)[keyof typeof AssetBalanceTransferIdentifiableTransactionTypeEnum];
+export type AssetBalanceTransferIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  (typeof AssetBalanceTransferIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum)[keyof typeof AssetBalanceTransferIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum];
 
 /**
  *
@@ -705,7 +726,7 @@ export interface AssetBalanceTransferRequiredIdentifiableTransaction {
    */
   outgoing_change: TransactionEntryWithRequiredEntryId;
   /**
-   * Id representing the full transaction.
+   *
    * @type {string}
    * @memberof AssetBalanceTransferRequiredIdentifiableTransaction
    */
@@ -863,47 +884,48 @@ export type AssetBalanceTransferTransactionWithEntryIdsTypeEnum =
 /**
  *
  * @export
- * @interface AssetDividendIdentifiableTransaction
+ * @interface AssetDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
  */
-export interface AssetDividendIdentifiableTransaction {
+export interface AssetDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId {
   /**
    * Date when the transaction occured.
    * @type {number}
-   * @memberof AssetDividendIdentifiableTransaction
+   * @memberof AssetDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   date: number;
   /**
    *
    * @type {TransactionEntryWithEntryId}
-   * @memberof AssetDividendIdentifiableTransaction
+   * @memberof AssetDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   entry: TransactionEntryWithEntryId;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
-   * @memberof AssetDividendIdentifiableTransaction
+   * @memberof AssetDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   fees?: Array<TransactionFeeItemWithEntryId> | null;
   /**
-   * Id representing the full transaction.
+   *
    * @type {string}
-   * @memberof AssetDividendIdentifiableTransaction
+   * @memberof AssetDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   transaction_id: string | null;
   /**
    *
    * @type {string}
-   * @memberof AssetDividendIdentifiableTransaction
+   * @memberof AssetDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
-  type: AssetDividendIdentifiableTransactionTypeEnum;
+  type: AssetDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum;
 }
 
-export const AssetDividendIdentifiableTransactionTypeEnum = {
-  AssetDividend: "asset_dividend",
-} as const;
+export const AssetDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  {
+    AssetDividend: "asset_dividend",
+  } as const;
 
-export type AssetDividendIdentifiableTransactionTypeEnum =
-  (typeof AssetDividendIdentifiableTransactionTypeEnum)[keyof typeof AssetDividendIdentifiableTransactionTypeEnum];
+export type AssetDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  (typeof AssetDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum)[keyof typeof AssetDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum];
 
 /**
  *
@@ -930,7 +952,7 @@ export interface AssetDividendRequiredIdentifiableTransaction {
    */
   fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
   /**
-   * Id representing the full transaction.
+   *
    * @type {string}
    * @memberof AssetDividendRequiredIdentifiableTransaction
    */
@@ -1075,10 +1097,10 @@ export type AssetDividendTransactionWithEntryIdsTypeEnum =
 export interface AssetIdentifiableAssetType {
   /**
    *
-   * @type {IdentifiableAssetType}
+   * @type {AssetType}
    * @memberof AssetIdentifiableAssetType
    */
-  asset_type: IdentifiableAssetType;
+  asset_type: AssetType;
   /**
    * Full name of the asset
    * @type {string}
@@ -1100,10 +1122,10 @@ export interface AssetIdentifiableAssetType {
 export interface AssetLookupTables {
   /**
    *
-   * @type {Array<IdentifiableAssetType>}
+   * @type {Array<AssetType>}
    * @memberof AssetLookupTables
    */
-  asset_types: Array<IdentifiableAssetType>;
+  asset_types: Array<AssetType>;
 }
 /**
  *
@@ -1310,53 +1332,54 @@ export interface AssetPortfolioPosition {
 /**
  *
  * @export
- * @interface AssetPurchaseIdentifiableTransaction
+ * @interface AssetPurchaseIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
  */
-export interface AssetPurchaseIdentifiableTransaction {
+export interface AssetPurchaseIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId {
   /**
    *
    * @type {TransactionEntryWithEntryId}
-   * @memberof AssetPurchaseIdentifiableTransaction
+   * @memberof AssetPurchaseIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   cash_outgoings_change: TransactionEntryWithEntryId;
   /**
    * Date when the transaction occured.
    * @type {number}
-   * @memberof AssetPurchaseIdentifiableTransaction
+   * @memberof AssetPurchaseIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
-   * @memberof AssetPurchaseIdentifiableTransaction
+   * @memberof AssetPurchaseIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   fees?: Array<TransactionFeeItemWithEntryId> | null;
   /**
    *
    * @type {TransactionEntryWithEntryId}
-   * @memberof AssetPurchaseIdentifiableTransaction
+   * @memberof AssetPurchaseIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   purchase_change: TransactionEntryWithEntryId;
   /**
-   * Id representing the full transaction.
+   *
    * @type {string}
-   * @memberof AssetPurchaseIdentifiableTransaction
+   * @memberof AssetPurchaseIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   transaction_id: string | null;
   /**
    *
    * @type {string}
-   * @memberof AssetPurchaseIdentifiableTransaction
+   * @memberof AssetPurchaseIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
-  type: AssetPurchaseIdentifiableTransactionTypeEnum;
+  type: AssetPurchaseIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum;
 }
 
-export const AssetPurchaseIdentifiableTransactionTypeEnum = {
-  AssetPurchase: "asset_purchase",
-} as const;
+export const AssetPurchaseIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  {
+    AssetPurchase: "asset_purchase",
+  } as const;
 
-export type AssetPurchaseIdentifiableTransactionTypeEnum =
-  (typeof AssetPurchaseIdentifiableTransactionTypeEnum)[keyof typeof AssetPurchaseIdentifiableTransactionTypeEnum];
+export type AssetPurchaseIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  (typeof AssetPurchaseIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum)[keyof typeof AssetPurchaseIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum];
 
 /**
  *
@@ -1389,7 +1412,7 @@ export interface AssetPurchaseRequiredIdentifiableTransaction {
    */
   purchase_change: TransactionEntryWithRequiredEntryId;
   /**
-   * Id representing the full transaction.
+   *
    * @type {string}
    * @memberof AssetPurchaseRequiredIdentifiableTransaction
    */
@@ -1566,53 +1589,54 @@ export interface AssetRate {
 /**
  *
  * @export
- * @interface AssetSaleIdentifiableTransaction
+ * @interface AssetSaleIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
  */
-export interface AssetSaleIdentifiableTransaction {
+export interface AssetSaleIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId {
   /**
    * Date when the transaction occured.
    * @type {number}
-   * @memberof AssetSaleIdentifiableTransaction
+   * @memberof AssetSaleIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
-   * @memberof AssetSaleIdentifiableTransaction
+   * @memberof AssetSaleIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   fees?: Array<TransactionFeeItemWithEntryId> | null;
   /**
    *
    * @type {TransactionEntryWithEntryId}
-   * @memberof AssetSaleIdentifiableTransaction
+   * @memberof AssetSaleIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   proceeds_entry: TransactionEntryWithEntryId;
   /**
    *
    * @type {TransactionEntryWithEntryId}
-   * @memberof AssetSaleIdentifiableTransaction
+   * @memberof AssetSaleIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   sale_entry: TransactionEntryWithEntryId;
   /**
-   * Id representing the full transaction.
+   *
    * @type {string}
-   * @memberof AssetSaleIdentifiableTransaction
+   * @memberof AssetSaleIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   transaction_id: string | null;
   /**
    *
    * @type {string}
-   * @memberof AssetSaleIdentifiableTransaction
+   * @memberof AssetSaleIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
-  type: AssetSaleIdentifiableTransactionTypeEnum;
+  type: AssetSaleIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum;
 }
 
-export const AssetSaleIdentifiableTransactionTypeEnum = {
-  AssetSale: "asset_sale",
-} as const;
+export const AssetSaleIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  {
+    AssetSale: "asset_sale",
+  } as const;
 
-export type AssetSaleIdentifiableTransactionTypeEnum =
-  (typeof AssetSaleIdentifiableTransactionTypeEnum)[keyof typeof AssetSaleIdentifiableTransactionTypeEnum];
+export type AssetSaleIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  (typeof AssetSaleIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum)[keyof typeof AssetSaleIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum];
 
 /**
  *
@@ -1645,7 +1669,7 @@ export interface AssetSaleRequiredIdentifiableTransaction {
    */
   sale_entry: TransactionEntryWithRequiredEntryId;
   /**
-   * Id representing the full transaction.
+   *
    * @type {string}
    * @memberof AssetSaleRequiredIdentifiableTransaction
    */
@@ -1803,53 +1827,54 @@ export type AssetSaleTransactionWithEntryIdsTypeEnum =
 /**
  *
  * @export
- * @interface AssetTradeIdentifiableTransaction
+ * @interface AssetTradeIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
  */
-export interface AssetTradeIdentifiableTransaction {
+export interface AssetTradeIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId {
   /**
    * Date when the transaction occured.
    * @type {number}
-   * @memberof AssetTradeIdentifiableTransaction
+   * @memberof AssetTradeIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   date: number;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
-   * @memberof AssetTradeIdentifiableTransaction
+   * @memberof AssetTradeIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   fees?: Array<TransactionFeeItemWithEntryId> | null;
   /**
    *
    * @type {TransactionEntryWithEntryId}
-   * @memberof AssetTradeIdentifiableTransaction
+   * @memberof AssetTradeIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   incoming_entry: TransactionEntryWithEntryId;
   /**
    *
    * @type {TransactionEntryWithEntryId}
-   * @memberof AssetTradeIdentifiableTransaction
+   * @memberof AssetTradeIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   outgoing_entry: TransactionEntryWithEntryId;
   /**
-   * Id representing the full transaction.
+   *
    * @type {string}
-   * @memberof AssetTradeIdentifiableTransaction
+   * @memberof AssetTradeIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   transaction_id: string | null;
   /**
    *
    * @type {string}
-   * @memberof AssetTradeIdentifiableTransaction
+   * @memberof AssetTradeIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
-  type: AssetTradeIdentifiableTransactionTypeEnum;
+  type: AssetTradeIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum;
 }
 
-export const AssetTradeIdentifiableTransactionTypeEnum = {
-  AssetTrade: "asset_trade",
-} as const;
+export const AssetTradeIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  {
+    AssetTrade: "asset_trade",
+  } as const;
 
-export type AssetTradeIdentifiableTransactionTypeEnum =
-  (typeof AssetTradeIdentifiableTransactionTypeEnum)[keyof typeof AssetTradeIdentifiableTransactionTypeEnum];
+export type AssetTradeIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  (typeof AssetTradeIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum)[keyof typeof AssetTradeIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum];
 
 /**
  *
@@ -1882,7 +1907,7 @@ export interface AssetTradeRequiredIdentifiableTransaction {
    */
   outgoing_entry: TransactionEntryWithRequiredEntryId;
   /**
-   * Id representing the full transaction.
+   *
    * @type {string}
    * @memberof AssetTradeRequiredIdentifiableTransaction
    */
@@ -2040,47 +2065,48 @@ export type AssetTradeTransactionWithEntryIdsTypeEnum =
 /**
  *
  * @export
- * @interface AssetTransferInIdentifiableTransaction
+ * @interface AssetTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
  */
-export interface AssetTransferInIdentifiableTransaction {
+export interface AssetTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId {
   /**
    * Date when the transaction occured.
    * @type {number}
-   * @memberof AssetTransferInIdentifiableTransaction
+   * @memberof AssetTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   date: number;
   /**
    *
    * @type {TransactionEntryWithEntryId}
-   * @memberof AssetTransferInIdentifiableTransaction
+   * @memberof AssetTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   entry: TransactionEntryWithEntryId;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
-   * @memberof AssetTransferInIdentifiableTransaction
+   * @memberof AssetTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   fees?: Array<TransactionFeeItemWithEntryId> | null;
   /**
-   * Id representing the full transaction.
+   *
    * @type {string}
-   * @memberof AssetTransferInIdentifiableTransaction
+   * @memberof AssetTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   transaction_id: string | null;
   /**
    *
    * @type {string}
-   * @memberof AssetTransferInIdentifiableTransaction
+   * @memberof AssetTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
-  type: AssetTransferInIdentifiableTransactionTypeEnum;
+  type: AssetTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum;
 }
 
-export const AssetTransferInIdentifiableTransactionTypeEnum = {
-  AssetTransferIn: "asset_transfer_in",
-} as const;
+export const AssetTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  {
+    AssetTransferIn: "asset_transfer_in",
+  } as const;
 
-export type AssetTransferInIdentifiableTransactionTypeEnum =
-  (typeof AssetTransferInIdentifiableTransactionTypeEnum)[keyof typeof AssetTransferInIdentifiableTransactionTypeEnum];
+export type AssetTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  (typeof AssetTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum)[keyof typeof AssetTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum];
 
 /**
  *
@@ -2107,7 +2133,7 @@ export interface AssetTransferInRequiredIdentifiableTransaction {
    */
   fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
   /**
-   * Id representing the full transaction.
+   *
    * @type {string}
    * @memberof AssetTransferInRequiredIdentifiableTransaction
    */
@@ -2247,47 +2273,48 @@ export type AssetTransferInTransactionWithEntryIdsTypeEnum =
 /**
  *
  * @export
- * @interface AssetTransferOutIdentifiableTransaction
+ * @interface AssetTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
  */
-export interface AssetTransferOutIdentifiableTransaction {
+export interface AssetTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId {
   /**
    * Date when the transaction occured.
    * @type {number}
-   * @memberof AssetTransferOutIdentifiableTransaction
+   * @memberof AssetTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   date: number;
   /**
    *
    * @type {TransactionEntryWithEntryId}
-   * @memberof AssetTransferOutIdentifiableTransaction
+   * @memberof AssetTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   entry: TransactionEntryWithEntryId;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
-   * @memberof AssetTransferOutIdentifiableTransaction
+   * @memberof AssetTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   fees?: Array<TransactionFeeItemWithEntryId> | null;
   /**
-   * Id representing the full transaction.
+   *
    * @type {string}
-   * @memberof AssetTransferOutIdentifiableTransaction
+   * @memberof AssetTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   transaction_id: string | null;
   /**
    *
    * @type {string}
-   * @memberof AssetTransferOutIdentifiableTransaction
+   * @memberof AssetTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
-  type: AssetTransferOutIdentifiableTransactionTypeEnum;
+  type: AssetTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum;
 }
 
-export const AssetTransferOutIdentifiableTransactionTypeEnum = {
-  AssetTransferOut: "asset_transfer_out",
-} as const;
+export const AssetTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  {
+    AssetTransferOut: "asset_transfer_out",
+  } as const;
 
-export type AssetTransferOutIdentifiableTransactionTypeEnum =
-  (typeof AssetTransferOutIdentifiableTransactionTypeEnum)[keyof typeof AssetTransferOutIdentifiableTransactionTypeEnum];
+export type AssetTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  (typeof AssetTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum)[keyof typeof AssetTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum];
 
 /**
  *
@@ -2314,7 +2341,7 @@ export interface AssetTransferOutRequiredIdentifiableTransaction {
    */
   fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
   /**
-   * Id representing the full transaction.
+   *
    * @type {string}
    * @memberof AssetTransferOutRequiredIdentifiableTransaction
    */
@@ -2454,6 +2481,25 @@ export type AssetTransferOutTransactionWithEntryIdsTypeEnum =
 /**
  *
  * @export
+ * @interface AssetType
+ */
+export interface AssetType {
+  /**
+   * The id of the asset type
+   * @type {number}
+   * @memberof AssetType
+   */
+  id: number;
+  /**
+   * The name of the asset type
+   * @type {string}
+   * @memberof AssetType
+   */
+  name: string;
+}
+/**
+ *
+ * @export
  * @interface AssetsPage
  */
 export interface AssetsPage {
@@ -2523,53 +2569,54 @@ export interface AuthMe {
 /**
  *
  * @export
- * @interface CashDividendIdentifiableTransaction
+ * @interface CashDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
  */
-export interface CashDividendIdentifiableTransaction {
+export interface CashDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId {
   /**
    * Date when the transaction occured.
    * @type {number}
-   * @memberof CashDividendIdentifiableTransaction
+   * @memberof CashDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   date: number;
   /**
    *
    * @type {TransactionEntryWithEntryId}
-   * @memberof CashDividendIdentifiableTransaction
+   * @memberof CashDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   entry: TransactionEntryWithEntryId;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
-   * @memberof CashDividendIdentifiableTransaction
+   * @memberof CashDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   fees?: Array<TransactionFeeItemWithEntryId> | null;
   /**
    * An id of a cash asset for which the dividends were paid for.
    * @type {number}
-   * @memberof CashDividendIdentifiableTransaction
+   * @memberof CashDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   origin_asset_id: number;
   /**
-   * Id representing the full transaction.
+   *
    * @type {string}
-   * @memberof CashDividendIdentifiableTransaction
+   * @memberof CashDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   transaction_id: string | null;
   /**
    *
    * @type {string}
-   * @memberof CashDividendIdentifiableTransaction
+   * @memberof CashDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
-  type: CashDividendIdentifiableTransactionTypeEnum;
+  type: CashDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum;
 }
 
-export const CashDividendIdentifiableTransactionTypeEnum = {
-  CashDividend: "cash_dividend",
-} as const;
+export const CashDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  {
+    CashDividend: "cash_dividend",
+  } as const;
 
-export type CashDividendIdentifiableTransactionTypeEnum =
-  (typeof CashDividendIdentifiableTransactionTypeEnum)[keyof typeof CashDividendIdentifiableTransactionTypeEnum];
+export type CashDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  (typeof CashDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum)[keyof typeof CashDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum];
 
 /**
  *
@@ -2602,7 +2649,7 @@ export interface CashDividendRequiredIdentifiableTransaction {
    */
   origin_asset_id: number;
   /**
-   * Id representing the full transaction.
+   *
    * @type {string}
    * @memberof CashDividendRequiredIdentifiableTransaction
    */
@@ -2797,47 +2844,48 @@ export interface CashPortfolio {
 /**
  *
  * @export
- * @interface CashTransferInIdentifiableTransaction
+ * @interface CashTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
  */
-export interface CashTransferInIdentifiableTransaction {
+export interface CashTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId {
   /**
    * Date when the transaction occured.
    * @type {number}
-   * @memberof CashTransferInIdentifiableTransaction
+   * @memberof CashTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   date: number;
   /**
    *
    * @type {TransactionEntryWithEntryId}
-   * @memberof CashTransferInIdentifiableTransaction
+   * @memberof CashTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   entry: TransactionEntryWithEntryId;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
-   * @memberof CashTransferInIdentifiableTransaction
+   * @memberof CashTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   fees?: Array<TransactionFeeItemWithEntryId> | null;
   /**
-   * Id representing the full transaction.
+   *
    * @type {string}
-   * @memberof CashTransferInIdentifiableTransaction
+   * @memberof CashTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   transaction_id: string | null;
   /**
    *
    * @type {string}
-   * @memberof CashTransferInIdentifiableTransaction
+   * @memberof CashTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
-  type: CashTransferInIdentifiableTransactionTypeEnum;
+  type: CashTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum;
 }
 
-export const CashTransferInIdentifiableTransactionTypeEnum = {
-  CashTransferIn: "cash_transfer_in",
-} as const;
+export const CashTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  {
+    CashTransferIn: "cash_transfer_in",
+  } as const;
 
-export type CashTransferInIdentifiableTransactionTypeEnum =
-  (typeof CashTransferInIdentifiableTransactionTypeEnum)[keyof typeof CashTransferInIdentifiableTransactionTypeEnum];
+export type CashTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  (typeof CashTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum)[keyof typeof CashTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum];
 
 /**
  *
@@ -2864,7 +2912,7 @@ export interface CashTransferInRequiredIdentifiableTransaction {
    */
   fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
   /**
-   * Id representing the full transaction.
+   *
    * @type {string}
    * @memberof CashTransferInRequiredIdentifiableTransaction
    */
@@ -3004,47 +3052,48 @@ export type CashTransferInTransactionWithEntryIdsTypeEnum =
 /**
  *
  * @export
- * @interface CashTransferOutIdentifiableTransaction
+ * @interface CashTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
  */
-export interface CashTransferOutIdentifiableTransaction {
+export interface CashTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId {
   /**
    * Date when the transaction occured.
    * @type {number}
-   * @memberof CashTransferOutIdentifiableTransaction
+   * @memberof CashTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   date: number;
   /**
    *
    * @type {TransactionEntryWithEntryId}
-   * @memberof CashTransferOutIdentifiableTransaction
+   * @memberof CashTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   entry: TransactionEntryWithEntryId;
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
-   * @memberof CashTransferOutIdentifiableTransaction
+   * @memberof CashTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   fees?: Array<TransactionFeeItemWithEntryId> | null;
   /**
-   * Id representing the full transaction.
+   *
    * @type {string}
-   * @memberof CashTransferOutIdentifiableTransaction
+   * @memberof CashTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
   transaction_id: string | null;
   /**
    *
    * @type {string}
-   * @memberof CashTransferOutIdentifiableTransaction
+   * @memberof CashTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
    */
-  type: CashTransferOutIdentifiableTransactionTypeEnum;
+  type: CashTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum;
 }
 
-export const CashTransferOutIdentifiableTransactionTypeEnum = {
-  CashTransferOut: "cash_transfer_out",
-} as const;
+export const CashTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  {
+    CashTransferOut: "cash_transfer_out",
+  } as const;
 
-export type CashTransferOutIdentifiableTransactionTypeEnum =
-  (typeof CashTransferOutIdentifiableTransactionTypeEnum)[keyof typeof CashTransferOutIdentifiableTransactionTypeEnum];
+export type CashTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  (typeof CashTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum)[keyof typeof CashTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum];
 
 /**
  *
@@ -3071,7 +3120,7 @@ export interface CashTransferOutRequiredIdentifiableTransaction {
    */
   fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
   /**
-   * Id representing the full transaction.
+   *
    * @type {string}
    * @memberof CashTransferOutRequiredIdentifiableTransaction
    */
@@ -3221,11 +3270,11 @@ export interface CategoryIdentifiableCategoryType {
    */
   category: string;
   /**
-   * Category type (generic - can be ID or expanded)
-   * @type {IdentifiableCategoryType}
+   *
+   * @type {CategoryType}
    * @memberof CategoryIdentifiableCategoryType
    */
-  category_type: IdentifiableCategoryType;
+  category_type: CategoryType;
   /**
    * Icon identifier for the category
    * @type {string}
@@ -3253,10 +3302,10 @@ export interface CategoryIdentifiableCategoryType {
 export interface CategoryMetadataLookupTables {
   /**
    *
-   * @type {Array<IdentifiableCategoryType>}
+   * @type {Array<CategoryType>}
    * @memberof CategoryMetadataLookupTables
    */
-  category_types: Array<IdentifiableCategoryType>;
+  category_types: Array<CategoryType>;
 }
 /**
  *
@@ -3271,7 +3320,7 @@ export interface CategoryRequiredCategoryTypeIdWithId {
    */
   category: string;
   /**
-   * Category type (generic - can be ID or expanded)
+   *
    * @type {number}
    * @memberof CategoryRequiredCategoryTypeIdWithId
    */
@@ -3308,6 +3357,12 @@ export interface CategoryRequiredCategoryTypeIdWithId {
  */
 export interface CategoryType {
   /**
+   * The ID of the category type
+   * @type {number}
+   * @memberof CategoryType
+   */
+  id: number;
+  /**
    * Whether this is a global type
    * @type {boolean}
    * @memberof CategoryType
@@ -3317,6 +3372,25 @@ export interface CategoryType {
    * The name of the category type
    * @type {string}
    * @memberof CategoryType
+   */
+  name: string;
+}
+/**
+ *
+ * @export
+ * @interface CategoryType2
+ */
+export interface CategoryType2 {
+  /**
+   * Whether this is a global type
+   * @type {boolean}
+   * @memberof CategoryType2
+   */
+  is_global: boolean;
+  /**
+   * The name of the category type
+   * @type {string}
+   * @memberof CategoryType2
    */
   name: string;
 }
@@ -3633,6 +3707,12 @@ export interface FileUrlResponse {
    * @type {string}
    * @memberof FileUrlResponse
    */
+  media_type: string;
+  /**
+   *
+   * @type {string}
+   * @memberof FileUrlResponse
+   */
   url: string;
 }
 /**
@@ -3643,10 +3723,10 @@ export interface FileUrlResponse {
 export interface GetAccountLiquidityTypesResponse {
   /**
    *
-   * @type {Array<IdentifiableAccountType>}
+   * @type {Array<AccountType>}
    * @memberof GetAccountLiquidityTypesResponse
    */
-  account_liquidity_types: Array<IdentifiableAccountType>;
+  account_liquidity_types: Array<AccountType>;
 }
 /**
  *
@@ -3656,16 +3736,16 @@ export interface GetAccountLiquidityTypesResponse {
 export interface GetAccountResponse {
   /**
    *
-   * @type {IdentifiableAccountType}
+   * @type {AccountType}
    * @memberof GetAccountResponse
    */
-  account_type: IdentifiableAccountType;
+  account_type: AccountType;
   /**
    *
-   * @type {IdentifiableAccountType}
+   * @type {AccountType}
    * @memberof GetAccountResponse
    */
-  liquidity_type: IdentifiableAccountType;
+  liquidity_type: AccountType;
   /**
    * Account name
    * @type {string}
@@ -3687,10 +3767,10 @@ export interface GetAccountResponse {
 export interface GetAccountTypesResponse {
   /**
    *
-   * @type {Array<IdentifiableAccountType>}
+   * @type {Array<AccountType>}
    * @memberof GetAccountTypesResponse
    */
-  account_types: Array<IdentifiableAccountType>;
+  account_types: Array<AccountType>;
 }
 /**
  *
@@ -3763,10 +3843,10 @@ export interface GetAssetPairResponse {
 export interface GetAssetResponse {
   /**
    *
-   * @type {IdentifiableAssetType}
+   * @type {AssetType}
    * @memberof GetAssetResponse
    */
-  asset_type: IdentifiableAssetType;
+  asset_type: AssetType;
   /**
    * The asset paired to this asset by default, with resolved ticker and name.
    * @type {AssetPairInfo}
@@ -4048,7 +4128,7 @@ export interface GroupTransactionItem {
    */
   description: string;
   /**
-   * Id representing a single entry in a transaction.
+   *
    * @type {string}
    * @memberof GroupTransactionItem
    */
@@ -4061,10 +4141,10 @@ export interface GroupTransactionItem {
   item_type: GroupTransactionItemItemTypeEnum;
   /**
    * All subtractions grouped into this group
-   * @type {Array<RequiredIdentifiableTransaction>}
+   * @type {Array<GroupTransactionItemTransactionsInner>}
    * @memberof GroupTransactionItem
    */
-  transactions: Array<RequiredIdentifiableTransaction>;
+  transactions: Array<GroupTransactionItemTransactionsInner>;
 }
 
 export const GroupTransactionItemItemTypeEnum = {
@@ -4073,6 +4153,24 @@ export const GroupTransactionItemItemTypeEnum = {
 
 export type GroupTransactionItemItemTypeEnum =
   (typeof GroupTransactionItemItemTypeEnum)[keyof typeof GroupTransactionItemItemTypeEnum];
+
+/**
+ * @type GroupTransactionItemTransactionsInner
+ * @export
+ */
+export type GroupTransactionItemTransactionsInner =
+  | AccountFeesRequiredIdentifiableTransaction
+  | AssetBalanceTransferRequiredIdentifiableTransaction
+  | AssetDividendRequiredIdentifiableTransaction
+  | AssetPurchaseRequiredIdentifiableTransaction
+  | AssetSaleRequiredIdentifiableTransaction
+  | AssetTradeRequiredIdentifiableTransaction
+  | AssetTransferInRequiredIdentifiableTransaction
+  | AssetTransferOutRequiredIdentifiableTransaction
+  | CashDividendRequiredIdentifiableTransaction
+  | CashTransferInRequiredIdentifiableTransaction
+  | CashTransferOutRequiredIdentifiableTransaction
+  | RegularRequiredIdentifiableTransaction;
 
 /**
  *
@@ -4096,44 +4194,6 @@ export interface HoldingsMetadataLookupTables {
 /**
  *
  * @export
- * @interface IdentifiableAccountType
- */
-export interface IdentifiableAccountType {
-  /**
-   * The id of the Account type
-   * @type {number}
-   * @memberof IdentifiableAccountType
-   */
-  id: number;
-  /**
-   * The name of the Account type
-   * @type {string}
-   * @memberof IdentifiableAccountType
-   */
-  name: string;
-}
-/**
- *
- * @export
- * @interface IdentifiableAssetType
- */
-export interface IdentifiableAssetType {
-  /**
-   * The id of the asset type
-   * @type {number}
-   * @memberof IdentifiableAssetType
-   */
-  id: number;
-  /**
-   * The name of the asset type
-   * @type {string}
-   * @memberof IdentifiableAssetType
-   */
-  name: string;
-}
-/**
- *
- * @export
  * @interface IdentifiableCategoryIdentifiableCategoryType
  */
 export interface IdentifiableCategoryIdentifiableCategoryType {
@@ -4144,11 +4204,11 @@ export interface IdentifiableCategoryIdentifiableCategoryType {
    */
   category: string;
   /**
-   * Category type (generic - can be ID or expanded)
-   * @type {IdentifiableCategoryType}
+   *
+   * @type {CategoryType}
    * @memberof IdentifiableCategoryIdentifiableCategoryType
    */
-  category_type: IdentifiableCategoryType;
+  category_type: CategoryType;
   /**
    * Icon identifier for the category
    * @type {string}
@@ -4173,31 +4233,6 @@ export interface IdentifiableCategoryIdentifiableCategoryType {
    * @memberof IdentifiableCategoryIdentifiableCategoryType
    */
   is_system: boolean;
-}
-/**
- *
- * @export
- * @interface IdentifiableCategoryType
- */
-export interface IdentifiableCategoryType {
-  /**
-   * The ID of the category type
-   * @type {number}
-   * @memberof IdentifiableCategoryType
-   */
-  id: number;
-  /**
-   * Whether this is a global type
-   * @type {boolean}
-   * @memberof IdentifiableCategoryType
-   */
-  is_global: boolean;
-  /**
-   * The name of the category type
-   * @type {string}
-   * @memberof IdentifiableCategoryType
-   */
-  name: string;
 }
 /**
  *
@@ -4316,26 +4351,6 @@ export interface IdentifiableQuickUploadResponse {
    */
   updated_at: string;
 }
-/**
- * @type IdentifiableTransaction
- * @export
- */
-export type IdentifiableTransaction =
-  | ({ type: "account_fees" } & AccountFeesIdentifiableTransaction)
-  | ({
-      type: "asset_balance_transfer";
-    } & AssetBalanceTransferIdentifiableTransaction)
-  | ({ type: "asset_dividend" } & AssetDividendIdentifiableTransaction)
-  | ({ type: "asset_purchase" } & AssetPurchaseIdentifiableTransaction)
-  | ({ type: "asset_sale" } & AssetSaleIdentifiableTransaction)
-  | ({ type: "asset_trade" } & AssetTradeIdentifiableTransaction)
-  | ({ type: "asset_transfer_in" } & AssetTransferInIdentifiableTransaction)
-  | ({ type: "asset_transfer_out" } & AssetTransferOutIdentifiableTransaction)
-  | ({ type: "cash_dividend" } & CashDividendIdentifiableTransaction)
-  | ({ type: "cash_transfer_in" } & CashTransferInIdentifiableTransaction)
-  | ({ type: "cash_transfer_out" } & CashTransferOutIdentifiableTransaction)
-  | ({ type: "regular" } & RegularIdentifiableTransaction);
-
 /**
  *
  * @export
@@ -4525,12 +4540,6 @@ export interface QuickUploadMessageResponse {
    * @type {string}
    * @memberof QuickUploadMessageResponse
    */
-  message_id: string;
-  /**
-   *
-   * @type {string}
-   * @memberof QuickUploadMessageResponse
-   */
   status: string;
 }
 /**
@@ -4604,63 +4613,6 @@ export interface RegisteredUser {
 /**
  *
  * @export
- * @interface RegularIdentifiableTransaction
- */
-export interface RegularIdentifiableTransaction {
-  /**
-   * Specific bespoke category id.
-   * @type {number}
-   * @memberof RegularIdentifiableTransaction
-   */
-  category_id: number;
-  /**
-   * Date when the transaction occured.
-   * @type {number}
-   * @memberof RegularIdentifiableTransaction
-   */
-  date: number;
-  /**
-   * Description of the transaction.
-   * @type {string}
-   * @memberof RegularIdentifiableTransaction
-   */
-  description?: string | null;
-  /**
-   *
-   * @type {TransactionEntryWithEntryId}
-   * @memberof RegularIdentifiableTransaction
-   */
-  entry: TransactionEntryWithEntryId;
-  /**
-   * Any other fees related to the transaction, such as transfer or conversion fees.
-   * @type {Array<TransactionFeeItemWithEntryId>}
-   * @memberof RegularIdentifiableTransaction
-   */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
-  /**
-   * Id representing the full transaction.
-   * @type {string}
-   * @memberof RegularIdentifiableTransaction
-   */
-  transaction_id: string | null;
-  /**
-   *
-   * @type {string}
-   * @memberof RegularIdentifiableTransaction
-   */
-  type: RegularIdentifiableTransactionTypeEnum;
-}
-
-export const RegularIdentifiableTransactionTypeEnum = {
-  Regular: "regular",
-} as const;
-
-export type RegularIdentifiableTransactionTypeEnum =
-  (typeof RegularIdentifiableTransactionTypeEnum)[keyof typeof RegularIdentifiableTransactionTypeEnum];
-
-/**
- *
- * @export
  * @interface RegularRequiredIdentifiableTransaction
  */
 export interface RegularRequiredIdentifiableTransaction {
@@ -4695,7 +4647,7 @@ export interface RegularRequiredIdentifiableTransaction {
    */
   fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
   /**
-   * Id representing the full transaction.
+   *
    * @type {string}
    * @memberof RegularRequiredIdentifiableTransaction
    */
@@ -4765,6 +4717,64 @@ export const RegularRequiredTransactionTypeEnum = {
 
 export type RegularRequiredTransactionTypeEnum =
   (typeof RegularRequiredTransactionTypeEnum)[keyof typeof RegularRequiredTransactionTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface RegularTransactionIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
+ */
+export interface RegularTransactionIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId {
+  /**
+   * Specific bespoke category id.
+   * @type {number}
+   * @memberof RegularTransactionIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
+   */
+  category_id: number;
+  /**
+   * Date when the transaction occured.
+   * @type {number}
+   * @memberof RegularTransactionIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
+   */
+  date: number;
+  /**
+   * Description of the transaction.
+   * @type {string}
+   * @memberof RegularTransactionIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
+   */
+  description?: string | null;
+  /**
+   *
+   * @type {TransactionEntryWithEntryId}
+   * @memberof RegularTransactionIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
+   */
+  entry: TransactionEntryWithEntryId;
+  /**
+   * Any other fees related to the transaction, such as transfer or conversion fees.
+   * @type {Array<TransactionFeeItemWithEntryId>}
+   * @memberof RegularTransactionIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
+   */
+  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  /**
+   *
+   * @type {string}
+   * @memberof RegularTransactionIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
+   */
+  transaction_id: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof RegularTransactionIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
+   */
+  type: RegularTransactionIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum;
+}
+
+export const RegularTransactionIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  {
+    Regular: "regular",
+  } as const;
+
+export type RegularTransactionIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum =
+  (typeof RegularTransactionIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum)[keyof typeof RegularTransactionIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryIdTypeEnum];
 
 /**
  *
@@ -5016,7 +5026,7 @@ export interface TransactionEntryWithEntryId {
    */
   asset_id: number;
   /**
-   * Id representing a single entry in a transaction.
+   *
    * @type {number}
    * @memberof TransactionEntryWithEntryId
    */
@@ -5047,7 +5057,7 @@ export interface TransactionEntryWithRequiredEntryId {
    */
   asset_id: number;
   /**
-   * Id representing a single entry in a transaction.
+   *
    * @type {number}
    * @memberof TransactionEntryWithRequiredEntryId
    */
@@ -5110,7 +5120,7 @@ export interface TransactionFeeItemWithEntryId {
    */
   asset_id: number;
   /**
-   * Id representing a single entry in a transaction.
+   *
    * @type {number}
    * @memberof TransactionFeeItemWithEntryId
    */
@@ -5148,7 +5158,7 @@ export interface TransactionFeeItemWithRequiredEntryId {
    */
   asset_id: number;
   /**
-   * Id representing a single entry in a transaction.
+   *
    * @type {number}
    * @memberof TransactionFeeItemWithRequiredEntryId
    */
@@ -5202,11 +5212,30 @@ export interface TransactionGroupIdentifiableTransactionWithIdentifiableEntries 
   description: string;
   /**
    * All subtractions grouped into this group
-   * @type {Array<IdentifiableTransaction>}
+   * @type {Array<TransactionGroupIdentifiableTransactionWithIdentifiableEntriesTransactionsInner>}
    * @memberof TransactionGroupIdentifiableTransactionWithIdentifiableEntries
    */
-  transactions: Array<IdentifiableTransaction>;
+  transactions: Array<TransactionGroupIdentifiableTransactionWithIdentifiableEntriesTransactionsInner>;
 }
+/**
+ * @type TransactionGroupIdentifiableTransactionWithIdentifiableEntriesTransactionsInner
+ * @export
+ */
+export type TransactionGroupIdentifiableTransactionWithIdentifiableEntriesTransactionsInner =
+
+    | AccountFeesIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
+    | AssetBalanceTransferIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
+    | AssetDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
+    | AssetPurchaseIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
+    | AssetSaleIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
+    | AssetTradeIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
+    | AssetTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
+    | AssetTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
+    | CashDividendIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
+    | CashTransferInIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
+    | CashTransferOutIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId
+    | RegularTransactionIdentifiableTransactionBaseTransactionBaseTransactionFeeIdentifiableAccountAssetEntryEntryIdTransactionIdIdentifiableAccountAssetEntryEntryId;
+
 /**
  *
  * @export
@@ -5233,10 +5262,10 @@ export interface TransactionGroupRequiredIdentifiableTransactionWithIdentifiable
   description: string;
   /**
    * All subtractions grouped into this group
-   * @type {Array<RequiredIdentifiableTransaction>}
+   * @type {Array<GroupTransactionItemTransactionsInner>}
    * @memberof TransactionGroupRequiredIdentifiableTransactionWithIdentifiableEntries
    */
-  transactions: Array<RequiredIdentifiableTransaction>;
+  transactions: Array<GroupTransactionItemTransactionsInner>;
 }
 /**
  *
@@ -5263,17 +5292,17 @@ export interface TransactionGroupTransactionGroupIdTransactionGroupRequiredIdent
    */
   description: string;
   /**
-   * Id representing a single entry in a transaction.
+   *
    * @type {string}
    * @memberof TransactionGroupTransactionGroupIdTransactionGroupRequiredIdentifiableTransactionWithIdentifiableEntriesAndId
    */
   group_id: string;
   /**
    * All subtractions grouped into this group
-   * @type {Array<RequiredIdentifiableTransaction>}
+   * @type {Array<GroupTransactionItemTransactionsInner>}
    * @memberof TransactionGroupTransactionGroupIdTransactionGroupRequiredIdentifiableTransactionWithIdentifiableEntriesAndId
    */
-  transactions: Array<RequiredIdentifiableTransaction>;
+  transactions: Array<GroupTransactionItemTransactionsInner>;
 }
 /**
  *
@@ -5301,11 +5330,29 @@ export interface TransactionGroupTransactionWithEntries {
   description: string;
   /**
    * All subtractions grouped into this group
-   * @type {Array<TransactionInput>}
+   * @type {Array<TransactionGroupTransactionWithEntriesTransactionsInner>}
    * @memberof TransactionGroupTransactionWithEntries
    */
-  transactions: Array<TransactionInput>;
+  transactions: Array<TransactionGroupTransactionWithEntriesTransactionsInner>;
 }
+/**
+ * @type TransactionGroupTransactionWithEntriesTransactionsInner
+ * @export
+ */
+export type TransactionGroupTransactionWithEntriesTransactionsInner =
+  | AccountFeesTransactionInput
+  | AssetBalanceTransferTransactionInput
+  | AssetDividendTransactionInput
+  | AssetPurchaseTransactionInput
+  | AssetSaleTransactionInput
+  | AssetTradeTransactionInput
+  | AssetTransferInTransactionInput
+  | AssetTransferOutTransactionInput
+  | CashDividendTransactionInput
+  | CashTransferInTransactionInput
+  | CashTransferOutTransactionInput
+  | RegularTransactionInput;
+
 /**
  *
  * @export
@@ -5630,6 +5677,62 @@ export const AIConversationsApiAxiosParamCreator = function (
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
+    deleteConversation: async (
+      userId: string,
+      conversationId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("deleteConversation", "userId", userId);
+      // verify required parameter 'conversationId' is not null or undefined
+      assertParamExists("deleteConversation", "conversationId", conversationId);
+      const localVarPath =
+        `/api/users/{user_id}/ai/conversations/{conversation_id}`
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+          .replace(
+            `{${"conversation_id"}}`,
+            encodeURIComponent(String(conversationId)),
+          );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "DELETE",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {string} conversationId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
     getConversation: async (
       userId: string,
       conversationId: string,
@@ -5838,6 +5941,39 @@ export const AIConversationsApiFp = function (configuration?: Configuration) {
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
+    async deleteConversation(
+      userId: string,
+      conversationId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.deleteConversation(
+          userId,
+          conversationId,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["AIConversationsApi.deleteConversation"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {string} conversationId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
     async getConversation(
       userId: string,
       conversationId: string,
@@ -5968,6 +6104,22 @@ export const AIConversationsApiFactory = function (
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
+    deleteConversation(
+      userId: string,
+      conversationId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<void> {
+      return localVarFp
+        .deleteConversation(userId, conversationId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {string} conversationId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
     getConversation(
       userId: string,
       conversationId: string,
@@ -6038,6 +6190,20 @@ export interface AIConversationsApiInterface {
    * @throws {RequiredError}
    * @memberof AIConversationsApiInterface
    */
+  deleteConversation(
+    userId: string,
+    conversationId: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<void>;
+
+  /**
+   *
+   * @param {string} userId
+   * @param {string} conversationId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AIConversationsApiInterface
+   */
   getConversation(
     userId: string,
     conversationId: string,
@@ -6096,6 +6262,24 @@ export class AIConversationsApi
   ) {
     return AIConversationsApiFp(this.configuration)
       .createConversation(userId, createConversationRequest, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @param {string} userId
+   * @param {string} conversationId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AIConversationsApi
+   */
+  public deleteConversation(
+    userId: string,
+    conversationId: string,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return AIConversationsApiFp(this.configuration)
+      .deleteConversation(userId, conversationId, options)
       .then((request) => request(this.axios, this.basePath));
   }
 
@@ -16437,10 +16621,7 @@ export const UserCategoriesApiFp = function (configuration?: Configuration) {
       createCategoryTypeRequest: CreateCategoryTypeRequest,
       options?: RawAxiosRequestConfig,
     ): Promise<
-      (
-        axios?: AxiosInstance,
-        basePath?: string,
-      ) => AxiosPromise<IdentifiableCategoryType>
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<CategoryType>
     > {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.postUserCategoryType(
@@ -16515,7 +16696,7 @@ export const UserCategoriesApiFp = function (configuration?: Configuration) {
       createCategoryTypeRequest: CreateCategoryTypeRequest,
       options?: RawAxiosRequestConfig,
     ): Promise<
-      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<CategoryType>
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<CategoryType2>
     > {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.putUserCategoryType(
@@ -16661,7 +16842,7 @@ export const UserCategoriesApiFactory = function (
       userId: string,
       createCategoryTypeRequest: CreateCategoryTypeRequest,
       options?: RawAxiosRequestConfig,
-    ): AxiosPromise<IdentifiableCategoryType> {
+    ): AxiosPromise<CategoryType> {
       return localVarFp
         .postUserCategoryType(userId, createCategoryTypeRequest, options)
         .then((request) => request(axios, basePath));
@@ -16699,7 +16880,7 @@ export const UserCategoriesApiFactory = function (
       typeId: number,
       createCategoryTypeRequest: CreateCategoryTypeRequest,
       options?: RawAxiosRequestConfig,
-    ): AxiosPromise<CategoryType> {
+    ): AxiosPromise<CategoryType2> {
       return localVarFp
         .putUserCategoryType(userId, typeId, createCategoryTypeRequest, options)
         .then((request) => request(axios, basePath));
@@ -16812,7 +16993,7 @@ export interface UserCategoriesApiInterface {
     userId: string,
     createCategoryTypeRequest: CreateCategoryTypeRequest,
     options?: RawAxiosRequestConfig,
-  ): AxiosPromise<IdentifiableCategoryType>;
+  ): AxiosPromise<CategoryType>;
 
   /**
    * Updates an existing user-specific category. Cannot update global or system categories. Category name must remain unique if changed.
@@ -16846,7 +17027,7 @@ export interface UserCategoriesApiInterface {
     typeId: number,
     createCategoryTypeRequest: CreateCategoryTypeRequest,
     options?: RawAxiosRequestConfig,
-  ): AxiosPromise<CategoryType>;
+  ): AxiosPromise<CategoryType2>;
 }
 
 /**

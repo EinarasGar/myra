@@ -2,7 +2,9 @@ use sea_query::*;
 use sea_query_sqlx::SqlxBinder;
 use sqlx::types::Uuid;
 
-use crate::idens::ai_conversation_idens::{AiConversationsIden, AiMessagesIden};
+use crate::idens::ai_conversation_idens::{
+    AiConversationsIden, AiMessagesIden, AiWorkflowQuickUploadIden,
+};
 use crate::query_params::ai_conversation_params::{
     GetConversationsParams, GetConversationsSearchType, GetMessagesParams,
 };
@@ -39,6 +41,14 @@ pub fn get_conversations(params: GetConversationsParams) -> DbQueryWithValues {
         .column(AiConversationsIden::UpdatedAt)
         .from(AiConversationsIden::Table)
         .and_where(Expr::col(AiConversationsIden::UserId).eq(params.user_id));
+
+    // Exclude quick-upload workflow conversations — they live in ai_conversations but are not
+    // user-facing chats, so they must never appear in (or be opened from) the chat history.
+    let mut quick_upload_sub = Query::select();
+    quick_upload_sub
+        .column(AiWorkflowQuickUploadIden::ConversationId)
+        .from(AiWorkflowQuickUploadIden::Table);
+    query.and_where(Expr::col(AiConversationsIden::Id).not_in_subquery(quick_upload_sub));
 
     match params.search_type {
         GetConversationsSearchType::ById(id) => {

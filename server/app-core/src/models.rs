@@ -291,3 +291,77 @@ pub struct AssetDetailState {
     pub chart_data: Vec<ChartPeriodData>,
     pub lots: Vec<LotItem>,
 }
+// ── AI Chat ────────────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct ConversationItem {
+    pub id: String,
+    pub title: String,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct ChatMessage {
+    pub role: String,
+    pub parts: Vec<MessagePart>,
+}
+
+#[derive(Debug, Clone, uniffi::Enum)]
+pub enum MessagePart {
+    Text {
+        content: String,
+    },
+    Reasoning {
+        content: String,
+    },
+    ToolCall {
+        call_id: String,
+        name: String,
+        params: String,
+        state: String,
+        output: Option<String>,
+    },
+    File {
+        file_id: String,
+        media_type: String,
+        url: String,
+    },
+}
+
+#[derive(Debug, Clone, uniffi::Enum)]
+pub enum ChatStreamEvent {
+    TextDelta {
+        delta: String,
+    },
+    ReasoningDelta {
+        delta: String,
+    },
+    ToolCall {
+        call_id: String,
+        name: String,
+        params: String,
+    },
+    ToolResult {
+        name: String,
+        output: String,
+    },
+    ToolApprovalRequired {
+        call_id: String,
+        name: String,
+        params: String,
+    },
+    Error {
+        message: String,
+    },
+    RateLimited {
+        message: String,
+        retry_after_seconds: Option<i64>,
+    },
+    Done,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct FileUploadResult {
+    pub file_id: String,
+}

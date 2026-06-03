@@ -30,6 +30,7 @@ pub struct FileWithUploadDto {
 pub struct FileUrlDto {
     pub url: String,
     pub expires_in_seconds: u32,
+    pub media_type: String,
 }
 
 impl From<dal::models::file_models::FileModel> for FileDto {

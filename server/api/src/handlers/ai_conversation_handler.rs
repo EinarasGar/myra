@@ -104,6 +104,31 @@ pub async fn get_conversation(
 }
 
 #[utoipa::path(
+    delete,
+    path = "/api/users/{user_id}/ai/conversations/{conversation_id}",
+    tag = "AI Conversations",
+    responses(
+        (status = 204, description = "Conversation deleted."),
+    ),
+    params(
+        ("user_id" = Uuid, Path, description = "Unique identifier of the user."),
+        ("conversation_id" = Uuid, Path, description = "Unique identifier of the conversation."),
+    ),
+    security(("auth_token" = []))
+)]
+pub async fn delete_conversation(
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(ConversationIdPath { conversation_id }): Path<ConversationIdPath>,
+    AiConversationServiceState(service): AiConversationServiceState,
+) -> Result<StatusCode, ApiError> {
+    service
+        .delete_conversation(conversation_id, user_id)
+        .await
+        .map_err(ApiError::from_anyhow)?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(
     get,
     path = "/api/users/{user_id}/ai/conversations/{conversation_id}/messages",
     tag = "AI Conversations",

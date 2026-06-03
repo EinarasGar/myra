@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Clone)]
-pub struct Base64Image {
+pub struct Base64Attachment {
     pub media_type: String,
     pub data: String,
 }

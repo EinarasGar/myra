@@ -1,5 +1,5 @@
 use ai::conversation_provider::{ConversationProvider, HistoryEntry};
-use ai::models::chat::{Base64Image, ChatHistoryMessage};
+use ai::models::chat::{Base64Attachment, ChatHistoryMessage};
 use futures::{Stream, StreamExt};
 use tokio::sync::{broadcast, oneshot};
 use uuid::Uuid;
@@ -69,12 +69,15 @@ impl UserConversationProvider {
         }
     }
 
-    async fn resolve_images(&self, file_ids: &[Uuid]) -> anyhow::Result<Vec<Base64Image>> {
+    async fn resolve_attachments(
+        &self,
+        file_ids: &[Uuid],
+    ) -> anyhow::Result<Vec<Base64Attachment>> {
         if file_ids.is_empty() {
             return Ok(Vec::new());
         }
         FileService::new(&self.providers)
-            .fetch_images_for_ai(self.user_id, file_ids)
+            .fetch_attachments_for_ai(self.user_id, file_ids)
             .await
     }
 }
@@ -99,8 +102,11 @@ impl ConversationProvider for UserConversationProvider {
             .collect())
     }
 
-    async fn fetch_images(&self, file_ids: &[Uuid]) -> anyhow::Result<Vec<Base64Image>> {
-        self.resolve_images(file_ids).await
+    async fn fetch_attachments(
+        &self,
+        file_ids: &[Uuid],
+    ) -> anyhow::Result<Vec<Base64Attachment>> {
+        self.resolve_attachments(file_ids).await
     }
 
     async fn record_user_message(&self, content: String, file_ids: &[Uuid]) -> anyhow::Result<()> {

@@ -203,6 +203,7 @@ impl FileService {
         Ok(FileUrlDto {
             url,
             expires_in_seconds: DOWNLOAD_URL_EXPIRY_SECONDS,
+            media_type: file.mime_type,
         })
     }
 
@@ -233,6 +234,7 @@ impl FileService {
         Ok(FileUrlDto {
             url,
             expires_in_seconds: DOWNLOAD_URL_EXPIRY_SECONDS,
+            media_type: file.mime_type,
         })
     }
 
@@ -286,16 +288,16 @@ impl FileService {
         Ok(())
     }
 
-    pub async fn fetch_images_for_ai(
+    pub async fn fetch_attachments_for_ai(
         &self,
         user_id: Uuid,
         file_ids: &[Uuid],
-    ) -> Result<Vec<ai::models::chat::Base64Image>> {
+    ) -> Result<Vec<ai::models::chat::Base64Attachment>> {
         Ok(self
             .download_files_as_base64(user_id, file_ids)
             .await?
             .into_iter()
-            .map(|(media_type, data)| ai::models::chat::Base64Image { media_type, data })
+            .map(|(media_type, data)| ai::models::chat::Base64Attachment { media_type, data })
             .collect())
     }
 }

@@ -2,19 +2,19 @@ use anyhow::Result;
 use uuid::Uuid;
 
 pub use crate::models::chat::HistoryEntry;
-use crate::models::chat::{Base64Image, ChatHistoryMessage};
+use crate::models::chat::{Base64Attachment, ChatHistoryMessage};
 
 pub trait ConversationProvider: Send + Sync + 'static {
     /// Load prior turns in oldest-to-newest order. File attachments are
-    /// returned as ids only — the wrapper batch-resolves them via `fetch_images`.
+    /// returned as ids only — the wrapper batch-resolves them via `fetch_attachments`.
     fn load_history(&self) -> impl std::future::Future<Output = Result<Vec<HistoryEntry>>> + Send;
 
-    /// Resolve a set of file ids into base64-encoded images. Called by the
-    /// wrapper for both historical and current-turn attachments.
-    fn fetch_images(
+    /// Resolve a set of file ids into base64-encoded attachments (images or documents).
+    /// Called by the wrapper for both historical and current-turn attachments.
+    fn fetch_attachments(
         &self,
         file_ids: &[Uuid],
-    ) -> impl std::future::Future<Output = Result<Vec<Base64Image>>> + Send;
+    ) -> impl std::future::Future<Output = Result<Vec<Base64Attachment>>> + Send;
 
     /// Persist the user's input turn, including file attachment ids.
     fn record_user_message(

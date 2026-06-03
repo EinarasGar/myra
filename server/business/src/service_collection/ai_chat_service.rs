@@ -71,6 +71,11 @@ impl AiChatService {
             Err(e) => {
                 return Err(match e.downcast_ref::<AiRateLimitError>() {
                     Some(AiRateLimitError::PerRequestCap) => AiChatError::PerRequestInputLimit,
+                    Some(AiRateLimitError::QuotaExceeded { reset_at }) => {
+                        AiChatError::QuotaExceeded {
+                            reset_at: reset_at.clone(),
+                        }
+                    }
                     Some(AiRateLimitError::ConcurrencyLimit) => {
                         AiChatError::ConcurrencyLimitExceeded
                     }

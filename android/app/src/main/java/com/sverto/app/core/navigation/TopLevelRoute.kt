@@ -2,9 +2,11 @@ package com.sverto.app.core.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.outlined.AccountBalance
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material.icons.outlined.ShowChart
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -32,5 +34,11 @@ enum class TopLevelRoute(
         label = "Accounts",
         selectedIcon = Icons.Filled.AccountBalance,
         unselectedIcon = Icons.Outlined.AccountBalance,
+    ),
+    AiChat(
+        route = "ai_chat",
+        label = "Myra",
+        selectedIcon = Icons.Filled.AutoAwesome,
+        unselectedIcon = Icons.Outlined.AutoAwesome,
     ),
 }

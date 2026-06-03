@@ -14,7 +14,7 @@ use crate::agents::approval::{build_gated_toolset, ApprovalHook};
 use crate::agents::chat_utils::{attachment_to_user_content, find_tool_call_in_history};
 use crate::conversation_provider::ConversationProvider;
 use crate::models::chat::{
-    Base64Image, ChatHistoryMessage, ChatStreamEvent, HistoryEntry, PromptOutput,
+    Base64Attachment, ChatHistoryMessage, ChatStreamEvent, HistoryEntry, PromptOutput,
     ToolRequestPayload,
 };
 use crate::rate_limit_provider::RateLimitProvider;
@@ -178,7 +178,7 @@ where
                 }
                 ChatHistoryMessage::ToolApproval { .. } => {}
                 ChatHistoryMessage::User { ref content } if !entry.file_ids.is_empty() => {
-                    let imgs: Vec<Base64Image> = entry
+                    let imgs: Vec<Base64Attachment> = entry
                         .file_ids
                         .iter()
                         .filter_map(|id| prepared.images_by_id.get(id).cloned())
@@ -351,16 +351,16 @@ where
         let all_images = if all_ids.is_empty() {
             Vec::new()
         } else {
-            self.conversation.fetch_images(&all_ids).await?
+            self.conversation.fetch_attachments(&all_ids).await?
         };
 
-        let images_by_id: HashMap<Uuid, Base64Image> = all_ids
+        let images_by_id: HashMap<Uuid, Base64Attachment> = all_ids
             .iter()
             .take(history_id_count)
             .copied()
             .zip(all_images.iter().take(history_id_count).cloned())
             .collect();
-        let current_images: Vec<Base64Image> =
+        let current_images: Vec<Base64Attachment> =
             all_images.into_iter().skip(history_id_count).collect();
 
         let history_messages: Vec<ChatHistoryMessage> =
@@ -392,10 +392,10 @@ struct PreparedTurn {
     rig_history: Vec<Message>,
     current_message: Message,
     history_entries: Vec<HistoryEntry>,
-    images_by_id: HashMap<Uuid, Base64Image>,
+    images_by_id: HashMap<Uuid, Base64Attachment>,
 }
 
-fn build_user_message(text: &str, attachments: &[Base64Image]) -> Message {
+fn build_user_message(text: &str, attachments: &[Base64Attachment]) -> Message {
     if attachments.is_empty() {
         return Message::user(text);
     }
@@ -418,13 +418,13 @@ fn build_user_message(text: &str, attachments: &[Base64Image]) -> Message {
 
 fn build_rig_history(
     entries: &[HistoryEntry],
-    images_by_id: &HashMap<Uuid, Base64Image>,
+    images_by_id: &HashMap<Uuid, Base64Attachment>,
 ) -> Vec<Message> {
     let mut out = Vec::with_capacity(entries.len());
     for entry in entries {
         match &entry.message {
             ChatHistoryMessage::User { content } if !entry.file_ids.is_empty() => {
-                let imgs: Vec<Base64Image> = entry
+                let imgs: Vec<Base64Attachment> = entry
                     .file_ids
                     .iter()
                     .filter_map(|id| images_by_id.get(id).cloned())

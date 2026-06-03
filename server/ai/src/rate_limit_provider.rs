@@ -14,8 +14,9 @@
 //!    (releases the slot, refunds the reservation).
 
 use thiserror::Error;
+use time::OffsetDateTime;
 
-use crate::models::chat::{Base64Image, ChatHistoryMessage};
+use crate::models::chat::{Base64Attachment, ChatHistoryMessage};
 
 #[derive(Debug, Error)]
 pub enum RateLimitError {
@@ -23,7 +24,7 @@ pub enum RateLimitError {
     PerRequestCap,
 
     #[error("Daily token quota exceeded")]
-    QuotaExceeded,
+    QuotaExceeded { reset_at: Option<OffsetDateTime> },
 
     #[error("Concurrent request limit reached")]
     ConcurrencyLimit,
@@ -39,7 +40,7 @@ pub trait RateLimitProvider: Send + Sync + 'static {
     fn pre_check<'a>(
         &'a self,
         message: &'a str,
-        images: &'a [Base64Image],
+        images: &'a [Base64Attachment],
         history: &'a [ChatHistoryMessage],
     ) -> impl std::future::Future<Output = Result<(), RateLimitError>> + Send + 'a;
 

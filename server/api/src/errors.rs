@@ -183,6 +183,12 @@ impl From<business::dtos::ai_chat_error_dto::AiChatError> for ApiError {
                     .format(&time::format_description::well_known::Rfc3339)
                     .unwrap_or_default(),
             })),
+            AiChatError::QuotaExceeded { reset_at } => ApiError::RateLimited(serde_json::json!({
+                "reason": "quota_exceeded",
+                "scope": "user",
+                "reset_at": reset_at
+                    .and_then(|t| t.format(&time::format_description::well_known::Rfc3339).ok()),
+            })),
             AiChatError::PerRequestInputLimit => ApiError::RateLimited(serde_json::json!({
                 "reason": "per_request_input_limit",
             })),

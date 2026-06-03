@@ -25,6 +25,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,6 +38,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -43,6 +47,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -78,6 +83,9 @@ import com.sverto.app.feature.transactions.group.CreateTransactionGroupViewModel
 import com.sverto.app.feature.transactions.group.GroupTransactionItem
 import com.sverto.app.feature.transactions.quickupload.QuickUploadUiItem
 import com.sverto.app.feature.transactions.quickupload.QuickUploadViewModel
+import com.sverto.app.feature.aichat.ConversationDrawer
+import com.sverto.app.feature.aichat.AiChatViewModel
+import com.sverto.app.feature.aichat.AiChatScreen
 import uniffi.sverto_core.ConnectionStatus
 import uniffi.sverto_core.TransactionListItem
 
@@ -101,11 +109,16 @@ private data class TransactionDetailState(
 fun MainScreen(
     transactionsViewModel: TransactionsViewModel = viewModel(factory = SvertoViewModelFactory),
     quickUploadViewModel: QuickUploadViewModel = viewModel(factory = SvertoViewModelFactory),
+    aiChatViewModel: AiChatViewModel = viewModel(factory = SvertoViewModelFactory),
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val isTopLevel = TopLevelRoute.entries.any { it.route == currentRoute }
+    val isAiChatTab = currentRoute == TopLevelRoute.AiChat.route
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    val aiChatState by aiChatViewModel.uiState.collectAsStateWithLifecycle()
 
     val transactionCache = remember { mutableMapOf<String, TransactionDetailState>() }
     val pendingGroupTransaction = remember { mutableStateOf<GroupTransactionItem?>(null) }
@@ -176,6 +189,33 @@ fun MainScreen(
     SharedTransitionLayout {
         val sharedScope = this
 
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            // Only interactive on the AI Chat tab: enables scrim tap-to-close and edge-swipe
+            // there, while keeping the drawer inert (and unreachable) on the other tabs.
+            gesturesEnabled = isAiChatTab,
+            drawerContent = {
+                // Always compose the drawer so its width stays constant (304.dp). If the
+                // content collapsed to zero width on non-chat tabs, ModalNavigationDrawer
+                // would recompute its anchors when the chat content appears and spring open.
+                // The drawer is only reachable from the AI Chat tab (see the hamburger below).
+                ConversationDrawer(
+                    conversations = aiChatState.conversations,
+                    activeConversationId = aiChatState.activeConversationId,
+                    onSelect = { id ->
+                        aiChatViewModel.selectConversation(id)
+                        scope.launch { drawerState.close() }
+                    },
+                    onCreate = {
+                        aiChatViewModel.startNewConversation()
+                        scope.launch { drawerState.close() }
+                    },
+                    onDelete = { id ->
+                        aiChatViewModel.deleteConversation(id)
+                    },
+                )
+            },
+        ) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = MaterialTheme.colorScheme.surface,
@@ -188,8 +228,10 @@ fun MainScreen(
                     ) {
                         CenterAlignedTopAppBar(
                             navigationIcon = {
-                                IconButton(onClick = { /* drawer */ }) {
-                                    Icon(Icons.Default.Menu, contentDescription = "Menu")
+                                if (isAiChatTab) {
+                                    IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                        Icon(Icons.Default.Menu, contentDescription = "Menu")
+                                    }
                                 }
                             },
                             title = {
@@ -280,9 +322,11 @@ fun MainScreen(
                 pendingGroupTransaction = pendingGroupTransaction,
                 editingGroupIndex = editingGroupIndex,
                 onNavigateToDetail = ::navigateToDetail,
+                aiChatViewModel = aiChatViewModel,
             )
         }
     }
+    } // ModalNavigationDrawer
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -311,6 +355,7 @@ private fun MainNavGraph(
     pendingGroupTransaction: MutableState<GroupTransactionItem?>,
     editingGroupIndex: MutableState<Int?>,
     onNavigateToDetail: (TransactionListItem, Boolean) -> Unit,
+    aiChatViewModel: AiChatViewModel,
 ) {
     NavHost(
         navController = navController,
@@ -368,6 +413,15 @@ private fun MainNavGraph(
                         .fillMaxSize()
                         .padding(innerPadding)
                         .consumeWindowInsets(innerPadding),
+            )
+        }
+        composable(TopLevelRoute.AiChat.route) {
+            AiChatScreen(
+                viewModel = aiChatViewModel,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .consumeWindowInsets(innerPadding),
             )
         }
         composable(

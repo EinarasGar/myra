@@ -111,6 +111,7 @@ mod modifiers;
         super::handlers::ai_conversation_handler::create_conversation,
         super::handlers::ai_conversation_handler::list_conversations,
         super::handlers::ai_conversation_handler::get_conversation,
+        super::handlers::ai_conversation_handler::delete_conversation,
         super::handlers::ai_conversation_handler::get_messages,
         super::handlers::ai_quick_upload_handler::create_quick_upload,
         super::handlers::ai_quick_upload_handler::list_quick_uploads,

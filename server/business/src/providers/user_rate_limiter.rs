@@ -5,7 +5,7 @@
 
 use std::sync::Mutex;
 
-use ai::models::chat::{Base64Image, ChatHistoryMessage};
+use ai::models::chat::{Base64Attachment, ChatHistoryMessage};
 use ai::rate_limit_provider::{RateLimitError as AiRateLimitError, RateLimitProvider};
 use uuid::Uuid;
 
@@ -43,7 +43,7 @@ impl RateLimitProvider for UserRateLimiter {
     async fn pre_check(
         &self,
         message: &str,
-        images: &[Base64Image],
+        images: &[Base64Attachment],
         history: &[ChatHistoryMessage],
     ) -> Result<(), AiRateLimitError> {
         // Estimator wants `Option<String>` for the message and DTO image
@@ -75,7 +75,9 @@ impl RateLimitProvider for UserRateLimiter {
         self.rate_limiter
             .check_quota(self.user_id, estimated)
             .await
-            .map_err(|_| AiRateLimitError::QuotaExceeded)?;
+            .map_err(|e| AiRateLimitError::QuotaExceeded {
+                reset_at: Some(e.reset_at),
+            })?;
 
         if !self
             .rate_limiter

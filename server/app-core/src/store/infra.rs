@@ -29,6 +29,9 @@ struct CacheEntry {
 pub struct SharedInfra {
     pub base_url: String,
     pub http: reqwest::Client,
+    /// Client for long-lived SSE streams — no overall request timeout (only a connect timeout),
+    /// so a long chat response isn't aborted mid-stream the way `http`'s 30s timeout would.
+    pub http_stream: reqwest::Client,
     cache: Mutex<HashMap<String, CacheEntry>>,
     cache_ttl: Duration,
     pub persistent_cache: PersistentCache,
@@ -48,11 +51,20 @@ impl SharedInfra {
             .build()
             .expect("failed to build HTTP client");
 
+        // Streaming client: no overall timeout (SSE responses can run for minutes); only bound the
+        // connection phase so a dead host still fails fast.
+        let http_stream = reqwest::Client::builder()
+            .use_preconfigured_tls(tls_config().clone())
+            .connect_timeout(Duration::from_secs(30))
+            .build()
+            .expect("failed to build streaming HTTP client");
+
         let persistent_cache = PersistentCache::open(&db_path);
 
         Self {
             base_url,
             http,
+            http_stream,
             cache: Mutex::new(HashMap::new()),
             cache_ttl: Duration::from_secs(cache_ttl_secs),
             persistent_cache,

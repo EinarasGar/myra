@@ -182,10 +182,7 @@ pub async fn get_file_url(
         .get_download_url(user_id, file_id)
         .await
         .map_err(ApiError::from_anyhow)?;
-    Ok(Json(FileUrlResponseViewModel {
-        url: file_url.url,
-        expires_in_seconds: file_url.expires_in_seconds,
-    }))
+    Ok(Json(file_url.into()))
 }
 
 /// Get File Thumbnail URL
@@ -217,8 +214,5 @@ pub async fn get_file_thumbnail(
         .get_thumbnail_url(user_id, file_id)
         .await
         .map_err(ApiError::from_anyhow)?;
-    Ok(Json(FileUrlResponseViewModel {
-        url: file_url.url,
-        expires_in_seconds: file_url.expires_in_seconds,
-    }))
+    Ok(Json(file_url.into()))
 }

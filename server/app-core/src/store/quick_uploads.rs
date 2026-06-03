@@ -291,7 +291,7 @@ pub async fn subscribe_processing_items(
 
         tokio::spawn(async move {
             let mut rx = sse::subscribe_sse(
-                &infra_clone.http,
+                &infra_clone.http_stream,
                 &infra_clone.base_url,
                 &uid,
                 &uid_for_sse,
@@ -437,7 +437,7 @@ pub async fn send_quick_upload_correction(
 
     // Subscribe to SSE for the result
     let mut rx = sse::subscribe_sse(
-        &infra.http,
+        &infra.http_stream,
         &infra.base_url,
         &user_id,
         upload_id,

@@ -1,6 +1,7 @@
 pub mod account_detail;
 pub mod account_transactions;
 pub mod accounts;
+pub mod ai_chat;
 pub mod asset_detail;
 pub mod infra;
 pub mod portfolio;
@@ -54,6 +55,7 @@ pub struct AppStore {
     asset_detail: Mutex<asset_detail::AssetDetailModule>,
     transactions: Mutex<transactions::TransactionsModule>,
     quick_uploads: Arc<Mutex<quick_uploads::QuickUploadsModule>>,
+    ai_chat: Arc<Mutex<ai_chat::AiChatModule>>,
 }
 
 #[uniffi::export(async_runtime = "tokio")]
@@ -111,6 +113,7 @@ impl AppStore {
             asset_detail: Mutex::new(asset_detail::AssetDetailModule::new()),
             transactions: Mutex::new(transactions::TransactionsModule::new()),
             quick_uploads: Arc::new(Mutex::new(quick_uploads::QuickUploadsModule::new())),
+            ai_chat: Arc::new(Mutex::new(ai_chat::AiChatModule::new())),
         }
     }
 
@@ -191,6 +194,7 @@ impl AppStore {
         self.asset_detail.lock().unwrap().clear_state();
         self.transactions.lock().unwrap().clear_state();
         self.quick_uploads.lock().unwrap().clear_state();
+        self.ai_chat.lock().unwrap().clear_state();
     }
 
     // ── Portfolio ────────────────────────────────────────────────────────
@@ -559,6 +563,95 @@ impl AppStore {
         let url = format!("{}/api/auth/me", self.infra.base_url);
         let body = self.infra.persistent_cache.get(&url)?;
         serde_json::from_str(&body).ok()
+    }
+
+    // ── AI Chat ───────────────────────────────────────────────────────────
+
+    pub fn observe_ai_chat(&self, observer: Box<dyn ai_chat::AiChatObserver>) {
+        self.ai_chat.lock().unwrap().set_observer(observer);
+    }
+
+    pub fn unobserve_ai_chat(&self) {
+        self.ai_chat.lock().unwrap().clear_observer();
+    }
+
+    pub async fn load_conversations(&self) {
+        let token = self.get_auth_token();
+        ai_chat::load_conversations(&self.infra, &self.ai_chat, token.as_deref()).await;
+    }
+
+    pub async fn create_conversation(
+        &self,
+        title: Option<String>,
+    ) -> Result<String, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        ai_chat::create_conversation(&self.infra, &self.ai_chat, title, token.as_deref()).await
+    }
+
+    pub async fn delete_conversation(
+        &self,
+        id: String,
+    ) -> Result<(), crate::error::ApiError> {
+        let token = self.get_auth_token();
+        ai_chat::delete_conversation(&self.infra, &self.ai_chat, &id, token.as_deref()).await
+    }
+
+    pub async fn load_messages(&self, conversation_id: String) {
+        let token = self.get_auth_token();
+        ai_chat::load_messages(&self.infra, &self.ai_chat, &conversation_id, token.as_deref()).await;
+    }
+
+    pub async fn upload_chat_file(
+        &self,
+        image_data: Vec<u8>,
+        mime_type: String,
+        file_name: String,
+    ) -> Result<String, crate::error::ApiError> {
+        let user_id = self.infra.user_id().ok_or_else(|| ApiError::Parse {
+            reason: "no user_id".into(),
+        })?;
+        let token = self.get_auth_token();
+        ai_chat::upload_file(&self.infra, &user_id, &image_data, &mime_type, &file_name, token.as_deref()).await
+    }
+
+    pub async fn send_message(
+        &self,
+        conversation_id: String,
+        text: String,
+        file_ids: Vec<String>,
+    ) {
+        let token = self.get_auth_token();
+        ai_chat::send_message(
+            &self.infra,
+            &self.ai_chat,
+            &conversation_id,
+            &text,
+            &file_ids,
+            token.as_deref(),
+        )
+        .await;
+    }
+
+    pub async fn approve_tool(
+        &self,
+        conversation_id: String,
+        call_id: String,
+        approved: bool,
+    ) {
+        let token = self.get_auth_token();
+        ai_chat::approve_tool(
+            &self.infra,
+            &self.ai_chat,
+            &conversation_id,
+            &call_id,
+            approved,
+            token.as_deref(),
+        )
+        .await;
+    }
+
+    pub fn cancel_stream(&self) {
+        ai_chat::cancel_stream(&self.ai_chat);
     }
 }
 
