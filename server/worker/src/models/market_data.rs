@@ -25,6 +25,12 @@ pub struct MarketDataClient {
     api_key: Option<String>,
 }
 
+impl Default for MarketDataClient {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MarketDataClient {
     pub fn new() -> Self {
         let base_url =

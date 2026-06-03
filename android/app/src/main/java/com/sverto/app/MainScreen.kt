@@ -26,28 +26,27 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -70,6 +69,9 @@ import com.sverto.app.feature.accounts.AccountDetailScreen
 import com.sverto.app.feature.accounts.AccountTransactionsScreen
 import com.sverto.app.feature.accounts.AccountsScreen
 import com.sverto.app.feature.accounts.AssetDetailScreen
+import com.sverto.app.feature.aichat.AiChatScreen
+import com.sverto.app.feature.aichat.AiChatViewModel
+import com.sverto.app.feature.aichat.ConversationDrawer
 import com.sverto.app.feature.portfolio.PortfolioScreen
 import com.sverto.app.feature.transactions.TransactionDetailScreen
 import com.sverto.app.feature.transactions.TransactionsScreen
@@ -83,9 +85,7 @@ import com.sverto.app.feature.transactions.group.CreateTransactionGroupViewModel
 import com.sverto.app.feature.transactions.group.GroupTransactionItem
 import com.sverto.app.feature.transactions.quickupload.QuickUploadUiItem
 import com.sverto.app.feature.transactions.quickupload.QuickUploadViewModel
-import com.sverto.app.feature.aichat.ConversationDrawer
-import com.sverto.app.feature.aichat.AiChatViewModel
-import com.sverto.app.feature.aichat.AiChatScreen
+import kotlinx.coroutines.launch
 import uniffi.sverto_core.ConnectionStatus
 import uniffi.sverto_core.TransactionListItem
 
@@ -216,116 +216,116 @@ fun MainScreen(
                 )
             },
         ) {
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            containerColor = MaterialTheme.colorScheme.surface,
-            topBar = {
-                Column {
-                    AnimatedVisibility(
-                        visible = isTopLevel,
-                        enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
-                        exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
-                    ) {
-                        CenterAlignedTopAppBar(
-                            navigationIcon = {
-                                if (isAiChatTab) {
-                                    IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                        Icon(Icons.Default.Menu, contentDescription = "Menu")
-                                    }
-                                }
-                            },
-                            title = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.ic_sverto_logo),
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.height(24.dp),
-                                    )
-                                    Spacer(Modifier.width(8.dp))
-                                    Text("Sverto")
-                                }
-                            },
-                            actions = {
-                                if (BuildConfig.CLERK_PUBLISHABLE_KEY.isNotBlank()) {
-                                    UserButton(clerkTheme = LocalClerkTheme.current)
-                                }
-                            },
-                            colors =
-                                TopAppBarDefaults.topAppBarColors(
-                                    containerColor = MaterialTheme.colorScheme.surface,
-                                ),
-                        )
-                    }
-                    OfflineBanner(status = connectionStatus.value)
-                }
-            },
-            bottomBar = {
-                AnimatedVisibility(
-                    visible = isTopLevel,
-                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
-                ) {
-                    NavigationBar {
-                        TopLevelRoute.entries.forEach { route ->
-                            val selected = currentRoute == route.route
-                            NavigationBarItem(
-                                selected = selected,
-                                onClick = {
-                                    navController.navigate(route.route) {
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                containerColor = MaterialTheme.colorScheme.surface,
+                topBar = {
+                    Column {
+                        AnimatedVisibility(
+                            visible = isTopLevel,
+                            enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
+                            exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
+                        ) {
+                            CenterAlignedTopAppBar(
+                                navigationIcon = {
+                                    if (isAiChatTab) {
+                                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                            Icon(Icons.Default.Menu, contentDescription = "Menu")
                                         }
-                                        launchSingleTop = true
-                                        restoreState = true
                                     }
                                 },
-                                icon = {
-                                    Icon(
-                                        imageVector =
-                                            if (selected) {
-                                                route.selectedIcon
-                                            } else {
-                                                route.unselectedIcon
-                                            },
-                                        contentDescription = route.label,
-                                    )
+                                title = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            painter = painterResource(id = R.drawable.ic_sverto_logo),
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.height(24.dp),
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        Text("Sverto")
+                                    }
                                 },
-                                label = { Text(route.label) },
+                                actions = {
+                                    if (BuildConfig.CLERK_PUBLISHABLE_KEY.isNotBlank()) {
+                                        UserButton(clerkTheme = LocalClerkTheme.current)
+                                    }
+                                },
+                                colors =
+                                    TopAppBarDefaults.topAppBarColors(
+                                        containerColor = MaterialTheme.colorScheme.surface,
+                                    ),
                             )
                         }
+                        OfflineBanner(status = connectionStatus.value)
                     }
-                }
-            },
-        ) { innerPadding ->
-            MainNavGraph(
-                navController = navController,
-                innerPadding = innerPadding,
-                sharedScope = sharedScope,
-                transactionsViewModel = transactionsViewModel,
-                quickUploadItems = quickUploadItems,
-                photoPickerLauncher = photoPickerLauncher,
-                onQuickUploadItemClick = { item ->
-                    val route =
-                        if (item.proposalType == "transaction_group") {
-                            "createTransactionGroup?quickUploadId=${item.id}"
-                        } else {
-                            "createTransaction/regular_transaction?quickUploadId=${item.id}"
-                        }
-                    navController.navigate(route)
                 },
-                onQuickUploadRetry = { quickUploadViewModel.retry(it) },
-                onQuickUploadDismiss = { quickUploadViewModel.dismiss(it) },
-                onRefreshQuickUploads = { quickUploadViewModel.refresh() },
-                onProposalCompleted = { quickUploadViewModel.onProposalCompleted(it) },
-                transactionCache = transactionCache,
-                pendingGroupTransaction = pendingGroupTransaction,
-                editingGroupIndex = editingGroupIndex,
-                onNavigateToDetail = ::navigateToDetail,
-                aiChatViewModel = aiChatViewModel,
-            )
+                bottomBar = {
+                    AnimatedVisibility(
+                        visible = isTopLevel,
+                        enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                        exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
+                    ) {
+                        NavigationBar {
+                            TopLevelRoute.entries.forEach { route ->
+                                val selected = currentRoute == route.route
+                                NavigationBarItem(
+                                    selected = selected,
+                                    onClick = {
+                                        navController.navigate(route.route) {
+                                            popUpTo(navController.graph.findStartDestination().id) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                    },
+                                    icon = {
+                                        Icon(
+                                            imageVector =
+                                                if (selected) {
+                                                    route.selectedIcon
+                                                } else {
+                                                    route.unselectedIcon
+                                                },
+                                            contentDescription = route.label,
+                                        )
+                                    },
+                                    label = { Text(route.label) },
+                                )
+                            }
+                        }
+                    }
+                },
+            ) { innerPadding ->
+                MainNavGraph(
+                    navController = navController,
+                    innerPadding = innerPadding,
+                    sharedScope = sharedScope,
+                    transactionsViewModel = transactionsViewModel,
+                    quickUploadItems = quickUploadItems,
+                    photoPickerLauncher = photoPickerLauncher,
+                    onQuickUploadItemClick = { item ->
+                        val route =
+                            if (item.proposalType == "transaction_group") {
+                                "createTransactionGroup?quickUploadId=${item.id}"
+                            } else {
+                                "createTransaction/regular_transaction?quickUploadId=${item.id}"
+                            }
+                        navController.navigate(route)
+                    },
+                    onQuickUploadRetry = { quickUploadViewModel.retry(it) },
+                    onQuickUploadDismiss = { quickUploadViewModel.dismiss(it) },
+                    onRefreshQuickUploads = { quickUploadViewModel.refresh() },
+                    onProposalCompleted = { quickUploadViewModel.onProposalCompleted(it) },
+                    transactionCache = transactionCache,
+                    pendingGroupTransaction = pendingGroupTransaction,
+                    editingGroupIndex = editingGroupIndex,
+                    onNavigateToDetail = ::navigateToDetail,
+                    aiChatViewModel = aiChatViewModel,
+                )
+            }
         }
-    }
     } // ModalNavigationDrawer
 }
 
@@ -418,10 +418,11 @@ private fun MainNavGraph(
         composable(TopLevelRoute.AiChat.route) {
             AiChatScreen(
                 viewModel = aiChatViewModel,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .consumeWindowInsets(innerPadding),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .consumeWindowInsets(innerPadding),
             )
         }
         composable(
@@ -703,11 +704,12 @@ private fun MainNavGraph(
         }
         composable(
             route = ACCOUNT_DETAIL_ROUTE,
-            arguments = listOf(
-                navArgument("accountId") { type = NavType.StringType },
-                navArgument("accountName") { type = NavType.StringType },
-                navArgument("accountTypeId") { type = NavType.IntType },
-            ),
+            arguments =
+                listOf(
+                    navArgument("accountId") { type = NavType.StringType },
+                    navArgument("accountName") { type = NavType.StringType },
+                    navArgument("accountTypeId") { type = NavType.IntType },
+                ),
         ) { backStackEntry ->
             val accountId = backStackEntry.arguments?.getString("accountId") ?: return@composable
             val accountName = backStackEntry.arguments?.getString("accountName") ?: return@composable

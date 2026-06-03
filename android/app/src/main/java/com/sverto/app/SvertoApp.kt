@@ -21,12 +21,13 @@ class SvertoAuthProvider : AuthProvider {
             return cachedToken
         }
 
-        val token = runBlocking {
-            when (val result = Clerk.auth.getToken()) {
-                is ClerkResult.Success -> result.value
-                is ClerkResult.Failure -> null
+        val token =
+            runBlocking {
+                when (val result = Clerk.auth.getToken()) {
+                    is ClerkResult.Success -> result.value
+                    is ClerkResult.Failure -> null
+                }
             }
-        }
 
         if (token != null) {
             cachedToken = token
@@ -90,4 +91,3 @@ class SvertoApp : Application() {
         )
     }
 }
-

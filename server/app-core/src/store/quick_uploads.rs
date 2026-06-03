@@ -21,6 +21,12 @@ pub struct QuickUploadsModule {
     cancelled: Arc<AtomicBool>,
 }
 
+impl Default for QuickUploadsModule {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl QuickUploadsModule {
     pub fn new() -> Self {
         Self {

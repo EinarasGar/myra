@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uniffi.sverto_core.AiChatObserver
+import uniffi.sverto_core.ApiException
 import uniffi.sverto_core.AppStore
 import uniffi.sverto_core.ChatMessage
 import uniffi.sverto_core.ChatStreamEvent
@@ -27,36 +28,44 @@ class AiChatViewModel(
 
     private val handler = Handler(Looper.getMainLooper())
 
-    private val observer = object : AiChatObserver {
-        override fun onConversationsChanged(conversations: List<uniffi.sverto_core.ConversationItem>) {
-            handler.post { _uiState.update { it.copy(conversations = conversations) } }
-        }
+    private val observer =
+        object : AiChatObserver {
+            override fun onConversationsChanged(conversations: List<uniffi.sverto_core.ConversationItem>) {
+                handler.post { _uiState.update { it.copy(conversations = conversations) } }
+            }
 
-        override fun onMessagesChanged(conversationId: String, messages: List<ChatMessage>) {
-            // Derive the pending approval from the loaded messages so a conversation reloaded while
-            // awaiting approval shows the approval card again (its tool call is "approval-requested").
-            val pendingCallId = messages
-                .flatMap { it.parts }
-                .filterIsInstance<MessagePart.ToolCall>()
-                .firstOrNull { it.state == "approval-requested" }
-                ?.callId
-            handler.post {
-                _uiState.update {
-                    it.copy(
-                        activeConversationId = conversationId,
-                        messages = messages,
-                        isStreaming = false,
-                        pendingApprovalCallId = pendingCallId,
-                        error = null,
-                    )
+            override fun onMessagesChanged(
+                conversationId: String,
+                messages: List<ChatMessage>,
+            ) {
+                // Derive the pending approval from the loaded messages so a conversation reloaded while
+                // awaiting approval shows the approval card again (its tool call is "approval-requested").
+                val pendingCallId =
+                    messages
+                        .flatMap { it.parts }
+                        .filterIsInstance<MessagePart.ToolCall>()
+                        .firstOrNull { it.state == "approval-requested" }
+                        ?.callId
+                handler.post {
+                    _uiState.update {
+                        it.copy(
+                            activeConversationId = conversationId,
+                            messages = messages,
+                            isStreaming = false,
+                            pendingApprovalCallId = pendingCallId,
+                            error = null,
+                        )
+                    }
                 }
             }
-        }
 
-        override fun onStreamEvent(conversationId: String, event: ChatStreamEvent) {
-            handler.post { applyStreamEvent(event) }
+            override fun onStreamEvent(
+                conversationId: String,
+                event: ChatStreamEvent,
+            ) {
+                handler.post { applyStreamEvent(event) }
+            }
         }
-    }
 
     init {
         store.observeAiChat(observer)
@@ -67,7 +76,7 @@ class AiChatViewModel(
         viewModelScope.launch {
             try {
                 store.loadConversations()
-            } catch (e: Exception) {
+            } catch (e: ApiException) {
                 Log.w("AiChatViewModel", "Failed to load conversations", e)
             }
         }
@@ -78,7 +87,7 @@ class AiChatViewModel(
             _uiState.update { it.copy(messages = emptyList(), activeConversationId = id) }
             try {
                 store.loadMessages(id)
-            } catch (e: Exception) {
+            } catch (e: ApiException) {
                 Log.e("AiChatViewModel", "Failed to load messages", e)
                 _uiState.update { it.copy(error = "Failed to load conversation") }
             }
@@ -110,7 +119,7 @@ class AiChatViewModel(
             _uiState.update { it.copy(messages = emptyList(), activeConversationId = null) }
             try {
                 store.deleteConversation(id)
-            } catch (e: Exception) {
+            } catch (e: ApiException) {
                 Log.e("AiChatViewModel", "Failed to delete conversation", e)
             }
         }
@@ -142,7 +151,7 @@ class AiChatViewModel(
                 try {
                     val newId = store.createConversation(null)
                     doSendMessage(newId, text, state.selectedFileUris, contentResolver)
-                } catch (e: Exception) {
+                } catch (e: ApiException) {
                     Log.e("AiChatViewModel", "Failed to create conversation for message", e)
                     _uiState.update { it.copy(error = "Failed to create conversation: ${e.message}") }
                 }
@@ -153,6 +162,9 @@ class AiChatViewModel(
         doSendMessage(convId, text, state.selectedFileUris, contentResolver)
     }
 
+    // Broad catches are intentional: per-file upload is best-effort (skip a file on any IO/parse
+    // failure) and the outer block surfaces any send failure to the UI as an error state.
+    @Suppress("TooGenericExceptionCaught")
     private fun doSendMessage(
         convId: String,
         text: String,
@@ -162,15 +174,16 @@ class AiChatViewModel(
         // Echo the user's message immediately. The local content:// uri is shown until the final
         // server reload replaces it with the persisted attachment. Listing it last (as a "user"
         // turn) also gives applyStreamEvent a clean boundary so the reply starts a new bubble.
-        val userParts = buildList {
-            fileUris.forEach { uri ->
-                val mime = contentResolver.getType(uri) ?: "application/octet-stream"
-                add(MessagePart.File(fileId = "", mediaType = mime, url = uri.toString()))
+        val userParts =
+            buildList {
+                fileUris.forEach { uri ->
+                    val mime = contentResolver.getType(uri) ?: "application/octet-stream"
+                    add(MessagePart.File(fileId = "", mediaType = mime, url = uri.toString()))
+                }
+                if (text.isNotEmpty()) {
+                    add(MessagePart.Text(text))
+                }
             }
-            if (text.isNotEmpty()) {
-                add(MessagePart.Text(text))
-            }
-        }
         _uiState.update {
             it.copy(
                 // Mark this conversation active so subsequent messages stay in it. (Previously the
@@ -190,18 +203,19 @@ class AiChatViewModel(
                 val fileIds = mutableListOf<String>()
                 for (uri in fileUris) {
                     try {
-                        val fileId = withContext(Dispatchers.IO) {
-                            val mimeType = contentResolver.getType(uri) ?: "image/jpeg"
-                            val inputStream = contentResolver.openInputStream(uri)
-                            val bytes = inputStream?.readBytes()
-                            inputStream?.close()
-                            if (bytes != null) {
-                                val fileName = uri.lastPathSegment ?: "image.jpg"
-                                store.uploadChatFile(bytes, mimeType, fileName)
-                            } else {
-                                null
+                        val fileId =
+                            withContext(Dispatchers.IO) {
+                                val mimeType = contentResolver.getType(uri) ?: "image/jpeg"
+                                val inputStream = contentResolver.openInputStream(uri)
+                                val bytes = inputStream?.readBytes()
+                                inputStream?.close()
+                                if (bytes != null) {
+                                    val fileName = uri.lastPathSegment ?: "image.jpg"
+                                    store.uploadChatFile(bytes, mimeType, fileName)
+                                } else {
+                                    null
+                                }
                             }
-                        }
                         if (fileId != null) {
                             fileIds.add(fileId)
                         }
@@ -231,21 +245,23 @@ class AiChatViewModel(
         // Move the pending tool out of "approval-requested" so the streamed result can attach to it
         // (approved -> executing; denied -> terminal denied state).
         val newToolState = if (approved) "input-available" else "output-denied"
-        val updatedMessages = state.messages.map { msg ->
-            if (msg.role != "assistant") {
-                msg
-            } else {
-                msg.copy(
-                    parts = msg.parts.map { part ->
-                        if (part is MessagePart.ToolCall && part.callId == callId) {
-                            part.copy(state = newToolState)
-                        } else {
-                            part
-                        }
-                    },
-                )
+        val updatedMessages =
+            state.messages.map { msg ->
+                if (msg.role != "assistant") {
+                    msg
+                } else {
+                    msg.copy(
+                        parts =
+                            msg.parts.map { part ->
+                                if (part is MessagePart.ToolCall && part.callId == callId) {
+                                    part.copy(state = newToolState)
+                                } else {
+                                    part
+                                }
+                            },
+                    )
+                }
             }
-        }
 
         _uiState.update {
             it.copy(
@@ -258,7 +274,7 @@ class AiChatViewModel(
         viewModelScope.launch {
             try {
                 store.approveTool(convId, callId, approved)
-            } catch (e: Exception) {
+            } catch (e: ApiException) {
                 _uiState.update {
                     it.copy(
                         isStreaming = false,
@@ -290,11 +306,12 @@ class AiChatViewModel(
             val lastMsg = messages.lastOrNull()
             // Only continue the current assistant turn. If the last message is the user's (just
             // echoed) message, start fresh parts so the reply becomes its own bubble.
-            val lastParts = if (lastMsg != null && lastMsg.role == "assistant") {
-                lastMsg.parts.toMutableList()
-            } else {
-                mutableListOf()
-            }
+            val lastParts =
+                if (lastMsg != null && lastMsg.role == "assistant") {
+                    lastMsg.parts.toMutableList()
+                } else {
+                    mutableListOf()
+                }
 
             fun commitAssistantParts() {
                 if (lastMsg != null && lastMsg.role == "assistant") {
@@ -333,20 +350,22 @@ class AiChatViewModel(
                     )
                 }
                 is ChatStreamEvent.ToolResult -> {
-                    val idx = lastParts.indexOfLast { part ->
-                        part is MessagePart.ToolCall &&
-                            part.state != "approval-requested" &&
-                            part.output == null
-                    }
+                    val idx =
+                        lastParts.indexOfLast { part ->
+                            part is MessagePart.ToolCall &&
+                                part.state != "approval-requested" &&
+                                part.output == null
+                        }
                     if (idx >= 0) {
                         val existing = lastParts[idx] as MessagePart.ToolCall
                         lastParts[idx] = existing.copy(state = "output-available", output = event.output)
                     }
                 }
                 is ChatStreamEvent.ToolApprovalRequired -> {
-                    val idx = lastParts.indexOfLast { part ->
-                        part is MessagePart.ToolCall && part.callId == event.callId
-                    }
+                    val idx =
+                        lastParts.indexOfLast { part ->
+                            part is MessagePart.ToolCall && part.callId == event.callId
+                        }
                     if (idx >= 0) {
                         val existing = lastParts[idx] as MessagePart.ToolCall
                         lastParts[idx] = existing.copy(state = "approval-requested", output = null)

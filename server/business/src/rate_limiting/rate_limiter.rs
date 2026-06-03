@@ -517,9 +517,7 @@ mod tests {
         redis
             .expect_execute_script_string()
             .returning(|_| Some("user:hourly:input:50000".to_string()));
-        redis
-            .expect_clone()
-            .returning(|| RedisConnection::default());
+        redis.expect_clone().returning(RedisConnection::default);
 
         let db = mock_db_with_limits();
         let limiter = RateLimiter::new(redis, db);
@@ -539,9 +537,7 @@ mod tests {
         redis
             .expect_execute_script_string()
             .returning(|_| Some("global:monthly:output:10000000".to_string()));
-        redis
-            .expect_clone()
-            .returning(|| RedisConnection::default());
+        redis.expect_clone().returning(RedisConnection::default);
 
         let db = mock_db_with_limits();
         let limiter = RateLimiter::new(redis, db);
@@ -669,9 +665,7 @@ mod tests {
     async fn concurrency_slot_acquired_under_limit() {
         let mut redis = RedisConnection::default();
         redis.expect_execute_script_int().returning(|_| Some(1));
-        redis
-            .expect_clone()
-            .returning(|| RedisConnection::default());
+        redis.expect_clone().returning(RedisConnection::default);
 
         let db = mock_db_with_limits();
         let limiter = RateLimiter::new(redis, db);
@@ -684,9 +678,7 @@ mod tests {
         let mut redis = RedisConnection::default();
         redis.expect_execute_script_int().returning(|_| Some(3));
         redis.expect_decr().returning(|_| ());
-        redis
-            .expect_clone()
-            .returning(|| RedisConnection::default());
+        redis.expect_clone().returning(RedisConnection::default);
 
         let db = mock_db_with_limits();
         let limiter = RateLimiter::new(redis, db);
@@ -698,9 +690,7 @@ mod tests {
     async fn concurrency_slot_fails_open_when_redis_unavailable() {
         let mut redis = RedisConnection::default();
         redis.expect_execute_script_int().returning(|_| None);
-        redis
-            .expect_clone()
-            .returning(|| RedisConnection::default());
+        redis.expect_clone().returning(RedisConnection::default);
 
         let db = mock_db_with_limits();
         let limiter = RateLimiter::new(redis, db);
@@ -716,9 +706,7 @@ mod tests {
         redis
             .expect_execute_script_vec()
             .returning(|_| Some(vec![100, 50, 200, 100, 500000, 500000, 10000000, 10000000]));
-        redis
-            .expect_clone()
-            .returning(|| RedisConnection::default());
+        redis.expect_clone().returning(RedisConnection::default);
 
         let mut db = MyraDb::default();
         db.expect_execute().returning(|_| Ok(()));
@@ -736,9 +724,7 @@ mod tests {
     async fn record_usage_without_redis() {
         let mut redis = RedisConnection::default();
         redis.expect_execute_script_vec().returning(|_| None);
-        redis
-            .expect_clone()
-            .returning(|| RedisConnection::default());
+        redis.expect_clone().returning(RedisConnection::default);
 
         let mut db = MyraDb::default();
         db.expect_execute().returning(|_| Ok(()));

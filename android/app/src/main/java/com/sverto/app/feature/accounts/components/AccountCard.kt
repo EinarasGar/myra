@@ -151,11 +151,12 @@ fun AccountCard(
                         if (account.accountTypeId == 3 && gain != null) {
                             val gainColor = if (gain >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                             val sign = if (gain >= 0) "+" else "-"
-                            val pct = if (balance > 0) {
-                                (gain / balance) * 100.0
-                            } else {
-                                0.0
-                            }
+                            val pct =
+                                if (balance > 0) {
+                                    (gain / balance) * 100.0
+                                } else {
+                                    0.0
+                                }
                             Text(
                                 text = "$sign${formatCurrency(abs(gain))} (${formatPercent(pct)}%)",
                                 style = MaterialTheme.typography.labelSmall,

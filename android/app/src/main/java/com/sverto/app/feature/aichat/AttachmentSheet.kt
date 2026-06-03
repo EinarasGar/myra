@@ -35,9 +35,10 @@ fun AttachmentSheet(
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp, end = 16.dp, bottom = 24.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, bottom = 24.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             AttachTile(

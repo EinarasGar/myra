@@ -71,7 +71,7 @@ fn build_child(
     let transaction_id = input
         .transaction_id
         .as_deref()
-        .map(|id| Uuid::parse_str(id))
+        .map(Uuid::parse_str)
         .transpose()
         .map_err(|e| ApiError::Parse {
             reason: format!("invalid transaction_id: {e}"),

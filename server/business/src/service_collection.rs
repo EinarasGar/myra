@@ -5,6 +5,7 @@ use dal::file_provider::FileProvider;
 use dal::job_queue::JobQueueHandle;
 use dal::noop_file_provider::NoOpFileProvider;
 use dal::pg_notify_connection::PgNotifyConnection;
+#[mockall_double::double]
 use dal::redis_connection::RedisConnection;
 use dal::s3_file_provider::S3FileProvider;
 use std::sync::Arc;

@@ -19,6 +19,12 @@ pub struct AssetDetailModule {
     asset_id: i32,
 }
 
+impl Default for AssetDetailModule {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AssetDetailModule {
     pub fn new() -> Self {
         Self {

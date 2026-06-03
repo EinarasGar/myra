@@ -43,13 +43,14 @@ import androidx.compose.ui.unit.dp
 
 private enum class ToolPhase { RUNNING, DONE, APPROVAL, DENIED, ERROR }
 
-private fun toolPhaseOf(state: String): ToolPhase = when (state) {
-    "output-available" -> ToolPhase.DONE
-    "approval-requested" -> ToolPhase.APPROVAL
-    "output-denied" -> ToolPhase.DENIED
-    "output-error" -> ToolPhase.ERROR
-    else -> ToolPhase.RUNNING // input-streaming / input-available / approval-responded
-}
+private fun toolPhaseOf(state: String): ToolPhase =
+    when (state) {
+        "output-available" -> ToolPhase.DONE
+        "approval-requested" -> ToolPhase.APPROVAL
+        "output-denied" -> ToolPhase.DENIED
+        "output-error" -> ToolPhase.ERROR
+        else -> ToolPhase.RUNNING // input-streaming / input-available / approval-responded
+    }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -77,9 +78,10 @@ fun ToolCallCard(
     ) {
         Column {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 LeadingTile(phase)
@@ -104,20 +106,22 @@ fun ToolCallCard(
                     Text(
                         text = statusLabel(phase),
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (phase == ToolPhase.RUNNING) {
-                            shimmerTextColor(active = true)
-                        } else {
-                            statusColor(phase)
-                        },
+                        color =
+                            if (phase == ToolPhase.RUNNING) {
+                                shimmerTextColor(active = true)
+                            } else {
+                                statusColor(phase)
+                            },
                     )
                 }
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
                     contentDescription = if (expanded) "Collapse" else "Expand",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier
-                        .size(20.dp)
-                        .rotate(chevronRotation),
+                    modifier =
+                        Modifier
+                            .size(20.dp)
+                            .rotate(chevronRotation),
                 )
             }
 
@@ -141,18 +145,24 @@ fun ToolCallCard(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun LeadingTile(phase: ToolPhase) {
-    val (tileColor, contentColor) = when (phase) {
-        ToolPhase.RUNNING -> MaterialTheme.colorScheme.secondaryContainer to
-            MaterialTheme.colorScheme.onSecondaryContainer
-        ToolPhase.DONE -> MaterialTheme.colorScheme.primaryContainer to
-            MaterialTheme.colorScheme.onPrimaryContainer
-        ToolPhase.APPROVAL -> MaterialTheme.colorScheme.tertiaryContainer to
-            MaterialTheme.colorScheme.onTertiaryContainer
-        ToolPhase.DENIED -> MaterialTheme.colorScheme.surfaceContainerHighest to
-            MaterialTheme.colorScheme.onSurfaceVariant
-        ToolPhase.ERROR -> MaterialTheme.colorScheme.errorContainer to
-            MaterialTheme.colorScheme.onErrorContainer
-    }
+    val (tileColor, contentColor) =
+        when (phase) {
+            ToolPhase.RUNNING ->
+                MaterialTheme.colorScheme.secondaryContainer to
+                    MaterialTheme.colorScheme.onSecondaryContainer
+            ToolPhase.DONE ->
+                MaterialTheme.colorScheme.primaryContainer to
+                    MaterialTheme.colorScheme.onPrimaryContainer
+            ToolPhase.APPROVAL ->
+                MaterialTheme.colorScheme.tertiaryContainer to
+                    MaterialTheme.colorScheme.onTertiaryContainer
+            ToolPhase.DENIED ->
+                MaterialTheme.colorScheme.surfaceContainerHighest to
+                    MaterialTheme.colorScheme.onSurfaceVariant
+            ToolPhase.ERROR ->
+                MaterialTheme.colorScheme.errorContainer to
+                    MaterialTheme.colorScheme.onErrorContainer
+        }
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = tileColor,
@@ -177,7 +187,10 @@ private fun LeadingTile(phase: ToolPhase) {
 }
 
 @Composable
-private fun CodeBox(caption: String, body: String) {
+private fun CodeBox(
+    caption: String,
+    body: String,
+) {
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surface,
@@ -201,42 +214,56 @@ private fun CodeBox(caption: String, body: String) {
     }
 }
 
-private fun phaseIcon(phase: ToolPhase): ImageVector = when (phase) {
-    ToolPhase.DONE -> Icons.Default.Check
-    ToolPhase.APPROVAL -> Icons.Default.Schedule
-    ToolPhase.DENIED -> Icons.Default.Cancel
-    ToolPhase.ERROR -> Icons.Default.ErrorOutline
-    ToolPhase.RUNNING -> Icons.Default.Build
-}
+private fun phaseIcon(phase: ToolPhase): ImageVector =
+    when (phase) {
+        ToolPhase.DONE -> Icons.Default.Check
+        ToolPhase.APPROVAL -> Icons.Default.Schedule
+        ToolPhase.DENIED -> Icons.Default.Cancel
+        ToolPhase.ERROR -> Icons.Default.ErrorOutline
+        ToolPhase.RUNNING -> Icons.Default.Build
+    }
 
-private fun statusLabel(phase: ToolPhase): String = when (phase) {
-    ToolPhase.RUNNING -> "Running…"
-    ToolPhase.DONE -> "Complete"
-    ToolPhase.APPROVAL -> "Approval needed"
-    ToolPhase.DENIED -> "Denied"
-    ToolPhase.ERROR -> "Error"
-}
+private fun statusLabel(phase: ToolPhase): String =
+    when (phase) {
+        ToolPhase.RUNNING -> "Running…"
+        ToolPhase.DONE -> "Complete"
+        ToolPhase.APPROVAL -> "Approval needed"
+        ToolPhase.DENIED -> "Denied"
+        ToolPhase.ERROR -> "Error"
+    }
 
 @Composable
-private fun statusColor(phase: ToolPhase): Color = when (phase) {
-    ToolPhase.DENIED, ToolPhase.ERROR -> MaterialTheme.colorScheme.error
-    else -> MaterialTheme.colorScheme.onSurfaceVariant
-}
+private fun statusColor(phase: ToolPhase): Color =
+    when (phase) {
+        ToolPhase.DENIED, ToolPhase.ERROR -> MaterialTheme.colorScheme.error
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
 
-private fun formatJson(json: String): String {
-    return try {
+private fun formatJson(json: String): String =
+    try {
         val sb = StringBuilder()
         var indent = 0
         var inString = false
         for (ch in json) {
             when {
-                ch == '"' -> { inString = !inString; sb.append(ch) }
+                ch == '"' -> {
+                    inString = !inString
+                    sb.append(ch)
+                }
                 ch == '{' || ch == '[' -> {
                     sb.append(ch)
-                    if (!inString) { sb.append('\n'); indent++; sb.append("  ".repeat(indent)) }
+                    if (!inString) {
+                        sb.append('\n')
+                        indent++
+                        sb.append("  ".repeat(indent))
+                    }
                 }
                 ch == '}' || ch == ']' -> {
-                    if (!inString) { indent--; sb.append('\n'); sb.append("  ".repeat(indent)) }
+                    if (!inString) {
+                        indent--
+                        sb.append('\n')
+                        sb.append("  ".repeat(indent))
+                    }
                     sb.append(ch)
                 }
                 ch == ',' && !inString -> {
@@ -244,7 +271,9 @@ private fun formatJson(json: String): String {
                     sb.append('\n')
                     sb.append("  ".repeat(indent))
                 }
-                ch == ':' && !inString -> { sb.append(": ") }
+                ch == ':' && !inString -> {
+                    sb.append(": ")
+                }
                 else -> sb.append(ch)
             }
         }
@@ -252,4 +281,3 @@ private fun formatJson(json: String): String {
     } catch (_: Exception) {
         json
     }
-}

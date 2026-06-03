@@ -119,8 +119,8 @@ pub fn insert_message(
         .values_panic([
             conversation_id.into(),
             role.into(),
-            content_expr.into(),
-            file_ids_expr.into(),
+            content_expr,
+            file_ids_expr,
         ])
         .returning(Query::returning().column(AiMessagesIden::Id))
         .build_sqlx(PostgresQueryBuilder)

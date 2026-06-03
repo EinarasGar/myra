@@ -158,7 +158,10 @@ function ToolInputTable({ input }: { input: unknown }) {
   );
 }
 
-type ToolCallPart = Extract<ChatMessage["parts"][number], { type: "tool_call" }>;
+type ToolCallPart = Extract<
+  ChatMessage["parts"][number],
+  { type: "tool_call" }
+>;
 
 function extractGroupEntries(input: unknown): Record<string, unknown>[] | null {
   if (!input || typeof input !== "object") return null;
@@ -333,9 +336,7 @@ function BulkApprovalCard({
   return (
     <div className="space-y-3 rounded-md border p-3">
       <div className="flex items-center justify-between gap-2">
-        <div className="text-sm font-medium">
-          Review {parts.length} actions
-        </div>
+        <div className="text-sm font-medium">Review {parts.length} actions</div>
         <div className="flex items-center gap-1">
           <Button
             size="icon"
@@ -379,11 +380,7 @@ function BulkApprovalCard({
         >
           Reject all
         </Button>
-        <Button
-          size="sm"
-          disabled={submitting}
-          onClick={() => handleAll(true)}
-        >
+        <Button size="sm" disabled={submitting} onClick={() => handleAll(true)}>
           {submitting && <Loader2 className="size-4 animate-spin" />}
           Accept all
         </Button>
@@ -550,10 +547,7 @@ function formatConversationDate(dateStr: string) {
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-function useConversations(
-  userId: string,
-  activeConversationId: string | null,
-) {
+function useConversations(userId: string, activeConversationId: string | null) {
   const [conversations, setConversations] = useState<
     IdentifiableConversationResponse[]
   >([]);

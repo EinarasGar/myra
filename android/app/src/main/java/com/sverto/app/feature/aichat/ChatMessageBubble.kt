@@ -26,9 +26,9 @@ private val BubbleMaxWidth = 340.dp
 @Composable
 fun ChatMessageBubble(
     message: ChatMessage,
+    modifier: Modifier = Modifier,
     isStreaming: Boolean = false,
     isLastMessage: Boolean = false,
-    modifier: Modifier = Modifier,
 ) {
     val isUser = message.role == "user"
 
@@ -70,9 +70,10 @@ fun ChatMessageBubble(
                     AttachmentThumbnail(
                         url = part.url,
                         mediaType = part.mediaType,
-                        modifier = Modifier
-                            .width(220.dp)
-                            .height(160.dp),
+                        modifier =
+                            Modifier
+                                .width(220.dp)
+                                .height(160.dp),
                     )
                 }
             }

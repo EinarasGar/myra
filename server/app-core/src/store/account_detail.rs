@@ -19,6 +19,12 @@ pub struct AccountDetailModule {
     account_id: String,
 }
 
+impl Default for AccountDetailModule {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AccountDetailModule {
     pub fn new() -> Self {
         Self {

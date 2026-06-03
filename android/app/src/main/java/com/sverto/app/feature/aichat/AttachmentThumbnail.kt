@@ -29,9 +29,10 @@ fun AttachmentThumbnail(
         )
     } else {
         Box(
-            modifier = modifier
-                .clip(shape)
-                .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+            modifier =
+                modifier
+                    .clip(shape)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest),
             contentAlignment = Alignment.Center,
         ) {
             Text(

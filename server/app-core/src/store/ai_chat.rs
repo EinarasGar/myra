@@ -1,7 +1,7 @@
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Mutex;
 use std::collections::HashSet;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::Mutex;
 
 use crate::error::ApiError;
 use crate::models::{ChatMessage, ChatStreamEvent, ConversationItem, MessagePart};
@@ -22,6 +22,12 @@ pub struct AiChatModule {
     pub observer: Option<Box<dyn AiChatObserver>>,
     pub pending_approval: Option<(String, String)>,
     pub cancelled: Option<Arc<AtomicBool>>,
+}
+
+impl Default for AiChatModule {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl AiChatModule {
@@ -315,8 +321,7 @@ pub async fn load_messages(
                     all_parts.extend(parts);
 
                     let prev = merged.last();
-                    let should_merge =
-                        prev.map_or(false, |p| p.role == role && role == "assistant");
+                    let should_merge = prev.is_some_and(|p| p.role == role && role == "assistant");
                     if should_merge {
                         if let Some(last) = merged.last_mut() {
                             last.parts.extend(all_parts);
@@ -468,11 +473,14 @@ fn server_content_to_parts(
 
     let mut merged: Vec<MessagePart> = vec![];
     for part in parts {
-        let should_merge = match (&part, merged.last()) {
-            (MessagePart::Text { .. }, Some(MessagePart::Text { .. })) => true,
-            (MessagePart::Reasoning { .. }, Some(MessagePart::Reasoning { .. })) => true,
-            _ => false,
-        };
+        let should_merge = matches!(
+            (&part, merged.last()),
+            (MessagePart::Text { .. }, Some(MessagePart::Text { .. }))
+                | (
+                    MessagePart::Reasoning { .. },
+                    Some(MessagePart::Reasoning { .. })
+                )
+        );
         if should_merge {
             if let Some(last) = merged.last_mut() {
                 match (last, &part) {

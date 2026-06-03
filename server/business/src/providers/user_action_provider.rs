@@ -45,9 +45,7 @@ impl AiActionProvider for UserActionProvider {
         &self,
         params: CreateCustomAssetParams,
     ) -> Result<CreateCustomAssetResult> {
-        self.service
-            .create_custom_asset(self.user_id, params)
-            .await
+        self.service.create_custom_asset(self.user_id, params).await
     }
 
     async fn record_asset_trade(

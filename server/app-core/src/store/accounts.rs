@@ -15,6 +15,12 @@ pub struct AccountsModule {
     observer: Option<Box<dyn AccountsObserver>>,
 }
 
+impl Default for AccountsModule {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AccountsModule {
     pub fn new() -> Self {
         Self {

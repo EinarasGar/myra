@@ -21,13 +21,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-private val suggestions = listOf(
-    "What's my spending this month?",
-    "How are my investments performing?",
-    "Show my recent transactions",
-    "What's my biggest expense category?",
-    "How much did I save last month?",
-)
+private val suggestions =
+    listOf(
+        "What's my spending this month?",
+        "How are my investments performing?",
+        "Show my recent transactions",
+        "What's my biggest expense category?",
+        "How much did I save last month?",
+    )
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -36,9 +37,10 @@ fun SuggestionChips(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(32.dp),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -66,9 +68,10 @@ fun SuggestionChips(
                 AssistChip(
                     onClick = { onSuggestion(suggestion) },
                     label = { Text(suggestion) },
-                    colors = AssistChipDefaults.assistChipColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    ),
+                    colors =
+                        AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        ),
                     modifier = Modifier.padding(4.dp),
                 )
             }

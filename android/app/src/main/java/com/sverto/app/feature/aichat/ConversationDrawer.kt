@@ -30,9 +30,10 @@ fun ConversationDrawer(
     onSelect: (String) -> Unit,
     onCreate: () -> Unit,
     onDelete: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     ModalDrawerSheet(
-        modifier = Modifier.width(304.dp),
+        modifier = modifier.width(304.dp),
     ) {
         Spacer(Modifier.height(16.dp))
 
@@ -85,9 +86,10 @@ fun ConversationDrawer(
                             )
                         }
                     },
-                    colors = NavigationDrawerItemDefaults.colors(
-                        selectedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    ),
+                    colors =
+                        NavigationDrawerItemDefaults.colors(
+                            selectedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        ),
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
                 )
             }

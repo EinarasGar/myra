@@ -128,12 +128,13 @@ private fun buildAllocationSegments(
     val grouped = accounts.groupBy { it.accountTypeId }
     return grouped.map { (typeId, accs) ->
         val typeTotal = accs.sumOf { it.balance ?: 0.0 }
-        val label = when (typeId) {
-            1 -> "Current"
-            2 -> "Savings"
-            3 -> "Investment"
-            else -> "Other"
-        }
+        val label =
+            when (typeId) {
+                1 -> "Current"
+                2 -> "Savings"
+                3 -> "Investment"
+                else -> "Other"
+            }
         AllocationSegment(
             label = label,
             fraction = (typeTotal / totalNetWorth).toFloat(),

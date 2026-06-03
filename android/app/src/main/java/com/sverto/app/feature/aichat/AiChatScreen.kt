@@ -1,5 +1,6 @@
 package com.sverto.app.feature.aichat
 
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -28,9 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
-import android.net.Uri
-import java.io.File
 import uniffi.sverto_core.MessagePart
+import java.io.File
 
 @Composable
 fun AiChatScreen(
@@ -39,22 +39,25 @@ fun AiChatScreen(
 ) {
     val context = LocalContext.current
 
-    val photoLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(),
-    ) { uris ->
-        viewModel.addSelectedFiles(uris)
-    }
-    val fileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenMultipleDocuments(),
-    ) { uris ->
-        viewModel.addSelectedFiles(uris)
-    }
+    val photoLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.PickMultipleVisualMedia(),
+        ) { uris ->
+            viewModel.addSelectedFiles(uris)
+        }
+    val fileLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.OpenMultipleDocuments(),
+        ) { uris ->
+            viewModel.addSelectedFiles(uris)
+        }
     var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture(),
-    ) { success ->
-        if (success) cameraImageUri?.let { viewModel.addSelectedFiles(listOf(it)) }
-    }
+    val cameraLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.TakePicture(),
+        ) { success ->
+            if (success) cameraImageUri?.let { viewModel.addSelectedFiles(listOf(it)) }
+        }
     var showAttachmentSheet by remember { mutableStateOf(false) }
 
     if (showAttachmentSheet) {
@@ -94,8 +97,14 @@ fun AiChatScreen(
 
     // Re-fire on the last message's text length too: streaming deltas mutate the last message in
     // place, so the list size alone won't keep a long growing reply pinned to the bottom.
-    val lastMessageLength = (state.messages.lastOrNull()?.parts?.lastOrNull() as? MessagePart.Text)
-        ?.content?.length ?: 0
+    val lastMessageLength =
+        (
+            state.messages
+                .lastOrNull()
+                ?.parts
+                ?.lastOrNull() as? MessagePart.Text
+        )?.content
+            ?.length ?: 0
     LaunchedEffect(state.messages.size, lastMessageLength) {
         if (state.messages.isNotEmpty()) {
             listState.animateScrollToItem(state.messages.size - 1)
@@ -138,8 +147,9 @@ fun AiChatScreen(
                 // text (e.g. before the first token, or between/after tool calls). When the last
                 // part is streaming text, its caret already signals activity.
                 val last = state.messages.lastOrNull()
-                val streamingText = last?.role == "assistant" &&
-                    last.parts.lastOrNull() is MessagePart.Text
+                val streamingText =
+                    last?.role == "assistant" &&
+                        last.parts.lastOrNull() is MessagePart.Text
                 if (state.isStreaming && !streamingText) {
                     item(key = "working") {
                         WorkingDots()
@@ -148,9 +158,11 @@ fun AiChatScreen(
 
                 // Pending tool approval appears inline as the latest item in the thread.
                 if (state.pendingApprovalCallId != null) {
-                    val pendingTool = state.messages.flatMap { it.parts }
-                        .filterIsInstance<MessagePart.ToolCall>()
-                        .find { it.state == "approval-requested" }
+                    val pendingTool =
+                        state.messages
+                            .flatMap { it.parts }
+                            .filterIsInstance<MessagePart.ToolCall>()
+                            .find { it.state == "approval-requested" }
                     if (pendingTool != null) {
                         item(key = "approval") {
                             ToolApprovalCard(
@@ -168,15 +180,17 @@ fun AiChatScreen(
         // Floating bottom area: snackbar, rate-limit banner, then the composer — overlaid on the
         // message list so content scrolls behind it.
         Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth(),
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth(),
         ) {
             SnackbarHost(
                 hostState = snackbarHostState,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp),
             )
 
             state.rateLimit?.let { info ->

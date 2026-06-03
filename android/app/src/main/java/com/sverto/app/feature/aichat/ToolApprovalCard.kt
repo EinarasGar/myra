@@ -50,9 +50,10 @@ fun ToolApprovalCard(
             // Banner
             Surface(color = MaterialTheme.colorScheme.tertiaryContainer) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
@@ -118,9 +119,10 @@ fun ToolApprovalCard(
                 Row(modifier = Modifier.fillMaxWidth()) {
                     OutlinedButton(
                         onClick = onDeny,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp),
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .height(48.dp),
                     ) {
                         Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
@@ -129,9 +131,10 @@ fun ToolApprovalCard(
                     Spacer(Modifier.width(10.dp))
                     Button(
                         onClick = onApprove,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp),
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .height(48.dp),
                     ) {
                         Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
@@ -144,11 +147,15 @@ fun ToolApprovalCard(
 }
 
 @Composable
-private fun ParamRow(label: String, value: String) {
+private fun ParamRow(
+    label: String,
+    value: String,
+) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 9.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
@@ -173,8 +180,8 @@ private fun ParamRow(label: String, value: String) {
 }
 
 /** Parse a JSON object string into top-level key/value rows. Returns null if it isn't an object. */
-private fun parseParamRows(params: String): List<Pair<String, String>>? {
-    return try {
+private fun parseParamRows(params: String): List<Pair<String, String>>? =
+    try {
         val obj = JSONObject(params)
         val out = mutableListOf<Pair<String, String>>()
         val keys = obj.keys()
@@ -186,4 +193,3 @@ private fun parseParamRows(params: String): List<Pair<String, String>>? {
     } catch (_: Exception) {
         null
     }
-}

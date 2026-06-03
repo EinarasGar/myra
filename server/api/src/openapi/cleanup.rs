@@ -106,6 +106,7 @@ impl OpenApiDocumentCleanup {
         while Self::normalize_document(&mut document) {}
 
         Self::promote_common_inline_object_schemas(&mut document);
+        Self::hoist_inline_transaction_unions(&mut document);
         Self::rename_schema_components(&mut document);
         Self::inline_trivial_schema_refs(&mut document);
         Self::collapse_ref_alias_schemas(&mut document);
@@ -550,9 +551,7 @@ impl OpenApiDocumentCleanup {
                     target.insert("required".to_string(), merged_required);
                 }
                 "properties" => {
-                    let Some(new_properties) = value.as_object() else {
-                        return None;
-                    };
+                    let new_properties = value.as_object()?;
 
                     let mut merged_properties = match target.remove("properties") {
                         Some(Value::Object(existing)) => existing,
@@ -1010,6 +1009,256 @@ impl OpenApiDocumentCleanup {
             .into_iter()
             .find(|candidate| candidate != "NestedObject")
             .unwrap_or_else(|| "SharedObject".to_string())
+    }
+
+    /// Transaction union enums that are only ever used nested inside a generic wrapper
+    /// (e.g. `TransactionGroup<TransactionWithId>`) are inlined by utoipa rather than
+    /// emitted as a top-level component. Two problems follow:
+    ///
+    /// 1. A union with *no* top-level component at all never gets a discriminator mapping
+    ///    from `DeriveDiscriminatorMapping`, so [`Self::collect_transaction_variant_renames`]
+    ///    can't rename its variants and they keep raw generic schema names.
+    /// 2. Even unions that *do* have a top-level component (because they're also used as a
+    ///    request/response body) are still inlined a second time inside the wrapper, which
+    ///    makes the TypeScript generator synthesise anonymous `...Inner` union types.
+    ///
+    /// This step first hoists any union from (1) into a named top-level component with its
+    /// discriminator mapping populated, then rewrites every remaining nested inline copy of
+    /// a transaction union to a `$ref` to its canonical top-level component. After this the
+    /// regular rename pipeline treats all of them like directly-referenced unions.
+    fn hoist_inline_transaction_unions(document: &mut Value) {
+        Self::hoist_missing_transaction_unions(document);
+        Self::collapse_inline_transaction_unions(document);
+    }
+
+    fn hoist_missing_transaction_unions(document: &mut Value) {
+        let schema_lookup = Self::schema_lookup(document);
+        if schema_lookup.is_empty() {
+            return;
+        }
+
+        let mut hoisted_components: Map<String, Value> = Map::new();
+
+        for (union_name, _) in TRANSACTION_UNION_RENAMES {
+            if schema_lookup.contains_key(*union_name) {
+                continue; // already a top-level component
+            }
+
+            let wrapper_suffix = format!("_{union_name}");
+            let Some(wrapper) = schema_lookup
+                .iter()
+                .find(|(name, _)| name.ends_with(&wrapper_suffix))
+                .map(|(_, schema)| schema)
+            else {
+                continue; // union is unused -> nothing to hoist
+            };
+
+            let Some(inline_union) = Self::find_inline_discriminated_union(wrapper) else {
+                continue;
+            };
+            let Some(component) = Self::hoisted_union_component(&inline_union, &schema_lookup)
+            else {
+                continue;
+            };
+
+            hoisted_components.insert((*union_name).to_string(), component);
+        }
+
+        if hoisted_components.is_empty() {
+            return;
+        }
+
+        let Some(document_object) = document.as_object_mut() else {
+            return;
+        };
+        let Some(schemas) = Self::ensure_component_map_mut(document_object, "schemas") else {
+            return;
+        };
+        schemas.extend(hoisted_components);
+    }
+
+    fn collapse_inline_transaction_unions(document: &mut Value) {
+        let union_names: BTreeSet<&str> = TRANSACTION_UNION_RENAMES
+            .iter()
+            .map(|(union_name, _)| *union_name)
+            .collect();
+
+        let branch_refs_to_union: BTreeMap<Vec<String>, String> = Self::schema_lookup(document)
+            .iter()
+            .filter(|(name, _)| union_names.contains(name.as_str()))
+            .filter_map(|(name, schema)| {
+                Self::discriminated_union_branch_refs(schema)
+                    .map(|branch_refs| (branch_refs, name.clone()))
+            })
+            .collect();
+
+        if branch_refs_to_union.is_empty() {
+            return;
+        }
+
+        let Some(schemas) = Self::component_map_mut(document, "schemas") else {
+            return;
+        };
+
+        for (schema_name, schema) in schemas.iter_mut() {
+            if union_names.contains(schema_name.as_str()) {
+                continue; // never rewrite a top-level union into a self-ref
+            }
+            Self::replace_nested_inline_unions(schema, &branch_refs_to_union);
+        }
+    }
+
+    fn replace_nested_inline_unions(
+        value: &mut Value,
+        branch_refs_to_union: &BTreeMap<Vec<String>, String>,
+    ) {
+        match value {
+            Value::Array(items) => {
+                for item in items {
+                    Self::replace_nested_inline_unions(item, branch_refs_to_union);
+                }
+            }
+            Value::Object(object) => {
+                if Self::is_inline_discriminated_union(object) {
+                    if let Some(branch_refs) =
+                        Self::discriminated_union_branch_refs(&Value::Object(object.clone()))
+                    {
+                        if let Some(union_name) = branch_refs_to_union.get(&branch_refs) {
+                            *value = Value::Object(Map::from_iter([(
+                                "$ref".to_string(),
+                                Value::String(Self::schema_ref(union_name)),
+                            )]));
+                            return;
+                        }
+                    }
+                }
+
+                for child in object.values_mut() {
+                    Self::replace_nested_inline_unions(child, branch_refs_to_union);
+                }
+            }
+            Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => {}
+        }
+    }
+
+    fn find_inline_discriminated_union(schema: &Value) -> Option<Value> {
+        match schema {
+            Value::Object(object) => {
+                if Self::is_inline_discriminated_union(object) {
+                    return Some(Value::Object(object.clone()));
+                }
+                object
+                    .values()
+                    .find_map(Self::find_inline_discriminated_union)
+            }
+            Value::Array(items) => items.iter().find_map(Self::find_inline_discriminated_union),
+            _ => None,
+        }
+    }
+
+    fn is_inline_discriminated_union(object: &Map<String, Value>) -> bool {
+        if object.contains_key("$ref") || !object.contains_key("discriminator") {
+            return false;
+        }
+
+        let Some(branches) = object
+            .get("oneOf")
+            .or_else(|| object.get("anyOf"))
+            .and_then(Value::as_array)
+        else {
+            return false;
+        };
+
+        !branches.is_empty()
+            && branches
+                .iter()
+                .all(|branch| branch.as_object().is_some_and(Self::is_plain_ref))
+    }
+
+    fn discriminated_union_branch_refs(schema: &Value) -> Option<Vec<String>> {
+        let object = schema.as_object()?;
+        if !object.contains_key("discriminator") {
+            return None;
+        }
+
+        let branches = object
+            .get("oneOf")
+            .or_else(|| object.get("anyOf"))
+            .and_then(Value::as_array)?;
+
+        let mut branch_refs = branches
+            .iter()
+            .map(|branch| {
+                branch
+                    .as_object()
+                    .filter(|branch| Self::is_plain_ref(branch))
+                    .and_then(|branch| branch.get("$ref"))
+                    .and_then(Value::as_str)
+                    .map(ToOwned::to_owned)
+            })
+            .collect::<Option<Vec<_>>>()?;
+
+        if branch_refs.is_empty() {
+            return None;
+        }
+
+        branch_refs.sort();
+        Some(branch_refs)
+    }
+
+    fn hoisted_union_component(
+        inline_union: &Value,
+        schema_lookup: &BTreeMap<String, Value>,
+    ) -> Option<Value> {
+        let object = inline_union.as_object()?;
+        let branches = object
+            .get("oneOf")
+            .or_else(|| object.get("anyOf"))
+            .and_then(Value::as_array)?;
+        let property_name = object
+            .get("discriminator")
+            .and_then(Value::as_object)
+            .and_then(|discriminator| discriminator.get("propertyName"))
+            .and_then(Value::as_str)?
+            .to_string();
+
+        let mut mapping = Map::new();
+        for branch in branches {
+            let ref_path = branch
+                .as_object()
+                .and_then(|branch| branch.get("$ref"))
+                .and_then(Value::as_str)?;
+            let variant_name = Self::ref_name(ref_path)?;
+            let tag = Self::discriminator_tag_of_variant(
+                schema_lookup.get(&variant_name)?,
+                &property_name,
+            )?;
+            mapping.insert(tag, Value::String(ref_path.to_string()));
+        }
+
+        let mut discriminator = Map::new();
+        discriminator.insert("mapping".to_string(), Value::Object(mapping));
+        discriminator.insert("propertyName".to_string(), Value::String(property_name));
+
+        let mut component = Map::new();
+        component.insert("anyOf".to_string(), Value::Array(branches.clone()));
+        component.insert("discriminator".to_string(), Value::Object(discriminator));
+
+        Some(Value::Object(component))
+    }
+
+    fn discriminator_tag_of_variant(variant: &Value, property_name: &str) -> Option<String> {
+        variant
+            .as_object()?
+            .get("properties")?
+            .as_object()?
+            .get(property_name)?
+            .as_object()?
+            .get("enum")?
+            .as_array()?
+            .first()?
+            .as_str()
+            .map(ToOwned::to_owned)
     }
 
     fn collect_transaction_variant_renames(
@@ -2249,11 +2498,11 @@ impl OpenApiDocumentCleanup {
         };
 
         if let Some(ref_path) = response_object.get("$ref").and_then(Value::as_str) {
-            return match (status_code, ref_path) {
-                ("401", "#/components/responses/UnauthorizedError") => true,
-                ("403", "#/components/responses/ForbiddenError") => true,
-                _ => false,
-            };
+            return matches!(
+                (status_code, ref_path),
+                ("401", "#/components/responses/UnauthorizedError")
+                    | ("403", "#/components/responses/ForbiddenError")
+            );
         }
 
         let Some(description) = response_object.get("description").and_then(Value::as_str) else {

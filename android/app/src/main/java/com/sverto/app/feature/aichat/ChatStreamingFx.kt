@@ -25,19 +25,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 /** Shape shared by assistant bubbles and the working-dots placeholder (22dp with a 6dp tail). */
-internal val AssistantBubbleShape = RoundedCornerShape(
-    topStart = 22.dp,
-    topEnd = 22.dp,
-    bottomEnd = 22.dp,
-    bottomStart = 6.dp,
-)
+internal val AssistantBubbleShape =
+    RoundedCornerShape(
+        topStart = 22.dp,
+        topEnd = 22.dp,
+        bottomEnd = 22.dp,
+        bottomStart = 6.dp,
+    )
 
-internal val UserBubbleShape = RoundedCornerShape(
-    topStart = 22.dp,
-    topEnd = 22.dp,
-    bottomEnd = 6.dp,
-    bottomStart = 22.dp,
-)
+internal val UserBubbleShape =
+    RoundedCornerShape(
+        topStart = 22.dp,
+        topEnd = 22.dp,
+        bottomEnd = 6.dp,
+        bottomStart = 22.dp,
+    )
 
 /** Three staggered scaling dots inside an assistant bubble — shown before the first token. */
 @Composable
@@ -55,20 +57,22 @@ fun WorkingDots(modifier: Modifier = Modifier) {
                 val scale by transition.animateFloat(
                     initialValue = 0.5f,
                     targetValue = 1f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(durationMillis = 600, easing = LinearEasing),
-                        repeatMode = RepeatMode.Reverse,
-                        initialStartOffset = StartOffset(index * 160),
-                    ),
+                    animationSpec =
+                        infiniteRepeatable(
+                            animation = tween(durationMillis = 600, easing = LinearEasing),
+                            repeatMode = RepeatMode.Reverse,
+                            initialStartOffset = StartOffset(index * 160),
+                        ),
                     label = "dot-$index",
                 )
                 Box(
-                    modifier = Modifier
-                        .padding(horizontal = 2.5.dp)
-                        .size(8.dp)
-                        .scale(scale)
-                        .clip(RoundedCornerShape(50))
-                        .background(MaterialTheme.colorScheme.primary),
+                    modifier =
+                        Modifier
+                            .padding(horizontal = 2.5.dp)
+                            .size(8.dp)
+                            .scale(scale)
+                            .clip(RoundedCornerShape(50))
+                            .background(MaterialTheme.colorScheme.primary),
                 )
             }
         }
@@ -82,17 +86,19 @@ fun StreamingCaret(modifier: Modifier = Modifier) {
     val phase by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1000, easing = LinearEasing),
-        ),
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(durationMillis = 1000, easing = LinearEasing),
+            ),
         label = "caret-phase",
     )
     Box(
-        modifier = modifier
-            .padding(start = 3.dp)
-            .size(width = 9.dp, height = 18.dp)
-            .clip(RoundedCornerShape(2.dp))
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = if (phase < 0.5f) 1f else 0f)),
+        modifier =
+            modifier
+                .padding(start = 3.dp)
+                .size(width = 9.dp, height = 18.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = if (phase < 0.5f) 1f else 0f)),
     )
 }
 
@@ -109,10 +115,11 @@ fun shimmerTextColor(active: Boolean): Color {
     val color by transition.animateColor(
         initialValue = rest,
         targetValue = highlight,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 900, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(durationMillis = 900, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse,
+            ),
         label = "shimmer-color",
     )
     return color

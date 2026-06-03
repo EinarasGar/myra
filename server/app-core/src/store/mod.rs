@@ -588,17 +588,20 @@ impl AppStore {
         ai_chat::create_conversation(&self.infra, &self.ai_chat, title, token.as_deref()).await
     }
 
-    pub async fn delete_conversation(
-        &self,
-        id: String,
-    ) -> Result<(), crate::error::ApiError> {
+    pub async fn delete_conversation(&self, id: String) -> Result<(), crate::error::ApiError> {
         let token = self.get_auth_token();
         ai_chat::delete_conversation(&self.infra, &self.ai_chat, &id, token.as_deref()).await
     }
 
     pub async fn load_messages(&self, conversation_id: String) {
         let token = self.get_auth_token();
-        ai_chat::load_messages(&self.infra, &self.ai_chat, &conversation_id, token.as_deref()).await;
+        ai_chat::load_messages(
+            &self.infra,
+            &self.ai_chat,
+            &conversation_id,
+            token.as_deref(),
+        )
+        .await;
     }
 
     pub async fn upload_chat_file(
@@ -611,15 +614,18 @@ impl AppStore {
             reason: "no user_id".into(),
         })?;
         let token = self.get_auth_token();
-        ai_chat::upload_file(&self.infra, &user_id, &image_data, &mime_type, &file_name, token.as_deref()).await
+        ai_chat::upload_file(
+            &self.infra,
+            &user_id,
+            &image_data,
+            &mime_type,
+            &file_name,
+            token.as_deref(),
+        )
+        .await
     }
 
-    pub async fn send_message(
-        &self,
-        conversation_id: String,
-        text: String,
-        file_ids: Vec<String>,
-    ) {
+    pub async fn send_message(&self, conversation_id: String, text: String, file_ids: Vec<String>) {
         let token = self.get_auth_token();
         ai_chat::send_message(
             &self.infra,
@@ -632,12 +638,7 @@ impl AppStore {
         .await;
     }
 
-    pub async fn approve_tool(
-        &self,
-        conversation_id: String,
-        call_id: String,
-        approved: bool,
-    ) {
+    pub async fn approve_tool(&self, conversation_id: String, call_id: String, approved: bool) {
         let token = self.get_auth_token();
         ai_chat::approve_tool(
             &self.infra,

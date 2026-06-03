@@ -270,7 +270,7 @@ pub fn aggregate_transactions(params: &AggregateTransactionsParams) -> DbQueryWi
             String::new(),
             "to_char(t.date_transacted, 'YYYY-MM')",
         ),
-        "description" | _ => (
+        _ => (
             "COALESCE(td.description, tg.description, 'No description') as group_name",
             "LEFT JOIN transaction_descriptions td ON td.transaction_id = t.id \
              LEFT JOIN transaction_group tg ON tg.id = t.group_id"

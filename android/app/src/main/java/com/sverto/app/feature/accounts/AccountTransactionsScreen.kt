@@ -82,18 +82,18 @@ fun AccountTransactionsScreen(
 
     // Infinite scroll: load more when near the end
     LaunchedEffect(listState, state.hasMore, state.isLoadingMore) {
-        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .collect { lastVisibleIndex ->
-                val totalItems = listState.layoutInfo.totalItemsCount
-                if (lastVisibleIndex != null &&
-                    lastVisibleIndex >= totalItems - 5 &&
-                    state.hasMore &&
-                    !state.isLoadingMore &&
-                    !state.isLoading
-                ) {
-                    viewModel.loadMore()
-                }
+        snapshotFlow {
+            listState.layoutInfo.visibleItemsInfo
+                .lastOrNull()
+                ?.index
+        }.collect { lastVisibleIndex ->
+            val totalItems = listState.layoutInfo.totalItemsCount
+            val nearEnd = lastVisibleIndex != null && lastVisibleIndex >= totalItems - 5
+            val canLoadMore = state.hasMore && !state.isLoadingMore && !state.isLoading
+            if (nearEnd && canLoadMore) {
+                viewModel.loadMore()
             }
+        }
     }
 
     val groupedTransactions =
@@ -139,9 +139,10 @@ fun AccountTransactionsScreen(
         when {
             state.isLoading -> {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
                     contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator()
@@ -149,9 +150,10 @@ fun AccountTransactionsScreen(
             }
             state.error != null && state.items.isEmpty() -> {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -172,9 +174,10 @@ fun AccountTransactionsScreen(
                             modifier = Modifier.align(Alignment.TopCenter),
                         )
                     },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
                 ) {
                     LazyColumn(
                         state = listState,
@@ -271,9 +274,10 @@ fun AccountTransactionsScreen(
                         if (state.isLoadingMore) {
                             item {
                                 Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(16.dp),
+                                    modifier =
+                                        Modifier
+                                            .fillMaxSize()
+                                            .padding(16.dp),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     CircularProgressIndicator(modifier = Modifier.size(24.dp))

@@ -131,8 +131,8 @@ pub fn get_transaction_with_entries(params: GetTransactionWithEntriesParams) -> 
 
         eligible_transactions_builder.and_where(
             Expr::tuple([
-                Expr::col((TransactionIden::Table, TransactionIden::DateTransacted)).into(),
-                Expr::col((TransactionIden::Table, TransactionIden::Id)).into(),
+                Expr::col((TransactionIden::Table, TransactionIden::DateTransacted)),
+                Expr::col((TransactionIden::Table, TransactionIden::Id)),
             ])
             .lt(Expr::tuple([
                 SimpleExpr::SubQuery(None, Box::new(date_subquery.into_sub_query_statement())),

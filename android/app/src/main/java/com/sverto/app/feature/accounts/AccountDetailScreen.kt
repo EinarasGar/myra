@@ -88,12 +88,14 @@ fun AccountDetailScreen(
     val isBrokerage = accountTypeId == 3 // Investment account
 
     // Convert chart data from UniFFI to portfolio ChartPoint
-    val chartData: Map<TimePeriod, List<ChartPoint>> = state.chartData.associate { periodData ->
-        val period = TimePeriod.entries.find { it.apiRange == periodData.period.lowercase() }
-            ?: return@associate TimePeriod.MONTH to emptyList()
-        val points = periodData.points.map { ChartPoint(date = it.timestamp, value = it.value) }
-        period to points
-    }
+    val chartData: Map<TimePeriod, List<ChartPoint>> =
+        state.chartData.associate { periodData ->
+            val period =
+                TimePeriod.entries.find { it.apiRange == periodData.period.lowercase() }
+                    ?: return@associate TimePeriod.MONTH to emptyList()
+            val points = periodData.points.map { ChartPoint(date = it.timestamp, value = it.value) }
+            period to points
+        }
 
     val holdings = state.holdings
     val transactions = state.recentTransactions
@@ -124,9 +126,10 @@ fun AccountDetailScreen(
         when {
             state.isLoading -> {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
                     contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator()
@@ -134,9 +137,10 @@ fun AccountDetailScreen(
             }
             state.error != null -> {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(

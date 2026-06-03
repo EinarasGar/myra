@@ -95,7 +95,7 @@ impl SharedInfra {
     }
 
     pub fn default_asset_id(&self) -> Option<i32> {
-        self.default_asset_id.lock().unwrap().clone()
+        *self.default_asset_id.lock().unwrap()
     }
 
     pub fn set_default_asset_id(&self, id: i32) {

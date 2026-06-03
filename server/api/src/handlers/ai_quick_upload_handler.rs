@@ -151,35 +151,30 @@ pub async fn subscribe(
             return;
         }
 
-        loop {
-            match rx.recv().await {
-                Ok(event) => {
-                    if let Ok(notification) = serde_json::from_value::<QuickUploadNotification>(event.payload) {
-                        let is_terminal = matches!(notification, QuickUploadNotification::Done | QuickUploadNotification::Error { .. });
-                        match notification {
-                            QuickUploadNotification::Status { step } => {
-                                yield Ok(Event::default().event("status").data(
-                                    serde_json::json!({"step": step}).to_string()
-                                ));
-                            }
-                            QuickUploadNotification::Proposal { proposal_type, data } => {
-                                yield Ok(Event::default().event("proposal").data(
-                                    serde_json::json!({"proposal_type": proposal_type, "data": data}).to_string()
-                                ));
-                            }
-                            QuickUploadNotification::Error { message } => {
-                                yield Ok(Event::default().event("error").data(
-                                    serde_json::json!({"message": message}).to_string()
-                                ));
-                            }
-                            QuickUploadNotification::Done => {
-                                yield Ok(Event::default().event("done").data(""));
-                            }
-                        }
-                        if is_terminal { break; }
+        while let Ok(event) = rx.recv().await {
+            if let Ok(notification) = serde_json::from_value::<QuickUploadNotification>(event.payload) {
+                let is_terminal = matches!(notification, QuickUploadNotification::Done | QuickUploadNotification::Error { .. });
+                match notification {
+                    QuickUploadNotification::Status { step } => {
+                        yield Ok(Event::default().event("status").data(
+                            serde_json::json!({"step": step}).to_string()
+                        ));
+                    }
+                    QuickUploadNotification::Proposal { proposal_type, data } => {
+                        yield Ok(Event::default().event("proposal").data(
+                            serde_json::json!({"proposal_type": proposal_type, "data": data}).to_string()
+                        ));
+                    }
+                    QuickUploadNotification::Error { message } => {
+                        yield Ok(Event::default().event("error").data(
+                            serde_json::json!({"message": message}).to_string()
+                        ));
+                    }
+                    QuickUploadNotification::Done => {
+                        yield Ok(Event::default().event("done").data(""));
                     }
                 }
-                Err(_) => break,
+                if is_terminal { break; }
             }
         }
     };

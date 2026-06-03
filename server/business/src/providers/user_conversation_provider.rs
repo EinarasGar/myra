@@ -102,10 +102,7 @@ impl ConversationProvider for UserConversationProvider {
             .collect())
     }
 
-    async fn fetch_attachments(
-        &self,
-        file_ids: &[Uuid],
-    ) -> anyhow::Result<Vec<Base64Attachment>> {
+    async fn fetch_attachments(&self, file_ids: &[Uuid]) -> anyhow::Result<Vec<Base64Attachment>> {
         self.resolve_attachments(file_ids).await
     }
 

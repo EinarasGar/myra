@@ -36,10 +36,7 @@ export default function TransactionGroupRow({
   return (
     <TableRow className="cursor-pointer bg-muted/30" onClick={onToggleExpand}>
       {avatarCell}
-      <TableCell
-        className="text-sm"
-        title={formatTransactionDate(group.date)}
-      >
+      <TableCell className="text-sm" title={formatTransactionDate(group.date)}>
         {formatTransactionDate(group.date)}
       </TableCell>
       <TableCell
@@ -62,10 +59,7 @@ export default function TransactionGroupRow({
         {getGroupAccountSummary(group, accounts)}
       </TableCell>
       <TableCell className="text-sm">—</TableCell>
-      <TableCell
-        className="text-sm max-w-0 truncate"
-        title={categoryName}
-      >
+      <TableCell className="text-sm max-w-0 truncate" title={categoryName}>
         {categoryName}
       </TableCell>
       <TableCell

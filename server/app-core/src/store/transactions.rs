@@ -30,6 +30,12 @@ pub struct TransactionsModule {
     next_cursor: Option<String>,
 }
 
+impl Default for TransactionsModule {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TransactionsModule {
     pub fn new() -> Self {
         Self {

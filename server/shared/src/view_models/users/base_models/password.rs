@@ -15,7 +15,7 @@ impl<'de> Deserialize<'de> for Password {
     {
         let s = String::deserialize(deserializer)?;
         let len = s.chars().count();
-        if len < 8 || len > 200 {
+        if !(8..=200).contains(&len) {
             return Err(serde::de::Error::custom(
                 "Must be between 8 and 200 characters.",
             ));

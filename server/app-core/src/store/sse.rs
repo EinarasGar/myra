@@ -212,7 +212,6 @@ fn parse_sse_block(block: &str) -> (String, String) {
     (event_type, data_lines.join("\n"))
 }
 
-
 pub async fn subscribe_chat_sse(
     http: &reqwest::Client,
     base_url: &str,

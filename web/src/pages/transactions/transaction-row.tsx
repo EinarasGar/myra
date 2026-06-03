@@ -75,19 +75,13 @@ export default function TransactionRow({
       <TableCell title={getTransactionTypeLabel(transaction.type)}>
         <TransactionTypeBadge type={transaction.type} />
       </TableCell>
-      <TableCell
-        className="text-sm max-w-0 truncate"
-        title={accountName}
-      >
+      <TableCell className="text-sm max-w-0 truncate" title={accountName}>
         {accountName}
       </TableCell>
       <TableCell className="text-sm" title={assetTicker}>
         {assetTicker}
       </TableCell>
-      <TableCell
-        className="text-sm max-w-0 truncate"
-        title={categoryName}
-      >
+      <TableCell className="text-sm max-w-0 truncate" title={categoryName}>
         {categoryName}
       </TableCell>
       <TableCell

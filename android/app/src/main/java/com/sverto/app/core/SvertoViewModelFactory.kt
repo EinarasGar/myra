@@ -8,11 +8,11 @@ import com.sverto.app.feature.accounts.AccountDetailViewModel
 import com.sverto.app.feature.accounts.AccountTransactionsViewModel
 import com.sverto.app.feature.accounts.AccountsViewModel
 import com.sverto.app.feature.accounts.AssetDetailViewModel
+import com.sverto.app.feature.aichat.AiChatViewModel
 import com.sverto.app.feature.portfolio.HomeViewModel
 import com.sverto.app.feature.transactions.TransactionsViewModel
 import com.sverto.app.feature.transactions.create.CreateTransactionViewModel
 import com.sverto.app.feature.transactions.group.CreateTransactionGroupViewModel
-import com.sverto.app.feature.aichat.AiChatViewModel
 import com.sverto.app.feature.transactions.quickupload.QuickUploadViewModel
 
 object SvertoViewModelFactory : ViewModelProvider.Factory {

@@ -71,7 +71,11 @@ impl<A: AiActionProvider> Tool for RecordAssetTradeTool<A> {
         let side = match args.side.to_lowercase().as_str() {
             "buy" => RecordAssetTradeSide::Buy,
             "sell" => RecordAssetTradeSide::Sell,
-            other => return Err(ToolError(format!("Invalid side '{other}'. Use 'buy' or 'sell'."))),
+            other => {
+                return Err(ToolError(format!(
+                    "Invalid side '{other}'. Use 'buy' or 'sell'."
+                )))
+            }
         };
 
         let account_id = args

@@ -95,9 +95,10 @@ fun ReasoningCard(
                     imageVector = Icons.Default.ArrowDropDown,
                     contentDescription = if (expanded) "Collapse" else "Expand",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier
-                        .size(20.dp)
-                        .rotate(chevronRotation),
+                    modifier =
+                        Modifier
+                            .size(20.dp)
+                            .rotate(chevronRotation),
                 )
             }
         }
@@ -108,10 +109,11 @@ fun ReasoningCard(
             exit = shrinkVertically(),
         ) {
             Row(
-                modifier = Modifier
-                    .padding(start = 6.dp, top = 8.dp)
-                    .fillMaxWidth()
-                    .height(IntrinsicSize.Min),
+                modifier =
+                    Modifier
+                        .padding(start = 6.dp, top = 8.dp)
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min),
             ) {
                 Box(
                     Modifier

@@ -19,6 +19,12 @@ pub struct PortfolioModule {
     observer: Option<Box<dyn PortfolioObserver>>,
 }
 
+impl Default for PortfolioModule {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PortfolioModule {
     pub fn new() -> Self {
         Self {
@@ -173,10 +179,7 @@ async fn fetch_fresh(
     );
 
     let holdings: Option<Vec<HoldingItem>> = match holdings_result {
-        Ok(resp) => match extract_holdings(&resp.body) {
-            Ok(items) => Some(items),
-            Err(_) => None,
-        },
+        Ok(resp) => extract_holdings(&resp.body).ok(),
         Err(_) => None,
     };
 

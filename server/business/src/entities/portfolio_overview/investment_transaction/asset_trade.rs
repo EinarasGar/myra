@@ -103,7 +103,7 @@ mod tests {
 
         // Outgoing asset should be fully removed
         assert!(
-            account_portfolio.asset_portfolios.get(&1).is_none(),
+            !account_portfolio.asset_portfolios.contains_key(&1),
             "Outgoing asset portfolio should be removed after full trade"
         );
     }

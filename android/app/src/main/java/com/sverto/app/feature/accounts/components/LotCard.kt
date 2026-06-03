@@ -18,10 +18,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import uniffi.sverto_core.LotItem
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.math.abs
+
+@Suppress("NewApi")
+private fun formatLotDate(epochSeconds: Long): String =
+    Instant
+        .ofEpochSecond(epochSeconds)
+        .atZone(ZoneId.systemDefault())
+        .toLocalDate()
+        .format(DateTimeFormatter.ofPattern("MMM d, yyyy"))
 
 @Composable
 fun LotCard(
@@ -31,10 +38,7 @@ fun LotCard(
     val gainColor = if (lot.gainPercent >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
     val gainSign = if (lot.gainPercent >= 0) "+" else "-"
     val pnlSign = if (lot.unrealizedGains >= 0) "+" else "-"
-    val buyDateStr = Instant.ofEpochSecond(lot.buyDate)
-        .atZone(ZoneId.systemDefault())
-        .toLocalDate()
-        .format(DateTimeFormatter.ofPattern("MMM d, yyyy"))
+    val buyDateStr = formatLotDate(lot.buyDate)
 
     Surface(
         modifier = modifier.fillMaxWidth(),

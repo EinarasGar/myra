@@ -18,6 +18,12 @@ pub struct AccountTransactionsModule {
     next_start: u32,
 }
 
+impl Default for AccountTransactionsModule {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AccountTransactionsModule {
     pub fn new() -> Self {
         Self {

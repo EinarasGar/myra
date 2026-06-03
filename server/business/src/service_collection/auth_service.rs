@@ -374,8 +374,13 @@ impl AuthService {
         let message = format!("{}.{}", parts[0], parts[1]);
         // let token_data = decode::<serde_json::Value>(&token, &decoding_key, &validation)
         //     .map_err(|e| anyhow::anyhow!("Failed to validate Clerk token: {}", e))?;
-        jsonwebtoken::crypto::verify(parts[2], message.as_bytes(), &decoding_key, Algorithm::RS256)
-            .map_err(|e| anyhow::anyhow!("Clerk token signature verification failed: {}", e))?;
+        jsonwebtoken::crypto::verify(
+            parts[2],
+            message.as_bytes(),
+            &decoding_key,
+            Algorithm::RS256,
+        )
+        .map_err(|e| anyhow::anyhow!("Clerk token signature verification failed: {}", e))?;
 
         let payload_bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
             .decode(parts[1])

@@ -173,8 +173,7 @@ impl AiActionService {
         let currency = match params.currency_asset_id {
             Some(id) => self.asset_service.get_asset(id).await?,
             None => {
-                let (_, _, default_asset_id) =
-                    self.users_service.get_basic_user(user_id).await?;
+                let (_, _, default_asset_id) = self.users_service.get_basic_user(user_id).await?;
                 self.asset_service.get_asset(default_asset_id).await?
             }
         };
@@ -242,9 +241,7 @@ fn parse_datetime_or_now(date: Option<&str>) -> Result<time::OffsetDateTime> {
         return Ok(time::OffsetDateTime::now_utc());
     };
 
-    if let Ok(dt) =
-        time::OffsetDateTime::parse(s, &time::format_description::well_known::Rfc3339)
-    {
+    if let Ok(dt) = time::OffsetDateTime::parse(s, &time::format_description::well_known::Rfc3339) {
         return Ok(dt);
     }
 
