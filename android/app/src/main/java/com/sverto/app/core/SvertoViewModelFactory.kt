@@ -10,6 +10,7 @@ import com.sverto.app.feature.accounts.AccountsViewModel
 import com.sverto.app.feature.accounts.AddAccountViewModel
 import com.sverto.app.feature.accounts.AssetDetailViewModel
 import com.sverto.app.feature.aichat.AiChatViewModel
+import com.sverto.app.feature.categories.CustomCategoriesViewModel
 import com.sverto.app.feature.portfolio.HomeViewModel
 import com.sverto.app.feature.transactions.TransactionsViewModel
 import com.sverto.app.feature.transactions.create.CreateTransactionViewModel
@@ -43,6 +44,8 @@ object SvertoViewModelFactory : ViewModelProvider.Factory {
                 AccountTransactionsViewModel(appStore) as T
             modelClass.isAssignableFrom(AssetDetailViewModel::class.java) ->
                 AssetDetailViewModel(appStore) as T
+            modelClass.isAssignableFrom(CustomCategoriesViewModel::class.java) ->
+                CustomCategoriesViewModel(appStore) as T
             modelClass.isAssignableFrom(AiChatViewModel::class.java) ->
                 AiChatViewModel(appStore) as T
             modelClass.isAssignableFrom(AddAccountViewModel::class.java) ->

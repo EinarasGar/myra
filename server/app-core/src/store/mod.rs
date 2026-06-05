@@ -3,6 +3,7 @@ pub mod account_transactions;
 pub mod accounts;
 pub mod ai_chat;
 pub mod asset_detail;
+pub mod categories;
 pub mod infra;
 pub mod portfolio;
 pub mod quick_uploads;
@@ -50,6 +51,7 @@ pub struct AppStore {
     connection_observer: Arc<Mutex<Option<Box<dyn ConnectionObserver>>>>,
     portfolio: Mutex<portfolio::PortfolioModule>,
     accounts: Mutex<accounts::AccountsModule>,
+    categories: Mutex<categories::CategoriesModule>,
     account_detail: Mutex<account_detail::AccountDetailModule>,
     account_transactions: Mutex<account_transactions::AccountTransactionsModule>,
     asset_detail: Mutex<asset_detail::AssetDetailModule>,
@@ -108,6 +110,7 @@ impl AppStore {
             connection_observer,
             portfolio: Mutex::new(portfolio::PortfolioModule::new()),
             accounts: Mutex::new(accounts::AccountsModule::new()),
+            categories: Mutex::new(categories::CategoriesModule::new()),
             account_detail: Mutex::new(account_detail::AccountDetailModule::new()),
             account_transactions: Mutex::new(account_transactions::AccountTransactionsModule::new()),
             asset_detail: Mutex::new(asset_detail::AssetDetailModule::new()),
@@ -189,6 +192,7 @@ impl AppStore {
         self.infra.clear_memory_cache();
         self.portfolio.lock().unwrap().clear_state();
         self.accounts.lock().unwrap().clear_state();
+        self.categories.lock().unwrap().clear_state();
         self.account_detail.lock().unwrap().clear_state();
         self.account_transactions.lock().unwrap().clear_state();
         self.asset_detail.lock().unwrap().clear_state();
@@ -235,6 +239,86 @@ impl AppStore {
     pub async fn refresh_accounts(&self) {
         let token = self.get_auth_token();
         accounts::refresh_accounts(&self.infra, &self.accounts, token.as_deref()).await;
+    }
+
+    // ── Categories ───────────────────────────────────────────────────
+
+    pub fn observe_categories(&self, observer: Box<dyn categories::CategoriesObserver>) {
+        self.categories.lock().unwrap().set_observer(observer);
+    }
+
+    pub fn unobserve_categories(&self) {
+        self.categories.lock().unwrap().clear_observer();
+    }
+
+    pub async fn load_categories(&self) {
+        let token = self.get_auth_token();
+        categories::load_categories(&self.infra, &self.categories, token.as_deref()).await;
+    }
+
+    pub async fn refresh_categories(&self) {
+        let token = self.get_auth_token();
+        categories::refresh_categories(&self.infra, &self.categories, token.as_deref()).await;
+    }
+
+    pub async fn create_category(
+        &self,
+        name: String,
+        icon: String,
+        type_id: i32,
+    ) -> Result<(), ApiError> {
+        let token = self.get_auth_token();
+        categories::create_category(
+            &self.infra,
+            &self.categories,
+            name,
+            icon,
+            type_id,
+            token.as_deref(),
+        )
+        .await
+    }
+
+    pub async fn update_category(
+        &self,
+        id: i32,
+        name: String,
+        icon: String,
+        type_id: i32,
+    ) -> Result<(), ApiError> {
+        let token = self.get_auth_token();
+        categories::update_category(
+            &self.infra,
+            &self.categories,
+            id,
+            name,
+            icon,
+            type_id,
+            token.as_deref(),
+        )
+        .await
+    }
+
+    pub async fn delete_category(&self, id: i32) -> Result<(), ApiError> {
+        let token = self.get_auth_token();
+        categories::delete_category(&self.infra, &self.categories, id, token.as_deref()).await
+    }
+
+    pub async fn create_category_type(&self, name: String) -> Result<(), ApiError> {
+        let token = self.get_auth_token();
+        categories::create_category_type(&self.infra, &self.categories, name, token.as_deref())
+            .await
+    }
+
+    pub async fn update_category_type(&self, id: i32, name: String) -> Result<(), ApiError> {
+        let token = self.get_auth_token();
+        categories::update_category_type(&self.infra, &self.categories, id, name, token.as_deref())
+            .await
+    }
+
+    pub async fn delete_category_type(&self, id: i32) -> Result<(), ApiError> {
+        let token = self.get_auth_token();
+        categories::delete_category_type(&self.infra, &self.categories, id, token.as_deref()).await
     }
 
     pub async fn create_account(

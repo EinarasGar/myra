@@ -267,6 +267,8 @@ dependencies {
     // JNA is required by UniFFI-generated Kotlin code to call into native libraries
     implementation(libs.jna) { artifact { type = "aar" } }
 
+    implementation(libs.icons.lucide)
+
     // Image loading for chat attachments (coil-network-okhttp is required for remote https URLs;
     // coil-compose alone only handles local content:// uris)
     implementation("io.coil-kt.coil3:coil-compose:3.4.0")

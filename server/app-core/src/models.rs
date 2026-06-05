@@ -305,6 +305,33 @@ pub struct AssetDetailState {
     pub chart_data: Vec<ChartPeriodData>,
     pub lots: Vec<LotItem>,
 }
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct ManagedCategory {
+    pub id: i32,
+    pub name: String,
+    pub icon: String,
+    pub category_type_id: i32,
+    pub type_name: String,
+    pub is_global: bool,
+    pub is_system: bool,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct ManagedCategoryType {
+    pub id: i32,
+    pub name: String,
+    pub is_global: bool,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct CategoriesState {
+    pub is_loading: bool,
+    pub error: Option<String>,
+    pub categories: Vec<ManagedCategory>,
+    pub types: Vec<ManagedCategoryType>,
+}
+
 // ── AI Chat ────────────────────────────────────────────────────────────────
 
 #[derive(Debug, Clone, uniffi::Record)]

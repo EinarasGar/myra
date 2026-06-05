@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
@@ -60,10 +61,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.clerk.ui.userbutton.UserButton
 import com.sverto.app.core.SvertoViewModelFactory
+import com.sverto.app.core.components.ProfileAvatarButton
 import com.sverto.app.core.navigation.TopLevelRoute
-import com.sverto.app.core.theme.LocalClerkTheme
 import com.sverto.app.core.ui.OfflineBanner
 import com.sverto.app.feature.accounts.AccountDetailScreen
 import com.sverto.app.feature.accounts.AccountTransactionsScreen
@@ -73,7 +73,9 @@ import com.sverto.app.feature.accounts.AssetDetailScreen
 import com.sverto.app.feature.aichat.AiChatScreen
 import com.sverto.app.feature.aichat.AiChatViewModel
 import com.sverto.app.feature.aichat.ConversationDrawer
+import com.sverto.app.feature.categories.CustomCategoriesScreen
 import com.sverto.app.feature.portfolio.PortfolioScreen
+import com.sverto.app.feature.settings.SettingsScreen
 import com.sverto.app.feature.transactions.TransactionDetailScreen
 import com.sverto.app.feature.transactions.TransactionsScreen
 import com.sverto.app.feature.transactions.TransactionsViewModel
@@ -249,9 +251,9 @@ fun MainScreen(
                                     }
                                 },
                                 actions = {
-                                    if (BuildConfig.CLERK_PUBLISHABLE_KEY.isNotBlank()) {
-                                        UserButton(clerkTheme = LocalClerkTheme.current)
-                                    }
+                                    ProfileAvatarButton(
+                                        onClick = { navController.navigate("settings") },
+                                    )
                                 },
                                 colors =
                                     TopAppBarDefaults.topAppBarColors(
@@ -770,6 +772,67 @@ private fun MainNavGraph(
                 animatedVisibilityScope = this@composable,
                 modifier = Modifier.fillMaxSize(),
             )
+        }
+        composable(
+            route = "settings",
+            enterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Start,
+                    animationSpec = tween(300),
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Start,
+                    animationSpec = tween(300),
+                )
+            },
+            popEnterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.End,
+                    animationSpec = tween(300),
+                )
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.End,
+                    animationSpec = tween(300),
+                )
+            },
+        ) {
+            SettingsScreen(
+                onBack = { navController.popBackStack() },
+                onCustomCategories = { navController.navigate("customCategories") },
+            )
+        }
+        composable(
+            route = "customCategories",
+            enterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Start,
+                    animationSpec = tween(300),
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Start,
+                    animationSpec = tween(300),
+                )
+            },
+            popEnterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.End,
+                    animationSpec = tween(300),
+                )
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.End,
+                    animationSpec = tween(300),
+                )
+            },
+        ) {
+            CustomCategoriesScreen(onBack = { navController.popBackStack() })
         }
     }
 }
