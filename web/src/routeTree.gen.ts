@@ -8,441 +8,441 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from "./routes/__root";
-import { Route as SignupRouteImport } from "./routes/signup";
-import { Route as LoginRouteImport } from "./routes/login";
-import { Route as AboutRouteImport } from "./routes/about";
-import { Route as AuthRouteImport } from "./routes/_auth";
-import { Route as AuthIndexRouteImport } from "./routes/_auth.index";
-import { Route as AuthUserAssetsRouteImport } from "./routes/_auth.user-assets";
-import { Route as AuthTransactionsRouteImport } from "./routes/_auth.transactions";
-import { Route as AuthSettingsRouteImport } from "./routes/_auth.settings";
-import { Route as AuthPortfolioOverviewRouteImport } from "./routes/_auth.portfolio-overview";
-import { Route as AuthPortfolioRouteImport } from "./routes/_auth.portfolio";
-import { Route as AuthComponentTestingRouteImport } from "./routes/_auth.component-testing";
-import { Route as AuthAiChatRouteImport } from "./routes/_auth.ai-chat";
-import { Route as AuthUserAssetsIndexRouteImport } from "./routes/_auth.user-assets.index";
-import { Route as AuthTransactionsIndexRouteImport } from "./routes/_auth.transactions.index";
-import { Route as AuthUserAssetsAssetIdRouteImport } from "./routes/_auth.user-assets.$assetId";
-import { Route as AuthTransactionsIndividualRouteImport } from "./routes/_auth.transactions.individual";
-import { Route as AuthSettingsCategoriesRouteImport } from "./routes/_auth.settings.categories";
-import { Route as AuthSettingsAccountsRouteImport } from "./routes/_auth.settings.accounts";
-import { Route as AuthAccountsAccountIdRouteImport } from "./routes/_auth.accounts.$accountId";
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as AuthRouteImport } from './routes/_auth'
+import { Route as AuthIndexRouteImport } from './routes/_auth.index'
+import { Route as AuthUserAssetsRouteImport } from './routes/_auth.user-assets'
+import { Route as AuthTransactionsRouteImport } from './routes/_auth.transactions'
+import { Route as AuthSettingsRouteImport } from './routes/_auth.settings'
+import { Route as AuthPortfolioOverviewRouteImport } from './routes/_auth.portfolio-overview'
+import { Route as AuthPortfolioRouteImport } from './routes/_auth.portfolio'
+import { Route as AuthComponentTestingRouteImport } from './routes/_auth.component-testing'
+import { Route as AuthAiChatRouteImport } from './routes/_auth.ai-chat'
+import { Route as AuthUserAssetsIndexRouteImport } from './routes/_auth.user-assets.index'
+import { Route as AuthTransactionsIndexRouteImport } from './routes/_auth.transactions.index'
+import { Route as AuthUserAssetsAssetIdRouteImport } from './routes/_auth.user-assets.$assetId'
+import { Route as AuthTransactionsIndividualRouteImport } from './routes/_auth.transactions.individual'
+import { Route as AuthSettingsCategoriesRouteImport } from './routes/_auth.settings.categories'
+import { Route as AuthSettingsAccountsRouteImport } from './routes/_auth.settings.accounts'
+import { Route as AuthAccountsAccountIdRouteImport } from './routes/_auth.accounts.$accountId'
 
 const SignupRoute = SignupRouteImport.update({
-  id: "/signup",
-  path: "/signup",
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const LoginRoute = LoginRouteImport.update({
-  id: "/login",
-  path: "/login",
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AboutRoute = AboutRouteImport.update({
-  id: "/about",
-  path: "/about",
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AuthRoute = AuthRouteImport.update({
-  id: "/_auth",
+  id: '/_auth',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AuthIndexRoute = AuthIndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => AuthRoute,
-} as any);
+} as any)
 const AuthUserAssetsRoute = AuthUserAssetsRouteImport.update({
-  id: "/user-assets",
-  path: "/user-assets",
+  id: '/user-assets',
+  path: '/user-assets',
   getParentRoute: () => AuthRoute,
-} as any);
+} as any)
 const AuthTransactionsRoute = AuthTransactionsRouteImport.update({
-  id: "/transactions",
-  path: "/transactions",
+  id: '/transactions',
+  path: '/transactions',
   getParentRoute: () => AuthRoute,
-} as any);
+} as any)
 const AuthSettingsRoute = AuthSettingsRouteImport.update({
-  id: "/settings",
-  path: "/settings",
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AuthRoute,
-} as any);
+} as any)
 const AuthPortfolioOverviewRoute = AuthPortfolioOverviewRouteImport.update({
-  id: "/portfolio-overview",
-  path: "/portfolio-overview",
+  id: '/portfolio-overview',
+  path: '/portfolio-overview',
   getParentRoute: () => AuthRoute,
-} as any);
+} as any)
 const AuthPortfolioRoute = AuthPortfolioRouteImport.update({
-  id: "/portfolio",
-  path: "/portfolio",
+  id: '/portfolio',
+  path: '/portfolio',
   getParentRoute: () => AuthRoute,
-} as any);
+} as any)
 const AuthComponentTestingRoute = AuthComponentTestingRouteImport.update({
-  id: "/component-testing",
-  path: "/component-testing",
+  id: '/component-testing',
+  path: '/component-testing',
   getParentRoute: () => AuthRoute,
-} as any);
+} as any)
 const AuthAiChatRoute = AuthAiChatRouteImport.update({
-  id: "/ai-chat",
-  path: "/ai-chat",
+  id: '/ai-chat',
+  path: '/ai-chat',
   getParentRoute: () => AuthRoute,
-} as any);
+} as any)
 const AuthUserAssetsIndexRoute = AuthUserAssetsIndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => AuthUserAssetsRoute,
-} as any);
+} as any)
 const AuthTransactionsIndexRoute = AuthTransactionsIndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => AuthTransactionsRoute,
-} as any);
+} as any)
 const AuthUserAssetsAssetIdRoute = AuthUserAssetsAssetIdRouteImport.update({
-  id: "/$assetId",
-  path: "/$assetId",
+  id: '/$assetId',
+  path: '/$assetId',
   getParentRoute: () => AuthUserAssetsRoute,
-} as any);
+} as any)
 const AuthTransactionsIndividualRoute =
   AuthTransactionsIndividualRouteImport.update({
-    id: "/individual",
-    path: "/individual",
+    id: '/individual',
+    path: '/individual',
     getParentRoute: () => AuthTransactionsRoute,
-  } as any);
+  } as any)
 const AuthSettingsCategoriesRoute = AuthSettingsCategoriesRouteImport.update({
-  id: "/categories",
-  path: "/categories",
+  id: '/categories',
+  path: '/categories',
   getParentRoute: () => AuthSettingsRoute,
-} as any);
+} as any)
 const AuthSettingsAccountsRoute = AuthSettingsAccountsRouteImport.update({
-  id: "/accounts",
-  path: "/accounts",
+  id: '/accounts',
+  path: '/accounts',
   getParentRoute: () => AuthSettingsRoute,
-} as any);
+} as any)
 const AuthAccountsAccountIdRoute = AuthAccountsAccountIdRouteImport.update({
-  id: "/accounts/$accountId",
-  path: "/accounts/$accountId",
+  id: '/accounts/$accountId',
+  path: '/accounts/$accountId',
   getParentRoute: () => AuthRoute,
-} as any);
+} as any)
 
 export interface FileRoutesByFullPath {
-  "/": typeof AuthIndexRoute;
-  "/about": typeof AboutRoute;
-  "/login": typeof LoginRoute;
-  "/signup": typeof SignupRoute;
-  "/ai-chat": typeof AuthAiChatRoute;
-  "/component-testing": typeof AuthComponentTestingRoute;
-  "/portfolio": typeof AuthPortfolioRoute;
-  "/portfolio-overview": typeof AuthPortfolioOverviewRoute;
-  "/settings": typeof AuthSettingsRouteWithChildren;
-  "/transactions": typeof AuthTransactionsRouteWithChildren;
-  "/user-assets": typeof AuthUserAssetsRouteWithChildren;
-  "/accounts/$accountId": typeof AuthAccountsAccountIdRoute;
-  "/settings/accounts": typeof AuthSettingsAccountsRoute;
-  "/settings/categories": typeof AuthSettingsCategoriesRoute;
-  "/transactions/individual": typeof AuthTransactionsIndividualRoute;
-  "/user-assets/$assetId": typeof AuthUserAssetsAssetIdRoute;
-  "/transactions/": typeof AuthTransactionsIndexRoute;
-  "/user-assets/": typeof AuthUserAssetsIndexRoute;
+  '/': typeof AuthIndexRoute
+  '/about': typeof AboutRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/ai-chat': typeof AuthAiChatRoute
+  '/component-testing': typeof AuthComponentTestingRoute
+  '/portfolio': typeof AuthPortfolioRoute
+  '/portfolio-overview': typeof AuthPortfolioOverviewRoute
+  '/settings': typeof AuthSettingsRouteWithChildren
+  '/transactions': typeof AuthTransactionsRouteWithChildren
+  '/user-assets': typeof AuthUserAssetsRouteWithChildren
+  '/accounts/$accountId': typeof AuthAccountsAccountIdRoute
+  '/settings/accounts': typeof AuthSettingsAccountsRoute
+  '/settings/categories': typeof AuthSettingsCategoriesRoute
+  '/transactions/individual': typeof AuthTransactionsIndividualRoute
+  '/user-assets/$assetId': typeof AuthUserAssetsAssetIdRoute
+  '/transactions/': typeof AuthTransactionsIndexRoute
+  '/user-assets/': typeof AuthUserAssetsIndexRoute
 }
 export interface FileRoutesByTo {
-  "/about": typeof AboutRoute;
-  "/login": typeof LoginRoute;
-  "/signup": typeof SignupRoute;
-  "/ai-chat": typeof AuthAiChatRoute;
-  "/component-testing": typeof AuthComponentTestingRoute;
-  "/portfolio": typeof AuthPortfolioRoute;
-  "/portfolio-overview": typeof AuthPortfolioOverviewRoute;
-  "/settings": typeof AuthSettingsRouteWithChildren;
-  "/": typeof AuthIndexRoute;
-  "/accounts/$accountId": typeof AuthAccountsAccountIdRoute;
-  "/settings/accounts": typeof AuthSettingsAccountsRoute;
-  "/settings/categories": typeof AuthSettingsCategoriesRoute;
-  "/transactions/individual": typeof AuthTransactionsIndividualRoute;
-  "/user-assets/$assetId": typeof AuthUserAssetsAssetIdRoute;
-  "/transactions": typeof AuthTransactionsIndexRoute;
-  "/user-assets": typeof AuthUserAssetsIndexRoute;
+  '/about': typeof AboutRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/ai-chat': typeof AuthAiChatRoute
+  '/component-testing': typeof AuthComponentTestingRoute
+  '/portfolio': typeof AuthPortfolioRoute
+  '/portfolio-overview': typeof AuthPortfolioOverviewRoute
+  '/settings': typeof AuthSettingsRouteWithChildren
+  '/': typeof AuthIndexRoute
+  '/accounts/$accountId': typeof AuthAccountsAccountIdRoute
+  '/settings/accounts': typeof AuthSettingsAccountsRoute
+  '/settings/categories': typeof AuthSettingsCategoriesRoute
+  '/transactions/individual': typeof AuthTransactionsIndividualRoute
+  '/user-assets/$assetId': typeof AuthUserAssetsAssetIdRoute
+  '/transactions': typeof AuthTransactionsIndexRoute
+  '/user-assets': typeof AuthUserAssetsIndexRoute
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport;
-  "/_auth": typeof AuthRouteWithChildren;
-  "/about": typeof AboutRoute;
-  "/login": typeof LoginRoute;
-  "/signup": typeof SignupRoute;
-  "/_auth/ai-chat": typeof AuthAiChatRoute;
-  "/_auth/component-testing": typeof AuthComponentTestingRoute;
-  "/_auth/portfolio": typeof AuthPortfolioRoute;
-  "/_auth/portfolio-overview": typeof AuthPortfolioOverviewRoute;
-  "/_auth/settings": typeof AuthSettingsRouteWithChildren;
-  "/_auth/transactions": typeof AuthTransactionsRouteWithChildren;
-  "/_auth/user-assets": typeof AuthUserAssetsRouteWithChildren;
-  "/_auth/": typeof AuthIndexRoute;
-  "/_auth/accounts/$accountId": typeof AuthAccountsAccountIdRoute;
-  "/_auth/settings/accounts": typeof AuthSettingsAccountsRoute;
-  "/_auth/settings/categories": typeof AuthSettingsCategoriesRoute;
-  "/_auth/transactions/individual": typeof AuthTransactionsIndividualRoute;
-  "/_auth/user-assets/$assetId": typeof AuthUserAssetsAssetIdRoute;
-  "/_auth/transactions/": typeof AuthTransactionsIndexRoute;
-  "/_auth/user-assets/": typeof AuthUserAssetsIndexRoute;
+  __root__: typeof rootRouteImport
+  '/_auth': typeof AuthRouteWithChildren
+  '/about': typeof AboutRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/_auth/ai-chat': typeof AuthAiChatRoute
+  '/_auth/component-testing': typeof AuthComponentTestingRoute
+  '/_auth/portfolio': typeof AuthPortfolioRoute
+  '/_auth/portfolio-overview': typeof AuthPortfolioOverviewRoute
+  '/_auth/settings': typeof AuthSettingsRouteWithChildren
+  '/_auth/transactions': typeof AuthTransactionsRouteWithChildren
+  '/_auth/user-assets': typeof AuthUserAssetsRouteWithChildren
+  '/_auth/': typeof AuthIndexRoute
+  '/_auth/accounts/$accountId': typeof AuthAccountsAccountIdRoute
+  '/_auth/settings/accounts': typeof AuthSettingsAccountsRoute
+  '/_auth/settings/categories': typeof AuthSettingsCategoriesRoute
+  '/_auth/transactions/individual': typeof AuthTransactionsIndividualRoute
+  '/_auth/user-assets/$assetId': typeof AuthUserAssetsAssetIdRoute
+  '/_auth/transactions/': typeof AuthTransactionsIndexRoute
+  '/_auth/user-assets/': typeof AuthUserAssetsIndexRoute
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
+  fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | "/"
-    | "/about"
-    | "/login"
-    | "/signup"
-    | "/ai-chat"
-    | "/component-testing"
-    | "/portfolio"
-    | "/portfolio-overview"
-    | "/settings"
-    | "/transactions"
-    | "/user-assets"
-    | "/accounts/$accountId"
-    | "/settings/accounts"
-    | "/settings/categories"
-    | "/transactions/individual"
-    | "/user-assets/$assetId"
-    | "/transactions/"
-    | "/user-assets/";
-  fileRoutesByTo: FileRoutesByTo;
+    | '/'
+    | '/about'
+    | '/login'
+    | '/signup'
+    | '/ai-chat'
+    | '/component-testing'
+    | '/portfolio'
+    | '/portfolio-overview'
+    | '/settings'
+    | '/transactions'
+    | '/user-assets'
+    | '/accounts/$accountId'
+    | '/settings/accounts'
+    | '/settings/categories'
+    | '/transactions/individual'
+    | '/user-assets/$assetId'
+    | '/transactions/'
+    | '/user-assets/'
+  fileRoutesByTo: FileRoutesByTo
   to:
-    | "/about"
-    | "/login"
-    | "/signup"
-    | "/ai-chat"
-    | "/component-testing"
-    | "/portfolio"
-    | "/portfolio-overview"
-    | "/settings"
-    | "/"
-    | "/accounts/$accountId"
-    | "/settings/accounts"
-    | "/settings/categories"
-    | "/transactions/individual"
-    | "/user-assets/$assetId"
-    | "/transactions"
-    | "/user-assets";
+    | '/about'
+    | '/login'
+    | '/signup'
+    | '/ai-chat'
+    | '/component-testing'
+    | '/portfolio'
+    | '/portfolio-overview'
+    | '/settings'
+    | '/'
+    | '/accounts/$accountId'
+    | '/settings/accounts'
+    | '/settings/categories'
+    | '/transactions/individual'
+    | '/user-assets/$assetId'
+    | '/transactions'
+    | '/user-assets'
   id:
-    | "__root__"
-    | "/_auth"
-    | "/about"
-    | "/login"
-    | "/signup"
-    | "/_auth/ai-chat"
-    | "/_auth/component-testing"
-    | "/_auth/portfolio"
-    | "/_auth/portfolio-overview"
-    | "/_auth/settings"
-    | "/_auth/transactions"
-    | "/_auth/user-assets"
-    | "/_auth/"
-    | "/_auth/accounts/$accountId"
-    | "/_auth/settings/accounts"
-    | "/_auth/settings/categories"
-    | "/_auth/transactions/individual"
-    | "/_auth/user-assets/$assetId"
-    | "/_auth/transactions/"
-    | "/_auth/user-assets/";
-  fileRoutesById: FileRoutesById;
+    | '__root__'
+    | '/_auth'
+    | '/about'
+    | '/login'
+    | '/signup'
+    | '/_auth/ai-chat'
+    | '/_auth/component-testing'
+    | '/_auth/portfolio'
+    | '/_auth/portfolio-overview'
+    | '/_auth/settings'
+    | '/_auth/transactions'
+    | '/_auth/user-assets'
+    | '/_auth/'
+    | '/_auth/accounts/$accountId'
+    | '/_auth/settings/accounts'
+    | '/_auth/settings/categories'
+    | '/_auth/transactions/individual'
+    | '/_auth/user-assets/$assetId'
+    | '/_auth/transactions/'
+    | '/_auth/user-assets/'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  AuthRoute: typeof AuthRouteWithChildren;
-  AboutRoute: typeof AboutRoute;
-  LoginRoute: typeof LoginRoute;
-  SignupRoute: typeof SignupRoute;
+  AuthRoute: typeof AuthRouteWithChildren
+  AboutRoute: typeof AboutRoute
+  LoginRoute: typeof LoginRoute
+  SignupRoute: typeof SignupRoute
 }
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    "/signup": {
-      id: "/signup";
-      path: "/signup";
-      fullPath: "/signup";
-      preLoaderRoute: typeof SignupRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/login": {
-      id: "/login";
-      path: "/login";
-      fullPath: "/login";
-      preLoaderRoute: typeof LoginRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/about": {
-      id: "/about";
-      path: "/about";
-      fullPath: "/about";
-      preLoaderRoute: typeof AboutRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/_auth": {
-      id: "/_auth";
-      path: "";
-      fullPath: "/";
-      preLoaderRoute: typeof AuthRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/_auth/": {
-      id: "/_auth/";
-      path: "/";
-      fullPath: "/";
-      preLoaderRoute: typeof AuthIndexRouteImport;
-      parentRoute: typeof AuthRoute;
-    };
-    "/_auth/user-assets": {
-      id: "/_auth/user-assets";
-      path: "/user-assets";
-      fullPath: "/user-assets";
-      preLoaderRoute: typeof AuthUserAssetsRouteImport;
-      parentRoute: typeof AuthRoute;
-    };
-    "/_auth/transactions": {
-      id: "/_auth/transactions";
-      path: "/transactions";
-      fullPath: "/transactions";
-      preLoaderRoute: typeof AuthTransactionsRouteImport;
-      parentRoute: typeof AuthRoute;
-    };
-    "/_auth/settings": {
-      id: "/_auth/settings";
-      path: "/settings";
-      fullPath: "/settings";
-      preLoaderRoute: typeof AuthSettingsRouteImport;
-      parentRoute: typeof AuthRoute;
-    };
-    "/_auth/portfolio-overview": {
-      id: "/_auth/portfolio-overview";
-      path: "/portfolio-overview";
-      fullPath: "/portfolio-overview";
-      preLoaderRoute: typeof AuthPortfolioOverviewRouteImport;
-      parentRoute: typeof AuthRoute;
-    };
-    "/_auth/portfolio": {
-      id: "/_auth/portfolio";
-      path: "/portfolio";
-      fullPath: "/portfolio";
-      preLoaderRoute: typeof AuthPortfolioRouteImport;
-      parentRoute: typeof AuthRoute;
-    };
-    "/_auth/component-testing": {
-      id: "/_auth/component-testing";
-      path: "/component-testing";
-      fullPath: "/component-testing";
-      preLoaderRoute: typeof AuthComponentTestingRouteImport;
-      parentRoute: typeof AuthRoute;
-    };
-    "/_auth/ai-chat": {
-      id: "/_auth/ai-chat";
-      path: "/ai-chat";
-      fullPath: "/ai-chat";
-      preLoaderRoute: typeof AuthAiChatRouteImport;
-      parentRoute: typeof AuthRoute;
-    };
-    "/_auth/user-assets/": {
-      id: "/_auth/user-assets/";
-      path: "/";
-      fullPath: "/user-assets/";
-      preLoaderRoute: typeof AuthUserAssetsIndexRouteImport;
-      parentRoute: typeof AuthUserAssetsRoute;
-    };
-    "/_auth/transactions/": {
-      id: "/_auth/transactions/";
-      path: "/";
-      fullPath: "/transactions/";
-      preLoaderRoute: typeof AuthTransactionsIndexRouteImport;
-      parentRoute: typeof AuthTransactionsRoute;
-    };
-    "/_auth/user-assets/$assetId": {
-      id: "/_auth/user-assets/$assetId";
-      path: "/$assetId";
-      fullPath: "/user-assets/$assetId";
-      preLoaderRoute: typeof AuthUserAssetsAssetIdRouteImport;
-      parentRoute: typeof AuthUserAssetsRoute;
-    };
-    "/_auth/transactions/individual": {
-      id: "/_auth/transactions/individual";
-      path: "/individual";
-      fullPath: "/transactions/individual";
-      preLoaderRoute: typeof AuthTransactionsIndividualRouteImport;
-      parentRoute: typeof AuthTransactionsRoute;
-    };
-    "/_auth/settings/categories": {
-      id: "/_auth/settings/categories";
-      path: "/categories";
-      fullPath: "/settings/categories";
-      preLoaderRoute: typeof AuthSettingsCategoriesRouteImport;
-      parentRoute: typeof AuthSettingsRoute;
-    };
-    "/_auth/settings/accounts": {
-      id: "/_auth/settings/accounts";
-      path: "/accounts";
-      fullPath: "/settings/accounts";
-      preLoaderRoute: typeof AuthSettingsAccountsRouteImport;
-      parentRoute: typeof AuthSettingsRoute;
-    };
-    "/_auth/accounts/$accountId": {
-      id: "/_auth/accounts/$accountId";
-      path: "/accounts/$accountId";
-      fullPath: "/accounts/$accountId";
-      preLoaderRoute: typeof AuthAccountsAccountIdRouteImport;
-      parentRoute: typeof AuthRoute;
-    };
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_auth/': {
+      id: '/_auth/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof AuthIndexRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/user-assets': {
+      id: '/_auth/user-assets'
+      path: '/user-assets'
+      fullPath: '/user-assets'
+      preLoaderRoute: typeof AuthUserAssetsRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/transactions': {
+      id: '/_auth/transactions'
+      path: '/transactions'
+      fullPath: '/transactions'
+      preLoaderRoute: typeof AuthTransactionsRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/settings': {
+      id: '/_auth/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthSettingsRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/portfolio-overview': {
+      id: '/_auth/portfolio-overview'
+      path: '/portfolio-overview'
+      fullPath: '/portfolio-overview'
+      preLoaderRoute: typeof AuthPortfolioOverviewRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/portfolio': {
+      id: '/_auth/portfolio'
+      path: '/portfolio'
+      fullPath: '/portfolio'
+      preLoaderRoute: typeof AuthPortfolioRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/component-testing': {
+      id: '/_auth/component-testing'
+      path: '/component-testing'
+      fullPath: '/component-testing'
+      preLoaderRoute: typeof AuthComponentTestingRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/ai-chat': {
+      id: '/_auth/ai-chat'
+      path: '/ai-chat'
+      fullPath: '/ai-chat'
+      preLoaderRoute: typeof AuthAiChatRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/user-assets/': {
+      id: '/_auth/user-assets/'
+      path: '/'
+      fullPath: '/user-assets/'
+      preLoaderRoute: typeof AuthUserAssetsIndexRouteImport
+      parentRoute: typeof AuthUserAssetsRoute
+    }
+    '/_auth/transactions/': {
+      id: '/_auth/transactions/'
+      path: '/'
+      fullPath: '/transactions/'
+      preLoaderRoute: typeof AuthTransactionsIndexRouteImport
+      parentRoute: typeof AuthTransactionsRoute
+    }
+    '/_auth/user-assets/$assetId': {
+      id: '/_auth/user-assets/$assetId'
+      path: '/$assetId'
+      fullPath: '/user-assets/$assetId'
+      preLoaderRoute: typeof AuthUserAssetsAssetIdRouteImport
+      parentRoute: typeof AuthUserAssetsRoute
+    }
+    '/_auth/transactions/individual': {
+      id: '/_auth/transactions/individual'
+      path: '/individual'
+      fullPath: '/transactions/individual'
+      preLoaderRoute: typeof AuthTransactionsIndividualRouteImport
+      parentRoute: typeof AuthTransactionsRoute
+    }
+    '/_auth/settings/categories': {
+      id: '/_auth/settings/categories'
+      path: '/categories'
+      fullPath: '/settings/categories'
+      preLoaderRoute: typeof AuthSettingsCategoriesRouteImport
+      parentRoute: typeof AuthSettingsRoute
+    }
+    '/_auth/settings/accounts': {
+      id: '/_auth/settings/accounts'
+      path: '/accounts'
+      fullPath: '/settings/accounts'
+      preLoaderRoute: typeof AuthSettingsAccountsRouteImport
+      parentRoute: typeof AuthSettingsRoute
+    }
+    '/_auth/accounts/$accountId': {
+      id: '/_auth/accounts/$accountId'
+      path: '/accounts/$accountId'
+      fullPath: '/accounts/$accountId'
+      preLoaderRoute: typeof AuthAccountsAccountIdRouteImport
+      parentRoute: typeof AuthRoute
+    }
   }
 }
 
 interface AuthSettingsRouteChildren {
-  AuthSettingsAccountsRoute: typeof AuthSettingsAccountsRoute;
-  AuthSettingsCategoriesRoute: typeof AuthSettingsCategoriesRoute;
+  AuthSettingsAccountsRoute: typeof AuthSettingsAccountsRoute
+  AuthSettingsCategoriesRoute: typeof AuthSettingsCategoriesRoute
 }
 
 const AuthSettingsRouteChildren: AuthSettingsRouteChildren = {
   AuthSettingsAccountsRoute: AuthSettingsAccountsRoute,
   AuthSettingsCategoriesRoute: AuthSettingsCategoriesRoute,
-};
+}
 
 const AuthSettingsRouteWithChildren = AuthSettingsRoute._addFileChildren(
   AuthSettingsRouteChildren,
-);
+)
 
 interface AuthTransactionsRouteChildren {
-  AuthTransactionsIndividualRoute: typeof AuthTransactionsIndividualRoute;
-  AuthTransactionsIndexRoute: typeof AuthTransactionsIndexRoute;
+  AuthTransactionsIndividualRoute: typeof AuthTransactionsIndividualRoute
+  AuthTransactionsIndexRoute: typeof AuthTransactionsIndexRoute
 }
 
 const AuthTransactionsRouteChildren: AuthTransactionsRouteChildren = {
   AuthTransactionsIndividualRoute: AuthTransactionsIndividualRoute,
   AuthTransactionsIndexRoute: AuthTransactionsIndexRoute,
-};
+}
 
 const AuthTransactionsRouteWithChildren =
-  AuthTransactionsRoute._addFileChildren(AuthTransactionsRouteChildren);
+  AuthTransactionsRoute._addFileChildren(AuthTransactionsRouteChildren)
 
 interface AuthUserAssetsRouteChildren {
-  AuthUserAssetsAssetIdRoute: typeof AuthUserAssetsAssetIdRoute;
-  AuthUserAssetsIndexRoute: typeof AuthUserAssetsIndexRoute;
+  AuthUserAssetsAssetIdRoute: typeof AuthUserAssetsAssetIdRoute
+  AuthUserAssetsIndexRoute: typeof AuthUserAssetsIndexRoute
 }
 
 const AuthUserAssetsRouteChildren: AuthUserAssetsRouteChildren = {
   AuthUserAssetsAssetIdRoute: AuthUserAssetsAssetIdRoute,
   AuthUserAssetsIndexRoute: AuthUserAssetsIndexRoute,
-};
+}
 
 const AuthUserAssetsRouteWithChildren = AuthUserAssetsRoute._addFileChildren(
   AuthUserAssetsRouteChildren,
-);
+)
 
 interface AuthRouteChildren {
-  AuthAiChatRoute: typeof AuthAiChatRoute;
-  AuthComponentTestingRoute: typeof AuthComponentTestingRoute;
-  AuthPortfolioRoute: typeof AuthPortfolioRoute;
-  AuthPortfolioOverviewRoute: typeof AuthPortfolioOverviewRoute;
-  AuthSettingsRoute: typeof AuthSettingsRouteWithChildren;
-  AuthTransactionsRoute: typeof AuthTransactionsRouteWithChildren;
-  AuthUserAssetsRoute: typeof AuthUserAssetsRouteWithChildren;
-  AuthIndexRoute: typeof AuthIndexRoute;
-  AuthAccountsAccountIdRoute: typeof AuthAccountsAccountIdRoute;
+  AuthAiChatRoute: typeof AuthAiChatRoute
+  AuthComponentTestingRoute: typeof AuthComponentTestingRoute
+  AuthPortfolioRoute: typeof AuthPortfolioRoute
+  AuthPortfolioOverviewRoute: typeof AuthPortfolioOverviewRoute
+  AuthSettingsRoute: typeof AuthSettingsRouteWithChildren
+  AuthTransactionsRoute: typeof AuthTransactionsRouteWithChildren
+  AuthUserAssetsRoute: typeof AuthUserAssetsRouteWithChildren
+  AuthIndexRoute: typeof AuthIndexRoute
+  AuthAccountsAccountIdRoute: typeof AuthAccountsAccountIdRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
@@ -455,16 +455,16 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthUserAssetsRoute: AuthUserAssetsRouteWithChildren,
   AuthIndexRoute: AuthIndexRoute,
   AuthAccountsAccountIdRoute: AuthAccountsAccountIdRoute,
-};
+}
 
-const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren);
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRouteWithChildren,
   AboutRoute: AboutRoute,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
-};
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()

@@ -1,20 +1,18 @@
 #[mockall_double::double]
 use dal::database_context::MyraDb;
-use dal::models::ai_conversation_models::{ConversationModel, MessageModel};
+use dal::models::ai_conversation_models::{ChatNeedingTitleModel, ConversationModel, MessageModel};
 use dal::queries::ai_conversation_queries;
 use dal::query_params::ai_conversation_params::{GetConversationsParams, GetMessagesParams};
 use itertools::Itertools;
 use uuid::Uuid;
 
 use crate::dtos::ai_chat_dto::ChatHistoryMessageDto;
-use crate::dtos::ai_conversation_dto::ConversationDto;
+use crate::dtos::ai_conversation_dto::{ChatNeedingTitleDto, ConversationDto};
 use crate::dtos::ai_message_dto::MessageDto;
-
 #[derive(Clone)]
 pub struct AiConversationService {
     db: MyraDb,
 }
-
 impl AiConversationService {
     pub fn new(providers: &super::ServiceProviders) -> Self {
         Self {
@@ -22,19 +20,22 @@ impl AiConversationService {
         }
     }
 
-    pub async fn create_conversation(
-        &self,
-        user_id: Uuid,
-        title: Option<&str>,
-    ) -> anyhow::Result<ConversationDto> {
-        let query =
-            ai_conversation_queries::create_conversation(user_id, title.map(|s| s.to_string()));
-        let id: Uuid = self.db.fetch_one_scalar(query).await?;
+    pub async fn create_chat(&self, user_id: Uuid) -> anyhow::Result<ConversationDto> {
+        self.db.start_transaction().await?;
+        let id: Uuid = self
+            .db
+            .fetch_one_scalar(ai_conversation_queries::create_conversation(user_id))
+            .await?;
+        self.db
+            .execute(ai_conversation_queries::create_chat(id))
+            .await?;
+        self.db.commit_transaction().await?;
+
         let now = time::OffsetDateTime::now_utc();
         Ok(ConversationDto {
             id,
             user_id,
-            title: title.map(|s| s.to_string()),
+            title: None,
             created_at: now,
             updated_at: now,
         })
@@ -61,7 +62,8 @@ impl AiConversationService {
         conversation_id: Uuid,
         user_id: Uuid,
     ) -> anyhow::Result<()> {
-        self.get_conversation(conversation_id, user_id).await?;
+        let query = ai_conversation_queries::get_owned_conversation_id(conversation_id, user_id);
+        let _: Uuid = self.db.fetch_one_scalar(query).await?;
         Ok(())
     }
 
@@ -122,5 +124,23 @@ impl AiConversationService {
         let query = ai_conversation_queries::delete_conversation(conversation_id, user_id);
         self.db.execute(query).await?;
         Ok(())
+    }
+
+    pub async fn get_chats_needing_titles(
+        &self,
+        limit: u64,
+    ) -> anyhow::Result<Vec<ChatNeedingTitleDto>> {
+        let query = ai_conversation_queries::get_chats_needing_titles(limit);
+        let models: Vec<ChatNeedingTitleModel> = self.db.fetch_all(query).await?;
+        Ok(models.into_iter().map_into().collect())
+    }
+
+    pub async fn set_generated_title_if_null(
+        &self,
+        conversation_id: Uuid,
+        title: String,
+    ) -> anyhow::Result<u64> {
+        let query = ai_conversation_queries::update_chat_title_if_null(conversation_id, title);
+        Ok(self.db.execute_with_rows_affected(query).await?)
     }
 }

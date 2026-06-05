@@ -679,12 +679,9 @@ impl AppStore {
         ai_chat::load_conversations(&self.infra, &self.ai_chat, token.as_deref()).await;
     }
 
-    pub async fn create_conversation(
-        &self,
-        title: Option<String>,
-    ) -> Result<String, crate::error::ApiError> {
+    pub async fn create_conversation(&self) -> Result<String, crate::error::ApiError> {
         let token = self.get_auth_token();
-        ai_chat::create_conversation(&self.infra, &self.ai_chat, title, token.as_deref()).await
+        ai_chat::create_conversation(&self.infra, &self.ai_chat, token.as_deref()).await
     }
 
     pub async fn delete_conversation(&self, id: String) -> Result<(), crate::error::ApiError> {

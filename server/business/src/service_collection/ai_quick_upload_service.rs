@@ -36,7 +36,7 @@ impl AiQuickUploadService {
         user_id: Uuid,
         source_file_id: Uuid,
     ) -> anyhow::Result<QuickUploadDto> {
-        let conv_query = ai_conversation_queries::create_conversation(user_id, None);
+        let conv_query = ai_conversation_queries::create_conversation(user_id);
         let conv_id: Uuid = self.db.fetch_one_scalar(conv_query).await?;
 
         let qu_query = ai_quick_upload_queries::create_quick_upload(conv_id, source_file_id);

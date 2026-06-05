@@ -7,11 +7,6 @@ use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use uuid::Uuid;
 
-#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
-pub struct CreateConversationRequestViewModel {
-    pub title: Option<String>,
-}
-
 #[derive(Debug, Clone, Default, Serialize, Deserialize, utoipa::ToSchema)]
 #[serde(transparent)]
 pub struct UserMessage(pub String);

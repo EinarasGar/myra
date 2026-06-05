@@ -122,12 +122,6 @@ struct ServerFileUrl {
 }
 
 #[derive(serde::Serialize)]
-struct CreateConversationBody {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    title: Option<String>,
-}
-
-#[derive(serde::Serialize)]
 struct FileCreateBody {
     mime_type: String,
     original_name: String,
@@ -190,27 +184,18 @@ pub async fn load_conversations(
 pub async fn create_conversation(
     infra: &Arc<SharedInfra>,
     module: &Mutex<AiChatModule>,
-    title: Option<String>,
     auth_token: Option<&str>,
 ) -> Result<String, ApiError> {
     let user_id = infra.user_id().ok_or_else(|| ApiError::Parse {
         reason: "no user_id".into(),
     })?;
-
     let path = format!("/api/users/{}/ai/conversations", user_id);
-    let body =
-        serde_json::to_string(&CreateConversationBody { title }).map_err(|e| ApiError::Parse {
-            reason: e.to_string(),
-        })?;
-
-    let resp = infra.post(&path, &body, auth_token).await?;
+    let resp = infra.post(&path, "", auth_token).await?;
     let created: ServerConversation =
         serde_json::from_str(&resp.body).map_err(|e| ApiError::Parse {
             reason: e.to_string(),
         })?;
-
     load_conversations(infra, module, auth_token).await;
-
     Ok(created.id)
 }
 

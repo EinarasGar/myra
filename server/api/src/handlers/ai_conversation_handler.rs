@@ -24,9 +24,8 @@ use crate::{
     extractors::ValidatedJson,
     states::{AiChatServiceState, AiConversationServiceState},
     view_models::ai::conversations::{
-        ConversationResponseViewModel, CreateConversationRequestViewModel,
-        IdentifiableConversationResponseViewModel, IdentifiableMessageResponseViewModel,
-        SendMessageRequestViewModel,
+        ConversationResponseViewModel, IdentifiableConversationResponseViewModel,
+        IdentifiableMessageResponseViewModel, SendMessageRequestViewModel,
     },
 };
 
@@ -40,16 +39,14 @@ use crate::{
     params(
         ("user_id" = Uuid, Path, description = "Unique identifier of the user."),
     ),
-    request_body(content = CreateConversationRequestViewModel),
     security(("auth_token" = []))
 )]
 pub async fn create_conversation(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     AiConversationServiceState(service): AiConversationServiceState,
-    ValidatedJson(body): ValidatedJson<CreateConversationRequestViewModel>,
 ) -> Result<(StatusCode, Json<IdentifiableConversationResponseViewModel>), ApiError> {
     let dto = service
-        .create_conversation(user_id, body.title.as_deref())
+        .create_chat(user_id)
         .await
         .map_err(ApiError::from_anyhow)?;
     Ok((StatusCode::CREATED, Json(dto.into())))

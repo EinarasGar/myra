@@ -3532,19 +3532,6 @@ export interface CreateCategoryTypeRequest {
 /**
  *
  * @export
- * @interface CreateConversationRequest
- */
-export interface CreateConversationRequest {
-  /**
-   *
-   * @type {string}
-   * @memberof CreateConversationRequest
-   */
-  title?: string | null;
-}
-/**
- *
- * @export
  * @interface CreateFileRequest
  */
 export interface CreateFileRequest {
@@ -5562,23 +5549,15 @@ export const AIConversationsApiAxiosParamCreator = function (
     /**
      *
      * @param {string} userId
-     * @param {CreateConversationRequest} createConversationRequest
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     createConversation: async (
       userId: string,
-      createConversationRequest: CreateConversationRequest,
       options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists("createConversation", "userId", userId);
-      // verify required parameter 'createConversationRequest' is not null or undefined
-      assertParamExists(
-        "createConversation",
-        "createConversationRequest",
-        createConversationRequest,
-      );
       const localVarPath = `/api/users/{user_id}/ai/conversations`.replace(
         `{${"user_id"}}`,
         encodeURIComponent(String(userId)),
@@ -5602,8 +5581,6 @@ export const AIConversationsApiAxiosParamCreator = function (
       // http bearer authentication required
       await setBearerAuthToObject(localVarHeaderParameter, configuration);
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
-
       setSearchParams(localVarUrlObj, localVarQueryParameter);
       let headersFromBaseOptions =
         baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -5612,11 +5589,6 @@ export const AIConversationsApiAxiosParamCreator = function (
         ...headersFromBaseOptions,
         ...options.headers,
       };
-      localVarRequestOptions.data = serializeDataIfNeeded(
-        createConversationRequest,
-        localVarRequestOptions,
-        configuration,
-      );
 
       return {
         url: toPathString(localVarUrlObj),
@@ -5854,13 +5826,11 @@ export const AIConversationsApiFp = function (configuration?: Configuration) {
     /**
      *
      * @param {string} userId
-     * @param {CreateConversationRequest} createConversationRequest
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     async createConversation(
       userId: string,
-      createConversationRequest: CreateConversationRequest,
       options?: RawAxiosRequestConfig,
     ): Promise<
       (
@@ -5869,11 +5839,7 @@ export const AIConversationsApiFp = function (configuration?: Configuration) {
       ) => AxiosPromise<IdentifiableConversationResponse>
     > {
       const localVarAxiosArgs =
-        await localVarAxiosParamCreator.createConversation(
-          userId,
-          createConversationRequest,
-          options,
-        );
+        await localVarAxiosParamCreator.createConversation(userId, options);
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
         operationServerMap["AIConversationsApi.createConversation"]?.[
@@ -6037,17 +6003,15 @@ export const AIConversationsApiFactory = function (
     /**
      *
      * @param {string} userId
-     * @param {CreateConversationRequest} createConversationRequest
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     createConversation(
       userId: string,
-      createConversationRequest: CreateConversationRequest,
       options?: RawAxiosRequestConfig,
     ): AxiosPromise<IdentifiableConversationResponse> {
       return localVarFp
-        .createConversation(userId, createConversationRequest, options)
+        .createConversation(userId, options)
         .then((request) => request(axios, basePath));
     },
     /**
@@ -6124,14 +6088,12 @@ export interface AIConversationsApiInterface {
   /**
    *
    * @param {string} userId
-   * @param {CreateConversationRequest} createConversationRequest
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    * @memberof AIConversationsApiInterface
    */
   createConversation(
     userId: string,
-    createConversationRequest: CreateConversationRequest,
     options?: RawAxiosRequestConfig,
   ): AxiosPromise<IdentifiableConversationResponse>;
 
@@ -6203,18 +6165,13 @@ export class AIConversationsApi
   /**
    *
    * @param {string} userId
-   * @param {CreateConversationRequest} createConversationRequest
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    * @memberof AIConversationsApi
    */
-  public createConversation(
-    userId: string,
-    createConversationRequest: CreateConversationRequest,
-    options?: RawAxiosRequestConfig,
-  ) {
+  public createConversation(userId: string, options?: RawAxiosRequestConfig) {
     return AIConversationsApiFp(this.configuration)
-      .createConversation(userId, createConversationRequest, options)
+      .createConversation(userId, options)
       .then((request) => request(this.axios, this.basePath));
   }
 

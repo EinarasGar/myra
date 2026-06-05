@@ -20,6 +20,17 @@ pub struct PromptOutput {
     pub output: String,
 }
 
+/// Whether a prompt turn writes to conversation history. Rate limiting (the
+/// `pre_check`/`record_usage` pair) runs either way — this only gates the
+/// user message and the model's response messages.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Persistence {
+    /// Record the user message and persist the response (normal chat turns).
+    Persist,
+    /// Write nothing to history — for one-off runs like title generation.
+    Ephemeral,
+}
+
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ChatHistoryMessage {

@@ -9,6 +9,11 @@ pub struct ConversationModel {
     pub created_at: OffsetDateTime,
     pub updated_at: OffsetDateTime,
 }
+#[derive(Debug, sqlx::FromRow)]
+pub struct ChatNeedingTitleModel {
+    pub conversation_id: Uuid,
+    pub user_id: Uuid,
+}
 
 #[derive(Debug, sqlx::FromRow)]
 pub struct MessageModel {

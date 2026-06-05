@@ -454,11 +454,8 @@ export default function useAiChat(
 
         let convId = conversationId;
         if (!convId) {
-          const title =
-            message.length > 50 ? message.slice(0, 50) + "..." : message;
           const res = await AIConversationsApiFactory().createConversation(
             userId,
-            { title },
           );
           convId = res.data.id;
           setConversationId(convId);

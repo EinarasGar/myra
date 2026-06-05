@@ -2,9 +2,7 @@ use sea_query::*;
 use sea_query_sqlx::SqlxBinder;
 use sqlx::types::Uuid;
 
-use crate::idens::ai_conversation_idens::{
-    AiConversationsIden, AiMessagesIden, AiWorkflowQuickUploadIden,
-};
+use crate::idens::ai_conversation_idens::{AiChatIden, AiConversationsIden, AiMessagesIden};
 use crate::query_params::ai_conversation_params::{
     GetConversationsParams, GetConversationsSearchType, GetMessagesParams,
 };
@@ -12,20 +10,33 @@ use crate::query_params::ai_conversation_params::{
 use super::DbQueryWithValues;
 
 #[tracing::instrument(skip_all)]
-pub fn create_conversation(user_id: Uuid, title: Option<String>) -> DbQueryWithValues {
-    let mut columns = vec![AiConversationsIden::UserId];
-    let mut values: Vec<SimpleExpr> = vec![user_id.into()];
-
-    if let Some(ref t) = title {
-        columns.push(AiConversationsIden::Title);
-        values.push(t.clone().into());
-    }
-
+pub fn create_conversation(user_id: Uuid) -> DbQueryWithValues {
     Query::insert()
         .into_table(AiConversationsIden::Table)
-        .columns(columns)
-        .values_panic(values)
+        .columns([AiConversationsIden::UserId])
+        .values_panic([user_id.into()])
         .returning(Query::returning().column(AiConversationsIden::Id))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn create_chat(conversation_id: Uuid) -> DbQueryWithValues {
+    Query::insert()
+        .into_table(AiChatIden::Table)
+        .columns([AiChatIden::ConversationId])
+        .values_panic([conversation_id.into()])
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn get_owned_conversation_id(conversation_id: Uuid, user_id: Uuid) -> DbQueryWithValues {
+    Query::select()
+        .column(AiConversationsIden::Id)
+        .from(AiConversationsIden::Table)
+        .and_where(Expr::col(AiConversationsIden::Id).eq(conversation_id))
+        .and_where(Expr::col(AiConversationsIden::UserId).eq(user_id))
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }
@@ -36,48 +47,101 @@ pub fn get_conversations(params: GetConversationsParams) -> DbQueryWithValues {
     query
         .column(AiConversationsIden::Id)
         .column(AiConversationsIden::UserId)
-        .column(AiConversationsIden::Title)
-        .column(AiConversationsIden::CreatedAt)
-        .column(AiConversationsIden::UpdatedAt)
+        .column((AiConversationsIden::Table, AiConversationsIden::CreatedAt))
+        .column((AiConversationsIden::Table, AiConversationsIden::UpdatedAt))
+        .expr_as(
+            Expr::cust(
+                r#"COALESCE(ai_chat.title, (
+                    SELECT left((
+                        SELECT string_agg(word, ' ' ORDER BY ord)
+                        FROM (
+                            SELECT word, ord
+                            FROM regexp_split_to_table(
+                                trim(regexp_replace(m.content ->> 'content', '\s+', ' ', 'g')),
+                                ' '
+                            ) WITH ORDINALITY AS words(word, ord)
+                            WHERE word <> ''
+                            ORDER BY ord
+                            LIMIT 8
+                        ) preview_words
+                    ), 60)
+                    FROM ai_messages m
+                    WHERE m.conversation_id = ai_conversations.id AND m.role = 'user'
+                    ORDER BY m.created_at ASC, m.id ASC
+                    LIMIT 1
+                ))"#,
+            ),
+            Alias::new("title"),
+        )
         .from(AiConversationsIden::Table)
+        .inner_join(
+            AiChatIden::Table,
+            Expr::col((AiChatIden::Table, AiChatIden::ConversationId))
+                .equals((AiConversationsIden::Table, AiConversationsIden::Id)),
+        )
         .and_where(Expr::col(AiConversationsIden::UserId).eq(params.user_id));
-
-    // Exclude quick-upload workflow conversations — they live in ai_conversations but are not
-    // user-facing chats, so they must never appear in (or be opened from) the chat history.
-    let mut quick_upload_sub = Query::select();
-    quick_upload_sub
-        .column(AiWorkflowQuickUploadIden::ConversationId)
-        .from(AiWorkflowQuickUploadIden::Table);
-    query.and_where(Expr::col(AiConversationsIden::Id).not_in_subquery(quick_upload_sub));
-
     match params.search_type {
         GetConversationsSearchType::ById(id) => {
             query.and_where(Expr::col(AiConversationsIden::Id).eq(id));
         }
         GetConversationsSearchType::All => {
-            query.order_by(AiConversationsIden::CreatedAt, Order::Desc);
+            query.order_by(
+                (AiConversationsIden::Table, AiConversationsIden::CreatedAt),
+                Order::Desc,
+            );
         }
     }
-
     if let Some(paging) = params.paging {
         query.limit(paging.count).offset(paging.start);
     }
-
     query.build_sqlx(PostgresQueryBuilder).into()
 }
 
 #[tracing::instrument(skip_all)]
-pub fn update_conversation_title(
-    conversation_id: Uuid,
-    user_id: Uuid,
-    title: String,
-) -> DbQueryWithValues {
+pub fn update_chat_title_if_null(conversation_id: Uuid, title: String) -> DbQueryWithValues {
     Query::update()
-        .table(AiConversationsIden::Table)
-        .value(AiConversationsIden::Title, title)
-        .value(AiConversationsIden::UpdatedAt, Expr::cust("NOW()"))
-        .and_where(Expr::col(AiConversationsIden::Id).eq(conversation_id))
-        .and_where(Expr::col(AiConversationsIden::UserId).eq(user_id))
+        .table(AiChatIden::Table)
+        .value(AiChatIden::Title, title)
+        .value(AiChatIden::UpdatedAt, Expr::cust("NOW()"))
+        .and_where(Expr::col(AiChatIden::ConversationId).eq(conversation_id))
+        .and_where(Expr::col(AiChatIden::Title).is_null())
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn get_chats_needing_titles(limit: u64) -> DbQueryWithValues {
+    Query::select()
+        .column((AiChatIden::Table, AiChatIden::ConversationId))
+        .column(AiConversationsIden::UserId)
+        .from(AiChatIden::Table)
+        .inner_join(
+            AiConversationsIden::Table,
+            Expr::col((AiConversationsIden::Table, AiConversationsIden::Id))
+                .equals((AiChatIden::Table, AiChatIden::ConversationId)),
+        )
+        .and_where(Expr::col(AiChatIden::Title).is_null())
+        .and_where(Expr::exists(
+            Query::select()
+                .expr(Expr::val(1))
+                .from(AiMessagesIden::Table)
+                .and_where(
+                    Expr::col((AiMessagesIden::Table, AiMessagesIden::ConversationId))
+                        .equals((AiChatIden::Table, AiChatIden::ConversationId)),
+                )
+                .and_where(Expr::col((AiMessagesIden::Table, AiMessagesIden::Role)).eq("user"))
+                .to_owned(),
+        ))
+        .and_where(Expr::cust(
+            "EXTRACT(EPOCH FROM (NOW() - \
+                 (SELECT MAX(m.created_at) FROM ai_messages m WHERE m.conversation_id = \
+                 ai_chat.conversation_id))) > 600",
+        ))
+        .order_by(
+            (AiConversationsIden::Table, AiConversationsIden::CreatedAt),
+            Order::Asc,
+        )
+        .limit(limit)
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }

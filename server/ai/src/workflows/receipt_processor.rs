@@ -11,6 +11,7 @@ use crate::conversation::Conversation;
 use crate::conversation_provider::ConversationProvider;
 use crate::data_provider::AiDataProvider;
 use crate::embedding::EMBEDDING_DIMS;
+use crate::models::chat::Persistence;
 pub use crate::models::receipt::ReceiptProcessorOutput;
 use crate::provider::create_gemini_client;
 use crate::rate_limit_provider::RateLimitProvider;
@@ -127,7 +128,9 @@ where
         .build();
 
     let conv = Conversation::new(conversation, rate_limit);
-    let output = conv.prompt(agent, message, file_ids).await?;
+    let output = conv
+        .prompt(agent, message, file_ids, Persistence::Persist)
+        .await?;
 
     parse_proposal(&output.output)
 }

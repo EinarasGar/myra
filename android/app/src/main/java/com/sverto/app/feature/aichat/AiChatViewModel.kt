@@ -149,7 +149,7 @@ class AiChatViewModel(
             // Auto-create conversation first, then send
             viewModelScope.launch {
                 try {
-                    val newId = store.createConversation(null)
+                    val newId = store.createConversation()
                     doSendMessage(newId, text, state.selectedFileUris, contentResolver)
                 } catch (e: ApiException) {
                     Log.e("AiChatViewModel", "Failed to create conversation for message", e)

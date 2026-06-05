@@ -1,3 +1,4 @@
+pub mod generate_chat_titles;
 pub mod refresh_assets;
 pub mod seed_asset_history;
 

@@ -36,12 +36,19 @@ async fn main() -> anyhow::Result<()> {
         services,
         scheduled::seed_asset_history::tick
     );
+    let generate_chat_titles = scheduled::cron_worker!(
+        "generate-chat-titles",
+        "0 */10 * * * *",
+        services,
+        scheduled::generate_chat_titles::tick
+    );
     tracing::info!("Worker starting");
 
     Monitor::new()
         .register(event_worker)
         .register(refresh_assets)
         .register(seed_history)
+        .register(generate_chat_titles)
         .run()
         .await?;
 

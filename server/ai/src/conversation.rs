@@ -14,7 +14,7 @@ use crate::agents::approval::{build_gated_toolset, ApprovalHook};
 use crate::agents::chat_utils::{attachment_to_user_content, find_tool_call_in_history};
 use crate::conversation_provider::ConversationProvider;
 use crate::models::chat::{
-    Base64Attachment, ChatHistoryMessage, ChatStreamEvent, HistoryEntry, PromptOutput,
+    Base64Attachment, ChatHistoryMessage, ChatStreamEvent, HistoryEntry, Persistence, PromptOutput,
     ToolRequestPayload,
 };
 use crate::rate_limit_provider::RateLimitProvider;
@@ -45,11 +45,13 @@ where
         agent: Agent<M>,
         message: String,
         file_ids: Vec<Uuid>,
+        persistence: Persistence,
     ) -> anyhow::Result<PromptOutput>
     where
         M: rig::completion::CompletionModel + 'static,
     {
-        let prepared = self.prepare(message, file_ids, false).await?;
+        let persist = persistence == Persistence::Persist;
+        let prepared = self.prepare(message, file_ids, !persist).await?;
 
         let response_result = agent
             .prompt(prepared.current_message)
@@ -66,16 +68,19 @@ where
             }
         };
 
-        let history_messages = convert_messages_to_history(response.messages.unwrap_or_default());
-        for msg in history_messages {
-            if matches!(
-                msg,
-                ChatHistoryMessage::User { .. } | ChatHistoryMessage::ToolApproval { .. }
-            ) {
-                continue;
-            }
-            if let Err(e) = self.conversation.append_message(msg).await {
-                tracing::warn!("Failed to persist response message: {e}");
+        if persist {
+            let history_messages =
+                convert_messages_to_history(response.messages.unwrap_or_default());
+            for msg in history_messages {
+                if matches!(
+                    msg,
+                    ChatHistoryMessage::User { .. } | ChatHistoryMessage::ToolApproval { .. }
+                ) {
+                    continue;
+                }
+                if let Err(e) = self.conversation.append_message(msg).await {
+                    tracing::warn!("Failed to persist response message: {e}");
+                }
             }
         }
 
