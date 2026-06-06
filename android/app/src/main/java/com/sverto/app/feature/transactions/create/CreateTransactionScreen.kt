@@ -110,6 +110,7 @@ fun CreateTransactionScreen(
     val accounts by viewModel.accounts.collectAsStateWithLifecycle()
     val assetResults by viewModel.assetResults.collectAsStateWithLifecycle()
     val categoryResults by viewModel.categoryResults.collectAsStateWithLifecycle()
+    val categoriesLoading by viewModel.categoriesLoading.collectAsStateWithLifecycle()
     val submitState by viewModel.submitState.collectAsStateWithLifecycle()
     val submittedTransaction by viewModel.submittedTransaction.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
@@ -189,7 +190,7 @@ fun CreateTransactionScreen(
                                 scene = Scene.AssetSearch(SearchTarget.ORIGIN_ASSET)
                             },
                             onPickCategory = {
-                                viewModel.searchCategories("")
+                                viewModel.loadCategories()
                                 scene = Scene.CategorySearch
                             },
                             onChangePrimaryAmount = viewModel::updatePrimaryAmount,
@@ -225,7 +226,8 @@ fun CreateTransactionScreen(
                             CategorySearchScene(
                                 sharedKey = CATEGORY_SHARED_KEY,
                                 results = categoryResults,
-                                onQueryChange = viewModel::searchCategories,
+                                loading = categoriesLoading,
+                                onQueryChange = viewModel::filterCategories,
                                 onSelect = { category ->
                                     viewModel.selectCategory(category)
                                     scene = Scene.Form

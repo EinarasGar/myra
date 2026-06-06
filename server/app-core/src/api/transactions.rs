@@ -75,7 +75,8 @@ fn build_list_item(
         description: desc.unwrap_or_else(|| type_label(tx_type).to_string()),
         transaction_type: tx_type.to_string(),
         type_label: type_label(tx_type).to_string(),
-        amount_display: format_entries(&entries, tables),
+        amount_display: primary_display(&entries, tables),
+        secondary_amount_display: secondary_display(&entries, tables),
         account_name: first
             .and_then(|e| find_account(tables, &e.0))
             .unwrap_or_default(),
@@ -86,6 +87,9 @@ fn build_list_item(
             .and_then(|id| find_category(tables, id))
             .unwrap_or_default(),
         category_id: cat_id,
+        category_icon: cat_id
+            .and_then(|id| find_category_icon(tables, id))
+            .unwrap_or_default(),
         is_group: false,
         group_size: 1,
         children: vec![],
@@ -232,13 +236,8 @@ fn group_to_list_item(
 
     let mut totals: HashMap<String, f64> = HashMap::new();
     for child in &tg.group.transactions {
-        for (_, asset_id, amount, outgoing) in &flatten(child).5 {
-            let signed = if *outgoing {
-                -amount.abs()
-            } else {
-                amount.abs()
-            };
-            *totals.entry(find_ticker(tables, *asset_id)).or_default() += signed;
+        for (_, asset_id, amount, _) in &flatten(child).5 {
+            *totals.entry(find_ticker(tables, *asset_id)).or_default() += *amount;
         }
     }
 
@@ -274,6 +273,7 @@ fn group_to_list_item(
         transaction_type: "group".to_string(),
         type_label: format!("Group · {group_size}"),
         amount_display,
+        secondary_amount_display: None,
         account_name: tg
             .group
             .transactions
@@ -288,6 +288,8 @@ fn group_to_list_item(
         asset_display: String::new(),
         category_name: find_category(tables, tg.group.category_id.0).unwrap_or_default(),
         category_id: Some(tg.group.category_id.0),
+        // Groups keep their dedicated "layers" glyph rather than a category icon.
+        category_icon: String::new(),
         is_group: true,
         group_size,
         children: tg
@@ -333,16 +335,25 @@ pub(crate) fn find_category(t: &MetadataLookupTables, id: i32) -> Option<String>
         .map(|c| c.category.category.as_str().to_string())
 }
 
-fn format_entries(entries: &[ET], tables: &MetadataLookupTables) -> String {
-    match entries.len() {
-        0 => String::new(),
-        1 => fmt(entries[0].2, &find_ticker(tables, entries[0].1)),
-        _ => format!(
-            "{} → {}",
-            fmt(entries[0].2, &find_ticker(tables, entries[0].1)),
-            fmt(entries[1].2, &find_ticker(tables, entries[1].1))
-        ),
+pub(crate) fn find_category_icon(t: &MetadataLookupTables, id: i32) -> Option<String> {
+    t.categories
+        .iter()
+        .find(|c| c.id.0 == id)
+        .map(|c| c.category.icon.as_str().to_string())
+}
+
+/// The headline amount: the whole amount for single-entry transactions, or the
+/// outgoing leg for two-entry transactions (purchase/sale/trade).
+fn primary_display(entries: &[ET], tables: &MetadataLookupTables) -> String {
+    match entries.first() {
+        None => String::new(),
+        Some(e) => fmt(e.2, &find_ticker(tables, e.1)),
     }
+}
+
+/// The incoming leg for two-entry transactions; `None` for single-entry.
+fn secondary_display(entries: &[ET], tables: &MetadataLookupTables) -> Option<String> {
+    entries.get(1).map(|e| fmt(e.2, &find_ticker(tables, e.1)))
 }
 
 fn type_label(t: &str) -> &str {

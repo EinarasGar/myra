@@ -152,7 +152,7 @@ fun CreateTransactionGroupScreen(
         if (isCategorySearch) {
             CategorySearchForGroup(
                 results = categoryResults,
-                onQueryChange = viewModel::searchCategories,
+                onQueryChange = viewModel::filterCategories,
                 onSelect = { category ->
                     viewModel.selectCategory(category)
                     showCategorySearch = false
@@ -273,7 +273,7 @@ fun CreateTransactionGroupScreen(
                         color = MaterialTheme.colorScheme.surfaceBright,
                         modifier =
                             Modifier.fillMaxWidth().clickable {
-                                viewModel.searchCategories("")
+                                viewModel.loadCategories()
                                 showCategorySearch = true
                             },
                     ) {

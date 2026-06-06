@@ -20,14 +20,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AccountBalance
-import androidx.compose.material.icons.outlined.CallMade
-import androidx.compose.material.icons.outlined.CallReceived
-import androidx.compose.material.icons.outlined.Layers
-import androidx.compose.material.icons.outlined.Payments
-import androidx.compose.material.icons.outlined.Receipt
-import androidx.compose.material.icons.outlined.ShoppingCart
-import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -54,7 +46,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -325,8 +316,6 @@ private fun TransactionRow(
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
 ) {
-    val icon = transactionIcon(transaction.transactionType)
-
     with(sharedTransitionScope) {
         ListItem(
             modifier =
@@ -340,10 +329,8 @@ private fun TransactionRow(
                     containerColor = MaterialTheme.colorScheme.surfaceBright,
                 ),
             leadingContent = {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = transaction.typeLabel,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                TransactionGlyph(
+                    transaction = transaction,
                     modifier = Modifier.size(24.dp),
                 )
             },
@@ -371,32 +358,11 @@ private fun TransactionRow(
                 }
             },
             trailingContent = {
-                Text(
-                    text = transaction.amountDisplay,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                )
+                TransactionAmount(transaction = transaction)
             },
         )
     }
 }
-
-private fun transactionIcon(type: String): ImageVector =
-    when (type) {
-        "asset_purchase" -> Icons.Outlined.ShoppingCart
-        "asset_sale" -> Icons.Outlined.Payments
-        "cash_transfer_in" -> Icons.Outlined.CallReceived
-        "cash_transfer_out" -> Icons.Outlined.CallMade
-        "cash_dividend", "asset_dividend" -> Icons.Outlined.Payments
-        "asset_trade" -> Icons.Outlined.SwapHoriz
-        "asset_transfer_in" -> Icons.Outlined.CallReceived
-        "asset_transfer_out" -> Icons.Outlined.CallMade
-        "asset_balance_transfer" -> Icons.Outlined.SwapHoriz
-        "account_fees" -> Icons.Outlined.Receipt
-        "group" -> Icons.Outlined.Layers
-        else -> Icons.Outlined.AccountBalance
-    }
 
 @Composable
 private fun ErrorState(

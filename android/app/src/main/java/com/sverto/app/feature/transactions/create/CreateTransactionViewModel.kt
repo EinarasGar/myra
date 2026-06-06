@@ -43,8 +43,12 @@ class CreateTransactionViewModel(
     private val _assetResults = MutableStateFlow<List<AssetItem>>(emptyList())
     val assetResults: StateFlow<List<AssetItem>> = _assetResults.asStateFlow()
 
+    private var allCategories: List<CategoryItem> = emptyList()
     private val _categoryResults = MutableStateFlow<List<CategoryItem>>(emptyList())
     val categoryResults: StateFlow<List<CategoryItem>> = _categoryResults.asStateFlow()
+
+    private val _categoriesLoading = MutableStateFlow(false)
+    val categoriesLoading: StateFlow<Boolean> = _categoriesLoading.asStateFlow()
 
     private val _formState = MutableStateFlow(TransactionFormState())
     val formState: StateFlow<TransactionFormState> = _formState.asStateFlow()
@@ -246,22 +250,30 @@ class CreateTransactionViewModel(
             }
     }
 
-    fun searchCategories(query: String) {
+    fun loadCategories() {
         categorySearchJob?.cancel()
-        if (query.isBlank()) {
-            _categoryResults.value = emptyList()
-            return
-        }
         categorySearchJob =
             viewModelScope.launch(Dispatchers.IO) {
-                delay(SEARCH_DEBOUNCE_MS)
+                _categoriesLoading.value = true
                 try {
-                    _categoryResults.value = store.searchCategories(query)
+                    allCategories = store.getAllCategories()
+                    _categoryResults.value = allCategories
                 } catch (
                     @Suppress("TooGenericExceptionCaught") e: Exception,
                 ) {
-                    Log.e(TAG, "Category search failed", e)
+                    Log.e(TAG, "Loading categories failed", e)
+                } finally {
+                    _categoriesLoading.value = false
                 }
+            }
+    }
+
+    fun filterCategories(query: String) {
+        _categoryResults.value =
+            if (query.isBlank()) {
+                allCategories
+            } else {
+                allCategories.filter { it.name.contains(query, ignoreCase = true) }
             }
     }
 

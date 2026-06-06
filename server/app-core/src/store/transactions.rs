@@ -4,7 +4,7 @@ use shared::view_models::transactions::update_individual_transaction::UpdateIndi
 
 use crate::api::accounts::extract_accounts;
 use crate::api::assets::extract_assets;
-use crate::api::categories::extract_categories;
+use crate::api::categories::{extract_categories, extract_user_categories};
 use crate::api::create_transaction::build_request_body;
 use crate::api::create_transaction_group::build_create_group_request_body;
 use crate::api::get_transaction::extract_editable_transaction;
@@ -435,21 +435,42 @@ pub async fn search_assets(
     extract_assets(&resp.body).map_err(|e| ApiError::Parse { reason: e })
 }
 
-pub async fn search_categories(
+/// Fetch every category assignable to a transaction: a large page of global
+/// categories plus the user's own custom ones. The picker loads this list once
+/// and filters it client-side, so there is no server-side search query here.
+pub async fn get_all_categories(
     infra: &SharedInfra,
-    query: &str,
     auth_token: Option<&str>,
 ) -> Result<Vec<CategoryItem>, ApiError> {
-    let encoded = urlencoding::encode(query);
-    let path = format!("/api/categories?count=20&start=0&query={encoded}");
-    let resp = infra.get(&path, auth_token).await?;
-    if resp.status >= 400 {
+    let global = infra
+        .get("/api/categories?count=200&start=0", auth_token)
+        .await?;
+    if global.status >= 400 {
         return Err(ApiError::Server {
-            reason: format!("HTTP {}", resp.status),
-            status: resp.status,
+            reason: format!("HTTP {}", global.status),
+            status: global.status,
         });
     }
-    extract_categories(&resp.body).map_err(|e| ApiError::Parse { reason: e })
+    let mut categories =
+        extract_categories(&global.body).map_err(|e| ApiError::Parse { reason: e })?;
+
+    if let Some(user_id) = infra.user_id() {
+        let user = infra
+            .get(&format!("/api/users/{user_id}/categories"), auth_token)
+            .await?;
+        if user.status >= 400 {
+            return Err(ApiError::Server {
+                reason: format!("HTTP {}", user.status),
+                status: user.status,
+            });
+        }
+        let user_categories =
+            extract_user_categories(&user.body).map_err(|e| ApiError::Parse { reason: e })?;
+        categories.extend(user_categories);
+    }
+
+    categories.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    Ok(categories)
 }
 
 pub async fn get_accounts_list(

@@ -21,9 +21,29 @@ pub fn extract_categories(body: &str) -> Result<Vec<CategoryItem>, String> {
     Ok(page
         .results
         .into_iter()
+        .filter(|row| !row.category.is_system)
         .map(|row| CategoryItem {
             id: row.id.0,
             name: row.category.category.into_inner(),
+            icon: row.category.icon.into_inner(),
+        })
+        .collect())
+}
+
+/// Parse the user's own categories (the `/api/users/{id}/categories` endpoint
+/// only returns custom categories — global ones come from `extract_categories`).
+/// System categories are dropped for the same reason: they must not be assignable.
+pub fn extract_user_categories(body: &str) -> Result<Vec<CategoryItem>, String> {
+    let resp: GetCategoriesResponseViewModel =
+        serde_json::from_str(body).map_err(|e| e.to_string())?;
+    Ok(resp
+        .categories
+        .into_iter()
+        .filter(|c| !c.category.is_system)
+        .map(|c| CategoryItem {
+            id: c.id.0,
+            name: c.category.category.into_inner(),
+            icon: c.category.icon.into_inner(),
         })
         .collect())
 }
@@ -144,6 +164,42 @@ pub fn server_error(status: u16, body: &str) -> ApiError {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn extract_categories_drops_system_categories() {
+        let body = r#"{
+            "results": [
+                {"id": 25, "category": "Groceries", "icon": "shopping-cart",
+                 "category_type": 2, "is_global": true, "is_system": false},
+                {"id": 1, "category": "Exchange Fees", "icon": "money_off",
+                 "category_type": 9, "is_global": true, "is_system": true}
+            ],
+            "total_results": 2,
+            "lookup_tables": {"category_types": []}
+        }"#;
+        let cats = extract_categories(body).unwrap();
+        assert_eq!(cats.len(), 1);
+        assert_eq!(cats[0].id, 25);
+        assert_eq!(cats[0].name, "Groceries");
+    }
+
+    #[test]
+    fn extract_user_categories_maps_and_drops_system() {
+        let body = r#"{
+            "categories": [
+                {"id": 50, "category": "Side Hustle", "icon": "briefcase",
+                 "category_type": 3, "is_global": false, "is_system": false},
+                {"id": 1, "category": "Exchange Fees", "icon": "money_off",
+                 "category_type": 9, "is_global": true, "is_system": true}
+            ],
+            "lookup_tables": {"category_types": []}
+        }"#;
+        let cats = extract_user_categories(body).unwrap();
+        assert_eq!(cats.len(), 1);
+        assert_eq!(cats[0].id, 50);
+        assert_eq!(cats[0].name, "Side Hustle");
+        assert_eq!(cats[0].icon, "briefcase");
+    }
 
     #[test]
     fn extracts_categories_with_resolved_type_names() {

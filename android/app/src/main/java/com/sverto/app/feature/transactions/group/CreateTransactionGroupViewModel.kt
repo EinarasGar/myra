@@ -25,7 +25,6 @@ import uniffi.sverto_core.TransactionListItem
 import java.math.BigDecimal
 
 private const val TAG = "CreateGroupVM"
-private const val SEARCH_DEBOUNCE_MS = 300L
 
 class CreateTransactionGroupViewModel(
     private val store: AppStore,
@@ -36,6 +35,7 @@ class CreateTransactionGroupViewModel(
     private val _formState = MutableStateFlow(GroupFormState())
     val formState: StateFlow<GroupFormState> = _formState.asStateFlow()
 
+    private var allCategories: List<CategoryItem> = emptyList()
     private val _categoryResults = MutableStateFlow<List<CategoryItem>>(emptyList())
     val categoryResults: StateFlow<List<CategoryItem>> = _categoryResults.asStateFlow()
 
@@ -213,22 +213,27 @@ class CreateTransactionGroupViewModel(
         _categoryResults.value = emptyList()
     }
 
-    fun searchCategories(query: String) {
+    fun loadCategories() {
         categorySearchJob?.cancel()
-        if (query.isBlank()) {
-            _categoryResults.value = emptyList()
-            return
-        }
         categorySearchJob =
             viewModelScope.launch(Dispatchers.IO) {
-                delay(SEARCH_DEBOUNCE_MS)
                 try {
-                    _categoryResults.value = store.searchCategories(query)
+                    allCategories = store.getAllCategories()
+                    _categoryResults.value = allCategories
                 } catch (
                     @Suppress("TooGenericExceptionCaught") e: Exception,
                 ) {
-                    Log.e(TAG, "Category search failed", e)
+                    Log.e(TAG, "Loading categories failed", e)
                 }
+            }
+    }
+
+    fun filterCategories(query: String) {
+        _categoryResults.value =
+            if (query.isBlank()) {
+                allCategories
+            } else {
+                allCategories.filter { it.name.contains(query, ignoreCase = true) }
             }
     }
 

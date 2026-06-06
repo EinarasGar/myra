@@ -570,12 +570,11 @@ impl AppStore {
         transactions::search_assets(&self.infra, &query, token.as_deref()).await
     }
 
-    pub async fn search_categories(
+    pub async fn get_all_categories(
         &self,
-        query: String,
     ) -> Result<Vec<crate::models::CategoryItem>, crate::error::ApiError> {
         let token = self.get_auth_token();
-        transactions::search_categories(&self.infra, &query, token.as_deref()).await
+        transactions::get_all_categories(&self.infra, token.as_deref()).await
     }
 
     pub async fn get_accounts_list(

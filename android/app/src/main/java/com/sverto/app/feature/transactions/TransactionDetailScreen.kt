@@ -23,17 +23,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.AccountBalance
-import androidx.compose.material.icons.outlined.CallMade
-import androidx.compose.material.icons.outlined.CallReceived
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Layers
-import androidx.compose.material.icons.outlined.Payments
-import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material.icons.outlined.Share
-import androidx.compose.material.icons.outlined.ShoppingCart
-import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -139,6 +132,15 @@ fun TransactionDetailScreen(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
+
+                    transaction.secondaryAmountDisplay?.let { secondary ->
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = signedSecondary(secondary),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
 
                     if (transaction.accountName.isNotEmpty() || transaction.categoryName.isNotEmpty()) {
                         Spacer(Modifier.height(14.dp))
@@ -279,9 +281,8 @@ private fun HeroHeader(
                         shape = RoundedCornerShape(bottomStart = 36.dp, bottomEnd = 36.dp),
                     ),
         ) {
-            Icon(
-                imageVector = transactionDetailIcon(transaction.transactionType),
-                contentDescription = null,
+            TransactionGlyph(
+                transaction = transaction,
                 tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
                 modifier =
                     Modifier
@@ -321,9 +322,8 @@ private fun HeroHeader(
                     .size(96.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = transactionDetailIcon(transaction.transactionType),
-                    contentDescription = null,
+                TransactionGlyph(
+                    transaction = transaction,
                     tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.size(40.dp),
                 )
@@ -465,8 +465,6 @@ private fun ChildTransactionRow(
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
 ) {
-    val icon = transactionDetailIcon(child.transactionType)
-
     with(sharedTransitionScope) {
         ListItem(
             modifier =
@@ -480,10 +478,8 @@ private fun ChildTransactionRow(
                     containerColor = MaterialTheme.colorScheme.surfaceBright,
                 ),
             leadingContent = {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = child.typeLabel,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                TransactionGlyph(
+                    transaction = child,
                     modifier = Modifier.size(24.dp),
                 )
             },
@@ -504,11 +500,7 @@ private fun ChildTransactionRow(
                 )
             },
             trailingContent = {
-                Text(
-                    text = child.amountDisplay,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
+                TransactionAmount(transaction = child)
             },
         )
     }
@@ -539,22 +531,6 @@ private fun DetailRow(
         )
     }
 }
-
-private fun transactionDetailIcon(type: String): ImageVector =
-    when (type) {
-        "asset_purchase" -> Icons.Outlined.ShoppingCart
-        "asset_sale" -> Icons.Outlined.Payments
-        "cash_transfer_in" -> Icons.Outlined.CallReceived
-        "cash_transfer_out" -> Icons.Outlined.CallMade
-        "cash_dividend", "asset_dividend" -> Icons.Outlined.Payments
-        "asset_trade" -> Icons.Outlined.SwapHoriz
-        "asset_transfer_in" -> Icons.Outlined.CallReceived
-        "asset_transfer_out" -> Icons.Outlined.CallMade
-        "asset_balance_transfer" -> Icons.Outlined.SwapHoriz
-        "account_fees" -> Icons.Outlined.Receipt
-        "group" -> Icons.Outlined.Layers
-        else -> Icons.Outlined.AccountBalance
-    }
 
 @Suppress("NewApi")
 private val detailDateFormatter =

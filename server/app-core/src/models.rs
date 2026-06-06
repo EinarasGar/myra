@@ -32,11 +32,19 @@ pub struct TransactionListItem {
     pub description: String,
     pub transaction_type: String,
     pub type_label: String,
+    /// Primary amount line. For single-entry transactions this is the whole
+    /// amount; for two-entry transactions (purchase/sale/trade) it is the
+    /// outgoing leg, with the incoming leg in `secondary_amount_display`.
     pub amount_display: String,
+    /// Incoming leg for two-entry transactions; `None` for single-entry.
+    pub secondary_amount_display: Option<String>,
     pub account_name: String,
     pub asset_display: String,
     pub category_name: String,
     pub category_id: Option<i32>,
+    /// Lucide icon name for the transaction's category, when it has one.
+    /// Empty for asset/cash operations that carry no category.
+    pub category_icon: String,
     pub is_group: bool,
     pub group_size: u32,
     pub children: Vec<TransactionListItem>,
@@ -102,6 +110,7 @@ pub struct AssetItem {
 pub struct CategoryItem {
     pub id: i32,
     pub name: String,
+    pub icon: String,
 }
 
 /// Flat Kotlin-friendly representation of an existing transaction, used to

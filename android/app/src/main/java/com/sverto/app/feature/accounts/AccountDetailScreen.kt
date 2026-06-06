@@ -19,14 +19,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.AccountBalance
-import androidx.compose.material.icons.outlined.CallMade
-import androidx.compose.material.icons.outlined.CallReceived
-import androidx.compose.material.icons.outlined.Layers
-import androidx.compose.material.icons.outlined.Payments
-import androidx.compose.material.icons.outlined.Receipt
-import androidx.compose.material.icons.outlined.ShoppingCart
-import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -46,7 +38,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -62,6 +53,8 @@ import com.sverto.app.feature.accounts.components.formatCurrency
 import com.sverto.app.feature.portfolio.ChartPoint
 import com.sverto.app.feature.portfolio.PortfolioChart
 import com.sverto.app.feature.portfolio.TimePeriod
+import com.sverto.app.feature.transactions.TransactionAmount
+import com.sverto.app.feature.transactions.TransactionGlyph
 import uniffi.sverto_core.TransactionListItem
 
 @Suppress("LongMethod")
@@ -261,7 +254,6 @@ fun AccountDetailScreen(
                                 ) {
                                     Column {
                                         transactions.forEachIndexed { index, tx ->
-                                            val icon = transactionIcon(tx.transactionType)
                                             val subtitle = tx.categoryName.ifEmpty { tx.typeLabel }
                                             ListItem(
                                                 modifier =
@@ -271,10 +263,8 @@ fun AccountDetailScreen(
                                                             animatedVisibilityScope = animatedVisibilityScope,
                                                         ).clickable { onTransactionClick(tx) },
                                                 leadingContent = {
-                                                    Icon(
-                                                        imageVector = icon,
-                                                        contentDescription = tx.typeLabel,
-                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    TransactionGlyph(
+                                                        transaction = tx,
                                                         modifier = Modifier.size(24.dp),
                                                     )
                                                 },
@@ -298,12 +288,7 @@ fun AccountDetailScreen(
                                                     }
                                                 },
                                                 trailingContent = {
-                                                    Text(
-                                                        text = tx.amountDisplay,
-                                                        style = MaterialTheme.typography.bodyLarge,
-                                                        color = MaterialTheme.colorScheme.onSurface,
-                                                        maxLines = 1,
-                                                    )
+                                                    TransactionAmount(transaction = tx)
                                                 },
                                                 colors =
                                                     ListItemDefaults.colors(
@@ -335,19 +320,3 @@ fun AccountDetailScreen(
         }
     }
 }
-
-private fun transactionIcon(type: String): ImageVector =
-    when (type) {
-        "asset_purchase" -> Icons.Outlined.ShoppingCart
-        "asset_sale" -> Icons.Outlined.Payments
-        "cash_transfer_in" -> Icons.Outlined.CallReceived
-        "cash_transfer_out" -> Icons.Outlined.CallMade
-        "cash_dividend", "asset_dividend" -> Icons.Outlined.Payments
-        "asset_trade" -> Icons.Outlined.SwapHoriz
-        "asset_transfer_in" -> Icons.Outlined.CallReceived
-        "asset_transfer_out" -> Icons.Outlined.CallMade
-        "asset_balance_transfer" -> Icons.Outlined.SwapHoriz
-        "account_fees" -> Icons.Outlined.Receipt
-        "group" -> Icons.Outlined.Layers
-        else -> Icons.Outlined.AccountBalance
-    }

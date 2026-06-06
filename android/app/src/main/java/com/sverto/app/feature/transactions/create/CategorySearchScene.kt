@@ -27,14 +27,18 @@ import androidx.compose.material.icons.outlined.Cancel
 import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,14 +53,20 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.sverto.app.core.icons.LucideIcon
 import uniffi.sverto_core.CategoryItem
 
-@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
+@OptIn(
+    ExperimentalSharedTransitionApi::class,
+    ExperimentalMaterial3Api::class,
+    ExperimentalMaterial3ExpressiveApi::class,
+)
 @Composable
 @Suppress("LongMethod")
 fun SharedTransitionScope.CategorySearchScene(
     sharedKey: String,
     results: List<CategoryItem>,
+    loading: Boolean,
     onQueryChange: (String) -> Unit,
     onSelect: (CategoryItem) -> Unit,
     onBack: () -> Unit,
@@ -154,19 +164,26 @@ fun SharedTransitionScope.CategorySearchScene(
         }
 
         when {
-            query.isBlank() ->
-                EmptySearchMessage(
-                    icon = Icons.Outlined.Category,
-                    iconTint = MaterialTheme.colorScheme.primary,
-                    title = "Find a category",
-                    subtitle = "Search for groceries, travel, salary…",
-                )
-            results.isEmpty() ->
+            results.isEmpty() && loading ->
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    LoadingIndicator()
+                }
+            results.isEmpty() && query.isNotBlank() ->
                 EmptySearchMessage(
                     icon = Icons.Outlined.Search,
                     iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
                     title = "No matches",
                     subtitle = "Nothing found for \"$query\"",
+                )
+            results.isEmpty() ->
+                EmptySearchMessage(
+                    icon = Icons.Outlined.Category,
+                    iconTint = MaterialTheme.colorScheme.primary,
+                    title = "Find a category",
+                    subtitle = "Search for groceries, travel, salary…",
                 )
             else ->
                 LazyColumn(
@@ -189,6 +206,7 @@ fun SharedTransitionScope.CategorySearchScene(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun CategoryResultRow(
     category: CategoryItem,
@@ -205,13 +223,12 @@ private fun CategoryResultRow(
                         .size(40.dp)
                         .background(
                             color = tint.copy(alpha = 0.14f),
-                            shape = RoundedCornerShape(14.dp),
+                            shape = MaterialShapes.Cookie9Sided.toShape(),
                         ),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    imageVector = Icons.Outlined.Category,
-                    contentDescription = null,
+                LucideIcon(
+                    name = category.icon,
                     tint = tint,
                     modifier = Modifier.size(20.dp),
                 )
