@@ -1,11 +1,13 @@
 package com.sverto.app.feature.categories.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -13,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import uniffi.sverto_core.ManagedCategoryType
 
 @Composable
@@ -24,7 +27,7 @@ fun CategoryTypeRow(
 ) {
     ListItem(
         modifier = modifier,
-        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         headlineContent = {
             Text(
                 text = type.name,
@@ -41,19 +44,23 @@ fun CategoryTypeRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else {
-                Row {
-                    IconButton(onClick = { onEdit(type) }) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilledTonalIconButton(onClick = { onEdit(type) }) {
                         Icon(
                             Icons.Outlined.Edit,
                             contentDescription = "Edit ${type.name}",
-                            tint = MaterialTheme.colorScheme.primary,
                         )
                     }
-                    IconButton(onClick = { onDelete(type) }) {
+                    FilledTonalIconButton(
+                        onClick = { onDelete(type) },
+                        colors =
+                            IconButtonDefaults.filledTonalIconButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error,
+                            ),
+                    ) {
                         Icon(
                             Icons.Outlined.Delete,
                             contentDescription = "Delete ${type.name}",
-                            tint = MaterialTheme.colorScheme.error,
                         )
                     }
                 }

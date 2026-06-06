@@ -14,15 +14,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumFlexibleTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -44,7 +45,10 @@ import com.sverto.app.feature.accounts.components.formatCurrency
 import com.sverto.app.feature.portfolio.ChartPoint
 import com.sverto.app.feature.portfolio.PortfolioChart
 import com.sverto.app.feature.portfolio.TimePeriod
+import kotlinx.coroutines.delay
 import java.text.NumberFormat
+
+private const val STAGGER_STEP_MS = 80L
 
 @Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -82,20 +86,20 @@ fun AssetDetailScreen(
 
     val pnlColor = if (state.unrealizedGains >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
 
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
     Scaffold(
-        modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.surface,
+        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(state.ticker)
-                        Text(
-                            text = state.name,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
+            MediumFlexibleTopAppBar(
+                title = { Text(state.ticker) },
+                subtitle = {
+                    Text(
+                        text = state.name,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -107,8 +111,10 @@ fun AssetDetailScreen(
                 },
                 colors =
                     TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                     ),
+                scrollBehavior = scrollBehavior,
             )
         },
     ) { padding ->
@@ -121,7 +127,7 @@ fun AssetDetailScreen(
                             .padding(padding),
                     contentAlignment = Alignment.Center,
                 ) {
-                    CircularProgressIndicator()
+                    LoadingIndicator()
                 }
             }
             state.error != null -> {
@@ -139,8 +145,18 @@ fun AssetDetailScreen(
                 }
             }
             else -> {
-                var contentVisible by remember { mutableStateOf(false) }
-                LaunchedEffect(Unit) { contentVisible = true }
+                // Each section reveals after an incremental delay so the entrance actually cascades
+                // top-to-bottom rather than firing all at once.
+                var chartVisible by remember { mutableStateOf(false) }
+                var positionVisible by remember { mutableStateOf(false) }
+                var lotsVisible by remember { mutableStateOf(false) }
+                LaunchedEffect(Unit) {
+                    chartVisible = true
+                    delay(STAGGER_STEP_MS)
+                    positionVisible = true
+                    delay(STAGGER_STEP_MS)
+                    lotsVisible = true
+                }
                 val motionScheme = MaterialTheme.motionScheme
 
                 Column(
@@ -155,7 +171,7 @@ fun AssetDetailScreen(
                     // Price chart (staggered animation)
                     if (chartData.isNotEmpty()) {
                         AnimatedVisibility(
-                            visible = contentVisible,
+                            visible = chartVisible,
                             enter =
                                 fadeIn(motionScheme.defaultEffectsSpec()) +
                                     slideInVertically(motionScheme.defaultSpatialSpec()) { it / 4 },
@@ -166,7 +182,7 @@ fun AssetDetailScreen(
 
                     // My Position (staggered animation with fast specs)
                     AnimatedVisibility(
-                        visible = contentVisible,
+                        visible = positionVisible,
                         enter =
                             fadeIn(motionScheme.fastEffectsSpec()) +
                                 slideInVertically(motionScheme.fastSpatialSpec()) { it / 4 },
@@ -180,10 +196,17 @@ fun AssetDetailScreen(
                                 fontWeight = FontWeight.SemiBold,
                             )
 
+                            // Hero total value for the position.
+                            Text(
+                                text = formatCurrency(state.value),
+                                style = MaterialTheme.typography.displaySmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+
                             MetricsGrid(
                                 items =
                                     listOf(
-                                        MetricItem(label = "Total Value", value = formatCurrency(state.value)),
                                         MetricItem(label = "Cost Basis", value = formatCurrency(state.costBasis)),
                                         MetricItem(
                                             label = "Unrealized P&L",
@@ -199,7 +222,7 @@ fun AssetDetailScreen(
                     // Positions (lots) (staggered animation)
                     if (state.lots.isNotEmpty()) {
                         AnimatedVisibility(
-                            visible = contentVisible,
+                            visible = lotsVisible,
                             enter =
                                 fadeIn(motionScheme.defaultEffectsSpec()) +
                                     slideInVertically(motionScheme.defaultSpatialSpec()) { it / 4 },

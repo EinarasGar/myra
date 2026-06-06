@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -12,11 +13,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeFlexibleTopAppBar
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PrimaryTabRow
@@ -26,7 +29,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sverto.app.core.SvertoViewModelFactory
@@ -47,7 +50,7 @@ import com.sverto.app.feature.categories.components.CategoryTypeRow
 import uniffi.sverto_core.ManagedCategory
 import uniffi.sverto_core.ManagedCategoryType
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 @Suppress("LongMethod")
 fun CustomCategoriesScreen(
@@ -91,11 +94,16 @@ fun CustomCategoriesScreen(
         prevTypeCount = state.types.size
     }
 
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
     Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.surface,
+        modifier =
+            modifier
+                .fillMaxSize()
+                .nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
-            TopAppBar(
+            LargeFlexibleTopAppBar(
                 title = { Text("Custom Categories") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -104,8 +112,10 @@ fun CustomCategoriesScreen(
                 },
                 colors =
                     TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                     ),
+                scrollBehavior = scrollBehavior,
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -127,7 +137,12 @@ fun CustomCategoriesScreen(
                     .fillMaxSize()
                     .padding(innerPadding),
         ) {
-            PrimaryTabRow(selectedTabIndex = selectedTab) {
+            PrimaryTabRow(
+                selectedTabIndex = selectedTab,
+                // Defaults to `surface`, but the rest of the screen (Scaffold, TopAppBar) is
+                // `surfaceContainer`; without this the tab strip renders as a darker band.
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            ) {
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
@@ -151,6 +166,7 @@ fun CustomCategoriesScreen(
                         category = category,
                         onEdit = { categoryForm = CategoryFormTarget(it) },
                         onDelete = { deleteCategory = it },
+                        modifier = Modifier.animateItem(),
                     )
                 }
             } else {
@@ -165,6 +181,7 @@ fun CustomCategoriesScreen(
                         type = type,
                         onEdit = { typeDialog = TypeDialogTarget(it.id, it.name) },
                         onDelete = { deleteType = it },
+                        modifier = Modifier.animateItem(),
                     )
                 }
             }
@@ -237,6 +254,7 @@ private data class TypeDialogTarget(
     val name: String,
 )
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun <T> TabBody(
     isLoading: Boolean,
@@ -244,12 +262,12 @@ private fun <T> TabBody(
     emptyText: String,
     itemKey: (T) -> Any,
     listState: LazyListState,
-    row: @Composable (T) -> Unit,
+    row: @Composable LazyItemScope.(T) -> Unit,
 ) {
     when {
         data.isEmpty() && isLoading ->
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                LoadingIndicator()
             }
 
         data.isEmpty() ->

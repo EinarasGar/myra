@@ -115,7 +115,7 @@ fun SwapGlyph(modifier: Modifier = Modifier) {
     ) {
         Surface(
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.surface,
+            color = MaterialTheme.colorScheme.surfaceContainer,
             border =
                 androidx.compose.foundation.BorderStroke(
                     width = 1.dp,

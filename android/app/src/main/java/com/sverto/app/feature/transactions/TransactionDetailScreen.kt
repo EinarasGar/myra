@@ -36,9 +36,10 @@ import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -59,6 +60,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.sverto.app.core.ui.RowDivider
 import uniffi.sverto_core.TransactionListItem
 import java.time.Instant
 import java.time.ZoneId
@@ -93,7 +95,7 @@ fun TransactionDetailScreen(
                         sharedContentState = rememberSharedContentState(key = "tx_${transaction.id}"),
                         animatedVisibilityScope = animatedVisibilityScope,
                     ),
-            color = MaterialTheme.colorScheme.surface,
+            color = MaterialTheme.colorScheme.surfaceContainer,
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 Column(
@@ -160,7 +162,7 @@ fun TransactionDetailScreen(
 
                     Surface(
                         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        color = MaterialTheme.colorScheme.surfaceBright,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Column(
@@ -169,33 +171,21 @@ fun TransactionDetailScreen(
                             DetailRow(label = "Date", value = formatDetailDate(transaction.date))
 
                             if (transaction.accountName.isNotEmpty()) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(horizontal = 16.dp),
-                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
-                                )
+                                RowDivider()
                                 DetailRow(label = "Account", value = transaction.accountName)
                             }
 
                             if (transaction.assetDisplay.isNotEmpty()) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(horizontal = 16.dp),
-                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
-                                )
+                                RowDivider()
                                 DetailRow(label = "Asset", value = transaction.assetDisplay)
                             }
 
                             if (transaction.categoryName.isNotEmpty()) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(horizontal = 16.dp),
-                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
-                                )
+                                RowDivider()
                                 DetailRow(label = "Category", value = transaction.categoryName)
                             }
 
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
-                            )
+                            RowDivider()
                             DetailRow(label = "Type", value = transaction.typeLabel)
 
                             if (transaction.isGroup && transaction.children.isNotEmpty()) {
@@ -211,7 +201,7 @@ fun TransactionDetailScreen(
 
                                 Surface(
                                     shape = RoundedCornerShape(24.dp),
-                                    color = MaterialTheme.colorScheme.surface,
+                                    color = MaterialTheme.colorScheme.surfaceContainer,
                                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                                 ) {
                                     Column {
@@ -223,13 +213,7 @@ fun TransactionDetailScreen(
                                                 animatedVisibilityScope = animatedVisibilityScope,
                                             )
                                             if (index < transaction.children.lastIndex) {
-                                                HorizontalDivider(
-                                                    modifier = Modifier.padding(horizontal = 16.dp),
-                                                    color =
-                                                        MaterialTheme.colorScheme.outlineVariant.copy(
-                                                            alpha = 0.4f,
-                                                        ),
-                                                )
+                                                RowDivider()
                                             }
                                         }
                                     }
@@ -308,9 +292,12 @@ private fun HeroHeader(
             )
         }
 
-        Surface(
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+        FilledTonalIconButton(
+            onClick = onBack,
+            colors =
+                IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.9f),
+                ),
             modifier =
                 Modifier
                     .align(Alignment.TopStart)
@@ -318,12 +305,10 @@ private fun HeroHeader(
                     .padding(start = 16.dp, top = 12.dp)
                     .size(46.dp),
         ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                )
-            }
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back",
+            )
         }
 
         Surface(
@@ -421,6 +406,7 @@ private fun QuickActionRow(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun QuickActionButton(
     icon: ImageVector,
@@ -445,20 +431,21 @@ private fun QuickActionButton(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Surface(
+        FilledTonalIconButton(
             onClick = onClick,
-            shape = CircleShape,
-            color = containerColor,
-            contentColor = contentColor,
+            shapes = IconButtonDefaults.shapes(),
+            colors =
+                IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = containerColor,
+                    contentColor = contentColor,
+                ),
             modifier = Modifier.size(68.dp),
         ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                )
-            }
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+            )
         }
 
         Text(
@@ -490,7 +477,7 @@ private fun ChildTransactionRow(
                     ).clickable(onClick = onClick),
             colors =
                 ListItemDefaults.colors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    containerColor = MaterialTheme.colorScheme.surfaceBright,
                 ),
             leadingContent = {
                 Icon(

@@ -6,17 +6,14 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.ButtonGroup
 import androidx.compose.material3.ButtonGroupDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -38,6 +35,9 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -128,76 +128,101 @@ fun PortfolioChart(
         animationProgress.animateTo(1f, animationSpec = tween(600))
     }
 
-    Card(
-        modifier.fillMaxWidth(),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            ),
-    ) {
-        Column(Modifier.padding(20.dp)) {
-            // Portfolio value
-            Text(
-                text = "$${formatNumber(currentValue)}",
-                style = MaterialTheme.typography.headlineLarge,
-                modifier = Modifier.animateContentSize(),
-            )
+    // No card: the chart is the screen's primary content, so it sits flush on the background
+    // (Fitbit / M3 hero-content pattern) instead of being boxed in a same-colour, invisible
+    // container. Callers supply the 16dp horizontal margin.
+    Column(modifier.fillMaxWidth()) {
+        // Portfolio value
+        Text(
+            text = "$${formatNumber(currentValue)}",
+            style = MaterialTheme.typography.headlineLarge,
+            modifier = Modifier.animateContentSize(),
+        )
 
-            // Change indicator
-            val sign = if (isPositive) "+" else ""
-            Text(
-                text = "$sign$${formatNumber(changeAmount)} ($sign${String.format(Locale.US, "%.2f", changePercent)}%)",
-                style = MaterialTheme.typography.bodyMedium,
-                color = changeColor,
-            )
+        // Change indicator
+        val sign = if (isPositive) "+" else ""
+        Text(
+            text = "$sign$${formatNumber(changeAmount)} ($sign${String.format(Locale.US, "%.2f", changePercent)}%)",
+            style = MaterialTheme.typography.bodyMedium,
+            color = changeColor,
+        )
 
-            // Date when scrubbing
-            if (scrubDate != null) {
-                Text(
-                    text = scrubDate,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+        // Scrub date — always render a single line (a blank placeholder when not scrubbing) so it
+        // reserves its height and the chart doesn't jump down when the date appears on press.
+        Text(
+            text = scrubDate ?: " ",
+            style = MaterialTheme.typography.bodySmall,
+            color =
+                if (scrubDate != null) {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                } else {
+                    Color.Transparent
+                },
+            maxLines = 1,
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        // Chart
+        PortfolioLineCanvas(
+            points = points.map { it.value },
+            progress = animationProgress.value,
+            scrubPosition = scrubPosition,
+            lineColor = lineColor,
+            fillColor = fillColor,
+            onScrub = { scrubPosition = it },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(180.dp),
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        // Time period selector — M3 Expressive connected button group.
+        // Google deprecated segmented buttons in favour of this: ToggleButtons sit in a Row with
+        // ConnectedSpaceBetween and position-aware shapes, so the segments read as one cohesive
+        // control (rounded outer corners, squared inner corners) spanning the full width — rather
+        // than separate floating pills.
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            val periods = TimePeriod.entries
+            // Hoisted out of the loop: the chart recomposes on every scrub frame, so build the
+            // segment shapes/colors/padding once rather than per segment per frame.
+            val leadingShapes = ButtonGroupDefaults.connectedLeadingButtonShapes()
+            val middleShapes = ButtonGroupDefaults.connectedMiddleButtonShapes()
+            val trailingShapes = ButtonGroupDefaults.connectedTrailingButtonShapes()
+            // Unselected segments default to surfaceContainer, which matches the screen background
+            // and disappears; bump them to surfaceContainerHigh so the connected track is visible.
+            // Selected segment keeps the default Primary fill.
+            val periodColors =
+                ToggleButtonDefaults.toggleButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 )
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            // Chart
-            PortfolioLineCanvas(
-                points = points.map { it.value },
-                progress = animationProgress.value,
-                scrubPosition = scrubPosition,
-                lineColor = lineColor,
-                fillColor = fillColor,
-                onScrub = { scrubPosition = it },
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(180.dp),
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            // Time period selector — M3 Expressive connected button group.
-            // Each button toggles its own checked state; exactly one is checked at a time.
-            // ButtonGroup's default expandedRatio makes the pressed/checked item nudge its
-            // neighbours out of the way (expressive spatial motion). ToggleButton's
-            // shapes morph between pill and squircle on press/check.
-            ButtonGroup(
-                horizontalArrangement = ButtonGroupDefaults.HorizontalArrangement,
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
-            ) {
-                TimePeriod.entries.forEach { period ->
-                    ToggleButton(
-                        checked = selectedPeriod == period,
-                        onCheckedChange = {
-                            selectedPeriod = period
-                            scrubPosition = null
+            val periodContentPadding = PaddingValues(horizontal = 6.dp, vertical = 10.dp)
+            periods.forEachIndexed { index, period ->
+                ToggleButton(
+                    checked = selectedPeriod == period,
+                    onCheckedChange = {
+                        selectedPeriod = period
+                        scrubPosition = null
+                    },
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .semantics { role = Role.RadioButton },
+                    shapes =
+                        when (index) {
+                            0 -> leadingShapes
+                            periods.lastIndex -> trailingShapes
+                            else -> middleShapes
                         },
-                        shapes = ToggleButtonDefaults.shapes(),
-                    ) {
-                        Text(period.label)
-                    }
+                    colors = periodColors,
+                    contentPadding = periodContentPadding,
+                ) {
+                    Text(period.label, maxLines = 1)
                 }
             }
         }

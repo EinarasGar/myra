@@ -2,10 +2,12 @@ package com.sverto.app.core.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MotionScheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -28,6 +30,17 @@ private val DarkColorScheme =
         primary = Purple80,
         secondary = PurpleGrey80,
         tertiary = Pink80,
+    )
+
+// Expressive shape scale — a step rounder than the M3 defaults (4/8/12/16/28) so default-shaped
+// components (cards, sheets, text fields, dialogs) read more expressive without per-call overrides.
+private val AppShapes =
+    Shapes(
+        extraSmall = RoundedCornerShape(8.dp),
+        small = RoundedCornerShape(12.dp),
+        medium = RoundedCornerShape(16.dp),
+        large = RoundedCornerShape(24.dp),
+        extraLarge = RoundedCornerShape(32.dp),
     )
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -54,6 +67,7 @@ fun SvertoTheme(
     MaterialExpressiveTheme(
         colorScheme = colorScheme,
         typography = Typography,
+        shapes = AppShapes,
         motionScheme = MotionScheme.expressive(),
     ) {
         val clerkTheme = rememberClerkTheme()
@@ -71,8 +85,8 @@ private fun rememberClerkTheme(): ClerkTheme {
             colors =
                 ClerkColors(
                     primary = colorScheme.primary,
-                    background = colorScheme.surface,
-                    input = colorScheme.surfaceContainerHigh,
+                    background = colorScheme.surfaceContainer,
+                    input = colorScheme.surfaceBright,
                     danger = colorScheme.error,
                     success = colorScheme.tertiary,
                     foreground = colorScheme.onSurface,

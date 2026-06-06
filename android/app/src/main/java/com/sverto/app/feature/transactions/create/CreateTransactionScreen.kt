@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -35,6 +36,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumFlexibleTopAppBar
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -42,7 +44,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -55,6 +56,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -117,6 +119,7 @@ fun CreateTransactionScreen(
 
     var scene by rememberSaveable(stateSaver = sceneSaver()) { mutableStateOf<Scene>(Scene.Form) }
     var showAccountPicker by remember { mutableStateOf<AccountTarget?>(null) }
+    val motionScheme = MaterialTheme.motionScheme
 
     LaunchedEffect(typeKey, editTransactionId, quickUploadId) {
         viewModel.setGroupCallback(onGroupTransactionReady)
@@ -148,7 +151,10 @@ fun CreateTransactionScreen(
             val sharedScope = this
             AnimatedContent(
                 targetState = scene,
-                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                transitionSpec = {
+                    fadeIn(animationSpec = motionScheme.defaultEffectsSpec()) togetherWith
+                        fadeOut(animationSpec = motionScheme.defaultEffectsSpec())
+                },
                 label = "create_tx_scene",
             ) { current ->
                 val avScope = this
@@ -253,7 +259,7 @@ fun CreateTransactionScreen(
 
         if (isLoading) {
             Surface(
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.92f),
                 modifier = Modifier.fillMaxSize(),
             ) {
                 Box(
@@ -301,10 +307,14 @@ private fun CreateTransactionForm(
     onChangeDescription: (String) -> Unit,
     onSendCorrection: (String) -> Unit,
 ) {
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            TopAppBar(
+            MediumFlexibleTopAppBar(
                 navigationIcon = {
                     IconButton(onClick = onDiscard) {
                         Icon(Icons.Default.Close, contentDescription = "Discard")
@@ -313,14 +323,15 @@ private fun CreateTransactionForm(
                 title = {
                     Text(
                         text = config.label,
-                        style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.SemiBold,
                     )
                 },
                 colors =
                     TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                     ),
+                scrollBehavior = scrollBehavior,
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -332,7 +343,7 @@ private fun CreateTransactionForm(
                 onSubmit = onSubmit,
             )
         },
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
     ) { padding ->
         Column(
             modifier =
@@ -633,8 +644,8 @@ private fun DescriptionField(
         shape = MaterialTheme.shapes.large,
         colors =
             OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
             ),
     )
 }
@@ -648,7 +659,7 @@ private fun SaveBar(
     onSubmit: () -> Unit,
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surface,
+        color = MaterialTheme.colorScheme.surfaceContainer,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Box(
@@ -663,7 +674,7 @@ private fun SaveBar(
             Button(
                 onClick = onSubmit,
                 enabled = !submitting,
-                shape = MaterialTheme.shapes.extraLarge,
+                shapes = ButtonDefaults.shapes(shape = MaterialTheme.shapes.extraLarge),
                 colors =
                     ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
@@ -677,7 +688,7 @@ private fun SaveBar(
                     horizontalArrangement = Arrangement.Center,
                 ) {
                     if (submitting) {
-                        LoadingIndicator()
+                        LoadingIndicator(modifier = Modifier.size(20.dp))
                         Spacer(Modifier.width(12.dp))
                         Text(
                             text = if (isEditMode) "Updating..." else "Saving...",

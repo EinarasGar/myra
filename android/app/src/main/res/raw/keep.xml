@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Lucide icons are resolved dynamically (reflection over the library R class and
+  Resources.getIdentifier by name in core/icons/LucideIcon.kt), so the resource
+  shrinker can't see them as used. Keep all lucide_ic_* drawables so the icon
+  picker and category icons render in release builds.
+-->
+<resources
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/lucide_ic_*" />

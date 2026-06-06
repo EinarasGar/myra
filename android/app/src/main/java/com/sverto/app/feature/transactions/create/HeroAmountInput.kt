@@ -1,5 +1,6 @@
 package com.sverto.app.feature.transactions.create
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -31,6 +33,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HeroAmountInput(
     value: String,
@@ -63,9 +66,11 @@ fun HeroAmountInput(
             color = MaterialTheme.colorScheme.onSurface,
         )
 
+    val motionScheme = MaterialTheme.motionScheme
+
     Surface(
         shape = RoundedCornerShape(28.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = MaterialTheme.colorScheme.surfaceBright,
         modifier =
             modifier
                 .fillMaxWidth()
@@ -84,6 +89,7 @@ fun HeroAmountInput(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.animateContentSize(motionScheme.fastSpatialSpec()),
             ) {
                 if (prefix.isNotEmpty()) {
                     Text(

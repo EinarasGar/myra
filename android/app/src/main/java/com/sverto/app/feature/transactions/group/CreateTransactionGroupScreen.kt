@@ -2,6 +2,7 @@ package com.sverto.app.feature.transactions.group
 
 import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -37,13 +38,13 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumFlexibleTopAppBar
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -64,12 +65,14 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sverto.app.core.SvertoViewModelFactory
+import com.sverto.app.core.ui.RowDivider
 import com.sverto.app.feature.transactions.NewTransactionSheet
 import com.sverto.app.feature.transactions.create.CorrectionInput
 import com.sverto.app.feature.transactions.create.CorrectionTypeChange
@@ -118,6 +121,7 @@ fun CreateTransactionGroupScreen(
     var showTypePicker by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showCategorySearch by remember { mutableStateOf(false) }
+    val motionScheme = MaterialTheme.motionScheme
 
     LaunchedEffect(editGroupId) {
         if (editGroup != null) {
@@ -139,7 +143,10 @@ fun CreateTransactionGroupScreen(
 
     AnimatedContent(
         targetState = showCategorySearch,
-        transitionSpec = { fadeIn() togetherWith fadeOut() },
+        transitionSpec = {
+            fadeIn(animationSpec = motionScheme.defaultEffectsSpec()) togetherWith
+                fadeOut(animationSpec = motionScheme.defaultEffectsSpec())
+        },
         label = "group_scene",
     ) { isCategorySearch ->
         if (isCategorySearch) {
@@ -153,11 +160,15 @@ fun CreateTransactionGroupScreen(
                 onBack = { showCategorySearch = false },
             )
         } else {
+            val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
             Scaffold(
-                modifier = modifier.fillMaxSize(),
+                modifier =
+                    modifier
+                        .fillMaxSize()
+                        .nestedScroll(scrollBehavior.nestedScrollConnection),
                 snackbarHost = { SnackbarHost(snackbarHostState) },
                 topBar = {
-                    TopAppBar(
+                    MediumFlexibleTopAppBar(
                         title = {
                             Text(
                                 text = if (isEditMode) "Edit Group" else "New Group",
@@ -171,8 +182,10 @@ fun CreateTransactionGroupScreen(
                         },
                         colors =
                             TopAppBarDefaults.topAppBarColors(
-                                containerColor = MaterialTheme.colorScheme.surface,
+                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                             ),
+                        scrollBehavior = scrollBehavior,
                     )
                 },
                 bottomBar = {
@@ -183,7 +196,7 @@ fun CreateTransactionGroupScreen(
                         onSubmit = viewModel::submit,
                     )
                 },
-                containerColor = MaterialTheme.colorScheme.surface,
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
             ) { innerPadding ->
                 Column(
                     modifier =
@@ -203,7 +216,7 @@ fun CreateTransactionGroupScreen(
                     Spacer(Modifier.height(4.dp))
                     Surface(
                         shape = MaterialTheme.shapes.large,
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        color = MaterialTheme.colorScheme.surfaceBright,
                         modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
                     ) {
                         Row(
@@ -242,8 +255,8 @@ fun CreateTransactionGroupScreen(
                         shape = MaterialTheme.shapes.large,
                         colors =
                             OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                focusedContainerColor = MaterialTheme.colorScheme.surfaceBright,
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceBright,
                             ),
                     )
 
@@ -257,7 +270,7 @@ fun CreateTransactionGroupScreen(
                     Spacer(Modifier.height(4.dp))
                     Surface(
                         shape = MaterialTheme.shapes.large,
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        color = MaterialTheme.colorScheme.surfaceBright,
                         modifier =
                             Modifier.fillMaxWidth().clickable {
                                 viewModel.searchCategories("")
@@ -301,10 +314,13 @@ fun CreateTransactionGroupScreen(
                     if (formState.transactions.isNotEmpty()) {
                         Surface(
                             shape = RoundedCornerShape(18.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            color = MaterialTheme.colorScheme.surfaceBright,
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Column {
+                            Column(
+                                modifier =
+                                    Modifier.animateContentSize(motionScheme.defaultSpatialSpec()),
+                            ) {
                                 formState.transactions.forEachIndexed { index, item ->
                                     GroupTransactionRow(
                                         index = index,
@@ -316,10 +332,7 @@ fun CreateTransactionGroupScreen(
                                         onRemove = { viewModel.removeTransaction(index) },
                                     )
                                     if (index < formState.transactions.lastIndex) {
-                                        HorizontalDivider(
-                                            modifier = Modifier.padding(horizontal = 16.dp),
-                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
-                                        )
+                                        RowDivider()
                                     }
                                 }
                             }
@@ -329,7 +342,7 @@ fun CreateTransactionGroupScreen(
 
                     Surface(
                         shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.surface,
+                        color = MaterialTheme.colorScheme.surfaceContainer,
                         border =
                             BorderStroke(
                                 width = 2.dp,
@@ -415,7 +428,7 @@ fun CreateTransactionGroupScreen(
 
     if (isLoading) {
         Surface(
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+            color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.92f),
             modifier = Modifier.fillMaxSize(),
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
@@ -436,7 +449,7 @@ private fun GroupTransactionRow(
         modifier = Modifier.clickable(onClick = onClick),
         colors =
             ListItemDefaults.colors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                containerColor = MaterialTheme.colorScheme.surfaceBright,
             ),
         leadingContent = {
             Text(
@@ -489,7 +502,7 @@ private fun GroupSaveBar(
     onSubmit: () -> Unit,
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surface,
+        color = MaterialTheme.colorScheme.surfaceContainer,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Box(
@@ -504,7 +517,7 @@ private fun GroupSaveBar(
             Button(
                 onClick = onSubmit,
                 enabled = enabled && !submitting,
-                shape = MaterialTheme.shapes.extraLarge,
+                shapes = ButtonDefaults.shapes(shape = MaterialTheme.shapes.extraLarge),
                 colors =
                     ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
@@ -518,7 +531,7 @@ private fun GroupSaveBar(
                     horizontalArrangement = Arrangement.Center,
                 ) {
                     if (submitting) {
-                        LoadingIndicator()
+                        LoadingIndicator(modifier = Modifier.size(20.dp))
                         Spacer(Modifier.width(12.dp))
                         Text(
                             text = if (isEditMode) "Updating..." else "Saving...",
@@ -566,11 +579,11 @@ private fun CategorySearchForGroup(
                 },
                 colors =
                     TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
                     ),
             )
         },
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
     ) { innerPadding ->
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
             OutlinedTextField(

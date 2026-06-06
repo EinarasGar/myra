@@ -140,6 +140,7 @@ fun AiChatScreen(
                         message = message,
                         isStreaming = state.isStreaming,
                         isLastMessage = index == state.messages.lastIndex,
+                        modifier = Modifier.animateItem(),
                     )
                 }
 

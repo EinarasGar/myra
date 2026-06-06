@@ -42,8 +42,8 @@ fun LotCard(
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceBright,
     ) {
         Column(
             modifier = Modifier.padding(12.dp),

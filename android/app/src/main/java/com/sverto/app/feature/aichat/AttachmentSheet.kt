@@ -73,7 +73,7 @@ private fun AttachTile(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(28.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = MaterialTheme.colorScheme.surfaceBright,
         modifier = modifier.height(96.dp),
     ) {
         Column(

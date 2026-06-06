@@ -64,7 +64,7 @@ fun AccountCard(
             shape = RoundedCornerShape(28.dp),
             colors =
                 CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    containerColor = MaterialTheme.colorScheme.surfaceBright,
                 ),
             modifier =
                 modifier

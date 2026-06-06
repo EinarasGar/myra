@@ -19,8 +19,11 @@ import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -59,7 +62,9 @@ fun MessageInputBar(
                 .fillMaxWidth()
                 .background(
                     Brush.verticalGradient(
-                        listOf(Color.Transparent, MaterialTheme.colorScheme.surface),
+                        // Fade toward surfaceContainerLow (a different role than the screen
+                        // background) so the composer reads as lifted above the message list.
+                        listOf(Color.Transparent, MaterialTheme.colorScheme.surfaceContainerLow),
                     ),
                 ).padding(start = 12.dp, end = 12.dp, top = 24.dp, bottom = 12.dp),
     ) {
@@ -100,8 +105,8 @@ fun MessageInputBar(
                     OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color.Transparent,
                         unfocusedBorderColor = Color.Transparent,
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceBright,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceBright,
                     ),
                 maxLines = 4,
             )
@@ -118,6 +123,7 @@ fun MessageInputBar(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SendButton(
     isStreaming: Boolean,
@@ -126,30 +132,23 @@ private fun SendButton(
     onStop: () -> Unit,
 ) {
     val active = isStreaming || enabled
-    Surface(
+    FilledIconButton(
         onClick = { if (isStreaming) onStop() else onSend() },
+        shapes = IconButtonDefaults.shapes(),
         enabled = active,
-        shape = RoundedCornerShape(18.dp),
-        color =
-            if (active) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.surfaceContainerHighest
-            },
+        colors =
+            IconButtonDefaults.filledIconButtonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
         modifier = Modifier.size(52.dp),
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                imageVector = if (isStreaming) Icons.Default.Stop else Icons.Default.ArrowUpward,
-                contentDescription = if (isStreaming) "Stop generating" else "Send message",
-                tint =
-                    if (active) {
-                        MaterialTheme.colorScheme.onPrimary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-            )
-        }
+        Icon(
+            imageVector = if (isStreaming) Icons.Default.Stop else Icons.Default.ArrowUpward,
+            contentDescription = if (isStreaming) "Stop generating" else "Send message",
+        )
     }
 }
 

@@ -63,9 +63,11 @@ fun ToolCallCard(
 ) {
     var expanded by remember { mutableStateOf(false) }
     val phase = toolPhaseOf(state)
+    val motionScheme = MaterialTheme.motionScheme
 
     val chevronRotation by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,
+        animationSpec = motionScheme.defaultSpatialSpec(),
         label = "toolcall-chevron",
     )
 
@@ -127,8 +129,8 @@ fun ToolCallCard(
 
             AnimatedVisibility(
                 visible = expanded,
-                enter = expandVertically(),
-                exit = shrinkVertically(),
+                enter = expandVertically(animationSpec = motionScheme.defaultSpatialSpec()),
+                exit = shrinkVertically(animationSpec = motionScheme.defaultSpatialSpec()),
             ) {
                 Column(modifier = Modifier.padding(start = 14.dp, end = 14.dp, bottom = 14.dp)) {
                     CodeBox(caption = "PARAMETERS", body = formatJson(params))
@@ -193,7 +195,7 @@ private fun CodeBox(
 ) {
     Surface(
         shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surface,
+        color = MaterialTheme.colorScheme.surfaceContainer,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = Modifier.fillMaxWidth(),
     ) {

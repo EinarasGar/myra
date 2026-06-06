@@ -1,13 +1,12 @@
 package com.sverto.app.feature.accounts
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,11 +26,11 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumFlexibleTopAppBar
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
@@ -39,7 +38,8 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,6 +47,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
@@ -98,9 +99,11 @@ fun AddAccountScreen(
 
     val isLoading = submitState is SubmitState.Loading
 
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
     Scaffold(
         topBar = {
-            TopAppBar(
+            MediumFlexibleTopAppBar(
                 title = { Text("Add account") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -112,8 +115,10 @@ fun AddAccountScreen(
                 },
                 colors =
                     TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                     ),
+                scrollBehavior = scrollBehavior,
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -124,7 +129,7 @@ fun AddAccountScreen(
                 onSave = { viewModel.createAccount(onSuccess) },
             )
         },
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
     ) { innerPadding ->
         Column(
             modifier =
@@ -270,6 +275,7 @@ private fun AccountTypePicker(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun AccountTypeCard(
     typeId: Int,
@@ -283,7 +289,9 @@ private fun AccountTypeCard(
         if (selected) {
             MaterialTheme.colorScheme.surfaceVariant
         } else {
-            MaterialTheme.colorScheme.surface
+            // surfaceContainer matches the screen background; bump unselected tiles to
+            // surfaceContainerHigh so they read as distinct surfaces, not just a border.
+            MaterialTheme.colorScheme.surfaceContainerHigh
         }
     val border =
         if (selected) {
@@ -291,11 +299,17 @@ private fun AccountTypeCard(
         } else {
             BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
         }
+    // Shape morphs rounder on selection for an expressive selected state.
+    val cornerRadius by animateDpAsState(
+        targetValue = if (selected) 28.dp else 20.dp,
+        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
+        label = "accountTypeCornerRadius",
+    )
 
     Surface(
         onClick = onClick,
         enabled = enabled,
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(cornerRadius),
         color = containerColor,
         border = border,
         modifier = modifier,
@@ -336,20 +350,22 @@ private fun AccountTypeCard(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun LiquiditySelector(
     selectedLiquidityId: Int?,
     enabled: Boolean,
     onSelect: (Int) -> Unit,
 ) {
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        FilterChip(
-            selected = selectedLiquidityId == LIQUIDITY_LIQUID_ID,
-            onClick = { onSelect(LIQUIDITY_LIQUID_ID) },
-            label = { Text("Liquid") },
-            enabled = enabled,
-        )
+    // Single liquidity option is modelled, so this is a lone expressive ToggleButton rather than a
+    // connected ButtonGroup (a connected group needs two or more segments).
+    ToggleButton(
+        checked = selectedLiquidityId == LIQUIDITY_LIQUID_ID,
+        onCheckedChange = { onSelect(LIQUIDITY_LIQUID_ID) },
+        enabled = enabled,
+        shapes = ToggleButtonDefaults.shapes(),
+    ) {
+        Text("Liquid", maxLines = 1)
     }
 }
 
@@ -389,7 +405,7 @@ private fun SaveBar(
     enabled: Boolean,
     onSave: () -> Unit,
 ) {
-    Surface(color = MaterialTheme.colorScheme.surface) {
+    Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
         Button(
             onClick = onSave,
             enabled = enabled,

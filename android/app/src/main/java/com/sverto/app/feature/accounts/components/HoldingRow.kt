@@ -31,7 +31,7 @@ fun HoldingRow(
         modifier = modifier.clickable(onClick = onClick),
         colors =
             ListItemDefaults.colors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                containerColor = MaterialTheme.colorScheme.surfaceBright,
             ),
         leadingContent = {
             Box(

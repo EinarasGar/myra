@@ -1,6 +1,7 @@
 package com.sverto.app.feature.aichat
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,6 +17,9 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ButtonGroupDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +34,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import org.json.JSONObject
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ToolApprovalCard(
     toolName: String,
@@ -116,7 +121,10 @@ fun ToolApprovalCard(
 
                 Spacer(Modifier.height(16.dp))
 
-                Row(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+                ) {
                     OutlinedButton(
                         onClick = onDeny,
                         modifier =
@@ -128,9 +136,9 @@ fun ToolApprovalCard(
                         Spacer(Modifier.width(8.dp))
                         Text("Deny")
                     }
-                    Spacer(Modifier.width(10.dp))
                     Button(
                         onClick = onApprove,
+                        shapes = ButtonDefaults.shapes(),
                         modifier =
                             Modifier
                                 .weight(1f)

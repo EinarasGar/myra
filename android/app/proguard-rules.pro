@@ -10,6 +10,12 @@
 # Keep UniFFI generated bindings
 -keep class uniffi.** { *; }
 
+# Lucide icon picker enumerates icons by reflecting over the library's R drawable
+# class and resolves them by name via Resources.getIdentifier (core/icons/LucideIcon.kt).
+# R8 can't see these dynamic references, so without this the fields are stripped and
+# the picker is empty in release builds.
+-keep class com.composables.icons.lucide.R$drawable { *; }
+
 # OkHttp
 -dontwarn okhttp3.internal.**
 

@@ -32,7 +32,6 @@ import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -60,6 +59,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sverto.app.core.ui.RowDivider
 import com.sverto.app.core.ui.TransactionListSkeleton
 import com.sverto.app.feature.transactions.quickupload.QuickUploadUiItem
 import com.sverto.app.feature.transactions.quickupload.QuickUploadsSection
@@ -245,13 +245,17 @@ private fun TransactionList(
                 }
 
                 grouped.forEach { (dateLabel, groupItems) ->
+                    // NOTE: no Modifier.animateItem() here. This list is date-grouped and updates
+                    // via bulk pull-to-refresh (the whole list is replaced), and animateItem() on a
+                    // stickyHeader makes the placement animation fire across the whole list on
+                    // refresh — the "list flies to the bottom and back" + frame-hitch glitch.
                     stickyHeader(key = dateLabel) {
                         DateHeader(dateLabel)
                     }
                     item(key = "card_$dateLabel") {
                         Surface(
                             shape = RoundedCornerShape(16.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            color = MaterialTheme.colorScheme.surfaceBright,
                             modifier =
                                 Modifier
                                     .fillMaxWidth()
@@ -266,10 +270,7 @@ private fun TransactionList(
                                         animatedVisibilityScope = animatedVisibilityScope,
                                     )
                                     if (index < groupItems.lastIndex) {
-                                        HorizontalDivider(
-                                            modifier = Modifier.padding(horizontal = 16.dp),
-                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                                        )
+                                        RowDivider()
                                     }
                                 }
                             }
@@ -295,15 +296,18 @@ private fun TransactionList(
 }
 
 @Composable
-private fun DateHeader(label: String) {
+private fun DateHeader(
+    label: String,
+    modifier: Modifier = Modifier,
+) {
     Text(
         text = label,
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier =
-            Modifier
+            modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface)
+                .background(MaterialTheme.colorScheme.surfaceContainer)
                 .padding(
                     start = 16.dp,
                     end = 16.dp,
@@ -333,7 +337,7 @@ private fun TransactionRow(
                     ).clickable(onClick = onClick),
             colors =
                 ListItemDefaults.colors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    containerColor = MaterialTheme.colorScheme.surfaceBright,
                 ),
             leadingContent = {
                 Icon(

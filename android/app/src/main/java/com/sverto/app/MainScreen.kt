@@ -9,7 +9,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -28,13 +27,14 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ShortNavigationBar
+import androidx.compose.material3.ShortNavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
@@ -50,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -108,7 +109,11 @@ private data class TransactionDetailState(
 )
 
 @Suppress("LongMethod", "ModifierMissing", "ViewModelForwarding")
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
+@OptIn(
+    ExperimentalMaterial3Api::class,
+    ExperimentalMaterial3ExpressiveApi::class,
+    ExperimentalSharedTransitionApi::class,
+)
 @Composable
 fun MainScreen(
     transactionsViewModel: TransactionsViewModel = viewModel(factory = SvertoViewModelFactory),
@@ -222,7 +227,7 @@ fun MainScreen(
         ) {
             Scaffold(
                 modifier = Modifier.fillMaxSize(),
-                containerColor = MaterialTheme.colorScheme.surface,
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
                 topBar = {
                     Column {
                         AnimatedVisibility(
@@ -257,7 +262,7 @@ fun MainScreen(
                                 },
                                 colors =
                                     TopAppBarDefaults.topAppBarColors(
-                                        containerColor = MaterialTheme.colorScheme.surface,
+                                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
                                     ),
                             )
                         }
@@ -270,10 +275,10 @@ fun MainScreen(
                         enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                         exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
                     ) {
-                        NavigationBar {
+                        ShortNavigationBar {
                             TopLevelRoute.entries.forEach { route ->
                                 val selected = currentRoute == route.route
-                                NavigationBarItem(
+                                ShortNavigationBarItem(
                                     selected = selected,
                                     onClick = {
                                         navController.navigate(route.route) {
@@ -333,7 +338,7 @@ fun MainScreen(
     } // ModalNavigationDrawer
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 @Suppress(
     "LongMethod",
@@ -361,11 +366,13 @@ private fun MainNavGraph(
     onNavigateToDetail: (TransactionListItem, Boolean) -> Unit,
     aiChatViewModel: AiChatViewModel,
 ) {
+    val fadeSpec = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
+    val slideSpec = MaterialTheme.motionScheme.defaultSpatialSpec<IntOffset>()
     NavHost(
         navController = navController,
         startDestination = TopLevelRoute.Portfolio.route,
-        enterTransition = { fadeIn(animationSpec = tween(300)) },
-        exitTransition = { fadeOut(animationSpec = tween(300)) },
+        enterTransition = { fadeIn(animationSpec = fadeSpec) },
+        exitTransition = { fadeOut(animationSpec = fadeSpec) },
         modifier = Modifier.fillMaxSize(),
     ) {
         composable(TopLevelRoute.Portfolio.route) {
@@ -778,25 +785,25 @@ private fun MainNavGraph(
             enterTransition = {
                 slideIntoContainer(
                     AnimatedContentTransitionScope.SlideDirection.Start,
-                    animationSpec = tween(300),
+                    animationSpec = slideSpec,
                 )
             },
             exitTransition = {
                 slideOutOfContainer(
                     AnimatedContentTransitionScope.SlideDirection.Start,
-                    animationSpec = tween(300),
+                    animationSpec = slideSpec,
                 )
             },
             popEnterTransition = {
                 slideIntoContainer(
                     AnimatedContentTransitionScope.SlideDirection.End,
-                    animationSpec = tween(300),
+                    animationSpec = slideSpec,
                 )
             },
             popExitTransition = {
                 slideOutOfContainer(
                     AnimatedContentTransitionScope.SlideDirection.End,
-                    animationSpec = tween(300),
+                    animationSpec = slideSpec,
                 )
             },
         ) {
@@ -810,25 +817,25 @@ private fun MainNavGraph(
             enterTransition = {
                 slideIntoContainer(
                     AnimatedContentTransitionScope.SlideDirection.Start,
-                    animationSpec = tween(300),
+                    animationSpec = slideSpec,
                 )
             },
             exitTransition = {
                 slideOutOfContainer(
                     AnimatedContentTransitionScope.SlideDirection.Start,
-                    animationSpec = tween(300),
+                    animationSpec = slideSpec,
                 )
             },
             popEnterTransition = {
                 slideIntoContainer(
                     AnimatedContentTransitionScope.SlideDirection.End,
-                    animationSpec = tween(300),
+                    animationSpec = slideSpec,
                 )
             },
             popExitTransition = {
                 slideOutOfContainer(
                     AnimatedContentTransitionScope.SlideDirection.End,
-                    animationSpec = tween(300),
+                    animationSpec = slideSpec,
                 )
             },
         ) {

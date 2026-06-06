@@ -88,7 +88,7 @@ fun ConversationDrawer(
                     },
                     colors =
                         NavigationDrawerItemDefaults.colors(
-                            selectedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            selectedContainerColor = MaterialTheme.colorScheme.surfaceBright,
                         ),
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
                 )

@@ -1,19 +1,23 @@
 package com.sverto.app.feature.categories.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.sverto.app.core.icons.LucideIcon
 import uniffi.sverto_core.ManagedCategory
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CategoryRow(
     category: ManagedCategory,
@@ -33,13 +38,13 @@ fun CategoryRow(
     val tint = MaterialTheme.colorScheme.primary
     ListItem(
         modifier = modifier,
-        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         leadingContent = {
             Box(
                 modifier =
                     Modifier
                         .size(40.dp)
-                        .background(tint.copy(alpha = 0.14f), RoundedCornerShape(14.dp)),
+                        .background(tint.copy(alpha = 0.14f), MaterialShapes.Cookie9Sided.toShape()),
                 contentAlignment = Alignment.Center,
             ) {
                 LucideIcon(name = category.icon, tint = tint, modifier = Modifier.size(20.dp))
@@ -68,19 +73,23 @@ fun CategoryRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else {
-                Row {
-                    IconButton(onClick = { onEdit(category) }) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilledTonalIconButton(onClick = { onEdit(category) }) {
                         Icon(
                             Icons.Outlined.Edit,
                             contentDescription = "Edit ${category.name}",
-                            tint = tint,
                         )
                     }
-                    IconButton(onClick = { onDelete(category) }) {
+                    FilledTonalIconButton(
+                        onClick = { onDelete(category) },
+                        colors =
+                            IconButtonDefaults.filledTonalIconButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error,
+                            ),
+                    ) {
                         Icon(
                             Icons.Outlined.Delete,
                             contentDescription = "Delete ${category.name}",
-                            tint = MaterialTheme.colorScheme.error,
                         )
                     }
                 }

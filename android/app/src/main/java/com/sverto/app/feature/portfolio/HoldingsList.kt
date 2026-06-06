@@ -11,7 +11,6 @@ import androidx.compose.material.icons.automirrored.outlined.ShowChart
 import androidx.compose.material.icons.outlined.AccountBalance
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Savings
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -25,6 +24,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.sverto.app.core.ui.RowDivider
 import uniffi.sverto_core.HoldingItem
 import java.text.NumberFormat
 import java.util.Locale
@@ -46,17 +46,14 @@ fun HoldingsList(
         )
 
         Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.surfaceBright,
         ) {
             Column {
                 holdings.forEachIndexed { index, holding ->
                     HoldingRow(holding)
                     if (index < holdings.lastIndex) {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                        )
+                        RowDivider()
                     }
                 }
             }
@@ -72,7 +69,7 @@ private fun HoldingRow(holding: HoldingItem) {
     ListItem(
         colors =
             ListItemDefaults.colors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                containerColor = MaterialTheme.colorScheme.surfaceBright,
             ),
         leadingContent = {
             Box(

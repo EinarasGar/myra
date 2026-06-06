@@ -49,7 +49,7 @@ fun PanelAmountField(
 
     Surface(
         shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surface,
+        color = MaterialTheme.colorScheme.surfaceContainer,
         modifier = modifier.fillMaxWidth().heightIn(min = 64.dp),
     ) {
         Row(

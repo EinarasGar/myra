@@ -20,8 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -59,50 +57,43 @@ fun shimmerBrush(): Brush {
 @Composable
 fun PortfolioChartSkeleton(modifier: Modifier = Modifier) {
     val brush = shimmerBrush()
-    Card(
-        modifier.fillMaxWidth(),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            ),
-    ) {
-        Column(Modifier.padding(20.dp)) {
-            Box(
-                Modifier
-                    .width(180.dp)
-                    .height(32.dp)
-                    .background(brush),
-            )
+    // Mirror the real chart: flush on the background, no card (see PortfolioChart).
+    Column(modifier.fillMaxWidth()) {
+        Box(
+            Modifier
+                .width(180.dp)
+                .height(32.dp)
+                .background(brush),
+        )
 
-            Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(8.dp))
 
-            Box(
-                Modifier
-                    .width(140.dp)
-                    .height(16.dp)
-                    .background(brush),
-            )
+        Box(
+            Modifier
+                .width(140.dp)
+                .height(16.dp)
+                .background(brush),
+        )
 
-            Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(16.dp))
 
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .height(180.dp)
-                    .background(brush),
-            )
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(180.dp)
+                .background(brush),
+        )
 
-            Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(16.dp))
 
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                repeat(7) {
-                    Box(
-                        Modifier
-                            .width(48.dp)
-                            .height(32.dp)
-                            .background(brush),
-                    )
-                }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            repeat(7) {
+                Box(
+                    Modifier
+                        .width(48.dp)
+                        .height(32.dp)
+                        .background(brush),
+                )
             }
         }
     }
@@ -121,7 +112,7 @@ fun HoldingsListSkeleton(modifier: Modifier = Modifier) {
         )
         Surface(
             shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            color = MaterialTheme.colorScheme.surfaceBright,
             modifier = Modifier.fillMaxWidth(),
         ) {
             Column {
@@ -189,7 +180,7 @@ fun TransactionListSkeleton(modifier: Modifier = Modifier) {
 
         Surface(
             shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            color = MaterialTheme.colorScheme.surfaceBright,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         ) {
             Column {
@@ -204,7 +195,7 @@ fun TransactionListSkeleton(modifier: Modifier = Modifier) {
 
         Surface(
             shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            color = MaterialTheme.colorScheme.surfaceBright,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         ) {
             Column {

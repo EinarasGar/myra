@@ -46,6 +46,7 @@ fun ReasoningCard(
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(isStreaming) }
+    val motionScheme = MaterialTheme.motionScheme
 
     // Collapse the thought process once the model has finished streaming it. The user can still
     // re-expand it manually afterwards.
@@ -57,6 +58,7 @@ fun ReasoningCard(
 
     val chevronRotation by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,
+        animationSpec = motionScheme.defaultSpatialSpec(),
         label = "reasoning-chevron",
     )
 
@@ -105,8 +107,8 @@ fun ReasoningCard(
 
         AnimatedVisibility(
             visible = expanded,
-            enter = expandVertically(),
-            exit = shrinkVertically(),
+            enter = expandVertically(animationSpec = motionScheme.defaultSpatialSpec()),
+            exit = shrinkVertically(animationSpec = motionScheme.defaultSpatialSpec()),
         ) {
             Row(
                 modifier =

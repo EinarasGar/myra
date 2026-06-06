@@ -76,13 +76,13 @@ fun SharedTransitionScope.AssetSearchScene(
         modifier =
             modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surface)
+                .background(MaterialTheme.colorScheme.surfaceContainer)
                 .statusBarsPadding()
                 .imePadding(),
     ) {
         Surface(
             shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            color = MaterialTheme.colorScheme.surfaceBright,
             modifier =
                 Modifier
                     .fillMaxWidth()
@@ -201,7 +201,7 @@ private fun AssetResultRow(
     val tint = MaterialTheme.colorScheme.tertiary
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
-        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         leadingContent = {
             Box(
                 modifier =

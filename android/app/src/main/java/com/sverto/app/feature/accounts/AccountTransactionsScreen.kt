@@ -24,19 +24,18 @@ import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.outlined.SwapHoriz
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumFlexibleTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
@@ -48,11 +47,13 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sverto.app.core.SvertoViewModelFactory
+import com.sverto.app.core.ui.RowDivider
 import uniffi.sverto_core.TransactionListItem
 import java.time.Instant
 import java.time.LocalDate
@@ -114,12 +115,13 @@ fun AccountTransactionsScreen(
         DateTimeFormatter.ofPattern("MMM d, yyyy")
 
     val pullToRefreshState = rememberPullToRefreshState()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
-        modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.surface,
+        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
-            TopAppBar(
+            MediumFlexibleTopAppBar(
                 title = { Text("Transactions") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -131,8 +133,10 @@ fun AccountTransactionsScreen(
                 },
                 colors =
                     TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                     ),
+                scrollBehavior = scrollBehavior,
             )
         },
     ) { padding ->
@@ -145,7 +149,7 @@ fun AccountTransactionsScreen(
                             .padding(padding),
                     contentAlignment = Alignment.Center,
                 ) {
-                    CircularProgressIndicator()
+                    LoadingIndicator()
                 }
             }
             state.error != null && state.items.isEmpty() -> {
@@ -201,8 +205,8 @@ fun AccountTransactionsScreen(
 
                             item(key = "group-$date") {
                                 Surface(
-                                    shape = RoundedCornerShape(16.dp),
-                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    shape = RoundedCornerShape(20.dp),
+                                    color = MaterialTheme.colorScheme.surfaceBright,
                                     modifier = Modifier.padding(horizontal = 16.dp),
                                 ) {
                                     with(sharedTransitionScope) {
@@ -255,14 +259,11 @@ fun AccountTransactionsScreen(
                                                     },
                                                     colors =
                                                         ListItemDefaults.colors(
-                                                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                                            containerColor = MaterialTheme.colorScheme.surfaceBright,
                                                         ),
                                                 )
                                                 if (index < txList.size - 1) {
-                                                    HorizontalDivider(
-                                                        modifier = Modifier.padding(horizontal = 16.dp),
-                                                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                                                    )
+                                                    RowDivider()
                                                 }
                                             }
                                         }
@@ -280,7 +281,7 @@ fun AccountTransactionsScreen(
                                             .padding(16.dp),
                                     contentAlignment = Alignment.Center,
                                 ) {
-                                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                    LoadingIndicator(modifier = Modifier.size(24.dp))
                                 }
                             }
                         }

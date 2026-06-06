@@ -10,7 +10,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -20,6 +23,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import uniffi.sverto_core.ManagedCategoryType
 
@@ -38,7 +42,7 @@ fun CategoryTypeSelectorSheet(
         sheetState = sheetState,
         modifier = modifier,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         Column(
             modifier =
@@ -76,14 +80,32 @@ fun CategoryTypeSelectorSheet(
                             ListItemDefaults.colors(
                                 containerColor =
                                     if (selected) {
-                                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                                        MaterialTheme.colorScheme.secondaryContainer
                                     } else {
-                                        MaterialTheme.colorScheme.surface
+                                        Color.Transparent
+                                    },
+                                headlineColor =
+                                    if (selected) {
+                                        MaterialTheme.colorScheme.onSecondaryContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface
                                     },
                             ),
                         headlineContent = {
                             Text(type.name, style = MaterialTheme.typography.bodyLarge)
                         },
+                        leadingContent =
+                            if (selected) {
+                                {
+                                    Icon(
+                                        imageVector = Icons.Filled.Check,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    )
+                                }
+                            } else {
+                                null
+                            },
                     )
                 }
             }

@@ -1,7 +1,10 @@
 package com.sverto.app.feature.categories.components
 
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,12 +17,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,7 +38,7 @@ import com.sverto.app.core.icons.LucideIcon
 import uniffi.sverto_core.ManagedCategory
 import uniffi.sverto_core.ManagedCategoryType
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CategoryFormSheet(
     existing: ManagedCategory?,
@@ -57,7 +63,7 @@ fun CategoryFormSheet(
         sheetState = sheetState,
         modifier = modifier,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         Column(
             modifier =
@@ -72,14 +78,21 @@ fun CategoryFormSheet(
             Spacer(Modifier.height(16.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
+                val iconChipInteraction = remember { MutableInteractionSource() }
+                val iconChipPressed by iconChipInteraction.collectIsPressedAsState()
+                val restShape = MaterialShapes.Cookie9Sided.toShape()
+                val pressedShape = MaterialShapes.Cookie12Sided.toShape()
                 Box(
                     modifier =
                         Modifier
                             .size(56.dp)
                             .background(
                                 MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
-                                RoundedCornerShape(16.dp),
-                            ).clickable { showIconPicker = true },
+                                if (iconChipPressed) pressedShape else restShape,
+                            ).clickable(
+                                interactionSource = iconChipInteraction,
+                                indication = LocalIndication.current,
+                            ) { showIconPicker = true },
                     contentAlignment = Alignment.Center,
                 ) {
                     LucideIcon(
