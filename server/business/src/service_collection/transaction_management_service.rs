@@ -34,6 +34,7 @@ use crate::{
         transaction_group_dto::TransactionGroupDto,
     },
     entities::transactions::{
+        metadata::MetadataKinds,
         transaction::Transaction,
         transaction_types::{
             create_transaction_from_dto, create_transaction_from_transaction_with_entries_model,
@@ -86,7 +87,7 @@ impl TransactionManagementService {
         let mut transactions = vec![transaction];
 
         self.transaction_metadata_service
-            .load_metadata(&mut transactions)
+            .load_metadata(&mut transactions, MetadataKinds::all())
             .await?;
 
         transaction = transactions
@@ -153,7 +154,7 @@ impl TransactionManagementService {
                 create_transactions_from_transaction_with_entries_models(models)?;
 
             self.transaction_metadata_service
-                .load_metadata(&mut transcations)
+                .load_metadata(&mut transcations, MetadataKinds::all())
                 .await?;
 
             let dtos = transcations
@@ -277,7 +278,7 @@ impl TransactionManagementService {
         };
 
         self.transaction_metadata_service
-            .load_metadata(&mut transactions)
+            .load_metadata(&mut transactions, MetadataKinds::all())
             .await?;
 
         let transaction_dtos = transactions
@@ -358,7 +359,7 @@ impl TransactionManagementService {
             let mut transactions =
                 create_transactions_from_transaction_with_entries_models(tx_models)?;
             self.transaction_metadata_service
-                .load_metadata(&mut transactions)
+                .load_metadata(&mut transactions, MetadataKinds::all())
                 .await?;
 
             for tx in transactions {
@@ -405,7 +406,7 @@ impl TransactionManagementService {
                 let mut transactions =
                     create_transactions_from_transaction_with_entries_models(tx_models)?;
                 self.transaction_metadata_service
-                    .load_metadata(&mut transactions)
+                    .load_metadata(&mut transactions, MetadataKinds::all())
                     .await?;
 
                 let tx_dtos = transactions
@@ -533,7 +534,7 @@ impl TransactionManagementService {
         let old_transaction = create_transaction_from_transaction_with_entries_model(models)?;
         let mut old_vec = vec![old_transaction];
         self.transaction_metadata_service
-            .load_metadata(&mut old_vec)
+            .load_metadata(&mut old_vec, MetadataKinds::all())
             .await?;
         let old_transaction = old_vec.pop().unwrap();
 

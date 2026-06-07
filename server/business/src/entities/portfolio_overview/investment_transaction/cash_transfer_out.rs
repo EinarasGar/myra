@@ -16,9 +16,9 @@ pub struct CashTransferOut {
 
 impl PortfolioAction for CashTransferOut {
     fn update_porfolio(&self, portfolio: &mut Portfolio) {
-        portfolio
-            .get_cash_portfolio(self.account_id, self.asset_id)
-            .add_units(-self.units, self.fees);
+        let cash = portfolio.get_cash_portfolio(self.account_id, self.asset_id);
+        cash.add_units(-self.units - self.fees);
+        cash.add_fees(self.fees);
     }
 
     fn date(&self) -> OffsetDateTime {

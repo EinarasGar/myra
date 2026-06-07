@@ -17,6 +17,7 @@ jsonwebtoken = "10.3.0"
 serde = { version = "1.0.228", features = ["derive"] }
 time = { version = "0.3.46", features = ["macros", "formatting", "serde"] }
 rust_decimal = "1.40.0"
+bitflags = "2.11"
 tracing = { version = "0.1.44", features = ["async-await", "log"] }
 mockall = "0.14.0"
 mockall_double = "0.3.1"

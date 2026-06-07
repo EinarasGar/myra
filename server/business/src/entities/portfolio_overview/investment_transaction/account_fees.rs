@@ -17,7 +17,7 @@ impl PortfolioAction for AccountFees {
     fn update_porfolio(&self, portfolio: &mut Portfolio) {
         let cash = portfolio.get_cash_portfolio(self.account_id, self.asset_id);
         cash.add_fees(self.quantity);
-        cash.add_units(-self.quantity, Decimal::ZERO);
+        cash.add_units(-self.quantity);
     }
 
     fn date(&self) -> OffsetDateTime {

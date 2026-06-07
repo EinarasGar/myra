@@ -8,8 +8,11 @@ use crate::{
     dtos::transaction_dto::{RegularTransactionMetadataDto, TransactionDto, TransactionTypeDto},
     entities::{
         entries::entry::Entry,
+        portfolio_overview::investment_transaction::regular_cash_change::RegularCashChange,
         transactions::{
-            base_transaction::BaseTransaction, metadata::MetadataField, transaction::Transaction,
+            base_transaction::BaseTransaction,
+            metadata::MetadataField,
+            transaction::{Transaction, TransactionPortfolioAction},
         },
     },
 };
@@ -96,5 +99,19 @@ impl TransactionProcessor for RegularTransaction {
             description: None,
             base: BaseTransaction::from_models(models),
         })
+    }
+
+    fn get_portfolio_action(&self) -> Result<TransactionPortfolioAction> {
+        let entry = self.base.entry(|_| true)?;
+
+        Ok(TransactionPortfolioAction::Regular(Box::new(
+            RegularCashChange {
+                asset_id: entry.asset_id,
+                account_id: entry.account_id,
+                units: entry.quantity,
+                fees: -self.base.fee_entries_total(),
+                date: self.base.date(),
+            },
+        )))
     }
 }

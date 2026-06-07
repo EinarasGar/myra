@@ -16,6 +16,7 @@ use crate::dtos::portfolio::overview::PortfolioOverviewDto;
 use crate::entities::portfolio_overview::portfolio::{
     Portfolio, PortfolioAction, ReferentialPortfolioAction,
 };
+use crate::entities::transactions::metadata::MetadataKinds;
 use crate::entities::transactions::transaction::{Transaction, TransactionPortfolioAction};
 use crate::entities::transactions::transaction_types::create_transactions_from_transaction_with_entries_models;
 
@@ -73,7 +74,7 @@ impl PortfolioOverviewService {
             create_transactions_from_transaction_with_entries_models(models)?;
 
         self.transaction_metadata_service
-            .load_metadata(&mut transactions)
+            .load_metadata(&mut transactions, MetadataKinds::DIVIDENDS)
             .await?;
 
         let mut portfolio = Portfolio::new();

@@ -101,7 +101,7 @@ impl TransactionProcessor for CashTransferInTransaction {
                 asset_id: entry.asset_id,
                 account_id: entry.account_id,
                 units: entry.quantity,
-                fees: dec!(0),
+                fees: -self.base.fee_entries_total(),
                 date: self.base.date(),
             },
         )))

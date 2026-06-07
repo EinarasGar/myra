@@ -29,6 +29,7 @@ use crate::dtos::{
     validation_error_dto::{BusinessFieldErrorDto, BusinessValidationErrorDto},
 };
 
+use crate::entities::transactions::metadata::MetadataKinds;
 use crate::entities::transactions::transaction::Transaction;
 use crate::entities::transactions::transaction_types::{
     create_transaction_from_dto, create_transactions_from_transaction_with_entries_models,
@@ -480,7 +481,7 @@ impl TransactionGroupService {
                 let mut transactions =
                     create_transactions_from_transaction_with_entries_models(tx_models)?;
                 self.transaction_metadata_service
-                    .load_metadata(&mut transactions)
+                    .load_metadata(&mut transactions, MetadataKinds::all())
                     .await?;
 
                 let tx_dtos = transactions
@@ -544,7 +545,7 @@ impl TransactionGroupService {
 
         let mut transactions = create_transactions_from_transaction_with_entries_models(models)?;
         self.transaction_metadata_service
-            .load_metadata(&mut transactions)
+            .load_metadata(&mut transactions, MetadataKinds::all())
             .await?;
 
         transactions

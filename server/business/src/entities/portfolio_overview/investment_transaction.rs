@@ -9,3 +9,4 @@ pub mod asset_transfer_out;
 pub mod cash_dividend;
 pub mod cash_transfer_in;
 pub mod cash_transfer_out;
+pub mod regular_cash_change;

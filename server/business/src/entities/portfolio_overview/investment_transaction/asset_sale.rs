@@ -46,7 +46,7 @@ impl PortfolioAction for AssetSale {
 
         portfolio
             .get_cash_portfolio(self.account_id, self.cash_asset_id)
-            .add_units(self.cash_units, Decimal::default());
+            .add_units(self.cash_units);
     }
 
     fn date(&self) -> OffsetDateTime {

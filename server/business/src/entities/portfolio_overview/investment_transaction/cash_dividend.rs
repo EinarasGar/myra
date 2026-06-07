@@ -29,7 +29,7 @@ impl PortfolioAction for CashDividend {
             .add_cash_dividends(self.quantity * self.price);
 
         let cash = portfolio.get_cash_portfolio(self.account_id, self.asset_id);
-        cash.add_units(self.quantity, self.fees);
+        cash.add_units(self.quantity - self.fees);
         cash.add_fees(self.fees);
         cash.add_dividends(self.quantity * self.price);
     }
@@ -118,7 +118,7 @@ mod tests {
             .get(&10)
             .expect("Should contain cash");
 
-        assert_eq!(cash_portfolio.units(), dec!(0.41));
+        assert_eq!(cash_portfolio.units(), dec!(0.34));
         assert_eq!(cash_portfolio.fees(), dec!(0.07));
         assert_eq!(cash_portfolio.dividends(), dec!(0.41));
     }

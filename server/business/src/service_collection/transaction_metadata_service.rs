@@ -8,9 +8,13 @@ use dal::{
     },
     queries::transaction_data_queries,
 };
+use std::collections::HashMap;
 use uuid::Uuid;
 
-use crate::entities::transactions::{metadata::MetadataField, transaction::Transaction};
+use crate::entities::transactions::{
+    metadata::{MetadataField, MetadataKinds},
+    transaction::Transaction,
+};
 
 use super::ai_embedding_service::AiEmbeddingService;
 
@@ -33,9 +37,17 @@ impl TransactionMetadataService {
         Ok(())
     }
 
-    pub async fn load_metadata(&self, transactions: &mut [Transaction]) -> anyhow::Result<()> {
-        self.load_transactions_descriptions(transactions).await?;
-        self.load_transactions_dividends(transactions).await?;
+    pub async fn load_metadata(
+        &self,
+        transactions: &mut [Transaction],
+        kinds: MetadataKinds,
+    ) -> anyhow::Result<()> {
+        if kinds.contains(MetadataKinds::DESCRIPTIONS) {
+            self.load_transactions_descriptions(transactions).await?;
+        }
+        if kinds.contains(MetadataKinds::DIVIDENDS) {
+            self.load_transactions_dividends(transactions).await?;
+        }
         Ok(())
     }
 
@@ -261,30 +273,30 @@ impl TransactionMetadataService {
         &self,
         transactions: &mut [Transaction],
     ) -> anyhow::Result<()> {
-        let mut transaction_ids: Vec<Uuid> = Vec::new();
+        let transaction_ids: Vec<Uuid> = transactions
+            .iter()
+            .filter(|transaction| {
+                transaction
+                    .get_metadata_fields()
+                    .iter()
+                    .any(|field| matches!(field, MetadataField::Dividends(_)))
+            })
+            .map(|transaction| transaction.get_transaction_id().unwrap())
+            .collect();
 
-        transactions.iter().for_each(|transaction| {
-            let transaction_id = transaction.get_transaction_id().unwrap();
-            let metadata_fields = transaction.get_metadata_fields();
-            for field in metadata_fields {
-                if let MetadataField::Dividends(_) = field {
-                    transaction_ids.push(transaction_id);
-                }
-            }
-        });
+        if transaction_ids.is_empty() {
+            return Ok(());
+        }
 
-        if !transaction_ids.is_empty() {
-            let query = transaction_data_queries::get_transactions_dividends(transaction_ids);
+        let query = transaction_data_queries::get_transactions_dividends(transaction_ids);
+        let models = self.db.fetch_all::<TransactionDividendModel>(query).await?;
 
-            let models = self.db.fetch_all::<TransactionDividendModel>(query).await?;
-
-            models.iter().for_each(|model| {
-                transactions
-                    .iter_mut()
-                    .find(|x| x.get_transaction_id() == Some(model.transaction_id))
-                    .unwrap()
+        let mut index = index_by_transaction_id(transactions);
+        for model in models {
+            if let Some(transaction) = index.get_mut(&model.transaction_id) {
+                transaction
                     .set_metadata_fields(MetadataField::Dividends(Some(model.source_asset_id)));
-            });
+            }
         }
 
         Ok(())
@@ -294,37 +306,42 @@ impl TransactionMetadataService {
         &self,
         transactions: &mut [Transaction],
     ) -> anyhow::Result<()> {
-        let mut transaction_ids: Vec<Uuid> = Vec::new();
+        let transaction_ids: Vec<Uuid> = transactions
+            .iter()
+            .filter(|transaction| {
+                transaction
+                    .get_metadata_fields()
+                    .iter()
+                    .any(|field| matches!(field, MetadataField::Description(_)))
+            })
+            .map(|transaction| transaction.get_transaction_id().unwrap())
+            .collect();
 
-        transactions.iter().for_each(|transaction| {
-            let transaction_id = transaction.get_transaction_id().unwrap();
-            let metadata_fields = transaction.get_metadata_fields();
-            for field in metadata_fields {
-                if let MetadataField::Description(_) = field {
-                    transaction_ids.push(transaction_id);
-                }
+        if transaction_ids.is_empty() {
+            return Ok(());
+        }
+
+        let query = transaction_data_queries::get_transactions_description(transaction_ids);
+        let models = self
+            .db
+            .fetch_all::<TransactionDescriptionModel>(query)
+            .await?;
+
+        let mut index = index_by_transaction_id(transactions);
+        for model in models {
+            if let Some(transaction) = index.get_mut(&model.transaction_id) {
+                transaction
+                    .set_metadata_fields(MetadataField::Description(Some(model.description)));
             }
-        });
-
-        if !transaction_ids.is_empty() {
-            let query = transaction_data_queries::get_transactions_description(transaction_ids);
-
-            let models = self
-                .db
-                .fetch_all::<TransactionDescriptionModel>(query)
-                .await?;
-
-            models.iter().for_each(|model| {
-                transactions
-                    .iter_mut()
-                    .find(|x| x.get_transaction_id() == Some(model.transaction_id))
-                    .unwrap()
-                    .set_metadata_fields(MetadataField::Description(Some(
-                        model.description.clone(),
-                    )));
-            });
         }
 
         Ok(())
     }
+}
+
+fn index_by_transaction_id(transactions: &mut [Transaction]) -> HashMap<Uuid, &mut Transaction> {
+    transactions
+        .iter_mut()
+        .map(|transaction| (transaction.get_transaction_id().unwrap(), transaction))
+        .collect()
 }

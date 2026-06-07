@@ -730,6 +730,7 @@ dependencies = [
  "async-stream",
  "async-trait",
  "base64",
+ "bitflags",
  "dal",
  "derivative",
  "futures",
