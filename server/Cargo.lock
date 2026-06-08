@@ -1195,6 +1195,7 @@ dependencies = [
  "async-trait",
  "http",
  "mockall",
+ "observability",
  "once_cell",
  "pgvector",
  "redis",

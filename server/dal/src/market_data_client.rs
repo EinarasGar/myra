@@ -1,5 +1,7 @@
 use rust_decimal::Decimal;
 use serde::Deserialize;
+use time::format_description::well_known::Rfc3339;
+use time::OffsetDateTime;
 
 #[derive(Deserialize)]
 pub struct LatestRateEntry {
@@ -8,12 +10,22 @@ pub struct LatestRateEntry {
 }
 
 #[derive(Deserialize)]
-pub struct HistoryRateEntry {
-    pub rate: Decimal,
-    pub timestamp: String,
+struct RawHistoryRateEntry {
+    rate: Decimal,
+    timestamp: String,
 }
 
 #[derive(Deserialize)]
+struct RawHistoryEntry {
+    symbol: String,
+    rates: Vec<RawHistoryRateEntry>,
+}
+
+pub struct HistoryRateEntry {
+    pub rate: Decimal,
+    pub recorded_at: OffsetDateTime,
+}
+
 pub struct HistoryEntry {
     pub symbol: String,
     pub rates: Vec<HistoryRateEntry>,
@@ -68,12 +80,36 @@ impl MarketDataClient {
     pub async fn get_history(
         &self,
         symbols: &[&str],
+        from: Option<OffsetDateTime>,
     ) -> Result<Vec<HistoryEntry>, Box<dyn std::error::Error + Send + Sync>> {
-        let url = format!(
+        let mut url = format!(
             "{}/rates/history?symbols={}",
             self.base_url,
             symbols.join(",")
         );
-        Ok(self.request(&url).send().await?.json().await?)
+        if let Some(from) = from {
+            url.push_str(&format!("&from={}", from.unix_timestamp()));
+        }
+
+        let raw: Vec<RawHistoryEntry> = self.request(&url).send().await?.json().await?;
+
+        Ok(raw
+            .into_iter()
+            .map(|entry| HistoryEntry {
+                symbol: entry.symbol,
+                rates: entry
+                    .rates
+                    .into_iter()
+                    .filter_map(|r| {
+                        OffsetDateTime::parse(&r.timestamp, &Rfc3339)
+                            .ok()
+                            .map(|recorded_at| HistoryRateEntry {
+                                rate: r.rate,
+                                recorded_at,
+                            })
+                    })
+                    .collect(),
+            })
+            .collect())
     }
 }

@@ -346,6 +346,48 @@ pub fn get_pair_id(pair1: i32, pair2: i32) -> DbQueryWithValues {
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }
+#[tracing::instrument(skip_all)]
+pub fn get_pair_market_symbol_info(pair1: i32, pair2: i32) -> DbQueryWithValues {
+    let asset2 = Alias::new("asset2");
+    Query::select()
+        .expr_as(
+            Expr::col((AssetPairsIden::Table, AssetPairsIden::Id)),
+            Alias::new("pair_id"),
+        )
+        .expr_as(
+            Expr::col((AssetsIden::Table, AssetsIden::Ticker)),
+            Alias::new("ticker1"),
+        )
+        .expr_as(
+            Expr::col((asset2.clone(), AssetsIden::Ticker)),
+            Alias::new("ticker2"),
+        )
+        .expr_as(
+            Expr::col((AssetsIden::Table, AssetsIden::AssetType)),
+            Alias::new("asset_type1"),
+        )
+        .expr_as(
+            Expr::col((asset2.clone(), AssetsIden::AssetType)),
+            Alias::new("asset_type2"),
+        )
+        .from(AssetPairsIden::Table)
+        .inner_join(
+            AssetsIden::Table,
+            Expr::col((AssetsIden::Table, AssetsIden::Id))
+                .equals((AssetPairsIden::Table, AssetPairsIden::Pair1)),
+        )
+        .join_as(
+            sea_query::JoinType::InnerJoin,
+            AssetsIden::Table,
+            asset2.clone(),
+            Expr::col((asset2.clone(), AssetsIden::Id))
+                .equals((AssetPairsIden::Table, AssetPairsIden::Pair2)),
+        )
+        .and_where(Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair1)).eq(pair1))
+        .and_where(Expr::col((AssetPairsIden::Table, AssetPairsIden::Pair2)).eq(pair2))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
 
 #[tracing::instrument(skip_all)]
 pub fn copy_in_pair_rates(rates: Vec<AssetPairRateInsert>) -> super::DbCopyCommand {

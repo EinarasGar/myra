@@ -4,6 +4,7 @@ pub mod enums;
 pub mod file_provider;
 pub(crate) mod idens;
 pub mod job_queue;
+pub mod market_data_client;
 pub mod models;
 pub mod noop_file_provider;
 pub mod pg_notify_connection;

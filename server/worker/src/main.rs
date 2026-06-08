@@ -4,7 +4,6 @@ use business::jobs::MyraJob;
 use business::service_collection::Services;
 
 mod events;
-mod models;
 mod scheduled;
 
 #[tokio::main]

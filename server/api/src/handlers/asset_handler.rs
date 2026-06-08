@@ -252,7 +252,7 @@ pub async fn get_asset_pair_rates(
 ) -> Result<Json<GetAssetPairRatesResponseViewModel>, ApiError> {
     let range = RangeDto::StringBased(query_params.range.clone());
     let rates = asset_rates_service
-        .get_pairs_by_range_direct(
+        .get_market_pair_rates_by_range(
             AssetPairIdsDto::new(AssetIdDto(id), AssetIdDto(reference_id)),
             range,
         )

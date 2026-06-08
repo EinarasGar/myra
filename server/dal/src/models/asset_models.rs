@@ -115,6 +115,15 @@ pub struct AssetRate {
     pub recorded_at: OffsetDateTime,
 }
 
+#[derive(sqlx::FromRow, Debug, Clone)]
+pub struct PairSymbolInfo {
+    pub pair_id: i32,
+    pub ticker1: String,
+    pub ticker2: String,
+    pub asset_type1: i32,
+    pub asset_type2: i32,
+}
+
 pub struct AssetPairRateInsert {
     pub pair_id: i32,
     pub rate: Decimal,

@@ -5,7 +5,7 @@ use business::service_collection::Services;
 use time::OffsetDateTime;
 
 use super::CronTick;
-use crate::models::market_data::MarketDataClient;
+use dal::market_data_client::MarketDataClient;
 
 #[tracing::instrument(name = "refresh_assets", skip_all, err)]
 pub async fn tick(_tick: CronTick, services: Data<Services>) -> Result<(), BoxDynError> {

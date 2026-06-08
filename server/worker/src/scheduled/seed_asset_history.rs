@@ -2,10 +2,9 @@ use apalis::prelude::{BoxDynError, Data};
 use business::dtos::asset_pair_rate_insert_dto::AssetPairRateInsertDto;
 use business::service_collection::asset_rates_service::AssetRatesService;
 use business::service_collection::Services;
-use time::OffsetDateTime;
 
 use super::CronTick;
-use crate::models::market_data::MarketDataClient;
+use dal::market_data_client::MarketDataClient;
 
 #[tracing::instrument(name = "seed_asset_history", skip_all, err)]
 pub async fn tick(_tick: CronTick, services: Data<Services>) -> Result<(), BoxDynError> {
@@ -51,7 +50,9 @@ pub async fn tick(_tick: CronTick, services: Data<Services>) -> Result<(), BoxDy
         symbol_list.join(", ")
     );
 
-    let response = MarketDataClient::new().get_history(&symbol_list).await?;
+    let response = MarketDataClient::new()
+        .get_history(&symbol_list, None)
+        .await?;
 
     let mut all_inserts: Vec<AssetPairRateInsertDto> = Vec::new();
 
@@ -61,27 +62,22 @@ pub async fn tick(_tick: CronTick, services: Data<Services>) -> Result<(), BoxDy
             continue;
         };
 
-        let mut count = 0;
-        for rate_entry in &entry.rates {
-            let Ok(ts) = chrono::DateTime::parse_from_rfc3339(&rate_entry.timestamp) else {
-                continue;
-            };
-            let Some(recorded_at) = OffsetDateTime::from_unix_timestamp(ts.timestamp()).ok() else {
-                continue;
-            };
-            all_inserts.push(AssetPairRateInsertDto {
-                pair_id: *pair_id,
-                rate: rate_entry.rate,
-                date: recorded_at,
-            });
-            count += 1;
-        }
-
-        if count == 0 {
+        if entry.rates.is_empty() {
             tracing::warn!("No rates for {} (pair_id={})", symbol, pair_id);
         } else {
-            tracing::info!("{} (pair_id={}): {} daily rates", symbol, pair_id, count);
+            tracing::info!(
+                "{} (pair_id={}): {} daily rates",
+                symbol,
+                pair_id,
+                entry.rates.len()
+            );
         }
+
+        all_inserts.extend(entry.rates.iter().map(|rate_entry| AssetPairRateInsertDto {
+            pair_id: *pair_id,
+            rate: rate_entry.rate,
+            date: rate_entry.recorded_at,
+        }));
     }
 
     if all_inserts.is_empty() {

@@ -2,10 +2,11 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 #[mockall_double::double]
 use dal::database_context::MyraDb;
+use dal::market_data_client::MarketDataClient;
 use dal::{
     models::asset_models::{
         AssetPair, AssetPairRate, AssetPairRateDate, AssetPairRateOption, AssetRate,
-        HeldAssetPairDetailModel,
+        HeldAssetPairDetailModel, PairSymbolInfo,
     },
     queries::asset_queries::{self, get_asset_pairs_rates_with_conversions},
     query_params::get_rates_params::{GetRatesParams, GetRatesSeachType, GetRatesTimeParams},
@@ -20,6 +21,7 @@ use crate::dtos::{
     asset_rate_dto::AssetRateDto, assets::asset_id_dto::AssetIdDto,
     assets::asset_pair_ids_dto::AssetPairIdsDto, net_worth::range_dto::RangeDto,
 };
+use crate::entities::market_data;
 use crate::entities::range::{Range, RangeError};
 
 use time::OffsetDateTime;
@@ -165,6 +167,16 @@ impl AssetRatesService {
     }
 
     #[tracing::instrument(skip_all, err)]
+    pub async fn get_market_pair_rates_by_range(
+        &self,
+        pair: AssetPairIdsDto,
+        range_dto: RangeDto,
+    ) -> anyhow::Result<Vec<AssetRateDto>> {
+        self.ensure_pair_fresh(pair.clone()).await;
+        self.get_pairs_by_range_direct(pair, range_dto).await
+    }
+
+    #[tracing::instrument(skip_all, err)]
     pub async fn get_assets_rates_default_from_date(
         &self,
         default_asset_id: AssetIdDto,
@@ -210,6 +222,72 @@ impl AssetRatesService {
         let command =
             asset_queries::copy_in_pair_rates(rates.into_iter().map(|x| x.into()).collect());
         self.db.copy_in(command).await?;
+        Ok(())
+    }
+
+    #[tracing::instrument(skip_all)]
+    async fn ensure_pair_fresh(&self, pair: AssetPairIdsDto) {
+        if let Err(e) = self.try_ensure_pair_fresh(pair).await {
+            tracing::warn!(
+                "Market data passthrough failed, serving existing data: {}",
+                e
+            );
+        }
+    }
+
+    async fn try_ensure_pair_fresh(&self, pair: AssetPairIdsDto) -> anyhow::Result<()> {
+        let info_query = asset_queries::get_pair_market_symbol_info(pair.pair1.0, pair.pair2.0);
+        let Some(info) = self.db.fetch_optional::<PairSymbolInfo>(info_query).await? else {
+            return Ok(());
+        };
+
+        // TODO: For a non-currency asset we fetch using its bare ticker, which the provider
+        // prices in the asset's base currency, and we store that against this exact pair_id.
+        // That is only correct when pair2 IS the asset's base currency (e.g. AAPL/USD); for an
+        // arbitrary reference (AAPL/GBP) this would store USD-priced data under a GBP pair.
+        // Safe today because every asset has a single pair (its base pair), so pair2 is always
+        // the base. Revisit symbol selection / conversion here once an asset can have multiple pairs.
+        let symbol = market_data::build_market_symbol(
+            &info.ticker1,
+            &info.ticker2,
+            info.asset_type1,
+            info.asset_type2,
+        );
+
+        let newest = self
+            .get_pair_latest_direct(pair.clone())
+            .await?
+            .map(|r| r.date);
+
+        let from =
+            match market_data::plan_fetch(newest, OffsetDateTime::now_utc(), Duration::hours(24)) {
+                market_data::FetchPlan::Fresh => return Ok(()),
+                market_data::FetchPlan::Full => None,
+                market_data::FetchPlan::Since(ts) => Some(ts),
+            };
+
+        let entries = MarketDataClient::new()
+            .get_history(&[symbol.as_str()], from)
+            .await
+            .map_err(|e| anyhow::anyhow!("market data history fetch failed: {}", e))?;
+
+        let Some(entry) = entries.into_iter().find(|e| e.symbol == symbol) else {
+            return Ok(());
+        };
+
+        let inserts: Vec<AssetPairRateInsertDto> = entry
+            .rates
+            .into_iter()
+            .filter(|r| from.map_or(true, |cutoff| r.recorded_at > cutoff))
+            .map(|r| AssetPairRateInsertDto {
+                pair_id: info.pair_id,
+                rate: r.rate,
+                date: r.recorded_at,
+            })
+            .collect();
+
+        self.insert_pair_many(inserts).await?;
+
         Ok(())
     }
 
