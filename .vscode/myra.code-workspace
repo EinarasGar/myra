@@ -1,0 +1,51 @@
+{
+  "folders": [{ "path": ".." }],
+  "settings": {},
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "dev: start all",
+        "dependsOn": ["infra", "backend", "worker", "market-data", "web"],
+        "dependsOrder": "parallel",
+        "runOptions": { "runOn": "folderOpen" },
+        "problemMatcher": []
+      },
+      {
+        "label": "infra",
+        "type": "shell",
+        "command": "make start-infra",
+        "presentation": { "panel": "dedicated", "reveal": "always" },
+        "problemMatcher": []
+      },
+      {
+        "label": "backend",
+        "type": "shell",
+        "command": "make backend-run",
+        "presentation": { "panel": "dedicated", "reveal": "always" },
+        "problemMatcher": []
+      },
+      {
+        "label": "worker",
+        "type": "shell",
+        "command": "make worker-run",
+        "presentation": { "panel": "dedicated", "reveal": "always" },
+        "problemMatcher": []
+      },
+      {
+        "label": "market-data",
+        "type": "shell",
+        "command": "make market-data-run",
+        "presentation": { "panel": "dedicated", "reveal": "always" },
+        "problemMatcher": []
+      },
+      {
+        "label": "web",
+        "type": "shell",
+        "command": "make web-run",
+        "presentation": { "panel": "dedicated", "reveal": "always" },
+        "problemMatcher": []
+      }
+    ]
+  }
+}

@@ -9,6 +9,14 @@ YELLOW = \033[1;33m
 RED = \033[0;31m
 NC = \033[0m # No Color
 
+# PIDs of THIS worktree's worker processes (the worker has no port). The worker binary's
+# argv is the relative path "target/debug/worker", identical across worktrees, so we match
+# the command and then confirm each process's cwd is inside this worktree before acting on
+# it — otherwise we'd touch workers belonging to other worktrees.
+# The patterns bracket their first char ([t]arget, [c]argo) so this very command line — which
+# contains the patterns — does not self-match pgrep (the classic `ps | grep [p]attern` trick).
+WORKER_PIDS = $$({ pgrep -f "[t]arget/debug/worker"; pgrep -f "[c]argo run -p worker"; } 2>/dev/null | sort -u | while read -r pid; do cwd=$$(lsof -a -d cwd -p $$pid -Fn 2>/dev/null | sed -n 's/^n//p'); case "$$cwd" in ("$(CURDIR)"|"$(CURDIR)"/*) echo $$pid ;; esac; done)
+
 # Default target
 .PHONY: help
 help: ## Show this help message
@@ -176,7 +184,7 @@ status: ## Show service ports, status, and useful links
 		fi; \
 	}; \
 	check_worker() { \
-		if pgrep -f "target/debug/worker" >/dev/null 2>&1 || pgrep -f "cargo run -p worker" >/dev/null 2>&1; then \
+		if [ -n "$(WORKER_PIDS)" ]; then \
 			echo "$(YELLOW)Worker        $(NC)  (no port) - $(GREEN)Running$(NC)"; \
 		else \
 			echo "$(YELLOW)Worker        $(NC)  (no port) - $(RED)Not Running$(NC)"; \
@@ -202,8 +210,7 @@ backend-run: ## Start API server (kills existing process on SERVER_PORT first)
 
 .PHONY: worker-run
 worker-run: ## Start background worker (kills existing worker first). Shares this worktree's .env — no port needed.
-	-@pkill -f "target/debug/worker" 2>/dev/null || true
-	-@pkill -f "cargo run -p worker" 2>/dev/null || true
+	-@PIDS="$(WORKER_PIDS)"; [ -n "$$PIDS" ] && kill $$PIDS 2>/dev/null || true
 	cd server && cargo run -p worker
 
 .PHONY: market-data-run
@@ -215,6 +222,10 @@ market-data-run: ## Start market data API (kills existing process on MARKET_DATA
 web-run: ## Start Vite dev server (kills existing process on VITE_PORT first)
 	-@lsof -ti :$(VITE_PORT) | xargs kill -9 2>/dev/null || true
 	cd web && bun run dev
+
+.PHONY: ide
+ide: ## Open VS Code and auto-start infra, backend, worker, market-data, web in split terminals
+	@code .vscode/myra.code-workspace
 
 .PHONY: android-run
 android-run: ## Build, install, and launch the dev Android app on all connected devices
@@ -252,6 +263,24 @@ start-infra: ## Start infrastructure services (Postgres, Jaeger, etc.)
 refresh-infra: ## Wipe volumes and restart infrastructure services
 	docker-compose down -v
 	docker-compose up -d
+
+.PHONY: _stop-processes
+_stop-processes:
+	@echo "$(YELLOW)Stopping local processes...$(NC)"
+	-@lsof -ti :$(SERVER_PORT) | xargs kill -9 2>/dev/null || true
+	-@lsof -ti :$(MARKET_DATA_PORT) | xargs kill -9 2>/dev/null || true
+	-@lsof -ti :$(VITE_PORT) | xargs kill -9 2>/dev/null || true
+	-@PIDS="$(WORKER_PIDS)"; [ -n "$$PIDS" ] && kill -9 $$PIDS 2>/dev/null || true
+
+.PHONY: stop
+stop: _stop-processes ## Stop all dev processes and docker containers (keeps volumes)
+	@echo "$(YELLOW)Stopping docker containers...$(NC)"
+	docker-compose down
+
+.PHONY: destroy
+destroy: _stop-processes ## Stop all dev processes and docker containers, AND delete volumes
+	@echo "$(YELLOW)Stopping docker containers and deleting volumes...$(NC)"
+	docker-compose down -v
 
 # Database
 .PHONY: export-db
