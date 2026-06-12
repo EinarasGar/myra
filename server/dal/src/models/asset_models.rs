@@ -1,5 +1,10 @@
 use sqlx::types::{time::OffsetDateTime, Decimal, Uuid};
 
+pub mod asset_type_ids {
+    pub const CURRENCY: i32 = 1;
+    pub const CRYPTO: i32 = 7;
+}
+
 #[derive(sqlx::FromRow, Debug)]
 pub struct AssetWithMetadata {
     pub id: i32,
@@ -7,7 +12,7 @@ pub struct AssetWithMetadata {
     pub asset_type: i32,
     pub ticker: String,
     pub user_id: Option<Uuid>,
-    pub base_pair_id: i32,
+    pub base_pair_id: Option<i32>,
     pub asset_type_name: String,
     pub pairs: Option<Vec<i32>>,
 }
@@ -141,4 +146,6 @@ pub struct HeldAssetPairDetailModel {
     pub pair_id: i32,
     pub asset_ticker: String,
     pub base_ticker: String,
+    pub asset_type: i32,
+    pub base_asset_type: i32,
 }

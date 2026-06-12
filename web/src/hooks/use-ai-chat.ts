@@ -454,9 +454,8 @@ export default function useAiChat(
 
         let convId = conversationId;
         if (!convId) {
-          const res = await AIConversationsApiFactory().createConversation(
-            userId,
-          );
+          const res =
+            await AIConversationsApiFactory().createConversation(userId);
           convId = res.data.id;
           setConversationId(convId);
         }

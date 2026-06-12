@@ -107,6 +107,51 @@ pub struct AssetItem {
 }
 
 #[derive(Debug, Clone, uniffi::Record)]
+pub struct AssetSummary {
+    pub id: i32,
+    pub name: String,
+    pub ticker: String,
+    pub asset_type: String,
+}
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct AssetSearchPage {
+    pub items: Vec<AssetSummary>,
+    pub total: i32,
+}
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct AssetPairRef {
+    pub asset_id: i32,
+    pub ticker: String,
+    pub name: String,
+}
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct AssetDetail {
+    pub ticker: String,
+    pub display_symbol: String,
+    pub exchange: Option<String>,
+    pub name: String,
+    pub asset_type: String,
+    pub base_pair_id: Option<i32>,
+    pub pairs: Vec<AssetPairRef>,
+}
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct AssetPairDetail {
+    pub main_ticker: String,
+    pub main_name: String,
+    pub ref_ticker: String,
+    pub ref_name: String,
+    pub latest_rate: Option<f64>,
+    pub last_updated: Option<i64>,
+    pub volume: Option<f64>,
+    pub exchange: Option<String>,
+}
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct AssetTypeOption {
+    pub id: i32,
+    pub name: String,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
 pub struct CategoryItem {
     pub id: i32,
     pub name: String,

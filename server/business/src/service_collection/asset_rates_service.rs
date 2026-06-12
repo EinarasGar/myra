@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 #[mockall_double::double]
 use dal::database_context::MyraDb;
-use dal::market_data_client::MarketDataClient;
+use dal::market_data_client::{AssetClass, MarketDataClient, PairRequest};
 use dal::{
     models::asset_models::{
         AssetPair, AssetPairRate, AssetPairRateDate, AssetPairRateOption, AssetRate,
@@ -15,6 +15,7 @@ use mockall::automock;
 use rust_decimal_macros::dec;
 use time::Duration;
 
+use crate::dtos::conflict_error_dto::BusinessConflictError;
 use crate::dtos::{
     asset_id_date_dto::AssetIdDateDto, asset_pair_date_dto::AssetPairDateDto,
     asset_pair_rate_dto::AssetPairRateDto, asset_pair_rate_insert_dto::AssetPairRateInsertDto,
@@ -221,7 +222,17 @@ impl AssetRatesService {
 
         let command =
             asset_queries::copy_in_pair_rates(rates.into_iter().map(|x| x.into()).collect());
-        self.db.copy_in(command).await?;
+        self.db.copy_in(command).await.map_err(|e| {
+            if e.as_database_error()
+                .is_some_and(|d| d.is_unique_violation())
+            {
+                anyhow::Error::new(BusinessConflictError {
+                    message: "A rate for this date already exists.".to_string(),
+                })
+            } else {
+                anyhow::Error::new(e)
+            }
+        })?;
         Ok(())
     }
 
@@ -241,19 +252,6 @@ impl AssetRatesService {
             return Ok(());
         };
 
-        // TODO: For a non-currency asset we fetch using its bare ticker, which the provider
-        // prices in the asset's base currency, and we store that against this exact pair_id.
-        // That is only correct when pair2 IS the asset's base currency (e.g. AAPL/USD); for an
-        // arbitrary reference (AAPL/GBP) this would store USD-priced data under a GBP pair.
-        // Safe today because every asset has a single pair (its base pair), so pair2 is always
-        // the base. Revisit symbol selection / conversion here once an asset can have multiple pairs.
-        let symbol = market_data::build_market_symbol(
-            &info.ticker1,
-            &info.ticker2,
-            info.asset_type1,
-            info.asset_type2,
-        );
-
         let newest = self
             .get_pair_latest_direct(pair.clone())
             .await?
@@ -266,12 +264,22 @@ impl AssetRatesService {
                 market_data::FetchPlan::Since(ts) => Some(ts),
             };
 
+        let request = PairRequest {
+            base: info.ticker1.clone(),
+            base_type: AssetClass::from_asset_type_id(info.asset_type1),
+            quote: info.ticker2.clone(),
+            quote_type: AssetClass::from_asset_type_id(info.asset_type2),
+        };
+
         let entries = MarketDataClient::new()
-            .get_history(&[symbol.as_str()], from)
+            .get_history(std::slice::from_ref(&request), from)
             .await
             .map_err(|e| anyhow::anyhow!("market data history fetch failed: {}", e))?;
 
-        let Some(entry) = entries.into_iter().find(|e| e.symbol == symbol) else {
+        let Some(entry) = entries
+            .into_iter()
+            .find(|e| e.base == info.ticker1 && e.quote == info.ticker2)
+        else {
             return Ok(());
         };
 

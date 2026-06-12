@@ -1,8 +1,8 @@
 use crate::view_models::assets::{
     add_asset_pair::{AddAssetPairRequestViewModel, AddAssetPairResponseViewModel},
     base_models::{
-        asset_metadata::AssetPairInfoViewModel, asset_type::IdentifiableAssetTypeViewModel,
-        asset_type_id::RequiredAssetTypeId, lookup::AssetLookupTables,
+        asset_type::IdentifiableAssetTypeViewModel, asset_type_id::RequiredAssetTypeId,
+        lookup::AssetLookupTables,
     },
     delete_asset_pair_rates::DeleteAssetPairRatesParams,
     get_asset_pair_rates::GetAssetPairRatesRequestParams,
@@ -20,7 +20,6 @@ use business::dtos::{
     net_worth::range_dto::RangeDto,
 };
 use serde::Deserialize;
-use std::collections::HashSet;
 
 #[derive(Deserialize)]
 pub(crate) struct AssetIdPath {
@@ -47,7 +46,6 @@ use crate::{
         base_models::{
             asset::{AssetViewModel, IdentifiableAssetViewModel},
             asset_id::RequiredAssetId,
-            asset_metadata::AssetMetadataViewModel,
             asset_pair_metadata::AssetPairMetadataViewModel,
             rate::AssetRateViewModel,
             user_asset_pair_metadata::UserAssetPairMetadataViewModel,
@@ -92,55 +90,7 @@ pub async fn get_user_asset(
         return Err(AuthError::Unauthorized.into());
     }
 
-    let asset_dto = assets_service.get_asset_with_metadata(id).await?;
-
-    let base_asset_id = asset_dto.base_asset_id.0;
-    let pair_ids: Vec<i32> = asset_dto
-        .pairs
-        .as_ref()
-        .map(|p| p.iter().map(|x| x.0).collect())
-        .unwrap_or_default();
-
-    let mut all_ids: HashSet<i32> = pair_ids.iter().copied().collect();
-    all_ids.insert(base_asset_id);
-
-    let fetched_assets = if !all_ids.is_empty() {
-        assets_service.get_assets(all_ids).await?
-    } else {
-        vec![]
-    };
-
-    let asset_map: std::collections::HashMap<i32, _> =
-        fetched_assets.into_iter().map(|a| (a.id.0, a)).collect();
-
-    let pair_infos: Vec<AssetPairInfoViewModel> = pair_ids
-        .iter()
-        .filter_map(|id| {
-            asset_map.get(id).map(|a| AssetPairInfoViewModel {
-                asset_id: RequiredAssetId(a.id.0),
-                ticker: a.ticker.clone(),
-                name: a.name.clone(),
-            })
-        })
-        .collect();
-
-    let base_asset_info = asset_map
-        .get(&base_asset_id)
-        .map(|a| AssetPairInfoViewModel {
-            asset_id: RequiredAssetId(a.id.0),
-            ticker: a.ticker.clone(),
-            name: a.name.clone(),
-        })
-        .ok_or_else(|| anyhow::anyhow!("Base asset not found"))?;
-
-    let ret = GetAssetResponseViewModel {
-        asset: asset_dto.asset.into(),
-        metadata: AssetMetadataViewModel {
-            base_asset: base_asset_info,
-            pairs: pair_infos,
-        },
-    };
-
+    let ret = super::asset_handler::fetch_asset_response(&assets_service, id).await?;
     Ok(ret.into())
 }
 

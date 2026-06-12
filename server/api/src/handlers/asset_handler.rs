@@ -6,6 +6,7 @@ use business::dtos::{
     net_worth::range_dto::RangeDto,
     paging_dto::PagingDto,
 };
+use business::service_collection::asset_service::AssetsService;
 
 use crate::view_models::assets::get_asset_types::GetAssetTypesResponseViewModel;
 use crate::{
@@ -120,18 +121,27 @@ pub async fn get_asset(
     Path(id): Path<i32>,
     AssetsServiceState(assets_service): AssetsServiceState,
 ) -> Result<Json<GetAssetResponseViewModel>, ApiError> {
+    let ret = fetch_asset_response(&assets_service, id).await?;
+    Ok(ret.into())
+}
+
+pub(crate) async fn fetch_asset_response(
+    assets_service: &AssetsService,
+    id: i32,
+) -> Result<GetAssetResponseViewModel, ApiError> {
     let asset_dto = assets_service.get_asset_with_metadata(id).await?;
 
-    let base_asset_id = asset_dto.base_asset_id.0;
+    let base_asset_id: Option<i32> = asset_dto.base_asset_id.map(|x| x.0);
     let pair_ids: Vec<i32> = asset_dto
         .pairs
         .as_ref()
         .map(|p| p.iter().map(|x| x.0).collect())
         .unwrap_or_default();
 
-    // Collect all IDs to fetch: pair IDs + base asset ID
     let mut all_ids: HashSet<i32> = pair_ids.iter().copied().collect();
-    all_ids.insert(base_asset_id);
+    if let Some(base_asset_id) = base_asset_id {
+        all_ids.insert(base_asset_id);
+    }
 
     let fetched_assets = if !all_ids.is_empty() {
         assets_service.get_assets(all_ids).await?
@@ -153,24 +163,22 @@ pub async fn get_asset(
         })
         .collect();
 
-    let base_asset_info = asset_map
-        .get(&base_asset_id)
-        .map(|a| AssetPairInfoViewModel {
-            asset_id: RequiredAssetId(a.id.0),
-            ticker: a.ticker.clone(),
-            name: a.name.clone(),
-        })
-        .ok_or_else(|| anyhow::anyhow!("Base asset not found"))?;
+    let base_asset_info =
+        base_asset_id
+            .and_then(|id| asset_map.get(&id))
+            .map(|a| AssetPairInfoViewModel {
+                asset_id: RequiredAssetId(a.id.0),
+                ticker: a.ticker.clone(),
+                name: a.name.clone(),
+            });
 
-    let ret = GetAssetResponseViewModel {
+    Ok(GetAssetResponseViewModel {
         asset: asset_dto.asset.into(),
         metadata: AssetMetadataViewModel {
             base_asset: base_asset_info,
             pairs: pair_infos,
         },
-    };
-
-    Ok(ret.into())
+    })
 }
 
 /// Get asset pair

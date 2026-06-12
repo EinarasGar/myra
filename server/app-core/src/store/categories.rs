@@ -4,9 +4,9 @@ use std::sync::Mutex;
 use super::infra::SharedInfra;
 use crate::api::categories::{
     build_create_category_body, build_create_type_body, build_update_category_body,
-    build_update_type_body, extract_category_types, extract_managed_categories, server_error,
+    build_update_type_body, extract_category_types, extract_managed_categories,
 };
-use crate::error::ApiError;
+use crate::error::{server_error, ApiError};
 use crate::models::CategoriesState;
 
 #[uniffi::export(callback_interface)]

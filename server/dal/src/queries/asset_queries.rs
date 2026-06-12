@@ -19,7 +19,9 @@ use crate::{
         entries_idens::EntryIden,
         ArrayFunc, CustomFunc, Unnest,
     },
-    models::asset_models::{AssetPair, AssetPairDate, AssetPairRateInsert, InsertAsset},
+    models::asset_models::{
+        asset_type_ids, AssetPair, AssetPairDate, AssetPairRateInsert, InsertAsset,
+    },
     query_params::{
         get_assets_params::{GetAssetsParams, GetAssetsParamsSeachType},
         get_rates_params::{GetRatesParams, GetRatesSeachType},
@@ -1489,6 +1491,14 @@ pub fn get_held_asset_pair_details(has_rates: bool) -> DbQueryWithValues {
             Expr::col((base_asset.clone(), AssetsIden::Ticker)),
             Alias::new("base_ticker"),
         )
+        .expr_as(
+            Expr::col((AssetsIden::Table, AssetsIden::AssetType)),
+            Alias::new("asset_type"),
+        )
+        .expr_as(
+            Expr::col((base_asset.clone(), AssetsIden::AssetType)),
+            Alias::new("base_asset_type"),
+        )
         .from(EntryIden::Table)
         .inner_join(
             AssetsIden::Table,
@@ -1523,7 +1533,7 @@ pub fn get_held_asset_pair_details(has_rates: bool) -> DbQueryWithValues {
 #[tracing::instrument(skip_all)]
 pub fn get_currency_cross_pairs(tickers: Vec<String>, has_rates: bool) -> DbQueryWithValues {
     let base_asset = Alias::new("base_asset");
-    let currency_type = 1;
+    let currency_type = asset_type_ids::CURRENCY;
 
     let exists_subquery = Expr::exists(
         Query::select()
@@ -1555,6 +1565,14 @@ pub fn get_currency_cross_pairs(tickers: Vec<String>, has_rates: bool) -> DbQuer
         .expr_as(
             Expr::col((base_asset.clone(), AssetsIden::Ticker)),
             Alias::new("base_ticker"),
+        )
+        .expr_as(
+            Expr::col((AssetsIden::Table, AssetsIden::AssetType)),
+            Alias::new("asset_type"),
+        )
+        .expr_as(
+            Expr::col((base_asset.clone(), AssetsIden::AssetType)),
+            Alias::new("base_asset_type"),
         )
         .from(AssetPairsIden::Table)
         .inner_join(

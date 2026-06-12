@@ -13,6 +13,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -74,6 +76,8 @@ import com.sverto.app.feature.accounts.AssetDetailScreen
 import com.sverto.app.feature.aichat.AiChatScreen
 import com.sverto.app.feature.aichat.AiChatViewModel
 import com.sverto.app.feature.aichat.ConversationDrawer
+import com.sverto.app.feature.assets.AssetSearchAppBar
+import com.sverto.app.feature.assets.CustomAssetsScreen
 import com.sverto.app.feature.categories.CustomCategoriesScreen
 import com.sverto.app.feature.portfolio.PortfolioScreen
 import com.sverto.app.feature.settings.SettingsScreen
@@ -92,6 +96,7 @@ import com.sverto.app.feature.transactions.quickupload.QuickUploadViewModel
 import kotlinx.coroutines.launch
 import uniffi.sverto_core.ConnectionStatus
 import uniffi.sverto_core.TransactionListItem
+import com.sverto.app.feature.assets.AssetDetailScreen as MarketAssetDetailScreen
 
 private const val TRANSACTION_DETAIL_ROUTE = "transactionDetail/{txId}"
 private const val EDIT_TRANSACTION_ROUTE = "editTransaction/{typeKey}/{txId}"
@@ -102,6 +107,8 @@ private const val ACCOUNT_DETAIL_ROUTE = "accountDetail/{accountId}/{accountName
 private const val ASSET_DETAIL_ROUTE = "assetDetail/{accountId}/{assetId}"
 private const val ACCOUNT_TRANSACTIONS_ROUTE = "accountTransactions/{accountId}"
 private const val ADD_ACCOUNT_ROUTE = "addAccount"
+private const val MARKET_ASSET_DETAIL_ROUTE = "asset/{assetId}?userAsset={userAsset}"
+private const val CUSTOM_ASSETS_ROUTE = "customAssets"
 
 private data class TransactionDetailState(
     val transaction: TransactionListItem,
@@ -241,18 +248,41 @@ fun MainScreen(
                                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                                             Icon(Icons.Default.Menu, contentDescription = "Menu")
                                         }
+                                    } else if (currentRoute == TopLevelRoute.Portfolio.route) {
+                                        // Decorative logo sized like an IconButton so the
+                                        // app-bar layout matches the other tabs, without a
+                                        // ripple-emitting dead button.
+                                        Box(
+                                            modifier = Modifier.size(48.dp),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(id = R.drawable.ic_sverto_logo),
+                                                contentDescription = "Sverto",
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.height(24.dp),
+                                            )
+                                        }
                                     }
                                 },
                                 title = {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            painter = painterResource(id = R.drawable.ic_sverto_logo),
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier.height(24.dp),
+                                    if (currentRoute == TopLevelRoute.Portfolio.route) {
+                                        AssetSearchAppBar(
+                                            onAssetClick = { id ->
+                                                navController.navigate("asset/$id?userAsset=false")
+                                            },
                                         )
-                                        Spacer(Modifier.width(8.dp))
-                                        Text("Sverto")
+                                    } else {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(
+                                                painter = painterResource(id = R.drawable.ic_sverto_logo),
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.height(24.dp),
+                                            )
+                                            Spacer(Modifier.width(8.dp))
+                                            Text("Sverto")
+                                        }
                                     }
                                 },
                                 actions = {
@@ -810,6 +840,7 @@ private fun MainNavGraph(
             SettingsScreen(
                 onBack = { navController.popBackStack() },
                 onCustomCategories = { navController.navigate("customCategories") },
+                onCustomAssets = { navController.navigate("customAssets") },
             )
         }
         composable(
@@ -840,6 +871,31 @@ private fun MainNavGraph(
             },
         ) {
             CustomCategoriesScreen(onBack = { navController.popBackStack() })
+        }
+        composable(
+            route = MARKET_ASSET_DETAIL_ROUTE,
+            arguments =
+                listOf(
+                    navArgument("assetId") { type = NavType.IntType },
+                    navArgument("userAsset") {
+                        type = NavType.BoolType
+                        defaultValue = false
+                    },
+                ),
+        ) { backStackEntry ->
+            val assetId = backStackEntry.arguments?.getInt("assetId") ?: return@composable
+            val userAsset = backStackEntry.arguments?.getBoolean("userAsset") ?: false
+            MarketAssetDetailScreen(
+                assetId = assetId,
+                userAsset = userAsset,
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(CUSTOM_ASSETS_ROUTE) {
+            CustomAssetsScreen(
+                onBack = { navController.popBackStack() },
+                onAssetClick = { assetId -> navController.navigate("asset/$assetId?userAsset=true") },
+            )
         }
     }
 }

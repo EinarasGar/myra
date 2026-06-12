@@ -10,12 +10,15 @@ import com.sverto.app.feature.accounts.AccountsViewModel
 import com.sverto.app.feature.accounts.AddAccountViewModel
 import com.sverto.app.feature.accounts.AssetDetailViewModel
 import com.sverto.app.feature.aichat.AiChatViewModel
+import com.sverto.app.feature.assets.CustomAssetsViewModel
+import com.sverto.app.feature.assets.MarketsListViewModel
 import com.sverto.app.feature.categories.CustomCategoriesViewModel
 import com.sverto.app.feature.portfolio.HomeViewModel
 import com.sverto.app.feature.transactions.TransactionsViewModel
 import com.sverto.app.feature.transactions.create.CreateTransactionViewModel
 import com.sverto.app.feature.transactions.group.CreateTransactionGroupViewModel
 import com.sverto.app.feature.transactions.quickupload.QuickUploadViewModel
+import com.sverto.app.feature.assets.AssetDetailViewModel as MarketAssetDetailViewModel
 
 object SvertoViewModelFactory : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
@@ -50,6 +53,12 @@ object SvertoViewModelFactory : ViewModelProvider.Factory {
                 AiChatViewModel(appStore) as T
             modelClass.isAssignableFrom(AddAccountViewModel::class.java) ->
                 AddAccountViewModel(appStore) as T
+            modelClass.isAssignableFrom(MarketsListViewModel::class.java) ->
+                MarketsListViewModel(appStore) as T
+            modelClass.isAssignableFrom(MarketAssetDetailViewModel::class.java) ->
+                MarketAssetDetailViewModel(appStore) as T
+            modelClass.isAssignableFrom(CustomAssetsViewModel::class.java) ->
+                CustomAssetsViewModel(appStore) as T
             else -> throw IllegalArgumentException("Unknown ViewModel: ${modelClass.name}")
         }
     }

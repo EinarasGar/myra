@@ -3,6 +3,7 @@ pub mod account_transactions;
 pub mod accounts;
 pub mod ai_chat;
 pub mod asset_detail;
+pub mod assets;
 pub mod categories;
 pub mod infra;
 pub mod portfolio;
@@ -562,6 +563,118 @@ impl AppStore {
 
     // ── Search (direct return) ───────────────────────────────────────────
 
+    // ── Assets (direct return) ───────────────────────────────────────────
+    pub async fn search_global_assets(
+        &self,
+        query: String,
+        start: i32,
+        count: i32,
+    ) -> Result<crate::models::AssetSearchPage, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        assets::search_global_assets(&self.infra, &query, start, count, token.as_deref()).await
+    }
+    pub async fn get_asset_detail(
+        &self,
+        asset_id: i32,
+        user_asset: bool,
+    ) -> Result<crate::models::AssetDetail, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        assets::get_asset_detail(&self.infra, asset_id, user_asset, token.as_deref()).await
+    }
+    pub async fn get_asset_pair(
+        &self,
+        asset_id: i32,
+        reference_id: i32,
+        user_asset: bool,
+    ) -> Result<crate::models::AssetPairDetail, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        assets::get_asset_pair(
+            &self.infra,
+            asset_id,
+            reference_id,
+            user_asset,
+            token.as_deref(),
+        )
+        .await
+    }
+    pub async fn get_asset_pair_rates(
+        &self,
+        asset_id: i32,
+        reference_id: i32,
+        range: String,
+        user_asset: bool,
+    ) -> Result<Vec<crate::models::ChartPoint>, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        assets::get_asset_pair_rates(
+            &self.infra,
+            asset_id,
+            reference_id,
+            &range,
+            user_asset,
+            token.as_deref(),
+        )
+        .await
+    }
+    pub async fn get_asset_types(
+        &self,
+    ) -> Result<Vec<crate::models::AssetTypeOption>, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        assets::get_asset_types(&self.infra, token.as_deref()).await
+    }
+    pub async fn get_user_assets(
+        &self,
+    ) -> Result<Vec<crate::models::AssetSummary>, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        assets::get_user_assets(&self.infra, token.as_deref()).await
+    }
+    pub async fn create_user_asset(
+        &self,
+        name: String,
+        ticker: String,
+        asset_type: i32,
+        base_asset_id: i32,
+    ) -> Result<i32, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        assets::create_user_asset(
+            &self.infra,
+            name,
+            ticker,
+            asset_type,
+            base_asset_id,
+            token.as_deref(),
+        )
+        .await
+    }
+    pub async fn add_user_asset_pair(
+        &self,
+        asset_id: i32,
+        reference_id: i32,
+    ) -> Result<(), crate::error::ApiError> {
+        let token = self.get_auth_token();
+        assets::add_user_asset_pair(&self.infra, asset_id, reference_id, token.as_deref()).await
+    }
+    pub async fn add_user_asset_rate(
+        &self,
+        asset_id: i32,
+        reference_id: i32,
+        date: i64,
+        rate: f64,
+    ) -> Result<(), crate::error::ApiError> {
+        let token = self.get_auth_token();
+        assets::add_user_asset_rate(
+            &self.infra,
+            asset_id,
+            reference_id,
+            date,
+            rate,
+            token.as_deref(),
+        )
+        .await
+    }
+    pub async fn delete_user_asset(&self, asset_id: i32) -> Result<(), crate::error::ApiError> {
+        let token = self.get_auth_token();
+        assets::delete_user_asset(&self.infra, asset_id, token.as_deref()).await
+    }
     pub async fn search_assets(
         &self,
         query: String,

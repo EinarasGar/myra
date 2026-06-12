@@ -33,6 +33,7 @@ use crate::dtos::{
         shared_asset_pair_metadata_dto::SharedAssetPairMetadataDto,
         update_asset_dto::UpdateAssetDto,
     },
+    conflict_error_dto::BusinessConflictError,
     page_of_results_dto::PageOfResultsDto,
     paging_dto::PagingDto,
 };
@@ -296,7 +297,17 @@ impl AssetsService {
     #[tracing::instrument(skip_all, err)]
     async fn insert_asset_pair(&self, pair_dto: AssetPairInsertDto) -> anyhow::Result<i32> {
         let query = asset_queries::inser_pair(pair_dto.into());
-        let asset_pair_id = self.db.fetch_one::<AssetPairId>(query).await?;
+        let asset_pair_id = self.db.fetch_one::<AssetPairId>(query).await.map_err(|e| {
+            if e.as_database_error()
+                .is_some_and(|d| d.is_unique_violation())
+            {
+                anyhow::Error::new(BusinessConflictError {
+                    message: "This asset pair already exists.".to_string(),
+                })
+            } else {
+                anyhow::Error::new(e)
+            }
+        })?;
         Ok(asset_pair_id.id)
     }
 

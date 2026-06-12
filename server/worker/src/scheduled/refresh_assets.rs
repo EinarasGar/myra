@@ -12,57 +12,44 @@ pub async fn tick(_tick: CronTick, services: Data<Services>) -> Result<(), BoxDy
     let providers = services.create_providers();
     let rates_svc = AssetRatesService::new(&providers);
 
-    let asset_pairs = rates_svc.list_held_pair_details(true).await?;
-    let currency_pairs = rates_svc
-        .list_currency_cross_pairs(
-            vec![
-                "USD".into(),
-                "EUR".into(),
-                "GBP".into(),
-                "JPY".into(),
-                "CHF".into(),
-            ],
-            true,
-        )
-        .await?;
+    let (pairs, requests) = super::collect_market_pairs(&rates_svc, true).await?;
 
-    let mut symbols: Vec<(i32, String)> = Vec::new();
-
-    for pair in &asset_pairs {
-        symbols.push((pair.pair_id, pair.asset_ticker.clone()));
-    }
-
-    for pair in &currency_pairs {
-        symbols.push((
-            pair.pair_id,
-            format!("{}{}", pair.asset_ticker, pair.base_ticker),
-        ));
-    }
-
-    if symbols.is_empty() {
+    if pairs.is_empty() {
         tracing::info!("No pairs to refresh");
         return Ok(());
     }
 
-    let symbol_list: Vec<&str> = symbols.iter().map(|(_, s)| s.as_str()).collect();
-    tracing::info!("Fetching latest rates for: {}", symbol_list.join(", "));
+    tracing::info!("Fetching latest rates for {} pairs", requests.len());
 
-    let response = MarketDataClient::new().get_latest(&symbol_list).await?;
+    let response = MarketDataClient::new().get_latest(&requests).await?;
 
     let now = OffsetDateTime::now_utc();
     let recorded_at = now.replace_time(time::Time::from_hms(now.hour(), now.minute(), 0)?);
 
     let mut inserts: Vec<AssetPairRateInsertDto> = Vec::new();
 
-    for (pair_id, symbol) in &symbols {
-        let Some(entry) = response.iter().find(|e| e.symbol == *symbol) else {
-            tracing::warn!("No rate returned for {}", symbol);
+    for pair in &pairs {
+        let Some(entry) = response
+            .iter()
+            .find(|e| e.base == pair.asset_ticker && e.quote == pair.base_ticker)
+        else {
+            tracing::warn!(
+                "No rate returned for {}/{}",
+                pair.asset_ticker,
+                pair.base_ticker
+            );
             continue;
         };
 
-        tracing::info!("pair_id={} rate={:.4} ({})", pair_id, entry.rate, symbol);
+        tracing::info!(
+            "pair_id={} rate={:.4} ({}/{})",
+            pair.pair_id,
+            entry.rate,
+            pair.asset_ticker,
+            pair.base_ticker
+        );
         inserts.push(AssetPairRateInsertDto {
-            pair_id: *pair_id,
+            pair_id: pair.pair_id,
             rate: entry.rate,
             date: recorded_at,
         });

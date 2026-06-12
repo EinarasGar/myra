@@ -15,6 +15,7 @@ import { LineChartSkeleton } from "@/components/line-chart-skeleton";
 import { Plus, Trash2 } from "lucide-react";
 import useGetUserAsset from "@/hooks/api/use-get-user-asset";
 import { useUserId } from "@/hooks/use-auth";
+import { TimeRangeLabels } from "@/constants/time-ranges";
 import AssetPairInfo from "./asset-pair-info";
 import AssetRateChart from "./asset-rate-chart";
 import AddRateDialog from "./add-rate-dialog";
@@ -40,16 +41,6 @@ export default function AssetDetailContent({ assetId }: Props) {
 
   const pairOptions = asset?.pairs ?? [];
   const selectedPair = pairOptions.find((p) => p.asset_id === selectedPairId);
-
-  const timeRangeLabels: Record<string, string> = {
-    "1d": "Last 24 hours",
-    "1w": "Last week",
-    "1m": "Last month",
-    "3m": "Last 3 months",
-    "6m": "Last 6 months",
-    "1y": "Last year",
-    all: "All time",
-  };
 
   return (
     <div className="m-4 space-y-4">
@@ -115,7 +106,7 @@ export default function AssetDetailContent({ assetId }: Props) {
               <CardTitle>Rate History</CardTitle>
               <p className="text-sm text-muted-foreground">
                 Showing rates for{" "}
-                {timeRangeLabels[timeRange]?.toLowerCase() ?? timeRange}
+                {TimeRangeLabels[timeRange]?.toLowerCase() ?? timeRange}
               </p>
             </div>
             <Select
@@ -129,27 +120,11 @@ export default function AssetDetailContent({ assetId }: Props) {
                 <SelectValue placeholder="Last year" />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
-                <SelectItem value="1d" className="rounded-lg">
-                  Last 24 hours
-                </SelectItem>
-                <SelectItem value="1w" className="rounded-lg">
-                  Last week
-                </SelectItem>
-                <SelectItem value="1m" className="rounded-lg">
-                  Last month
-                </SelectItem>
-                <SelectItem value="3m" className="rounded-lg">
-                  Last 3 months
-                </SelectItem>
-                <SelectItem value="6m" className="rounded-lg">
-                  Last 6 months
-                </SelectItem>
-                <SelectItem value="1y" className="rounded-lg">
-                  Last year
-                </SelectItem>
-                <SelectItem value="all" className="rounded-lg">
-                  All time
-                </SelectItem>
+                {Object.entries(TimeRangeLabels).map(([value, label]) => (
+                  <SelectItem key={value} value={value} className="rounded-lg">
+                    {label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Button size="sm" onClick={() => setIsAddRateOpen(true)}>

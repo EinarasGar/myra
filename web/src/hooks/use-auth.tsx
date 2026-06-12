@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import * as React from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { AuthMe } from "@/api";
 import { QueryKeys } from "@/constants/query-keys";
 import {
   AuthProvider as AuthProviderImpl,
@@ -48,20 +49,27 @@ export function useUserId(): string {
 
   if (userId) return userId;
 
-  const cached = queryClient.getQueryData<{ user_id: string }>([
-    QueryKeys.AUTH_ME,
-  ]);
+  const cached = queryClient.getQueryData<AuthMe>([QueryKeys.AUTH_ME]);
   if (cached?.user_id) return cached.user_id;
 
   throw new Promise<void>((resolve) => {
     const unsubscribe = queryClient.getQueryCache().subscribe(() => {
-      const data = queryClient.getQueryData<{ user_id: string }>([
-        QueryKeys.AUTH_ME,
-      ]);
+      const data = queryClient.getQueryData<AuthMe>([QueryKeys.AUTH_ME]);
       if (data?.user_id) {
         unsubscribe();
         resolve();
       }
     });
   });
+}
+
+/**
+ * Returns the authenticated user's default asset id from the cached /auth/me
+ * response, or null if it isn't available yet. Observes the query cache only —
+ * it never fires its own API call (the auth provider populates the cache).
+ */
+export function useDefaultAssetId(): number | null {
+  const queryClient = useQueryClient();
+  const cached = queryClient.getQueryData<AuthMe>([QueryKeys.AUTH_ME]);
+  return cached?.default_asset_id ?? null;
 }

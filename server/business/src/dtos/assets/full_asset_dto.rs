@@ -4,7 +4,7 @@ use super::{asset_dto::AssetDto, asset_id_dto::AssetIdDto, asset_type_dto::Asset
 
 pub struct FullAssetDto {
     pub asset: AssetDto,
-    pub base_asset_id: AssetIdDto,
+    pub base_asset_id: Option<AssetIdDto>,
     pub pairs: Option<Vec<AssetIdDto>>,
 }
 
@@ -20,7 +20,7 @@ impl From<AssetWithMetadata> for FullAssetDto {
                 ticker: p.ticker,
                 id: AssetIdDto(p.id),
             },
-            base_asset_id: AssetIdDto(p.base_pair_id),
+            base_asset_id: p.base_pair_id.map(AssetIdDto),
             pairs: p.pairs.map(|x| x.into_iter().map(AssetIdDto).collect()),
         }
     }

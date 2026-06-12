@@ -12,7 +12,8 @@ pub struct AssetPairInfoViewModel {
 #[derive(Clone, Debug, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct AssetMetadataViewModel {
     /// The asset paired to this asset by default, with resolved ticker and name.
-    pub base_asset: AssetPairInfoViewModel,
+    /// Absent for assets that have no designated base pair (e.g. currencies).
+    pub base_asset: Option<AssetPairInfoViewModel>,
 
     /// Available pairs with resolved ticker and name info.
     pub pairs: Vec<AssetPairInfoViewModel>,

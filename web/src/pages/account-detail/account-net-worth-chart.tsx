@@ -17,6 +17,7 @@ import AccountNetWorthChartContent from "./account-net-worth-chart-content";
 import { ErrorBoundary } from "react-error-boundary";
 import ErrorBoundaryFallback from "@/components/error-boundary-fallback";
 import { LineChartSkeleton } from "@/components/line-chart-skeleton";
+import { TimeRangeLabels } from "@/constants/time-ranges";
 
 export default function AccountNetWorthChart({
   accountId,
@@ -24,16 +25,6 @@ export default function AccountNetWorthChart({
   accountId: string;
 }) {
   const [timeRange, setTimeRange] = useState("3m");
-
-  const timeRangeLabels: Record<string, string> = {
-    "1d": "Last 24 hours",
-    "1w": "Last week",
-    "1m": "Last month",
-    "3m": "Last 3 months",
-    "6m": "Last 6 months",
-    "1y": "Last year",
-    all: "All time",
-  };
 
   return (
     <>
@@ -43,7 +34,7 @@ export default function AccountNetWorthChart({
             <CardTitle>Net Worth - History</CardTitle>
             <CardDescription>
               Showing total net worth for{" "}
-              {timeRangeLabels[timeRange]?.toLowerCase() ?? timeRange}
+              {TimeRangeLabels[timeRange]?.toLowerCase() ?? timeRange}
             </CardDescription>
           </div>
           <Select value={timeRange} onValueChange={(v) => v && setTimeRange(v)}>

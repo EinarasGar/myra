@@ -3824,11 +3824,11 @@ export interface GetAssetResponse {
    */
   asset_type: AssetType;
   /**
-   * The asset paired to this asset by default, with resolved ticker and name.
+   * The asset paired to this asset by default, with resolved ticker and name. Absent for assets that have no designated base pair (e.g. currencies).
    * @type {AssetPairInfo}
    * @memberof GetAssetResponse
    */
-  base_asset: AssetPairInfo;
+  base_asset?: AssetPairInfo | null;
   /**
    * Full name of the asset
    * @type {string}

@@ -11,70 +11,51 @@ pub async fn tick(_tick: CronTick, services: Data<Services>) -> Result<(), BoxDy
     let providers = services.create_providers();
     let rates_svc = AssetRatesService::new(&providers);
 
-    let asset_pairs = rates_svc.list_held_pair_details(false).await?;
-    let currency_pairs = rates_svc
-        .list_currency_cross_pairs(
-            vec![
-                "USD".into(),
-                "EUR".into(),
-                "GBP".into(),
-                "JPY".into(),
-                "CHF".into(),
-            ],
-            false,
-        )
-        .await?;
+    let (pairs, requests) = super::collect_market_pairs(&rates_svc, false).await?;
 
-    let mut symbols: Vec<(i32, String)> = Vec::new();
-
-    for pair in &asset_pairs {
-        symbols.push((pair.pair_id, pair.asset_ticker.clone()));
-    }
-
-    for pair in &currency_pairs {
-        symbols.push((
-            pair.pair_id,
-            format!("{}{}", pair.asset_ticker, pair.base_ticker),
-        ));
-    }
-
-    if symbols.is_empty() {
+    if pairs.is_empty() {
         tracing::info!("All pairs already have history");
         return Ok(());
     }
 
-    let symbol_list: Vec<&str> = symbols.iter().map(|(_, s)| s.as_str()).collect();
-    tracing::info!(
-        "Downloading history for {} symbols: {}",
-        symbol_list.len(),
-        symbol_list.join(", ")
-    );
+    tracing::info!("Downloading history for {} pairs", requests.len());
 
-    let response = MarketDataClient::new()
-        .get_history(&symbol_list, None)
-        .await?;
+    let response = MarketDataClient::new().get_history(&requests, None).await?;
 
     let mut all_inserts: Vec<AssetPairRateInsertDto> = Vec::new();
 
-    for (pair_id, symbol) in &symbols {
-        let Some(entry) = response.iter().find(|e| e.symbol == *symbol) else {
-            tracing::warn!("No history returned for {}", symbol);
+    for pair in &pairs {
+        let Some(entry) = response
+            .iter()
+            .find(|e| e.base == pair.asset_ticker && e.quote == pair.base_ticker)
+        else {
+            tracing::warn!(
+                "No history returned for {}/{}",
+                pair.asset_ticker,
+                pair.base_ticker
+            );
             continue;
         };
 
         if entry.rates.is_empty() {
-            tracing::warn!("No rates for {} (pair_id={})", symbol, pair_id);
+            tracing::warn!(
+                "No rates for {}/{} (pair_id={})",
+                pair.asset_ticker,
+                pair.base_ticker,
+                pair.pair_id
+            );
         } else {
             tracing::info!(
-                "{} (pair_id={}): {} daily rates",
-                symbol,
-                pair_id,
+                "{}/{} (pair_id={}): {} daily rates",
+                pair.asset_ticker,
+                pair.base_ticker,
+                pair.pair_id,
                 entry.rates.len()
             );
         }
 
         all_inserts.extend(entry.rates.iter().map(|rate_entry| AssetPairRateInsertDto {
-            pair_id: *pair_id,
+            pair_id: pair.pair_id,
             rate: rate_entry.rate,
             date: rate_entry.recorded_at,
         }));

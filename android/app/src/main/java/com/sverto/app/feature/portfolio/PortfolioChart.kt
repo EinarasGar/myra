@@ -26,6 +26,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -67,9 +68,13 @@ enum class TimePeriod(
 fun PortfolioChart(
     portfolioData: Map<TimePeriod, List<ChartPoint>>,
     modifier: Modifier = Modifier,
+    selectedPeriod: TimePeriod? = null,
+    onPeriodSelect: ((TimePeriod) -> Unit)? = null,
+    headerTrailing: (@Composable () -> Unit)? = null,
 ) {
-    var selectedPeriod by remember { mutableStateOf(TimePeriod.MONTH) }
-    val points = portfolioData[selectedPeriod] ?: emptyList()
+    var internalPeriod by remember { mutableStateOf(TimePeriod.MONTH) }
+    val activePeriod = selectedPeriod ?: internalPeriod
+    val points = portfolioData[activePeriod] ?: emptyList()
 
     // Scrub state: null = show latest, 0..1 = normalized position
     var scrubPosition by remember { mutableStateOf<Float?>(null) }
@@ -90,7 +95,7 @@ fun PortfolioChart(
     val scrubDate =
         if (scrubIdx != null) {
             val dateFormat =
-                if (selectedPeriod == TimePeriod.DAY) {
+                if (activePeriod == TimePeriod.DAY) {
                     SimpleDateFormat("MMM d, h:mm a", Locale.US)
                 } else {
                     SimpleDateFormat("MMM d, yyyy", Locale.US)
@@ -123,8 +128,8 @@ fun PortfolioChart(
     // `remember(selectedPeriod)` creates a fresh Animatable at 0f synchronously in the same
     // composition that receives the new `points`, so the canvas never renders one full frame of
     // new data before the sweep starts.
-    val animationProgress = remember(selectedPeriod) { Animatable(0f) }
-    LaunchedEffect(selectedPeriod) {
+    val animationProgress = remember(activePeriod) { Animatable(0f) }
+    LaunchedEffect(activePeriod) {
         animationProgress.animateTo(1f, animationSpec = tween(600))
     }
 
@@ -132,35 +137,42 @@ fun PortfolioChart(
     // (Fitbit / M3 hero-content pattern) instead of being boxed in a same-colour, invisible
     // container. Callers supply the 16dp horizontal margin.
     Column(modifier.fillMaxWidth()) {
-        // Portfolio value
-        Text(
-            text = "$${formatNumber(currentValue)}",
-            style = MaterialTheme.typography.headlineLarge,
-            modifier = Modifier.animateContentSize(),
-        )
-
-        // Change indicator
-        val sign = if (isPositive) "+" else ""
-        Text(
-            text = "$sign$${formatNumber(changeAmount)} ($sign${String.format(Locale.US, "%.2f", changePercent)}%)",
-            style = MaterialTheme.typography.bodyMedium,
-            color = changeColor,
-        )
-
-        // Scrub date — always render a single line (a blank placeholder when not scrubbing) so it
-        // reserves its height and the chart doesn't jump down when the date appears on press.
-        Text(
-            text = scrubDate ?: " ",
-            style = MaterialTheme.typography.bodySmall,
-            color =
-                if (scrubDate != null) {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                } else {
-                    Color.Transparent
-                },
-            maxLines = 1,
-        )
-
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            // Top-align the trailing slot with the headline value line (not the centre of the
+            // three-line block — the reserved scrub-date line would drag it visually downward).
+            verticalAlignment = Alignment.Top,
+        ) {
+            Column(Modifier.weight(1f)) {
+                // Portfolio value
+                Text(
+                    text = "$${formatNumber(currentValue)}",
+                    style = MaterialTheme.typography.headlineLarge,
+                    modifier = Modifier.animateContentSize(),
+                )
+                // Change indicator
+                val sign = if (isPositive) "+" else ""
+                Text(
+                    text = "$sign$${formatNumber(changeAmount)} ($sign${String.format(Locale.US, "%.2f", changePercent)}%)",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = changeColor,
+                )
+                // Scrub date — always render a single line (a blank placeholder when not scrubbing) so it
+                // reserves its height and the chart doesn't jump down when the date appears on press.
+                Text(
+                    text = scrubDate ?: " ",
+                    style = MaterialTheme.typography.bodySmall,
+                    color =
+                        if (scrubDate != null) {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        } else {
+                            Color.Transparent
+                        },
+                    maxLines = 1,
+                )
+            }
+            headerTrailing?.invoke()
+        }
         Spacer(Modifier.height(16.dp))
 
         // Chart
@@ -204,9 +216,13 @@ fun PortfolioChart(
             val periodContentPadding = PaddingValues(horizontal = 6.dp, vertical = 10.dp)
             periods.forEachIndexed { index, period ->
                 ToggleButton(
-                    checked = selectedPeriod == period,
+                    checked = activePeriod == period,
                     onCheckedChange = {
-                        selectedPeriod = period
+                        if (onPeriodSelect != null) {
+                            onPeriodSelect(period)
+                        } else {
+                            internalPeriod = period
+                        }
                         scrubPosition = null
                     },
                     modifier =

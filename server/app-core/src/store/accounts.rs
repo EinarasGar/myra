@@ -1,33 +1,10 @@
 use std::sync::Mutex;
 
-use shared::errors::ApiErrorResponse;
-
 use super::infra::SharedInfra;
 use crate::api::account_overview::extract_account_balance;
 use crate::api::accounts::{extract_account_types, extract_accounts};
-use crate::error::ApiError;
+use crate::error::{server_error, ApiError};
 use crate::models::{AccountTypeItem, AccountsState, CreateAccountInput};
-
-/// Build a `Server` error from a non-success response, preferring the server's
-/// own message (and per-field validation detail) over a bare status code.
-fn server_error(status: u16, body: &str) -> ApiError {
-    let reason = serde_json::from_str::<ApiErrorResponse>(body)
-        .ok()
-        .map(|err| {
-            if err.errors.is_empty() {
-                err.message
-            } else {
-                err.errors
-                    .iter()
-                    .map(|f| format!("{}: {}", f.field, f.message))
-                    .collect::<Vec<_>>()
-                    .join("; ")
-            }
-        })
-        .filter(|reason| !reason.is_empty())
-        .unwrap_or_else(|| format!("HTTP {status}"));
-    ApiError::Server { reason, status }
-}
 
 #[uniffi::export(callback_interface)]
 pub trait AccountsObserver: Send + Sync {

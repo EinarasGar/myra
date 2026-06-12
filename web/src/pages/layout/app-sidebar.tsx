@@ -68,8 +68,7 @@ const navMain = [
       },
       {
         title: "Global Assets",
-        url: "#",
-        disabled: true,
+        url: "/global-assets",
       },
     ],
   },

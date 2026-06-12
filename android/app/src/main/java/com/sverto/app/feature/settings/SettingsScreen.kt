@@ -40,6 +40,7 @@ import com.sverto.app.core.theme.LocalClerkTheme
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    onCustomAssets: () -> Unit,
     onCustomCategories: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -92,6 +93,11 @@ fun SettingsScreen(
                 icon = "tags",
                 label = "Custom Categories",
                 onClick = onCustomCategories,
+            )
+            SettingsRow(
+                icon = "coins",
+                label = "Custom Assets",
+                onClick = onCustomAssets,
             )
             if (isClerk) {
                 ProfileSettingsRow()
