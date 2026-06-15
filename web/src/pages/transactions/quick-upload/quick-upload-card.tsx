@@ -32,7 +32,8 @@ export function QuickUploadCard({
   const isProcessing =
     item.status === "pending" ||
     item.status === "created" ||
-    item.status === "processing";
+    item.status === "processing" ||
+    item.status === "retrying";
   const isFailed = item.status === "failed";
   const isReady = item.status === "proposal_ready";
   const { title, subtitle, amount } = summary(item);

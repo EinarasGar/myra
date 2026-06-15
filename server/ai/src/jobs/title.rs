@@ -3,7 +3,7 @@ use rig::client::CompletionClient;
 use crate::config::AiConfig;
 use crate::conversation::Conversation;
 use crate::conversation_provider::ConversationProvider;
-use crate::models::chat::Persistence;
+use crate::models::chat::{ChatTurn, Persistence};
 use crate::provider::create_gemini_client;
 use crate::rate_limit_provider::RateLimitProvider;
 
@@ -40,10 +40,12 @@ where
         .build();
 
     let result = conv
-        .prompt(
+        .run(
             agent,
-            "Generate a 1-5 word title for this conversation.".to_string(),
-            vec![],
+            ChatTurn::Message {
+                message: "Generate a 1-5 word title for this conversation.".to_string(),
+                file_ids: vec![],
+            },
             Persistence::Ephemeral,
         )
         .await?;

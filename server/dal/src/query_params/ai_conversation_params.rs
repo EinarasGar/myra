@@ -10,6 +10,7 @@ use super::paging_params::PagingParams;
 pub enum QuickUploadStatus {
     Pending,
     Processing,
+    Retrying,
     ProposalReady,
     Accepted,
     Rejected,
@@ -30,6 +31,7 @@ impl fmt::Display for QuickUploadStatus {
         match self {
             Self::Pending => write!(f, "pending"),
             Self::Processing => write!(f, "processing"),
+            Self::Retrying => write!(f, "retrying"),
             Self::ProposalReady => write!(f, "proposal_ready"),
             Self::Accepted => write!(f, "accepted"),
             Self::Rejected => write!(f, "rejected"),
@@ -45,6 +47,7 @@ impl std::str::FromStr for QuickUploadStatus {
         match s {
             "pending" => Ok(Self::Pending),
             "processing" => Ok(Self::Processing),
+            "retrying" => Ok(Self::Retrying),
             "proposal_ready" => Ok(Self::ProposalReady),
             "accepted" => Ok(Self::Accepted),
             "rejected" => Ok(Self::Rejected),
@@ -114,8 +117,42 @@ impl GetConversationsParams {
 pub struct GetMessagesParams {
     pub conversation_id: Uuid,
     pub user_id: Uuid,
-    pub after_id: Option<Uuid>,
-    pub limit: u64,
+}
+
+pub struct UpdateConversationErrorParams {
+    pub target: ConversationErrorTarget,
+    pub error: Option<serde_json::Value>,
+}
+
+pub enum ConversationErrorTarget {
+    Conversation(Uuid),
+    QuickUpload(Uuid),
+}
+
+impl UpdateConversationErrorParams {
+    pub fn set(conversation_id: Uuid, error: impl Into<serde_json::Value>) -> Self {
+        Self {
+            target: ConversationErrorTarget::Conversation(conversation_id),
+            error: Some(error.into()),
+        }
+    }
+
+    pub fn set_for_quick_upload(
+        quick_upload_id: Uuid,
+        error: impl Into<serde_json::Value>,
+    ) -> Self {
+        Self {
+            target: ConversationErrorTarget::QuickUpload(quick_upload_id),
+            error: Some(error.into()),
+        }
+    }
+
+    pub fn clear(conversation_id: Uuid) -> Self {
+        Self {
+            target: ConversationErrorTarget::Conversation(conversation_id),
+            error: None,
+        }
+    }
 }
 
 pub struct GetQuickUploadsParams {

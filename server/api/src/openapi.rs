@@ -117,6 +117,7 @@ mod modifiers;
         super::handlers::ai_quick_upload_handler::list_quick_uploads,
         super::handlers::ai_quick_upload_handler::get_quick_upload,
         super::handlers::ai_quick_upload_handler::send_correction,
+        super::handlers::ai_quick_upload_handler::retry_quick_upload,
         super::handlers::ai_quick_upload_handler::complete,
     ),
     components(

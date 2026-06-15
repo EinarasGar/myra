@@ -5,6 +5,8 @@ use uuid::Uuid;
 
 use dal::models::ai_conversation_models::QuickUploadModel;
 
+use crate::dtos::ai_error_dto::AiErrorDto;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "event", content = "data")]
 pub enum QuickUploadNotification {
@@ -16,7 +18,7 @@ pub enum QuickUploadNotification {
         data: serde_json::Value,
     },
     #[serde(rename = "error")]
-    Error { message: String },
+    Error { error: AiErrorDto },
     #[serde(rename = "done")]
     Done,
 }

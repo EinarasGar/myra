@@ -214,7 +214,7 @@ mod tests {
 
     #[test]
     fn history_body_omits_missing_from() {
-        let body = HistoryRequestBody {
+        let body = RatesRequestBody {
             pairs: &[],
             from: None,
         };
@@ -224,7 +224,7 @@ mod tests {
 
     #[test]
     fn history_body_includes_from_when_present() {
-        let body = HistoryRequestBody {
+        let body = RatesRequestBody {
             pairs: &[],
             from: Some(1_686_523_200),
         };

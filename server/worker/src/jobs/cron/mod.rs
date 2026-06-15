@@ -2,8 +2,11 @@ pub mod generate_chat_titles;
 pub mod refresh_assets;
 pub mod seed_asset_history;
 
+pub use generate_chat_titles::GenerateChatTitlesJob;
+pub use refresh_assets::RefreshAssetsJob;
+pub use seed_asset_history::SeedAssetHistoryJob;
+
 use business::service_collection::asset_rates_service::AssetRatesService;
-use chrono::{DateTime, Utc};
 use dal::market_data_client::PairRequest;
 use dal::models::asset_models::HeldAssetPairDetailModel;
 
@@ -27,29 +30,3 @@ pub(crate) async fn collect_market_pairs(
     let requests = pairs.iter().map(PairRequest::from).collect();
     Ok((pairs, requests))
 }
-
-#[derive(Default, Debug, Clone)]
-pub struct CronTick(#[allow(dead_code)] DateTime<Utc>);
-
-impl From<DateTime<Utc>> for CronTick {
-    fn from(t: DateTime<Utc>) -> Self {
-        Self(t)
-    }
-}
-
-#[allow(unused_macros)]
-macro_rules! cron_worker {
-    ($name:expr, $schedule:expr, $services:expr, $handler:expr) => {
-        apalis::prelude::WorkerBuilder::new($name)
-            .layer(apalis::layers::catch_panic::CatchPanicLayer::new())
-            .data($services.clone())
-            .backend(apalis_cron::CronStream::new(
-                <apalis_cron::Schedule as std::str::FromStr>::from_str($schedule)
-                    .expect("valid cron"),
-            ))
-            .build_fn($handler)
-    };
-}
-
-#[allow(unused_imports)]
-pub(crate) use cron_worker;

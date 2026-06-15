@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { AIConversationsApiFactory, FilesApiFactory } from "@/api";
+import type { AiError, ApiErrorResponse } from "@/api";
 import { QueryKeys } from "@/constants/query-keys";
 import { getBaseUrl } from "@/lib/api-utils";
 import type { FileUIPart } from "ai";
@@ -28,20 +29,48 @@ export type MessagePart =
       signature?: string;
     }
   | { type: "reasoning"; content: string }
-  | { type: "file"; file: FileUIPart };
+  | { type: "file"; file: FileUIPart }
+  | {
+      type: "error";
+      message: string;
+      resetAt?: string;
+    };
 
 export interface ChatMessage {
   role: "user" | "assistant";
   parts: MessagePart[];
 }
 
+class RateLimitedError extends Error {
+  resetAt?: string;
+
+  constructor(message: string, resetAt?: string) {
+    super(message);
+    this.name = "RateLimitedError";
+    this.resetAt = resetAt;
+  }
+}
+
+class HttpError extends Error {
+  status: number;
+
+  constructor(status: number) {
+    super(`HTTP ${status}`);
+    this.name = "HttpError";
+    this.status = status;
+  }
+}
+
 export interface UseAiChatReturn {
   messages: ChatMessage[];
   isStreaming: boolean;
   conversationId: string | null;
+  rateLimitedUntil: string | null;
   sendMessage: (message: string, files?: FileUIPart[]) => void;
   approveToolCall: (callId: string, approved: boolean) => Promise<void>;
+  retry: () => void;
   clearMessages: () => void;
+  clearRateLimitedUntil: () => void;
 }
 
 function serverPartsToMessageParts(
@@ -101,11 +130,27 @@ export default function useAiChat(
   const [conversationId, setConversationId] = useState<string | null>(
     initialConversationId ?? null,
   );
+  const [rateLimitedUntil, setRateLimitedUntil] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const { getAccessToken } = useAuth();
   const queryClient = useQueryClient();
   const messagesRef = useRef<ChatMessage[]>([]);
   messagesRef.current = messages;
+
+  const updateLastAssistant = useCallback(
+    (updater: (parts: MessagePart[]) => MessagePart[]) => {
+      setMessages((prev) => {
+        const updated = [...prev];
+        const last = updated[updated.length - 1];
+        updated[updated.length - 1] = {
+          ...last,
+          parts: updater([...last.parts]),
+        };
+        return updated;
+      });
+    },
+    [],
+  );
 
   const invalidateDataQueries = useCallback(() => {
     const keys = [
@@ -202,6 +247,55 @@ export default function useAiChat(
             merged.push({ role, parts });
           }
         }
+
+        // Detect an interrupted turn: the server persists messages as it
+        // goes, so a conversation ending on anything but a final assistant
+        // text means the turn never completed and can be retried. Only then
+        // is the conversation fetched for its stored last_error.
+        const lastRole = res.data[res.data.length - 1]?.role;
+        const maybeInterrupted =
+          lastRole === "user" ||
+          lastRole === "tool_result" ||
+          lastRole === "tool_approval" ||
+          lastRole === "tool_call";
+
+        if (maybeInterrupted) {
+          const convRes = await AIConversationsApiFactory()
+            .getConversation(userId, initialConversationId)
+            .catch(() => null);
+          if (cancelled) return;
+
+          const lastError = convRes?.data.last_error ?? null;
+          // A dangling tool call without an error marker means a tool
+          // approval is pending — only offer retry when an error was stored.
+          const retryable = lastRole !== "tool_call" || lastError !== null;
+
+          if (retryable) {
+            const errorPart: MessagePart = {
+              type: "error",
+              message:
+                lastError?.message ??
+                "This response was interrupted before completing.",
+              resetAt: lastError?.reset_at ?? undefined,
+            };
+            const lastMerged = merged[merged.length - 1];
+            if (lastMerged && lastMerged.role === "assistant") {
+              // The dangling tool call was interrupted by an error, not
+              // awaiting approval — don't render approval buttons for it.
+              if (lastRole === "tool_call") {
+                lastMerged.parts = lastMerged.parts.map((p) =>
+                  p.type === "tool_call" && p.state === "approval-requested"
+                    ? { ...p, state: "input-available" as const }
+                    : p,
+                );
+              }
+              lastMerged.parts.push(errorPart);
+            } else {
+              merged.push({ role: "assistant", parts: [errorPart] });
+            }
+          }
+        }
+
         setMessages(merged);
       })
       .catch(() => {
@@ -216,13 +310,12 @@ export default function useAiChat(
   const streamSse = useCallback(
     async (
       url: string,
-      body: Record<string, unknown>,
+      body: Record<string, unknown> | undefined,
       signal: AbortSignal,
       updateMsg: (updater: (parts: MessagePart[]) => MessagePart[]) => void,
     ) => {
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
+      const headers: Record<string, string> = {};
+      if (body !== undefined) headers["Content-Type"] = "application/json";
       const token = await getAccessToken();
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
@@ -230,12 +323,25 @@ export default function useAiChat(
         method: "POST",
         credentials: "include",
         headers,
-        body: JSON.stringify(body),
+        body: body === undefined ? undefined : JSON.stringify(body),
         signal,
       });
 
       if (!response.ok || !response.body) {
-        throw new Error(`HTTP ${response.status}`);
+        if (response.status === 429) {
+          let message = "Rate limit exceeded.";
+          let resetAt: string | undefined;
+          try {
+            const errorBody = (await response.json()) as ApiErrorResponse;
+            const details = errorBody.details as AiError | null | undefined;
+            message = details?.message ?? errorBody.message ?? message;
+            resetAt = details?.reset_at ?? undefined;
+          } catch {
+            /* non-JSON error body */
+          }
+          throw new RateLimitedError(message, resetAt);
+        }
+        throw new HttpError(response.status);
       }
 
       const reader = response.body.getReader();
@@ -313,8 +419,20 @@ export default function useAiChat(
           });
         } else if (currentEvent === "error") {
           updateMsg((parts) => {
-            parts.push({ type: "text", content: `Error: ${data}` });
-            return parts;
+            let parsed: Partial<AiError> = {};
+            try {
+              parsed = JSON.parse(data) as AiError;
+            } catch {
+              /* non-JSON error payload */
+            }
+            return [
+              ...parts,
+              {
+                type: "error",
+                message: parsed.message ?? data,
+                resetAt: parsed.reset_at ?? undefined,
+              },
+            ];
           });
         } else if (currentEvent === "tool_request") {
           try {
@@ -408,6 +526,7 @@ export default function useAiChat(
 
       setMessages((prev) => [...prev, userMessage, assistantMessage]);
       setIsStreaming(true);
+      setRateLimitedUntil(null);
 
       const controller = new AbortController();
       abortRef.current = controller;
@@ -466,20 +585,6 @@ export default function useAiChat(
           base,
         ).toString();
 
-        const updateLastAssistant = (
-          updater: (parts: MessagePart[]) => MessagePart[],
-        ) => {
-          setMessages((prev) => {
-            const updated = [...prev];
-            const last = updated[updated.length - 1];
-            updated[updated.length - 1] = {
-              ...last,
-              parts: updater([...last.parts]),
-            };
-            return updated;
-          });
-        };
-
         await streamSse(
           url,
           {
@@ -490,20 +595,24 @@ export default function useAiChat(
           updateLastAssistant,
         );
       } catch (err) {
-        if ((err as Error).name !== "AbortError") {
-          setMessages((prev) => {
-            const updated = [...prev];
-            updated[updated.length - 1] = {
-              role: "assistant",
-              parts: [
-                {
-                  type: "text",
-                  content: "Sorry, something went wrong. Please try again.",
-                },
-              ],
-            };
-            return updated;
-          });
+        if ((err as Error).name === "AbortError") {
+          /* user cancelled */
+        } else if (err instanceof RateLimitedError && err.resetAt) {
+          // Rejected pre-flight — the message was never persisted, so drop
+          // the optimistic messages and surface the rate-limit banner.
+          setMessages((prev) => prev.slice(0, -2));
+          setRateLimitedUntil(err.resetAt);
+        } else if (err instanceof RateLimitedError) {
+          // No reset hint (e.g. concurrency limit) — show the server's
+          // explanation inline instead of a countdown banner.
+          updateLastAssistant(() => [{ type: "text", content: err.message }]);
+        } else {
+          updateLastAssistant(() => [
+            {
+              type: "text",
+              content: "Sorry, something went wrong. Please try again.",
+            },
+          ]);
         }
       } finally {
         setIsStreaming(false);
@@ -511,7 +620,14 @@ export default function useAiChat(
         invalidateDataQueries();
       }
     },
-    [conversationId, userId, isStreaming, streamSse, invalidateDataQueries],
+    [
+      conversationId,
+      userId,
+      isStreaming,
+      streamSse,
+      updateLastAssistant,
+      invalidateDataQueries,
+    ],
   );
 
   const approveToolCall = useCallback(
@@ -638,6 +754,78 @@ export default function useAiChat(
     [userId, conversationId, isStreaming, streamSse, invalidateDataQueries],
   );
 
+  const retry = useCallback(async () => {
+    if (isStreaming) return;
+    const convId = conversationId;
+    if (!convId) return;
+
+    // The continuation streams into the last assistant message — strip its
+    // stale error part, or create a fresh assistant message if the last
+    // message is from the user.
+    setMessages((prev) => {
+      const updated = [...prev];
+      const last = updated[updated.length - 1];
+      if (last && last.role === "assistant") {
+        const parts = [...last.parts];
+        while (parts.length > 0 && parts[parts.length - 1].type === "error") {
+          parts.pop();
+        }
+        updated[updated.length - 1] = { ...last, parts };
+      } else {
+        updated.push({ role: "assistant", parts: [] });
+      }
+      return updated;
+    });
+    setIsStreaming(true);
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    try {
+      const base = getBaseUrl();
+      const url = new URL(
+        `/api/users/${userId}/ai/conversations/${convId}/retry`,
+        base,
+      ).toString();
+
+      await streamSse(url, undefined, controller.signal, updateLastAssistant);
+    } catch (err) {
+      if ((err as Error).name === "AbortError") {
+        /* user cancelled */
+      } else if (err instanceof HttpError && err.status === 409) {
+        /* nothing to retry — the turn already completed server-side */
+      } else if (err instanceof RateLimitedError) {
+        updateLastAssistant((parts) => [
+          ...parts,
+          {
+            type: "error",
+            message: err.message,
+            resetAt: err.resetAt,
+          },
+        ]);
+      } else {
+        updateLastAssistant((parts) => [
+          ...parts,
+          {
+            type: "error",
+            message: "Sorry, something went wrong. Please try again.",
+          },
+        ]);
+      }
+    } finally {
+      setIsStreaming(false);
+      abortRef.current = null;
+      invalidateDataQueries();
+    }
+  }, [
+    userId,
+    conversationId,
+    isStreaming,
+    streamSse,
+    updateLastAssistant,
+    invalidateDataQueries,
+  ]);
+
   const clearMessages = useCallback(() => {
     if (abortRef.current) {
       abortRef.current.abort();
@@ -647,12 +835,19 @@ export default function useAiChat(
     setIsStreaming(false);
   }, []);
 
+  const clearRateLimitedUntil = useCallback(() => {
+    setRateLimitedUntil(null);
+  }, []);
+
   return {
     messages,
     isStreaming,
     conversationId,
+    rateLimitedUntil,
     sendMessage,
     approveToolCall,
+    retry,
     clearMessages,
+    clearRateLimitedUntil,
   };
 }

@@ -165,9 +165,10 @@ pub async fn subscribe(
                             serde_json::json!({"proposal_type": proposal_type, "data": data}).to_string()
                         ));
                     }
-                    QuickUploadNotification::Error { message } => {
+                    QuickUploadNotification::Error { error } => {
+                        let vm = shared::view_models::ai::errors::AiErrorViewModel::from(error);
                         yield Ok(Event::default().event("error").data(
-                            serde_json::json!({"message": message}).to_string()
+                            serde_json::to_string(&vm).unwrap_or_else(|_| "{}".to_string())
                         ));
                     }
                     QuickUploadNotification::Done => {
@@ -213,6 +214,37 @@ pub async fn send_correction(
             status: QuickUploadStatus::Processing.to_string(),
         }),
     ))
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/users/{user_id}/ai/quick-upload/{quick_upload_id}/retry",
+    tag = "AI Quick Upload",
+    responses(
+        (status = 204, description = "Quick upload re-enqueued for processing."),
+        (status = 409, description = "Quick upload is not in a retryable state."),
+    ),
+    params(
+        ("user_id" = Uuid, Path, description = "Unique identifier of the user."),
+        ("quick_upload_id" = Uuid, Path, description = "Unique identifier of the quick upload."),
+    ),
+    security(("auth_token" = []))
+)]
+pub async fn retry_quick_upload(
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(QuickUploadIdPath { quick_upload_id }): Path<QuickUploadIdPath>,
+    AiQuickUploadServiceState(service): AiQuickUploadServiceState,
+) -> Result<StatusCode, ApiError> {
+    let retried = service
+        .retry(quick_upload_id, user_id)
+        .await
+        .map_err(ApiError::from_anyhow)?;
+    if !retried {
+        return Err(ApiError::Conflict(
+            "Quick upload is not in a retryable state".to_string(),
+        ));
+    }
+    Ok(StatusCode::NO_CONTENT)
 }
 
 #[utoipa::path(

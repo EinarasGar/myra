@@ -3,6 +3,7 @@ use uuid::Uuid;
 
 pub use crate::models::chat::HistoryEntry;
 use crate::models::chat::{Base64Attachment, ChatHistoryMessage};
+use crate::models::error::AiError;
 
 pub trait ConversationProvider: Send + Sync + 'static {
     /// Load prior turns in oldest-to-newest order. File attachments are
@@ -28,4 +29,14 @@ pub trait ConversationProvider: Send + Sync + 'static {
         &self,
         message: ChatHistoryMessage,
     ) -> impl std::future::Future<Output = Result<()>> + Send;
+
+    /// Persist the failed-turn marker on the conversation. Replaces any
+    /// previous marker.
+    fn record_turn_error(
+        &self,
+        error: &AiError,
+    ) -> impl std::future::Future<Output = Result<()>> + Send;
+
+    /// Clear the failed-turn marker.
+    fn clear_turn_error(&self) -> impl std::future::Future<Output = Result<()>> + Send;
 }

@@ -6,6 +6,7 @@ pub enum AiConversationsIden {
     UserId,
     CreatedAt,
     UpdatedAt,
+    LastError,
 }
 
 impl Iden for AiConversationsIden {
@@ -16,6 +17,7 @@ impl Iden for AiConversationsIden {
             Self::UserId => "user_id",
             Self::CreatedAt => "created_at",
             Self::UpdatedAt => "updated_at",
+            Self::LastError => "last_error",
         }
     }
 }

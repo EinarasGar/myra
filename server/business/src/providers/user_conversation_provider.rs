@@ -2,9 +2,11 @@ use ai::conversation_provider::{ConversationProvider, HistoryEntry};
 use ai::models::chat::{Base64Attachment, ChatHistoryMessage};
 use futures::{Stream, StreamExt};
 use tokio::sync::{broadcast, oneshot};
+use tracing::Instrument;
 use uuid::Uuid;
 
 use crate::dtos::ai_chat_dto::{ChatHistoryMessageDto, ChatStreamEventDto};
+use crate::dtos::ai_error_dto::AiErrorDto;
 use crate::service_collection::ai_conversation_service::AiConversationService;
 use crate::service_collection::file_service::FileService;
 use crate::service_collection::ServiceProviders;
@@ -54,14 +56,18 @@ impl UserConversationProvider {
         let (completion_tx, completion_rx) = oneshot::channel();
         let task_event_tx = event_tx.clone();
 
-        tokio::spawn(async move {
-            let mut stream = std::pin::pin!(stream);
-            while let Some(event) = stream.next().await {
-                let _ = task_event_tx.send(event);
+        let span = tracing::info_span!("drive_chat_stream");
+        tokio::spawn(
+            async move {
+                let mut stream = std::pin::pin!(stream);
+                while let Some(event) = stream.next().await {
+                    let _ = task_event_tx.send(event);
+                }
+                let _ = task_event_tx.send(ChatStreamEventDto::Done);
+                let _ = completion_tx.send(Ok(()));
             }
-            let _ = task_event_tx.send(ChatStreamEventDto::Done);
-            let _ = completion_tx.send(Ok(()));
-        });
+            .instrument(span),
+        );
 
         ConversationStreamHandle {
             event_tx,
@@ -86,7 +92,7 @@ impl ConversationProvider for UserConversationProvider {
     async fn load_history(&self) -> anyhow::Result<Vec<HistoryEntry>> {
         let messages = self
             .conv_service
-            .get_messages(self.conversation_id, self.user_id, None, 1000)
+            .get_messages(self.conversation_id, self.user_id)
             .await?;
         Ok(messages
             .into_iter()
@@ -126,6 +132,19 @@ impl ConversationProvider for UserConversationProvider {
             )
             .await?;
         Ok(())
+    }
+
+    async fn record_turn_error(&self, error: &ai::models::error::AiError) -> anyhow::Result<()> {
+        let dto: AiErrorDto = error.clone().into();
+        self.conv_service
+            .set_conversation_error(self.conversation_id, &dto)
+            .await
+    }
+
+    async fn clear_turn_error(&self) -> anyhow::Result<()> {
+        self.conv_service
+            .clear_conversation_error(self.conversation_id)
+            .await
     }
 }
 

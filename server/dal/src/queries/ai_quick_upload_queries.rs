@@ -147,3 +147,27 @@ pub fn update_quick_upload_proposal(
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }
+
+#[tracing::instrument(skip_all)]
+pub fn try_reset_for_manual_retry(quick_upload_id: Uuid) -> DbQueryWithValues {
+    Query::update()
+        .table(AiWorkflowQuickUploadIden::Table)
+        .value(
+            AiWorkflowQuickUploadIden::Status,
+            QuickUploadStatus::Pending.to_string(),
+        )
+        .value(AiWorkflowQuickUploadIden::UpdatedAt, Expr::cust("NOW()"))
+        .and_where(Expr::col(AiWorkflowQuickUploadIden::Id).eq(quick_upload_id))
+        .and_where(
+            Expr::col(AiWorkflowQuickUploadIden::Status)
+                .eq(QuickUploadStatus::Failed.to_string())
+                .or(Expr::col(AiWorkflowQuickUploadIden::Status)
+                    .is_in([
+                        QuickUploadStatus::Retrying.to_string(),
+                        QuickUploadStatus::Processing.to_string(),
+                    ])
+                    .and(Expr::cust("updated_at < NOW() - INTERVAL '15 minutes'"))),
+        )
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}

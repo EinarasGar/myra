@@ -11,13 +11,14 @@ use crate::conversation::Conversation;
 use crate::conversation_provider::ConversationProvider;
 use crate::data_provider::AiDataProvider;
 use crate::embedding::EMBEDDING_DIMS;
-use crate::models::chat::Persistence;
+use crate::models::chat::{ChatTurn, Persistence};
 pub use crate::models::receipt::ReceiptProcessorOutput;
 use crate::provider::create_gemini_client;
 use crate::rate_limit_provider::RateLimitProvider;
 use crate::tools::list_accounts::ListAccountsTool;
 use crate::tools::search_assets::SearchAssetsTool;
 use crate::tools::search_categories::SearchCategoriesTool;
+use rig::agent::Agent;
 use rig::client::{CompletionClient, EmbeddingsClient};
 use uuid::Uuid;
 
@@ -97,6 +98,26 @@ where
     run_with_prompt(config, data, conversation, rate_limit, correction, vec![]).await
 }
 
+pub async fn retry<D, C, R>(
+    config: AiConfig,
+    data: Arc<D>,
+    conversation: Arc<C>,
+    rate_limit: Arc<R>,
+) -> anyhow::Result<ReceiptProcessorOutput>
+where
+    D: AiDataProvider,
+    C: ConversationProvider,
+    R: RateLimitProvider,
+{
+    let agent = build_agent(&config, data);
+    let conv = Conversation::new(conversation, rate_limit);
+    let output = conv
+        .run(agent, ChatTurn::Continuation, Persistence::Persist)
+        .await?;
+
+    parse_proposal(&output.output)
+}
+
 async fn run_with_prompt<D, C, R>(
     config: AiConfig,
     data: Arc<D>,
@@ -110,11 +131,31 @@ where
     C: ConversationProvider,
     R: RateLimitProvider,
 {
+    let agent = build_agent(&config, data);
+    let conv = Conversation::new(conversation, rate_limit);
+    let output = conv
+        .run(
+            agent,
+            ChatTurn::Message { message, file_ids },
+            Persistence::Persist,
+        )
+        .await?;
+
+    parse_proposal(&output.output)
+}
+
+fn build_agent<D>(
+    config: &AiConfig,
+    data: Arc<D>,
+) -> Agent<rig::providers::gemini::completion::CompletionModel>
+where
+    D: AiDataProvider,
+{
     let client = create_gemini_client(&config.api_key);
     let embedding_model =
         client.embedding_model_with_ndims(&config.embedding_model, EMBEDDING_DIMS);
 
-    let agent = client
+    client
         .agent(&config.model)
         .preamble(SYSTEM_PROMPT)
         .max_tokens(8192)
@@ -125,14 +166,7 @@ where
             embedding_model.clone(),
         ))
         .tool(SearchAssetsTool::new(data.clone(), embedding_model.clone()))
-        .build();
-
-    let conv = Conversation::new(conversation, rate_limit);
-    let output = conv
-        .prompt(agent, message, file_ids, Persistence::Persist)
-        .await?;
-
-    parse_proposal(&output.output)
+        .build()
 }
 
 fn parse_proposal(output: &str) -> anyhow::Result<ReceiptProcessorOutput> {

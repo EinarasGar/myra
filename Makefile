@@ -55,7 +55,7 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk 
 		"POSTGRES_USER=myradev" \
 		"POSTGRES_PASSWORD=devpassword" \
 		"POSTGRES_DB=myra" \
-		"RUST_LOG=error,dal=trace,business=trace,api=trace,worker=trace,ai=info,tower_http=info" \
+		"RUST_LOG=error,dal=trace,business=trace,api=trace,worker=trace,ai=info,tower_http=info,rig=info" \
 		"JWT_SECRET=devjwtsecret" \
 		"" \
 		"POSTGRES_PORT=7$${PREFIX}1" \

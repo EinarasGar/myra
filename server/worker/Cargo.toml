@@ -9,9 +9,10 @@ business = { path = "../business", default-features = false, features = ["noauth
 dal = { path = "../dal" }
 ai = { path = "../ai" }
 observability = { path = "../observability", features = ["color-sql"] }
-apalis = { version = "0.7", features = ["tracing", "catch-panic"] }
-apalis-sql = { version = "0.7", features = ["postgres"] }
-apalis-cron = { version = "0.7" }
+apalis = { version = "=1.0.0-rc.9", features = ["tracing", "catch-panic"] }
+apalis-postgres = { git = "https://github.com/EinarasGar/apalis-postgres", rev = "6c4c4af54d34f7e7703195b29a8ef1183f81747a", features = ["time"] }
+apalis-cron = { version = "=1.0.0-rc.8" }
+cron = "0.16"
 tokio = { version = "1.49.0", features = ["full"] }
 tracing = { version = "0.1.44", features = ["async-await", "log"] }
 anyhow = { version = "1.0.100", features = ["backtrace"] }
@@ -19,6 +20,7 @@ color-eyre = "0.6.5"
 dotenvy = "0.15"
 clap = { version = "4.5.56", features = ["derive"] }
 serde = { version = "1", features = ["derive"] }
+async-trait = "0.1.89"
 chrono = "0.4"
 futures = "0.3"
 uuid = { version = "1", features = ["serde"] }
@@ -30,3 +32,4 @@ rust_decimal = "1.40.0"
 time = "0.3"
 base64 = "0.22"
 serde_json = "1"
+rand = "0.9"

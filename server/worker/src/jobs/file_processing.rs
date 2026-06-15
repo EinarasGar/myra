@@ -2,6 +2,9 @@
 //! thumbnail for images, and marks the file as ready.
 
 use anyhow::{anyhow, Result};
+use async_trait::async_trait;
+use business::jobs::FileProcessingJob;
+use business::service_collection::ServiceProviders;
 use dal::file_provider::FileProvider;
 use dal::models::file_models::FileStatus;
 use dal::queries::file_queries;
@@ -9,7 +12,16 @@ use std::sync::Arc;
 use tokio::sync::Semaphore;
 use uuid::Uuid;
 
-use business::service_collection::ServiceProviders;
+use crate::jobs::WorkerJob;
+
+#[async_trait]
+impl WorkerJob for FileProcessingJob {
+    const NAME: &'static str = "file_processing";
+
+    async fn run(&self, providers: &ServiceProviders) -> anyhow::Result<()> {
+        handle(providers, self.file_id, self.user_id).await
+    }
+}
 
 const MAX_THUMBNAIL_SIZE: u64 = 10_485_760;
 const MIME_DETECTION_BYTES: u64 = 8192;
@@ -40,7 +52,7 @@ fn is_text_based_mime(mime: &str) -> bool {
 }
 
 #[tracing::instrument(skip(providers))]
-pub async fn handle(providers: &ServiceProviders, file_id: Uuid, user_id: Uuid) -> Result<()> {
+async fn handle(providers: &ServiceProviders, file_id: Uuid, user_id: Uuid) -> Result<()> {
     let query = file_queries::get_file_by_id_and_user(file_id, user_id);
     let file = providers
         .db

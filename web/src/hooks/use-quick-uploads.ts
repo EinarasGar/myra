@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react";
+import { isAxiosError } from "axios";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth, useUserId } from "@/hooks/use-auth";
 import { AIQuickUploadApiFactory, FilesApiFactory } from "@/api";
@@ -14,11 +15,17 @@ const ACTIVE_STATUSES = new Set([
   "pending",
   "created",
   "processing",
+  "retrying",
   "proposal_ready",
   "failed",
 ]);
 
-const SUBSCRIBABLE_STATUSES = new Set(["pending", "created", "processing"]);
+const SUBSCRIBABLE_STATUSES = new Set([
+  "pending",
+  "created",
+  "processing",
+  "retrying",
+]);
 
 const subscriptions = new Map<string, AbortController>();
 
@@ -222,22 +229,21 @@ export function useQuickUploads(): UseQuickUploadsReturn {
 
   const retry = useCallback(
     async (failedId: string) => {
-      const current = queryClient.getQueryData<
-        IdentifiableQuickUploadResponse[]
-      >([QueryKeys.QUICK_UPLOADS, userId]);
-      const failed = current?.find((i) => i.id === failedId);
-      if (!failed) return;
-
-      removeItem(failedId);
-      const ctrl = subscriptions.get(failedId);
-      if (ctrl) {
-        ctrl.abort();
-        subscriptions.delete(failedId);
+      try {
+        await AIQuickUploadApiFactory().retryQuickUpload(userId, failedId);
+      } catch (err) {
+        // 409 means the row changed state; the refetch below shows the
+        // truth either way, but other failures shouldn't be invisible.
+        if (!isAxiosError(err) || err.response?.status !== 409) {
+          console.error("Quick upload retry failed", err);
+        }
       }
-
-      await createFromFileId(failed.source_file_id);
+      await queryClient.invalidateQueries({
+        queryKey: [QueryKeys.QUICK_UPLOADS, userId],
+      });
+      void subscribe(failedId);
     },
-    [userId, queryClient, removeItem, createFromFileId],
+    [userId, queryClient, subscribe],
   );
 
   return { items, isLoading, createFromFile, completeQuickUpload, retry };

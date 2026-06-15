@@ -171,31 +171,29 @@ impl IntoResponse for ApiError {
 impl From<business::dtos::ai_chat_error_dto::AiChatError> for ApiError {
     fn from(err: business::dtos::ai_chat_error_dto::AiChatError) -> Self {
         use business::dtos::ai_chat_error_dto::AiChatError;
+        use business::dtos::ai_error_dto::AiErrorDto;
         match err {
-            AiChatError::RateLimited(rl) => ApiError::RateLimited(serde_json::json!({
-                "reason": "quota_exceeded",
-                "window": rl.window.to_string(),
-                "token_type": rl.token_type.to_string(),
-                "scope": rl.scope.to_string(),
-                "limit": rl.limit,
-                "remaining": rl.remaining,
-                "reset_at": rl.reset_at
-                    .format(&time::format_description::well_known::Rfc3339)
-                    .unwrap_or_default(),
-            })),
-            AiChatError::QuotaExceeded { reset_at } => ApiError::RateLimited(serde_json::json!({
-                "reason": "quota_exceeded",
-                "scope": "user",
-                "reset_at": reset_at
-                    .and_then(|t| t.format(&time::format_description::well_known::Rfc3339).ok()),
-            })),
-            AiChatError::PerRequestInputLimit => ApiError::RateLimited(serde_json::json!({
-                "reason": "per_request_input_limit",
-            })),
-            AiChatError::ConcurrencyLimitExceeded => ApiError::RateLimited(serde_json::json!({
-                "reason": "concurrency_limit",
-                "scope": "user",
-            })),
+            AiChatError::Ai(dto) => {
+                use shared::view_models::ai::errors::AiErrorViewModel;
+                let vm = AiErrorViewModel::from(dto.clone());
+                match dto {
+                    AiErrorDto::RateLimited { .. }
+                    | AiErrorDto::ProviderRateLimited
+                    | AiErrorDto::ConcurrencyLimited => {
+                        ApiError::RateLimited(serde_json::to_value(&vm).unwrap_or_default())
+                    }
+                    AiErrorDto::InputTooLarge | AiErrorDto::InvalidAttachment { .. } => {
+                        ApiError::BadRequest(vm.message)
+                    }
+                    AiErrorDto::ProviderUnavailable { .. } => ApiError::ServiceUnavailable,
+                    AiErrorDto::TurnLimit { .. }
+                    | AiErrorDto::Fatal { .. }
+                    | AiErrorDto::Unknown { .. } => ApiError::Internal(anyhow::anyhow!(vm.message)),
+                }
+            }
+            AiChatError::NothingToRetry => {
+                ApiError::Conflict("No interrupted turn to retry".to_string())
+            }
             AiChatError::Internal(e) => ApiError::from_anyhow(e),
         }
     }

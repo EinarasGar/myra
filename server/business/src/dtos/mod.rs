@@ -7,6 +7,7 @@ pub mod add_user_dto;
 pub mod ai_chat_dto;
 pub mod ai_chat_error_dto;
 pub mod ai_conversation_dto;
+pub mod ai_error_dto;
 pub mod ai_message_dto;
 pub mod ai_quick_upload_dto;
 pub mod asset_dto;

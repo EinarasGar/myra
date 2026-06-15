@@ -1,5 +1,8 @@
 use ai::models::chat::{ChatHistoryMessage, ChatStreamEvent};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+
+use crate::dtos::ai_error_dto::AiErrorDto;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
@@ -135,7 +138,7 @@ pub enum ChatStreamEventDto {
         output: String,
     },
     Reasoning(String),
-    Error(String),
+    Error(AiErrorDto),
     ToolRequest {
         tool_call_id: String,
         name: String,
@@ -167,7 +170,7 @@ impl From<ChatStreamEvent> for ChatStreamEventDto {
                 ChatStreamEventDto::ToolResult { name, output }
             }
             ChatStreamEvent::Reasoning(text) => ChatStreamEventDto::Reasoning(text),
-            ChatStreamEvent::Error(text) => ChatStreamEventDto::Error(text),
+            ChatStreamEvent::Error(e) => ChatStreamEventDto::Error(AiErrorDto::from(e)),
             ChatStreamEvent::ToolRequest {
                 tool_call_id,
                 name,
@@ -184,6 +187,35 @@ impl From<ChatStreamEvent> for ChatStreamEventDto {
                 input_tokens,
                 output_tokens,
             },
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum ChatTurnDto {
+    Message {
+        message: String,
+        file_ids: Vec<Uuid>,
+    },
+    Approval {
+        tool_call_id: String,
+        approved: bool,
+    },
+    Continuation,
+}
+
+impl From<ChatTurnDto> for ai::models::chat::ChatTurn {
+    fn from(t: ChatTurnDto) -> Self {
+        match t {
+            ChatTurnDto::Message { message, file_ids } => Self::Message { message, file_ids },
+            ChatTurnDto::Approval {
+                tool_call_id,
+                approved,
+            } => Self::Approval {
+                tool_call_id,
+                approved,
+            },
+            ChatTurnDto::Continuation => Self::Continuation,
         }
     }
 }

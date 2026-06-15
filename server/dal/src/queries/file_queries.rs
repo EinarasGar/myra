@@ -142,7 +142,10 @@ pub fn update_file_ready(
         .value(UserFilesIden::UpdatedAt, Expr::cust("NOW()"))
         .and_where(Expr::col(UserFilesIden::Id).eq(file_id))
         .and_where(Expr::col(UserFilesIden::UserId).eq(user_id))
-        .and_where(Expr::col(UserFilesIden::Status).eq(FileStatus::Processing))
+        .and_where(
+            Expr::col(UserFilesIden::Status)
+                .is_in([FileStatus::Processing.as_str(), FileStatus::Failed.as_str()]),
+        )
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }

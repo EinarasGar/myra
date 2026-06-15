@@ -2,34 +2,32 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum MyraJob {
-    EmbedTransaction {
-        transaction_id: Uuid,
-        text: String,
-    },
-    EmbedTransactionGroup {
-        group_id: Uuid,
-        text: String,
-    },
-    EmbedAsset {
-        asset_id: i32,
-        text: String,
-    },
-    EmbedCategory {
-        category_id: i32,
-        text: String,
-    },
-    ProcessUploadedFile {
-        file_id: Uuid,
-        user_id: Uuid,
-    },
-    ProcessQuickUpload {
+pub enum EmbeddingJob {
+    Transaction { transaction_id: Uuid, text: String },
+    Group { group_id: Uuid, text: String },
+    Asset { asset_id: i32, text: String },
+    Category { category_id: i32, text: String },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileProcessingJob {
+    pub file_id: Uuid,
+    pub user_id: Uuid,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum QuickUploadJob {
+    Process {
         quick_upload_id: Uuid,
         user_id: Uuid,
     },
-    ProcessQuickUploadCorrection {
+    Correction {
         quick_upload_id: Uuid,
         user_id: Uuid,
         message: String,
+    },
+    Retry {
+        quick_upload_id: Uuid,
+        user_id: Uuid,
     },
 }

@@ -23,9 +23,12 @@ use crate::{
     errors::ApiError,
     extractors::ValidatedJson,
     states::{AiChatServiceState, AiConversationServiceState},
-    view_models::ai::conversations::{
-        ConversationResponseViewModel, IdentifiableConversationResponseViewModel,
-        IdentifiableMessageResponseViewModel, SendMessageRequestViewModel,
+    view_models::ai::{
+        conversations::{
+            ConversationResponseViewModel, IdentifiableConversationResponseViewModel,
+            IdentifiableMessageResponseViewModel, SendMessageRequestViewModel,
+        },
+        errors::AiErrorViewModel,
     },
 };
 
@@ -144,7 +147,7 @@ pub async fn get_messages(
     AiConversationServiceState(service): AiConversationServiceState,
 ) -> Result<Json<Vec<IdentifiableMessageResponseViewModel>>, ApiError> {
     let dtos = service
-        .get_messages(conversation_id, user_id, None, 100)
+        .get_messages(conversation_id, user_id)
         .await
         .map_err(ApiError::from_anyhow)?;
     Ok(Json(dtos.into_iter().map_into().collect()))
@@ -158,19 +161,41 @@ pub async fn send_message(
 ) -> Result<Sse<impl Stream<Item = Result<Event, Infallible>>>, ApiError> {
     request.validate()?;
 
-    let tool_approval = request.tool_approval.map(|a| (a.tool_call_id, a.approved));
+    let turn = match request.tool_approval {
+        Some(approval) => business::dtos::ai_chat_dto::ChatTurnDto::Approval {
+            tool_call_id: approval.tool_call_id,
+            approved: approval.approved,
+        },
+        None => business::dtos::ai_chat_dto::ChatTurnDto::Message {
+            message: request.message.map(|m| m.0).unwrap_or_default(),
+            file_ids: request.file_ids,
+        },
+    };
 
     let chat_stream = chat_service
-        .send(
-            user_id,
-            conversation_id,
-            request.message.map(|m| m.0),
-            request.file_ids,
-            tool_approval,
-        )
+        .send(user_id, conversation_id, turn)
         .await
         .map_err(ApiError::from)?;
 
+    Ok(chat_sse_response(chat_stream))
+}
+
+pub async fn retry_message(
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(ConversationIdPath { conversation_id }): Path<ConversationIdPath>,
+    AiChatServiceState(chat_service): AiChatServiceState,
+) -> Result<Sse<impl Stream<Item = Result<Event, Infallible>>>, ApiError> {
+    let chat_stream = chat_service
+        .retry(user_id, conversation_id)
+        .await
+        .map_err(ApiError::from)?;
+
+    Ok(chat_sse_response(chat_stream))
+}
+
+fn chat_sse_response(
+    chat_stream: impl Stream<Item = ChatStreamEventDto> + Send + 'static,
+) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
     let stream = async_stream::stream! {
         let mut chat_stream = std::pin::pin!(chat_stream);
 
@@ -194,7 +219,9 @@ pub async fn send_message(
                     yield Ok(Event::default().event("reasoning").data(text));
                 }
                 ChatStreamEventDto::Error(e) => {
-                    yield Ok(Event::default().event("error").data(format!("AI error: {}", e)));
+                    let vm = AiErrorViewModel::from(e);
+                    let data = serde_json::to_string(&vm).unwrap_or_else(|_| "{}".to_string());
+                    yield Ok(Event::default().event("error").data(data));
                 }
                 ChatStreamEventDto::ToolRequest { tool_call_id, name, args } => {
                     let data = serde_json::json!({ "tool_call_id": tool_call_id, "name": name, "args": args });
@@ -209,5 +236,5 @@ pub async fn send_message(
         }
     };
 
-    Ok(Sse::new(stream).keep_alive(KeepAlive::default()))
+    Sse::new(stream).keep_alive(KeepAlive::default())
 }

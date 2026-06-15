@@ -58,6 +58,7 @@ import {
   History,
   Loader2,
   Plus,
+  RefreshCw,
   Sparkles,
   XIcon,
 } from "lucide-react";
@@ -68,8 +69,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import useAiChat, { type ChatMessage } from "@/hooks/use-ai-chat";
+import useAiChat, {
+  type ChatMessage,
+  type FileUIPart,
+} from "@/hooks/use-ai-chat";
 import { useUserId } from "@/hooks/use-auth";
+import { useCountdown } from "@/hooks/use-countdown";
 import { useState, useEffect } from "react";
 import {
   AIConversationsApiFactory,
@@ -389,16 +394,78 @@ function BulkApprovalCard({
   );
 }
 
+function formatDuration(ms: number): string {
+  const total = Math.ceil(ms / 1000);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return m > 0 ? `${m}m ${s.toString().padStart(2, "0")}s` : `${s}s`;
+}
+
+function ChatErrorCard({
+  message,
+  resetAt,
+  disabled,
+  onRetry,
+}: {
+  message: string;
+  resetAt?: string;
+  disabled: boolean;
+  onRetry: () => void;
+}) {
+  const resetMs = useCountdown(resetAt);
+  const gated = resetMs > 0;
+
+  return (
+    <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
+      <p className="text-destructive">{message}</p>
+      <Button
+        size="sm"
+        variant="outline"
+        className="mt-2"
+        disabled={disabled || gated}
+        onClick={onRetry}
+      >
+        <RefreshCw className="mr-1 h-3 w-3" />
+        {gated ? `Retry in ${formatDuration(resetMs)}` : "Retry"}
+      </Button>
+    </div>
+  );
+}
+
+function RateLimitBanner({
+  until,
+  onExpire,
+}: {
+  until: string;
+  onExpire: () => void;
+}) {
+  const remaining = useCountdown(until);
+
+  useEffect(() => {
+    if (remaining <= 0) onExpire();
+  }, [remaining, onExpire]);
+
+  if (remaining <= 0) return null;
+
+  return (
+    <div className="mb-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+      Rate limited — you can send again in {formatDuration(remaining)}
+    </div>
+  );
+}
+
 function MessageParts({
   msg,
   isStreaming,
   isLast,
   onApprove,
+  onRetry,
 }: {
   msg: ChatMessage;
   isStreaming: boolean;
   isLast: boolean;
   onApprove: (callId: string, approved: boolean) => Promise<void>;
+  onRetry: () => void;
 }) {
   const isLastAssistant = isStreaming && msg.role === "assistant" && isLast;
   const hasParts = msg.parts.length > 0;
@@ -443,6 +510,16 @@ function MessageParts({
                 <ReasoningTrigger />
                 <ReasoningContent>{part.content}</ReasoningContent>
               </Reasoning>
+            );
+          case "error":
+            return (
+              <ChatErrorCard
+                key={j}
+                message={part.message}
+                resetAt={part.resetAt}
+                disabled={isStreaming}
+                onRetry={onRetry}
+              />
             );
           case "tool_call": {
             // When there are 2+ pending approvals, hide their inline cards
@@ -698,12 +775,22 @@ export default function AiChatPage() {
     messages,
     isStreaming,
     conversationId,
+    rateLimitedUntil,
     sendMessage,
     approveToolCall,
+    retry,
     clearMessages,
+    clearRateLimitedUntil,
   } = useAiChat(userId, selectedConversationId);
 
   const hasMessages = messages.length > 0;
+  // RateLimitBanner clears rateLimitedUntil when the countdown expires.
+  const isRateLimited = rateLimitedUntil !== null;
+
+  function handleSend(text: string, files?: FileUIPart[]) {
+    if (rateLimitedUntil) return;
+    sendMessage(text, files);
+  }
 
   function handleSelectConversation(id: string) {
     clearMessages();
@@ -798,6 +885,7 @@ export default function AiChatPage() {
                           isStreaming={isStreaming}
                           isLast={i === messages.length - 1}
                           onApprove={approveToolCall}
+                          onRetry={retry}
                         />
                       </MessageContent>
                     </Message>
@@ -811,16 +899,22 @@ export default function AiChatPage() {
           {!hasMessages && (
             <Suggestions className="mb-4 justify-center">
               {suggestions.map((s) => (
-                <Suggestion key={s} suggestion={s} onClick={sendMessage} />
+                <Suggestion key={s} suggestion={s} onClick={handleSend} />
               ))}
             </Suggestions>
           )}
 
           <div className="shrink-0 pt-2">
+            {rateLimitedUntil && (
+              <RateLimitBanner
+                until={rateLimitedUntil}
+                onExpire={clearRateLimitedUntil}
+              />
+            )}
             <PromptInputProvider>
               <PromptInput
                 onSubmit={({ text, files }) => {
-                  sendMessage(text, files);
+                  handleSend(text, files);
                 }}
                 accept="image/*,application/pdf"
                 multiple
@@ -837,6 +931,7 @@ export default function AiChatPage() {
                   </PromptInputActionMenu>
                   <PromptInputSubmit
                     status={isStreaming ? "streaming" : "ready"}
+                    disabled={isRateLimited}
                   />
                 </PromptInputFooter>
               </PromptInput>

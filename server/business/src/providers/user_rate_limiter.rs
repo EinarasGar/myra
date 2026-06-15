@@ -76,6 +76,7 @@ impl RateLimitProvider for UserRateLimiter {
             .check_quota(self.user_id, estimated)
             .await
             .map_err(|e| AiRateLimitError::QuotaExceeded {
+                scope: e.scope.into(),
                 reset_at: Some(e.reset_at),
             })?;
 

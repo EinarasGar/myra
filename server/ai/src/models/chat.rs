@@ -5,6 +5,8 @@ use rig::OneOrMany;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::models::error::AiError;
+
 #[derive(Clone)]
 pub struct Base64Attachment {
     pub media_type: String,
@@ -29,6 +31,18 @@ pub enum Persistence {
     Persist,
     /// Write nothing to history — for one-off runs like title generation.
     Ephemeral,
+}
+
+pub enum ChatTurn {
+    Message {
+        message: String,
+        file_ids: Vec<Uuid>,
+    },
+    Approval {
+        tool_call_id: String,
+        approved: bool,
+    },
+    Continuation,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -118,7 +132,7 @@ pub enum ChatStreamEvent {
         output: String,
     },
     Reasoning(String),
-    Error(String),
+    Error(AiError),
     ToolRequest {
         tool_call_id: String,
         name: String,

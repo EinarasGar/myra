@@ -17,6 +17,7 @@ use thiserror::Error;
 use time::OffsetDateTime;
 
 use crate::models::chat::{Base64Attachment, ChatHistoryMessage};
+use crate::models::error::LimitScope;
 
 #[derive(Debug, Error)]
 pub enum RateLimitError {
@@ -24,7 +25,10 @@ pub enum RateLimitError {
     PerRequestCap,
 
     #[error("Daily token quota exceeded")]
-    QuotaExceeded { reset_at: Option<OffsetDateTime> },
+    QuotaExceeded {
+        scope: LimitScope,
+        reset_at: Option<OffsetDateTime>,
+    },
 
     #[error("Concurrent request limit reached")]
     ConcurrencyLimit,

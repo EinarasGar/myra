@@ -38,6 +38,8 @@ pub struct ConversationResponseViewModel {
     pub created_at: OffsetDateTime,
     #[serde(with = "time::serde::rfc3339")]
     pub updated_at: OffsetDateTime,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_error: Option<super::errors::AiErrorViewModel>,
 }
 
 #[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
@@ -74,6 +76,7 @@ impl From<ConversationDto> for ConversationResponseViewModel {
             title: dto.title,
             created_at: dto.created_at,
             updated_at: dto.updated_at,
+            last_error: dto.last_error.map(Into::into),
         }
     }
 }

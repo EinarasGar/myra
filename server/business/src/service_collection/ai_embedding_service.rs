@@ -5,12 +5,12 @@ use dal::queries::ai_queries;
 use pgvector::Vector;
 use uuid::Uuid;
 
-use crate::jobs::MyraJob;
+use crate::jobs::EmbeddingJob;
 
 #[derive(Clone)]
 pub struct AiEmbeddingService {
     db: MyraDb,
-    queue: JobQueueHandle<MyraJob>,
+    queue: JobQueueHandle,
 }
 
 impl AiEmbeddingService {
@@ -27,7 +27,7 @@ impl AiEmbeddingService {
         text: String,
     ) -> anyhow::Result<()> {
         self.queue
-            .push(MyraJob::EmbedTransaction {
+            .push(EmbeddingJob::Transaction {
                 transaction_id,
                 text,
             })
@@ -36,13 +36,13 @@ impl AiEmbeddingService {
 
     pub async fn enqueue_embed_group(&self, group_id: Uuid, text: String) -> anyhow::Result<()> {
         self.queue
-            .push(MyraJob::EmbedTransactionGroup { group_id, text })
+            .push(EmbeddingJob::Group { group_id, text })
             .await
     }
 
     pub async fn enqueue_embed_asset(&self, asset_id: i32, text: String) -> anyhow::Result<()> {
         self.queue
-            .push(MyraJob::EmbedAsset { asset_id, text })
+            .push(EmbeddingJob::Asset { asset_id, text })
             .await
     }
 
@@ -52,7 +52,7 @@ impl AiEmbeddingService {
         text: String,
     ) -> anyhow::Result<()> {
         self.queue
-            .push(MyraJob::EmbedCategory { category_id, text })
+            .push(EmbeddingJob::Category { category_id, text })
             .await
     }
 

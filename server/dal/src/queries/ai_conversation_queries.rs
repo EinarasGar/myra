@@ -2,9 +2,12 @@ use sea_query::*;
 use sea_query_sqlx::SqlxBinder;
 use sqlx::types::Uuid;
 
-use crate::idens::ai_conversation_idens::{AiChatIden, AiConversationsIden, AiMessagesIden};
+use crate::idens::ai_conversation_idens::{
+    AiChatIden, AiConversationsIden, AiMessagesIden, AiWorkflowQuickUploadIden,
+};
 use crate::query_params::ai_conversation_params::{
-    GetConversationsParams, GetConversationsSearchType, GetMessagesParams,
+    ConversationErrorTarget, GetConversationsParams, GetConversationsSearchType, GetMessagesParams,
+    UpdateConversationErrorParams,
 };
 
 use super::DbQueryWithValues;
@@ -49,6 +52,7 @@ pub fn get_conversations(params: GetConversationsParams) -> DbQueryWithValues {
         .column(AiConversationsIden::UserId)
         .column((AiConversationsIden::Table, AiConversationsIden::CreatedAt))
         .column((AiConversationsIden::Table, AiConversationsIden::UpdatedAt))
+        .column((AiConversationsIden::Table, AiConversationsIden::LastError))
         .expr_as(
             Expr::cust(
                 r#"COALESCE(ai_chat.title, (
@@ -214,14 +218,34 @@ pub fn get_messages(params: GetMessagesParams) -> DbQueryWithValues {
         .and_where(
             Expr::col((AiConversationsIden::Table, AiConversationsIden::UserId)).eq(params.user_id),
         )
-        .order_by((AiMessagesIden::Table, AiMessagesIden::Id), Order::Asc)
-        .limit(params.limit);
-
-    if let Some(after_id) = params.after_id {
-        query.and_where(Expr::col((AiMessagesIden::Table, AiMessagesIden::Id)).gt(after_id));
-    }
+        .order_by((AiMessagesIden::Table, AiMessagesIden::Id), Order::Asc);
 
     query.build_sqlx(PostgresQueryBuilder).into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn get_last_message(conversation_id: Uuid, user_id: Uuid) -> DbQueryWithValues {
+    Query::select()
+        .column((AiMessagesIden::Table, AiMessagesIden::Id))
+        .column((AiMessagesIden::Table, AiMessagesIden::ConversationId))
+        .column((AiMessagesIden::Table, AiMessagesIden::Role))
+        .column((AiMessagesIden::Table, AiMessagesIden::Content))
+        .column((AiMessagesIden::Table, AiMessagesIden::FileIds))
+        .column((AiMessagesIden::Table, AiMessagesIden::CreatedAt))
+        .from(AiMessagesIden::Table)
+        .inner_join(
+            AiConversationsIden::Table,
+            Expr::col((AiConversationsIden::Table, AiConversationsIden::Id))
+                .equals((AiMessagesIden::Table, AiMessagesIden::ConversationId)),
+        )
+        .and_where(
+            Expr::col((AiMessagesIden::Table, AiMessagesIden::ConversationId)).eq(conversation_id),
+        )
+        .and_where(Expr::col((AiConversationsIden::Table, AiConversationsIden::UserId)).eq(user_id))
+        .order_by((AiMessagesIden::Table, AiMessagesIden::Id), Order::Desc)
+        .limit(1)
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
 }
 
 #[tracing::instrument(skip_all)]
@@ -232,4 +256,43 @@ pub fn delete_conversation(conversation_id: Uuid, user_id: Uuid) -> DbQueryWithV
         .and_where(Expr::col(AiConversationsIden::UserId).eq(user_id))
         .build_sqlx(PostgresQueryBuilder)
         .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn update_conversation_error(params: UpdateConversationErrorParams) -> DbQueryWithValues {
+    let mut query = Query::update();
+    query
+        .table(AiConversationsIden::Table)
+        .value(AiConversationsIden::UpdatedAt, Expr::cust("NOW()"));
+
+    match params.error {
+        Some(error) => {
+            query.value(AiConversationsIden::LastError, error);
+        }
+        None => {
+            query.value(AiConversationsIden::LastError, Expr::cust("NULL"));
+            // Skip rows already clear so a routine turn-start doesn't bump
+            // updated_at on every conversation that never errored.
+            query.and_where(Expr::col(AiConversationsIden::LastError).is_not_null());
+        }
+    }
+
+    match params.target {
+        ConversationErrorTarget::Conversation(conversation_id) => {
+            query.and_where(Expr::col(AiConversationsIden::Id).eq(conversation_id));
+        }
+        ConversationErrorTarget::QuickUpload(quick_upload_id) => {
+            query.and_where(
+                Expr::col(AiConversationsIden::Id).in_subquery(
+                    Query::select()
+                        .column(AiWorkflowQuickUploadIden::ConversationId)
+                        .from(AiWorkflowQuickUploadIden::Table)
+                        .and_where(Expr::col(AiWorkflowQuickUploadIden::Id).eq(quick_upload_id))
+                        .take(),
+                ),
+            );
+        }
+    }
+
+    query.build_sqlx(PostgresQueryBuilder).into()
 }

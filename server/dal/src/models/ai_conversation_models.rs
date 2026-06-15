@@ -6,6 +6,7 @@ pub struct ConversationModel {
     pub id: Uuid,
     pub user_id: Uuid,
     pub title: Option<String>,
+    pub last_error: Option<serde_json::Value>,
     pub created_at: OffsetDateTime,
     pub updated_at: OffsetDateTime,
 }

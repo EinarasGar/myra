@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use time::OffsetDateTime;
 
@@ -34,7 +34,7 @@ impl fmt::Display for TokenType {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum LimitScope {
     User,
@@ -46,6 +46,24 @@ impl fmt::Display for LimitScope {
         match self {
             LimitScope::User => write!(f, "user"),
             LimitScope::Global => write!(f, "global"),
+        }
+    }
+}
+
+impl From<LimitScope> for ai::models::error::LimitScope {
+    fn from(scope: LimitScope) -> Self {
+        match scope {
+            LimitScope::User => Self::User,
+            LimitScope::Global => Self::Global,
+        }
+    }
+}
+
+impl From<ai::models::error::LimitScope> for LimitScope {
+    fn from(scope: ai::models::error::LimitScope) -> Self {
+        match scope {
+            ai::models::error::LimitScope::User => Self::User,
+            ai::models::error::LimitScope::Global => Self::Global,
         }
     }
 }

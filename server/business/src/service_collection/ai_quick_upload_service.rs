@@ -5,21 +5,22 @@ use dal::models::ai_conversation_models::QuickUploadModel;
 use dal::pg_notify_connection::{PgNotifyConnection, PgNotifyEvent};
 use dal::queries::{ai_conversation_queries, ai_quick_upload_queries};
 use dal::query_params::ai_conversation_params::{
-    GetQuickUploadsParams, ProposalType, QuickUploadStatus,
+    GetQuickUploadsParams, ProposalType, QuickUploadStatus, UpdateConversationErrorParams,
 };
 
 use itertools::Itertools;
 use tokio::sync::broadcast;
 use uuid::Uuid;
 
+use crate::dtos::ai_error_dto::AiErrorDto;
 use crate::dtos::ai_quick_upload_dto::{QuickUploadDto, QuickUploadNotification};
-use crate::jobs::MyraJob;
+use crate::jobs::QuickUploadJob;
 
 #[derive(Clone)]
 pub struct AiQuickUploadService {
     db: MyraDb,
     pg_notify: PgNotifyConnection,
-    queue: JobQueueHandle<MyraJob>,
+    queue: JobQueueHandle,
 }
 
 impl AiQuickUploadService {
@@ -43,7 +44,7 @@ impl AiQuickUploadService {
         let qu_id: Uuid = self.db.fetch_one_scalar(qu_query).await?;
 
         self.queue
-            .push(MyraJob::ProcessQuickUpload {
+            .push(QuickUploadJob::Process {
                 quick_upload_id: qu_id,
                 user_id,
             })
@@ -83,7 +84,9 @@ impl AiQuickUploadService {
             Some(vec![
                 QuickUploadStatus::Pending,
                 QuickUploadStatus::Processing,
+                QuickUploadStatus::Retrying,
                 QuickUploadStatus::ProposalReady,
+                QuickUploadStatus::Failed,
             ])
         } else {
             None
@@ -155,6 +158,34 @@ impl AiQuickUploadService {
         Ok(())
     }
 
+    pub async fn record_conversation_error(
+        &self,
+        quick_upload_id: Uuid,
+        error: &AiErrorDto,
+    ) -> anyhow::Result<()> {
+        let query = ai_conversation_queries::update_conversation_error(
+            UpdateConversationErrorParams::set_for_quick_upload(quick_upload_id, error),
+        );
+        self.db.execute(query).await?;
+        Ok(())
+    }
+
+    pub async fn retry(&self, quick_upload_id: Uuid, user_id: Uuid) -> anyhow::Result<bool> {
+        self.get_quick_upload(quick_upload_id, user_id).await?;
+        let query = ai_quick_upload_queries::try_reset_for_manual_retry(quick_upload_id);
+        let rows = self.db.execute_with_rows_affected(query).await?;
+        if rows == 0 {
+            return Ok(false);
+        }
+        self.queue
+            .push(QuickUploadJob::Retry {
+                quick_upload_id,
+                user_id,
+            })
+            .await?;
+        Ok(true)
+    }
+
     pub async fn enqueue_correction(
         &self,
         quick_upload_id: Uuid,
@@ -167,7 +198,7 @@ impl AiQuickUploadService {
             .await?;
 
         self.queue
-            .push(MyraJob::ProcessQuickUploadCorrection {
+            .push(QuickUploadJob::Correction {
                 quick_upload_id,
                 user_id,
                 message,

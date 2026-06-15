@@ -15,8 +15,7 @@ use tower_governor::{
     governor::GovernorConfigBuilder, key_extractor::SmartIpKeyExtractor, GovernorLayer,
 };
 use tower_http::cors::CorsLayer;
-use tower_http::trace::{DefaultMakeSpan, TraceLayer};
-use tracing::Level;
+use tower_http::trace::TraceLayer;
 use utoipa_rapidoc::RapiDoc;
 use utoipa_redoc::Redoc;
 
@@ -73,12 +72,14 @@ pub(crate) fn create_router(state: AppState) -> Router {
                                                                     .delete(handlers::ai_conversation_handler::delete_conversation))
         .route("/ai/conversations/{conversation_id}/messages", get(handlers::ai_conversation_handler::get_messages)
                                                                     .post(handlers::ai_conversation_handler::send_message))
+        .route("/ai/conversations/{conversation_id}/retry",    post(handlers::ai_conversation_handler::retry_message))
         .route("/ai/quick-upload",                             post(handlers::ai_quick_upload_handler::create_quick_upload)
                                                                     .get(handlers::ai_quick_upload_handler::list_quick_uploads))
         .route("/ai/quick-upload/{quick_upload_id}",           get(handlers::ai_quick_upload_handler::get_quick_upload))
         .route("/ai/quick-upload/{quick_upload_id}/subscribe", get(handlers::ai_quick_upload_handler::subscribe))
         .route("/ai/quick-upload/{quick_upload_id}/message",   post(handlers::ai_quick_upload_handler::send_correction))
         .route("/ai/quick-upload/{quick_upload_id}/complete",  post(handlers::ai_quick_upload_handler::complete))
+        .route("/ai/quick-upload/{quick_upload_id}/retry",     post(handlers::ai_quick_upload_handler::retry_quick_upload))
         .route("/files",                                        post(handlers::file_handler::create_file))
         .route("/files/{file_id}",                              get(handlers::file_handler::get_file)
                                                                     .delete(handlers::file_handler::delete_file))
@@ -116,11 +117,37 @@ pub(crate) fn create_router(state: AppState) -> Router {
         .merge(authenticated_routes)
         .layer(build_cors_layer())
         .layer(
-            TraceLayer::new_for_http().make_span_with(
-                DefaultMakeSpan::new()
-                    .include_headers(false)
-                    .level(Level::INFO),
-            ),
+            TraceLayer::new_for_http()
+                .make_span_with(|request: &axum::http::Request<_>| {
+                    // MatchedPath is the low-cardinality route template
+                    // ("/api/users/{user_id}/..."); fall back to the raw path
+                    // for unrouted requests (404s).
+                    let route = request
+                        .extensions()
+                        .get::<axum::extract::MatchedPath>()
+                        .map(axum::extract::MatchedPath::as_str)
+                        .unwrap_or_else(|| request.uri().path());
+                    tracing::info_span!(
+                        "http_request",
+                        otel.name = %format!("{} {}", request.method(), route),
+                        otel.kind = "server",
+                        otel.status_code = tracing::field::Empty,
+                        http.request.method = %request.method(),
+                        http.route = route,
+                        url.path = request.uri().path(),
+                        http.response.status_code = tracing::field::Empty,
+                    )
+                })
+                .on_response(
+                    |response: &axum::http::Response<_>,
+                     _latency: std::time::Duration,
+                     span: &tracing::Span| {
+                        span.record("http.response.status_code", response.status().as_u16());
+                        if response.status().is_server_error() {
+                            span.record("otel.status_code", "ERROR");
+                        }
+                    },
+                ),
         )
         .with_state(state)
 }

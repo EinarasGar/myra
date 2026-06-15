@@ -16,7 +16,7 @@ use crate::dtos::{
     not_found_error_dto::BusinessNotFoundError,
     service_unavailable_error_dto::BusinessServiceUnavailableError,
 };
-use crate::jobs::MyraJob;
+use crate::jobs::FileProcessingJob;
 
 const MAX_FILE_SIZE: i64 = 20_971_520;
 const UPLOAD_URL_EXPIRY_SECONDS: u32 = 900;
@@ -37,7 +37,7 @@ fn convert_provider_error(err: anyhow::Error) -> anyhow::Error {
 pub struct FileService {
     db: MyraDb,
     file_provider: Arc<dyn FileProvider>,
-    queue: JobQueueHandle<MyraJob>,
+    queue: JobQueueHandle,
 }
 
 impl FileService {
@@ -171,7 +171,7 @@ impl FileService {
         };
 
         self.queue
-            .push(MyraJob::ProcessUploadedFile {
+            .push(FileProcessingJob {
                 file_id: file.id,
                 user_id: file.user_id,
             })

@@ -1,14 +1,11 @@
-use apalis::prelude::Data;
-use business::jobs::MyraJob;
+use apalis::prelude::{Attempt, BoxDynError, Data};
+use business::jobs::{EmbeddingJob, FileProcessingJob};
 use business::service_collection::Services;
-use chrono::Utc;
 use clap::{Parser, Subcommand};
 use uuid::Uuid;
 
-use worker::events::handler::handle_job;
-use worker::scheduled::refresh_assets;
-use worker::scheduled::seed_asset_history;
-use worker::scheduled::CronTick;
+use worker::jobs::cron::{RefreshAssetsJob, SeedAssetHistoryJob};
+use worker::jobs::{run_job, CronJob};
 
 #[derive(Parser)]
 #[command(version, about = "Manually trigger worker jobs")]
@@ -61,37 +58,58 @@ async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     let services = Services::new().await?;
 
-    let result = match cli.job {
-        Jobs::RefreshAssets => {
-            let tick = CronTick::from(Utc::now());
-            refresh_assets::tick(tick, Data::new(services)).await
-        }
-        Jobs::SeedAssetHistory => {
-            let tick = CronTick::from(Utc::now());
-            seed_asset_history::tick(tick, Data::new(services)).await
-        }
-        job => {
-            let myra_job = match job {
-                Jobs::EmbedTransaction {
-                    transaction_id,
-                    text,
-                } => MyraJob::EmbedTransaction {
+    let result: Result<(), BoxDynError> = match cli.job {
+        Jobs::RefreshAssets => RefreshAssetsJob::tick(&services.create_providers())
+            .await
+            .map_err(Into::into),
+        Jobs::SeedAssetHistory => SeedAssetHistoryJob::tick(&services.create_providers())
+            .await
+            .map_err(Into::into),
+        Jobs::EmbedTransaction {
+            transaction_id,
+            text,
+        } => {
+            run_job(
+                EmbeddingJob::Transaction {
                     transaction_id,
                     text,
                 },
-                Jobs::EmbedTransactionGroup { group_id, text } => {
-                    MyraJob::EmbedTransactionGroup { group_id, text }
-                }
-                Jobs::EmbedAsset { asset_id, text } => MyraJob::EmbedAsset { asset_id, text },
-                Jobs::EmbedCategory { category_id, text } => {
-                    MyraJob::EmbedCategory { category_id, text }
-                }
-                Jobs::ProcessUploadedFile { file_id, user_id } => {
-                    MyraJob::ProcessUploadedFile { file_id, user_id }
-                }
-                _ => unreachable!(),
-            };
-            handle_job(myra_job, Data::new(services)).await
+                Data::new(services),
+                Attempt::new_with_value(1),
+            )
+            .await
+        }
+        Jobs::EmbedTransactionGroup { group_id, text } => {
+            run_job(
+                EmbeddingJob::Group { group_id, text },
+                Data::new(services),
+                Attempt::new_with_value(1),
+            )
+            .await
+        }
+        Jobs::EmbedAsset { asset_id, text } => {
+            run_job(
+                EmbeddingJob::Asset { asset_id, text },
+                Data::new(services),
+                Attempt::new_with_value(1),
+            )
+            .await
+        }
+        Jobs::EmbedCategory { category_id, text } => {
+            run_job(
+                EmbeddingJob::Category { category_id, text },
+                Data::new(services),
+                Attempt::new_with_value(1),
+            )
+            .await
+        }
+        Jobs::ProcessUploadedFile { file_id, user_id } => {
+            run_job(
+                FileProcessingJob { file_id, user_id },
+                Data::new(services),
+                Attempt::new_with_value(1),
+            )
+            .await
         }
     };
 
