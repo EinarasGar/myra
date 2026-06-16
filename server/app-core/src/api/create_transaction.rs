@@ -12,8 +12,9 @@ use shared::view_models::transactions::transaction_types::{
     asset_dividend::AssetDividendInputViewModel, asset_purchase::AssetPurchaseInputViewModel,
     asset_sale::AssetSaleInputViewModel, asset_trade::AssetTradeInputViewModel,
     asset_transfer_in::AssetTransferInInputViewModel,
-    asset_transfer_out::AssetTransferOutInputViewModel, cash_dividend::CashDividendInputViewModel,
-    cash_transfer_in::CashTransferInInputViewModel,
+    asset_transfer_out::AssetTransferOutInputViewModel,
+    cash_balance_transfer::CashBalanceTransferInputViewModel,
+    cash_dividend::CashDividendInputViewModel, cash_transfer_in::CashTransferInInputViewModel,
     cash_transfer_out::CashTransferOutInputViewModel,
     regular_transaction::RegularTransactionInputViewModel, TransactionWithEntries,
 };
@@ -142,6 +143,15 @@ pub fn build_transaction(
         "asset_balance_transfer" => {
             let secondary = secondary_entry(&input)?;
             TransactionWithEntries::AssetBalanceTransfer(AssetBalanceTransferInputViewModel {
+                r#type: Default::default(),
+                base,
+                outgoing_change: primary_entry,
+                incoming_change: secondary,
+            })
+        }
+        "cash_balance_transfer" => {
+            let secondary = secondary_entry(&input)?;
+            TransactionWithEntries::CashBalanceTransfer(CashBalanceTransferInputViewModel {
                 r#type: Default::default(),
                 base,
                 outgoing_change: primary_entry,

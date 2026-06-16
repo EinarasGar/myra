@@ -87,4 +87,188 @@ mod tests {
         assert_eq!(cash_portfolio.units(), dec!(90.82));
         assert_eq!(cash_portfolio.fees(), dec!(9.18));
     }
+
+    #[test]
+    fn transfer_in_with_zero_fee_keeps_fee_total_at_zero() {
+        let mut portfolio = Portfolio::new();
+        let account_id = Uuid::new_v4();
+
+        let input: Vec<Box<dyn PortfolioAction>> = vec![Box::new(CashTransferIn {
+            asset_id: 1,
+            account_id,
+            fees: dec!(0),
+            units: dec!(250),
+            date: datetime!(2000-03-22 00:00:00 UTC),
+        })];
+
+        portfolio.process_transactions(input);
+
+        let cash_portfolio = portfolio
+            .account_portfolios()
+            .get(&account_id)
+            .expect("Should contain account")
+            .cash_portfolios
+            .get(&1)
+            .expect("Should contain cash");
+
+        assert_eq!(cash_portfolio.units(), dec!(250));
+        assert_eq!(cash_portfolio.fees(), dec!(0));
+        assert_eq!(cash_portfolio.dividends(), dec!(0));
+    }
+
+    // The entity layer (CashTransferInTransaction::get_portfolio_action) negates the
+    // negative ledger fee entries, so this action always receives positive fee scalars
+    // that accumulate into a positive per-account fee total.
+    #[test]
+    fn transfer_in_accumulates_units_and_fees_across_multiple_transfers() {
+        let mut portfolio = Portfolio::new();
+        let account_id = Uuid::new_v4();
+
+        let input: Vec<Box<dyn PortfolioAction>> = vec![
+            Box::new(CashTransferIn {
+                asset_id: 1,
+                account_id,
+                fees: dec!(2),
+                units: dec!(100),
+                date: datetime!(2000-03-22 00:00:00 UTC),
+            }),
+            Box::new(CashTransferIn {
+                asset_id: 1,
+                account_id,
+                fees: dec!(3),
+                units: dec!(50),
+                date: datetime!(2000-03-23 00:00:00 UTC),
+            }),
+        ];
+
+        portfolio.process_transactions(input);
+
+        let cash_portfolio = portfolio
+            .account_portfolios()
+            .get(&account_id)
+            .expect("Should contain account")
+            .cash_portfolios
+            .get(&1)
+            .expect("Should contain cash");
+
+        assert_eq!(cash_portfolio.units(), dec!(145));
+        assert_eq!(cash_portfolio.fees(), dec!(5));
+    }
+
+    #[test]
+    fn transfer_in_keeps_multiple_currencies_separate() {
+        let mut portfolio = Portfolio::new();
+        let account_id = Uuid::new_v4();
+
+        let input: Vec<Box<dyn PortfolioAction>> = vec![
+            Box::new(CashTransferIn {
+                asset_id: 1,
+                account_id,
+                fees: dec!(1),
+                units: dec!(100),
+                date: datetime!(2000-03-22 00:00:00 UTC),
+            }),
+            Box::new(CashTransferIn {
+                asset_id: 2,
+                account_id,
+                fees: dec!(2),
+                units: dec!(200),
+                date: datetime!(2000-03-22 00:00:00 UTC),
+            }),
+        ];
+
+        portfolio.process_transactions(input);
+
+        let account_portfolio = portfolio
+            .account_portfolios()
+            .get(&account_id)
+            .expect("Should contain account");
+
+        let eur = account_portfolio
+            .cash_portfolios
+            .get(&1)
+            .expect("Should contain currency 1");
+        assert_eq!(eur.units(), dec!(99));
+        assert_eq!(eur.fees(), dec!(1));
+
+        let usd = account_portfolio
+            .cash_portfolios
+            .get(&2)
+            .expect("Should contain currency 2");
+        assert_eq!(usd.units(), dec!(198));
+        assert_eq!(usd.fees(), dec!(2));
+    }
+
+    #[test]
+    fn transfer_in_keeps_multiple_accounts_separate() {
+        let mut portfolio = Portfolio::new();
+        let account_a = Uuid::new_v4();
+        let account_b = Uuid::new_v4();
+
+        let input: Vec<Box<dyn PortfolioAction>> = vec![
+            Box::new(CashTransferIn {
+                asset_id: 1,
+                account_id: account_a,
+                fees: dec!(0),
+                units: dec!(75),
+                date: datetime!(2000-03-22 00:00:00 UTC),
+            }),
+            Box::new(CashTransferIn {
+                asset_id: 1,
+                account_id: account_b,
+                fees: dec!(5),
+                units: dec!(25),
+                date: datetime!(2000-03-22 00:00:00 UTC),
+            }),
+        ];
+
+        portfolio.process_transactions(input);
+
+        let cash_a = portfolio
+            .account_portfolios()
+            .get(&account_a)
+            .expect("Should contain account a")
+            .cash_portfolios
+            .get(&1)
+            .expect("Should contain cash a");
+        assert_eq!(cash_a.units(), dec!(75));
+        assert_eq!(cash_a.fees(), dec!(0));
+
+        let cash_b = portfolio
+            .account_portfolios()
+            .get(&account_b)
+            .expect("Should contain account b")
+            .cash_portfolios
+            .get(&1)
+            .expect("Should contain cash b");
+        assert_eq!(cash_b.units(), dec!(20));
+        assert_eq!(cash_b.fees(), dec!(5));
+    }
+
+    #[test]
+    fn transfer_in_where_fee_consumes_whole_amount_survives_pruning_via_fee_total() {
+        let mut portfolio = Portfolio::new();
+        let account_id = Uuid::new_v4();
+
+        let input: Vec<Box<dyn PortfolioAction>> = vec![Box::new(CashTransferIn {
+            asset_id: 1,
+            account_id,
+            fees: dec!(10),
+            units: dec!(10),
+            date: datetime!(2000-03-22 00:00:00 UTC),
+        })];
+
+        portfolio.process_transactions(input);
+
+        let cash_portfolio = portfolio
+            .account_portfolios()
+            .get(&account_id)
+            .expect("Account with fees paid must survive pruning")
+            .cash_portfolios
+            .get(&1)
+            .expect("Cash portfolio with fees paid must survive pruning");
+
+        assert_eq!(cash_portfolio.units(), dec!(0));
+        assert_eq!(cash_portfolio.fees(), dec!(10));
+    }
 }

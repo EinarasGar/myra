@@ -70,6 +70,7 @@ function getTypeInitials(type: string): string {
     asset_transfer_in: "TI",
     asset_transfer_out: "TO",
     asset_balance_transfer: "BT",
+    cash_balance_transfer: "CB",
     account_fees: "FE",
     regular: "TX",
   };
@@ -91,6 +92,7 @@ function getTypeColor(type: string): string {
     asset_transfer_out: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
     asset_balance_transfer:
       "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400",
+    cash_balance_transfer: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-400",
     account_fees: "bg-slate-500/15 text-slate-600 dark:text-slate-400",
     regular: "bg-zinc-500/15 text-zinc-600 dark:text-zinc-400",
   };

@@ -270,4 +270,105 @@ mod tests {
         let range = Range::try_from_with_time(dto, start_time).unwrap();
         assert_eq!(range.interval, Duration::days(1));
     }
+
+    #[test]
+    fn string_presets_map_to_expected_lookback_and_spacing() {
+        fn preset(range: &str) -> Range {
+            Range::try_from(RangeDto::StringBased(range.to_string())).unwrap()
+        }
+
+        let cases = [
+            ("1w", Duration::weeks(1), Duration::minutes(30)),
+            ("1m", Duration::days(30), Duration::hours(1)),
+            ("3m", Duration::days(90), Duration::days(1)),
+            ("6m", Duration::days(180), Duration::days(1)),
+            ("1y", Duration::days(365), Duration::days(1)),
+            ("5y", Duration::days(365 * 5), Duration::weeks(1)),
+        ];
+
+        for (name, lookback, spacing) in cases {
+            let range = preset(name);
+            assert_eq!(range.end_time() - range.start_time(), lookback, "{name}");
+            assert_eq!(range.interval(), spacing, "{name}");
+            assert!(!range.infinite_start(), "{name}");
+            assert!(!range.infinite_end(), "{name}");
+        }
+    }
+
+    #[test]
+    fn string_preset_end_time_is_now() {
+        let range = Range::try_from(RangeDto::StringBased("3m".to_string())).unwrap();
+        let delta = OffsetDateTime::now_utc() - range.end_time();
+        assert!(delta >= Duration::seconds(0));
+        assert!(delta < Duration::minutes(1));
+    }
+
+    #[test]
+    fn custom_range_interval_follows_span_ladder() {
+        fn interval_for(span: Duration) -> Duration {
+            let start = datetime!(2022-01-01 0:00 UTC);
+            Range::try_from(RangeDto::Custom(Some(start), Some(start + span), None))
+                .unwrap()
+                .interval()
+        }
+
+        assert_eq!(interval_for(Duration::hours(12)), Duration::minutes(5));
+        assert_eq!(interval_for(Duration::weeks(1)), Duration::minutes(30));
+        assert_eq!(interval_for(Duration::days(8)), Duration::hours(1));
+        assert_eq!(interval_for(Duration::days(30)), Duration::hours(1));
+        assert_eq!(interval_for(Duration::days(31)), Duration::days(1));
+        assert_eq!(interval_for(Duration::days(365)), Duration::days(1));
+        assert_eq!(interval_for(Duration::days(400)), Duration::days(7));
+    }
+
+    #[test]
+    fn try_from_with_time_prefers_dto_start_over_provided_time() {
+        let dto_start = datetime!(2022-06-01 0:00 UTC);
+        let fallback = datetime!(2020-01-01 0:00 UTC);
+        let end_time = datetime!(2022-06-02 0:00 UTC);
+
+        let dto = RangeDto::Custom(Some(dto_start), Some(end_time), Some(Duration::hours(1)));
+        let range = Range::try_from_with_time(dto, fallback).unwrap();
+        assert_eq!(range.start_time(), dto_start);
+        assert_eq!(range.end_time(), end_time);
+        assert_eq!(range.interval(), Duration::hours(1));
+        assert!(!range.infinite_start());
+        assert!(!range.infinite_end());
+    }
+
+    #[test]
+    fn try_from_with_time_string_preset_ignores_provided_time() {
+        let fallback = datetime!(2000-01-01 0:00 UTC);
+        let dto = RangeDto::StringBased("1d".to_string());
+        let range = Range::try_from_with_time(dto, fallback).unwrap();
+        assert_eq!(range.end_time() - range.start_time(), Duration::days(1));
+        assert_eq!(range.interval(), Duration::minutes(5));
+        assert!(!range.infinite_start());
+        assert!(!range.infinite_end());
+    }
+
+    #[test]
+    fn try_from_with_time_custom_all_none_uses_provided_start_and_now_end() {
+        let fallback = OffsetDateTime::now_utc() - Duration::days(10);
+        let dto = RangeDto::Custom(None, None, None);
+        let range = Range::try_from_with_time(dto, fallback).unwrap();
+        assert_eq!(range.start_time(), fallback);
+        assert!(range.infinite_start());
+        assert!(range.infinite_end());
+        assert_eq!(range.interval(), Duration::hours(1));
+        let delta = OffsetDateTime::now_utc() - range.end_time();
+        assert!(delta >= Duration::seconds(0));
+        assert!(delta < Duration::minutes(1));
+    }
+
+    #[test]
+    fn all_range_with_long_span_uses_weekly_interval() {
+        let start_time = OffsetDateTime::now_utc() - Duration::days(400);
+        let dto = RangeDto::StringBased("all".to_string());
+        let range = Range::try_from_with_time(dto, start_time).unwrap();
+        assert_eq!(range.start_time(), start_time);
+        assert_eq!(range.interval(), Duration::days(7));
+        assert!(range.infinite_start());
+        assert!(range.infinite_end());
+    }
 }

@@ -26,7 +26,9 @@ import { ChevronRight } from "lucide-react";
 export type AssetPortfolioRow = {
   asset_name: string;
   account_name: string;
-  total_units: number;
+  units_held: number;
+  units_bought?: number; // present on lot sub-rows only
+  is_closed?: boolean;
   cost_basis: number;
   unrealized_gains: number;
   realized_gains: number;
@@ -82,9 +84,14 @@ const columns: ColumnDef<AssetPortfolioRow>[] = [
     cell: (info) => info.getValue(),
   },
   {
-    accessorKey: "total_units",
-    header: () => <span>Total Units</span>,
-    cell: (info) => Number(info.getValue()).toFixed(2),
+    id: "units_held",
+    header: () => <span>Units Held</span>,
+    cell: ({ row }) => {
+      const { units_held, units_bought } = row.original;
+      return units_bought === undefined
+        ? Number(units_held).toFixed(2)
+        : `${Number(units_held)} of ${Number(units_bought)}`;
+    },
   },
   {
     accessorKey: "cost_basis",
@@ -141,22 +148,30 @@ export default function AssetPortfoliosTable() {
         return {
           asset_name: asset?.name ?? "",
           account_name: account?.name ?? "",
-          total_units: d.total_units,
+          units_held: d.remaining_units,
           cost_basis: d.total_cost_basis,
           unrealized_gains: d.unrealized_gains,
           realized_gains: d.realized_gains,
           total_gains: d.total_gains,
           fees: d.total_fees,
-          subRows: d.positions.map((p) => ({
-            asset_name: p.add_date,
-            account_name: p.is_dividend ? "Dividend" : "",
-            total_units: p.quantity_added,
-            cost_basis: p.total_cost_basis,
-            unrealized_gains: p.unrealized_gains,
-            realized_gains: p.realized_gains,
-            total_gains: p.total_gains,
-            fees: p.fees,
-          })),
+          subRows: [...d.positions]
+            .sort(
+              (a, b) =>
+                new Date(b.add_date).getTime() - new Date(a.add_date).getTime(),
+            )
+            .map((p) => ({
+              asset_name:
+                p.amount_left === 0 ? `${p.add_date} (closed)` : p.add_date,
+              account_name: p.is_dividend ? "Dividend" : "",
+              units_held: p.amount_left,
+              units_bought: p.quantity_added,
+              is_closed: p.amount_left === 0,
+              cost_basis: p.total_cost_basis,
+              unrealized_gains: p.unrealized_gains,
+              realized_gains: p.realized_gains,
+              total_gains: p.total_gains,
+              fees: p.fees,
+            })),
         } as AssetPortfolioRow;
       }) ?? []
     );
@@ -196,7 +211,10 @@ export default function AssetPortfoliosTable() {
             table.getRowModel().rows.map((row) => (
               <TableRow
                 key={row.id}
-                className={cn(row.depth > 0 && "bg-muted/50")}
+                className={cn(
+                  row.depth > 0 && "bg-muted/50",
+                  row.original.is_closed && "opacity-60",
+                )}
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>

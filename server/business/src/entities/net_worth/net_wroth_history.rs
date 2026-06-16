@@ -87,8 +87,9 @@ impl NetWorthHistory {
         self.asset_pair_rates
             .iter()
             .for_each(|(asset_id, rate_queue)| {
-                *self.last_rates.entry(*asset_id).or_default() =
-                    rate_queue.front().unwrap().clone();
+                if let Some(front) = rate_queue.front() {
+                    *self.last_rates.entry(*asset_id).or_default() = front.clone();
+                }
             });
 
         self.update_rates_with_base_rate();
@@ -1416,5 +1417,496 @@ mod tests {
         assert_eq!(result[4].rate, dec!(9));
         assert_eq!(result[5].rate, dec!(4));
         assert_eq!(result[6].rate, dec!(1));
+    }
+
+    fn make_history(
+        reference_asset_id: i32,
+        start: OffsetDateTime,
+        end: OffsetDateTime,
+    ) -> NetWorthHistory {
+        NetWorthHistory::new(
+            AssetIdDto(reference_asset_id),
+            RangeDto::Custom(Some(start), Some(end), Some(Duration::hours(1)))
+                .try_into()
+                .unwrap(),
+        )
+    }
+
+    fn add_rates(
+        net_worth_history: &mut NetWorthHistory,
+        asset_rate_queues: HashMap<(i32, i32), VecDeque<AssetRateDto>>,
+    ) {
+        let asset_rate_queues: HashMap<AssetPairIdsDto, VecDeque<AssetRateDto>> = asset_rate_queues
+            .into_iter()
+            .map(|(k, v)| (AssetPairIdsDto::new(AssetIdDto(k.0), AssetIdDto(k.1)), v))
+            .collect();
+        net_worth_history.add_asset_rates(asset_rate_queues);
+    }
+
+    #[test]
+    fn entries_exist_reflects_added_entries() {
+        let mut net_worth_history = make_history(
+            2,
+            datetime!(2023-03-22 12:00:00 UTC),
+            datetime!(2023-03-22 13:00:00 UTC),
+        );
+        assert!(!net_worth_history.entries_exist());
+
+        net_worth_history.add_entries(
+            vec![EntriesIntervalSumDto {
+                asset_id: 1,
+                quantity: dec!(0),
+                time: datetime!(2023-03-22 12:00:00 UTC),
+            }]
+            .into_iter(),
+        );
+        assert!(net_worth_history.entries_exist());
+    }
+
+    #[test]
+    fn first_occurance_dates_keep_earliest_entry_per_asset() {
+        let mut net_worth_history = make_history(
+            2,
+            datetime!(2023-03-22 12:00:00 UTC),
+            datetime!(2023-03-22 15:00:00 UTC),
+        );
+
+        net_worth_history.add_entries(
+            vec![
+                EntriesIntervalSumDto {
+                    asset_id: 1,
+                    quantity: dec!(1),
+                    time: datetime!(2023-03-22 12:00:00 UTC),
+                },
+                EntriesIntervalSumDto {
+                    asset_id: 3,
+                    quantity: dec!(0),
+                    time: datetime!(2023-03-22 13:00:00 UTC),
+                },
+                EntriesIntervalSumDto {
+                    asset_id: 1,
+                    quantity: dec!(2),
+                    time: datetime!(2023-03-22 14:00:00 UTC),
+                },
+            ]
+            .into_iter(),
+        );
+
+        let dates = net_worth_history.get_asset_first_occurance_dates();
+        assert_eq!(dates.len(), 2);
+        assert_eq!(
+            *dates
+                .get(&AssetIdDto(1))
+                .expect("asset 1 should have a first occurance date"),
+            datetime!(2023-03-22 12:00:00 UTC)
+        );
+        assert_eq!(
+            *dates
+                .get(&AssetIdDto(3))
+                .expect("asset 3 should have a first occurance date"),
+            datetime!(2023-03-22 13:00:00 UTC)
+        );
+    }
+
+    #[test]
+    fn entries_before_window_collapse_into_first_point() {
+        // everything dated before the chart window
+        // collapses into the first point, acting as the opening balance.
+        let transactions_queue = vec![
+            EntriesIntervalSumDto {
+                asset_id: 1,
+                quantity: dec!(2),
+                time: datetime!(2023-03-20 12:00:00 UTC),
+            },
+            EntriesIntervalSumDto {
+                asset_id: 1,
+                quantity: dec!(3),
+                time: datetime!(2023-03-21 12:00:00 UTC),
+            },
+        ];
+
+        let mut asset_rate_queues: HashMap<(i32, i32), VecDeque<AssetRateDto>> = HashMap::new();
+        asset_rate_queues.insert(
+            (1, 2),
+            vec![AssetRateDto {
+                rate: dec!(1),
+                date: datetime!(2023-03-20 12:00:00 UTC),
+            }]
+            .into_iter()
+            .collect(),
+        );
+
+        let mut net_worth_history = make_history(
+            2,
+            datetime!(2023-03-22 12:00:00 UTC),
+            datetime!(2023-03-22 13:00:00 UTC),
+        );
+        net_worth_history.add_entries(transactions_queue.into_iter());
+        add_rates(&mut net_worth_history, asset_rate_queues);
+
+        let result = net_worth_history.calculate_networth_history();
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].date, datetime!(2023-03-22 12:00:00 UTC));
+        assert_eq!(result[0].rate, dec!(5));
+        assert_eq!(result[1].rate, dec!(5));
+    }
+
+    #[test]
+    fn last_rate_at_or_before_first_point_wins_over_older_rates() {
+        // the last known rate at or before each
+        // point is used, and carried forward when no newer rate exists.
+        let transactions_queue = vec![EntriesIntervalSumDto {
+            asset_id: 1,
+            quantity: dec!(1),
+            time: datetime!(2023-03-22 10:00:00 UTC),
+        }];
+
+        let mut asset_rate_queues: HashMap<(i32, i32), VecDeque<AssetRateDto>> = HashMap::new();
+        asset_rate_queues.insert(
+            (1, 2),
+            vec![
+                AssetRateDto {
+                    rate: dec!(1),
+                    date: datetime!(2023-03-22 10:00:00 UTC),
+                },
+                AssetRateDto {
+                    rate: dec!(2),
+                    date: datetime!(2023-03-22 11:30:00 UTC),
+                },
+            ]
+            .into_iter()
+            .collect(),
+        );
+
+        let mut net_worth_history = make_history(
+            2,
+            datetime!(2023-03-22 12:00:00 UTC),
+            datetime!(2023-03-22 13:00:00 UTC),
+        );
+        net_worth_history.add_entries(transactions_queue.into_iter());
+        add_rates(&mut net_worth_history, asset_rate_queues);
+
+        let result = net_worth_history.calculate_networth_history();
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].rate, dec!(2));
+        assert_eq!(result[1].rate, dec!(2));
+    }
+
+    #[test]
+    fn asset_with_empty_rate_series_is_left_out_of_total() {
+        // a holding with no price path is left
+        // out of the total. An empty rate series must not bring down the whole
+        // calculation; the other assets should still be valued.
+        let transactions_queue = vec![
+            EntriesIntervalSumDto {
+                asset_id: 1,
+                quantity: dec!(1),
+                time: datetime!(2023-03-22 12:00:00 UTC),
+            },
+            EntriesIntervalSumDto {
+                asset_id: 3,
+                quantity: dec!(2),
+                time: datetime!(2023-03-22 12:00:00 UTC),
+            },
+        ];
+
+        let mut asset_rate_queues: HashMap<(i32, i32), VecDeque<AssetRateDto>> = HashMap::new();
+        asset_rate_queues.insert((1, 2), VecDeque::new());
+        asset_rate_queues.insert(
+            (3, 2),
+            vec![AssetRateDto {
+                rate: dec!(5),
+                date: datetime!(2023-03-22 12:00:00 UTC),
+            }]
+            .into_iter()
+            .collect(),
+        );
+
+        let mut net_worth_history = make_history(
+            2,
+            datetime!(2023-03-22 12:00:00 UTC),
+            datetime!(2023-03-22 12:00:00 UTC),
+        );
+        net_worth_history.add_entries(transactions_queue.into_iter());
+        add_rates(&mut net_worth_history, asset_rate_queues);
+
+        let result = net_worth_history.calculate_networth_history();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].rate, dec!(10));
+    }
+
+    #[test]
+    fn reference_asset_entries_count_at_face_value_without_rates() {
+        // amounts already in the default asset
+        // count at face value.
+        let transactions_queue = vec![EntriesIntervalSumDto {
+            asset_id: 2,
+            quantity: dec!(100),
+            time: datetime!(2023-03-22 12:00:00 UTC),
+        }];
+
+        let mut net_worth_history = make_history(
+            2,
+            datetime!(2023-03-22 12:00:00 UTC),
+            datetime!(2023-03-22 13:00:00 UTC),
+        );
+        net_worth_history.add_entries(transactions_queue.into_iter());
+        add_rates(&mut net_worth_history, HashMap::new());
+
+        let result = net_worth_history.calculate_networth_history();
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].rate, dec!(100));
+        assert_eq!(result[1].rate, dec!(100));
+    }
+
+    #[test]
+    fn negative_quantities_net_against_assets() {
+        // entry quantities are signed, debt
+        // balances are negative and net out against assets.
+        let transactions_queue = vec![
+            EntriesIntervalSumDto {
+                asset_id: 1,
+                quantity: dec!(5),
+                time: datetime!(2023-03-22 12:00:00 UTC),
+            },
+            EntriesIntervalSumDto {
+                asset_id: 3,
+                quantity: dec!(-3),
+                time: datetime!(2023-03-22 12:00:00 UTC),
+            },
+        ];
+
+        let mut asset_rate_queues: HashMap<(i32, i32), VecDeque<AssetRateDto>> = HashMap::new();
+        asset_rate_queues.insert(
+            (1, 2),
+            vec![AssetRateDto {
+                rate: dec!(2),
+                date: datetime!(2023-03-22 12:00:00 UTC),
+            }]
+            .into_iter()
+            .collect(),
+        );
+        asset_rate_queues.insert(
+            (3, 2),
+            vec![AssetRateDto {
+                rate: dec!(1),
+                date: datetime!(2023-03-22 12:00:00 UTC),
+            }]
+            .into_iter()
+            .collect(),
+        );
+
+        let mut net_worth_history = make_history(
+            2,
+            datetime!(2023-03-22 12:00:00 UTC),
+            datetime!(2023-03-22 12:00:00 UTC),
+        );
+        net_worth_history.add_entries(transactions_queue.into_iter());
+        add_rates(&mut net_worth_history, asset_rate_queues);
+
+        let result = net_worth_history.calculate_networth_history();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].rate, dec!(7));
+    }
+
+    #[test]
+    fn entry_between_points_appears_at_next_point() {
+        let transactions_queue = vec![
+            EntriesIntervalSumDto {
+                asset_id: 1,
+                quantity: dec!(1),
+                time: datetime!(2023-03-22 12:00:00 UTC),
+            },
+            EntriesIntervalSumDto {
+                asset_id: 1,
+                quantity: dec!(1),
+                time: datetime!(2023-03-22 12:30:00 UTC),
+            },
+        ];
+
+        let mut asset_rate_queues: HashMap<(i32, i32), VecDeque<AssetRateDto>> = HashMap::new();
+        asset_rate_queues.insert(
+            (1, 2),
+            vec![AssetRateDto {
+                rate: dec!(10),
+                date: datetime!(2023-03-22 12:00:00 UTC),
+            }]
+            .into_iter()
+            .collect(),
+        );
+
+        let mut net_worth_history = make_history(
+            2,
+            datetime!(2023-03-22 12:00:00 UTC),
+            datetime!(2023-03-22 14:00:00 UTC),
+        );
+        net_worth_history.add_entries(transactions_queue.into_iter());
+        add_rates(&mut net_worth_history, asset_rate_queues);
+
+        let result = net_worth_history.calculate_networth_history();
+        assert_eq!(result.len(), 3);
+        assert_eq!(result[0].rate, dec!(10));
+        assert_eq!(result[1].rate, dec!(20));
+        assert_eq!(result[2].rate, dec!(20));
+    }
+
+    #[test]
+    fn entries_after_window_end_are_excluded() {
+        let transactions_queue = vec![
+            EntriesIntervalSumDto {
+                asset_id: 1,
+                quantity: dec!(1),
+                time: datetime!(2023-03-22 12:00:00 UTC),
+            },
+            EntriesIntervalSumDto {
+                asset_id: 1,
+                quantity: dec!(5),
+                time: datetime!(2023-03-22 13:30:00 UTC),
+            },
+        ];
+
+        let mut asset_rate_queues: HashMap<(i32, i32), VecDeque<AssetRateDto>> = HashMap::new();
+        asset_rate_queues.insert(
+            (1, 2),
+            vec![AssetRateDto {
+                rate: dec!(1),
+                date: datetime!(2023-03-22 12:00:00 UTC),
+            }]
+            .into_iter()
+            .collect(),
+        );
+
+        let mut net_worth_history = make_history(
+            2,
+            datetime!(2023-03-22 12:00:00 UTC),
+            datetime!(2023-03-22 13:00:00 UTC),
+        );
+        net_worth_history.add_entries(transactions_queue.into_iter());
+        add_rates(&mut net_worth_history, asset_rate_queues);
+
+        let result = net_worth_history.calculate_networth_history();
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].rate, dec!(1));
+        assert_eq!(result[1].rate, dec!(1));
+    }
+
+    #[test]
+    fn multi_asset_interpolation_uses_each_assets_own_rate_gaps() {
+        // points between two recorded rates are
+        // interpolated on a straight line, per asset.
+        let transactions_queue = vec![
+            EntriesIntervalSumDto {
+                asset_id: 1,
+                quantity: dec!(1),
+                time: datetime!(2023-03-22 12:00:00 UTC),
+            },
+            EntriesIntervalSumDto {
+                asset_id: 3,
+                quantity: dec!(1),
+                time: datetime!(2023-03-22 12:00:00 UTC),
+            },
+        ];
+
+        let mut asset_rate_queues: HashMap<(i32, i32), VecDeque<AssetRateDto>> = HashMap::new();
+        asset_rate_queues.insert(
+            (1, 2),
+            vec![
+                AssetRateDto {
+                    rate: dec!(1),
+                    date: datetime!(2023-03-22 12:00:00 UTC),
+                },
+                AssetRateDto {
+                    rate: dec!(3),
+                    date: datetime!(2023-03-22 14:00:00 UTC),
+                },
+            ]
+            .into_iter()
+            .collect(),
+        );
+        asset_rate_queues.insert(
+            (3, 2),
+            vec![
+                AssetRateDto {
+                    rate: dec!(10),
+                    date: datetime!(2023-03-22 12:00:00 UTC),
+                },
+                AssetRateDto {
+                    rate: dec!(2),
+                    date: datetime!(2023-03-22 16:00:00 UTC),
+                },
+            ]
+            .into_iter()
+            .collect(),
+        );
+
+        let mut net_worth_history = make_history(
+            2,
+            datetime!(2023-03-22 12:00:00 UTC),
+            datetime!(2023-03-22 16:00:00 UTC),
+        );
+        net_worth_history.add_entries(transactions_queue.into_iter());
+        add_rates(&mut net_worth_history, asset_rate_queues);
+
+        let result = net_worth_history.calculate_networth_history();
+        assert_eq!(result.len(), 5);
+        // asset 1: 1, 2, 3, 3, 3 (interpolated then carried forward)
+        // asset 3: 10, 8, 6, 4, 2 (interpolated across the whole window)
+        assert_eq!(result[0].rate, dec!(11));
+        assert_eq!(result[1].rate, dec!(10));
+        assert_eq!(result[2].rate, dec!(9));
+        assert_eq!(result[3].rate, dec!(7));
+        assert_eq!(result[4].rate, dec!(5));
+    }
+
+    #[test]
+    fn asset_without_conversion_path_to_reference_is_left_out() {
+        // a holding with no price path to the
+        // default asset is left out of the total.
+        let transactions_queue = vec![
+            EntriesIntervalSumDto {
+                asset_id: 1,
+                quantity: dec!(1),
+                time: datetime!(2023-03-22 12:00:00 UTC),
+            },
+            EntriesIntervalSumDto {
+                asset_id: 4,
+                quantity: dec!(3),
+                time: datetime!(2023-03-22 12:00:00 UTC),
+            },
+        ];
+
+        let mut asset_rate_queues: HashMap<(i32, i32), VecDeque<AssetRateDto>> = HashMap::new();
+        // Asset 1 only prices against asset 3, which has no rate to the
+        // reference asset 2 — no two-hop path exists.
+        asset_rate_queues.insert(
+            (1, 3),
+            vec![AssetRateDto {
+                rate: dec!(5),
+                date: datetime!(2023-03-22 12:00:00 UTC),
+            }]
+            .into_iter()
+            .collect(),
+        );
+        asset_rate_queues.insert(
+            (4, 2),
+            vec![AssetRateDto {
+                rate: dec!(2),
+                date: datetime!(2023-03-22 12:00:00 UTC),
+            }]
+            .into_iter()
+            .collect(),
+        );
+
+        let mut net_worth_history = make_history(
+            2,
+            datetime!(2023-03-22 12:00:00 UTC),
+            datetime!(2023-03-22 12:00:00 UTC),
+        );
+        net_worth_history.add_entries(transactions_queue.into_iter());
+        add_rates(&mut net_worth_history, asset_rate_queues);
+
+        let result = net_worth_history.calculate_networth_history();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].rate, dec!(6));
     }
 }

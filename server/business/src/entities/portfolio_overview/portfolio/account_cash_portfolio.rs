@@ -60,3 +60,41 @@ impl AccountCashPortfolio {
             && self.dividends == Decimal::new(0, 0)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rust_decimal_macros::dec;
+
+    #[test]
+    fn is_empty_true_when_additions_cancel_back_to_zero() {
+        let mut cash = AccountCashPortfolio::default();
+
+        cash.add_units(dec!(100));
+        cash.add_units(dec!(-100));
+        cash.add_fees(dec!(2.5));
+        cash.add_fees(dec!(-2.5));
+        cash.add_dividends(dec!(7));
+        cash.add_dividends(dec!(-7));
+
+        assert!(cash.is_empty());
+    }
+
+    #[test]
+    fn negative_zero_still_counts_as_empty() {
+        let cash = AccountCashPortfolio::new(-dec!(0), -dec!(0), -dec!(0));
+
+        assert!(cash.is_empty());
+    }
+
+    #[test]
+    fn negative_zero_from_cancellation_with_fractional_amounts_counts_as_empty() {
+        let mut cash = AccountCashPortfolio::default();
+
+        cash.add_units(dec!(-0.50));
+        cash.add_units(dec!(0.50));
+
+        assert_eq!(cash.units(), dec!(0));
+        assert!(cash.is_empty());
+    }
+}

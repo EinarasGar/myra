@@ -334,10 +334,13 @@ pub struct AccountTransactionsState {
 
 #[derive(Debug, Clone, uniffi::Record)]
 pub struct LotItem {
-    pub units: f64,
+    pub units_bought: f64,
+    pub units_remaining: f64,
+    pub units_sold: f64,
     pub buy_date: i64,
     pub buy_price_per_unit: f64,
     pub cost_basis: f64,
+    pub realized_gains: f64,
     pub unrealized_gains: f64,
     pub gain_percent: f64,
     pub current_value: f64,

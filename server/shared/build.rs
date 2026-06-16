@@ -212,6 +212,7 @@ fn register_transaction_aliases(mut config: Config<'static>) -> Config<'static> 
         ("AssetDividend", "asset_dividend", "PositiveAmount"),
         ("AssetBalanceTransfer", "asset_balance_transfer", "Amount"),
         ("AccountFees", "account_fees", "NegativeAmount"),
+        ("CashBalanceTransfer", "cash_balance_transfer", "Amount"),
     ] {
         config = register_transaction_alias_group(config, name, module, view_amount);
     }

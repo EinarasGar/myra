@@ -471,8 +471,11 @@ private fun buildInput(
         is EntryMode.Dual -> {
             val secAccount =
                 if (mode.sameAccount) primaryAccountId else state.secondaryEntry.accountId
-            val secAsset = state.secondaryEntry.assetId
-            val secAmt = signedAmount(state.secondaryEntry.amount, mode.secondarySign)
+            val secAsset =
+                if (mode.sameAsset) primaryAssetId else state.secondaryEntry.assetId
+            val secAmountRaw =
+                if (mode.sharedAmount) state.primaryEntry.amount else state.secondaryEntry.amount
+            val secAmt = signedAmount(secAmountRaw, mode.secondarySign)
             if (secAccount == null || secAsset == null || secAmt == null) return null
             secondaryAccountId = secAccount
             secondaryAssetId = secAsset

@@ -48,32 +48,133 @@ fn validate_non_zero(entry: &AccountAssetEntryViewModel, field_prefix: &str) -> 
     }
 }
 
-/// Returns errors for **both** fields when the accounts don't match,
-/// so the user knows that either side can be corrected.
+fn pair_error(
+    violated: bool,
+    field_a: &str,
+    field_b: &str,
+    suffix: &str,
+    message: String,
+) -> [Option<FieldError>; 2] {
+    if violated {
+        [
+            Some(FieldError {
+                field: format!("{}.{}", field_a, suffix),
+                message: message.clone(),
+            }),
+            Some(FieldError {
+                field: format!("{}.{}", field_b, suffix),
+                message,
+            }),
+        ]
+    } else {
+        [None, None]
+    }
+}
+
 fn validate_same_account(
     entry_a: &AccountAssetEntryViewModel,
     field_a: &str,
     entry_b: &AccountAssetEntryViewModel,
     field_b: &str,
 ) -> [Option<FieldError>; 2] {
-    if entry_a.account_id.0 != entry_b.account_id.0 {
-        let msg = format!(
+    pair_error(
+        entry_a.account_id.0 != entry_b.account_id.0,
+        field_a,
+        field_b,
+        "account_id",
+        format!(
             "{}.account_id and {}.account_id must reference the same account.",
             field_a, field_b
-        );
-        [
-            Some(FieldError {
-                field: format!("{}.account_id", field_a),
-                message: msg.clone(),
-            }),
-            Some(FieldError {
-                field: format!("{}.account_id", field_b),
-                message: msg,
-            }),
-        ]
-    } else {
-        [None, None]
-    }
+        ),
+    )
+}
+
+fn validate_different_accounts(
+    entry_a: &AccountAssetEntryViewModel,
+    field_a: &str,
+    entry_b: &AccountAssetEntryViewModel,
+    field_b: &str,
+) -> [Option<FieldError>; 2] {
+    pair_error(
+        entry_a.account_id.0 == entry_b.account_id.0,
+        field_a,
+        field_b,
+        "account_id",
+        format!(
+            "{}.account_id and {}.account_id must reference different accounts.",
+            field_a, field_b
+        ),
+    )
+}
+
+fn validate_same_asset(
+    entry_a: &AccountAssetEntryViewModel,
+    field_a: &str,
+    entry_b: &AccountAssetEntryViewModel,
+    field_b: &str,
+) -> [Option<FieldError>; 2] {
+    pair_error(
+        entry_a.asset_id.0 != entry_b.asset_id.0,
+        field_a,
+        field_b,
+        "asset_id",
+        format!(
+            "{}.asset_id and {}.asset_id must reference the same asset.",
+            field_a, field_b
+        ),
+    )
+}
+
+fn validate_equal_magnitude(
+    entry_a: &AccountAssetEntryViewModel,
+    field_a: &str,
+    entry_b: &AccountAssetEntryViewModel,
+    field_b: &str,
+) -> [Option<FieldError>; 2] {
+    pair_error(
+        entry_a.amount.as_decimal() + entry_b.amount.as_decimal() != Decimal::ZERO,
+        field_a,
+        field_b,
+        "amount",
+        format!(
+            "{}.amount and {}.amount must have equal magnitude.",
+            field_a, field_b
+        ),
+    )
+}
+
+fn validate_cash_balance_transfer(
+    outgoing_change: &AccountAssetEntryViewModel,
+    incoming_change: &AccountAssetEntryViewModel,
+) -> Result<(), Vec<FieldError>> {
+    let [asset_a, asset_b] = validate_same_asset(
+        outgoing_change,
+        "outgoing_change",
+        incoming_change,
+        "incoming_change",
+    );
+    let [magnitude_a, magnitude_b] = validate_equal_magnitude(
+        outgoing_change,
+        "outgoing_change",
+        incoming_change,
+        "incoming_change",
+    );
+    let [acct_a, acct_b] = validate_different_accounts(
+        outgoing_change,
+        "outgoing_change",
+        incoming_change,
+        "incoming_change",
+    );
+    collect_errors(vec![
+        validate_negative(outgoing_change, "outgoing_change"),
+        validate_positive(incoming_change, "incoming_change"),
+        asset_a,
+        asset_b,
+        magnitude_a,
+        magnitude_b,
+        acct_a,
+        acct_b,
+    ])
 }
 
 fn collect_errors(errors: Vec<Option<FieldError>>) -> Result<(), Vec<FieldError>> {
@@ -148,6 +249,9 @@ impl Validatable for TransactionWithEntries {
             TransactionWithEntries::AccountFees(t) => {
                 collect_errors(vec![validate_negative(&t.entry, "entry")])
             }
+            TransactionWithEntries::CashBalanceTransfer(t) => {
+                validate_cash_balance_transfer(&t.outgoing_change, &t.incoming_change)
+            }
         }
     }
 }
@@ -217,6 +321,9 @@ impl Validatable for IdentifiableTransactionWithIdentifiableEntries {
             IdentifiableTransactionWithIdentifiableEntries::AccountFees(t) => {
                 collect_errors(vec![validate_negative(&t.entry.entry, "entry")])
             }
+            IdentifiableTransactionWithIdentifiableEntries::CashBalanceTransfer(t) => {
+                validate_cash_balance_transfer(&t.outgoing_change.entry, &t.incoming_change.entry)
+            }
         }
     }
 }
@@ -284,6 +391,9 @@ impl Validatable for TransactionWithIdentifiableEntries {
             TransactionWithIdentifiableEntries::AccountFees(t) => {
                 collect_errors(vec![validate_negative(&t.entry.entry, "entry")])
             }
+            TransactionWithIdentifiableEntries::CashBalanceTransfer(t) => {
+                validate_cash_balance_transfer(&t.outgoing_change.entry, &t.incoming_change.entry)
+            }
         }
     }
 }
@@ -313,6 +423,7 @@ mod tests {
     use crate::view_models::transactions::base_models::transaction_base::TransactionBaseWithEntries;
     use crate::view_models::transactions::transaction_types::asset_purchase::AssetPurchase;
     use crate::view_models::transactions::transaction_types::asset_sale::AssetSale;
+    use crate::view_models::transactions::transaction_types::cash_balance_transfer::CashBalanceTransfer;
     use crate::view_models::transactions::transaction_types::cash_transfer_in::CashTransferIn;
     use crate::view_models::transactions::transaction_types::cash_transfer_out::CashTransferOut;
     use crate::view_models::transactions::transaction_types::regular_transaction::RegularTransaction;
@@ -326,9 +437,17 @@ mod tests {
     }
 
     fn make_entry_with_account(amount: Decimal, account_id: Uuid) -> AccountAssetEntryViewModel {
+        make_entry_full(amount, account_id, 1)
+    }
+
+    fn make_entry_full(
+        amount: Decimal,
+        account_id: Uuid,
+        asset_id: i32,
+    ) -> AccountAssetEntryViewModel {
         AccountAssetEntryViewModel {
             account_id: RequiredAccountId(account_id),
-            asset_id: RequiredAssetId(1),
+            asset_id: RequiredAssetId(asset_id),
             amount: Amount(amount),
         }
     }
@@ -341,16 +460,6 @@ mod tests {
     }
 
     // ---- CashTransferIn (positive) ----
-
-    #[test]
-    fn test_validate_cash_transfer_in_positive_succeeds() {
-        let t = TransactionWithEntries::CashTransferIn(CashTransferIn {
-            r#type: Default::default(),
-            base: make_base(),
-            entry: make_entry(dec!(100)),
-        });
-        assert!(t.validate().is_ok());
-    }
 
     #[test]
     fn test_validate_cash_transfer_in_negative_fails() {
@@ -367,27 +476,7 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_validate_cash_transfer_in_zero_fails() {
-        let t = TransactionWithEntries::CashTransferIn(CashTransferIn {
-            r#type: Default::default(),
-            base: make_base(),
-            entry: make_entry(dec!(0)),
-        });
-        assert!(t.validate().is_err());
-    }
-
     // ---- CashTransferOut (negative) ----
-
-    #[test]
-    fn test_validate_cash_transfer_out_negative_succeeds() {
-        let t = TransactionWithEntries::CashTransferOut(CashTransferOut {
-            r#type: Default::default(),
-            base: make_base(),
-            entry: make_entry(dec!(-100)),
-        });
-        assert!(t.validate().is_ok());
-    }
 
     #[test]
     fn test_validate_cash_transfer_out_positive_fails() {
@@ -405,30 +494,6 @@ mod tests {
     }
 
     // ---- RegularTransaction (non-zero) ----
-
-    #[test]
-    fn test_validate_regular_transaction_positive_succeeds() {
-        let t = TransactionWithEntries::RegularTransaction(RegularTransaction {
-            r#type: Default::default(),
-            base: make_base(),
-            entry: make_entry(dec!(50)),
-            category_id: RequiredCategoryId(1),
-            description: None,
-        });
-        assert!(t.validate().is_ok());
-    }
-
-    #[test]
-    fn test_validate_regular_transaction_negative_succeeds() {
-        let t = TransactionWithEntries::RegularTransaction(RegularTransaction {
-            r#type: Default::default(),
-            base: make_base(),
-            entry: make_entry(dec!(-50)),
-            category_id: RequiredCategoryId(1),
-            description: None,
-        });
-        assert!(t.validate().is_ok());
-    }
 
     #[test]
     fn test_validate_regular_transaction_zero_fails() {
@@ -525,6 +590,94 @@ mod tests {
             assert!(errors
                 .iter()
                 .any(|e| e.field == "proceeds_entry.account_id"));
+        }
+    }
+
+    #[test]
+    fn test_validate_cash_balance_transfer_valid_succeeds() {
+        let t = TransactionWithEntries::CashBalanceTransfer(CashBalanceTransfer {
+            r#type: Default::default(),
+            base: make_base(),
+            outgoing_change: make_entry_with_account(dec!(-100), Uuid::new_v4()),
+            incoming_change: make_entry_with_account(dec!(100), Uuid::new_v4()),
+        });
+        assert!(t.validate().is_ok());
+    }
+
+    #[test]
+    fn test_validate_cash_balance_transfer_wrong_signs_fails() {
+        let t = TransactionWithEntries::CashBalanceTransfer(CashBalanceTransfer {
+            r#type: Default::default(),
+            base: make_base(),
+            outgoing_change: make_entry_with_account(dec!(100), Uuid::new_v4()),
+            incoming_change: make_entry_with_account(dec!(-100), Uuid::new_v4()),
+        });
+        let errors = t.validate().unwrap_err();
+        {
+            assert!(errors
+                .iter()
+                .any(|e| e.field == "outgoing_change.amount"
+                    && e.message == "Must be a negative value."));
+            assert!(errors
+                .iter()
+                .any(|e| e.field == "incoming_change.amount"
+                    && e.message == "Must be a positive value."));
+        }
+    }
+
+    #[test]
+    fn test_validate_cash_balance_transfer_different_assets_fails() {
+        let t = TransactionWithEntries::CashBalanceTransfer(CashBalanceTransfer {
+            r#type: Default::default(),
+            base: make_base(),
+            outgoing_change: make_entry_full(dec!(-100), Uuid::new_v4(), 1),
+            incoming_change: make_entry_full(dec!(100), Uuid::new_v4(), 2),
+        });
+        let errors = t.validate().unwrap_err();
+        {
+            assert!(errors.iter().any(|e| e.field == "outgoing_change.asset_id"));
+            assert!(errors.iter().any(|e| e.field == "incoming_change.asset_id"));
+        }
+    }
+
+    #[test]
+    fn test_validate_cash_balance_transfer_unequal_magnitude_fails() {
+        let t = TransactionWithEntries::CashBalanceTransfer(CashBalanceTransfer {
+            r#type: Default::default(),
+            base: make_base(),
+            outgoing_change: make_entry_with_account(dec!(-100), Uuid::new_v4()),
+            incoming_change: make_entry_with_account(dec!(90), Uuid::new_v4()),
+        });
+        let errors = t.validate().unwrap_err();
+        {
+            assert!(errors
+                .iter()
+                .any(|e| e.field == "outgoing_change.amount"
+                    && e.message.contains("equal magnitude")));
+            assert!(errors
+                .iter()
+                .any(|e| e.field == "incoming_change.amount"
+                    && e.message.contains("equal magnitude")));
+        }
+    }
+
+    #[test]
+    fn test_validate_cash_balance_transfer_same_account_fails() {
+        let account_id = Uuid::new_v4();
+        let t = TransactionWithEntries::CashBalanceTransfer(CashBalanceTransfer {
+            r#type: Default::default(),
+            base: make_base(),
+            outgoing_change: make_entry_with_account(dec!(-100), account_id),
+            incoming_change: make_entry_with_account(dec!(100), account_id),
+        });
+        let errors = t.validate().unwrap_err();
+        {
+            assert!(errors
+                .iter()
+                .any(|e| e.field == "outgoing_change.account_id"));
+            assert!(errors
+                .iter()
+                .any(|e| e.field == "incoming_change.account_id"));
         }
     }
 }

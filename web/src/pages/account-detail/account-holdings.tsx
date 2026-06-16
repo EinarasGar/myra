@@ -24,7 +24,7 @@ interface AccountHoldingsProps {
 
 type AssetHoldingRow = {
   asset_name: string;
-  total_units: number;
+  units_held: number;
   cost_basis: number;
   unrealized_gains: number;
   total_gains: number;
@@ -58,8 +58,8 @@ const assetColumns: ColumnDef<AssetHoldingRow>[] = [
     cell: (info) => info.getValue(),
   },
   {
-    accessorKey: "total_units",
-    header: () => <span>Total Units</span>,
+    accessorKey: "units_held",
+    header: () => <span>Units Held</span>,
     cell: (info) => Number(info.getValue()).toFixed(2),
   },
   {
@@ -175,7 +175,7 @@ export default function AccountHoldings({ accountId }: AccountHoldingsProps) {
       const asset = assets.find((a) => a.id === p.asset_id);
       return {
         asset_name: asset?.name ?? String(p.asset_id),
-        total_units: p.total_units,
+        units_held: p.remaining_units,
         cost_basis: p.total_cost_basis,
         unrealized_gains: p.unrealized_gains,
         total_gains: p.total_gains,

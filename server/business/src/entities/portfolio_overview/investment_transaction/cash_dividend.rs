@@ -122,4 +122,107 @@ mod tests {
         assert_eq!(cash_portfolio.fees(), dec!(0.07));
         assert_eq!(cash_portfolio.dividends(), dec!(0.41));
     }
+
+    #[test]
+    fn cash_dividend_price_converts_dividend_value_with_fees() {
+        let mut portfolio = Portfolio::new();
+        let account_id = Uuid::new_v4();
+
+        let input: Vec<Box<dyn PortfolioAction>> = vec![Box::new(CashDividend {
+            asset_id: 10,
+            account_id,
+            quantity: dec!(10),
+            origin_asset_id: 2,
+            price: dec!(1.5),
+            fees: dec!(2),
+            date: datetime!(2000-03-22 00:00:00 UTC),
+        })];
+
+        portfolio.process_transactions(input);
+
+        let account_portfolio = portfolio
+            .account_portfolios()
+            .get(&account_id)
+            .expect("Should contain account");
+        let asset_portfolio = account_portfolio
+            .asset_portfolios
+            .get(&2)
+            .expect("Should contain origin asset");
+        let cash_portfolio = account_portfolio
+            .cash_portfolios
+            .get(&10)
+            .expect("Should contain cash");
+
+        assert_eq!(cash_portfolio.units(), dec!(8));
+        assert_eq!(cash_portfolio.fees(), dec!(2));
+        assert_eq!(cash_portfolio.dividends(), dec!(15));
+        assert_eq!(asset_portfolio.cash_dividends(), dec!(15));
+    }
+
+    #[test]
+    fn cash_dividend_origin_asset_portfolio_without_positions_survives_pruning() {
+        let mut portfolio = Portfolio::new();
+        let account_id = Uuid::new_v4();
+
+        let input: Vec<Box<dyn PortfolioAction>> = vec![Box::new(CashDividend {
+            asset_id: 10,
+            account_id,
+            quantity: dec!(3),
+            origin_asset_id: 7,
+            price: dec!(2),
+            fees: dec!(0),
+            date: datetime!(2000-03-22 00:00:00 UTC),
+        })];
+
+        portfolio.process_transactions(input);
+
+        let asset_portfolio = portfolio
+            .account_portfolios()
+            .get(&account_id)
+            .expect("Should contain account")
+            .asset_portfolios
+            .get(&7)
+            .expect("Origin asset portfolio with only cash dividends must survive pruning");
+
+        assert!(asset_portfolio.positions.is_empty());
+        assert_eq!(asset_portfolio.cash_dividends(), dec!(6));
+    }
+
+    #[test]
+    fn apply_conversion_rate_multiplies_price_into_dividend_value() {
+        let mut dividend = CashDividend {
+            asset_id: 10,
+            account_id: Uuid::new_v4(),
+            quantity: dec!(4),
+            origin_asset_id: 2,
+            price: dec!(1),
+            fees: dec!(0),
+            date: datetime!(2000-03-22 00:00:00 UTC),
+        };
+
+        assert_eq!(dividend.get_conversion_asset_id(), AssetIdDto(10));
+        dividend.apply_conversion_rate(dec!(0.85));
+
+        let account_id = dividend.account_id;
+        let mut portfolio = Portfolio::new();
+        dividend.update_porfolio(&mut portfolio);
+
+        let account_portfolio = portfolio
+            .account_portfolios()
+            .get(&account_id)
+            .expect("Should contain account");
+        let asset_portfolio = account_portfolio
+            .asset_portfolios
+            .get(&2)
+            .expect("Should contain origin asset");
+        let cash_portfolio = account_portfolio
+            .cash_portfolios
+            .get(&10)
+            .expect("Should contain cash");
+
+        assert_eq!(cash_portfolio.units(), dec!(4));
+        assert_eq!(cash_portfolio.dividends(), dec!(3.40));
+        assert_eq!(asset_portfolio.cash_dividends(), dec!(3.40));
+        assert_eq!(dividend.date(), datetime!(2000-03-22 00:00:00 UTC));
+    }
 }

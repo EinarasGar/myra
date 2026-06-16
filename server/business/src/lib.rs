@@ -7,3 +7,5 @@ pub mod loader;
 pub mod providers;
 pub mod rate_limiting;
 pub mod service_collection;
+#[cfg(test)]
+pub(crate) mod test_support;

@@ -162,6 +162,14 @@ fn flatten_required(tx: &ReqTxEnum) -> (i64, &str, Option<String>, Option<i32>, 
                 entry(&t.incoming_change, false)
             ]
         ),
+        ReqTxEnum::CashBalanceTransfer(t) => base!(
+            t,
+            "cash_balance_transfer",
+            vec![
+                entry(&t.outgoing_change, true),
+                entry(&t.incoming_change, false)
+            ]
+        ),
     }
 }
 
@@ -219,6 +227,14 @@ fn flatten(tx: &TxEnum) -> (String, i64, &str, Option<String>, Option<i32>, Vec<
         TxEnum::AssetBalanceTransfer(t) => base!(
             t,
             "asset_balance_transfer",
+            vec![
+                entry(&t.outgoing_change, true),
+                entry(&t.incoming_change, false)
+            ]
+        ),
+        TxEnum::CashBalanceTransfer(t) => base!(
+            t,
+            "cash_balance_transfer",
             vec![
                 entry(&t.outgoing_change, true),
                 entry(&t.incoming_change, false)
@@ -367,6 +383,7 @@ fn type_label(t: &str) -> &str {
         "asset_transfer_in" => "Transfer In",
         "asset_transfer_out" => "Transfer Out",
         "asset_balance_transfer" => "Balance Transfer",
+        "cash_balance_transfer" => "Cash Balance Transfer",
         "account_fees" => "Fees",
         "regular" => "Transaction",
         other => other,

@@ -6,6 +6,7 @@ pub mod asset_sale;
 pub mod asset_trade;
 pub mod asset_transfer_in;
 pub mod asset_transfer_out;
+pub mod cash_balance_transfer;
 pub mod cash_dividend;
 pub mod cash_transfer_in;
 pub mod cash_transfer_out;
@@ -31,14 +32,16 @@ use crate::view_models::transactions::base_models::transaction_base::{
 use business::dtos::transaction_dto::{
     AccountFeesMetadataDto, AssetBalanceTransferMetadataDto, AssetDividendMetadataDto,
     AssetPurchaseMetadataDto, AssetSaleMetadataDto, AssetTradeMetadataDto,
-    AssetTransferInMetadataDto, AssetTransferOutMetadataDto, CashDividendMetadataDto,
-    CashTransferInMetadataDto, CashTransferOutMetadataDto, RegularTransactionMetadataDto,
+    AssetTransferInMetadataDto, AssetTransferOutMetadataDto, CashBalanceTransferMetadataDto,
+    CashDividendMetadataDto, CashTransferInMetadataDto, CashTransferOutMetadataDto,
+    RegularTransactionMetadataDto,
 };
 
 use self::{
     account_fees::*, asset_balance_transfer::*, asset_dividend::*, asset_purchase::*,
-    asset_sale::*, asset_trade::*, asset_transfer_in::*, asset_transfer_out::*, cash_dividend::*,
-    cash_transfer_in::*, cash_transfer_out::*, regular_transaction::*,
+    asset_sale::*, asset_trade::*, asset_transfer_in::*, asset_transfer_out::*,
+    cash_balance_transfer::*, cash_dividend::*, cash_transfer_in::*, cash_transfer_out::*,
+    regular_transaction::*,
 };
 
 macro_rules! generate_transaction_type_enums {
@@ -122,7 +125,8 @@ generate_transaction_type_enums!(
     AssetPurchase,
     AssetDividend,
     AssetBalanceTransfer,
-    AccountFees
+    AccountFees,
+    CashBalanceTransfer
 );
 
 pub type TransactionInput = TransactionWithEntries;
@@ -203,6 +207,13 @@ impl From<TransactionDto> for RequiredIdentifiableTransactionWithIdentifiableEnt
                     RequiredIdentifiableAccountFeesWithIdentifiableEntriesViewModel::from(value),
                 )
             }
+            TransactionTypeDto::CashBalanceTransfer(_) => {
+                RequiredIdentifiableTransactionWithIdentifiableEntries::CashBalanceTransfer(
+                    RequiredIdentifiableCashBalanceTransferWithIdentifiableEntriesViewModel::from(
+                        value,
+                    ),
+                )
+            }
         }
     }
 }
@@ -269,6 +280,11 @@ impl From<TransactionDto> for RequiredTransactionWithIdentifiableEntries {
             TransactionTypeDto::AccountFees(_) => {
                 RequiredTransactionWithIdentifiableEntries::AccountFees(
                     RequiredAccountFeesWithIdentifiableEntriesViewModel::from(value),
+                )
+            }
+            TransactionTypeDto::CashBalanceTransfer(_) => {
+                RequiredTransactionWithIdentifiableEntries::CashBalanceTransfer(
+                    RequiredCashBalanceTransferWithIdentifiableEntriesViewModel::from(value),
                 )
             }
         }
@@ -454,6 +470,20 @@ impl From<IdentifiableTransactionWithIdentifiableEntries> for TransactionDto {
                     }),
                 }
             }
+            IdentifiableTransactionWithIdentifiableEntries::CashBalanceTransfer(t) => {
+                let (transaction_id, date, fee_entries) = extract_identifiable_base(t.base);
+                TransactionDto {
+                    transaction_id,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::CashBalanceTransfer(
+                        CashBalanceTransferMetadataDto {
+                            outgoing_change: t.outgoing_change.into(),
+                            incoming_change: t.incoming_change.into(),
+                        },
+                    ),
+                }
+            }
         }
     }
 }
@@ -609,6 +639,20 @@ impl From<TransactionWithIdentifiableEntries> for TransactionDto {
                     transaction_type: TransactionTypeDto::AccountFees(AccountFeesMetadataDto {
                         entry: t.entry.into(),
                     }),
+                }
+            }
+            TransactionWithIdentifiableEntries::CashBalanceTransfer(t) => {
+                let (date, fee_entries) = extract_base_no_id(t.base);
+                TransactionDto {
+                    transaction_id: None,
+                    date,
+                    fee_entries,
+                    transaction_type: TransactionTypeDto::CashBalanceTransfer(
+                        CashBalanceTransferMetadataDto {
+                            outgoing_change: t.outgoing_change.into(),
+                            incoming_change: t.incoming_change.into(),
+                        },
+                    ),
                 }
             }
         }

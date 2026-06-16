@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.CallMade
 import androidx.compose.material.icons.automirrored.outlined.CallReceived
 import androidx.compose.material.icons.outlined.AccountBalance
+import androidx.compose.material.icons.outlined.CurrencyExchange
 import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Receipt
@@ -37,6 +38,7 @@ fun transactionTypeIcon(type: String): ImageVector =
         "asset_transfer_in" -> Icons.AutoMirrored.Outlined.CallReceived
         "asset_transfer_out" -> Icons.AutoMirrored.Outlined.CallMade
         "asset_balance_transfer" -> Icons.Outlined.SwapHoriz
+        "cash_balance_transfer" -> Icons.Outlined.CurrencyExchange
         "account_fees" -> Icons.Outlined.Receipt
         "group" -> Icons.Outlined.Layers
         else -> Icons.Outlined.AccountBalance

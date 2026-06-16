@@ -585,30 +585,38 @@ private fun DualEntrySections(
                 onClick = onPickSecondaryAccount,
                 tint = MaterialTheme.colorScheme.primary,
             )
-            Spacer(Modifier.height(8.dp))
         }
-        with(sharedScope) {
-            AssetPickerField(
-                selectedDisplay = secondaryEntry.assetDisplay,
-                onClick = onPickSecondaryAsset,
-                tint = MaterialTheme.colorScheme.tertiary,
-                modifier =
-                    Modifier.sharedBounds(
-                        sharedContentState =
-                            rememberSharedContentState(
-                                key = assetSharedKey(SearchTarget.SECONDARY_ASSET),
-                            ),
-                        animatedVisibilityScope = animatedVisibilityScope,
-                    ),
+        if (!mode.sameAsset) {
+            if (!mode.sameAccount) {
+                Spacer(Modifier.height(8.dp))
+            }
+            with(sharedScope) {
+                AssetPickerField(
+                    selectedDisplay = secondaryEntry.assetDisplay,
+                    onClick = onPickSecondaryAsset,
+                    tint = MaterialTheme.colorScheme.tertiary,
+                    modifier =
+                        Modifier.sharedBounds(
+                            sharedContentState =
+                                rememberSharedContentState(
+                                    key = assetSharedKey(SearchTarget.SECONDARY_ASSET),
+                                ),
+                            animatedVisibilityScope = animatedVisibilityScope,
+                        ),
+                )
+            }
+        }
+        if (!mode.sharedAmount) {
+            if (!mode.sameAccount || !mode.sameAsset) {
+                Spacer(Modifier.height(8.dp))
+            }
+            PanelAmountField(
+                value = secondaryEntry.amount,
+                onValueChange = onChangeSecondaryAmount,
+                sign = mode.secondarySign,
+                label = mode.secondaryAmountLabel,
             )
         }
-        Spacer(Modifier.height(8.dp))
-        PanelAmountField(
-            value = secondaryEntry.amount,
-            onValueChange = onChangeSecondaryAmount,
-            sign = mode.secondarySign,
-            label = mode.secondaryAmountLabel,
-        )
     }
 }
 

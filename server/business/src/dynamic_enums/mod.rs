@@ -67,6 +67,10 @@ mod tests {
 
     static STATIC_ENUM: Lazy<Mutex<Option<HashMap<FooEnum, i32>>>> = Lazy::new(|| Mutex::new(None));
 
+    // These tests mutate the shared STATIC_ENUM; serialize them so they don't
+    // race each other under parallel execution.
+    static TEST_GUARD: Mutex<()> = Mutex::new(());
+
     pub struct FooDynamicEnum;
 
     #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -99,8 +103,13 @@ mod tests {
         *map = None;
     }
 
+    fn guard() -> std::sync::MutexGuard<'static, ()> {
+        TEST_GUARD.lock().unwrap_or_else(|e| e.into_inner())
+    }
+
     #[test]
     fn test_try_from_dynamic_enum_found() {
+        let _g = guard();
         setup_enum();
         let enum_value = FooDynamicEnum::try_from_dynamic_enum(2);
         teardown_enum();
@@ -109,6 +118,7 @@ mod tests {
 
     #[test]
     fn test_try_from_dynamic_enum_not_found() {
+        let _g = guard();
         setup_enum();
         let enum_value = FooDynamicEnum::try_from_dynamic_enum(1);
         teardown_enum();
@@ -117,12 +127,15 @@ mod tests {
 
     #[test]
     fn test_try_from_dynamic_enum_not_loaded() {
+        let _g = guard();
+        teardown_enum();
         let enum_value = FooDynamicEnum::try_from_dynamic_enum(1);
         assert_eq!(enum_value.unwrap_err(), DynamicEnumError::NotLoaded);
     }
 
     #[test]
     fn test_try_into_dynamic_enum_found() {
+        let _g = guard();
         setup_enum();
         let int_value = FooDynamicEnum::try_into_dynamic_enum(FooEnum::Bar);
         teardown_enum();
@@ -131,6 +144,7 @@ mod tests {
 
     #[test]
     fn test_try_into_dynamic_enum_not_found() {
+        let _g = guard();
         setup_enum();
         let int_value = FooDynamicEnum::try_into_dynamic_enum(FooEnum::Biz);
         teardown_enum();
@@ -139,6 +153,8 @@ mod tests {
 
     #[test]
     fn test_try_into_dynamic_enum_not_loaded() {
+        let _g = guard();
+        teardown_enum();
         let int_value = FooDynamicEnum::try_into_dynamic_enum(FooEnum::Bar);
         assert_eq!(int_value.unwrap_err(), DynamicEnumError::NotLoaded);
     }

@@ -27,6 +27,7 @@ pub enum TransactionTypeDto {
     AssetTrade(AssetTradeMetadataDto),
     AssetBalanceTransfer(AssetBalanceTransferMetadataDto),
     AccountFees(AccountFeesMetadataDto),
+    CashBalanceTransfer(CashBalanceTransferMetadataDto),
 }
 
 #[derive(Clone, Debug)]
@@ -96,6 +97,12 @@ pub struct AccountFeesMetadataDto {
     pub entry: EntryDto,
 }
 
+#[derive(Clone, Debug)]
+pub struct CashBalanceTransferMetadataDto {
+    pub outgoing_change: EntryDto,
+    pub incoming_change: EntryDto,
+}
+
 impl From<TransactionTypeDto> for TransactionTypes {
     fn from(value: TransactionTypeDto) -> Self {
         match value {
@@ -111,6 +118,7 @@ impl From<TransactionTypeDto> for TransactionTypes {
             TransactionTypeDto::AssetTrade(_) => TransactionTypes::AssetTrade,
             TransactionTypeDto::AssetBalanceTransfer(_) => TransactionTypes::AssetBalanceTransfer,
             TransactionTypeDto::AccountFees(_) => TransactionTypes::AccountFees,
+            TransactionTypeDto::CashBalanceTransfer(_) => TransactionTypes::CashBalanceTransfer,
         }
     }
 }

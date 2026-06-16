@@ -3,6 +3,7 @@ package com.sverto.app.feature.transactions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.CallMade
 import androidx.compose.material.icons.automirrored.outlined.CallReceived
+import androidx.compose.material.icons.outlined.CurrencyExchange
 import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material.icons.outlined.ShoppingCart
@@ -98,6 +99,12 @@ val TransactionTypeGroups =
                         label = "Cash Out",
                         description = "Withdraw cash from account",
                         icon = Icons.AutoMirrored.Outlined.CallMade,
+                    ),
+                    TransactionTypeDefinition(
+                        key = "cash_balance_transfer",
+                        label = "Cash Balance Transfer",
+                        description = "Move cash between accounts",
+                        icon = Icons.Outlined.CurrencyExchange,
                     ),
                     TransactionTypeDefinition(
                         key = "asset_transfer_in",

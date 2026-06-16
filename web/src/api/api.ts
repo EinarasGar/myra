@@ -1231,6 +1231,12 @@ export interface AssetPortfolio {
   cash_dividends: number;
   /**
    *
+   * @type {number}
+   * @memberof AssetPortfolio
+   */
+  market_value: number;
+  /**
+   *
    * @type {Array<AssetPortfolioPosition>}
    * @memberof AssetPortfolio
    */
@@ -1241,6 +1247,12 @@ export interface AssetPortfolio {
    * @memberof AssetPortfolio
    */
   realized_gains: number;
+  /**
+   *
+   * @type {number}
+   * @memberof AssetPortfolio
+   */
+  remaining_units: number;
   /**
    *
    * @type {number}
@@ -2595,6 +2607,243 @@ export interface AuthMe {
    */
   user_metadata?: UserMetadata | null;
 }
+/**
+ *
+ * @export
+ * @interface CashBalanceTransferIdentifiableTransaction
+ */
+export interface CashBalanceTransferIdentifiableTransaction {
+  /**
+   * Date when the transaction occured.
+   * @type {number}
+   * @memberof CashBalanceTransferIdentifiableTransaction
+   */
+  date: number;
+  /**
+   * Any other fees related to the transaction, such as transfer or conversion fees.
+   * @type {Array<TransactionFeeItemWithEntryId>}
+   * @memberof CashBalanceTransferIdentifiableTransaction
+   */
+  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  /**
+   *
+   * @type {TransactionEntryWithEntryId}
+   * @memberof CashBalanceTransferIdentifiableTransaction
+   */
+  incoming_change: TransactionEntryWithEntryId;
+  /**
+   *
+   * @type {TransactionEntryWithEntryId}
+   * @memberof CashBalanceTransferIdentifiableTransaction
+   */
+  outgoing_change: TransactionEntryWithEntryId;
+  /**
+   *
+   * @type {string}
+   * @memberof CashBalanceTransferIdentifiableTransaction
+   */
+  transaction_id: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof CashBalanceTransferIdentifiableTransaction
+   */
+  type: CashBalanceTransferIdentifiableTransactionTypeEnum;
+}
+
+export const CashBalanceTransferIdentifiableTransactionTypeEnum = {
+  CashBalanceTransfer: "cash_balance_transfer",
+} as const;
+
+export type CashBalanceTransferIdentifiableTransactionTypeEnum =
+  (typeof CashBalanceTransferIdentifiableTransactionTypeEnum)[keyof typeof CashBalanceTransferIdentifiableTransactionTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface CashBalanceTransferRequiredIdentifiableTransaction
+ */
+export interface CashBalanceTransferRequiredIdentifiableTransaction {
+  /**
+   * Date when the transaction occured.
+   * @type {number}
+   * @memberof CashBalanceTransferRequiredIdentifiableTransaction
+   */
+  date: number;
+  /**
+   * Any other fees related to the transaction, such as transfer or conversion fees.
+   * @type {Array<TransactionFeeItemWithRequiredEntryId>}
+   * @memberof CashBalanceTransferRequiredIdentifiableTransaction
+   */
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  /**
+   *
+   * @type {TransactionEntryWithRequiredEntryId}
+   * @memberof CashBalanceTransferRequiredIdentifiableTransaction
+   */
+  incoming_change: TransactionEntryWithRequiredEntryId;
+  /**
+   *
+   * @type {TransactionEntryWithRequiredEntryId}
+   * @memberof CashBalanceTransferRequiredIdentifiableTransaction
+   */
+  outgoing_change: TransactionEntryWithRequiredEntryId;
+  /**
+   *
+   * @type {string}
+   * @memberof CashBalanceTransferRequiredIdentifiableTransaction
+   */
+  transaction_id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CashBalanceTransferRequiredIdentifiableTransaction
+   */
+  type: CashBalanceTransferRequiredIdentifiableTransactionTypeEnum;
+}
+
+export const CashBalanceTransferRequiredIdentifiableTransactionTypeEnum = {
+  CashBalanceTransfer: "cash_balance_transfer",
+} as const;
+
+export type CashBalanceTransferRequiredIdentifiableTransactionTypeEnum =
+  (typeof CashBalanceTransferRequiredIdentifiableTransactionTypeEnum)[keyof typeof CashBalanceTransferRequiredIdentifiableTransactionTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface CashBalanceTransferRequiredTransaction
+ */
+export interface CashBalanceTransferRequiredTransaction {
+  /**
+   * Date when the transaction occured.
+   * @type {number}
+   * @memberof CashBalanceTransferRequiredTransaction
+   */
+  date: number;
+  /**
+   * Any other fees related to the transaction, such as transfer or conversion fees.
+   * @type {Array<TransactionFeeItemWithRequiredEntryId>}
+   * @memberof CashBalanceTransferRequiredTransaction
+   */
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  /**
+   *
+   * @type {TransactionEntryWithRequiredEntryId}
+   * @memberof CashBalanceTransferRequiredTransaction
+   */
+  incoming_change: TransactionEntryWithRequiredEntryId;
+  /**
+   *
+   * @type {TransactionEntryWithRequiredEntryId}
+   * @memberof CashBalanceTransferRequiredTransaction
+   */
+  outgoing_change: TransactionEntryWithRequiredEntryId;
+  /**
+   *
+   * @type {string}
+   * @memberof CashBalanceTransferRequiredTransaction
+   */
+  type: CashBalanceTransferRequiredTransactionTypeEnum;
+}
+
+export const CashBalanceTransferRequiredTransactionTypeEnum = {
+  CashBalanceTransfer: "cash_balance_transfer",
+} as const;
+
+export type CashBalanceTransferRequiredTransactionTypeEnum =
+  (typeof CashBalanceTransferRequiredTransactionTypeEnum)[keyof typeof CashBalanceTransferRequiredTransactionTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface CashBalanceTransferTransactionInput
+ */
+export interface CashBalanceTransferTransactionInput {
+  /**
+   * Date when the transaction occured.
+   * @type {number}
+   * @memberof CashBalanceTransferTransactionInput
+   */
+  date: number;
+  /**
+   * Any other fees related to the transaction, such as transfer or conversion fees.
+   * @type {Array<TransactionFeeItem>}
+   * @memberof CashBalanceTransferTransactionInput
+   */
+  fees?: Array<TransactionFeeItem> | null;
+  /**
+   *
+   * @type {TransactionEntry}
+   * @memberof CashBalanceTransferTransactionInput
+   */
+  incoming_change: TransactionEntry;
+  /**
+   *
+   * @type {TransactionEntry}
+   * @memberof CashBalanceTransferTransactionInput
+   */
+  outgoing_change: TransactionEntry;
+  /**
+   *
+   * @type {string}
+   * @memberof CashBalanceTransferTransactionInput
+   */
+  type: CashBalanceTransferTransactionInputTypeEnum;
+}
+
+export const CashBalanceTransferTransactionInputTypeEnum = {
+  CashBalanceTransfer: "cash_balance_transfer",
+} as const;
+
+export type CashBalanceTransferTransactionInputTypeEnum =
+  (typeof CashBalanceTransferTransactionInputTypeEnum)[keyof typeof CashBalanceTransferTransactionInputTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface CashBalanceTransferTransactionWithEntryIds
+ */
+export interface CashBalanceTransferTransactionWithEntryIds {
+  /**
+   * Date when the transaction occured.
+   * @type {number}
+   * @memberof CashBalanceTransferTransactionWithEntryIds
+   */
+  date: number;
+  /**
+   * Any other fees related to the transaction, such as transfer or conversion fees.
+   * @type {Array<TransactionFeeItemWithEntryId>}
+   * @memberof CashBalanceTransferTransactionWithEntryIds
+   */
+  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  /**
+   *
+   * @type {TransactionEntryWithEntryId}
+   * @memberof CashBalanceTransferTransactionWithEntryIds
+   */
+  incoming_change: TransactionEntryWithEntryId;
+  /**
+   *
+   * @type {TransactionEntryWithEntryId}
+   * @memberof CashBalanceTransferTransactionWithEntryIds
+   */
+  outgoing_change: TransactionEntryWithEntryId;
+  /**
+   *
+   * @type {string}
+   * @memberof CashBalanceTransferTransactionWithEntryIds
+   */
+  type: CashBalanceTransferTransactionWithEntryIdsTypeEnum;
+}
+
+export const CashBalanceTransferTransactionWithEntryIdsTypeEnum = {
+  CashBalanceTransfer: "cash_balance_transfer",
+} as const;
+
+export type CashBalanceTransferTransactionWithEntryIdsTypeEnum =
+  (typeof CashBalanceTransferTransactionWithEntryIdsTypeEnum)[keyof typeof CashBalanceTransferTransactionWithEntryIdsTypeEnum];
+
 /**
  *
  * @export
@@ -4367,6 +4616,9 @@ export type IdentifiableTransaction =
   | ({ type: "asset_trade" } & AssetTradeIdentifiableTransaction)
   | ({ type: "asset_transfer_in" } & AssetTransferInIdentifiableTransaction)
   | ({ type: "asset_transfer_out" } & AssetTransferOutIdentifiableTransaction)
+  | ({
+      type: "cash_balance_transfer";
+    } & CashBalanceTransferIdentifiableTransaction)
   | ({ type: "cash_dividend" } & CashDividendIdentifiableTransaction)
   | ({ type: "cash_transfer_in" } & CashTransferInIdentifiableTransaction)
   | ({ type: "cash_transfer_out" } & CashTransferOutIdentifiableTransaction)
@@ -4917,6 +5169,9 @@ export type RequiredIdentifiableTransaction =
   | ({
       type: "asset_transfer_out";
     } & AssetTransferOutRequiredIdentifiableTransaction)
+  | ({
+      type: "cash_balance_transfer";
+    } & CashBalanceTransferRequiredIdentifiableTransaction)
   | ({ type: "cash_dividend" } & CashDividendRequiredIdentifiableTransaction)
   | ({
       type: "cash_transfer_in";
@@ -4941,6 +5196,7 @@ export type RequiredTransaction =
   | ({ type: "asset_trade" } & AssetTradeRequiredTransaction)
   | ({ type: "asset_transfer_in" } & AssetTransferInRequiredTransaction)
   | ({ type: "asset_transfer_out" } & AssetTransferOutRequiredTransaction)
+  | ({ type: "cash_balance_transfer" } & CashBalanceTransferRequiredTransaction)
   | ({ type: "cash_dividend" } & CashDividendRequiredTransaction)
   | ({ type: "cash_transfer_in" } & CashTransferInRequiredTransaction)
   | ({ type: "cash_transfer_out" } & CashTransferOutRequiredTransaction)
@@ -5386,6 +5642,7 @@ export type TransactionInput =
   | ({ type: "asset_trade" } & AssetTradeTransactionInput)
   | ({ type: "asset_transfer_in" } & AssetTransferInTransactionInput)
   | ({ type: "asset_transfer_out" } & AssetTransferOutTransactionInput)
+  | ({ type: "cash_balance_transfer" } & CashBalanceTransferTransactionInput)
   | ({ type: "cash_dividend" } & CashDividendTransactionInput)
   | ({ type: "cash_transfer_in" } & CashTransferInTransactionInput)
   | ({ type: "cash_transfer_out" } & CashTransferOutTransactionInput)
@@ -5406,6 +5663,9 @@ export type TransactionWithEntryIds =
   | ({ type: "asset_trade" } & AssetTradeTransactionWithEntryIds)
   | ({ type: "asset_transfer_in" } & AssetTransferInTransactionWithEntryIds)
   | ({ type: "asset_transfer_out" } & AssetTransferOutTransactionWithEntryIds)
+  | ({
+      type: "cash_balance_transfer";
+    } & CashBalanceTransferTransactionWithEntryIds)
   | ({ type: "cash_dividend" } & CashDividendTransactionWithEntryIds)
   | ({ type: "cash_transfer_in" } & CashTransferInTransactionWithEntryIds)
   | ({ type: "cash_transfer_out" } & CashTransferOutTransactionWithEntryIds)

@@ -14,6 +14,7 @@ pub enum DatabaseTransactionTypeCategories {
     AssetTrade = 9,
     AssetBalanceTransfer = 10,
     AccountFees = 11,
+    CashBalanceTransfer = 12,
 }
 
 impl DatabaseTransactionTypeCategories {

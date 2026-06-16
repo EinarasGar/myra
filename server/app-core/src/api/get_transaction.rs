@@ -142,6 +142,13 @@ pub(crate) fn to_editable_transaction(
             &t.incoming_change,
             tables,
         ),
+        TxEnum::CashBalanceTransfer(t) => dual_entry_transaction(
+            "cash_balance_transfer",
+            t.base.date.unix_timestamp(),
+            &t.outgoing_change,
+            &t.incoming_change,
+            tables,
+        ),
     }
 }
 

@@ -21,6 +21,8 @@ sealed interface EntryMode {
         val secondarySign: AmountSign,
         val secondaryAmountLabel: String,
         val sameAccount: Boolean = false,
+        val sameAsset: Boolean = false,
+        val sharedAmount: Boolean = false,
     ) : EntryMode
 }
 
@@ -154,6 +156,24 @@ fun getTransactionTypeConfig(typeKey: String): TransactionTypeConfig =
                         secondaryJsonKey = "incoming_change",
                         secondarySign = AmountSign.POSITIVE,
                         secondaryAmountLabel = "Units arriving",
+                    ),
+            )
+        "cash_balance_transfer" ->
+            TransactionTypeConfig(
+                apiType = "cash_balance_transfer",
+                label = "Cash Balance Transfer",
+                entryMode =
+                    EntryMode.Dual(
+                        primaryLabel = "From",
+                        primaryJsonKey = "outgoing_change",
+                        primarySign = AmountSign.NEGATIVE,
+                        primaryAmountLabel = "Amount leaving",
+                        secondaryLabel = "To",
+                        secondaryJsonKey = "incoming_change",
+                        secondarySign = AmountSign.POSITIVE,
+                        secondaryAmountLabel = "Amount arriving",
+                        sameAsset = true,
+                        sharedAmount = true,
                     ),
             )
         else -> error("Unknown transaction type: $typeKey")

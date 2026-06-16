@@ -22,6 +22,8 @@ pub struct AssetPortfolioViewModel {
     pub total_gains: Decimal,
     pub total_cost_basis: Decimal,
     pub unit_cost_basis: Decimal,
+    pub remaining_units: Decimal,
+    pub market_value: Decimal,
 }
 
 #[cfg(feature = "backend")]
@@ -39,6 +41,8 @@ impl From<PortfolioAssetOverviewDto> for AssetPortfolioViewModel {
             total_gains: dto.total_gains,
             total_cost_basis: dto.total_cost_basis,
             unit_cost_basis: dto.unit_cost_basis,
+            remaining_units: dto.remaining_units,
+            market_value: dto.market_value,
         }
     }
 }

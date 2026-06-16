@@ -16,4 +16,6 @@ pub struct PortfolioAssetOverviewDto {
     pub total_gains: Decimal,
     pub total_cost_basis: Decimal,
     pub unit_cost_basis: Decimal,
+    pub remaining_units: Decimal,
+    pub market_value: Decimal,
 }

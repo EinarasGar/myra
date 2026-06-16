@@ -51,6 +51,10 @@ pub fn transaction_dtos_to_asset_ids_hashset(transactions: &[&TransactionDto]) -
             TransactionTypeDto::AccountFees(m) => {
                 asset_ids.insert(m.entry.asset_id);
             }
+            TransactionTypeDto::CashBalanceTransfer(m) => {
+                asset_ids.insert(m.outgoing_change.asset_id);
+                asset_ids.insert(m.incoming_change.asset_id);
+            }
         }
     }
     asset_ids
@@ -102,6 +106,10 @@ pub fn transaction_dtos_to_account_ids_hashset(transactions: &[&TransactionDto])
             }
             TransactionTypeDto::AccountFees(m) => {
                 account_ids.insert(m.entry.account_id);
+            }
+            TransactionTypeDto::CashBalanceTransfer(m) => {
+                account_ids.insert(m.outgoing_change.account_id);
+                account_ids.insert(m.incoming_change.account_id);
             }
         }
     }

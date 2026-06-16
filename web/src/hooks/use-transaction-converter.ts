@@ -107,6 +107,14 @@ export default function useTransactionViewModelConverter(
       delta = `${viewModel.outgoing_change?.amount} ${outgoingAsset?.ticker} -> ${viewModel.incoming_change?.amount} ${incomingAsset?.ticker}`;
     }
 
+    if (viewModel.type === "cash_balance_transfer") {
+      const asset = assets.find(
+        (a) => a.id === viewModel.incoming_change?.asset_id,
+      );
+      description = `Transferred ${viewModel.incoming_change?.amount} ${asset?.ticker}`;
+      delta = `${viewModel.incoming_change?.amount} ${asset?.ticker}`;
+    }
+
     if (viewModel.type === "account_fees" && viewModel.entry) {
       const asset = assets.find((a) => a.id === viewModel.entry?.asset_id);
       delta = `${viewModel.entry.amount} ${asset?.ticker}`;

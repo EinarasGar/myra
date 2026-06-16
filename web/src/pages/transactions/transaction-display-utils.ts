@@ -30,6 +30,7 @@ export function getTransactionTypeLabel(type: string): string {
     asset_transfer_in: "Transfer In",
     asset_transfer_out: "Transfer Out",
     asset_balance_transfer: "Balance Transfer",
+    cash_balance_transfer: "Cash Balance Transfer",
     account_fees: "Fees",
     regular: "Transaction",
   };
@@ -64,6 +65,10 @@ export function getTransactionAmount(
       const inAsset = findAsset(transaction.incoming_change.asset_id);
       return `${transaction.outgoing_change.amount} ${outAsset?.ticker ?? ""} → ${transaction.incoming_change.amount} ${inAsset?.ticker ?? ""}`;
     }
+    case "cash_balance_transfer": {
+      const asset = findAsset(transaction.incoming_change.asset_id);
+      return `${transaction.incoming_change.amount} ${asset?.ticker ?? ""}`;
+    }
     default: {
       if ("entry" in transaction) {
         const entry = transaction.entry as TransactionEntryWithRequiredEntryId;
@@ -88,7 +93,10 @@ export function getTransactionAccountId(
     return transaction.sale_entry.account_id;
   if (transaction.type === "asset_trade")
     return transaction.outgoing_entry.account_id;
-  if (transaction.type === "asset_balance_transfer")
+  if (
+    transaction.type === "asset_balance_transfer" ||
+    transaction.type === "cash_balance_transfer"
+  )
     return transaction.outgoing_change.account_id;
   return null;
 }
@@ -104,7 +112,10 @@ export function getTransactionAssetId(
   if (transaction.type === "asset_sale") return transaction.sale_entry.asset_id;
   if (transaction.type === "asset_trade")
     return transaction.outgoing_entry.asset_id;
-  if (transaction.type === "asset_balance_transfer")
+  if (
+    transaction.type === "asset_balance_transfer" ||
+    transaction.type === "cash_balance_transfer"
+  )
     return transaction.outgoing_change.asset_id;
   return null;
 }
@@ -162,6 +173,17 @@ export function getTransactionAmountEntries(
         },
       ];
     case "asset_balance_transfer":
+      return [
+        {
+          amount: -Math.abs(Number(transaction.outgoing_change.amount)),
+          ticker: findTicker(transaction.outgoing_change.asset_id),
+        },
+        {
+          amount: Math.abs(Number(transaction.incoming_change.amount)),
+          ticker: findTicker(transaction.incoming_change.asset_id),
+        },
+      ];
+    case "cash_balance_transfer":
       return [
         {
           amount: -Math.abs(Number(transaction.outgoing_change.amount)),

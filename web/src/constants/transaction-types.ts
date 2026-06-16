@@ -31,6 +31,10 @@ export const TransactionTypes = {
     label: "Asset Transfer Out",
     key: "asset_transfer_out",
   },
+  CASH_BALANCE_TRANSFER: {
+    label: "Cash Balance Transfer",
+    key: "cash_balance_transfer",
+  },
   CASH_TRANSFER_IN: {
     label: "Cash Transfer In",
     key: "cash_transfer_in",
@@ -133,6 +137,11 @@ export const TransactionTypeGroups: TransactionTypeGroup[] = [
         key: "asset_transfer_out",
         label: "Asset Transfer Out",
         description: "Send assets from account",
+      },
+      {
+        key: "cash_balance_transfer",
+        label: "Cash Balance Transfer",
+        description: "Move cash between accounts",
       },
     ],
   },

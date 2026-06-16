@@ -15,6 +15,7 @@ use shared::view_models::transactions::transaction_types::{
     asset_trade::IdentifiableAssetTradeWithIdentifiableEntriesViewModel,
     asset_transfer_in::IdentifiableAssetTransferInWithIdentifiableEntriesViewModel,
     asset_transfer_out::IdentifiableAssetTransferOutWithIdentifiableEntriesViewModel,
+    cash_balance_transfer::IdentifiableCashBalanceTransferWithIdentifiableEntriesViewModel,
     cash_dividend::IdentifiableCashDividendWithIdentifiableEntriesViewModel,
     cash_transfer_in::IdentifiableCashTransferInWithIdentifiableEntriesViewModel,
     cash_transfer_out::IdentifiableCashTransferOutWithIdentifiableEntriesViewModel,
@@ -190,6 +191,16 @@ fn build_child(
         "asset_balance_transfer" => {
             IdentifiableTransactionWithIdentifiableEntries::AssetBalanceTransfer(
                 IdentifiableAssetBalanceTransferWithIdentifiableEntriesViewModel {
+                    r#type: Default::default(),
+                    base,
+                    outgoing_change: primary,
+                    incoming_change: secondary_entry(&input)?,
+                },
+            )
+        }
+        "cash_balance_transfer" => {
+            IdentifiableTransactionWithIdentifiableEntries::CashBalanceTransfer(
+                IdentifiableCashBalanceTransferWithIdentifiableEntriesViewModel {
                     r#type: Default::default(),
                     base,
                     outgoing_change: primary,

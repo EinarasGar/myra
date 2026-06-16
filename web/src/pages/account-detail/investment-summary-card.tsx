@@ -55,7 +55,13 @@ export default function InvestmentSummaryCard({
       0,
     );
     const cashValue = cashPortfolios.reduce((sum, p) => sum + p.units, 0);
-    const totalValue = totalCostBasis + unrealizedGain + cashValue;
+    // Market value of remaining holdings + cash. Summing cost basis + unrealized
+    // gain would keep the basis of already-sold units and overstate the total.
+    const marketValue = assetPortfolios.reduce(
+      (sum, p) => sum + p.market_value,
+      0,
+    );
+    const totalValue = marketValue + cashValue;
     const unrealizedPct =
       totalCostBasis !== 0 ? (unrealizedGain / totalCostBasis) * 100 : 0;
     const totalDividends = cashPortfolios.reduce(

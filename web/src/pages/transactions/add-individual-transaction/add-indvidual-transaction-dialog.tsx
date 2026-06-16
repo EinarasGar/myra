@@ -20,6 +20,7 @@ import AddAssetTransferOutForm from "./add-asset-transfer-out-form";
 import AddAssetTransferInForm from "./add-asset-transfer-in-form";
 import AddAssetTradeForm from "./add-asset-trade-form";
 import AddAssetBalanceTransferForm from "./add-asset-balance-transfer-form";
+import AddCashBalanceTransferForm from "./add-cash-balance-transfer-form";
 import AddAccountFeesForm from "./add-account-fees-form";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +35,7 @@ const SPECIALIZED_TYPES = [
   "asset_transfer_in",
   "asset_trade",
   "asset_balance_transfer",
+  "cash_balance_transfer",
   "account_fees",
 ];
 
@@ -129,6 +131,9 @@ export function AddIndividualTranscationDialog({
             )}
             {selectedType === "asset_balance_transfer" && (
               <AddAssetBalanceTransferForm onSuccess={handleSuccess} />
+            )}
+            {selectedType === "cash_balance_transfer" && (
+              <AddCashBalanceTransferForm onSuccess={handleSuccess} />
             )}
             {selectedType === "account_fees" && (
               <AddAccountFeesForm onSuccess={handleSuccess} />

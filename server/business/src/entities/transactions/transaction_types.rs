@@ -7,6 +7,7 @@ use asset_sale::AssetSaleTransaction;
 use asset_trade::AssetTradeTransaction;
 use asset_transfer_in::AssetTransferInTransaction;
 use asset_transfer_out::AssetTransferOutTransaction;
+use cash_balance_transfer::CashBalanceTransferTransaction;
 use cash_dividend::CashDividendTransaction;
 use cash_transfer_in::CashTransferInTransaction;
 use cash_transfer_out::CashTransferOutTransaction;
@@ -31,6 +32,7 @@ pub mod asset_sale;
 pub mod asset_trade;
 pub mod asset_transfer_in;
 pub mod asset_transfer_out;
+pub mod cash_balance_transfer;
 pub mod cash_dividend;
 pub mod cash_transfer_in;
 pub mod cash_transfer_out;
@@ -49,6 +51,7 @@ pub enum TransactionTypes {
     AssetDividend,
     AssetBalanceTransfer,
     AccountFees,
+    CashBalanceTransfer,
 }
 
 impl From<DatabaseTransactionTypes> for TransactionTypes {
@@ -68,6 +71,7 @@ impl From<DatabaseTransactionTypes> for TransactionTypes {
                 TransactionTypes::AssetBalanceTransfer
             }
             DatabaseTransactionTypes::AccountFees => TransactionTypes::AccountFees,
+            DatabaseTransactionTypes::CashBalanceTransfer => TransactionTypes::CashBalanceTransfer,
         }
     }
 }
@@ -88,6 +92,7 @@ fn get_dto_constructor(
         TransactionTypes::AssetDividend => &AssetDividendTransaction::try_from_dto,
         TransactionTypes::AssetBalanceTransfer => &AssetBalanceTransferTransaction::try_from_dto,
         TransactionTypes::AccountFees => &AccountFeesTransaction::try_from_dto,
+        TransactionTypes::CashBalanceTransfer => &CashBalanceTransferTransaction::try_from_dto,
     }
 }
 
@@ -128,6 +133,9 @@ fn get_model_constructor(
         }
         TransactionTypes::AccountFees => {
             &AccountFeesTransaction::from_transaction_with_entries_models
+        }
+        TransactionTypes::CashBalanceTransfer => {
+            &CashBalanceTransferTransaction::from_transaction_with_entries_models
         }
     }
 }

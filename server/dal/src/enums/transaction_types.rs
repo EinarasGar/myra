@@ -13,4 +13,5 @@ pub enum DatabaseTransactionTypes {
     AssetDividend = 10,
     AssetBalanceTransfer = 11,
     AccountFees = 12,
+    CashBalanceTransfer = 13,
 }

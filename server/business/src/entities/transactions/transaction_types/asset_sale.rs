@@ -128,3 +128,307 @@ impl TransactionProcessor for AssetSaleTransaction {
         )))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use rust_decimal::Decimal;
+    use time::macros::datetime;
+
+    use crate::{
+        dtos::{
+            assets::asset_id_dto::AssetIdDto, entry_dto::EntryDto, fee_entry_dto::FeeEntryDto,
+            fee_entry_types_dto::FeeEntryTypesDto,
+        },
+        entities::portfolio_overview::portfolio::{
+            portfolio_asset_position_dto::PortfolioAssetPosition, Portfolio,
+        },
+        test_support::load_dynamic_enums,
+    };
+
+    use super::*;
+
+    fn fee_dto(asset_id: i32, account_id: Uuid, quantity: Decimal) -> FeeEntryDto {
+        FeeEntryDto {
+            entry: EntryDto::new(asset_id, account_id, quantity),
+            entry_type: FeeEntryTypesDto::Transaction,
+        }
+    }
+
+    fn sale_dto(
+        account_id: Uuid,
+        units_sold: Decimal,
+        proceeds: Decimal,
+        fee_entries: Vec<FeeEntryDto>,
+    ) -> TransactionDto {
+        TransactionDto {
+            transaction_id: None,
+            date: datetime!(2024-05-10 00:00:00 UTC),
+            fee_entries,
+            transaction_type: TransactionTypeDto::AssetSale(AssetSaleMetadataDto {
+                sale: EntryDto::new(1, account_id, units_sold),
+                proceeds: EntryDto::new(10, account_id, proceeds),
+            }),
+        }
+    }
+
+    fn model(
+        id: i32,
+        transaction_id: Uuid,
+        user_id: Uuid,
+        account_id: Uuid,
+        asset_id: i32,
+        quantity: Decimal,
+        category_id: i32,
+    ) -> TransactionWithEntriesModel {
+        TransactionWithEntriesModel {
+            id,
+            asset_id,
+            account_id,
+            quantity,
+            category_id,
+            transaction_id,
+            user_id,
+            type_id: DatabaseTransactionTypes::AssetSale,
+            date_transacted: datetime!(2024-05-10 00:00:00 UTC),
+        }
+    }
+
+    #[test]
+    fn try_from_dto_stamps_both_legs_with_asset_sale_category() {
+        load_dynamic_enums();
+        let user_id = Uuid::new_v4();
+        let account_id = Uuid::new_v4();
+        let dto = sale_dto(
+            account_id,
+            dec!(-4),
+            dec!(480),
+            vec![fee_dto(10, account_id, dec!(-2))],
+        );
+
+        let txn =
+            AssetSaleTransaction::try_from_dto(dto, user_id).expect("sale dto should convert");
+
+        let entries = txn.get_entries();
+        assert_eq!(entries.len(), 3);
+
+        let asset_leg = entries
+            .iter()
+            .find(|e| e.quantity == dec!(-4))
+            .expect("asset leg");
+        assert_eq!(asset_leg.category, 4);
+        assert_eq!(asset_leg.asset_id, 1);
+
+        let cash_leg = entries
+            .iter()
+            .find(|e| e.quantity == dec!(480))
+            .expect("proceeds leg");
+        assert_eq!(cash_leg.category, 4);
+        assert_eq!(cash_leg.asset_id, 10);
+
+        let fee_leg = entries
+            .iter()
+            .find(|e| e.quantity == dec!(-2))
+            .expect("fee entry rides along");
+        assert_eq!(fee_leg.category, 2);
+    }
+
+    #[test]
+    fn try_into_dto_recovers_sale_and_proceeds_legs_by_sign() {
+        load_dynamic_enums();
+        let user_id = Uuid::new_v4();
+        let account_id = Uuid::new_v4();
+        let transaction_id = Uuid::new_v4();
+
+        let txn = AssetSaleTransaction::from_transaction_with_entries_models(vec![
+            model(1, transaction_id, user_id, account_id, 10, dec!(480), 4),
+            model(2, transaction_id, user_id, account_id, 1, dec!(-4), 4),
+            model(3, transaction_id, user_id, account_id, 10, dec!(-2), 2),
+        ]);
+
+        let dto = txn.try_into_dto().expect("entity should convert to dto");
+
+        assert_eq!(dto.transaction_id, Some(transaction_id));
+        assert_eq!(dto.date, datetime!(2024-05-10 00:00:00 UTC));
+
+        let TransactionTypeDto::AssetSale(metadata) = dto.transaction_type else {
+            panic!("expected asset sale metadata");
+        };
+        assert_eq!(metadata.sale.asset_id, 1);
+        assert_eq!(metadata.sale.quantity, dec!(-4));
+        assert_eq!(metadata.proceeds.asset_id, 10);
+        assert_eq!(metadata.proceeds.quantity, dec!(480));
+
+        assert_eq!(dto.fee_entries.len(), 1);
+        assert_eq!(dto.fee_entries[0].entry.quantity, dec!(-2));
+        assert_eq!(dto.fee_entries[0].entry_type, FeeEntryTypesDto::Transaction);
+    }
+
+    #[test]
+    fn sale_portfolio_action_splits_realized_and_unrealized_gains_and_credits_net_cash() {
+        load_dynamic_enums();
+        let user_id = Uuid::new_v4();
+        let account_id = Uuid::new_v4();
+
+        let mut portfolio = Portfolio::new();
+        portfolio
+            .get_asset_portfolio(account_id, 1)
+            .add_positions(vec![PortfolioAssetPosition::new(
+                dec!(100),
+                dec!(10),
+                datetime!(2024-03-22 00:00:00 UTC),
+                dec!(5),
+            )]);
+
+        let dto = sale_dto(
+            account_id,
+            dec!(-4),
+            dec!(480),
+            vec![fee_dto(10, account_id, dec!(-2))],
+        );
+        let txn =
+            AssetSaleTransaction::try_from_dto(dto, user_id).expect("sale dto should convert");
+
+        let action = txn.get_portfolio_action().expect("portfolio action");
+        let TransactionPortfolioAction::Referential(action) = action else {
+            panic!("expected referential portfolio action");
+        };
+        assert_eq!(action.date(), datetime!(2024-05-10 00:00:00 UTC));
+        assert_eq!(action.get_conversion_asset_id(), AssetIdDto(10));
+
+        action.update_porfolio(&mut portfolio);
+
+        let account_portfolio = portfolio
+            .account_portfolios()
+            .get(&account_id)
+            .expect("account portfolio");
+        let asset_portfolio = account_portfolio
+            .asset_portfolios
+            .get(&1)
+            .expect("asset portfolio");
+        assert_eq!(asset_portfolio.positions.len(), 1);
+
+        let position = &asset_portfolio.positions[0];
+        assert_eq!(position.amount_sold(), dec!(4));
+        assert_eq!(position.get_amount_left(), dec!(6));
+        assert_eq!(position.total_fees(), dec!(7));
+        assert_eq!(position.get_realized_gains(), dec!(77.20));
+        assert_eq!(position.get_unrealized_gains(dec!(130)), dec!(175.80));
+        assert_eq!(position.get_total_gains(dec!(130)), dec!(253));
+
+        let cash_portfolio = account_portfolio
+            .cash_portfolios
+            .get(&10)
+            .expect("cash portfolio");
+        assert_eq!(cash_portfolio.units(), dec!(478));
+        assert_eq!(cash_portfolio.fees(), dec!(0));
+    }
+
+    #[test]
+    fn portfolio_action_consumes_oldest_position_first_and_spreads_fees_by_units_sold() {
+        load_dynamic_enums();
+        let user_id = Uuid::new_v4();
+        let account_id = Uuid::new_v4();
+
+        let mut portfolio = Portfolio::new();
+        portfolio
+            .get_asset_portfolio(account_id, 1)
+            .add_positions(vec![
+                PortfolioAssetPosition::new(
+                    dec!(100),
+                    dec!(5),
+                    datetime!(2024-03-22 00:00:00 UTC),
+                    dec!(0),
+                ),
+                PortfolioAssetPosition::new(
+                    dec!(110),
+                    dec!(5),
+                    datetime!(2024-03-23 00:00:00 UTC),
+                    dec!(0),
+                ),
+            ]);
+
+        let dto = sale_dto(
+            account_id,
+            dec!(-8),
+            dec!(960),
+            vec![fee_dto(10, account_id, dec!(-8))],
+        );
+        let txn =
+            AssetSaleTransaction::try_from_dto(dto, user_id).expect("sale dto should convert");
+        let action = txn.get_portfolio_action().expect("portfolio action");
+        let TransactionPortfolioAction::Referential(action) = action else {
+            panic!("expected referential portfolio action");
+        };
+        action.update_porfolio(&mut portfolio);
+
+        let account_portfolio = portfolio
+            .account_portfolios()
+            .get(&account_id)
+            .expect("account portfolio");
+        let asset_portfolio = account_portfolio
+            .asset_portfolios
+            .get(&1)
+            .expect("asset portfolio");
+        assert_eq!(asset_portfolio.positions.len(), 2);
+
+        let newer = &asset_portfolio.positions[0];
+        assert_eq!(newer.add_date(), datetime!(2024-03-23 00:00:00 UTC));
+        assert_eq!(newer.amount_sold(), dec!(3));
+        assert_eq!(newer.total_fees(), dec!(3));
+
+        let older = &asset_portfolio.positions[1];
+        assert_eq!(older.add_date(), datetime!(2024-03-22 00:00:00 UTC));
+        assert_eq!(older.amount_sold(), dec!(5));
+        assert_eq!(older.total_fees(), dec!(5));
+
+        let cash_portfolio = account_portfolio
+            .cash_portfolios
+            .get(&10)
+            .expect("cash portfolio");
+        assert_eq!(cash_portfolio.units(), dec!(952));
+    }
+
+    #[test]
+    fn portfolio_action_oversell_consumes_all_recorded_units() {
+        load_dynamic_enums();
+        let user_id = Uuid::new_v4();
+        let account_id = Uuid::new_v4();
+
+        let mut portfolio = Portfolio::new();
+        portfolio
+            .get_asset_portfolio(account_id, 1)
+            .add_positions(vec![PortfolioAssetPosition::new(
+                dec!(100),
+                dec!(5),
+                datetime!(2024-03-22 00:00:00 UTC),
+                dec!(0),
+            )]);
+
+        let dto = sale_dto(account_id, dec!(-10), dec!(1200), vec![]);
+        let txn =
+            AssetSaleTransaction::try_from_dto(dto, user_id).expect("sale dto should convert");
+        let action = txn.get_portfolio_action().expect("portfolio action");
+        let TransactionPortfolioAction::Referential(action) = action else {
+            panic!("expected referential portfolio action");
+        };
+        action.update_porfolio(&mut portfolio);
+
+        let account_portfolio = portfolio
+            .account_portfolios()
+            .get(&account_id)
+            .expect("account portfolio");
+        let asset_portfolio = account_portfolio
+            .asset_portfolios
+            .get(&1)
+            .expect("asset portfolio");
+        assert_eq!(asset_portfolio.positions.len(), 1);
+        assert_eq!(asset_portfolio.positions[0].amount_sold(), dec!(5));
+        assert_eq!(asset_portfolio.positions[0].get_amount_left(), dec!(0));
+
+        let cash_portfolio = account_portfolio
+            .cash_portfolios
+            .get(&10)
+            .expect("cash portfolio");
+        assert_eq!(cash_portfolio.units(), dec!(1200));
+    }
+}

@@ -19,6 +19,7 @@ import AddAssetTransferOutForm from "../add-individual-transaction/add-asset-tra
 import AddAssetTransferInForm from "../add-individual-transaction/add-asset-transfer-in-form";
 import AddAssetTradeForm from "../add-individual-transaction/add-asset-trade-form";
 import AddAssetBalanceTransferForm from "../add-individual-transaction/add-asset-balance-transfer-form";
+import AddCashBalanceTransferForm from "../add-individual-transaction/add-cash-balance-transfer-form";
 import AddAccountFeesForm from "../add-individual-transaction/add-account-fees-form";
 
 const SPECIALIZED_TYPES = [
@@ -32,6 +33,7 @@ const SPECIALIZED_TYPES = [
   "asset_transfer_in",
   "asset_trade",
   "asset_balance_transfer",
+  "cash_balance_transfer",
   "account_fees",
 ];
 
@@ -99,6 +101,9 @@ export function AddSubTransactionDialog({
         )}
         {selectedType === "asset_balance_transfer" && (
           <AddAssetBalanceTransferForm onCollect={handleCollect} />
+        )}
+        {selectedType === "cash_balance_transfer" && (
+          <AddCashBalanceTransferForm onCollect={handleCollect} />
         )}
         {selectedType === "account_fees" && (
           <AddAccountFeesForm onCollect={handleCollect} />

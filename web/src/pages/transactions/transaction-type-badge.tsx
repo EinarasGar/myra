@@ -15,6 +15,7 @@ const TYPE_VARIANTS: Record<
   asset_transfer_in: "default",
   asset_transfer_out: "destructive",
   asset_balance_transfer: "outline",
+  cash_balance_transfer: "outline",
   account_fees: "destructive",
   regular: "secondary",
 };
