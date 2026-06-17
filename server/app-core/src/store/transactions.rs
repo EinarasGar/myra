@@ -435,6 +435,22 @@ pub async fn search_assets(
     extract_assets(&resp.body).map_err(|e| ApiError::Parse { reason: e })
 }
 
+pub async fn get_all_currencies(
+    infra: &SharedInfra,
+    auth_token: Option<&str>,
+) -> Result<Vec<crate::models::AssetItem>, ApiError> {
+    let resp = infra
+        .get("/api/assets?count=500&start=0&asset_type=1", auth_token)
+        .await?;
+    if resp.status >= 400 {
+        return Err(ApiError::Server {
+            reason: format!("HTTP {}", resp.status),
+            status: resp.status,
+        });
+    }
+    crate::api::assets::extract_assets(&resp.body).map_err(|e| ApiError::Parse { reason: e })
+}
+
 /// Fetch every category assignable to a transaction: a large page of global
 /// categories plus the user's own custom ones. The picker loads this list once
 /// and filters it client-side, so there is no server-side search query here.

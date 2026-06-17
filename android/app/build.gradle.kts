@@ -279,4 +279,6 @@ dependencies {
     implementation("com.mikepenz:multiplatform-markdown-renderer-coil3:0.41.0")
 
     debugImplementation(libs.compose.ui.tooling)
+
+    testImplementation("junit:junit:4.13.2")
 }

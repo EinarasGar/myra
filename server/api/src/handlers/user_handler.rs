@@ -1,6 +1,12 @@
+use axum::extract::Path;
 use axum::Json;
+use uuid::Uuid;
 
+use crate::auth::AuthenticatedUser;
 use crate::errors::ApiError;
+
+use crate::extractors::ValidatedJson;
+use crate::states::UsersServiceState;
 
 #[cfg(feature = "database")]
 use serde::Serialize;
@@ -8,10 +14,9 @@ use serde::Serialize;
 use utoipa::ToSchema;
 
 #[cfg(feature = "database")]
-use crate::{
-    extractors::ValidatedJson, states::UsersServiceState,
-    view_models::users::add_user_view_model::AddUserViewModel,
-};
+use crate::view_models::users::add_user_view_model::AddUserViewModel;
+use shared::view_models::users::set_base_asset_view_model::SetBaseAssetRequestViewModel;
+use shared::view_models::users::set_onboarding_view_model::SetOnboardingVersionRequestViewModel;
 
 #[cfg(feature = "database")]
 #[derive(Debug, Serialize, ToSchema)]
@@ -61,4 +66,46 @@ pub async fn post_user() -> Result<Json<serde_json::Value>, ApiError> {
     Err(ApiError::NotFound(
         "User registration is not available under this authentication provider".to_string(),
     ))
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/users/{user_id}/base-asset",
+    tag = "Users",
+    params(("user_id" = String, Path, description = "Id of the user.")),
+    request_body(content = SetBaseAssetRequestViewModel),
+    responses((status = 200, description = "Base asset updated."))
+)]
+#[tracing::instrument(skip_all, err)]
+pub async fn post_base_asset(
+    _auth: AuthenticatedUser,
+    Path(user_id): Path<Uuid>,
+    UsersServiceState(users_service): UsersServiceState,
+    ValidatedJson(params): ValidatedJson<SetBaseAssetRequestViewModel>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    users_service
+        .set_default_asset(user_id, params.asset_id)
+        .await?;
+    Ok(Json(serde_json::json!({})))
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/users/{user_id}/onboarding",
+    tag = "Users",
+    params(("user_id" = String, Path, description = "Id of the user.")),
+    request_body(content = SetOnboardingVersionRequestViewModel),
+    responses((status = 200, description = "Onboarding version updated."))
+)]
+#[tracing::instrument(skip_all, err)]
+pub async fn post_onboarding(
+    _auth: AuthenticatedUser,
+    Path(user_id): Path<Uuid>,
+    UsersServiceState(users_service): UsersServiceState,
+    ValidatedJson(params): ValidatedJson<SetOnboardingVersionRequestViewModel>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    users_service
+        .set_onboarding_version(user_id, params.version)
+        .await?;
+    Ok(Json(serde_json::json!({})))
 }

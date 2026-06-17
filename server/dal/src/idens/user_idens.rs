@@ -5,6 +5,7 @@ pub enum UsersIden {
     Id,
     Username,
     DefaultAsset,
+    OnboardingVersion,
 }
 
 pub enum UserRolesIden {
@@ -52,6 +53,7 @@ impl Iden for UsersIden {
             Self::Id => "id",
             Self::Username => "username",
             Self::DefaultAsset => "default_asset",
+            Self::OnboardingVersion => "onboarding_version",
         }
     }
 }

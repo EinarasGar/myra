@@ -174,6 +174,8 @@ impl AiActionService {
             Some(id) => self.asset_service.get_asset(id).await?,
             None => {
                 let (_, _, default_asset_id) = self.users_service.get_basic_user(user_id).await?;
+                let default_asset_id = default_asset_id
+                    .ok_or_else(|| anyhow::anyhow!("User has no base currency set"))?;
                 self.asset_service.get_asset(default_asset_id).await?
             }
         };

@@ -18,6 +18,7 @@ export default function useSearchAssets(query?: string | null) {
       count,
       start,
       query || undefined,
+      undefined,
       {
         signal,
       },

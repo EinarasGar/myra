@@ -3,7 +3,7 @@ use sqlx::types::Uuid;
 #[derive(Debug)]
 pub struct AddUserModel {
     pub username: String,
-    pub default_asset: i32,
+    pub default_asset: Option<i32>,
 }
 
 #[derive(Debug, sqlx::FromRow)]
@@ -20,14 +20,22 @@ pub struct UserFullModel {
     pub username: String,
     pub role_id: i32,
     pub role_name: String,
-    pub default_asset: i32,
+    pub default_asset: Option<i32>,
+    pub onboarding_version: i32,
 }
 
 #[derive(Debug, sqlx::FromRow)]
 pub struct UserBasicModel {
     pub id: Uuid,
     pub username: String,
-    pub default_asset: i32,
+    pub default_asset: Option<i32>,
+}
+#[derive(Debug, sqlx::FromRow)]
+pub struct UserOnboardingModel {
+    pub id: Uuid,
+    pub username: String,
+    pub default_asset: Option<i32>,
+    pub onboarding_version: i32,
 }
 
 #[derive(Debug, sqlx::FromRow)]

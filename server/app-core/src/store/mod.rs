@@ -6,6 +6,7 @@ pub mod asset_detail;
 pub mod assets;
 pub mod categories;
 pub mod infra;
+pub mod onboarding;
 pub mod portfolio;
 pub mod quick_uploads;
 pub mod sse;
@@ -152,32 +153,43 @@ impl AppStore {
     pub fn unobserve_connection(&self) {
         *self.connection_observer.lock().unwrap() = None;
     }
+    pub fn get_onboarding_version(&self) -> i32 {
+        self.infra.onboarding_version().unwrap_or(0)
+    }
+    pub fn get_default_asset_id(&self) -> Option<i32> {
+        self.infra.default_asset_id()
+    }
 
     pub async fn on_sign_in(&self) {
         let token = self.get_auth_token();
 
         // Fetch user_id and default_asset_id from the server (works in all auth modes including noauth)
-        let (user_id, default_asset_id) =
+        let (user_id, default_asset_id, onboarding_version) =
             match self.infra.get("/api/auth/me", token.as_deref()).await {
                 Ok(resp) => match serde_json::from_str::<serde_json::Value>(&resp.body) {
                     Ok(v) => {
                         let user_id = v["user_id"].as_str().map(|s| s.to_string());
                         let default_asset_id = v["default_asset_id"].as_i64().map(|id| id as i32);
-                        (user_id, default_asset_id)
+                        let onboarding_version = v["onboarding_version"].as_i64().map(|n| n as i32);
+                        (user_id, default_asset_id, onboarding_version)
                     }
-                    Err(_) => (self.auth_provider.get_user_id(), None),
+                    Err(_) => (self.auth_provider.get_user_id(), None, None),
                 },
-                Err(_) => (self.auth_provider.get_user_id(), None),
+                Err(_) => (self.auth_provider.get_user_id(), None, None),
             };
 
         tracing::info!(
-            "AppStore::on_sign_in user_id={:?} default_asset_id={:?}",
+            "AppStore::on_sign_in user_id={:?} default_asset_id={:?} onboarding_version={:?}",
             user_id,
-            default_asset_id
+            default_asset_id,
+            onboarding_version
         );
         *self.infra.user_id.lock().unwrap() = user_id;
         if let Some(id) = default_asset_id {
             self.infra.set_default_asset_id(id);
+        }
+        if let Some(v) = onboarding_version {
+            self.infra.set_onboarding_version(v);
         }
 
         // Trigger initial quick uploads fetch
@@ -322,6 +334,16 @@ impl AppStore {
     pub async fn delete_category_type(&self, id: i32) -> Result<(), ApiError> {
         let token = self.get_auth_token();
         categories::delete_category_type(&self.infra, &self.categories, id, token.as_deref()).await
+    }
+
+    pub async fn update_base_asset(&self, asset_id: i32) -> Result<(), ApiError> {
+        let token = self.get_auth_token();
+        assets::update_base_asset(&self.infra, asset_id, token.as_deref()).await
+    }
+
+    pub async fn set_onboarding_version(&self, version: i32) -> Result<(), ApiError> {
+        let token = self.get_auth_token();
+        onboarding::set_onboarding_version(&self.infra, version, token.as_deref()).await
     }
 
     pub async fn create_account(
@@ -712,6 +734,11 @@ impl AppStore {
     ) -> Result<Vec<crate::models::AssetItem>, crate::error::ApiError> {
         let token = self.get_auth_token();
         transactions::search_assets(&self.infra, &query, token.as_deref()).await
+    }
+
+    pub async fn get_all_currencies(&self) -> Result<Vec<crate::models::AssetItem>, ApiError> {
+        let token = self.get_auth_token();
+        transactions::get_all_currencies(&self.infra, token.as_deref()).await
     }
 
     pub async fn get_all_categories(

@@ -230,6 +230,11 @@ pub fn get_asset_with_metadata(params: GetAssetsParams) -> DbQueryWithValues {
         }
     };
 
+    if let Some(asset_type) = params.asset_type {
+        get_assets_builder
+            .and_where(Expr::col((AssetsIden::Table, AssetsIden::AssetType)).eq(asset_type));
+    }
+
     if let Some(paging) = params.paging {
         get_assets_builder.limit(paging.count).offset(paging.start);
     }

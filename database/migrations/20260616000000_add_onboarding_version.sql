@@ -1,0 +1,2 @@
+ALTER TABLE users ADD COLUMN onboarding_version INT NOT NULL DEFAULT 0;
+ALTER TABLE users ALTER COLUMN default_asset DROP NOT NULL;

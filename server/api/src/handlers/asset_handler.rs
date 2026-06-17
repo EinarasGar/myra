@@ -31,9 +31,9 @@ use crate::{
             get_asset_pair_rates::{
                 GetAssetPairRatesRequestParams, GetAssetPairRatesResponseViewModel,
             },
-            get_assets::GetAssetsLineResponseViewModel,
+            get_assets::{GetAssetsLineResponseViewModel, GetAssetsRequestParams},
         },
-        base_models::search::{AssetsPage, PaginatedSearchQuery},
+        base_models::search::AssetsPage,
     },
 };
 
@@ -47,7 +47,7 @@ use crate::{
     get,
     path = "/api/assets",
     tag = "Assets",
-    params(PaginatedSearchQuery),
+    params(GetAssetsRequestParams),
     responses(
         (status = 200, description = "Assets retrieved successfully.", body = AssetsPage),
         GetResponses
@@ -59,7 +59,7 @@ use crate::{
 )]
 #[tracing::instrument(skip_all, err)]
 pub async fn search_assets(
-    ValidatedQuery(query_params): ValidatedQuery<PaginatedSearchQuery>,
+    ValidatedQuery(query_params): ValidatedQuery<GetAssetsRequestParams>,
     AssetsServiceState(assets_service): AssetsServiceState,
 ) -> Result<Json<AssetsPage>, ApiError> {
     let paging_dto = PagingDto {
@@ -68,7 +68,11 @@ pub async fn search_assets(
     };
 
     let page = assets_service
-        .search_assets(paging_dto, query_params.query.clone())
+        .search_assets(
+            paging_dto,
+            query_params.query.clone(),
+            query_params.asset_type,
+        )
         .await?;
 
     let mut map: HashMap<i32, IdentifiableAssetTypeViewModel> = HashMap::new();

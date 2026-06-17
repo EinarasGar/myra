@@ -285,7 +285,7 @@ impl AuthService {
                     .register_user(AddUserDto {
                         username: clerk_user_id.to_string(),
                         password: None,
-                        default_asset: 1,
+                        default_asset: None,
                         assign_default_role: false,
                     })
                     .await?;

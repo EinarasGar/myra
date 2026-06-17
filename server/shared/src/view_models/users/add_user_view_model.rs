@@ -17,7 +17,7 @@ impl From<AddUserViewModel> for AddUserDto {
         Self {
             username: p.username.into_inner(),
             password: Some(p.password.into_inner()),
-            default_asset: 1,
+            default_asset: None,
             assign_default_role: true,
         }
     }

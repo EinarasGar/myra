@@ -61,6 +61,8 @@ mod modifiers;
         super::handlers::auth_handler::post_logout,
         super::handlers::auth_handler::get_me,
         super::handlers::user_handler::post_user,
+        super::handlers::user_handler::post_base_asset,
+        super::handlers::user_handler::post_onboarding,
         super::handlers::user_asset_handler::delete_asset,
         super::handlers::user_asset_handler::delete_asset_pair_rates,
         super::handlers::user_asset_handler::delete_asset_pair,

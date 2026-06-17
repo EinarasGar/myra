@@ -85,6 +85,10 @@ const navMain = [
         title: "Accounts",
         url: "/settings/accounts",
       },
+      {
+        title: "Base Currency",
+        url: "/settings/base-currency",
+      },
     ],
   },
 ];

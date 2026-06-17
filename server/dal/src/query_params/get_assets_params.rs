@@ -6,6 +6,7 @@ pub struct GetAssetsParams {
     pub search_type: GetAssetsParamsSeachType,
     pub include_metadata: bool,
     pub paging: Option<PagingParams>,
+    pub asset_type: Option<i32>,
 }
 
 impl GetAssetsParams {
@@ -14,6 +15,7 @@ impl GetAssetsParams {
             search_type: GetAssetsParamsSeachType::ById(id),
             paging: None,
             include_metadata: true,
+            asset_type: None,
         }
     }
 
@@ -22,6 +24,7 @@ impl GetAssetsParams {
             search_type: GetAssetsParamsSeachType::ByIds(ids),
             paging: None,
             include_metadata: false,
+            asset_type: None,
         }
     }
 
@@ -30,6 +33,7 @@ impl GetAssetsParams {
             search_type: GetAssetsParamsSeachType::ByPairId(pair1, pair2),
             paging: None,
             include_metadata: false,
+            asset_type: None,
         }
     }
 
@@ -38,6 +42,7 @@ impl GetAssetsParams {
             search_type: GetAssetsParamsSeachType::ByQuery(query),
             paging: Some(PagingParams { start, count }),
             include_metadata: false,
+            asset_type: None,
         }
     }
 
@@ -46,7 +51,13 @@ impl GetAssetsParams {
             search_type: GetAssetsParamsSeachType::All,
             paging: Some(PagingParams { start, count }),
             include_metadata: false,
+            asset_type: None,
         }
+    }
+
+    pub fn with_asset_type(mut self, asset_type: Option<i32>) -> Self {
+        self.asset_type = asset_type;
+        self
     }
 }
 

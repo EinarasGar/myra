@@ -21,7 +21,8 @@ use crate::view_models::errors::AuthResponses;
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct AuthMeViewModel {
     pub user_id: String,
-    pub default_asset_id: i32,
+    pub default_asset_id: Option<i32>,
+    pub onboarding_version: i32,
     pub role: String,
     pub user_metadata: Option<UserMetadataViewModel>,
 }
@@ -51,10 +52,12 @@ pub async fn get_me(
 ) -> Result<Json<AuthMeViewModel>, ApiError> {
     #[cfg(feature = "clerk")]
     {
-        let (_, _, default_asset_id) = users_service.get_basic_user(auth.user_id).await?;
+        let (default_asset_id, onboarding_version) =
+            users_service.get_onboarding_info(auth.user_id).await?;
         Ok(Json(AuthMeViewModel {
             user_id: auth.user_id.to_string(),
             default_asset_id,
+            onboarding_version,
             role: format!("{:?}", auth.role),
             user_metadata: None,
         }))
@@ -65,6 +68,7 @@ pub async fn get_me(
         Ok(Json(AuthMeViewModel {
             user_id: user.id.to_string(),
             default_asset_id: user.default_asset_id,
+            onboarding_version: user.onboarding_version,
             role: format!("{:?}", user.role.role),
             user_metadata: Some(UserMetadataViewModel {
                 username: user.username,

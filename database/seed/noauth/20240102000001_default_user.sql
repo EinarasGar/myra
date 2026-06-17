@@ -2,9 +2,9 @@ INSERT INTO users (id, username, default_asset)
 VALUES (
     '00000000-0000-0000-0000-000000000000',
     'User',
-    (SELECT id FROM assets WHERE ticker = 'GBP')
+    NULL
 )
-ON CONFLICT (id) DO UPDATE SET default_asset = EXCLUDED.default_asset
+ON CONFLICT (id) DO NOTHING
 ;
 
 
@@ -13,5 +13,5 @@ VALUES (
     '00000000-0000-0000-0000-000000000000',
     2
 )
+ON CONFLICT DO NOTHING
 ;
-

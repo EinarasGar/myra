@@ -14,7 +14,8 @@ pub struct ApiResponse {
 #[derive(Debug, Clone, serde::Deserialize, uniffi::Record)]
 pub struct AuthMe {
     pub user_id: String,
-    pub default_asset_id: i32,
+    pub default_asset_id: Option<i32>,
+    pub onboarding_version: i32,
     pub role: String,
     pub user_metadata: Option<UserMetadata>,
 }

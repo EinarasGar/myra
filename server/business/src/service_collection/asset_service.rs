@@ -69,15 +69,17 @@ impl AssetsService {
         &self,
         paging: PagingDto,
         query: Option<String>,
+        asset_type: Option<i32>,
     ) -> anyhow::Result<PageOfResultsDto<asset_dto::AssetDto>> {
         let query = if let Some(query) = query {
-            asset_queries::get_asset_with_metadata(GetAssetsParams::by_query(
-                query,
-                paging.start,
-                paging.count,
-            ))
+            asset_queries::get_asset_with_metadata(
+                GetAssetsParams::by_query(query, paging.start, paging.count)
+                    .with_asset_type(asset_type),
+            )
         } else {
-            asset_queries::get_asset_with_metadata(GetAssetsParams::all(paging.start, paging.count))
+            asset_queries::get_asset_with_metadata(
+                GetAssetsParams::all(paging.start, paging.count).with_asset_type(asset_type),
+            )
         };
 
         let counted_models = self.db.fetch_all::<TotalCount<Asset>>(query).await?;

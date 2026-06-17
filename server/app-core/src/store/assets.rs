@@ -142,6 +142,24 @@ pub async fn create_user_asset(
     Ok(new_id)
 }
 
+pub async fn update_base_asset(
+    infra: &SharedInfra,
+    asset_id: i32,
+    auth_token: Option<&str>,
+) -> Result<(), ApiError> {
+    let user_id = infra.user_id().ok_or_else(|| ApiError::Parse {
+        reason: "no user_id".into(),
+    })?;
+    let body = serde_json::json!({ "asset_id": asset_id }).to_string();
+    let path = format!("/api/users/{user_id}/base-asset");
+    let resp = infra.post(&path, &body, auth_token).await?;
+    if resp.status >= 400 {
+        return Err(server_error(resp.status, &resp.body));
+    }
+    infra.set_default_asset_id(asset_id);
+    Ok(())
+}
+
 pub async fn add_user_asset_pair(
     infra: &SharedInfra,
     asset_id: i32,

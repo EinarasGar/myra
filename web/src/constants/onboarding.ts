@@ -1,0 +1,1 @@
+export const CURRENT_ONBOARDING_VERSION = 1;

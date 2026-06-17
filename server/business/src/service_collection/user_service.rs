@@ -1,5 +1,7 @@
 use dal::{
-    models::user_models::{AddUserModel, UserBasicModel, UserFullModel, UserRoleModel},
+    models::user_models::{
+        AddUserModel, UserBasicModel, UserFullModel, UserOnboardingModel, UserRoleModel,
+    },
     queries::user_queries,
 };
 
@@ -76,13 +78,45 @@ impl UsersService {
             username: user.username,
             role: role_dto,
             default_asset_id: user.default_asset,
+            onboarding_version: 0,
         };
 
         Ok(ret_obj)
     }
 
     #[tracing::instrument(skip_all, err)]
-    pub async fn get_basic_user(&self, user_id: Uuid) -> anyhow::Result<(Uuid, String, i32)> {
+    pub async fn get_onboarding_info(&self, user_id: Uuid) -> anyhow::Result<(Option<i32>, i32)> {
+        let query = user_queries::get_user_onboarding_info(user_id);
+        let model = self.db.fetch_one::<UserOnboardingModel>(query).await?;
+        Ok((model.default_asset, model.onboarding_version))
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn set_default_asset(&self, user_id: Uuid, asset_id: i32) -> anyhow::Result<()> {
+        let query = user_queries::update_user_default_asset(user_id, asset_id);
+        self.db.execute(query).await?;
+        Ok(())
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn get_default_asset(&self, user_id: Uuid) -> anyhow::Result<Option<i32>> {
+        let query = user_queries::get_user_basic_info(user_id);
+        let model = self.db.fetch_one::<UserBasicModel>(query).await?;
+        Ok(model.default_asset)
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn set_onboarding_version(&self, user_id: Uuid, version: i32) -> anyhow::Result<()> {
+        let query = user_queries::update_user_onboarding_version(user_id, version);
+        self.db.execute(query).await?;
+        Ok(())
+    }
+
+    #[tracing::instrument(skip_all, err)]
+    pub async fn get_basic_user(
+        &self,
+        user_id: Uuid,
+    ) -> anyhow::Result<(Uuid, String, Option<i32>)> {
         let query = user_queries::get_user_basic_info(user_id);
         let model = self.db.fetch_one::<UserBasicModel>(query).await?;
         Ok((model.id, model.username, model.default_asset))

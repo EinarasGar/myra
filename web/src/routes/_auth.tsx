@@ -1,11 +1,16 @@
 import * as React from "react";
-import { useAuth } from "@/hooks/use-auth";
+import {
+  useAuth,
+  useOnboardingVersion,
+} from "@/hooks/use-auth";
+import { CURRENT_ONBOARDING_VERSION } from "@/constants/onboarding";
 import { AppSidebar } from "@/pages/layout/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import {
   createFileRoute,
   Outlet,
   redirect,
+  useLocation,
   useNavigate,
 } from "@tanstack/react-router";
 
@@ -30,18 +35,30 @@ export const Route = createFileRoute("/_auth")({
 function AuthLayout() {
   const auth = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const onboardingVersion = useOnboardingVersion();
 
-  // If auth is fully resolved and the user is not authenticated, redirect to login.
-  // This handles cases where beforeLoad couldn't redirect (e.g. Clerk SDK was still loading).
-  if (!auth.isLoading && !auth.isAuthenticated) {
-    navigate({ to: "/login" });
+  const shouldRedirectToLogin = !auth.isLoading && !auth.isAuthenticated;
+  const shouldRedirectToOnboarding =
+    onboardingVersion !== undefined &&
+    onboardingVersion < CURRENT_ONBOARDING_VERSION &&
+    !location.pathname.startsWith("/onboarding");
+
+  React.useEffect(() => {
+    if (shouldRedirectToLogin) {
+      navigate({ to: "/login" });
+    }
+  }, [navigate, shouldRedirectToLogin]);
+
+  React.useEffect(() => {
+    if (shouldRedirectToOnboarding) {
+      navigate({ to: "/onboarding" });
+    }
+  }, [navigate, shouldRedirectToOnboarding]);
+
+  if (shouldRedirectToLogin || shouldRedirectToOnboarding) {
     return null;
   }
-
-  // Render the layout shell immediately — even while the auth provider is still
-  // initializing (e.g. Clerk SDK loading). The sidebar already shows skeletons
-  // for profile data, and page content suspends inside <AsyncBoundary> until
-  // userId resolves.
   return (
     <SidebarProvider>
       <AppSidebar />

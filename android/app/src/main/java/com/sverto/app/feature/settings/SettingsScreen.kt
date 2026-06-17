@@ -26,15 +26,27 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.clerk.api.Clerk
 import com.sverto.app.BuildConfig
+import com.sverto.app.SvertoApp
 import com.sverto.app.core.icons.LucideIcon
 import com.sverto.app.core.theme.LocalClerkTheme
+import com.sverto.app.feature.assets.components.CurrencyPickerSheet
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -51,6 +63,21 @@ fun SettingsScreen(
             .joinToString(" ")
             .ifBlank { if (isClerk) "Your account" else "Local account" }
     val email = user?.primaryEmailAddress?.emailAddress
+    val context = LocalContext.current
+    val appStore = remember { (context.applicationContext as SvertoApp).appStore }
+    val scope = rememberCoroutineScope()
+    var showCurrencyPicker by remember { mutableStateOf(false) }
+    var baseCurrencyId by remember { mutableStateOf(appStore.getCachedMe()?.defaultAssetId) }
+    var baseCurrencyTicker by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(baseCurrencyId) {
+        val id = baseCurrencyId ?: return@LaunchedEffect
+        val match =
+            runCatching { withContext(Dispatchers.IO) { appStore.getAllCurrencies() } }
+                .getOrNull()
+                ?.firstOrNull { it.id == id }
+        if (match != null) baseCurrencyTicker = match.ticker
+    }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
@@ -77,30 +104,57 @@ fun SettingsScreen(
             )
         },
     ) { innerPadding ->
-        Column(
+        Box(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
-                    .verticalScroll(rememberScrollState()),
+                    .padding(innerPadding),
         ) {
-            AccountHeader(displayName = displayName, email = email)
-            HorizontalDivider(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                color = MaterialTheme.colorScheme.outlineVariant,
-            )
-            SettingsRow(
-                icon = "tags",
-                label = "Custom Categories",
-                onClick = onCustomCategories,
-            )
-            SettingsRow(
-                icon = "coins",
-                label = "Custom Assets",
-                onClick = onCustomAssets,
-            )
-            if (isClerk) {
-                ProfileSettingsRow()
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+            ) {
+                AccountHeader(displayName = displayName, email = email)
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                )
+                SettingsRow(
+                    icon = "tags",
+                    label = "Custom Categories",
+                    onClick = onCustomCategories,
+                )
+                SettingsRow(
+                    icon = "coins",
+                    label = "Custom Assets",
+                    onClick = onCustomAssets,
+                )
+                SettingsRow(
+                    icon = "payments",
+                    label = "Base Currency",
+                    supporting = baseCurrencyTicker,
+                    onClick = { showCurrencyPicker = true },
+                )
+                if (isClerk) {
+                    ProfileSettingsRow()
+                }
+            }
+            if (showCurrencyPicker) {
+                CurrencyPickerSheet(
+                    title = "Choose base currency",
+                    selectedId = baseCurrencyId,
+                    onSelect = { asset ->
+                        showCurrencyPicker = false
+                        baseCurrencyId = asset.id
+                        baseCurrencyTicker = asset.ticker
+                        scope.launch {
+                            appStore.updateBaseAsset(asset.id)
+                        }
+                    },
+                    onDismiss = { showCurrencyPicker = false },
+                )
             }
         }
     }
@@ -156,6 +210,7 @@ private fun SettingsRow(
     icon: String,
     label: String,
     onClick: () -> Unit,
+    supporting: String? = null,
 ) {
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
@@ -168,6 +223,16 @@ private fun SettingsRow(
             )
         },
         headlineContent = { Text(label, style = MaterialTheme.typography.bodyLarge) },
+        supportingContent =
+            supporting?.let {
+                {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            },
         trailingContent = {
             Icon(
                 imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,

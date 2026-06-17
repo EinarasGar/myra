@@ -68,7 +68,10 @@ pub async fn get_account_networth_history(
     let range = RangeDto::StringBased(query_params.range.clone());
     let default_asset = AssetIdDto(match &query_params.default_asset_id {
         Some(id) => id.0,
-        None => user_service.get_full_user(user_id).await?.default_asset_id,
+        None => user_service
+            .get_default_asset(user_id)
+            .await?
+            .ok_or_else(|| ApiError::Conflict("User has no base currency set".to_string()))?,
     });
 
     let history = portfolio_service
@@ -115,7 +118,12 @@ pub async fn get_account_portfolio_overview(
 ) -> Result<Json<GetPortfolioOverviewViewModel>, ApiError> {
     let default_asset = match query_params.default_asset_id {
         Some(id) => AssetIdDto(id),
-        None => AssetIdDto(user_service.get_full_user(user_id).await?.default_asset_id),
+        None => AssetIdDto(
+            user_service
+                .get_default_asset(user_id)
+                .await?
+                .ok_or_else(|| ApiError::Conflict("User has no base currency set".to_string()))?,
+        ),
     };
 
     let overview = portfolio_service

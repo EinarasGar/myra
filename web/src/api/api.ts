@@ -2628,7 +2628,13 @@ export interface AuthMe {
    * @type {number}
    * @memberof AuthMe
    */
-  default_asset_id: number;
+  default_asset_id?: number | null;
+  /**
+   *
+   * @type {number}
+   * @memberof AuthMe
+   */
+  onboarding_version: number;
   /**
    *
    * @type {string}
@@ -5310,6 +5316,32 @@ export interface SearchCategoriesResponse {
    * @memberof SearchCategoriesResponse
    */
   total_results: number;
+}
+/**
+ *
+ * @export
+ * @interface SetBaseAssetRequest
+ */
+export interface SetBaseAssetRequest {
+  /**
+   *
+   * @type {number}
+   * @memberof SetBaseAssetRequest
+   */
+  asset_id: number;
+}
+/**
+ *
+ * @export
+ * @interface SetOnboardingVersionRequest
+ */
+export interface SetOnboardingVersionRequest {
+  /**
+   *
+   * @type {number}
+   * @memberof SetOnboardingVersionRequest
+   */
+  version: number;
 }
 /**
  *
@@ -9342,6 +9374,7 @@ export const AssetsApiAxiosParamCreator = function (
      * @param {number} [count]
      * @param {number} [start]
      * @param {string} [query]
+     * @param {number} [assetType] Filter by asset type id
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
@@ -9349,6 +9382,7 @@ export const AssetsApiAxiosParamCreator = function (
       count?: number,
       start?: number,
       query?: string,
+      assetType?: number,
       options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/api/assets`;
@@ -9381,6 +9415,10 @@ export const AssetsApiAxiosParamCreator = function (
 
       if (query !== undefined) {
         localVarQueryParameter["query"] = query;
+      }
+
+      if (assetType !== undefined) {
+        localVarQueryParameter["asset_type"] = assetType;
       }
 
       setSearchParams(localVarUrlObj, localVarQueryParameter);
@@ -9550,6 +9588,7 @@ export const AssetsApiFp = function (configuration?: Configuration) {
      * @param {number} [count]
      * @param {number} [start]
      * @param {string} [query]
+     * @param {number} [assetType] Filter by asset type id
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
@@ -9557,6 +9596,7 @@ export const AssetsApiFp = function (configuration?: Configuration) {
       count?: number,
       start?: number,
       query?: string,
+      assetType?: number,
       options?: RawAxiosRequestConfig,
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<AssetsPage>
@@ -9565,6 +9605,7 @@ export const AssetsApiFp = function (configuration?: Configuration) {
         count,
         start,
         query,
+        assetType,
         options,
       );
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
@@ -9664,6 +9705,7 @@ export const AssetsApiFactory = function (
      * @param {number} [count]
      * @param {number} [start]
      * @param {string} [query]
+     * @param {number} [assetType] Filter by asset type id
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
@@ -9671,10 +9713,11 @@ export const AssetsApiFactory = function (
       count?: number,
       start?: number,
       query?: string,
+      assetType?: number,
       options?: RawAxiosRequestConfig,
     ): AxiosPromise<AssetsPage> {
       return localVarFp
-        .searchAssets(count, start, query, options)
+        .searchAssets(count, start, query, assetType, options)
         .then((request) => request(axios, basePath));
     },
   };
@@ -9748,6 +9791,7 @@ export interface AssetsApiInterface {
    * @param {number} [count]
    * @param {number} [start]
    * @param {string} [query]
+   * @param {number} [assetType] Filter by asset type id
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    * @memberof AssetsApiInterface
@@ -9756,6 +9800,7 @@ export interface AssetsApiInterface {
     count?: number,
     start?: number,
     query?: string,
+    assetType?: number,
     options?: RawAxiosRequestConfig,
   ): AxiosPromise<AssetsPage>;
 }
@@ -9840,6 +9885,7 @@ export class AssetsApi extends BaseAPI implements AssetsApiInterface {
    * @param {number} [count]
    * @param {number} [start]
    * @param {string} [query]
+   * @param {number} [assetType] Filter by asset type id
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    * @memberof AssetsApi
@@ -9848,10 +9894,11 @@ export class AssetsApi extends BaseAPI implements AssetsApiInterface {
     count?: number,
     start?: number,
     query?: string,
+    assetType?: number,
     options?: RawAxiosRequestConfig,
   ) {
     return AssetsApiFp(this.configuration)
-      .searchAssets(count, start, query, options)
+      .searchAssets(count, start, query, assetType, options)
       .then((request) => request(this.axios, this.basePath));
   }
 }
@@ -17655,6 +17702,126 @@ export const UsersApiAxiosParamCreator = function (
 ) {
   return {
     /**
+     *
+     * @param {string} userId
+     * @param {SetBaseAssetRequest} setBaseAssetRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    postBaseAsset: async (
+      userId: string,
+      setBaseAssetRequest: SetBaseAssetRequest,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("postBaseAsset", "userId", userId);
+      // verify required parameter 'setBaseAssetRequest' is not null or undefined
+      assertParamExists(
+        "postBaseAsset",
+        "setBaseAssetRequest",
+        setBaseAssetRequest,
+      );
+      const localVarPath = `/api/users/{user_id}/base-asset`.replace(
+        `{${"user_id"}}`,
+        encodeURIComponent(String(userId)),
+      );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "POST",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        setBaseAssetRequest,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {SetOnboardingVersionRequest} setOnboardingVersionRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    postOnboarding: async (
+      userId: string,
+      setOnboardingVersionRequest: SetOnboardingVersionRequest,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("postOnboarding", "userId", userId);
+      // verify required parameter 'setOnboardingVersionRequest' is not null or undefined
+      assertParamExists(
+        "postOnboarding",
+        "setOnboardingVersionRequest",
+        setOnboardingVersionRequest,
+      );
+      const localVarPath = `/api/users/{user_id}/onboarding`.replace(
+        `{${"user_id"}}`,
+        encodeURIComponent(String(userId)),
+      );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "POST",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        setOnboardingVersionRequest,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
      * Creates a new user account with the provided username and password.
      * @summary Register a new user
      * @param {AddUser} addUser
@@ -17715,6 +17882,70 @@ export const UsersApiFp = function (configuration?: Configuration) {
   const localVarAxiosParamCreator = UsersApiAxiosParamCreator(configuration);
   return {
     /**
+     *
+     * @param {string} userId
+     * @param {SetBaseAssetRequest} setBaseAssetRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async postBaseAsset(
+      userId: string,
+      setBaseAssetRequest: SetBaseAssetRequest,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.postBaseAsset(
+        userId,
+        setBaseAssetRequest,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["UsersApi.postBaseAsset"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {SetOnboardingVersionRequest} setOnboardingVersionRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async postOnboarding(
+      userId: string,
+      setOnboardingVersionRequest: SetOnboardingVersionRequest,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.postOnboarding(
+        userId,
+        setOnboardingVersionRequest,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["UsersApi.postOnboarding"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
      * Creates a new user account with the provided username and password.
      * @summary Register a new user
      * @param {AddUser} addUser
@@ -17758,6 +17989,38 @@ export const UsersApiFactory = function (
   const localVarFp = UsersApiFp(configuration);
   return {
     /**
+     *
+     * @param {string} userId
+     * @param {SetBaseAssetRequest} setBaseAssetRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    postBaseAsset(
+      userId: string,
+      setBaseAssetRequest: SetBaseAssetRequest,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<void> {
+      return localVarFp
+        .postBaseAsset(userId, setBaseAssetRequest, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @param {string} userId
+     * @param {SetOnboardingVersionRequest} setOnboardingVersionRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    postOnboarding(
+      userId: string,
+      setOnboardingVersionRequest: SetOnboardingVersionRequest,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<void> {
+      return localVarFp
+        .postOnboarding(userId, setOnboardingVersionRequest, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
      * Creates a new user account with the provided username and password.
      * @summary Register a new user
      * @param {AddUser} addUser
@@ -17782,6 +18045,34 @@ export const UsersApiFactory = function (
  */
 export interface UsersApiInterface {
   /**
+   *
+   * @param {string} userId
+   * @param {SetBaseAssetRequest} setBaseAssetRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UsersApiInterface
+   */
+  postBaseAsset(
+    userId: string,
+    setBaseAssetRequest: SetBaseAssetRequest,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<void>;
+
+  /**
+   *
+   * @param {string} userId
+   * @param {SetOnboardingVersionRequest} setOnboardingVersionRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UsersApiInterface
+   */
+  postOnboarding(
+    userId: string,
+    setOnboardingVersionRequest: SetOnboardingVersionRequest,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<void>;
+
+  /**
    * Creates a new user account with the provided username and password.
    * @summary Register a new user
    * @param {AddUser} addUser
@@ -17802,6 +18093,42 @@ export interface UsersApiInterface {
  * @extends {BaseAPI}
  */
 export class UsersApi extends BaseAPI implements UsersApiInterface {
+  /**
+   *
+   * @param {string} userId
+   * @param {SetBaseAssetRequest} setBaseAssetRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UsersApi
+   */
+  public postBaseAsset(
+    userId: string,
+    setBaseAssetRequest: SetBaseAssetRequest,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return UsersApiFp(this.configuration)
+      .postBaseAsset(userId, setBaseAssetRequest, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @param {string} userId
+   * @param {SetOnboardingVersionRequest} setOnboardingVersionRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UsersApi
+   */
+  public postOnboarding(
+    userId: string,
+    setOnboardingVersionRequest: SetOnboardingVersionRequest,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return UsersApiFp(this.configuration)
+      .postOnboarding(userId, setOnboardingVersionRequest, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
   /**
    * Creates a new user account with the provided username and password.
    * @summary Register a new user

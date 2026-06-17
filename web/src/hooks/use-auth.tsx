@@ -73,3 +73,22 @@ export function useDefaultAssetId(): number | null {
   const cached = queryClient.getQueryData<AuthMe>([QueryKeys.AUTH_ME]);
   return cached?.default_asset_id ?? null;
 }
+export function useOnboardingVersion(): number | undefined {
+  const queryClient = useQueryClient();
+  const [version, setVersion] = React.useState(
+    () => queryClient.getQueryData<AuthMe>([QueryKeys.AUTH_ME])?.onboarding_version,
+  );
+
+  React.useEffect(
+    () =>
+      queryClient.getQueryCache().subscribe(() => {
+        setVersion(
+          queryClient.getQueryData<AuthMe>([QueryKeys.AUTH_ME])
+            ?.onboarding_version,
+        );
+      }),
+    [queryClient],
+  );
+
+  return version;
+}

@@ -4,6 +4,6 @@ use serde::Deserialize;
 pub struct AddUserDto {
     pub username: String,
     pub password: Option<String>,
-    pub default_asset: i32,
+    pub default_asset: Option<i32>,
     pub assign_default_role: bool,
 }

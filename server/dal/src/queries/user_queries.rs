@@ -105,6 +105,7 @@ pub fn get_user_full_info(user_id: Uuid) -> DbQueryWithValues {
         .column((UsersIden::Table, UsersIden::Id))
         .column((UsersIden::Table, UsersIden::Username))
         .column((UsersIden::Table, UsersIden::DefaultAsset))
+        .column((UsersIden::Table, UsersIden::OnboardingVersion))
         .column((UserRolesIden::Table, UserRolesIden::RoleName))
         .expr_as(
             Expr::col((
@@ -267,6 +268,38 @@ pub fn insert_external_identity_mapping(
             ExternalIdentityMappingsIden::UserId,
         ])
         .values_panic([provider.into(), external_user_id.into(), user_id.into()])
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+#[tracing::instrument(skip_all)]
+pub fn get_user_onboarding_info(user_id: Uuid) -> DbQueryWithValues {
+    Query::select()
+        .column((UsersIden::Table, UsersIden::Id))
+        .column((UsersIden::Table, UsersIden::Username))
+        .column((UsersIden::Table, UsersIden::DefaultAsset))
+        .column((UsersIden::Table, UsersIden::OnboardingVersion))
+        .from(UsersIden::Table)
+        .and_where(Expr::col((UsersIden::Table, UsersIden::Id)).eq(user_id))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn update_user_default_asset(user_id: Uuid, asset_id: i32) -> DbQueryWithValues {
+    Query::update()
+        .table(UsersIden::Table)
+        .value(UsersIden::DefaultAsset, asset_id)
+        .and_where(Expr::col(UsersIden::Id).eq(user_id))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn update_user_onboarding_version(user_id: Uuid, version: i32) -> DbQueryWithValues {
+    Query::update()
+        .table(UsersIden::Table)
+        .value(UsersIden::OnboardingVersion, version)
+        .and_where(Expr::col(UsersIden::Id).eq(user_id))
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }
