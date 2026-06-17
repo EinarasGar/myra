@@ -16,7 +16,9 @@ use std::sync::{Arc, Mutex};
 use self::infra::SharedInfra;
 use crate::api::quick_upload;
 use crate::error::ApiError;
-use crate::models::{AuthMe, ConnectionStatus, CreateAccountInput, QuickUploadDetail};
+use crate::models::{
+    AuthMe, ConnectionStatus, CreateAccountInput, QuickUploadDetail, UpdateAccountInput,
+};
 
 /// Chart period ranges and their display labels.
 /// Shared between account_detail and asset_detail modules.
@@ -335,6 +337,35 @@ impl AppStore {
     ) -> Result<Vec<crate::models::AccountTypeItem>, crate::error::ApiError> {
         let token = self.get_auth_token();
         accounts::get_account_types(&self.infra, token.as_deref()).await
+    }
+
+    pub async fn update_account(
+        &self,
+        account_id: String,
+        input: UpdateAccountInput,
+    ) -> Result<(), crate::error::ApiError> {
+        let token = self.get_auth_token();
+        accounts::update_account(
+            &self.infra,
+            &self.accounts,
+            &account_id,
+            input,
+            token.as_deref(),
+        )
+        .await
+    }
+
+    pub async fn delete_account(&self, account_id: String) -> Result<(), crate::error::ApiError> {
+        let token = self.get_auth_token();
+        accounts::delete_account(&self.infra, &self.accounts, &account_id, token.as_deref()).await
+    }
+
+    pub async fn get_account(
+        &self,
+        account_id: String,
+    ) -> Result<crate::models::AccountEditModel, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        accounts::get_account(&self.infra, &account_id, token.as_deref()).await
     }
 
     // ── Account Detail ───────────────────────────────────────────────

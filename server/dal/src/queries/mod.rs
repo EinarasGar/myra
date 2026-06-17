@@ -2,6 +2,7 @@ use std::fmt::Debug;
 
 use sea_query_sqlx::SqlxValues;
 
+pub mod account_identifier_queries;
 pub mod account_queries;
 pub mod ai_conversation_queries;
 pub mod ai_queries;

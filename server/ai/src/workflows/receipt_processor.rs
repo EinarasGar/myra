@@ -34,6 +34,7 @@ Use the available tools to:
 - Search for matching accounts (the account the money was spent from)
 - Search for appropriate categories for the transaction
 - Search for the correct currency/asset
+- If the receipt shows a card ending, account number, or IBAN, match it to the account whose `identifiers` contains it (card_last4 = last 4 digits; account_number/iban = exact).
 
 After gathering information, produce your final output as a structured JSON object in your LAST message.
 

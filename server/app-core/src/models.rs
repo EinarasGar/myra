@@ -91,12 +91,38 @@ pub struct AccountListItem {
     pub holdings_count: Option<u32>,
 }
 
+#[derive(Debug, Clone, uniffi::Record, serde::Serialize)]
+pub struct AccountIdentifier {
+    pub kind: String,
+    pub value: String,
+}
+
 #[derive(Debug, Clone, uniffi::Record)]
 pub struct CreateAccountInput {
     pub name: String,
     pub account_type_id: i32,
     pub liquidity_type_id: i32,
     pub ownership_share: f64,
+    pub identifiers: Vec<AccountIdentifier>,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct UpdateAccountInput {
+    pub name: String,
+    pub account_type_id: i32,
+    pub liquidity_type_id: i32,
+    pub ownership_share: f64,
+    pub identifiers: Vec<AccountIdentifier>,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct AccountEditModel {
+    pub id: String,
+    pub name: String,
+    pub account_type_id: i32,
+    pub liquidity_type_id: i32,
+    pub ownership_share: f64,
+    pub identifiers: Vec<AccountIdentifier>,
 }
 
 #[derive(Debug, Clone, uniffi::Record)]

@@ -41,11 +41,29 @@ pub struct AccountUpdateModel {
     pub liquidity_type: i32,
     pub ownership_share: Decimal,
 }
-
 pub struct AccountCreationModel {
     pub user_id: Uuid,
     pub account_name: String,
     pub account_type: i32,
     pub liquidity_type: i32,
     pub ownership_share: Decimal,
+}
+
+#[derive(sqlx::FromRow, Debug)]
+pub struct AccountIdentifierRow {
+    pub account_id: Uuid,
+    pub kind: String,
+    pub value: String,
+}
+
+#[derive(sqlx::FromRow, Debug)]
+pub struct ConflictingIdentifierModel {
+    pub kind: String,
+    pub value: String,
+}
+
+pub struct AccountIdentifierInsert {
+    pub account_id: Uuid,
+    pub kind: String,
+    pub value: String,
 }

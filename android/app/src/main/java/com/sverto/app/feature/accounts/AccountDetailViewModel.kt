@@ -2,10 +2,12 @@ package com.sverto.app.feature.accounts
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import uniffi.sverto_core.AccountDetailObserver
 import uniffi.sverto_core.AccountDetailState
 import uniffi.sverto_core.AppStore
@@ -63,6 +65,19 @@ class AccountDetailViewModel(
     fun refresh() {
         _isRefreshing.value = true
         viewModelScope.launch { store.refreshAccountDetail() }
+    }
+
+    fun delete(
+        accountId: String,
+        onDeleted: () -> Unit,
+    ) {
+        viewModelScope.launch {
+            val result =
+                withContext(Dispatchers.IO) {
+                    runCatching { store.deleteAccount(accountId) }
+                }
+            result.onSuccess { onDeleted() }
+        }
     }
 
     override fun onCleared() {

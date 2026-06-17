@@ -2,6 +2,7 @@ use sea_query::{Func, FunctionCall, Iden, IntoColumnRef, SimpleExpr};
 use time::{Duration, OffsetDateTime};
 
 pub mod account_idens;
+pub mod account_identifier_idens;
 pub mod ai_conversation_idens;
 pub mod asset_idens;
 pub mod entries_idens;

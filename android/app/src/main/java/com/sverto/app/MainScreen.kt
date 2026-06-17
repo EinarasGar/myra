@@ -107,6 +107,7 @@ private const val ACCOUNT_DETAIL_ROUTE = "accountDetail/{accountId}/{accountName
 private const val ASSET_DETAIL_ROUTE = "assetDetail/{accountId}/{assetId}"
 private const val ACCOUNT_TRANSACTIONS_ROUTE = "accountTransactions/{accountId}"
 private const val ADD_ACCOUNT_ROUTE = "addAccount"
+private const val EDIT_ACCOUNT_ROUTE = "editAccount/{accountId}"
 private const val MARKET_ASSET_DETAIL_ROUTE = "asset/{assetId}?userAsset={userAsset}"
 private const val CUSTOM_ASSETS_ROUTE = "customAssets"
 
@@ -362,6 +363,7 @@ fun MainScreen(
                     editingGroupIndex = editingGroupIndex,
                     onNavigateToDetail = ::navigateToDetail,
                     aiChatViewModel = aiChatViewModel,
+                    onEdit = { id -> navController.navigate("editAccount/$id") },
                 )
             }
         }
@@ -395,6 +397,7 @@ private fun MainNavGraph(
     editingGroupIndex: MutableState<Int?>,
     onNavigateToDetail: (TransactionListItem, Boolean) -> Unit,
     aiChatViewModel: AiChatViewModel,
+    onEdit: (String) -> Unit,
 ) {
     val fadeSpec = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
     val slideSpec = MaterialTheme.motionScheme.defaultSpatialSpec<IntOffset>()
@@ -471,6 +474,18 @@ private fun MainNavGraph(
             AddAccountScreen(
                 onBack = { navController.popBackStack() },
                 onSuccess = { navController.popBackStack() },
+            )
+        }
+        composable(
+            route = EDIT_ACCOUNT_ROUTE,
+            arguments = listOf(navArgument("accountId") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val accountId =
+                backStackEntry.arguments?.getString("accountId") ?: return@composable
+            AddAccountScreen(
+                onBack = { navController.popBackStack() },
+                onSuccess = { navController.popBackStack() },
+                accountId = accountId,
             )
         }
         composable(
@@ -774,6 +789,7 @@ private fun MainNavGraph(
                     navController.navigate("accountTransactions/$accountId")
                 },
                 onTransactionClick = { tx -> onNavigateToDetail(tx, false) },
+                onEdit = onEdit,
                 sharedTransitionScope = sharedScope,
                 animatedVisibilityScope = this@composable,
                 modifier = Modifier.fillMaxSize(),

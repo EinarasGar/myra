@@ -3,6 +3,7 @@ use rust_decimal::Decimal;
 use uuid::Uuid;
 
 use super::{
+    account_identifier_dto::AccountIdentifierDto,
     account_liquidity_type_dto::AccountLiquidityTypeDto, account_type_dto::AccountTypeDto,
 };
 
@@ -13,6 +14,7 @@ pub struct FullAccountDto {
     pub account_type: AccountTypeDto,
     pub liquidity_type: AccountLiquidityTypeDto,
     pub ownership_share: Decimal,
+    pub identifiers: Vec<AccountIdentifierDto>,
 }
 
 impl From<AccountWithMetadata> for FullAccountDto {
@@ -30,6 +32,7 @@ impl From<AccountWithMetadata> for FullAccountDto {
                 name: account.liquidity_type_name,
             },
             ownership_share: account.ownership_share,
+            identifiers: Vec::new(),
         }
     }
 }

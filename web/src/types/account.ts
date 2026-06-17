@@ -17,12 +17,18 @@ export interface Account {
   name: string;
 }
 
+export interface AccountIdentifier {
+  kind: "card_last4" | "account_number" | "iban";
+  value: string;
+}
+
 export interface ExpandedAccount {
   id: string;
   name: string;
   accountType?: AccountType;
   liquidityType?: LiquidityType;
   ownershipShare: number;
+  identifiers: AccountIdentifier[];
 }
 
 export const mapAccountComboBoxProps = <T extends Account | ExpandedAccount>(

@@ -3,10 +3,13 @@ package com.sverto.app.feature.accounts
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,11 +26,20 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.InputChip
+import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumFlexibleTopAppBar
@@ -38,18 +50,22 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -59,6 +75,7 @@ import com.sverto.app.core.SvertoViewModelFactory
 import com.sverto.app.feature.accounts.components.accountTypeContainerColor
 import com.sverto.app.feature.accounts.components.accountTypeIcon
 import com.sverto.app.feature.accounts.components.accountTypeOnContainerColor
+import uniffi.sverto_core.AccountIdentifier
 import uniffi.sverto_core.AccountTypeItem
 
 // Target tile width; the grid fits as many columns as comfortably fit, clamped to 2..4.
@@ -77,18 +94,28 @@ fun AddAccountScreen(
     onBack: () -> Unit,
     onSuccess: () -> Unit,
     modifier: Modifier = Modifier,
+    accountId: String? = null,
     viewModel: AddAccountViewModel = viewModel(factory = SvertoViewModelFactory),
 ) {
     val name by viewModel.name.collectAsStateWithLifecycle()
     val selectedTypeId by viewModel.selectedTypeId.collectAsStateWithLifecycle()
     val selectedLiquidityId by viewModel.selectedLiquidityId.collectAsStateWithLifecycle()
     val ownershipShare by viewModel.ownershipShare.collectAsStateWithLifecycle()
+    val identifiers by viewModel.identifiers.collectAsStateWithLifecycle()
     val accountTypes by viewModel.accountTypes.collectAsStateWithLifecycle()
     val typesLoading by viewModel.typesLoading.collectAsStateWithLifecycle()
     val submitState by viewModel.submitState.collectAsStateWithLifecycle()
     val isValid by viewModel.isValid.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
+
+    val isEditing = accountId != null
+
+    LaunchedEffect(accountId) {
+        if (accountId != null) {
+            viewModel.loadForEdit(accountId)
+        }
+    }
 
     LaunchedEffect(submitState) {
         if (submitState is SubmitState.Error) {
@@ -104,7 +131,7 @@ fun AddAccountScreen(
     Scaffold(
         topBar = {
             MediumFlexibleTopAppBar(
-                title = { Text("Add account") },
+                title = { Text(if (isEditing) "Edit account" else "Add account") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -126,7 +153,7 @@ fun AddAccountScreen(
             SaveBar(
                 isLoading = isLoading,
                 enabled = isValid && !isLoading,
-                onSave = { viewModel.createAccount(onSuccess) },
+                onSave = { viewModel.save(onSuccess) },
             )
         },
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -190,6 +217,15 @@ fun AddAccountScreen(
                 enabled = !isLoading,
                 onChange = { viewModel.ownershipShare.value = it },
             )
+
+            FieldSection(title = "Account identifiers") {
+                AccountIdentifiersField(
+                    identifiers = identifiers,
+                    enabled = !isLoading,
+                    onAdd = { kind, raw -> viewModel.addIdentifier(kind, raw) },
+                    onRemove = { viewModel.removeIdentifier(it) },
+                )
+            }
 
             Spacer(Modifier.height(8.dp))
         }
@@ -396,6 +432,141 @@ private fun OwnershipSection(
             modifier = Modifier.fillMaxWidth(),
         )
     }
+}
+
+private val IDENTIFIER_KINDS =
+    listOf("card_last4" to "Card ending", "account_number" to "Account number", "iban" to "IBAN")
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@Composable
+private fun AccountIdentifiersField(
+    identifiers: List<AccountIdentifier>,
+    enabled: Boolean,
+    onAdd: (String, String) -> String?,
+    onRemove: (AccountIdentifier) -> Unit,
+) {
+    var showAddDialog by remember { mutableStateOf(false) }
+
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        identifiers.forEach { id ->
+            val label = IDENTIFIER_KINDS.firstOrNull { it.first == id.kind }?.second ?: id.kind
+            val shown =
+                if (id.kind == "iban" && id.value.length > 12) {
+                    "${id.value.take(4)}…${id.value.takeLast(4)}"
+                } else {
+                    id.value
+                }
+            InputChip(
+                selected = false,
+                onClick = { onRemove(id) },
+                label = { Text("$label: $shown") },
+                enabled = enabled,
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = "Remove $label $shown",
+                        modifier = Modifier.size(InputChipDefaults.IconSize),
+                    )
+                },
+            )
+        }
+        AssistChip(
+            onClick = { showAddDialog = true },
+            label = { Text("Add") },
+            enabled = enabled,
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = null,
+                    modifier = Modifier.size(AssistChipDefaults.IconSize),
+                )
+            },
+        )
+    }
+
+    if (showAddDialog) {
+        AddIdentifierDialog(
+            onAdd = onAdd,
+            onDismiss = { showAddDialog = false },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddIdentifierDialog(
+    onAdd: (String, String) -> String?,
+    onDismiss: () -> Unit,
+) {
+    var kind by remember { mutableStateOf(IDENTIFIER_KINDS.first().first) }
+    var value by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf<String?>(null) }
+    var menuOpen by remember { mutableStateOf(false) }
+    val kindLabel = IDENTIFIER_KINDS.firstOrNull { it.first == kind }?.second ?: kind
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add identifier") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box {
+                    OutlinedTextField(
+                        value = kindLabel,
+                        onValueChange = {},
+                        readOnly = true,
+                        enabled = false,
+                        label = { Text("Type") },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Box(
+                        Modifier
+                            .matchParentSize()
+                            .clickable { menuOpen = true },
+                    )
+                    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                        IDENTIFIER_KINDS.forEach { (k, label) ->
+                            DropdownMenuItem(
+                                text = { Text(label) },
+                                onClick = {
+                                    kind = k
+                                    value = ""
+                                    error = null
+                                    menuOpen = false
+                                },
+                            )
+                        }
+                    }
+                }
+                OutlinedTextField(
+                    value = value,
+                    onValueChange = {
+                        value = it
+                        error = null
+                    },
+                    label = { Text(if (kind == "iban") "IBAN" else "Value") },
+                    singleLine = true,
+                    isError = error != null,
+                    supportingText = error?.let { { Text(it) } },
+                    keyboardOptions =
+                        KeyboardOptions(
+                            keyboardType = if (kind == "iban") KeyboardType.Text else KeyboardType.NumberPassword,
+                        ),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val err = onAdd(kind, value)
+                    if (err == null) onDismiss() else error = err
+                },
+                enabled = value.isNotBlank(),
+            ) { Text("Add") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)

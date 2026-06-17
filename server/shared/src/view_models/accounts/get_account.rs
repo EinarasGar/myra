@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+use crate::view_models::accounts::base_models::account_identifier::AccountIdentifierViewModel;
 use crate::view_models::accounts::base_models::ownership_share::OwnershipShare;
 
 use super::base_models::{
@@ -13,4 +14,6 @@ pub struct GetAccountResponseViewModel {
     pub account: ExpandedAccountViewModel,
     pub ownership_share: OwnershipShare,
     pub liquidity_type: IdentifiableAccountLiquidityTypeViewModel,
+    #[serde(default)]
+    pub identifiers: Vec<AccountIdentifierViewModel>,
 }

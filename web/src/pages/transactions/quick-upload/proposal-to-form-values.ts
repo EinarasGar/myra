@@ -34,7 +34,7 @@ function findAccount(
   if (!id) return null;
   const a = lookups.accounts.find((x) => x.account_id === id);
   if (!a) return null;
-  return { id: a.account_id, name: a.name, ownershipShare: 1 };
+  return { id: a.account_id, name: a.name, ownershipShare: 1, identifiers: [] };
 }
 
 function findAsset(

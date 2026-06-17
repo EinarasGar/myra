@@ -2,9 +2,11 @@ use std::sync::Mutex;
 
 use super::infra::SharedInfra;
 use crate::api::account_overview::extract_account_balance;
-use crate::api::accounts::{extract_account_types, extract_accounts};
+use crate::api::accounts::{extract_account_edit, extract_account_types, extract_accounts};
 use crate::error::{server_error, ApiError};
-use crate::models::{AccountTypeItem, AccountsState, CreateAccountInput};
+use crate::models::{
+    AccountEditModel, AccountTypeItem, AccountsState, CreateAccountInput, UpdateAccountInput,
+};
 
 #[uniffi::export(callback_interface)]
 pub trait AccountsObserver: Send + Sync {
@@ -185,6 +187,7 @@ pub async fn create_account(
         "account_type": input.account_type_id,
         "liquidity_type": input.liquidity_type_id,
         "ownership_share": input.ownership_share,
+        "identifiers": input.identifiers,
     })
     .to_string();
 
@@ -210,4 +213,71 @@ pub async fn get_account_types(
         return Err(server_error(resp.status, &resp.body));
     }
     extract_account_types(&resp.body).map_err(|e| ApiError::Parse { reason: e })
+}
+
+pub async fn update_account(
+    infra: &SharedInfra,
+    module: &Mutex<AccountsModule>,
+    account_id: &str,
+    input: UpdateAccountInput,
+    auth_token: Option<&str>,
+) -> Result<(), ApiError> {
+    let user_id = infra.user_id().ok_or_else(|| ApiError::Parse {
+        reason: "no user_id".into(),
+    })?;
+
+    let body = serde_json::json!({
+        "name": input.name,
+        "account_type": input.account_type_id,
+        "liquidity_type": input.liquidity_type_id,
+        "ownership_share": input.ownership_share,
+        "identifiers": input.identifiers,
+    })
+    .to_string();
+
+    let path = format!("/api/users/{user_id}/accounts/{account_id}");
+    let resp = infra.put(&path, &body, auth_token).await?;
+    if resp.status >= 400 {
+        return Err(server_error(resp.status, &resp.body));
+    }
+
+    refresh_accounts(infra, module, auth_token).await;
+    Ok(())
+}
+
+pub async fn delete_account(
+    infra: &SharedInfra,
+    module: &Mutex<AccountsModule>,
+    account_id: &str,
+    auth_token: Option<&str>,
+) -> Result<(), ApiError> {
+    let user_id = infra.user_id().ok_or_else(|| ApiError::Parse {
+        reason: "no user_id".into(),
+    })?;
+
+    let path = format!("/api/users/{user_id}/accounts/{account_id}");
+    let resp = infra.delete(&path, auth_token).await?;
+    if resp.status >= 400 {
+        return Err(server_error(resp.status, &resp.body));
+    }
+
+    refresh_accounts(infra, module, auth_token).await;
+    Ok(())
+}
+
+pub async fn get_account(
+    infra: &SharedInfra,
+    account_id: &str,
+    auth_token: Option<&str>,
+) -> Result<AccountEditModel, ApiError> {
+    let user_id = infra.user_id().ok_or_else(|| ApiError::Parse {
+        reason: "no user_id".into(),
+    })?;
+
+    let path = format!("/api/users/{user_id}/accounts/{account_id}");
+    let resp = infra.get(&path, auth_token).await?;
+    if resp.status >= 400 {
+        return Err(server_error(resp.status, &resp.body));
+    }
+    extract_account_edit(account_id, &resp.body).map_err(|e| ApiError::Parse { reason: e })
 }

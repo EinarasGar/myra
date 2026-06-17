@@ -25,6 +25,7 @@ import AccountHoldings from "./account-holdings";
 import AccountTransactions, {
   AccountTransactionsSkeleton,
 } from "./account-transactions";
+import AccountIdentifiers from "./account-identifiers";
 
 export default function AccountDetailPage() {
   const { accountId } = useParams({ from: "/_auth/accounts/$accountId" });
@@ -82,6 +83,16 @@ export default function AccountDetailPage() {
       <ErrorBoundary fallback={<ErrorBoundaryFallback />}>
         <Suspense fallback={<LineChartSkeleton />}>
           <AccountNetWorthChart accountId={accountId} />
+        </Suspense>
+      </ErrorBoundary>
+
+      <ErrorBoundary fallback={<ErrorBoundaryFallback />}>
+        <Suspense
+          fallback={
+            <div className="m-4 h-32 animate-pulse rounded-lg bg-muted" />
+          }
+        >
+          <AccountIdentifiers accountId={accountId} />
         </Suspense>
       </ErrorBoundary>
 

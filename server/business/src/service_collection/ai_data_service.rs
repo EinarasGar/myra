@@ -3,7 +3,9 @@
 //! explicitly because `AiDataService` itself is shared across users; the
 //! per-user `AiDataProvider` impl lives in the providers module.
 
-use ai::models::account::AccountResult;
+use std::collections::HashMap;
+
+use ai::models::account::{AccountIdentifierResult, AccountResult};
 use ai::models::aggregate::AggregateGroupResult;
 use ai::models::reference::{AssetResult, CategoryResult};
 use ai::models::search::TransactionSearchResult;
@@ -11,7 +13,7 @@ use anyhow::Result;
 #[mockall_double::double]
 use dal::database_context::MyraDb;
 use dal::models::ai_models::{AiAssetModel, AiCategoryModel, AiTransactionSearchModel};
-use dal::queries::ai_queries;
+use dal::queries::{account_identifier_queries, ai_queries};
 use dal::query_params::ai_search_params;
 use pgvector::Vector;
 use uuid::Uuid;
@@ -120,9 +122,31 @@ impl AiDataService {
             .db
             .fetch_all::<dal::models::ai_models::AiAccountModel>(q)
             .await?;
+
+        let ids: Vec<Uuid> = rows.iter().map(|r| r.account_id).collect();
+        let mut by_account: HashMap<Uuid, Vec<AccountIdentifierResult>> = HashMap::new();
+        if !ids.is_empty() {
+            let id_rows = self
+                .db
+                .fetch_all::<dal::models::account_models::AccountIdentifierRow>(
+                    account_identifier_queries::get_identifiers_for_accounts(ids),
+                )
+                .await?;
+            for r in id_rows {
+                by_account
+                    .entry(r.account_id)
+                    .or_default()
+                    .push(AccountIdentifierResult {
+                        kind: r.kind,
+                        value: r.value,
+                    });
+            }
+        }
+
         Ok(rows
             .into_iter()
             .map(|r| AccountResult {
+                identifiers: by_account.remove(&r.account_id).unwrap_or_default(),
                 account_id: r.account_id,
                 account_name: r.account_name,
                 account_type: r.account_type,

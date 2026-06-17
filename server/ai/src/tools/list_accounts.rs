@@ -26,7 +26,7 @@ impl<D: AiDataProvider> Tool for ListAccountsTool<D> {
     async fn definition(&self, _prompt: String) -> ToolDefinition {
         ToolDefinition {
             name: Self::NAME.to_string(),
-            description: "List all active accounts for the user. Returns account names, types, and liquidity types.".to_string(),
+            description: "List all active accounts for the user. Returns each account's name, type, liquidity type, and identifiers (typed: card_last4, account_number, iban).".to_string(),
             parameters: json!({
                 "type": "object",
                 "properties": {},

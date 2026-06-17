@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use axum::{extract::Path, Json};
-use business::dtos::accounts::account_amendment_dto::AccountAmendmentDto;
 use itertools::Itertools;
 use serde::Deserialize;
 use uuid::Uuid;
@@ -16,6 +15,7 @@ use crate::{
     errors::ApiError,
     extractors::ValidatedJson,
     states::AccountsServiceState,
+    view_models::accounts::base_models::account_identifier::AccountIdentifierViewModel,
     view_models::accounts::base_models::ownership_share::OwnershipShare,
     view_models::accounts::{
         add_account::{AddAccountRequestViewModel, AddAccountResponseViewModel},
@@ -33,6 +33,7 @@ use crate::{
         update_account::UpdateAccountViewModel,
     },
     view_models::errors::{CreateResponses, DeleteResponses, GetResponses, UpdateResponses},
+    view_models::transactions::validation::Validatable,
 };
 
 /// Get Account
@@ -68,6 +69,14 @@ pub async fn get_account(
     let ret = GetAccountResponseViewModel {
         liquidity_type: account.liquidity_type.clone().into(),
         ownership_share: OwnershipShare::from_trusted(account.ownership_share),
+        identifiers: account
+            .identifiers
+            .iter()
+            .map(|i| AccountIdentifierViewModel {
+                kind: i.kind.into(),
+                value: i.value.clone(),
+            })
+            .collect(),
         account: account.into(),
     };
 
@@ -165,16 +174,12 @@ pub async fn update_account(
     AccountsServiceState(account_service): AccountsServiceState,
     ValidatedJson(body): ValidatedJson<UpdateAccountViewModel>,
 ) -> Result<Json<UpdateAccountViewModel>, ApiError> {
-    let dto = AccountAmendmentDto {
-        account_name: body.account.name.as_str().to_owned(),
-        account_type: body.account.account_type.0,
-        account_liquidity_type: body.liquidity_type.0,
-        ownership_share: body.ownership_share.as_decimal(),
-    };
+    body.validate()?;
 
     account_service
-        .update_user_account(user_id, account_id, dto)
-        .await?;
+        .update_user_account(user_id, account_id, body.clone().into())
+        .await
+        .map_err(ApiError::from_anyhow)?;
 
     Ok(body.into())
 }
@@ -207,18 +212,17 @@ pub async fn add_account(
     AccountsServiceState(account_service): AccountsServiceState,
     ValidatedJson(body): ValidatedJson<AddAccountRequestViewModel>,
 ) -> Result<Json<AddAccountResponseViewModel>, ApiError> {
-    let dto = AccountAmendmentDto {
-        account_name: body.account.name.as_str().to_owned(),
-        account_type: body.account.account_type.0,
-        account_liquidity_type: body.liquidity_type.0,
-        ownership_share: body.ownership_share.as_decimal(),
-    };
+    body.validate()?;
 
-    let new_id = account_service.add_user_account(user_id, dto).await?;
+    let new_id = account_service
+        .add_user_account(user_id, body.clone().into())
+        .await
+        .map_err(ApiError::from_anyhow)?;
 
     let ret = AddAccountResponseViewModel {
         ownership_share: body.ownership_share,
         liquidity_type: body.liquidity_type,
+        identifiers: body.identifiers,
         account: IdentifiableAccount {
             account_id: RequiredAccountId(new_id),
             account: body.account,
@@ -256,7 +260,8 @@ pub async fn delete_account(
 ) -> Result<(), ApiError> {
     account_service
         .deactivate_user_account(user_id, account_id)
-        .await?;
+        .await
+        .map_err(ApiError::from_anyhow)?;
     Ok(())
 }
 

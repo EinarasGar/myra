@@ -275,6 +275,41 @@ export type AccountFeesTransactionWithEntryIdsTypeEnum =
 /**
  *
  * @export
+ * @interface AccountIdentifier
+ */
+export interface AccountIdentifier {
+  /**
+   *
+   * @type {AccountIdentifierKind}
+   * @memberof AccountIdentifier
+   */
+  kind: AccountIdentifierKind;
+  /**
+   *
+   * @type {string}
+   * @memberof AccountIdentifier
+   */
+  value: string;
+}
+
+/**
+ *
+ * @export
+ * @enum {string}
+ */
+
+export const AccountIdentifierKind = {
+  CardLast4: "card_last4",
+  AccountNumber: "account_number",
+  Iban: "iban",
+} as const;
+
+export type AccountIdentifierKind =
+  (typeof AccountIdentifierKind)[keyof typeof AccountIdentifierKind];
+
+/**
+ *
+ * @export
  * @interface AccountMetadataLookupTables
  */
 export interface AccountMetadataLookupTables {
@@ -353,6 +388,12 @@ export interface AddAccountResponse {
    * @memberof AddAccountResponse
    */
   account_type: number;
+  /**
+   *
+   * @type {Array<AccountIdentifier>}
+   * @memberof AddAccountResponse
+   */
+  identifiers?: Array<AccountIdentifier>;
   /**
    *
    * @type {number}
@@ -4010,6 +4051,12 @@ export interface GetAccountResponse {
   account_type: AccountType;
   /**
    *
+   * @type {Array<AccountIdentifier>}
+   * @memberof GetAccountResponse
+   */
+  identifiers?: Array<AccountIdentifier>;
+  /**
+   *
    * @type {AccountType}
    * @memberof GetAccountResponse
    */
@@ -4048,16 +4095,53 @@ export interface GetAccountTypesResponse {
 export interface GetAccountsResponse {
   /**
    *
-   * @type {Array<AddAccountResponse>}
+   * @type {Array<GetAccountsResponseViewModelRow>}
    * @memberof GetAccountsResponse
    */
-  accounts: Array<AddAccountResponse>;
+  accounts: Array<GetAccountsResponseViewModelRow>;
   /**
    *
    * @type {AccountMetadataLookupTables}
    * @memberof GetAccountsResponse
    */
   lookup_tables: AccountMetadataLookupTables;
+}
+/**
+ *
+ * @export
+ * @interface GetAccountsResponseViewModelRow
+ */
+export interface GetAccountsResponseViewModelRow {
+  /**
+   *
+   * @type {string}
+   * @memberof GetAccountsResponseViewModelRow
+   */
+  account_id: string;
+  /**
+   *
+   * @type {number}
+   * @memberof GetAccountsResponseViewModelRow
+   */
+  account_type: number;
+  /**
+   *
+   * @type {number}
+   * @memberof GetAccountsResponseViewModelRow
+   */
+  liquidity_type: number;
+  /**
+   * Account name
+   * @type {string}
+   * @memberof GetAccountsResponseViewModelRow
+   */
+  name: string;
+  /**
+   * Ownership share. Must be > 0 and <= 1.
+   * @type {number}
+   * @memberof GetAccountsResponseViewModelRow
+   */
+  ownership_share: number;
 }
 /**
  *
@@ -5683,6 +5767,12 @@ export interface UpdateAccount {
    * @memberof UpdateAccount
    */
   account_type: number;
+  /**
+   *
+   * @type {Array<AccountIdentifier>}
+   * @memberof UpdateAccount
+   */
+  identifiers?: Array<AccountIdentifier>;
   /**
    *
    * @type {number}

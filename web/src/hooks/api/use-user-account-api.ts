@@ -31,10 +31,21 @@ export function useGetUserAccounts(userId: string) {
             ? { id: liquidityType.id, name: liquidityType.name }
             : undefined,
           ownershipShare: acc.ownership_share ?? 1,
+          identifiers: [],
         };
       });
 
       return expanded;
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+}
+export function useGetAccount(userId: string, accountId: string) {
+  return useSuspenseQuery({
+    queryKey: [QueryKeys.USER_ACCOUNTS, userId, accountId],
+    queryFn: async () => {
+      const response = await AccountsApiFactory().getAccount(accountId, userId);
+      return response.data;
     },
     staleTime: 1000 * 60 * 5,
   });
