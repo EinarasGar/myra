@@ -59,6 +59,7 @@ const INITIAL_USER_PROMPT: &str =
 
 /// Initial extraction. Records the user prompt with the receipt attachment
 /// and runs the agent. The wrapper handles persistence and image resolution.
+#[tracing::instrument(skip_all, err, fields(source_file_id = %source_file_id))]
 pub async fn process<D, C, R>(
     config: AiConfig,
     data: Arc<D>,
@@ -84,6 +85,7 @@ where
 
 /// Apply a user correction. The wrapper loads the prior history (including
 /// the receipt image) and runs the agent with the correction text.
+#[tracing::instrument(skip_all, err)]
 pub async fn correct<D, C, R>(
     config: AiConfig,
     data: Arc<D>,
@@ -99,6 +101,7 @@ where
     run_with_prompt(config, data, conversation, rate_limit, correction, vec![]).await
 }
 
+#[tracing::instrument(skip_all, err)]
 pub async fn retry<D, C, R>(
     config: AiConfig,
     data: Arc<D>,
@@ -119,6 +122,7 @@ where
     parse_proposal(&output.output)
 }
 
+#[tracing::instrument(skip_all, err, fields(file_count = file_ids.len()))]
 async fn run_with_prompt<D, C, R>(
     config: AiConfig,
     data: Arc<D>,
@@ -170,6 +174,7 @@ where
         .build()
 }
 
+#[tracing::instrument(skip_all, err)]
 fn parse_proposal(output: &str) -> anyhow::Result<ReceiptProcessorOutput> {
     let trimmed = output.trim();
 

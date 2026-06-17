@@ -99,6 +99,7 @@ async fn handle(providers: &ServiceProviders, file_id: Uuid, user_id: Uuid) -> R
     Ok(())
 }
 
+#[tracing::instrument(skip_all, err, fields(file_id = %file_id, declared_mime = %declared_mime))]
 async fn process_file(
     file_provider: &Arc<dyn FileProvider>,
     file_id: Uuid,

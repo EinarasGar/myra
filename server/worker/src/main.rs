@@ -1,4 +1,4 @@
-use apalis::prelude::Monitor;
+use apalis::prelude::{Monitor, WorkerError};
 use business::jobs::{EmbeddingJob, FileProcessingJob, QuickUploadJob};
 use business::service_collection::Services;
 use worker::jobs::cron::{GenerateChatTitlesJob, RefreshAssetsJob, SeedAssetHistoryJob};
@@ -22,6 +22,18 @@ async fn main() -> anyhow::Result<()> {
         .register_cron::<RefreshAssetsJob>(&services)
         .register_cron::<SeedAssetHistoryJob>(&services)
         .register_cron::<GenerateChatTitlesJob>(&services)
+        .should_restart(|ctx, error, attempt| {
+            if matches!(error, WorkerError::GracefulExit) {
+                return false;
+            }
+            tracing::error!(
+                worker = %ctx.name(),
+                attempt,
+                %error,
+                "worker exited unexpectedly; restarting"
+            );
+            attempt < 10
+        })
         .run()
         .await?;
 

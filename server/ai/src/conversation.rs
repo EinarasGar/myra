@@ -41,6 +41,7 @@ where
         }
     }
 
+    #[tracing::instrument(skip_all, err)]
     pub async fn run<M>(
         &self,
         agent: Agent<M>,
@@ -65,6 +66,7 @@ where
         self.run_prepared(agent, prepared, persist).await
     }
 
+    #[tracing::instrument(skip_all, err)]
     async fn run_prepared<M>(
         &self,
         agent: Agent<M>,
@@ -123,6 +125,7 @@ where
         })
     }
 
+    #[tracing::instrument(skip_all, err)]
     pub async fn stream<A>(
         &self,
         agent: Agent<rig::providers::gemini::completion::CompletionModel>,

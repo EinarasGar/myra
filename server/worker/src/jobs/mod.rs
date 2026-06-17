@@ -51,6 +51,7 @@ pub trait CronJob: Send + Sync + Sized + 'static {
     async fn tick(providers: &ServiceProviders) -> anyhow::Result<()>;
 }
 
+#[tracing::instrument(skip_all, fields(job = T::NAME, attempt = attempt.current()))]
 pub async fn run_job<T: WorkerJob>(
     job: T,
     services: Data<Services>,
@@ -87,6 +88,7 @@ pub async fn run_job<T: WorkerJob>(
     Err(decision.into_apalis_error(ai_error))
 }
 
+#[tracing::instrument(skip_all, fields(job = T::NAME))]
 async fn cron_handler<T: CronJob>(
     _tick: apalis_cron::Tick,
     services: Data<Services>,
