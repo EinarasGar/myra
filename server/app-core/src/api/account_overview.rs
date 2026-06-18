@@ -4,12 +4,6 @@ use shared::view_models::portfolio::get_overview::GetPortfolioOverviewViewModel;
 
 use crate::models::{AccountHoldingItem, LotItem};
 
-pub struct AccountBalanceSummary {
-    pub balance: f64,
-    pub unrealized_gain: f64,
-    pub holdings_count: u32,
-}
-
 pub struct AccountOverviewData {
     pub holdings: Vec<AccountHoldingItem>,
     pub cash_balance: f64,
@@ -19,38 +13,6 @@ pub struct AccountOverviewData {
     pub realized_gains: f64,
     pub total_fees: f64,
     pub lots_by_asset: HashMap<i32, Vec<LotItem>>,
-}
-
-pub fn extract_account_balance(body: &str) -> Result<AccountBalanceSummary, String> {
-    let resp: GetPortfolioOverviewViewModel =
-        serde_json::from_str(body).map_err(|e| e.to_string())?;
-
-    let mut cash_balance: f64 = 0.0;
-    for cp in &resp.portfolios.cash_portfolios {
-        let units: f64 = cp.units.to_string().parse().unwrap_or(0.0);
-        cash_balance += units;
-    }
-
-    let mut asset_value: f64 = 0.0;
-    let mut unrealized_gain: f64 = 0.0;
-    let mut holdings_count: u32 = 0;
-
-    for ap in &resp.portfolios.asset_portfolios {
-        let remaining_units: f64 = ap.remaining_units.to_string().parse().unwrap_or(0.0);
-        if remaining_units > 0.0 {
-            let market_value: f64 = ap.market_value.to_string().parse().unwrap_or(0.0);
-            let ug: f64 = ap.unrealized_gains.to_string().parse().unwrap_or(0.0);
-            asset_value += market_value;
-            unrealized_gain += ug;
-            holdings_count += 1;
-        }
-    }
-
-    Ok(AccountBalanceSummary {
-        balance: cash_balance + asset_value,
-        unrealized_gain,
-        holdings_count,
-    })
 }
 
 pub fn extract_account_overview(body: &str) -> Result<AccountOverviewData, String> {

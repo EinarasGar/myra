@@ -68,6 +68,10 @@ fn build_list_item(
     tables: &MetadataLookupTables,
 ) -> TransactionListItem {
     let first = entries.first();
+    let secondary_account_name = entries
+        .get(1)
+        .filter(|second| first.map(|f| f.0 != second.0).unwrap_or(true))
+        .and_then(|e| find_account(tables, &e.0));
 
     TransactionListItem {
         id,
@@ -80,6 +84,7 @@ fn build_list_item(
         account_name: first
             .and_then(|e| find_account(tables, &e.0))
             .unwrap_or_default(),
+        secondary_account_name,
         asset_display: first
             .and_then(|e| find_asset_display(tables, e.1))
             .unwrap_or_default(),
@@ -301,6 +306,7 @@ fn group_to_list_item(
                     .and_then(|e| find_account(tables, &e.0))
             })
             .unwrap_or_default(),
+        secondary_account_name: None,
         asset_display: String::new(),
         category_name: find_category(tables, tg.group.category_id.0).unwrap_or_default(),
         category_id: Some(tg.group.category_id.0),

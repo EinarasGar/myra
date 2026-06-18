@@ -20,7 +20,6 @@ class AccountsViewModel(
                 isLoadingBalances = false,
                 error = null,
                 accounts = emptyList(),
-                totalNetWorth = 0.0,
             ),
         )
     val state: StateFlow<AccountsState> = _state.asStateFlow()

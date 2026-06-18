@@ -55,3 +55,43 @@ pub fn extract_holdings(body: &str) -> Result<Vec<HoldingItem>, String> {
 
     Ok(items)
 }
+
+pub fn extract_account_balances(body: &str) -> Result<HashMap<String, f64>, String> {
+    let resp: GetHoldingsResponseViewModel =
+        serde_json::from_str(body).map_err(|e| e.to_string())?;
+
+    let mut balances: HashMap<String, f64> = HashMap::new();
+    for row in &resp.holdings {
+        let value: f64 = row
+            .value
+            .as_ref()
+            .map(|v| v.to_string().parse().unwrap_or(0.0))
+            .unwrap_or(0.0);
+        *balances.entry(row.account_id.0.to_string()).or_insert(0.0) += value;
+    }
+
+    Ok(balances)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const HOLDINGS_JSON: &str = r#"{
+        "holdings": [
+            { "account_id": "00000000-0000-0000-0000-000000000001", "asset_id": 42, "units": "100", "value": "87.0" },
+            { "account_id": "00000000-0000-0000-0000-000000000001", "asset_id": 45, "units": "10", "value": "10.0" },
+            { "account_id": "00000000-0000-0000-0000-000000000002", "asset_id": 45, "units": "-50", "value": "-50.0" },
+            { "account_id": "00000000-0000-0000-0000-000000000003", "asset_id": 99, "units": "5", "value": null }
+        ],
+        "lookup_tables": { "accounts": [], "assets": [] }
+    }"#;
+
+    #[test]
+    fn account_balances_sum_value_per_account_and_treat_null_as_zero() {
+        let balances = extract_account_balances(HOLDINGS_JSON).unwrap();
+        assert!((balances["00000000-0000-0000-0000-000000000001"] - 97.0).abs() < 1e-9);
+        assert!((balances["00000000-0000-0000-0000-000000000002"] - (-50.0)).abs() < 1e-9);
+        assert!((balances["00000000-0000-0000-0000-000000000003"]).abs() < 1e-9);
+    }
+}

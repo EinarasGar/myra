@@ -1,8 +1,8 @@
 use std::sync::Mutex;
 
 use super::infra::SharedInfra;
-use crate::api::account_overview::extract_account_balance;
 use crate::api::accounts::{extract_account_edit, extract_account_types, extract_accounts};
+use crate::api::holdings::extract_account_balances;
 use crate::error::{server_error, ApiError};
 use crate::models::{
     AccountEditModel, AccountTypeItem, AccountsState, CreateAccountInput, UpdateAccountInput,
@@ -32,7 +32,6 @@ impl AccountsModule {
                 is_loading_balances: false,
                 error: None,
                 accounts: vec![],
-                total_net_worth: 0.0,
             },
             observer: None,
         }
@@ -53,7 +52,6 @@ impl AccountsModule {
             is_loading_balances: false,
             error: None,
             accounts: vec![],
-            total_net_worth: 0.0,
         };
         self.notify();
     }
@@ -113,38 +111,19 @@ pub async fn load_accounts(
         m.notify();
     }
 
-    // Phase 2: Fetch portfolio overview for each account concurrently
-    let balance_paths: Vec<String> = accounts
-        .iter()
-        .map(|acc| {
-            format!(
-                "/api/users/{user_id}/accounts/{}/portfolio/overview",
-                acc.id
-            )
-        })
-        .collect();
+    // Phase 2: one holdings call gives every account's full (unscaled) balance.
+    let holdings_path =
+        format!("/api/users/{user_id}/portfolio/holdings?apply_ownership_share=false");
+    let balances = infra
+        .get(&holdings_path, auth_token)
+        .await
+        .ok()
+        .and_then(|resp| extract_account_balances(&resp.body).ok());
 
-    let balance_futures: Vec<_> = balance_paths
-        .iter()
-        .map(|path| infra.get(path, auth_token))
-        .collect();
-
-    let balance_results = futures_util::future::join_all(balance_futures).await;
-
-    // Update accounts with balance data
     let mut updated_accounts = accounts;
-    let mut total_net_worth = 0.0;
-
-    for (i, result) in balance_results.into_iter().enumerate() {
-        if let Ok(resp) = result {
-            if let Ok(summary) = extract_account_balance(&resp.body) {
-                if i < updated_accounts.len() {
-                    updated_accounts[i].balance = Some(summary.balance);
-                    updated_accounts[i].unrealized_gain = Some(summary.unrealized_gain);
-                    updated_accounts[i].holdings_count = Some(summary.holdings_count);
-                    total_net_worth += summary.balance;
-                }
-            }
+    if let Some(balances) = balances {
+        for account in updated_accounts.iter_mut() {
+            account.balance = Some(balances.get(&account.id).copied().unwrap_or(0.0));
         }
     }
 
@@ -152,7 +131,6 @@ pub async fn load_accounts(
     {
         let mut m = module.lock().unwrap();
         m.state.accounts = updated_accounts;
-        m.state.total_net_worth = total_net_worth;
         m.state.is_loading_balances = false;
         m.notify();
     }

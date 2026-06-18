@@ -44,8 +44,12 @@ impl PortfolioOverviewService {
         }
     }
 
-    pub async fn get_holdings(&self, user_id: Uuid) -> anyhow::Result<Vec<HoldingDto>> {
-        let query = entries_queries::get_holdings(user_id);
+    pub async fn get_holdings(
+        &self,
+        user_id: Uuid,
+        apply_ownership_share: bool,
+    ) -> anyhow::Result<Vec<HoldingDto>> {
+        let query = entries_queries::get_holdings(user_id, apply_ownership_share);
         let ret = self.db.fetch_all::<Holding>(query).await?;
         Ok(ret.into_iter().map(|h| h.into()).collect())
     }
@@ -57,9 +61,7 @@ impl PortfolioOverviewService {
         account_id: Option<Uuid>,
     ) -> anyhow::Result<PortfolioOverviewDto> {
         let query_params = match account_id {
-            Some(acc_id) => {
-                GetTransactionWithEntriesParams::by_user_id_for_account(user_id, acc_id)
-            }
+            Some(_) => GetTransactionWithEntriesParams::by_user_id(user_id),
             None => GetTransactionWithEntriesParams::by_user_id_with_ownership(user_id),
         };
 
@@ -140,6 +142,10 @@ impl PortfolioOverviewService {
 
         tracing::trace!("final_vec: {:#?}", final_vec);
         portfolio.process_transactions(final_vec);
+
+        if let Some(account_id) = account_id {
+            portfolio.retain_account(account_id);
+        }
 
         let held_asset_ids: HashSet<AssetIdDto> = portfolio
             .account_portfolios()

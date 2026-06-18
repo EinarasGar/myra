@@ -40,6 +40,10 @@ pub struct TransactionListItem {
     /// Incoming leg for two-entry transactions; `None` for single-entry.
     pub secondary_amount_display: Option<String>,
     pub account_name: String,
+    /// Counterparty account for transfers between two accounts (cash/asset
+    /// balance transfer); `None` when both legs share one account or there is
+    /// only one entry.
+    pub secondary_account_name: Option<String>,
     pub asset_display: String,
     pub category_name: String,
     pub category_id: Option<i32>,
@@ -314,7 +318,6 @@ pub struct AccountsState {
     pub is_loading_balances: bool,
     pub error: Option<String>,
     pub accounts: Vec<AccountListItem>,
-    pub total_net_worth: f64,
 }
 
 #[derive(Debug, Clone, uniffi::Record)]

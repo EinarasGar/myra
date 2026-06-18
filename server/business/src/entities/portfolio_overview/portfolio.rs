@@ -107,6 +107,10 @@ impl Portfolio {
         &self.account_portfolios
     }
 
+    pub fn retain_account(&mut self, account_id: Uuid) {
+        self.account_portfolios.retain(|id, _| *id == account_id);
+    }
+
     pub fn try_into_dto(
         &self,
         current_rates: HashMap<AssetIdDto, Decimal>,
@@ -194,7 +198,9 @@ mod tests {
     use uuid::Uuid;
 
     use crate::entities::portfolio_overview::investment_transaction::{
-        asset_purchase::AssetPurchase, asset_sale::AssetSale, cash_dividend::CashDividend,
+        asset_balance_transfer::AssetBalanceTransfer, asset_purchase::AssetPurchase,
+        asset_sale::AssetSale, asset_transfer_in::AssetTransferIn,
+        cash_balance_transfer::CashBalanceTransfer, cash_dividend::CashDividend,
         cash_transfer_in::CashTransferIn, cash_transfer_out::CashTransferOut,
     };
 
@@ -711,6 +717,198 @@ mod tests {
             .expect("account should be auto-created")
             .asset_portfolios
             .contains_key(&1));
+    }
+
+    #[test]
+    fn retain_account_keeps_only_transfer_destination_and_drops_counterparty() {
+        let mut portfolio = Portfolio::new();
+        let source = Uuid::new_v4();
+        let destination = Uuid::new_v4();
+
+        portfolio.process_transactions(vec![Box::new(CashBalanceTransfer {
+            asset_id: 1,
+            account_from: source,
+            account_to: destination,
+            units: dec!(100),
+            fees: dec!(0),
+            date: datetime!(2000-03-23 00:00:00 UTC),
+        })]);
+
+        assert_eq!(portfolio.account_portfolios().len(), 2);
+
+        portfolio.retain_account(destination);
+
+        assert_eq!(portfolio.account_portfolios().len(), 1);
+        assert!(portfolio.account_portfolios().contains_key(&destination));
+        assert!(!portfolio.account_portfolios().contains_key(&source));
+        assert_eq!(
+            portfolio
+                .account_portfolios()
+                .get(&destination)
+                .expect("destination account should remain")
+                .cash_portfolios
+                .get(&1)
+                .expect("destination cash should remain")
+                .units(),
+            dec!(100)
+        );
+    }
+
+    #[test]
+    fn retain_account_keeps_only_transfer_source_and_drops_counterparty() {
+        let mut portfolio = Portfolio::new();
+        let source = Uuid::new_v4();
+        let destination = Uuid::new_v4();
+
+        portfolio.process_transactions(vec![Box::new(CashBalanceTransfer {
+            asset_id: 1,
+            account_from: source,
+            account_to: destination,
+            units: dec!(100),
+            fees: dec!(0),
+            date: datetime!(2000-03-23 00:00:00 UTC),
+        })]);
+
+        portfolio.retain_account(source);
+
+        assert_eq!(portfolio.account_portfolios().len(), 1);
+        assert!(portfolio.account_portfolios().contains_key(&source));
+        assert!(!portfolio.account_portfolios().contains_key(&destination));
+        assert_eq!(
+            portfolio
+                .account_portfolios()
+                .get(&source)
+                .expect("source account should remain")
+                .cash_portfolios
+                .get(&1)
+                .expect("source cash should remain")
+                .units(),
+            dec!(-100)
+        );
+    }
+
+    #[test]
+    fn retain_account_with_no_match_clears_all_portfolios() {
+        let mut portfolio = Portfolio::new();
+        let source = Uuid::new_v4();
+        let destination = Uuid::new_v4();
+
+        portfolio.process_transactions(vec![Box::new(CashBalanceTransfer {
+            asset_id: 1,
+            account_from: source,
+            account_to: destination,
+            units: dec!(100),
+            fees: dec!(0),
+            date: datetime!(2000-03-23 00:00:00 UTC),
+        })]);
+
+        portfolio.retain_account(Uuid::new_v4());
+
+        assert!(portfolio.account_portfolios().is_empty());
+    }
+
+    #[test]
+    fn per_account_overview_isolates_each_side_of_transfer_with_prior_balances() {
+        let funded = Uuid::new_v4();
+        let overdrawn = Uuid::new_v4();
+
+        let prior_funded = || {
+            Box::new(CashTransferIn {
+                asset_id: 1,
+                account_id: funded,
+                units: dec!(200),
+                fees: dec!(0),
+                date: datetime!(2000-01-01 00:00:00 UTC),
+            }) as Box<dyn PortfolioAction>
+        };
+        let prior_overdrawn = || {
+            Box::new(CashTransferOut {
+                asset_id: 1,
+                account_id: overdrawn,
+                units: dec!(100),
+                fees: dec!(0),
+                date: datetime!(2000-01-01 00:00:00 UTC),
+            }) as Box<dyn PortfolioAction>
+        };
+        let transfer = || {
+            Box::new(CashBalanceTransfer {
+                asset_id: 1,
+                account_from: funded,
+                account_to: overdrawn,
+                units: dec!(50),
+                fees: dec!(0),
+                date: datetime!(2000-02-01 00:00:00 UTC),
+            }) as Box<dyn PortfolioAction>
+        };
+
+        let cash = |portfolio: &Portfolio, account: &Uuid| {
+            portfolio
+                .account_portfolios()
+                .get(account)
+                .expect("account should exist")
+                .cash_portfolios
+                .get(&1)
+                .expect("cash should exist")
+                .units()
+        };
+
+        // Each per-account overview query returns that account's own history plus
+        // both legs of any transfer it touches, so the counterparty's leg leaks in
+        // until retain_account drops every account but the requested one.
+        let mut funded_view = Portfolio::new();
+        funded_view.process_transactions(vec![prior_funded(), transfer()]);
+        assert_eq!(funded_view.account_portfolios().len(), 2);
+        funded_view.retain_account(funded);
+        assert_eq!(funded_view.account_portfolios().len(), 1);
+        assert_eq!(cash(&funded_view, &funded), dec!(150));
+
+        let mut overdrawn_view = Portfolio::new();
+        overdrawn_view.process_transactions(vec![prior_overdrawn(), transfer()]);
+        assert_eq!(overdrawn_view.account_portfolios().len(), 2);
+        overdrawn_view.retain_account(overdrawn);
+        assert_eq!(overdrawn_view.account_portfolios().len(), 1);
+        assert_eq!(cash(&overdrawn_view, &overdrawn), dec!(-50));
+    }
+
+    #[test]
+    fn full_replay_then_retain_delivers_transferred_in_asset_to_destination() {
+        let mut portfolio = Portfolio::new();
+        let source = Uuid::new_v4();
+        let destination = Uuid::new_v4();
+
+        portfolio.process_transactions(vec![
+            Box::new(AssetTransferIn {
+                asset_id: 1,
+                account_id: source,
+                quantity: dec!(2),
+                price: dec!(10),
+                fees: dec!(0),
+                date: datetime!(2000-03-22 00:00:00 UTC),
+            }),
+            Box::new(AssetBalanceTransfer {
+                asset_id: 1,
+                account_from: source,
+                account_to: destination,
+                quantity: dec!(2),
+                fees: dec!(0),
+                date: datetime!(2000-03-23 00:00:00 UTC),
+            }),
+        ]);
+
+        portfolio.retain_account(destination);
+
+        assert_eq!(portfolio.account_portfolios().len(), 1);
+        assert_eq!(
+            portfolio
+                .account_portfolios()
+                .get(&destination)
+                .expect("destination should hold the transferred asset")
+                .asset_portfolios
+                .get(&1)
+                .expect("transferred asset should be present")
+                .remaining_units(),
+            dec!(2)
+        );
     }
 
     #[test]

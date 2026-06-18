@@ -36,6 +36,7 @@ use crate::{
 #[derive(Deserialize, Debug)]
 pub struct GetPortfolioQueryParams {
     default_asset_id: Option<i32>,
+    apply_ownership_share: Option<bool>,
 }
 
 /// Get Holdings
@@ -73,7 +74,9 @@ pub async fn get_holdings(
             .ok_or_else(|| ApiError::Conflict("User has no base currency set".to_string()))?,
     };
 
-    let holdings = portfolio_service.get_holdings(user_id).await?;
+    let holdings = portfolio_service
+        .get_holdings(user_id, query_params.apply_ownership_share.unwrap_or(true))
+        .await?;
 
     let account_ids: HashSet<Uuid> = holdings.iter().map(|x| x.account_id).collect();
     let asset_ids: HashSet<i32> = holdings.iter().map(|x| x.asset_id).collect();

@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Layers
@@ -146,6 +147,7 @@ fun TransactionDetailScreen(
                         Spacer(Modifier.height(14.dp))
                         TransactionMetaRow(
                             accountName = transaction.accountName,
+                            secondaryAccountName = transaction.secondaryAccountName,
                             categoryName = transaction.categoryName,
                         )
                     }
@@ -174,7 +176,14 @@ fun TransactionDetailScreen(
 
                             if (transaction.accountName.isNotEmpty()) {
                                 RowDivider()
-                                DetailRow(label = "Account", value = transaction.accountName)
+                                val destinationAccount = transaction.secondaryAccountName
+                                if (!destinationAccount.isNullOrEmpty()) {
+                                    DetailRow(label = "From", value = transaction.accountName)
+                                    RowDivider()
+                                    DetailRow(label = "To", value = destinationAccount)
+                                } else {
+                                    DetailRow(label = "Account", value = transaction.accountName)
+                                }
                             }
 
                             if (transaction.assetDisplay.isNotEmpty()) {
@@ -335,6 +344,7 @@ private fun HeroHeader(
 @Composable
 private fun TransactionMetaRow(
     accountName: String,
+    secondaryAccountName: String?,
     categoryName: String,
 ) {
     Row(
@@ -344,6 +354,15 @@ private fun TransactionMetaRow(
     ) {
         if (accountName.isNotEmpty()) {
             MetaChip(accountName)
+        }
+        if (!secondaryAccountName.isNullOrEmpty()) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = "to",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp),
+            )
+            MetaChip(secondaryAccountName)
         }
         if (categoryName.isNotEmpty()) {
             MetaChip(categoryName)

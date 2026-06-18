@@ -41,17 +41,22 @@ pub fn insert_entries(models: Vec<AddEntryModel>) -> DbQueryWithValues {
 }
 
 #[tracing::instrument(skip_all)]
-pub fn get_holdings(user_id: Uuid) -> DbQueryWithValues {
-    Query::select()
-        .column((EntryIden::Table, EntryIden::AssetId))
-        .column((EntryIden::Table, EntryIden::AccountId))
-        .expr_as(
+pub fn get_holdings(user_id: Uuid, apply_ownership_share: bool) -> DbQueryWithValues {
+    let quantity_sum = || {
+        if apply_ownership_share {
             Expr::sum(
                 Expr::col((EntryIden::Table, EntryIden::Quantity))
                     .mul(Expr::col((AccountIden::Table, AccountIden::OwnershipShare))),
-            ),
-            Alias::new("total_quantity"),
-        )
+            )
+        } else {
+            Expr::sum(Expr::col((EntryIden::Table, EntryIden::Quantity)))
+        }
+    };
+
+    Query::select()
+        .column((EntryIden::Table, EntryIden::AssetId))
+        .column((EntryIden::Table, EntryIden::AccountId))
+        .expr_as(quantity_sum(), Alias::new("total_quantity"))
         .from(EntryIden::Table)
         .join(
             JoinType::Join,
@@ -62,13 +67,7 @@ pub fn get_holdings(user_id: Uuid) -> DbQueryWithValues {
         .and_where(Expr::col((AccountIden::Table, AccountIden::UserId)).eq(user_id))
         .group_by_col((EntryIden::Table, EntryIden::AccountId))
         .group_by_col((EntryIden::Table, EntryIden::AssetId))
-        .and_having(
-            Expr::sum(
-                Expr::col((EntryIden::Table, EntryIden::Quantity))
-                    .mul(Expr::col((AccountIden::Table, AccountIden::OwnershipShare))),
-            )
-            .ne(0),
-        )
+        .and_having(quantity_sum().ne(0))
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }
