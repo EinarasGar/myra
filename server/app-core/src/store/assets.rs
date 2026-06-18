@@ -145,6 +145,7 @@ pub async fn create_user_asset(
 pub async fn update_base_asset(
     infra: &SharedInfra,
     asset_id: i32,
+    ticker: String,
     auth_token: Option<&str>,
 ) -> Result<(), ApiError> {
     let user_id = infra.user_id().ok_or_else(|| ApiError::Parse {
@@ -157,6 +158,7 @@ pub async fn update_base_asset(
         return Err(server_error(resp.status, &resp.body));
     }
     infra.set_default_asset_id(asset_id);
+    infra.set_default_asset_ticker(ticker);
     Ok(())
 }
 

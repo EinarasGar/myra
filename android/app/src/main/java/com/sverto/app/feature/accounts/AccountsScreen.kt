@@ -144,6 +144,7 @@ private fun AccountsContent(
         AccountTypeSection(
             label = accountTypeLabel(typeId),
             accounts = accounts,
+            baseTicker = state.baseTicker,
             onAccountClick = onAccountClick,
             sharedTransitionScope = sharedTransitionScope,
             animatedVisibilityScope = animatedVisibilityScope,
@@ -156,6 +157,7 @@ private fun AccountsContent(
 private fun AccountTypeSection(
     label: String,
     accounts: List<AccountListItem>,
+    baseTicker: String,
     onAccountClick: (AccountListItem) -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
@@ -170,6 +172,7 @@ private fun AccountTypeSection(
         accounts.forEach { account ->
             AccountCard(
                 account = account,
+                baseTicker = baseTicker,
                 onClick = { onAccountClick(account) },
                 sharedTransitionScope = sharedTransitionScope,
                 animatedVisibilityScope = animatedVisibilityScope,

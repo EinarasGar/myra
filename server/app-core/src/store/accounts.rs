@@ -32,6 +32,8 @@ impl AccountsModule {
                 is_loading_balances: false,
                 error: None,
                 accounts: vec![],
+                total_net_worth: 0.0,
+                base_ticker: String::new(),
             },
             observer: None,
         }
@@ -52,6 +54,8 @@ impl AccountsModule {
             is_loading_balances: false,
             error: None,
             accounts: vec![],
+            total_net_worth: 0.0,
+            base_ticker: String::new(),
         };
         self.notify();
     }
@@ -77,6 +81,7 @@ pub async fn load_accounts(
     {
         let mut m = module.lock().unwrap();
         m.state.is_loading = true;
+        m.state.base_ticker = infra.default_asset_ticker().unwrap_or_default();
         m.notify();
     }
 
@@ -132,6 +137,7 @@ pub async fn load_accounts(
         let mut m = module.lock().unwrap();
         m.state.accounts = updated_accounts;
         m.state.is_loading_balances = false;
+        m.state.base_ticker = infra.default_asset_ticker().unwrap_or_default();
         m.notify();
     }
 }

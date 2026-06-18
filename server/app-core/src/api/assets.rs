@@ -40,11 +40,11 @@ pub fn extract_assets(body: &str) -> Result<Vec<AssetItem>, String> {
         .collect())
 }
 
-pub fn extract_asset_base_pair_id(body: &str) -> Result<i32, String> {
+pub fn extract_asset_base_pair(body: &str) -> Result<(i32, String), String> {
     let resp: GetAssetResponseViewModel = serde_json::from_str(body).map_err(|e| e.to_string())?;
     resp.metadata
         .base_asset
-        .map(|b| b.asset_id.0)
+        .map(|b| (b.asset_id.0, b.ticker))
         .ok_or_else(|| "asset has no base pair".to_string())
 }
 

@@ -26,26 +26,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.sverto.app.core.Money
 import uniffi.sverto_core.AccountListItem
 import kotlin.math.abs
-
-internal fun formatCurrency(value: Double): String {
-    val absValue = abs(value)
-    val whole = absValue.toLong()
-    val fraction = ((absValue - whole) * 100).toLong()
-    val formatted =
-        buildString {
-            val wholeStr = whole.toString()
-            wholeStr.forEachIndexed { index, c ->
-                if (index > 0 && (wholeStr.length - index) % 3 == 0) append(',')
-                append(c)
-            }
-            append('.')
-            append(fraction.toString().padStart(2, '0'))
-        }
-    val prefix = if (value < 0) "-£" else "£"
-    return "$prefix$formatted"
-}
 
 internal fun formatPercent(value: Double): String = "%.1f".format(abs(value))
 
@@ -53,6 +36,7 @@ internal fun formatPercent(value: Double): String = "%.1f".format(abs(value))
 @Composable
 fun AccountCard(
     account: AccountListItem,
+    baseTicker: String,
     onClick: () -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
@@ -119,7 +103,7 @@ fun AccountCard(
                     val balance = account.balance
                     if (balance != null) {
                         Text(
-                            text = formatCurrency(balance),
+                            text = Money.format(balance, baseTicker),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface,
@@ -133,7 +117,6 @@ fun AccountCard(
                                 } else {
                                     MaterialTheme.colorScheme.error
                                 }
-                            val sign = if (gain >= 0) "+" else "-"
                             val pct =
                                 if (balance > 0) {
                                     (gain / balance) * 100.0
@@ -141,7 +124,7 @@ fun AccountCard(
                                     0.0
                                 }
                             Text(
-                                text = "$sign${formatCurrency(abs(gain))} (${formatPercent(pct)}%)",
+                                text = "${Money.format(gain, baseTicker, signed = true)} (${formatPercent(pct)}%)",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = gainColor,
                             )

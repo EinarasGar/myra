@@ -14,10 +14,16 @@ pub struct ApiResponse {
 #[derive(Debug, Clone, serde::Deserialize, uniffi::Record)]
 pub struct AuthMe {
     pub user_id: String,
-    pub default_asset_id: Option<i32>,
+    pub default_asset: Option<DefaultAsset>,
     pub onboarding_version: i32,
     pub role: String,
     pub user_metadata: Option<UserMetadata>,
+}
+
+#[derive(Debug, Clone, serde::Deserialize, uniffi::Record)]
+pub struct DefaultAsset {
+    pub id: i32,
+    pub ticker: String,
 }
 
 #[derive(Debug, Clone, serde::Deserialize, uniffi::Record)]
@@ -296,6 +302,7 @@ pub struct PortfolioState {
     pub error: Option<String>,
     pub holdings: Vec<HoldingItem>,
     pub chart_data: Vec<ChartPeriodData>,
+    pub base_ticker: String,
 }
 
 #[derive(Debug, Clone, uniffi::Record)]
@@ -318,6 +325,8 @@ pub struct AccountsState {
     pub is_loading_balances: bool,
     pub error: Option<String>,
     pub accounts: Vec<AccountListItem>,
+    pub total_net_worth: f64,
+    pub base_ticker: String,
 }
 
 #[derive(Debug, Clone, uniffi::Record)]
@@ -351,6 +360,7 @@ pub struct AccountDetailState {
     pub realized_gains: f64,
     pub total_fees: f64,
     pub recent_transactions: Vec<TransactionListItem>,
+    pub base_ticker: String,
 }
 
 #[derive(Debug, Clone, uniffi::Record)]
@@ -391,6 +401,8 @@ pub struct AssetDetailState {
     pub current_price: f64,
     pub chart_data: Vec<ChartPeriodData>,
     pub lots: Vec<LotItem>,
+    pub base_ticker: String,
+    pub price_ticker: String,
 }
 
 #[derive(Debug, Clone, uniffi::Record)]

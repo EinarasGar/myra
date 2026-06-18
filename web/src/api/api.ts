@@ -2625,10 +2625,10 @@ export interface Auth {
 export interface AuthMe {
   /**
    *
-   * @type {number}
+   * @type {DefaultAsset}
    * @memberof AuthMe
    */
-  default_asset_id?: number | null;
+  default_asset?: DefaultAsset | null;
   /**
    *
    * @type {number}
@@ -3966,6 +3966,25 @@ export interface CreateQuickUploadRequest {
    * @memberof CreateQuickUploadRequest
    */
   file_id: string;
+}
+/**
+ *
+ * @export
+ * @interface DefaultAsset
+ */
+export interface DefaultAsset {
+  /**
+   *
+   * @type {number}
+   * @memberof DefaultAsset
+   */
+  id: number;
+  /**
+   *
+   * @type {string}
+   * @memberof DefaultAsset
+   */
+  ticker: string;
 }
 /**
  *

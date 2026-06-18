@@ -39,6 +39,7 @@ pub struct SharedInfra {
     pub is_offline: AtomicBool,
     pub user_id: Mutex<Option<String>>,
     pub default_asset_id: Mutex<Option<i32>>,
+    pub default_asset_ticker: Mutex<Option<String>>,
     pub onboarding_version: Mutex<Option<i32>>,
     pub db_path: String,
     on_offline_changed: Mutex<Option<OnOfflineChangedCallback>>,
@@ -73,6 +74,7 @@ impl SharedInfra {
             is_offline: AtomicBool::new(false),
             user_id: Mutex::new(None),
             default_asset_id: Mutex::new(None),
+            default_asset_ticker: Mutex::new(None),
             onboarding_version: Mutex::new(None),
             db_path,
             on_offline_changed: Mutex::new(None),
@@ -102,6 +104,14 @@ impl SharedInfra {
 
     pub fn set_default_asset_id(&self, id: i32) {
         *self.default_asset_id.lock().unwrap() = Some(id);
+    }
+
+    pub fn default_asset_ticker(&self) -> Option<String> {
+        self.default_asset_ticker.lock().unwrap().clone()
+    }
+
+    pub fn set_default_asset_ticker(&self, ticker: String) {
+        *self.default_asset_ticker.lock().unwrap() = Some(ticker);
     }
 
     pub fn onboarding_version(&self) -> Option<i32> {

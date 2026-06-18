@@ -24,15 +24,16 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.sverto.app.core.Money
 import com.sverto.app.core.ui.RowDivider
 import uniffi.sverto_core.HoldingItem
 import java.text.NumberFormat
 import java.util.Locale
-import kotlin.math.abs
 
 @Composable
 fun HoldingsList(
     holdings: List<HoldingItem>,
+    baseTicker: String,
     modifier: Modifier = Modifier,
 ) {
     if (holdings.isEmpty()) return
@@ -51,7 +52,7 @@ fun HoldingsList(
         ) {
             Column {
                 holdings.forEachIndexed { index, holding ->
-                    HoldingRow(holding)
+                    HoldingRow(holding, baseTicker)
                     if (index < holdings.lastIndex) {
                         RowDivider()
                     }
@@ -62,7 +63,10 @@ fun HoldingsList(
 }
 
 @Composable
-private fun HoldingRow(holding: HoldingItem) {
+private fun HoldingRow(
+    holding: HoldingItem,
+    baseTicker: String,
+) {
     val icon = holdingIcon(holding.assetTypeId)
     val iconTint = holdingIconTint(holding.assetTypeId)
 
@@ -109,7 +113,7 @@ private fun HoldingRow(holding: HoldingItem) {
         trailingContent = {
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = formatValue(holding.value),
+                    text = Money.format(holding.value, baseTicker),
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
@@ -141,16 +145,6 @@ private fun holdingIconTint(assetTypeId: Int) =
         8, 9 -> MaterialTheme.colorScheme.secondary
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
-
-private fun formatValue(value: Double): String {
-    val fmt =
-        NumberFormat.getNumberInstance(Locale.UK).apply {
-            minimumFractionDigits = 2
-            maximumFractionDigits = 2
-        }
-    val prefix = if (value < 0) "-" else ""
-    return "$prefix${fmt.format(abs(value))}"
-}
 
 private fun formatUnits(units: Double): String {
     val fmt =

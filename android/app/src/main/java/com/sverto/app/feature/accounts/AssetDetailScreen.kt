@@ -37,11 +37,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sverto.app.core.Money
 import com.sverto.app.core.SvertoViewModelFactory
 import com.sverto.app.feature.accounts.components.LotCard
 import com.sverto.app.feature.accounts.components.MetricItem
 import com.sverto.app.feature.accounts.components.MetricsGrid
-import com.sverto.app.feature.accounts.components.formatCurrency
 import com.sverto.app.feature.portfolio.ChartPoint
 import com.sverto.app.feature.portfolio.PortfolioChart
 import com.sverto.app.feature.portfolio.TimePeriod
@@ -176,7 +176,7 @@ fun AssetDetailScreen(
                                 fadeIn(motionScheme.defaultEffectsSpec()) +
                                     slideInVertically(motionScheme.defaultSpatialSpec()) { it / 4 },
                         ) {
-                            PortfolioChart(portfolioData = chartData)
+                            PortfolioChart(portfolioData = chartData, currencyTicker = state.priceTicker)
                         }
                     }
 
@@ -198,7 +198,7 @@ fun AssetDetailScreen(
 
                             // Hero total value for the position.
                             Text(
-                                text = formatCurrency(state.value),
+                                text = Money.format(state.value, state.baseTicker),
                                 style = MaterialTheme.typography.displaySmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface,
@@ -207,10 +207,10 @@ fun AssetDetailScreen(
                             MetricsGrid(
                                 items =
                                     listOf(
-                                        MetricItem(label = "Cost Basis", value = formatCurrency(state.costBasis)),
+                                        MetricItem(label = "Cost Basis", value = Money.format(state.costBasis, state.baseTicker)),
                                         MetricItem(
                                             label = "Unrealized P&L",
-                                            value = formatCurrency(state.unrealizedGains),
+                                            value = Money.format(state.unrealizedGains, state.baseTicker, signed = true),
                                             valueColor = pnlColor,
                                         ),
                                         MetricItem(label = "Units Held", value = unitsFormatted),
@@ -237,7 +237,7 @@ fun AssetDetailScreen(
                                 )
 
                                 state.lots.forEach { lot ->
-                                    LotCard(lot = lot)
+                                    LotCard(lot = lot, baseTicker = state.baseTicker)
                                 }
                             }
                         }

@@ -40,6 +40,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.sverto.app.core.Money
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -67,6 +68,7 @@ enum class TimePeriod(
 @Composable
 fun PortfolioChart(
     portfolioData: Map<TimePeriod, List<ChartPoint>>,
+    currencyTicker: String,
     modifier: Modifier = Modifier,
     selectedPeriod: TimePeriod? = null,
     onPeriodSelect: ((TimePeriod) -> Unit)? = null,
@@ -144,16 +146,16 @@ fun PortfolioChart(
             verticalAlignment = Alignment.Top,
         ) {
             Column(Modifier.weight(1f)) {
-                // Portfolio value
                 Text(
-                    text = "$${formatNumber(currentValue)}",
+                    text = Money.format(currentValue, currencyTicker),
                     style = MaterialTheme.typography.headlineLarge,
                     modifier = Modifier.animateContentSize(),
                 )
-                // Change indicator
-                val sign = if (isPositive) "+" else ""
+                val changeText = Money.format(changeAmount, currencyTicker, signed = true)
+                val pctText = String.format(Locale.US, "%.2f", changePercent)
+                val pctSign = if (isPositive) "+" else ""
                 Text(
-                    text = "$sign$${formatNumber(changeAmount)} ($sign${String.format(Locale.US, "%.2f", changePercent)}%)",
+                    text = "$changeText ($pctSign$pctText%)",
                     style = MaterialTheme.typography.bodyMedium,
                     color = changeColor,
                 )
@@ -379,13 +381,4 @@ private fun buildSmoothPath(points: List<Offset>): Path {
         }
     }
     return path
-}
-
-private fun formatNumber(value: Double): String {
-    val abs = kotlin.math.abs(value)
-    return when {
-        abs >= 1_000_000 -> String.format(Locale.US, "%,.0f", value)
-        abs >= 1_000 -> String.format(Locale.US, "%,.2f", value)
-        else -> String.format(Locale.US, "%.2f", value)
-    }
 }

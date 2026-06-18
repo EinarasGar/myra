@@ -63,20 +63,22 @@ export function useUserId(): string {
   });
 }
 
-/**
- * Returns the authenticated user's default asset id from the cached /auth/me
- * response, or null if it isn't available yet. Observes the query cache only —
- * it never fires its own API call (the auth provider populates the cache).
- */
 export function useDefaultAssetId(): number | null {
   const queryClient = useQueryClient();
   const cached = queryClient.getQueryData<AuthMe>([QueryKeys.AUTH_ME]);
-  return cached?.default_asset_id ?? null;
+  return cached?.default_asset?.id ?? null;
+}
+
+export function useDefaultAssetTicker(): string | null {
+  const queryClient = useQueryClient();
+  const cached = queryClient.getQueryData<AuthMe>([QueryKeys.AUTH_ME]);
+  return cached?.default_asset?.ticker ?? null;
 }
 export function useOnboardingVersion(): number | undefined {
   const queryClient = useQueryClient();
   const [version, setVersion] = React.useState(
-    () => queryClient.getQueryData<AuthMe>([QueryKeys.AUTH_ME])?.onboarding_version,
+    () =>
+      queryClient.getQueryData<AuthMe>([QueryKeys.AUTH_ME])?.onboarding_version,
   );
 
   React.useEffect(

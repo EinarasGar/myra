@@ -88,9 +88,9 @@ fun PortfolioScreen(
                             }.toMap()
 
                     if (portfolioData.isNotEmpty()) {
-                        PortfolioChart(portfolioData = portfolioData)
+                        PortfolioChart(portfolioData = portfolioData, currencyTicker = state.baseTicker)
                     }
-                    HoldingsList(holdings = state.holdings)
+                    HoldingsList(holdings = state.holdings, baseTicker = state.baseTicker)
                 }
             }
 

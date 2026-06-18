@@ -115,9 +115,6 @@ fun OnboardingScreen(
                         }
                     },
                     onNext = {
-                        if (state.steps[pagerState.currentPage] == OnboardingStepId.BASE_CURRENCY) {
-                            viewModel.saveBaseAsset()
-                        }
                         scope.launch {
                             pagerState.animateScrollToPage(pagerState.currentPage + 1)
                         }

@@ -6,6 +6,7 @@ import type { CombinedTransactionItem } from "@/api/api";
 import type { GroupTransactionItem } from "@/api/api";
 import type { Account } from "@/types/account";
 import type { Asset } from "@/types/assets";
+import { formatMoney } from "@/lib/format-money";
 
 // Format a unix timestamp to readable date
 export function formatTransactionDate(unixTimestamp: number): string {
@@ -48,32 +49,35 @@ export function getTransactionAmount(
     case "asset_purchase": {
       const purchaseAsset = findAsset(transaction.purchase_change.asset_id);
       const cashAsset = findAsset(transaction.cash_outgoings_change.asset_id);
-      return `${transaction.cash_outgoings_change.amount} ${cashAsset?.ticker ?? ""} → ${transaction.purchase_change.amount} ${purchaseAsset?.ticker ?? ""}`;
+      return `${formatMoney(Number(transaction.cash_outgoings_change.amount), cashAsset?.ticker ?? "")} → ${formatMoney(Number(transaction.purchase_change.amount), purchaseAsset?.ticker ?? "")}`;
     }
     case "asset_sale": {
       const saleAsset = findAsset(transaction.sale_entry.asset_id);
       const proceedsAsset = findAsset(transaction.proceeds_entry.asset_id);
-      return `${transaction.sale_entry.amount} ${saleAsset?.ticker ?? ""} → ${transaction.proceeds_entry.amount} ${proceedsAsset?.ticker ?? ""}`;
+      return `${formatMoney(Number(transaction.sale_entry.amount), saleAsset?.ticker ?? "")} → ${formatMoney(Number(transaction.proceeds_entry.amount), proceedsAsset?.ticker ?? "")}`;
     }
     case "asset_trade": {
       const outAsset = findAsset(transaction.outgoing_entry.asset_id);
       const inAsset = findAsset(transaction.incoming_entry.asset_id);
-      return `${transaction.outgoing_entry.amount} ${outAsset?.ticker ?? ""} → ${transaction.incoming_entry.amount} ${inAsset?.ticker ?? ""}`;
+      return `${formatMoney(Number(transaction.outgoing_entry.amount), outAsset?.ticker ?? "")} → ${formatMoney(Number(transaction.incoming_entry.amount), inAsset?.ticker ?? "")}`;
     }
     case "asset_balance_transfer": {
       const outAsset = findAsset(transaction.outgoing_change.asset_id);
       const inAsset = findAsset(transaction.incoming_change.asset_id);
-      return `${transaction.outgoing_change.amount} ${outAsset?.ticker ?? ""} → ${transaction.incoming_change.amount} ${inAsset?.ticker ?? ""}`;
+      return `${formatMoney(Number(transaction.outgoing_change.amount), outAsset?.ticker ?? "")} → ${formatMoney(Number(transaction.incoming_change.amount), inAsset?.ticker ?? "")}`;
     }
     case "cash_balance_transfer": {
       const asset = findAsset(transaction.incoming_change.asset_id);
-      return `${transaction.incoming_change.amount} ${asset?.ticker ?? ""}`;
+      return formatMoney(
+        Number(transaction.incoming_change.amount),
+        asset?.ticker ?? "",
+      );
     }
     default: {
       if ("entry" in transaction) {
         const entry = transaction.entry as TransactionEntryWithRequiredEntryId;
         const asset = findAsset(entry.asset_id);
-        return `${entry.amount} ${asset?.ticker ?? ""}`;
+        return formatMoney(Number(entry.amount), asset?.ticker ?? "");
       }
       return "";
     }
@@ -270,11 +274,8 @@ export function getGroupAmountSummary(
 
   if (totals.size === 0) return "—";
 
-  // Format each ticker's total
-  const formatEntry = (ticker: string, amount: number) => {
-    const rounded = Math.round(amount * 100) / 100;
-    return `${rounded} ${ticker}`;
-  };
+  const formatEntry = (ticker: string, amount: number) =>
+    formatMoney(amount, ticker);
 
   // Sort by absolute value descending so most significant amounts come first
   const sorted = Array.from(totals.entries()).sort(

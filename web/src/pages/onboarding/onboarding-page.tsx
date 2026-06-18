@@ -79,7 +79,10 @@ export default function OnboardingPage() {
         old
           ? {
               ...old,
-              default_asset_id: selectedOrFirstCurrency.id,
+              default_asset: {
+                id: selectedOrFirstCurrency.id,
+                ticker: selectedOrFirstCurrency.ticker,
+              },
               onboarding_version: CURRENT_ONBOARDING_VERSION,
             }
           : old,
@@ -129,7 +132,9 @@ export default function OnboardingPage() {
                 aria-label="Base currency"
               />
               <div className="max-h-64 space-y-2 overflow-y-auto">
-                {isFetching && <p className="text-sm text-muted-foreground">Loading...</p>}
+                {isFetching && (
+                  <p className="text-sm text-muted-foreground">Loading...</p>
+                )}
                 {currencies.map((currency) => (
                   <button
                     key={currency.id}

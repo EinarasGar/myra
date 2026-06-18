@@ -10,6 +10,7 @@ pub struct UserFullDto {
     pub username: String,
     pub role: UserRoleDto,
     pub default_asset_id: Option<i32>,
+    pub default_ticker: Option<String>,
     pub onboarding_version: i32,
 }
 
@@ -24,6 +25,7 @@ impl From<UserFullModel> for UserFullDto {
             }
             .into(),
             default_asset_id: p.default_asset,
+            default_ticker: p.default_ticker,
             onboarding_version: p.onboarding_version,
         }
     }

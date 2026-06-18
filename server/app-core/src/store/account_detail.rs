@@ -43,6 +43,7 @@ impl AccountDetailModule {
                 realized_gains: 0.0,
                 total_fees: 0.0,
                 recent_transactions: vec![],
+                base_ticker: String::new(),
             },
             observer: None,
             account_id: String::new(),
@@ -74,6 +75,7 @@ impl AccountDetailModule {
             realized_gains: 0.0,
             total_fees: 0.0,
             recent_transactions: vec![],
+            base_ticker: String::new(),
         };
         self.account_id = String::new();
         self.notify();
@@ -106,6 +108,7 @@ pub async fn load_account_detail(
         m.state.account_id = account_id.to_string();
         m.state.account_name = account_name.to_string();
         m.state.account_type_id = account_type_id;
+        m.state.base_ticker = infra.default_asset_ticker().unwrap_or_default();
         m.notify();
     }
 
@@ -185,6 +188,7 @@ pub async fn load_account_detail(
         m.state.chart_data = chart_data;
     }
 
+    m.state.base_ticker = infra.default_asset_ticker().unwrap_or_default();
     m.state.error = error;
     m.state.is_loading = false;
     m.notify();

@@ -1,8 +1,5 @@
 import * as React from "react";
-import {
-  useAuth,
-  useOnboardingVersion,
-} from "@/hooks/use-auth";
+import { useAuth, useOnboardingVersion } from "@/hooks/use-auth";
 import { CURRENT_ONBOARDING_VERSION } from "@/constants/onboarding";
 import { AppSidebar } from "@/pages/layout/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";

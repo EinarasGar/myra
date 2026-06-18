@@ -6,7 +6,8 @@ import { useAssetStore } from "@/hooks/store/use-asset-store";
 import useGetPortfolioHoldings from "@/hooks/api/use-get-holdings";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
-import { useUserId } from "@/hooks/use-auth";
+import { useUserId, useDefaultAssetTicker } from "@/hooks/use-auth";
+import { formatMoney } from "@/lib/format-money";
 export type Holding = {
   asset_name: string;
   account_name: string;
@@ -14,45 +15,44 @@ export type Holding = {
   price: number;
 };
 
-const columns: ColumnDef<Holding>[] = [
-  {
-    accessorKey: "asset_name",
-    cell: (info) => info.getValue(),
-    header: () => <span>Type</span>,
-    footer: (props) => props.column.id,
-  },
-  {
-    accessorFn: (row) => row.account_name,
-    id: "account_name",
-    cell: (info) => info.getValue(),
-    header: () => <span>Account Name</span>,
-    footer: (props) => props.column.id,
-  },
-  {
-    accessorKey: "units",
-    header: () => "Units",
-    cell: (info) => info.getValue(),
-    footer: (props) => props.column.id,
-  },
-  {
-    accessorKey: "price",
-    header: () => <span>Price</span>,
-    cell: (info) => {
-      const raw = info.getValue<number | string | null | undefined>();
-      const num = typeof raw === "string" ? Number(raw) : raw;
-      if (num == null || Number.isNaN(num)) return "—";
-      return num.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
+function makeColumns(baseTicker: string): ColumnDef<Holding>[] {
+  return [
+    {
+      accessorKey: "asset_name",
+      cell: (info) => info.getValue(),
+      header: () => <span>Type</span>,
+      footer: (props) => props.column.id,
     },
-    footer: (props) => props.column.id,
-  },
-];
+    {
+      accessorFn: (row) => row.account_name,
+      id: "account_name",
+      cell: (info) => info.getValue(),
+      header: () => <span>Account Name</span>,
+      footer: (props) => props.column.id,
+    },
+    {
+      accessorKey: "units",
+      header: () => "Units",
+      cell: (info) => info.getValue(),
+      footer: (props) => props.column.id,
+    },
+    {
+      accessorKey: "price",
+      header: () => <span>Price</span>,
+      cell: (info) => {
+        const raw = info.getValue<number | string | null | undefined>();
+        const num = typeof raw === "string" ? Number(raw) : raw;
+        if (num == null || Number.isNaN(num)) return "—";
+        return formatMoney(num, baseTicker);
+      },
+      footer: (props) => props.column.id,
+    },
+  ];
+}
 
 export const HoldingsTableSkeleton = () => (
   <DataTableSkeleton
-    columns={columns}
+    columns={makeColumns("")}
     rowNum={3}
     usePagination={false}
   ></DataTableSkeleton>
@@ -60,9 +60,11 @@ export const HoldingsTableSkeleton = () => (
 
 export default function HoldingsTable() {
   const userId = useUserId();
+  const baseTicker = useDefaultAssetTicker() ?? "";
   const { data: holdingData } = useGetPortfolioHoldings(userId);
   const assets = useAssetStore((state) => state.assets);
   const accounts = useAccountStore((state) => state.accounts);
+  const columns = useMemo(() => makeColumns(baseTicker), [baseTicker]);
 
   const tableData = useMemo(() => {
     return (
@@ -85,7 +87,7 @@ export default function HoldingsTable() {
       data: tableData,
       columns,
     }),
-    [tableData],
+    [tableData, columns],
   );
 
   return <MemoizedDataTable {...table}></MemoizedDataTable>;

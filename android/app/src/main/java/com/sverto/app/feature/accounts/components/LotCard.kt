@@ -16,11 +16,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.sverto.app.core.Money
 import uniffi.sverto_core.LotItem
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import kotlin.math.abs
 
 @Suppress("NewApi")
 private fun formatLotDate(epochSeconds: Long): String =
@@ -40,6 +40,7 @@ private fun formatUnits(value: Double): String =
 @Composable
 fun LotCard(
     lot: LotItem,
+    baseTicker: String,
     modifier: Modifier = Modifier,
 ) {
     val isClosed = lot.unitsRemaining <= 0.0
@@ -111,7 +112,7 @@ fun LotCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = "@ ${formatCurrency(lot.buyPricePerUnit)}/unit",
+                    text = "@ ${Money.format(lot.buyPricePerUnit, baseTicker)}/unit",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -119,19 +120,18 @@ fun LotCard(
 
             // Unrealized P&L + current value (only while units remain)
             if (!isClosed) {
-                val pnlSign = if (lot.unrealizedGains >= 0) "+" else "-"
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
-                        text = "Unrealized: $pnlSign${formatCurrency(abs(lot.unrealizedGains))}",
+                        text = "Unrealized: ${Money.format(lot.unrealizedGains, baseTicker, signed = true)}",
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
                         color = gainColor,
                     )
                     Text(
-                        text = "Value: ${formatCurrency(lot.currentValue)}",
+                        text = "Value: ${Money.format(lot.currentValue, baseTicker)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -140,10 +140,9 @@ fun LotCard(
 
             // Realized P&L from the sold portion (only when something was sold)
             if (lot.unitsSold > 0.0) {
-                val realizedSign = if (lot.realizedGains >= 0) "+" else "-"
                 Text(
                     text =
-                        "Realized: $realizedSign${formatCurrency(abs(lot.realizedGains))} · " +
+                        "Realized: ${Money.format(lot.realizedGains, baseTicker, signed = true)} · " +
                             "${formatUnits(lot.unitsSold)} sold",
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Medium,

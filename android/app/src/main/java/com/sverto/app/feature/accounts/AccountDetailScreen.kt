@@ -51,12 +51,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sverto.app.core.Money
 import com.sverto.app.core.SvertoViewModelFactory
 import com.sverto.app.core.ui.RowDivider
 import com.sverto.app.feature.accounts.components.HoldingRow
 import com.sverto.app.feature.accounts.components.MetricItem
 import com.sverto.app.feature.accounts.components.MetricsGrid
-import com.sverto.app.feature.accounts.components.formatCurrency
 import com.sverto.app.feature.portfolio.ChartPoint
 import com.sverto.app.feature.portfolio.PortfolioChart
 import com.sverto.app.feature.portfolio.TimePeriod
@@ -197,7 +197,7 @@ fun AccountDetailScreen(
                         item(key = "chart") {
                             if (chartData.isNotEmpty()) {
                                 Column(modifier = Modifier.animateItem()) {
-                                    PortfolioChart(portfolioData = chartData)
+                                    PortfolioChart(portfolioData = chartData, currencyTicker = state.baseTicker)
                                     Spacer(modifier = Modifier.height(24.dp))
                                 }
                             }
@@ -222,14 +222,23 @@ fun AccountDetailScreen(
                                     MetricsGrid(
                                         items =
                                             listOf(
-                                                MetricItem(label = "Total Value", value = formatCurrency(state.totalValue)),
-                                                MetricItem(label = "Cost Basis", value = formatCurrency(state.totalCostBasis)),
+                                                MetricItem(
+                                                    label = "Total Value",
+                                                    value = Money.format(state.totalValue, state.baseTicker),
+                                                ),
+                                                MetricItem(
+                                                    label = "Cost Basis",
+                                                    value = Money.format(state.totalCostBasis, state.baseTicker),
+                                                ),
                                                 MetricItem(
                                                     label = "Unrealized P&L",
-                                                    value = formatCurrency(state.unrealizedGains),
+                                                    value = Money.format(state.unrealizedGains, state.baseTicker, signed = true),
                                                     valueColor = pnlColor,
                                                 ),
-                                                MetricItem(label = "Total Fees", value = formatCurrency(state.totalFees)),
+                                                MetricItem(
+                                                    label = "Total Fees",
+                                                    value = Money.format(state.totalFees, state.baseTicker),
+                                                ),
                                             ),
                                     )
                                     Spacer(modifier = Modifier.height(24.dp))
@@ -264,6 +273,7 @@ fun AccountDetailScreen(
                                             holdings.forEachIndexed { index, holding ->
                                                 HoldingRow(
                                                     holding = holding,
+                                                    baseTicker = state.baseTicker,
                                                     onClick = { onHoldingClick(accountId, holding.assetId) },
                                                 )
                                                 if (index < holdings.size - 1) {

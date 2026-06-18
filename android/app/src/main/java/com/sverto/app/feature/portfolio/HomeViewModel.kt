@@ -20,6 +20,7 @@ class HomeViewModel(
                 error = null,
                 holdings = emptyList(),
                 chartData = emptyList(),
+                baseTicker = "",
             ),
         )
     val state: StateFlow<PortfolioState> = _state.asStateFlow()

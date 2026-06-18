@@ -33,8 +33,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import java.util.Locale
-import kotlin.math.abs
+import com.sverto.app.core.Money
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -145,11 +144,14 @@ fun QuickUploadCard(
                 }
 
                 if (item.status == QuickUploadStatus.READY && item.proposalSummary?.amount != null) {
-                    Text(
-                        text = formatAmount(item.proposalSummary.amount),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
+                    val value = item.proposalSummary.amount.toDoubleOrNull()
+                    if (value != null) {
+                        Text(
+                            text = Money.format(value, item.proposalSummary.currency ?: "", signed = true),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
                 }
             }
 
@@ -245,10 +247,4 @@ private fun StatusBadge(status: QuickUploadStatus) {
             )
         }
     }
-}
-
-private fun formatAmount(amount: String): String {
-    val value = amount.toDoubleOrNull() ?: return amount
-    val prefix = if (value < 0) "-" else "+"
-    return "$prefix\$${String.format(Locale.US, "%.2f", abs(value))}"
 }

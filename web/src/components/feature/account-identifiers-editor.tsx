@@ -31,7 +31,9 @@ function validate(kind: Kind, v: string): string | null {
     return /^\d{4}$/.test(v) ? null : "Card ending must be 4 digits.";
   if (kind === "account_number")
     return /^\d{4,34}$/.test(v) ? null : "Account number must be 4–34 digits.";
-  return /^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(v) ? null : "Enter a valid IBAN.";
+  return /^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(v)
+    ? null
+    : "Enter a valid IBAN.";
 }
 
 export function AccountIdentifiersEditor({

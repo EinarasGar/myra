@@ -4,6 +4,7 @@ data class ProposalSummary(
     val description: String,
     val date: String,
     val amount: String?,
+    val currency: String? = null,
 )
 
 enum class QuickUploadStatus {

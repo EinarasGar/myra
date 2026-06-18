@@ -32,6 +32,7 @@ class AccountDetailViewModel(
                 realizedGains = 0.0,
                 totalFees = 0.0,
                 recentTransactions = emptyList(),
+                baseTicker = "",
             ),
         )
     val state: StateFlow<AccountDetailState> = _state.asStateFlow()

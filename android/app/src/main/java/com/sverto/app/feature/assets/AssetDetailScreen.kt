@@ -146,8 +146,14 @@ fun AssetDetailScreen(
                 if (state.isLoading || ratesLoading) {
                     PortfolioChartSkeleton(modifier = Modifier.padding(vertical = 16.dp))
                 } else {
+                    val quoteTicker =
+                        state.detail
+                            ?.pairs
+                            ?.firstOrNull { it.assetId == state.selectedPairId }
+                            ?.ticker ?: ""
                     PortfolioChart(
                         portfolioData = state.chartByPeriod,
+                        currencyTicker = quoteTicker,
                         selectedPeriod = state.selectedPeriod,
                         onPeriodSelect = viewModel::selectPeriod,
                         headerTrailing = {

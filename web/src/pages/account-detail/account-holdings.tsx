@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useUserId } from "@/hooks/use-auth";
+import { useUserId, useDefaultAssetTicker } from "@/hooks/use-auth";
 import { useAssetStore } from "@/hooks/store/use-asset-store";
 import useGetAccountPortfolioOverview from "@/hooks/api/use-get-account-portfolio-overview";
 import {
@@ -17,6 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { formatMoney } from "@/lib/format-money";
 
 interface AccountHoldingsProps {
   accountId: string;
@@ -38,7 +39,13 @@ type CashHoldingRow = {
   dividends: number;
 };
 
-function GainCell({ value }: { value: number }) {
+function GainCell({
+  value,
+  baseTicker,
+}: {
+  value: number;
+  baseTicker: string;
+}) {
   return (
     <span
       className={cn(
@@ -46,66 +53,79 @@ function GainCell({ value }: { value: number }) {
         value < 0 && "text-red-600 dark:text-red-400",
       )}
     >
-      {Number(value).toFixed(2)}
+      {formatMoney(Number(value), baseTicker, true)}
     </span>
   );
 }
 
-const assetColumns: ColumnDef<AssetHoldingRow>[] = [
-  {
-    accessorKey: "asset_name",
-    header: () => <span>Asset</span>,
-    cell: (info) => info.getValue(),
-  },
-  {
-    accessorKey: "units_held",
-    header: () => <span>Units Held</span>,
-    cell: (info) => Number(info.getValue()).toFixed(2),
-  },
-  {
-    accessorKey: "cost_basis",
-    header: () => <span>Cost Basis</span>,
-    cell: (info) => Number(info.getValue()).toFixed(2),
-  },
-  {
-    accessorKey: "unrealized_gains",
-    header: () => <span>Unrealized Gains</span>,
-    cell: ({ row }) => <GainCell value={row.original.unrealized_gains} />,
-  },
-  {
-    accessorKey: "total_gains",
-    header: () => <span>Total Gains</span>,
-    cell: ({ row }) => <GainCell value={row.original.total_gains} />,
-  },
-  {
-    accessorKey: "fees",
-    header: () => <span>Fees</span>,
-    cell: (info) => Number(info.getValue()).toFixed(2),
-  },
-];
+function makeAssetColumns(baseTicker: string): ColumnDef<AssetHoldingRow>[] {
+  return [
+    {
+      accessorKey: "asset_name",
+      header: () => <span>Asset</span>,
+      cell: (info) => info.getValue(),
+    },
+    {
+      accessorKey: "units_held",
+      header: () => <span>Units Held</span>,
+      cell: (info) => Number(info.getValue()).toFixed(2),
+    },
+    {
+      accessorKey: "cost_basis",
+      header: () => <span>Cost Basis</span>,
+      cell: ({ row }) =>
+        formatMoney(Number(row.original.cost_basis), baseTicker),
+    },
+    {
+      accessorKey: "unrealized_gains",
+      header: () => <span>Unrealized Gains</span>,
+      cell: ({ row }) => (
+        <GainCell
+          value={row.original.unrealized_gains}
+          baseTicker={baseTicker}
+        />
+      ),
+    },
+    {
+      accessorKey: "total_gains",
+      header: () => <span>Total Gains</span>,
+      cell: ({ row }) => (
+        <GainCell value={row.original.total_gains} baseTicker={baseTicker} />
+      ),
+    },
+    {
+      accessorKey: "fees",
+      header: () => <span>Fees</span>,
+      cell: ({ row }) => formatMoney(Number(row.original.fees), baseTicker),
+    },
+  ];
+}
 
-const cashColumns: ColumnDef<CashHoldingRow>[] = [
-  {
-    accessorKey: "asset_name",
-    header: () => <span>Asset</span>,
-    cell: (info) => info.getValue(),
-  },
-  {
-    accessorKey: "units",
-    header: () => <span>Units</span>,
-    cell: (info) => Number(info.getValue()).toFixed(2),
-  },
-  {
-    accessorKey: "fees",
-    header: () => <span>Fees</span>,
-    cell: (info) => Number(info.getValue()).toFixed(2),
-  },
-  {
-    accessorKey: "dividends",
-    header: () => <span>Dividends</span>,
-    cell: (info) => Number(info.getValue()).toFixed(2),
-  },
-];
+function makeCashColumns(baseTicker: string): ColumnDef<CashHoldingRow>[] {
+  return [
+    {
+      accessorKey: "asset_name",
+      header: () => <span>Asset</span>,
+      cell: (info) => info.getValue(),
+    },
+    {
+      accessorKey: "units",
+      header: () => <span>Units</span>,
+      cell: (info) => Number(info.getValue()).toFixed(2),
+    },
+    {
+      accessorKey: "fees",
+      header: () => <span>Fees</span>,
+      cell: ({ row }) => formatMoney(Number(row.original.fees), baseTicker),
+    },
+    {
+      accessorKey: "dividends",
+      header: () => <span>Dividends</span>,
+      cell: ({ row }) =>
+        formatMoney(Number(row.original.dividends), baseTicker),
+    },
+  ];
+}
 
 function SimpleTable<TData>({
   data,
@@ -167,8 +187,14 @@ function SimpleTable<TData>({
 
 export default function AccountHoldings({ accountId }: AccountHoldingsProps) {
   const userId = useUserId();
+  const baseTicker = useDefaultAssetTicker() ?? "";
   const { data } = useGetAccountPortfolioOverview(userId, accountId);
   const assets = useAssetStore((state) => state.assets);
+  const assetColumns = useMemo(
+    () => makeAssetColumns(baseTicker),
+    [baseTicker],
+  );
+  const cashColumns = useMemo(() => makeCashColumns(baseTicker), [baseTicker]);
 
   const assetRows = useMemo<AssetHoldingRow[]>(() => {
     return (data.asset_portfolios ?? []).map((p) => {

@@ -65,19 +65,12 @@ class OnboardingViewModel(
         _state.value = _state.value.copy(selectedCurrency = item)
     }
 
-    fun saveBaseAsset() {
-        val asset = _state.value.selectedCurrency ?: return
-        viewModelScope.launch {
-            runCatching { store.updateBaseAsset(asset.id) }
-        }
-    }
-
     fun finish() {
         viewModelScope.launch {
             _state.value = _state.value.copy(isFinishing = true, error = null)
             val result =
                 runCatching {
-                    _state.value.selectedCurrency?.let { store.updateBaseAsset(it.id) }
+                    _state.value.selectedCurrency?.let { store.updateBaseAsset(it.id, it.ticker) }
                     store.setOnboardingVersion(CURRENT_ONBOARDING_VERSION)
                 }
             _state.value =

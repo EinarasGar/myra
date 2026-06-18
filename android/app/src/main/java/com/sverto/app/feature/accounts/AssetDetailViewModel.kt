@@ -29,6 +29,8 @@ class AssetDetailViewModel(
                 currentPrice = 0.0,
                 chartData = emptyList(),
                 lots = emptyList(),
+                baseTicker = "",
+                priceTicker = "",
             ),
         )
     val state: StateFlow<AssetDetailState> = _state.asStateFlow()

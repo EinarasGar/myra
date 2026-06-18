@@ -78,6 +78,7 @@ impl UsersService {
             username: user.username,
             role: role_dto,
             default_asset_id: user.default_asset,
+            default_ticker: None,
             onboarding_version: 0,
         };
 
@@ -85,10 +86,17 @@ impl UsersService {
     }
 
     #[tracing::instrument(skip_all, err)]
-    pub async fn get_onboarding_info(&self, user_id: Uuid) -> anyhow::Result<(Option<i32>, i32)> {
+    pub async fn get_onboarding_info(
+        &self,
+        user_id: Uuid,
+    ) -> anyhow::Result<(Option<i32>, Option<String>, i32)> {
         let query = user_queries::get_user_onboarding_info(user_id);
         let model = self.db.fetch_one::<UserOnboardingModel>(query).await?;
-        Ok((model.default_asset, model.onboarding_version))
+        Ok((
+            model.default_asset,
+            model.default_ticker,
+            model.onboarding_version,
+        ))
     }
 
     #[tracing::instrument(skip_all, err)]

@@ -67,7 +67,7 @@ fun SettingsScreen(
     val appStore = remember { (context.applicationContext as SvertoApp).appStore }
     val scope = rememberCoroutineScope()
     var showCurrencyPicker by remember { mutableStateOf(false) }
-    var baseCurrencyId by remember { mutableStateOf(appStore.getCachedMe()?.defaultAssetId) }
+    var baseCurrencyId by remember { mutableStateOf(appStore.getCachedMe()?.defaultAsset?.id) }
     var baseCurrencyTicker by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(baseCurrencyId) {
@@ -150,7 +150,7 @@ fun SettingsScreen(
                         baseCurrencyId = asset.id
                         baseCurrencyTicker = asset.ticker
                         scope.launch {
-                            appStore.updateBaseAsset(asset.id)
+                            appStore.updateBaseAsset(asset.id, asset.ticker)
                         }
                     },
                     onDismiss = { showCurrencyPicker = false },

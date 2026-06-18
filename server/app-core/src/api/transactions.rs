@@ -397,5 +397,5 @@ fn type_label(t: &str) -> &str {
 }
 
 fn fmt(amount: f64, ticker: &str) -> String {
-    format!("{} {ticker}", (amount * 100.0).round() / 100.0)
+    crate::money::format_money(amount, ticker.to_string(), false)
 }

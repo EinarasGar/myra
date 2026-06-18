@@ -15,11 +15,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.sverto.app.core.Money
 import uniffi.sverto_core.AccountHoldingItem
 
 @Composable
 fun HoldingRow(
     holding: AccountHoldingItem,
+    baseTicker: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -69,7 +71,7 @@ fun HoldingRow(
         trailingContent = {
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = formatCurrency(holding.value),
+                    text = Money.format(holding.value, baseTicker),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface,

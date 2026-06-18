@@ -4,7 +4,7 @@ use super::infra::SharedInfra;
 use super::{CHART_LABELS, CHART_RANGES};
 use crate::api::account_overview::extract_account_overview;
 use crate::api::asset_rates::extract_asset_rates;
-use crate::api::assets::extract_asset_base_pair_id;
+use crate::api::assets::extract_asset_base_pair;
 use crate::models::{AssetDetailState, ChartPeriodData};
 
 #[uniffi::export(callback_interface)]
@@ -42,6 +42,8 @@ impl AssetDetailModule {
                 current_price: 0.0,
                 chart_data: vec![],
                 lots: vec![],
+                base_ticker: String::new(),
+                price_ticker: String::new(),
             },
             observer: None,
             account_id: String::new(),
@@ -73,6 +75,8 @@ impl AssetDetailModule {
             current_price: 0.0,
             chart_data: vec![],
             lots: vec![],
+            base_ticker: String::new(),
+            price_ticker: String::new(),
         };
         self.account_id = String::new();
         self.asset_id = 0;
@@ -104,6 +108,7 @@ pub async fn load_asset_detail(
         m.asset_id = asset_id;
         m.state.is_loading = true;
         m.state.asset_id = asset_id;
+        m.state.base_ticker = infra.default_asset_ticker().unwrap_or_default();
         m.notify();
     }
 
@@ -116,13 +121,18 @@ pub async fn load_asset_detail(
         infra.get(&asset_meta_path, auth_token),
     );
 
-    // Resolve reference_id: asset's own base_pair > user default > asset_id fallback
-    let reference_id = asset_meta_result
+    // The price chart is denominated in the asset's native reference currency, not converted to the user's base.
+    let base_pair = asset_meta_result
         .as_ref()
         .ok()
-        .and_then(|r| extract_asset_base_pair_id(&r.body).ok())
-        .or_else(|| infra.default_asset_id())
-        .unwrap_or(asset_id);
+        .and_then(|r| extract_asset_base_pair(&r.body).ok());
+    let (reference_id, reference_ticker) = match base_pair {
+        Some((id, ticker)) => (id, Some(ticker)),
+        None => match infra.default_asset_id() {
+            Some(id) => (id, infra.default_asset_ticker()),
+            None => (asset_id, None),
+        },
+    };
 
     // Phase 2: Fetch rate chart data with resolved reference_id
     let rate_paths: Vec<String> = CHART_RANGES
@@ -186,6 +196,8 @@ pub async fn load_asset_detail(
         m.state.chart_data = chart_data;
     }
 
+    m.state.base_ticker = infra.default_asset_ticker().unwrap_or_default();
+    m.state.price_ticker = reference_ticker.unwrap_or_else(|| m.state.ticker.clone());
     m.state.error = error;
     m.state.is_loading = false;
     m.notify();

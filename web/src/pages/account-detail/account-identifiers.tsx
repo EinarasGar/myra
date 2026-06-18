@@ -50,7 +50,10 @@ export default function AccountIdentifiers({
         <CardTitle>Account identifiers</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4 pt-6">
-        <AccountIdentifiersEditor value={identifiers} onChange={setIdentifiers} />
+        <AccountIdentifiersEditor
+          value={identifiers}
+          onChange={setIdentifiers}
+        />
         {serverError && (
           <span className="text-sm text-destructive">{serverError}</span>
         )}

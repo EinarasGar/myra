@@ -65,7 +65,9 @@ export default function BaseCurrencyPage() {
     setUserSelected(item);
     await setBaseAsset.mutateAsync({ asset_id: item.id });
     queryClient.setQueryData<AuthMe>([QueryKeys.AUTH_ME], (old) =>
-      old ? { ...old, default_asset_id: item.id } : old,
+      old
+        ? { ...old, default_asset: { id: item.id, ticker: item.ticker } }
+        : old,
     );
   };
 

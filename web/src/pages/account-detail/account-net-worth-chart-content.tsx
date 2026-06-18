@@ -1,7 +1,8 @@
 import { ChartConfig, ChartContainer } from "@/components/ui/chart";
 import useGetAccountPortfolioHistory from "@/hooks/api/use-get-account-portfolio-history";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
-import { useUserId } from "@/hooks/use-auth";
+import { useUserId, useDefaultAssetTicker } from "@/hooks/use-auth";
+import { formatMoney } from "@/lib/format-money";
 
 import { ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
@@ -27,6 +28,7 @@ export default function AccountNetWorthChartContent({
   range: string;
 }) {
   const userId = useUserId();
+  const baseTicker = useDefaultAssetTicker() ?? "";
   const { data } = useGetAccountPortfolioHistory(userId, accountId, range);
 
   if (!data?.data.sums || data.data.sums.length === 0) {
@@ -61,7 +63,7 @@ export default function AccountNetWorthChartContent({
         <CartesianGrid vertical={false} />
         <YAxis
           domain={yAxisDomain}
-          tickFormatter={(value) => `$${value.toFixed(2)}`}
+          tickFormatter={(value) => formatMoney(value, baseTicker)}
         />
         <XAxis
           dataKey="date"

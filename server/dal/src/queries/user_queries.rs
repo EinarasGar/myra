@@ -3,6 +3,7 @@ use sea_query_sqlx::SqlxBinder;
 use sqlx::types::Uuid;
 
 use crate::{
+    idens::asset_idens::AssetsIden,
     idens::user_idens::{
         ExternalIdentityMappingsIden, RefreshTokensIden, UserCredentialsIden,
         UserRoleAssignmentsIden, UserRolesIden, UsersIden,
@@ -114,6 +115,10 @@ pub fn get_user_full_info(user_id: Uuid) -> DbQueryWithValues {
             )),
             Alias::new("role_id"),
         )
+        .expr_as(
+            Expr::col((AssetsIden::Table, AssetsIden::Ticker)),
+            Alias::new("default_ticker"),
+        )
         .from(UsersIden::Table)
         .inner_join(
             UserRoleAssignmentsIden::Table,
@@ -129,6 +134,11 @@ pub fn get_user_full_info(user_id: Uuid) -> DbQueryWithValues {
                 UserRoleAssignmentsIden::RoleId,
             ))
             .equals((UserRolesIden::Table, UserRolesIden::Id)),
+        )
+        .left_join(
+            AssetsIden::Table,
+            Expr::col((UsersIden::Table, UsersIden::DefaultAsset))
+                .equals((AssetsIden::Table, AssetsIden::Id)),
         )
         .and_where(Expr::col((UsersIden::Table, UsersIden::Id)).eq(user_id))
         .build_sqlx(PostgresQueryBuilder)
@@ -278,7 +288,16 @@ pub fn get_user_onboarding_info(user_id: Uuid) -> DbQueryWithValues {
         .column((UsersIden::Table, UsersIden::Username))
         .column((UsersIden::Table, UsersIden::DefaultAsset))
         .column((UsersIden::Table, UsersIden::OnboardingVersion))
+        .expr_as(
+            Expr::col((AssetsIden::Table, AssetsIden::Ticker)),
+            Alias::new("default_ticker"),
+        )
         .from(UsersIden::Table)
+        .left_join(
+            AssetsIden::Table,
+            Expr::col((UsersIden::Table, UsersIden::DefaultAsset))
+                .equals((AssetsIden::Table, AssetsIden::Id)),
+        )
         .and_where(Expr::col((UsersIden::Table, UsersIden::Id)).eq(user_id))
         .build_sqlx(PostgresQueryBuilder)
         .into()

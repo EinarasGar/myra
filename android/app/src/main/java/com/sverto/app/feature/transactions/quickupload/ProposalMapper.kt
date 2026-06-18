@@ -19,6 +19,7 @@ fun parseProposalSummary(proposalData: String?): ProposalSummary? {
             description = json.optString("description", "Receipt"),
             date = json.optString("date", ""),
             amount = if (json.has("amount")) json.optString("amount") else null,
+            currency = if (json.has("currency")) json.optString("currency") else null,
         )
     } catch (_: Exception) {
         null

@@ -11,8 +11,9 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
-import { useUserId } from "@/hooks/use-auth";
+import { useUserId, useDefaultAssetTicker } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { formatMoney } from "@/lib/format-money";
 import {
   Table,
   TableBody,
@@ -37,7 +38,15 @@ export type AssetPortfolioRow = {
   subRows?: AssetPortfolioRow[];
 };
 
-function GainCell({ value, suffix }: { value: number; suffix?: string }) {
+function GainCell({
+  value,
+  baseTicker,
+  suffix,
+}: {
+  value: number;
+  baseTicker: string;
+  suffix?: string;
+}) {
   return (
     <span
       className={cn(
@@ -45,100 +54,119 @@ function GainCell({ value, suffix }: { value: number; suffix?: string }) {
         value < 0 && "text-red-600 dark:text-red-400",
       )}
     >
-      {Number(value).toFixed(2)}
-      {suffix}
+      {suffix
+        ? `${Number(value).toFixed(2)}${suffix}`
+        : formatMoney(Number(value), baseTicker, true)}
     </span>
   );
 }
 
-const columns: ColumnDef<AssetPortfolioRow>[] = [
-  {
-    id: "asset_name",
-    accessorKey: "asset_name",
-    header: () => <span>Asset</span>,
-    cell: ({ row, getValue }) => (
-      <div
-        className="flex items-center gap-1"
-        style={{ paddingLeft: `${row.depth * 1.5}rem` }}
-      >
-        {row.getCanExpand() ? (
-          <button
-            onClick={row.getToggleExpandedHandler()}
-            className="cursor-pointer p-0.5"
-          >
-            <ChevronRight
-              className={cn(
-                "h-4 w-4 transition-transform",
-                row.getIsExpanded() && "rotate-90",
-              )}
-            />
-          </button>
-        ) : null}
-        <span>{getValue<string>()}</span>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "account_name",
-    header: () => <span>Account</span>,
-    cell: (info) => info.getValue(),
-  },
-  {
-    id: "units_held",
-    header: () => <span>Units Held</span>,
-    cell: ({ row }) => {
-      const { units_held, units_bought } = row.original;
-      return units_bought === undefined
-        ? Number(units_held).toFixed(2)
-        : `${Number(units_held)} of ${Number(units_bought)}`;
+function makeColumns(baseTicker: string): ColumnDef<AssetPortfolioRow>[] {
+  return [
+    {
+      id: "asset_name",
+      accessorKey: "asset_name",
+      header: () => <span>Asset</span>,
+      cell: ({ row, getValue }) => (
+        <div
+          className="flex items-center gap-1"
+          style={{ paddingLeft: `${row.depth * 1.5}rem` }}
+        >
+          {row.getCanExpand() ? (
+            <button
+              onClick={row.getToggleExpandedHandler()}
+              className="cursor-pointer p-0.5"
+            >
+              <ChevronRight
+                className={cn(
+                  "h-4 w-4 transition-transform",
+                  row.getIsExpanded() && "rotate-90",
+                )}
+              />
+            </button>
+          ) : null}
+          <span>{getValue<string>()}</span>
+        </div>
+      ),
     },
-  },
-  {
-    accessorKey: "cost_basis",
-    header: () => <span>Cost Basis</span>,
-    cell: (info) => Number(info.getValue()).toFixed(2),
-  },
-  {
-    accessorKey: "unrealized_gains",
-    header: () => <span>Unrealized Gains</span>,
-    cell: ({ row }) => <GainCell value={row.original.unrealized_gains} />,
-  },
-  {
-    accessorKey: "realized_gains",
-    header: () => <span>Realized Gains</span>,
-    cell: ({ row }) => <GainCell value={row.original.realized_gains} />,
-  },
-  {
-    accessorKey: "total_gains",
-    header: () => <span>Total Gains</span>,
-    cell: ({ row }) => <GainCell value={row.original.total_gains} />,
-  },
-  {
-    id: "gain_pct",
-    header: () => <span>% Gain</span>,
-    cell: ({ row }) => {
-      const { total_gains, cost_basis } = row.original;
-      const pct = cost_basis !== 0 ? (total_gains / cost_basis) * 100 : 0;
-      return <GainCell value={pct} suffix="%" />;
+    {
+      accessorKey: "account_name",
+      header: () => <span>Account</span>,
+      cell: (info) => info.getValue(),
     },
-  },
-  {
-    accessorKey: "fees",
-    header: () => <span>Fees</span>,
-    cell: (info) => Number(info.getValue()).toFixed(2),
-  },
-];
+    {
+      id: "units_held",
+      header: () => <span>Units Held</span>,
+      cell: ({ row }) => {
+        const { units_held, units_bought } = row.original;
+        return units_bought === undefined
+          ? Number(units_held).toFixed(2)
+          : `${Number(units_held)} of ${Number(units_bought)}`;
+      },
+    },
+    {
+      accessorKey: "cost_basis",
+      header: () => <span>Cost Basis</span>,
+      cell: ({ row }) =>
+        formatMoney(Number(row.original.cost_basis), baseTicker),
+    },
+    {
+      accessorKey: "unrealized_gains",
+      header: () => <span>Unrealized Gains</span>,
+      cell: ({ row }) => (
+        <GainCell
+          value={row.original.unrealized_gains}
+          baseTicker={baseTicker}
+        />
+      ),
+    },
+    {
+      accessorKey: "realized_gains",
+      header: () => <span>Realized Gains</span>,
+      cell: ({ row }) => (
+        <GainCell value={row.original.realized_gains} baseTicker={baseTicker} />
+      ),
+    },
+    {
+      accessorKey: "total_gains",
+      header: () => <span>Total Gains</span>,
+      cell: ({ row }) => (
+        <GainCell value={row.original.total_gains} baseTicker={baseTicker} />
+      ),
+    },
+    {
+      id: "gain_pct",
+      header: () => <span>% Gain</span>,
+      cell: ({ row }) => {
+        const { total_gains, cost_basis } = row.original;
+        const pct = cost_basis !== 0 ? (total_gains / cost_basis) * 100 : 0;
+        return <GainCell value={pct} baseTicker={baseTicker} suffix="%" />;
+      },
+    },
+    {
+      accessorKey: "fees",
+      header: () => <span>Fees</span>,
+      cell: ({ row }) => formatMoney(Number(row.original.fees), baseTicker),
+    },
+  ];
+}
 
 export const AssetPortfoliosTableSkeleton = () => (
-  <DataTableSkeleton columns={columns} rowNum={3} usePagination={false} />
+  <DataTableSkeleton
+    columns={makeColumns("")}
+    rowNum={3}
+    usePagination={false}
+  />
 );
 
 export default function AssetPortfoliosTable() {
   const userId = useUserId();
+  const baseTicker = useDefaultAssetTicker() ?? "";
   const { data } = useGetPortfolioOverview(userId);
   const assets = useAssetStore((state) => state.assets);
   const accounts = useAccountStore((state) => state.accounts);
   const [expanded, setExpanded] = useState<ExpandedState>({});
+  const columns = useMemo(() => makeColumns(baseTicker), [baseTicker]);
 
   const tableData = useMemo(() => {
     return (

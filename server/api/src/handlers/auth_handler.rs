@@ -21,10 +21,16 @@ use crate::view_models::errors::AuthResponses;
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct AuthMeViewModel {
     pub user_id: String,
-    pub default_asset_id: Option<i32>,
+    pub default_asset: Option<DefaultAssetViewModel>,
     pub onboarding_version: i32,
     pub role: String,
     pub user_metadata: Option<UserMetadataViewModel>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+pub struct DefaultAssetViewModel {
+    pub id: i32,
+    pub ticker: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
@@ -52,11 +58,15 @@ pub async fn get_me(
 ) -> Result<Json<AuthMeViewModel>, ApiError> {
     #[cfg(feature = "clerk")]
     {
-        let (default_asset_id, onboarding_version) =
+        let (default_asset_id, default_ticker, onboarding_version) =
             users_service.get_onboarding_info(auth.user_id).await?;
+        let default_asset = match (default_asset_id, default_ticker) {
+            (Some(id), Some(ticker)) => Some(DefaultAssetViewModel { id, ticker }),
+            _ => None,
+        };
         Ok(Json(AuthMeViewModel {
             user_id: auth.user_id.to_string(),
-            default_asset_id,
+            default_asset,
             onboarding_version,
             role: format!("{:?}", auth.role),
             user_metadata: None,
@@ -65,9 +75,13 @@ pub async fn get_me(
     #[cfg(not(feature = "clerk"))]
     {
         let user = users_service.get_full_user(auth.user_id).await?;
+        let default_asset = match (user.default_asset_id, user.default_ticker) {
+            (Some(id), Some(ticker)) => Some(DefaultAssetViewModel { id, ticker }),
+            _ => None,
+        };
         Ok(Json(AuthMeViewModel {
             user_id: user.id.to_string(),
-            default_asset_id: user.default_asset_id,
+            default_asset,
             onboarding_version: user.onboarding_version,
             role: format!("{:?}", user.role.role),
             user_metadata: Some(UserMetadataViewModel {

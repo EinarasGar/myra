@@ -160,33 +160,48 @@ impl AppStore {
         self.infra.default_asset_id()
     }
 
+    pub fn get_default_asset_ticker(&self) -> Option<String> {
+        self.infra.default_asset_ticker()
+    }
+
     pub async fn on_sign_in(&self) {
         let token = self.get_auth_token();
 
-        // Fetch user_id and default_asset_id from the server (works in all auth modes including noauth)
-        let (user_id, default_asset_id, onboarding_version) =
+        let (user_id, default_asset_id, default_asset_ticker, onboarding_version) =
             match self.infra.get("/api/auth/me", token.as_deref()).await {
                 Ok(resp) => match serde_json::from_str::<serde_json::Value>(&resp.body) {
                     Ok(v) => {
                         let user_id = v["user_id"].as_str().map(|s| s.to_string());
-                        let default_asset_id = v["default_asset_id"].as_i64().map(|id| id as i32);
+                        let default_asset_id =
+                            v["default_asset"]["id"].as_i64().map(|id| id as i32);
+                        let default_asset_ticker =
+                            v["default_asset"]["ticker"].as_str().map(|s| s.to_string());
                         let onboarding_version = v["onboarding_version"].as_i64().map(|n| n as i32);
-                        (user_id, default_asset_id, onboarding_version)
+                        (
+                            user_id,
+                            default_asset_id,
+                            default_asset_ticker,
+                            onboarding_version,
+                        )
                     }
-                    Err(_) => (self.auth_provider.get_user_id(), None, None),
+                    Err(_) => (self.auth_provider.get_user_id(), None, None, None),
                 },
-                Err(_) => (self.auth_provider.get_user_id(), None, None),
+                Err(_) => (self.auth_provider.get_user_id(), None, None, None),
             };
 
         tracing::info!(
-            "AppStore::on_sign_in user_id={:?} default_asset_id={:?} onboarding_version={:?}",
+            "AppStore::on_sign_in user_id={:?} default_asset_id={:?} default_asset_ticker={:?} onboarding_version={:?}",
             user_id,
             default_asset_id,
+            default_asset_ticker,
             onboarding_version
         );
         *self.infra.user_id.lock().unwrap() = user_id;
         if let Some(id) = default_asset_id {
             self.infra.set_default_asset_id(id);
+        }
+        if let Some(ticker) = default_asset_ticker {
+            self.infra.set_default_asset_ticker(ticker);
         }
         if let Some(v) = onboarding_version {
             self.infra.set_onboarding_version(v);
@@ -336,9 +351,12 @@ impl AppStore {
         categories::delete_category_type(&self.infra, &self.categories, id, token.as_deref()).await
     }
 
-    pub async fn update_base_asset(&self, asset_id: i32) -> Result<(), ApiError> {
+    pub async fn update_base_asset(&self, asset_id: i32, ticker: String) -> Result<(), ApiError> {
         let token = self.get_auth_token();
-        assets::update_base_asset(&self.infra, asset_id, token.as_deref()).await
+        assets::update_base_asset(&self.infra, asset_id, ticker, token.as_deref()).await?;
+        self.refresh_portfolio().await;
+        self.refresh_accounts().await;
+        Ok(())
     }
 
     pub async fn set_onboarding_version(&self, version: i32) -> Result<(), ApiError> {

@@ -33,6 +33,7 @@ impl PortfolioModule {
                 error: None,
                 holdings: vec![],
                 chart_data: vec![],
+                base_ticker: String::new(),
             },
             observer: None,
         }
@@ -53,6 +54,7 @@ impl PortfolioModule {
             error: None,
             holdings: vec![],
             chart_data: vec![],
+            base_ticker: String::new(),
         };
         self.notify();
     }
@@ -116,6 +118,7 @@ pub async fn load_portfolio(
         }
         m.state.is_loading = true;
         m.state.error = None;
+        m.state.base_ticker = infra.default_asset_ticker().unwrap_or_default();
         m.notify();
     }
 
@@ -227,6 +230,7 @@ async fn fetch_fresh(
     } else {
         m.state.error = Some("Failed to load portfolio".to_string());
     }
+    m.state.base_ticker = infra.default_asset_ticker().unwrap_or_default();
     m.state.is_loading = false;
     m.notify();
 }

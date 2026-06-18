@@ -21,6 +21,7 @@ pub struct UserFullModel {
     pub role_id: i32,
     pub role_name: String,
     pub default_asset: Option<i32>,
+    pub default_ticker: Option<String>,
     pub onboarding_version: i32,
 }
 
@@ -35,6 +36,7 @@ pub struct UserOnboardingModel {
     pub id: Uuid,
     pub username: String,
     pub default_asset: Option<i32>,
+    pub default_ticker: Option<String>,
     pub onboarding_version: i32,
 }
 
