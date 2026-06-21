@@ -31,12 +31,14 @@ impl TransactionMetadataService {
         }
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(count = transactions.len()))]
     pub async fn write_metadata(&self, transactions: &mut [Transaction]) -> anyhow::Result<()> {
         self.write_transaction_descriptions(transactions).await?;
         self.write_transaction_dividends(transactions).await?;
         Ok(())
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(count = transactions.len()))]
     pub async fn load_metadata(
         &self,
         transactions: &mut [Transaction],
@@ -51,6 +53,7 @@ impl TransactionMetadataService {
         Ok(())
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(transaction_id = tracing::field::Empty))]
     pub async fn update_metadata(
         &self,
         old_transaction: &Transaction,
@@ -59,6 +62,7 @@ impl TransactionMetadataService {
         let transaction_id = new_transaction
             .get_transaction_id()
             .expect("Transaction must have an id for update");
+        tracing::Span::current().record("transaction_id", tracing::field::display(transaction_id));
 
         self.diff_descriptions(transaction_id, old_transaction, new_transaction)
             .await?;
@@ -189,6 +193,7 @@ impl TransactionMetadataService {
         Ok(())
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(count = transactions.len()))]
     pub async fn write_transaction_descriptions(
         &self,
         transactions: &mut [Transaction],

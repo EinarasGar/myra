@@ -14,8 +14,6 @@ opentelemetry-appender-tracing = "0.31.1"
 reqwest = { version = "0.13", default-features = false, features = ["json"] }
 reqwest-middleware = { version = "0.5", features = ["json"] }
 reqwest-tracing = { version = "0.7", features = ["opentelemetry_0_31"] }
-syntect = { optional = true, version = "5.3.0" }
 
 [features]
 default = []
-color-sql = ["dep:syntect"]

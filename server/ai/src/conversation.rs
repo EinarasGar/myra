@@ -41,7 +41,7 @@ where
         }
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn run<M>(
         &self,
         agent: Agent<M>,
@@ -66,7 +66,7 @@ where
         self.run_prepared(agent, prepared, persist).await
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(otel.kind = "client"))]
     async fn run_prepared<M>(
         &self,
         agent: Agent<M>,
@@ -98,7 +98,11 @@ where
                 let err = AiError::from(e);
                 if persist {
                     if let Err(pe) = self.conversation.record_turn_error(&err).await {
-                        tracing::warn!("Failed to persist turn error: {pe}");
+                        tracing::warn!(
+                            error = ?pe,
+                            error.type = "persist_turn_error",
+                            "failed to persist turn error"
+                        );
                     }
                 }
                 return Err(err);
@@ -110,7 +114,11 @@ where
                 messages_to_persist(response.messages.unwrap_or_default(), history_len);
             for msg in new_messages {
                 if let Err(e) = self.conversation.append_message(msg).await {
-                    tracing::warn!("Failed to persist response message: {e}");
+                    tracing::warn!(
+                        error = ?e,
+                        error.type = "persist_response_message",
+                        "failed to persist response message"
+                    );
                 }
             }
         }
@@ -125,7 +133,7 @@ where
         })
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(otel.kind = "client"))]
     pub async fn stream<A>(
         &self,
         agent: Agent<rig::providers::gemini::completion::CompletionModel>,
@@ -340,7 +348,7 @@ where
                     }
                     Ok(MultiTurnStreamItem::StreamAssistantItem(StreamedAssistantContent::Reasoning(r))) => {
                         if thinking_span.is_none() {
-                            thinking_span = Some(tracing::info_span!("thinking"));
+                            thinking_span = Some(tracing::debug_span!("thinking"));
                         }
                         let text = r.content.iter().filter_map(|c| match c {
                             rig::completion::message::ReasoningContent::Text { text, .. } => Some(text.as_str()),
@@ -352,7 +360,7 @@ where
                     }
                     Ok(MultiTurnStreamItem::StreamAssistantItem(StreamedAssistantContent::ReasoningDelta { reasoning, .. })) => {
                         if thinking_span.is_none() {
-                            thinking_span = Some(tracing::info_span!("thinking"));
+                            thinking_span = Some(tracing::debug_span!("thinking"));
                         }
                         if !reasoning.is_empty() {
                             yield ChatStreamEvent::Reasoning(reasoning);
@@ -360,7 +368,7 @@ where
                     }
                     Ok(MultiTurnStreamItem::FinalResponse(final_resp)) => {
                         let usage = final_resp.usage();
-                        tracing::info!(
+                        tracing::debug!(
                             input_tokens = usage.input_tokens,
                             output_tokens = usage.output_tokens,
                             "chat stream completed"
@@ -385,7 +393,11 @@ where
                             }).await;
                         }
                         if let Err(pe) = conversation.record_turn_error(&err).await {
-                            tracing::warn!("Failed to persist turn error: {pe}");
+                            tracing::warn!(
+                                error = ?pe,
+                                error.type = "persist_turn_error",
+                                "failed to persist turn error"
+                            );
                         }
                         error_yielded = true;
                         yield ChatStreamEvent::Error(err);
@@ -410,12 +422,19 @@ where
             }
 
             if !usage_recorded && !error_yielded && !paused_for_approval && tool_requests.is_empty() {
-                tracing::error!("AI stream ended without final response, error, or pending approval");
+                tracing::error!(
+                    error.type = "stream_ended_without_completion",
+                    "AI stream ended without final response, error, or pending approval"
+                );
                 let err = AiError::ProviderUnavailable {
                     detail: "The model stream ended unexpectedly without completing the turn".to_string(),
                 };
                 if let Err(pe) = conversation.record_turn_error(&err).await {
-                    tracing::warn!("Failed to persist turn error: {pe}");
+                    tracing::warn!(
+                        error = ?pe,
+                        error.type = "persist_turn_error",
+                        "failed to persist turn error"
+                    );
                 }
                 yield ChatStreamEvent::Error(err);
             }
@@ -441,7 +460,11 @@ where
 
     async fn clear_turn_error_marker(&self) {
         if let Err(e) = self.conversation.clear_turn_error().await {
-            tracing::warn!("Failed to clear turn error marker: {e}");
+            tracing::warn!(
+                error = ?e,
+                error.type = "clear_turn_error",
+                "failed to clear turn error marker"
+            );
         }
     }
 

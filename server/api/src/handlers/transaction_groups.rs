@@ -54,7 +54,7 @@ use crate::{
         ("auth_token" = [])
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn add_transaction_group(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     TransactionGroupServiceState(service): TransactionGroupServiceState,
@@ -128,7 +128,7 @@ pub async fn add_transaction_group(
         ("auth_token" = [])
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn group_individual_transactions(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     TransactionGroupServiceState(service): TransactionGroupServiceState,
@@ -203,7 +203,7 @@ pub async fn group_individual_transactions(
         ("auth_token" = [])
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, group_id = %group_id))]
 pub async fn update_transaction_group(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(GroupIdPath { group_id }): Path<GroupIdPath>,
@@ -274,7 +274,7 @@ pub async fn update_transaction_group(
         ("auth_token" = [])
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, group_id = %group_id))]
 pub async fn delete_transaction_group(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(GroupIdPath { group_id }): Path<GroupIdPath>,
@@ -306,7 +306,7 @@ pub async fn delete_transaction_group(
         ("auth_token" = [])
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn get_transaction_groups(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     ValidatedQuery(query_params): ValidatedQuery<CursorOrPaginatedSearchQuery>,

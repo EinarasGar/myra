@@ -56,7 +56,7 @@ impl AiEmbeddingService {
             .await
     }
 
-    #[tracing::instrument(skip(self, embedding), err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(transaction_id = %transaction_id, dimensions = embedding.len()))]
     pub async fn store_transaction_embedding(
         &self,
         transaction_id: Uuid,
@@ -70,7 +70,7 @@ impl AiEmbeddingService {
         Ok(())
     }
 
-    #[tracing::instrument(skip(self, embedding), err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(group_id = %group_id, dimensions = embedding.len()))]
     pub async fn store_group_embedding(
         &self,
         group_id: Uuid,
@@ -82,7 +82,7 @@ impl AiEmbeddingService {
         Ok(())
     }
 
-    #[tracing::instrument(skip(self, embedding), err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(asset_id = %asset_id, dimensions = embedding.len()))]
     pub async fn store_asset_embedding(
         &self,
         asset_id: i32,
@@ -93,7 +93,7 @@ impl AiEmbeddingService {
         Ok(())
     }
 
-    #[tracing::instrument(skip(self, embedding), err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(category_id = %category_id, dimensions = embedding.len()))]
     pub async fn store_category_embedding(
         &self,
         category_id: i32,

@@ -15,18 +15,15 @@ impl CronJob for RefreshAssetsJob {
     const NAME: &'static str = "refresh-assets";
     const SCHEDULE: &'static str = "0 */5 * * * *";
 
-    #[tracing::instrument(name = "refresh_assets", skip_all, err)]
+    #[tracing::instrument(level = "info", name = "refresh_assets", skip_all)]
     async fn tick(providers: &ServiceProviders) -> anyhow::Result<()> {
         let rates_svc = AssetRatesService::new(providers);
 
         let (pairs, requests) = collect_market_pairs(&rates_svc, true).await?;
 
         if pairs.is_empty() {
-            tracing::info!("No pairs to refresh");
             return Ok(());
         }
-
-        tracing::info!("Fetching latest rates for {} pairs", requests.len());
 
         let response = MarketDataClient::new()
             .get_latest(&requests)
@@ -43,21 +40,9 @@ impl CronJob for RefreshAssetsJob {
                 .iter()
                 .find(|e| e.base == pair.asset_ticker && e.quote == pair.base_ticker)
             else {
-                tracing::warn!(
-                    "No rate returned for {}/{}",
-                    pair.asset_ticker,
-                    pair.base_ticker
-                );
                 continue;
             };
 
-            tracing::info!(
-                "pair_id={} rate={:.4} ({}/{})",
-                pair.pair_id,
-                entry.rate,
-                pair.asset_ticker,
-                pair.base_ticker
-            );
             inserts.push(AssetPairRateInsertDto {
                 pair_id: pair.pair_id,
                 rate: entry.rate,
@@ -66,13 +51,12 @@ impl CronJob for RefreshAssetsJob {
         }
 
         if inserts.is_empty() {
-            tracing::info!("No prices to write");
             return Ok(());
         }
 
         let count = inserts.len();
         rates_svc.insert_pair_many(inserts).await?;
-        tracing::info!("Wrote {} prices to asset_history", count);
+        tracing::info!(count = count, "refreshed asset rates");
 
         Ok(())
     }

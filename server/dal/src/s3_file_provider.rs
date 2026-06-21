@@ -42,6 +42,7 @@ impl S3FileProvider {
 
 #[async_trait]
 impl FileProvider for S3FileProvider {
+    #[tracing::instrument(level = "debug", skip_all, fields(otel.kind = "client"))]
     async fn generate_presigned_upload(
         &self,
         key: &str,
@@ -80,6 +81,7 @@ impl FileProvider for S3FileProvider {
         })
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(otel.kind = "client"))]
     async fn generate_presigned_download(
         &self,
         key: &str,
@@ -91,6 +93,7 @@ impl FileProvider for S3FileProvider {
             .map_err(|e| anyhow!("Failed to generate presigned download URL: {}", e))
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(otel.kind = "client"))]
     async fn download(&self, key: &str) -> Result<Vec<u8>> {
         let response = self
             .bucket
@@ -100,6 +103,7 @@ impl FileProvider for S3FileProvider {
         Ok(response.bytes().to_vec())
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(otel.kind = "client"))]
     async fn download_range(&self, key: &str, start: u64, end: u64) -> Result<Vec<u8>> {
         let response = self
             .bucket
@@ -109,6 +113,7 @@ impl FileProvider for S3FileProvider {
         Ok(response.bytes().to_vec())
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(otel.kind = "client"))]
     async fn head_object(&self, key: &str) -> Result<u64> {
         let (head, _status) = self
             .bucket
@@ -121,6 +126,7 @@ impl FileProvider for S3FileProvider {
         u64::try_from(size).map_err(|_| anyhow!("Invalid Content-Length from head response"))
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(otel.kind = "client"))]
     async fn upload(&self, key: &str, content: &[u8], content_type: &str) -> Result<()> {
         self.bucket
             .put_object_with_content_type(key, content, content_type)
@@ -129,6 +135,7 @@ impl FileProvider for S3FileProvider {
         Ok(())
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(otel.kind = "client"))]
     async fn delete(&self, key: &str) -> Result<()> {
         self.bucket
             .delete_object(key)

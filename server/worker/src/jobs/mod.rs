@@ -51,7 +51,7 @@ pub trait CronJob: Send + Sync + Sized + 'static {
     async fn tick(providers: &ServiceProviders) -> anyhow::Result<()>;
 }
 
-#[tracing::instrument(skip_all, fields(job = T::NAME, attempt = attempt.current()))]
+#[tracing::instrument(level = "info", skip_all, fields(job = T::NAME, attempt = attempt.current(), otel.kind = "consumer"))]
 pub async fn run_job<T: WorkerJob>(
     job: T,
     services: Data<Services>,
@@ -59,6 +59,7 @@ pub async fn run_job<T: WorkerJob>(
 ) -> Result<(), BoxDynError> {
     let providers = services.create_providers();
     let attempts = attempt.current() as i32;
+    let started = std::time::Instant::now();
 
     let result = AssertUnwindSafe(async {
         job.before_run(&providers).await?;
@@ -69,7 +70,15 @@ pub async fn run_job<T: WorkerJob>(
     .unwrap_or_else(panic_to_anyhow);
 
     let error = match result {
-        Ok(()) => return Ok(()),
+        Ok(()) => {
+            tracing::info!(
+                job = T::NAME,
+                attempts,
+                duration_ms = started.elapsed().as_millis() as u64,
+                "job completed"
+            );
+            return Ok(());
+        }
         Err(e) => e,
     };
 
@@ -77,10 +86,10 @@ pub async fn run_job<T: WorkerJob>(
     let ai_error = retry::extract_ai_error(&error);
     match &decision {
         RetryDecision::RetryAfter(delay) => {
-            tracing::warn!(job = T::NAME, attempts, retry_in = ?delay, error = %error, "job failed, retry scheduled");
+            tracing::warn!(job = T::NAME, attempts, retry_in = ?delay, duration_ms = started.elapsed().as_millis() as u64, error = ?error, "job failed, retry scheduled");
         }
         RetryDecision::Abort => {
-            tracing::error!(job = T::NAME, attempts, error = %error, "job failed permanently");
+            tracing::error!(job = T::NAME, attempts, duration_ms = started.elapsed().as_millis() as u64, error = ?error, "job failed permanently");
         }
     }
 
@@ -88,14 +97,19 @@ pub async fn run_job<T: WorkerJob>(
     Err(decision.into_apalis_error(ai_error))
 }
 
-#[tracing::instrument(skip_all, fields(job = T::NAME))]
+#[tracing::instrument(level = "info", skip_all, fields(job = T::NAME, otel.kind = "consumer"), err)]
 async fn cron_handler<T: CronJob>(
     _tick: apalis_cron::Tick,
     services: Data<Services>,
 ) -> Result<(), BoxDynError> {
-    T::tick(&services.create_providers())
-        .await
-        .map_err(Into::into)
+    let started = std::time::Instant::now();
+    T::tick(&services.create_providers()).await?;
+    tracing::info!(
+        job = T::NAME,
+        duration_ms = started.elapsed().as_millis() as u64,
+        "cron job completed"
+    );
+    Ok(())
 }
 
 fn panic_to_anyhow(panic: Box<dyn std::any::Any + Send>) -> anyhow::Result<()> {

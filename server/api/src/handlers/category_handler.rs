@@ -43,7 +43,7 @@ use crate::{
         ("auth_token" = [])
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn search_categories(
     ValidatedQuery(search_query): ValidatedQuery<PaginatedSearchQuery>,
     ValidatedQuery(query): ValidatedQuery<SearchCategoriesQuery>,
@@ -102,7 +102,7 @@ pub async fn search_categories(
         ("auth_token" = [])
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn get_category_types(
     CategoryTypeServiceState(category_type_service): CategoryTypeServiceState,
 ) -> Result<Json<GetCategoryTypesResponseViewModel>, ApiError> {

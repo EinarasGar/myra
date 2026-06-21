@@ -63,7 +63,7 @@ use itertools::Itertools;
         ("auth_token" = [])
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn get_categories(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     CategoryServiceState(category_service): CategoryServiceState,
@@ -115,7 +115,7 @@ pub async fn get_categories(
         ("auth_token" = [])
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, category_id = category_id))]
 pub async fn get_user_category(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(CategoryIdPath { category_id }): Path<CategoryIdPath>,
@@ -149,7 +149,7 @@ pub async fn get_user_category(
         ("auth_token" = [])
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn post_user_category(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     CategoryServiceState(category_service): CategoryServiceState,
@@ -189,7 +189,7 @@ pub async fn post_user_category(
         ("auth_token" = [])
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, category_id = category_id))]
 pub async fn put_user_category(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(CategoryIdPath { category_id }): Path<CategoryIdPath>,
@@ -225,7 +225,7 @@ pub async fn put_user_category(
         ("auth_token" = [])
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, category_id = category_id))]
 pub async fn delete_user_category(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(CategoryIdPath { category_id }): Path<CategoryIdPath>,
@@ -257,7 +257,7 @@ pub async fn delete_user_category(
         ("auth_token" = [])
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn get_user_category_types(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     CategoryTypeServiceState(category_type_service): CategoryTypeServiceState,
@@ -295,7 +295,7 @@ pub async fn get_user_category_types(
         ("auth_token" = [])
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn post_user_category_type(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     CategoryTypeServiceState(category_type_service): CategoryTypeServiceState,
@@ -334,7 +334,7 @@ pub async fn post_user_category_type(
         ("auth_token" = [])
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, type_id = type_id))]
 pub async fn put_user_category_type(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(TypeIdPath { type_id }): Path<TypeIdPath>,
@@ -370,7 +370,7 @@ pub async fn put_user_category_type(
         ("auth_token" = [])
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, type_id = type_id))]
 pub async fn delete_user_category_type(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(TypeIdPath { type_id }): Path<TypeIdPath>,

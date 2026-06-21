@@ -54,6 +54,7 @@ impl<D: AiDataProvider> Tool for AggregateTransactionsTool<D> {
         }
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(tool = Self::NAME))]
     async fn call(&self, args: Self::Args) -> std::result::Result<Self::Output, Self::Error> {
         let params = AggregateParams {
             group_by: args.group_by,

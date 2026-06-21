@@ -61,6 +61,7 @@ impl<M: EmbeddingModel + Send + Sync, D: AiDataProvider> Tool for SearchTransact
         }
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(tool = Self::NAME, count = tracing::field::Empty))]
     async fn call(&self, args: Self::Args) -> std::result::Result<Self::Output, Self::Error> {
         let limit = args.limit.unwrap_or(500);
         let params = SearchParams {
@@ -104,6 +105,8 @@ impl<M: EmbeddingModel + Send + Sync, D: AiDataProvider> Tool for SearchTransact
         let mut transactions: Vec<TransactionSearchResult> = seen.into_values().collect();
         transactions.sort_by(|a, b| b.date_transacted.cmp(&a.date_transacted));
         transactions.truncate(limit as usize);
+
+        tracing::Span::current().record("count", transactions.len());
 
         let total_amount: Decimal = transactions.iter().map(|t| t.quantity).sum();
 

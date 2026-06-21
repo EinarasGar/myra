@@ -57,7 +57,7 @@ use crate::{
         ("auth_token" = [])
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, account_id = %account_id))]
 pub async fn get_account_networth_history(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(AccountIdPath { account_id }): Path<AccountIdPath>,
@@ -106,7 +106,7 @@ pub async fn get_account_networth_history(
         ("auth_token" = [])
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, account_id = %account_id))]
 pub async fn get_account_portfolio_overview(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(AccountIdPath { account_id }): Path<AccountIdPath>,
@@ -184,7 +184,7 @@ pub async fn get_account_portfolio_overview(
         ("auth_token" = [])
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, account_id = %account_id))]
 pub async fn get_account_transactions(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(AccountIdPath { account_id }): Path<AccountIdPath>,

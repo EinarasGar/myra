@@ -25,10 +25,23 @@ impl PgNotifyConnection {
         let listener_pool = pool.clone();
         let listener_subscribers = subscribers.clone();
         tokio::spawn(async move {
+            let mut consecutive_failures: u32 = 0;
             loop {
                 if let Err(e) = Self::listen_loop(&listener_pool, &listener_subscribers).await {
-                    tracing::warn!("PG NOTIFY listener disconnected, reconnecting in 1s: {}", e);
-                    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+                    consecutive_failures += 1;
+                    if consecutive_failures == 1 || consecutive_failures.is_multiple_of(30) {
+                        tracing::warn!(
+                            channel = %CHANNEL,
+                            attempt = consecutive_failures,
+                            error = ?e,
+                            error.type = "sqlx::Error",
+                            "pg notify listener disconnected, reconnecting"
+                        );
+                    }
+                    let backoff_secs = 2u64.saturating_pow(consecutive_failures.min(5)).min(30);
+                    tokio::time::sleep(std::time::Duration::from_secs(backoff_secs)).await;
+                } else {
+                    consecutive_failures = 0;
                 }
             }
         });
@@ -42,7 +55,7 @@ impl PgNotifyConnection {
     ) -> Result<(), sqlx::Error> {
         let mut listener = PgListener::connect_with(pool).await?;
         listener.listen(CHANNEL).await?;
-        tracing::info!("PG NOTIFY listener started on channel '{}'", CHANNEL);
+        tracing::info!(channel = %CHANNEL, "pg notify listener started");
 
         loop {
             let notification = listener.recv().await?;

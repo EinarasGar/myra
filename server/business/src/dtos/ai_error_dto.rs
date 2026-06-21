@@ -41,7 +41,11 @@ pub fn parse_last_error(v: serde_json::Value) -> Option<AiErrorDto> {
     match serde_json::from_value(v) {
         Ok(dto) => Some(dto),
         Err(e) => {
-            tracing::error!("Failed to deserialize persisted last_error: {e}");
+            tracing::warn!(
+                error = &e as &dyn std::error::Error,
+                error.type = "last_error_deserialize",
+                "failed to deserialize persisted last_error, ignoring"
+            );
             None
         }
     }

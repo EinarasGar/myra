@@ -115,7 +115,7 @@ impl AccountsService {
         Ok(map)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, account_id = %id))]
     pub async fn get_account_with_metadata(
         &self,
         user_id: Uuid,
@@ -134,7 +134,7 @@ impl AccountsService {
         Ok(dto)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn get_accounts(&self, id: HashSet<Uuid>) -> anyhow::Result<Vec<AccountDto>> {
         let query = account_queries::get_accounts(GetAccountsParams::by_ids(id));
         let model = self.db.fetch_all::<Account>(query).await?;
@@ -142,7 +142,7 @@ impl AccountsService {
         Ok(ret)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub async fn get_user_accounts_with_metadata(
         &self,
         user_id: Uuid,
@@ -159,7 +159,7 @@ impl AccountsService {
         Ok(dtos)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, account_id = %account_id))]
     pub async fn update_user_account(
         &self,
         user_id: Uuid,
@@ -200,7 +200,7 @@ impl AccountsService {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub async fn add_user_account(
         &self,
         user_id: Uuid,
@@ -226,7 +226,7 @@ impl AccountsService {
         Ok(new_id)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, account_id = %account_id))]
     pub async fn deactivate_user_account(
         &self,
         user_id: Uuid,
@@ -252,7 +252,7 @@ impl AccountsService {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn get_account_types(&self) -> anyhow::Result<Vec<AccountTypeDto>> {
         let query = account_queries::get_account_types();
         let models = self.db.fetch_all::<AccountTypeModel>(query).await?;
@@ -260,7 +260,7 @@ impl AccountsService {
         Ok(return_models)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn get_account_liquidity_types(
         &self,
     ) -> anyhow::Result<Vec<AccountLiquidityTypeDto>> {

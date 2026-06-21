@@ -21,7 +21,7 @@ use crate::{
 
 use super::DbQueryWithValues;
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn insert_transaction_group(model: AddTransactionGroupModel) -> DbQueryWithValues {
     Query::insert()
         .into_table(TransactionGroupIden::Table)
@@ -40,7 +40,7 @@ pub fn insert_transaction_group(model: AddTransactionGroupModel) -> DbQueryWithV
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn update_transaction_group(model: UpdateTransactionGroupModel) -> DbQueryWithValues {
     Query::update()
         .table(TransactionGroupIden::Table)
@@ -52,7 +52,7 @@ pub fn update_transaction_group(model: UpdateTransactionGroupModel) -> DbQueryWi
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_transaction_group(group_id: Uuid) -> DbQueryWithValues {
     Query::delete()
         .from_table(TransactionGroupIden::Table)
@@ -61,7 +61,7 @@ pub fn delete_transaction_group(group_id: Uuid) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn set_group_id_on_transactions(
     group_id: Uuid,
     transaction_ids: Vec<Uuid>,
@@ -75,7 +75,7 @@ pub fn set_group_id_on_transactions(
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_transactions_by_group(group_id: Uuid) -> DbQueryWithValues {
     Query::delete()
         .from_table(TransactionIden::Table)
@@ -84,7 +84,7 @@ pub fn delete_transactions_by_group(group_id: Uuid) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_transaction_descriptions_by_group(group_id: Uuid) -> DbQueryWithValues {
     let subquery = Query::select()
         .column(TransactionIden::Id)
@@ -99,7 +99,7 @@ pub fn delete_transaction_descriptions_by_group(group_id: Uuid) -> DbQueryWithVa
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_transaction_entries_by_group(group_id: Uuid) -> DbQueryWithValues {
     let subquery = Query::select()
         .column(TransactionIden::Id)
@@ -114,7 +114,7 @@ pub fn delete_transaction_entries_by_group(group_id: Uuid) -> DbQueryWithValues 
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_transaction_groups_for_user(params: GetTransactionGroupsParams) -> DbQueryWithValues {
     let is_offset_paging = matches!(params.pagination, PaginationMode::Offset(_));
 
@@ -254,7 +254,7 @@ pub fn get_transaction_groups_for_user(params: GetTransactionGroupsParams) -> Db
     builder.build_sqlx(PostgresQueryBuilder).into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_transaction_ids_by_groups(group_ids: Vec<Uuid>) -> DbQueryWithValues {
     Query::select()
         .column(TransactionIden::Id)
@@ -265,7 +265,7 @@ pub fn get_transaction_ids_by_groups(group_ids: Vec<Uuid>) -> DbQueryWithValues 
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_transaction_groups_by_ids(group_ids: Vec<Uuid>) -> DbQueryWithValues {
     Query::select()
         .columns([

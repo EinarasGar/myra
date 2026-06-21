@@ -67,6 +67,7 @@ impl<A: AiActionProvider> Tool for RecordAssetTradeTool<A> {
         }
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(tool = Self::NAME, asset_id = args.asset_id))]
     async fn call(&self, args: Self::Args) -> std::result::Result<Self::Output, Self::Error> {
         let side = match args.side.to_lowercase().as_str() {
             "buy" => RecordAssetTradeSide::Buy,

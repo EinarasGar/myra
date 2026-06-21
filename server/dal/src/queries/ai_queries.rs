@@ -18,7 +18,7 @@ use crate::query_params::ai_search_params::{
 
 use super::{escape_ilike_pattern, DbQueryWithValues};
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn search_transactions_by_description(params: &SearchTransactionsParams) -> DbQueryWithValues {
     let pattern = escape_ilike_pattern(&params.query);
 
@@ -107,7 +107,7 @@ pub fn search_transactions_by_description(params: &SearchTransactionsParams) -> 
     query.build_sqlx(PostgresQueryBuilder).into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn count_transactions_by_description(params: &SearchTransactionsParams) -> DbQueryWithValues {
     let pattern = escape_ilike_pattern(&params.query);
 
@@ -150,7 +150,7 @@ pub fn count_transactions_by_description(params: &SearchTransactionsParams) -> D
     query.build_sqlx(PostgresQueryBuilder).into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn search_transactions_by_embedding(
     user_id: Uuid,
     query_vector: Vector,
@@ -249,7 +249,7 @@ pub fn search_transactions_by_embedding(
     query.build_sqlx(PostgresQueryBuilder).into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn aggregate_transactions(params: &AggregateTransactionsParams) -> DbQueryWithValues {
     let needs_description_tables =
         params.group_by == "description" || params.description_filter.is_some();
@@ -328,10 +328,11 @@ pub fn aggregate_transactions(params: &AggregateTransactionsParams) -> DbQueryWi
     DbQueryWithValues {
         query: sql,
         values: sea_query_sqlx::SqlxValues(sea_query::Values(values)),
+        name: None,
     }
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_active_accounts(params: &ListAccountsParams) -> DbQueryWithValues {
     Query::select()
         .expr_as(
@@ -372,7 +373,7 @@ pub fn get_active_accounts(params: &ListAccountsParams) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn update_transaction_description_embedding(
     transaction_id: Uuid,
     embedding: Vector,
@@ -388,7 +389,7 @@ pub fn update_transaction_description_embedding(
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn update_transaction_group_embedding(group_id: Uuid, embedding: Vector) -> DbQueryWithValues {
     Query::update()
         .table(TransactionGroupIden::Table)
@@ -401,7 +402,7 @@ pub fn update_transaction_group_embedding(group_id: Uuid, embedding: Vector) -> 
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn update_asset_embedding(asset_id: i32, embedding: Vector) -> DbQueryWithValues {
     Query::update()
         .table(AssetsIden::Table)
@@ -411,7 +412,7 @@ pub fn update_asset_embedding(asset_id: i32, embedding: Vector) -> DbQueryWithVa
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn update_category_embedding(category_id: i32, embedding: Vector) -> DbQueryWithValues {
     Query::update()
         .table(TransactionCategoriesIden::Table)
@@ -424,7 +425,7 @@ pub fn update_category_embedding(category_id: i32, embedding: Vector) -> DbQuery
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn search_categories(params: &SearchCategoriesParams) -> DbQueryWithValues {
     let mut query = Query::select();
     query
@@ -498,7 +499,7 @@ pub fn search_categories(params: &SearchCategoriesParams) -> DbQueryWithValues {
     query.build_sqlx(PostgresQueryBuilder).into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn search_assets(params: &SearchAssetsParams) -> DbQueryWithValues {
     let mut query = Query::select();
     query

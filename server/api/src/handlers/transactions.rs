@@ -62,7 +62,7 @@ use crate::{
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, transaction_id = %transaction_id))]
 pub async fn update_transaction(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(TransactionIdPath { transaction_id }): Path<TransactionIdPath>,
@@ -119,7 +119,7 @@ pub async fn update_transaction(
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, transaction_id = %transaction_id))]
 pub async fn delete_transaction(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(TransactionIdPath { transaction_id }): Path<TransactionIdPath>,
@@ -151,7 +151,7 @@ pub async fn delete_transaction(
         ("auth_token" = [])
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn get_transactions(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     ValidatedQuery(query_params): ValidatedQuery<CursorOrPaginatedSearchQuery>,

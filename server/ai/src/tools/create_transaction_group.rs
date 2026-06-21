@@ -80,6 +80,7 @@ impl<A: AiActionProvider> Tool for CreateTransactionGroupTool<A> {
         }
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(tool = Self::NAME, category_id = args.category_id, entries = args.entries.len()))]
     async fn call(&self, args: Self::Args) -> std::result::Result<Self::Output, Self::Error> {
         let entries: Result<Vec<TransactionEntryParam>, ToolError> = args
             .entries

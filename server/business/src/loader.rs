@@ -49,7 +49,7 @@ impl StartupLoader {
         }
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "info", skip_all)]
     pub async fn load(mut self) -> Result<(), LoaderError> {
         info!("Executing startup loaders.");
 
@@ -64,7 +64,7 @@ impl StartupLoader {
         while let Some(res) = set.join_next().await {
             match res {
                 Ok((Ok(_), loader)) => {
-                    info!("{:?} loader executed successfully.", loader);
+                    info!(loader = ?loader, "loader executed successfully");
 
                     // I dont actually like this tbh. I think it should be located inside loaders themselves
                     // because some of them might not know what they are loading and how many items they should load
@@ -73,17 +73,31 @@ impl StartupLoader {
                     let loaded_len = loader.get_loaded_len();
                     let expected_len = loader.get_expected_len();
                     if loaded_len != expected_len {
+                        tracing::error!(
+                            loader = ?loader,
+                            expected = expected_len,
+                            loaded = loaded_len,
+                            error.type = "LengthMissmatch",
+                            "loader length mismatch"
+                        );
                         return Err(LoaderError::LengthMissmatch(expected_len, loaded_len));
                     }
                 }
                 Ok((Err(e), loader)) => {
-                    tracing::error!("Loader {:?} failed: {:?}", loader, e);
-                    // Abort the remaining tasks by returning early with the error
+                    tracing::error!(
+                        loader = ?loader,
+                        error = &e as &dyn std::error::Error,
+                        error.type = "LoaderError",
+                        "loader failed"
+                    );
                     return Err(e);
                 }
                 Err(join_error) => {
-                    tracing::error!("Loader Task panicked or was aborted: {:?}", join_error);
-                    // Handle task panic or abortion
+                    tracing::error!(
+                        error = &join_error as &dyn std::error::Error,
+                        error.type = "JoinError",
+                        "loader task panicked or was aborted"
+                    );
                     return Err(LoaderError::FailedToLoad);
                 }
             }

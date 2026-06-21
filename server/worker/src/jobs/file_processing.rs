@@ -51,7 +51,7 @@ fn is_text_based_mime(mime: &str) -> bool {
         .any(|prefix| base.starts_with(prefix))
 }
 
-#[tracing::instrument(skip(providers))]
+#[tracing::instrument(level = "info", skip_all, fields(file_id = %file_id, user_id = %user_id))]
 async fn handle(providers: &ServiceProviders, file_id: Uuid, user_id: Uuid) -> Result<()> {
     let query = file_queries::get_file_by_id_and_user(file_id, user_id);
     let file = providers
@@ -87,10 +87,14 @@ async fn handle(providers: &ServiceProviders, file_id: Uuid, user_id: Uuid) -> R
             }
         }
         Err(e) => {
-            tracing::error!(file_id = %file_id, error = %e, "File processing failed");
             let fail_query = file_queries::update_file_status(file_id, user_id, FileStatus::Failed);
             if let Err(db_err) = providers.db.execute(fail_query).await {
-                tracing::error!(file_id = %file_id, error = %db_err, "Failed to update file status to failed");
+                tracing::error!(
+                    file_id = %file_id,
+                    error = ?db_err,
+                    error.type = "db_status_update",
+                    "failed to mark file failed"
+                );
             }
             return Err(e);
         }
@@ -99,7 +103,7 @@ async fn handle(providers: &ServiceProviders, file_id: Uuid, user_id: Uuid) -> R
     Ok(())
 }
 
-#[tracing::instrument(skip_all, err, fields(file_id = %file_id, declared_mime = %declared_mime))]
+#[tracing::instrument(level = "debug", skip_all, fields(file_id = %file_id, declared_mime = %declared_mime))]
 async fn process_file(
     file_provider: &Arc<dyn FileProvider>,
     file_id: Uuid,

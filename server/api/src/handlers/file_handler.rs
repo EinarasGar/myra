@@ -41,7 +41,7 @@ use business::dtos::file_dto::CreateFileDto;
     request_body(content = CreateFileRequestViewModel),
     security(("auth_token" = []))
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn create_file(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     FileServiceState(service): FileServiceState,
@@ -78,7 +78,7 @@ pub async fn create_file(
     ),
     security(("auth_token" = []))
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, file_id = %file_id))]
 pub async fn get_file(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(FileIdPath { file_id }): Path<FileIdPath>,
@@ -109,7 +109,7 @@ pub async fn get_file(
     ),
     security(("auth_token" = []))
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, file_id = %file_id))]
 pub async fn delete_file(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(FileIdPath { file_id }): Path<FileIdPath>,
@@ -140,7 +140,7 @@ pub async fn delete_file(
     ),
     security(("auth_token" = []))
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, file_id = %file_id))]
 pub async fn confirm_file(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(FileIdPath { file_id }): Path<FileIdPath>,
@@ -172,7 +172,7 @@ pub async fn confirm_file(
     ),
     security(("auth_token" = []))
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, file_id = %file_id))]
 pub async fn get_file_url(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(FileIdPath { file_id }): Path<FileIdPath>,
@@ -204,7 +204,7 @@ pub async fn get_file_url(
     ),
     security(("auth_token" = []))
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, file_id = %file_id))]
 pub async fn get_file_thumbnail(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(FileIdPath { file_id }): Path<FileIdPath>,

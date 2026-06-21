@@ -39,7 +39,7 @@ impl AssetRatesService {
         }
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn get_pair_latest_direct(
         &self,
         pair: AssetPairIdsDto,
@@ -55,7 +55,7 @@ impl AssetRatesService {
         Ok(ret.map(Into::into))
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn get_pairs_latest_converted(
         &self,
         asset_ids: HashSet<AssetIdDto>,
@@ -137,7 +137,7 @@ impl AssetRatesService {
         Ok(result)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn get_pairs_by_range_direct(
         &self,
         pair: AssetPairIdsDto,
@@ -167,7 +167,7 @@ impl AssetRatesService {
         Ok(result)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn get_market_pair_rates_by_range(
         &self,
         pair: AssetPairIdsDto,
@@ -177,7 +177,7 @@ impl AssetRatesService {
         self.get_pairs_by_range_direct(pair, range_dto).await
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn get_assets_rates_default_from_date(
         &self,
         default_asset_id: AssetIdDto,
@@ -208,13 +208,13 @@ impl AssetRatesService {
         Ok(result)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn insert_pair_single(&self, rate: AssetPairRateInsertDto) -> anyhow::Result<()> {
         self.insert_pair_many(vec![rate]).await?;
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn insert_pair_many(&self, rates: Vec<AssetPairRateInsertDto>) -> anyhow::Result<()> {
         if rates.is_empty() {
             return Ok(());
@@ -236,12 +236,13 @@ impl AssetRatesService {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all)]
+    #[tracing::instrument(level = "debug", skip_all)]
     async fn ensure_pair_fresh(&self, pair: AssetPairIdsDto) {
-        if let Err(e) = self.try_ensure_pair_fresh(pair).await {
+        if let Err(err) = self.try_ensure_pair_fresh(pair).await {
             tracing::warn!(
-                "Market data passthrough failed, serving existing data: {}",
-                e
+                error = ?err,
+                error.type = "market_data_passthrough",
+                "market data passthrough failed, serving existing data"
             );
         }
     }
@@ -286,7 +287,7 @@ impl AssetRatesService {
         let inserts: Vec<AssetPairRateInsertDto> = entry
             .rates
             .into_iter()
-            .filter(|r| from.map_or(true, |cutoff| r.recorded_at > cutoff))
+            .filter(|r| from.is_none_or(|cutoff| r.recorded_at > cutoff))
             .map(|r| AssetPairRateInsertDto {
                 pair_id: info.pair_id,
                 rate: r.rate,
@@ -299,7 +300,7 @@ impl AssetRatesService {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(pair_id))]
     pub async fn delete_rates_in_range(
         &self,
         pair_id: i32,
@@ -317,7 +318,7 @@ impl AssetRatesService {
     /// if it is not foud, the price for base conversion is returned
     /// The number of elements returned is the same as the number of elements in the input list
     /// For elements where id is found but price is not, the Option for rate and date will be null
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn get_pair_prices_by_dates(
         &self,
         pair_dates: Vec<AssetPairDateDto>,
@@ -351,7 +352,7 @@ impl AssetRatesService {
     /// plus prices with base pair if the direct conversion is not found
     /// Another query is performed if there are any prices returned that are not direct conversion
     /// to get the correct conversion price to reference asset
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn get_pairs_by_dates_converted(
         &self,
         asset_id_dates: Vec<AssetIdDateDto>,
@@ -421,7 +422,7 @@ impl AssetRatesService {
         Ok(mapped_prices)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn list_held_pair_details(
         &self,
         has_rates: bool,
@@ -430,7 +431,7 @@ impl AssetRatesService {
         Ok(self.db.fetch_all::<HeldAssetPairDetailModel>(query).await?)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn list_currency_cross_pairs(
         &self,
         tickers: Vec<String>,

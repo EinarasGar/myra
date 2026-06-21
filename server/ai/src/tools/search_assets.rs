@@ -45,6 +45,7 @@ impl<M: EmbeddingModel + Send + Sync, D: AiDataProvider> Tool for SearchAssetsTo
         }
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(tool = Self::NAME))]
     async fn call(&self, args: Self::Args) -> std::result::Result<Self::Output, Self::Error> {
         let query_vec = if let Some(ref q) = args.query {
             Some(

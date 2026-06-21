@@ -29,6 +29,7 @@ impl AiDataService {
         }
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, limit))]
     pub async fn search_transactions_by_text(
         &self,
         user_id: Uuid,
@@ -49,6 +50,7 @@ impl AiDataService {
         Ok(rows.into_iter().map(to_search_result).collect())
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, limit))]
     pub async fn search_transactions_by_vector(
         &self,
         user_id: Uuid,
@@ -65,6 +67,7 @@ impl AiDataService {
         Ok(rows.into_iter().map(to_search_result).collect())
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, limit))]
     pub async fn count_transactions_by_text(
         &self,
         user_id: Uuid,
@@ -85,6 +88,7 @@ impl AiDataService {
         Ok(count)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub async fn aggregate_transactions(
         &self,
         user_id: Uuid,
@@ -115,6 +119,7 @@ impl AiDataService {
             .collect())
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub async fn list_accounts(&self, user_id: Uuid) -> Result<Vec<AccountResult>> {
         let dal_params = ai_search_params::ListAccountsParams { user_id };
         let q = ai_queries::get_active_accounts(&dal_params);
@@ -155,6 +160,7 @@ impl AiDataService {
             .collect())
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub async fn search_categories(
         &self,
         user_id: Uuid,
@@ -174,6 +180,7 @@ impl AiDataService {
         Ok(rows.into_iter().map(to_category_result).collect())
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub async fn search_assets(
         &self,
         user_id: Uuid,

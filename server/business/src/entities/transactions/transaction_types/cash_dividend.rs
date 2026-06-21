@@ -114,7 +114,9 @@ impl TransactionProcessor for CashDividendTransaction {
 
     fn get_portfolio_action(&self) -> Result<TransactionPortfolioAction> {
         let Some(origin_asset_id) = self.origin_asset_id else {
-            tracing::warn!("CashDividend transaction missing origin_asset_id metadata, skipping portfolio action");
+            tracing::warn!(
+                "cash dividend missing origin_asset_id metadata, skipping portfolio action"
+            );
             return Ok(TransactionPortfolioAction::None);
         };
 

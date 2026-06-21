@@ -8,7 +8,7 @@ use crate::{
 
 use super::DbQueryWithValues;
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_fee_enum_mappings() -> DbQueryWithValues {
     Query::select()
         .columns([
@@ -24,7 +24,7 @@ pub fn get_fee_enum_mappings() -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_transaction_type_enum_mappings() -> DbQueryWithValues {
     Query::select()
         .columns([

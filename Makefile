@@ -55,7 +55,7 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk 
 		"POSTGRES_USER=myradev" \
 		"POSTGRES_PASSWORD=devpassword" \
 		"POSTGRES_DB=myra" \
-		"RUST_LOG=error,dal=trace,business=trace,api=trace,worker=trace,ai=info,tower_http=info,rig=info" \
+		"RUST_LOG=info,api=debug,business=debug,dal=debug,worker=debug,ai=debug,tower_http=info,rig=info,hyper=warn,h2=warn,reqwest=warn,sqlx=warn" \
 		"JWT_SECRET=devjwtsecret" \
 		"" \
 		"POSTGRES_PORT=7$${PREFIX}1" \
@@ -206,7 +206,7 @@ status: ## Show service ports, status, and useful links
 .PHONY: backend-run
 backend-run: ## Start API server (kills existing process on SERVER_PORT first)
 	-@lsof -ti :$(SERVER_PORT) | xargs kill -9 2>/dev/null || true
-	cd server && cargo run -p api --no-default-features --features $(AUTH_PROVIDER),color-sql,seed
+	cd server && cargo run -p api --no-default-features --features $(AUTH_PROVIDER),seed
 
 .PHONY: worker-run
 worker-run: ## Start background worker (kills existing worker first). Shares this worktree's .env — no port needed.
@@ -289,6 +289,12 @@ export-db: ## Export database data to db_dump.sql
 	@PGPASSWORD=$(POSTGRES_PASSWORD) pg_dump -h localhost -p $(POSTGRES_PORT) -U $(POSTGRES_USER) -d $(POSTGRES_DB) --data-only --exclude-table='_sqlx_*' --disable-triggers > db_dump.sql
 	@echo "$(GREEN)Database data exported to db_dump.sql$(NC)"
 
+.PHONY: seed-demo
+seed-demo: ## Load the demo/showcase dataset for the default user (idempotent; needs DB running)
+	@echo "$(GREEN)Seeding demo showcase data...$(NC)"
+	@PGPASSWORD=$(POSTGRES_PASSWORD) psql -h localhost -p $(POSTGRES_PORT) -U $(POSTGRES_USER) -d $(POSTGRES_DB) -v ON_ERROR_STOP=1 -q -f database/demo/showcase_data.sql
+	@echo "$(GREEN)Demo data loaded. Run 'make worker-run' so investment prices populate from market data.$(NC)"
+
 .PHONY: import-db
 import-db: ## Import database data from db_dump.sql (truncates existing data first)
 	@echo "$(YELLOW)Truncating existing data...$(NC)"
@@ -303,7 +309,7 @@ import-db: ## Import database data from db_dump.sql (truncates existing data fir
 generate-api: ## Generate TypeScript API client from OpenAPI spec
 	@echo "$(GREEN)Compiling and generating OpenAPI spec...$(NC)"
 	@TEMP_FILE=$$(mktemp /tmp/openapi.XXXXXX.json); \
-	if (cd server && cargo run -p api --no-default-features --features database,color-sql -- --openapi) > $$TEMP_FILE 2>/dev/null; then \
+	if (cd server && cargo run -p api --no-default-features --features database -- --openapi) > $$TEMP_FILE 2>/dev/null; then \
 		echo "$(GREEN)OpenAPI spec generated successfully$(NC)"; \
 		echo "$(YELLOW)Converting anyOf to oneOf...$(NC)"; \
 		sed -i '' 's/"anyOf"/"oneOf"/g' $$TEMP_FILE; \
@@ -321,7 +327,7 @@ generate-api: ## Generate TypeScript API client from OpenAPI spec
 		echo "$(GREEN)API client generated successfully!$(NC)"; \
 	else \
 		echo "$(RED)Error: Failed to generate OpenAPI spec. Check Rust compilation errors:$(NC)"; \
-		(cd server && cargo run -p api --no-default-features --features database,color-sql -- --openapi) 2>&1 || true; \
+		(cd server && cargo run -p api --no-default-features --features database -- --openapi) 2>&1 || true; \
 		rm -f $$TEMP_FILE; \
 		exit 1; \
 	fi

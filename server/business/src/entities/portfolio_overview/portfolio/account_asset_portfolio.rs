@@ -1,6 +1,6 @@
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
-use tracing::error;
+use tracing::warn;
 
 use super::portfolio_asset_position_dto::PortfolioAssetPosition;
 
@@ -79,7 +79,7 @@ impl AccountAssetPortfolio {
                 position.sell(amount_selling, price, sale_fees);
                 left_to_sell -= amount_selling;
             } else {
-                error!("Not enough assets to sell");
+                warn!(remaining = %left_to_sell, "oversell: not enough units held, selling all available");
                 break;
             }
         }
@@ -135,7 +135,7 @@ impl AccountAssetPortfolio {
                 position.add_quantity(-amount_transfering, -own_fees_moved);
                 removed_positions.push(transfered_postion);
             } else {
-                error!("Not enough assets to transfer");
+                warn!(remaining = %left_to_remove, "over-transfer: not enough units held, transferring all available");
                 break;
             }
         }

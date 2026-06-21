@@ -8,15 +8,11 @@ use std::collections::HashMap;
 use std::sync::OnceLock;
 use tracing::Subscriber;
 use tracing_opentelemetry::OpenTelemetryLayer;
-use tracing_subscriber::filter::filter_fn;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::registry::LookupSpan;
 use tracing_subscriber::Layer;
 use tracing_subscriber::Registry;
 use tracing_subscriber::{prelude::*, EnvFilter};
-
-#[cfg(all(feature = "color-sql", debug_assertions))]
-pub mod sql_highlighter;
 
 static TRACER_PROVIDER: OnceLock<SdkTracerProvider> = OnceLock::new();
 static LOGGER_PROVIDER: OnceLock<SdkLoggerProvider> = OnceLock::new();
@@ -81,9 +77,8 @@ where
                         .build();
 
                     opentelemetry::global::set_tracer_provider(tracer_provider.clone());
-                    let telemetry = OpenTelemetryLayer::new(tracer_provider.tracer(service_name))
-                        .with_filter(filter_fn(|metadata| metadata.is_span()))
-                        .boxed();
+                    let telemetry =
+                        OpenTelemetryLayer::new(tracer_provider.tracer(service_name)).boxed();
                     let _ = TRACER_PROVIDER.set(tracer_provider);
                     Some(telemetry)
                 }
@@ -155,12 +150,7 @@ fn create_otlp_headers() -> HashMap<String, String> {
 }
 
 fn create_print_layer() -> Box<dyn Layer<Registry> + Send + Sync> {
-    let layer = tracing_subscriber::fmt::layer().pretty();
-
-    #[cfg(all(feature = "color-sql", debug_assertions))]
-    let layer = layer.fmt_fields(sql_highlighter::create_tracing_formatter());
-
-    layer.boxed()
+    tracing_subscriber::fmt::layer().pretty().boxed()
 }
 
 /// Creates an env filter from `RUST_LOG`. If invalid, panics. If empty or unset,

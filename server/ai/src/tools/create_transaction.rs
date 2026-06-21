@@ -62,6 +62,7 @@ impl<A: AiActionProvider> Tool for CreateTransactionTool<A> {
         }
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(tool = Self::NAME, category_id = args.category_id, asset_id = args.asset_id))]
     async fn call(&self, args: Self::Args) -> std::result::Result<Self::Output, Self::Error> {
         let account_id = args
             .account_id

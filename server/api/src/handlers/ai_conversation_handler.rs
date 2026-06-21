@@ -44,6 +44,7 @@ use crate::{
     ),
     security(("auth_token" = []))
 )]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn create_conversation(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     AiConversationServiceState(service): AiConversationServiceState,
@@ -67,6 +68,7 @@ pub async fn create_conversation(
     ),
     security(("auth_token" = []))
 )]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn list_conversations(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     AiConversationServiceState(service): AiConversationServiceState,
@@ -91,6 +93,7 @@ pub async fn list_conversations(
     ),
     security(("auth_token" = []))
 )]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, conversation_id = %conversation_id))]
 pub async fn get_conversation(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(ConversationIdPath { conversation_id }): Path<ConversationIdPath>,
@@ -116,6 +119,7 @@ pub async fn get_conversation(
     ),
     security(("auth_token" = []))
 )]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, conversation_id = %conversation_id))]
 pub async fn delete_conversation(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(ConversationIdPath { conversation_id }): Path<ConversationIdPath>,
@@ -141,6 +145,7 @@ pub async fn delete_conversation(
     ),
     security(("auth_token" = []))
 )]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, conversation_id = %conversation_id))]
 pub async fn get_messages(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(ConversationIdPath { conversation_id }): Path<ConversationIdPath>,
@@ -153,6 +158,7 @@ pub async fn get_messages(
     Ok(Json(dtos.into_iter().map_into().collect()))
 }
 
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, conversation_id = %conversation_id))]
 pub async fn send_message(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(ConversationIdPath { conversation_id }): Path<ConversationIdPath>,
@@ -180,6 +186,7 @@ pub async fn send_message(
     Ok(chat_sse_response(chat_stream))
 }
 
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, conversation_id = %conversation_id))]
 pub async fn retry_message(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(ConversationIdPath { conversation_id }): Path<ConversationIdPath>,

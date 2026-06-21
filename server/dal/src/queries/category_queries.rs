@@ -21,7 +21,7 @@ use crate::{
 
 use super::DbQueryWithValues;
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_categories(params: GetCategoriesParams) -> DbQueryWithValues {
     let mut query = Query::select();
 
@@ -207,7 +207,7 @@ pub fn get_categories(params: GetCategoriesParams) -> DbQueryWithValues {
     query.build_sqlx(PostgresQueryBuilder).into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn insert_category(user_id: Uuid, category: InsertCategoryModel) -> DbQueryWithValues {
     Query::insert()
         .into_table(TransactionCategoriesIden::Table)
@@ -228,7 +228,7 @@ pub fn insert_category(user_id: Uuid, category: InsertCategoryModel) -> DbQueryW
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn update_category(
     category_id: i32,
     user_id: Uuid,
@@ -248,7 +248,7 @@ pub fn update_category(
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_category(category_id: i32, user_id: Uuid) -> DbQueryWithValues {
     Query::delete()
         .from_table(TransactionCategoriesIden::Table)
@@ -258,7 +258,7 @@ pub fn delete_category(category_id: i32, user_id: Uuid) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_category_count(params: GetCategoryCountParams) -> DbQueryWithValues {
     let mut query = Query::select();
 
@@ -280,7 +280,7 @@ pub fn get_category_count(params: GetCategoryCountParams) -> DbQueryWithValues {
     query.build_sqlx(PostgresQueryBuilder).into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn check_duplicate_category_name(
     category_name: &str,
     user_id: Option<Uuid>,

@@ -32,7 +32,7 @@ impl EntriesService {
         }
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn add_transcation_entries(
         &self,
         transactions: &mut [Transaction],
@@ -147,7 +147,7 @@ impl EntriesService {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub(crate) async fn get_entries_interval_sums(
         &self,
         user_id: Uuid,
@@ -170,7 +170,7 @@ impl EntriesService {
         Ok(results.into_iter().map_into())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub async fn get_oldest_entry_date(
         &self,
         user_id: Uuid,

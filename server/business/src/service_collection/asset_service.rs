@@ -52,7 +52,7 @@ impl AssetsService {
         }
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(asset_id = %id))]
     pub async fn get_asset_with_metadata(&self, id: i32) -> anyhow::Result<FullAssetDto> {
         let query = asset_queries::get_asset_with_metadata(GetAssetsParams::by_id(id));
         let model = self.db.fetch_optional::<AssetWithMetadata>(query).await?;
@@ -64,7 +64,7 @@ impl AssetsService {
         }
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn search_assets(
         &self,
         paging: PagingDto,
@@ -101,7 +101,7 @@ impl AssetsService {
         }
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(pair1, pair2))]
     pub async fn get_asset_pair(
         &self,
         pair1: i32,
@@ -122,7 +122,7 @@ impl AssetsService {
         Ok((ret1, ret2))
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn get_assets(&self, ids: HashSet<i32>) -> anyhow::Result<Vec<asset_dto::AssetDto>> {
         let query = asset_queries::get_asset_with_metadata(GetAssetsParams::by_ids(ids));
         let models = self.db.fetch_all::<Asset>(query).await?;
@@ -130,7 +130,7 @@ impl AssetsService {
         Ok(ret_vec)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(pair1, pair2))]
     pub async fn get_shared_asset_pair_metadata(
         &self,
         pair1: i32,
@@ -149,7 +149,7 @@ impl AssetsService {
         }
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(asset_id = %id))]
     pub async fn get_asset(&self, id: i32) -> anyhow::Result<AssetDto> {
         let query = asset_queries::get_asset(id);
         let model = self.db.fetch_one::<Asset>(query).await?;
@@ -157,7 +157,7 @@ impl AssetsService {
         Ok(model.into())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn get_all_assets_ticker_and_pair_ids(
         &self,
     ) -> anyhow::Result<Vec<AssetTickerPairIdsDto>> {
@@ -170,7 +170,7 @@ impl AssetsService {
         Ok(ret_vec)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn get_public_assets(
         &self,
         page: u64,
@@ -185,7 +185,7 @@ impl AssetsService {
         Ok(ret_vec)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub async fn get_all_user_assets(
         &self,
         user_id: Uuid,
@@ -197,7 +197,7 @@ impl AssetsService {
         Ok(ret_vec)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub async fn check_assets_access(
         &self,
         user_id: Uuid,
@@ -215,14 +215,14 @@ impl AssetsService {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(pair1, pair2))]
     pub async fn get_asset_pair_id(&self, pair1: i32, pair2: i32) -> anyhow::Result<i32> {
         let query = asset_queries::get_pair_id(pair1, pair2);
         let ret = self.db.fetch_one::<AssetPairId>(query).await?;
         Ok(ret.id)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn add_asset(&self, rate: AssetInsertDto) -> anyhow::Result<InsertAssetResultDto> {
         self.db.start_transaction().await?;
         let asset_id = self.insert_asset(rate.clone()).await?;
@@ -243,7 +243,7 @@ impl AssetsService {
         })
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %asset_dto.user_id))]
     pub async fn add_custom_asset(&self, asset_dto: AddCustomAssetDto) -> anyhow::Result<AssetDto> {
         self.db.start_transaction().await?;
 
@@ -278,7 +278,7 @@ impl AssetsService {
         Ok(ret)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, asset_id = %asset_id))]
     pub async fn validate_asset_ownership(
         &self,
         user_id: Uuid,
@@ -289,14 +289,14 @@ impl AssetsService {
         Ok(ret.exists)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     async fn insert_asset(&self, asset_dto: AssetInsertDto) -> anyhow::Result<i32> {
         let query = asset_queries::insert_asset(asset_dto.clone().into());
         let asset_id = self.db.fetch_one::<AssetId>(query).await?;
         Ok(asset_id.id)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     async fn insert_asset_pair(&self, pair_dto: AssetPairInsertDto) -> anyhow::Result<i32> {
         let query = asset_queries::inser_pair(pair_dto.into());
         let asset_pair_id = self.db.fetch_one::<AssetPairId>(query).await.map_err(|e| {
@@ -313,7 +313,7 @@ impl AssetsService {
         Ok(asset_pair_id.id)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, asset_id = %asset_id))]
     pub async fn add_asset_pair(
         &self,
         user_id: Uuid,
@@ -331,7 +331,7 @@ impl AssetsService {
         self.insert_asset_pair(pair).await
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn get_assets_base_pairs(
         &self,
         ids: HashSet<i32>,
@@ -345,7 +345,7 @@ impl AssetsService {
         Ok(base_pairs_map)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(asset_id = %dto.asset_id))]
     pub async fn update_asset(&self, dto: UpdateAssetDto) -> anyhow::Result<()> {
         let existing = self.get_asset(dto.asset_id).await?;
         let name_or_ticker_changed = existing.name != dto.name || existing.ticker != dto.ticker;
@@ -373,7 +373,7 @@ impl AssetsService {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(pair_id))]
     pub async fn get_asset_pair_user_metadata(
         &self,
         pair_id: i32,
@@ -386,7 +386,7 @@ impl AssetsService {
         Ok(result.and_then(|m| m.exchange))
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(pair_id))]
     pub async fn upsert_asset_pair_user_metadata(
         &self,
         pair_id: i32,
@@ -397,7 +397,7 @@ impl AssetsService {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, asset_id = %asset_id))]
     pub async fn delete_asset(&self, user_id: Uuid, asset_id: i32) -> anyhow::Result<()> {
         let is_owned = self.validate_asset_ownership(user_id, asset_id).await?;
         if !is_owned {
@@ -425,7 +425,7 @@ impl AssetsService {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, pair1, pair2))]
     pub async fn delete_asset_pair(
         &self,
         user_id: Uuid,
@@ -457,7 +457,7 @@ impl AssetsService {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn get_asset_types(
         &self,
     ) -> anyhow::Result<Vec<dtos::assets::asset_type_dto::AssetTypeDto>> {

@@ -12,8 +12,9 @@ async fn main() -> anyhow::Result<()> {
 
     let services = Services::new().await?;
     dal::job_queue::JobQueueHandle::run_migrations(&services.connection.pool).await?;
+    tracing::info!("job queue migrations applied");
 
-    tracing::info!("Worker starting");
+    tracing::info!("worker starting");
 
     Monitor::new()
         .register_job::<EmbeddingJob>(&services)
@@ -29,7 +30,8 @@ async fn main() -> anyhow::Result<()> {
             tracing::error!(
                 worker = %ctx.name(),
                 attempt,
-                %error,
+                error = error as &dyn std::error::Error,
+                error.type = "WorkerError",
                 "worker exited unexpectedly; restarting"
             );
             attempt < 10

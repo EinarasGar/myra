@@ -48,6 +48,7 @@ pub(crate) struct QuickUploadIdPath {
     ),
     security(("auth_token" = []))
 )]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn create_quick_upload(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     AiQuickUploadServiceState(service): AiQuickUploadServiceState,
@@ -72,6 +73,7 @@ pub async fn create_quick_upload(
     ),
     security(("auth_token" = []))
 )]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn list_quick_uploads(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     AiQuickUploadServiceState(service): AiQuickUploadServiceState,
@@ -96,6 +98,7 @@ pub async fn list_quick_uploads(
     ),
     security(("auth_token" = []))
 )]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, quick_upload_id = %quick_upload_id))]
 pub async fn get_quick_upload(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(QuickUploadIdPath { quick_upload_id }): Path<QuickUploadIdPath>,
@@ -128,6 +131,7 @@ pub async fn get_quick_upload(
     Ok(Json(vm))
 }
 
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, quick_upload_id = %quick_upload_id))]
 pub async fn subscribe(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(QuickUploadIdPath { quick_upload_id }): Path<QuickUploadIdPath>,
@@ -197,6 +201,7 @@ pub async fn subscribe(
     ),
     security(("auth_token" = []))
 )]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, quick_upload_id = %quick_upload_id))]
 pub async fn send_correction(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(QuickUploadIdPath { quick_upload_id }): Path<QuickUploadIdPath>,
@@ -230,6 +235,7 @@ pub async fn send_correction(
     ),
     security(("auth_token" = []))
 )]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, quick_upload_id = %quick_upload_id))]
 pub async fn retry_quick_upload(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(QuickUploadIdPath { quick_upload_id }): Path<QuickUploadIdPath>,
@@ -261,6 +267,7 @@ pub async fn retry_quick_upload(
     request_body(content = CompleteQuickUploadRequestViewModel),
     security(("auth_token" = []))
 )]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, quick_upload_id = %quick_upload_id))]
 pub async fn complete(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(QuickUploadIdPath { quick_upload_id }): Path<QuickUploadIdPath>,

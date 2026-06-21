@@ -55,7 +55,7 @@ impl RedisConnection {
         let url = match std::env::var("REDIS_URL") {
             Ok(url) => url,
             Err(_) => {
-                tracing::warn!("REDIS_URL not set, rate limiting will use DB-only mode");
+                tracing::warn!("redis url not set, rate limiting will use db-only mode");
                 return Self {
                     client: None,
                     manager: Arc::new(RwLock::new(None)),
@@ -65,7 +65,11 @@ impl RedisConnection {
         let client = match redis::Client::open(url) {
             Ok(c) => c,
             Err(e) => {
-                tracing::warn!("Failed to parse Redis URL: {}", e);
+                tracing::warn!(
+                    error = &e as &dyn std::error::Error,
+                    error.type = "redis::RedisError",
+                    "failed to parse redis url"
+                );
                 return Self {
                     client: None,
                     manager: Arc::new(RwLock::new(None)),
@@ -79,14 +83,19 @@ impl RedisConnection {
         };
 
         if conn.get_connection().await.is_some() {
-            tracing::info!("Connected to Redis");
+            tracing::info!("connected to redis");
         } else {
-            tracing::warn!("Redis unavailable at startup, will retry on first request");
+            tracing::warn!("redis unavailable at startup, will retry on first request");
         }
 
         conn
     }
 
+    #[tracing::instrument(
+        level = "debug",
+        skip_all,
+        fields(otel.kind = "client", db.system.name = "redis")
+    )]
     pub async fn execute_script_string(&self, cmd: RedisScript) -> Option<String> {
         let mut conn = self.get_connection().await?;
         let fut = async {
@@ -109,16 +118,25 @@ impl RedisConnection {
         match tokio::time::timeout(COMMAND_TIMEOUT, fut).await {
             Ok(Ok(val)) => Some(val),
             Ok(Err(e)) => {
-                tracing::warn!("Redis script failed: {}", e);
+                tracing::warn!(
+                    error = &e as &dyn std::error::Error,
+                    error.type = "redis::RedisError",
+                    "redis script failed"
+                );
                 None
             }
             Err(_) => {
-                tracing::warn!("Redis script timed out");
+                tracing::warn!("redis script timed out");
                 None
             }
         }
     }
 
+    #[tracing::instrument(
+        level = "debug",
+        skip_all,
+        fields(otel.kind = "client", db.system.name = "redis")
+    )]
     pub async fn execute_script_vec(&self, cmd: RedisScript) -> Option<Vec<i64>> {
         let mut conn = self.get_connection().await?;
         let fut = async {
@@ -141,16 +159,25 @@ impl RedisConnection {
         match tokio::time::timeout(COMMAND_TIMEOUT, fut).await {
             Ok(Ok(val)) => Some(val),
             Ok(Err(e)) => {
-                tracing::warn!("Redis script failed: {}", e);
+                tracing::warn!(
+                    error = &e as &dyn std::error::Error,
+                    error.type = "redis::RedisError",
+                    "redis script failed"
+                );
                 None
             }
             Err(_) => {
-                tracing::warn!("Redis script timed out");
+                tracing::warn!("redis script timed out");
                 None
             }
         }
     }
 
+    #[tracing::instrument(
+        level = "debug",
+        skip_all,
+        fields(otel.kind = "client", db.system.name = "redis")
+    )]
     pub async fn execute_script_int(&self, cmd: RedisScript) -> Option<i64> {
         let mut conn = self.get_connection().await?;
         let fut = async {
@@ -173,16 +200,25 @@ impl RedisConnection {
         match tokio::time::timeout(COMMAND_TIMEOUT, fut).await {
             Ok(Ok(val)) => Some(val),
             Ok(Err(e)) => {
-                tracing::warn!("Redis script failed: {}", e);
+                tracing::warn!(
+                    error = &e as &dyn std::error::Error,
+                    error.type = "redis::RedisError",
+                    "redis script failed"
+                );
                 None
             }
             Err(_) => {
-                tracing::warn!("Redis script timed out");
+                tracing::warn!("redis script timed out");
                 None
             }
         }
     }
 
+    #[tracing::instrument(
+        level = "debug",
+        skip_all,
+        fields(otel.kind = "client", db.system.name = "redis")
+    )]
     pub async fn set_ex(&self, key: &str, value: i64, ttl_secs: u64) {
         if let Some(mut conn) = self.get_connection().await {
             let _ = tokio::time::timeout(COMMAND_TIMEOUT, async {
@@ -192,6 +228,11 @@ impl RedisConnection {
         }
     }
 
+    #[tracing::instrument(
+        level = "debug",
+        skip_all,
+        fields(otel.kind = "client", db.system.name = "redis")
+    )]
     pub async fn hset_with_expire(&self, key: &str, fields: &[(&str, i64)], ttl_secs: i64) {
         if let Some(mut conn) = self.get_connection().await {
             let _ = tokio::time::timeout(COMMAND_TIMEOUT, async {
@@ -202,6 +243,11 @@ impl RedisConnection {
         }
     }
 
+    #[tracing::instrument(
+        level = "debug",
+        skip_all,
+        fields(otel.kind = "client", db.system.name = "redis")
+    )]
     pub async fn decr(&self, key: &str) {
         if let Some(mut conn) = self.get_connection().await {
             let _ = tokio::time::timeout(COMMAND_TIMEOUT, async {
@@ -234,11 +280,15 @@ impl RedisConnection {
                 Some(mgr)
             }
             Ok(Err(e)) => {
-                tracing::warn!("Failed to connect to Redis: {}", e);
+                tracing::warn!(
+                    error = &e as &dyn std::error::Error,
+                    error.type = "redis::RedisError",
+                    "failed to connect to redis"
+                );
                 None
             }
             Err(_) => {
-                tracing::warn!("Redis connection timed out");
+                tracing::warn!("redis connection timed out");
                 None
             }
         }

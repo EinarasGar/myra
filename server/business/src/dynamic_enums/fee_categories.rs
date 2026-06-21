@@ -21,7 +21,7 @@ pub struct FeeCategories;
 
 #[async_trait]
 impl Loader for FeeCategories {
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(otel.kind = "client"))]
     async fn load(&self) -> Result<(), LoaderError> {
         let mut m = HashMap::new();
 

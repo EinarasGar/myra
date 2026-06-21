@@ -9,7 +9,7 @@ use crate::query_params::ai_conversation_params::{
 
 use super::DbQueryWithValues;
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn create_quick_upload(conversation_id: Uuid, source_file_id: Uuid) -> DbQueryWithValues {
     Query::insert()
         .into_table(AiWorkflowQuickUploadIden::Table)
@@ -23,7 +23,7 @@ pub fn create_quick_upload(conversation_id: Uuid, source_file_id: Uuid) -> DbQue
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_quick_uploads(params: GetQuickUploadsParams) -> DbQueryWithValues {
     let mut query = Query::select();
     query
@@ -111,7 +111,7 @@ pub fn get_quick_uploads(params: GetQuickUploadsParams) -> DbQueryWithValues {
     query.build_sqlx(PostgresQueryBuilder).into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn update_quick_upload_status(
     quick_upload_id: Uuid,
     status: QuickUploadStatus,
@@ -125,7 +125,7 @@ pub fn update_quick_upload_status(
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn update_quick_upload_proposal(
     quick_upload_id: Uuid,
     proposal_type: String,
@@ -148,7 +148,7 @@ pub fn update_quick_upload_proposal(
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn try_reset_for_manual_retry(quick_upload_id: Uuid) -> DbQueryWithValues {
     Query::update()
         .table(AiWorkflowQuickUploadIden::Table)

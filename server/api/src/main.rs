@@ -71,7 +71,7 @@ async fn main() -> Result<()> {
     let bind_host = env::var("SERVER_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
     let bind_address = format!("{}:{}", bind_host, port);
     let listener = tokio::net::TcpListener::bind(&bind_address).await.unwrap();
-    info!("Starting web server on {}", listener.local_addr().unwrap());
+    info!(address = %listener.local_addr().unwrap(), "starting web server");
     axum::serve(
         listener,
         app.into_make_service_with_connect_info::<SocketAddr>(),

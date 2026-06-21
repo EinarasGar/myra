@@ -32,7 +32,7 @@ impl UsersService {
         }
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn register_user(&self, user: AddUserDto) -> anyhow::Result<UserFullDto> {
         let db_user = AddUserModel {
             username: user.username.clone(),
@@ -85,7 +85,7 @@ impl UsersService {
         Ok(ret_obj)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub async fn get_onboarding_info(
         &self,
         user_id: Uuid,
@@ -99,28 +99,28 @@ impl UsersService {
         ))
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, asset_id = %asset_id))]
     pub async fn set_default_asset(&self, user_id: Uuid, asset_id: i32) -> anyhow::Result<()> {
         let query = user_queries::update_user_default_asset(user_id, asset_id);
         self.db.execute(query).await?;
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub async fn get_default_asset(&self, user_id: Uuid) -> anyhow::Result<Option<i32>> {
         let query = user_queries::get_user_basic_info(user_id);
         let model = self.db.fetch_one::<UserBasicModel>(query).await?;
         Ok(model.default_asset)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, version))]
     pub async fn set_onboarding_version(&self, user_id: Uuid, version: i32) -> anyhow::Result<()> {
         let query = user_queries::update_user_onboarding_version(user_id, version);
         self.db.execute(query).await?;
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub async fn get_basic_user(
         &self,
         user_id: Uuid,
@@ -130,7 +130,7 @@ impl UsersService {
         Ok((model.id, model.username, model.default_asset))
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub async fn get_full_user(&self, user_id: Uuid) -> anyhow::Result<UserFullDto> {
         let query = user_queries::get_user_full_info(user_id);
         let model = self.db.fetch_one::<UserFullModel>(query).await?;
@@ -138,7 +138,7 @@ impl UsersService {
         Ok(model.into())
     }
 
-    #[tracing::instrument(skip_all)]
+    #[tracing::instrument(level = "debug", skip_all)]
     fn hash_password(&self, password: String) -> String {
         let salt = SaltString::generate(&mut OsRng);
         let argon2 = Argon2::default();
@@ -149,7 +149,7 @@ impl UsersService {
         password_hash
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub fn verify_user_password(
         &self,
         password: String,

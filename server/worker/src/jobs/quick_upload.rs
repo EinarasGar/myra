@@ -29,7 +29,7 @@ impl WorkerJob for QuickUploadJob {
         retry::default_decision(error, attempts, &Self::retry_policy())
     }
 
-    #[tracing::instrument(skip_all, err, fields(quick_upload_id = %quick_upload_id(self)))]
+    #[tracing::instrument(level = "debug", skip_all, fields(quick_upload_id = %quick_upload_id(self)))]
     async fn before_run(&self, providers: &ServiceProviders) -> anyhow::Result<()> {
         let service = AiQuickUploadService::new(providers);
         let quick_upload_id = quick_upload_id(self);
@@ -52,7 +52,7 @@ impl WorkerJob for QuickUploadJob {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, err, fields(quick_upload_id = %quick_upload_id(self)))]
+    #[tracing::instrument(level = "debug", skip_all, fields(quick_upload_id = %quick_upload_id(self)))]
     async fn run(&self, providers: &ServiceProviders) -> anyhow::Result<()> {
         let service = AiQuickUploadService::new(providers);
         match self {
@@ -86,7 +86,12 @@ impl WorkerJob for QuickUploadJob {
             .record_conversation_error(quick_upload_id, &dto)
             .await
         {
-            tracing::warn!("Failed to record quick upload error: {e}");
+            tracing::warn!(
+                quick_upload_id = %quick_upload_id,
+                error = ?e,
+                error.type = "record_conversation_error",
+                "failed to record quick upload error"
+            );
         }
 
         match decision {
@@ -146,7 +151,7 @@ struct WorkflowContext {
     rate_limit: Arc<business::providers::user_rate_limiter::UserRateLimiter>,
 }
 
-#[tracing::instrument(skip_all, err, fields(quick_upload_id = %quick_upload_id, user_id = %user_id))]
+#[tracing::instrument(level = "debug", skip_all, fields(quick_upload_id = %quick_upload_id, user_id = %user_id))]
 async fn setup(
     providers: &ServiceProviders,
     service: &AiQuickUploadService,
@@ -189,7 +194,7 @@ async fn setup(
     ))
 }
 
-#[tracing::instrument(skip_all, err, fields(quick_upload_id = %quick_upload_id))]
+#[tracing::instrument(level = "debug", skip_all, fields(quick_upload_id = %quick_upload_id))]
 async fn save_and_notify(
     service: &AiQuickUploadService,
     quick_upload_id: Uuid,
@@ -226,7 +231,7 @@ async fn save_and_notify(
     Ok(())
 }
 
-#[tracing::instrument(skip_all, err, fields(quick_upload_id = %quick_upload_id, user_id = %user_id))]
+#[tracing::instrument(level = "debug", skip_all, fields(quick_upload_id = %quick_upload_id, user_id = %user_id))]
 async fn process(
     providers: &ServiceProviders,
     service: &AiQuickUploadService,
@@ -265,7 +270,7 @@ async fn process(
     save_and_notify(service, quick_upload_id, output).await
 }
 
-#[tracing::instrument(skip_all, err, fields(quick_upload_id = %quick_upload_id, user_id = %user_id))]
+#[tracing::instrument(level = "debug", skip_all, fields(quick_upload_id = %quick_upload_id, user_id = %user_id))]
 async fn process_retry(
     providers: &ServiceProviders,
     service: &AiQuickUploadService,
@@ -303,7 +308,7 @@ async fn process_retry(
     save_and_notify(service, quick_upload_id, output).await
 }
 
-#[tracing::instrument(skip_all, err, fields(quick_upload_id = %quick_upload_id, user_id = %user_id))]
+#[tracing::instrument(level = "debug", skip_all, fields(quick_upload_id = %quick_upload_id, user_id = %user_id))]
 async fn process_correction(
     providers: &ServiceProviders,
     service: &AiQuickUploadService,

@@ -56,7 +56,7 @@ use crate::{
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, account_id = %account_id))]
 pub async fn get_account(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(AccountIdPath { account_id }): Path<AccountIdPath>,
@@ -102,7 +102,7 @@ pub async fn get_account(
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn get_accounts(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     AccountsServiceState(account_service): AccountsServiceState,
@@ -167,7 +167,7 @@ pub async fn get_accounts(
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, account_id = %account_id))]
 pub async fn update_account(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(AccountIdPath { account_id }): Path<AccountIdPath>,
@@ -206,7 +206,7 @@ pub async fn update_account(
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn add_account(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     AccountsServiceState(account_service): AccountsServiceState,
@@ -252,7 +252,7 @@ pub async fn add_account(
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, account_id = %account_id))]
 pub async fn delete_account(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(AccountIdPath { account_id }): Path<AccountIdPath>,
@@ -281,7 +281,7 @@ pub async fn delete_account(
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn get_account_types(
     AccountsServiceState(account_service): AccountsServiceState,
 ) -> Result<Json<GetAccountTypesResponseViewModel>, ApiError> {
@@ -308,7 +308,7 @@ pub async fn get_account_types(
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn get_account_liquidity_types(
     AccountsServiceState(account_service): AccountsServiceState,
 ) -> Result<Json<GetAccountLiquidityTypesResponseViewModel>, ApiError> {

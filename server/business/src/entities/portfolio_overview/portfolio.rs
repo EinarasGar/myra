@@ -126,7 +126,11 @@ impl Portfolio {
                         // history dropping unpriced holdings). Its gains/value can't
                         // be expressed in the reference asset without a rate.
                         let Some(current_rate) = current_rates.get(&AssetIdDto(*asset_id)) else {
-                            tracing::warn!("Held asset with no current rate");
+                            tracing::warn!(
+                                asset_id = %asset_id,
+                                account_id = %account_id,
+                                "held asset has no current rate, omitting from overview"
+                            );
                             return;
                         };
                         portfolios.push(PortfolioOverviewType::Asset(PortfolioAssetOverviewDto {

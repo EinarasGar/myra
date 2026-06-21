@@ -7,7 +7,7 @@ use crate::models::file_models::FileStatus;
 
 use super::DbQueryWithValues;
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn insert_file(
     id: Uuid,
     user_id: Uuid,
@@ -39,7 +39,7 @@ pub fn insert_file(
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_file_by_id_and_user(file_id: Uuid, user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .column(UserFilesIden::Id)
@@ -59,7 +59,7 @@ pub fn get_file_by_id_and_user(file_id: Uuid, user_id: Uuid) -> DbQueryWithValue
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_files_by_ids_and_user(file_ids: Vec<Uuid>, user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .column(UserFilesIden::Id)
@@ -86,7 +86,7 @@ pub fn get_files_by_ids_and_user(file_ids: Vec<Uuid>, user_id: Uuid) -> DbQueryW
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_file_status_by_id_and_user(file_id: Uuid, user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .column(UserFilesIden::Status)
@@ -97,7 +97,7 @@ pub fn get_file_status_by_id_and_user(file_id: Uuid, user_id: Uuid) -> DbQueryWi
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn update_file_status(file_id: Uuid, user_id: Uuid, status: FileStatus) -> DbQueryWithValues {
     Query::update()
         .table(UserFilesIden::Table)
@@ -110,7 +110,7 @@ pub fn update_file_status(file_id: Uuid, user_id: Uuid, status: FileStatus) -> D
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn update_file_status_conditional(
     file_id: Uuid,
     user_id: Uuid,
@@ -129,7 +129,7 @@ pub fn update_file_status_conditional(
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn update_file_ready(
     file_id: Uuid,
     user_id: Uuid,
@@ -150,7 +150,7 @@ pub fn update_file_ready(
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_file(file_id: Uuid, user_id: Uuid) -> DbQueryWithValues {
     Query::delete()
         .from_table(UserFilesIden::Table)

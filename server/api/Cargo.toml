@@ -44,8 +44,7 @@ async-stream = "0.3"
 tower_governor = { version = "0.6", features = ["tracing"] }
 
 [features]
-default = ["color-sql", "noauth", "seed"]
-color-sql = ["observability/color-sql"]
+default = ["noauth", "seed"]
 seed = []
 database = ["business/database"]
 clerk = ["dep:reqwest", "business/clerk"]

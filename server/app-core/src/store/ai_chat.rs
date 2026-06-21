@@ -108,11 +108,9 @@ struct ServerConversation {
 
 #[derive(serde::Deserialize)]
 struct ServerMessage {
-    id: String,
     role: String,
     content: serde_json::Value,
     file_ids: Option<Vec<String>>,
-    created_at: Option<String>,
 }
 
 #[derive(serde::Deserialize)]

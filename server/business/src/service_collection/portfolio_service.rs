@@ -26,7 +26,7 @@ impl PortfolioService {
         }
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, account_id = ?account_id))]
     pub async fn get_full_portfolio_history(
         &self,
         user_id: Uuid,
@@ -48,8 +48,6 @@ impl PortfolioService {
             }
             Err(err) => return Err(err.into()),
         };
-
-        tracing::trace!("Using range for portfolio hisotry: {:?}", range);
 
         let mut net_worth_history = NetWorthHistory::new(reference_asset.clone(), range);
 

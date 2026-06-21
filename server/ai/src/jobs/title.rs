@@ -23,7 +23,7 @@ Rules:
 ///
 /// Uses the same agent pattern as chat but runs ephemerally: nothing is written
 /// to conversation history, while rate limiting is still enforced and recorded.
-#[tracing::instrument(skip_all, fields(model = %config.model))]
+#[tracing::instrument(skip_all, level = "debug", fields(model = %config.model))]
 pub async fn generate_conversation_title<C, R>(
     config: &AiConfig,
     conv: Conversation<C, R>,

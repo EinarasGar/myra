@@ -54,7 +54,7 @@ impl AuthService {
         }
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn get_auth_token(
         &self,
         username: String,
@@ -74,7 +74,7 @@ impl AuthService {
         Ok(token)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub fn verify_auth_token(&self, token: String) -> anyhow::Result<ClaimsDto> {
         let token_message =
             decode::<ClaimsDto>(&token, &self.jwt_keys.decoding, &Validation::default())?;
@@ -97,7 +97,7 @@ impl AuthService {
         hash.iter().map(|b| format!("{:02x}", b)).collect()
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub async fn create_refresh_token(
         &self,
         user_id: uuid::Uuid,
@@ -116,7 +116,7 @@ impl AuthService {
         Ok((raw_token, expires_at))
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn validate_and_rotate(
         &self,
         raw_token: &str,
@@ -147,14 +147,14 @@ impl AuthService {
         Ok((stored.user_id, new_raw_token, new_expires_at))
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub async fn revoke_all_refresh_tokens(&self, user_id: uuid::Uuid) -> anyhow::Result<()> {
         let query = user_queries::delete_all_refresh_tokens_for_user(user_id);
         self.db_context.execute(query).await?;
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub async fn issue_access_token(&self, user_id: uuid::Uuid) -> anyhow::Result<String> {
         let user = self.user_service.get_full_user(user_id).await?;
         let my_claims = ClaimsDto {
@@ -187,13 +187,16 @@ struct CachedJwks {
 }
 
 #[cfg(feature = "clerk")]
+type CachedIdentity = (Uuid, String, Instant);
+
+#[cfg(feature = "clerk")]
 pub struct AuthService {
     db_context: MyraDb,
     user_service: UsersService,
     clerk_secret_key: String,
     jwks_cache: Arc<RwLock<Option<CachedJwks>>>,
     /// Cache of clerk_user_id → (internal_user_id, username, fetched_at)
-    identity_cache: Arc<RwLock<HashMap<String, (Uuid, String, Instant)>>>,
+    identity_cache: Arc<RwLock<HashMap<String, CachedIdentity>>>,
 }
 
 #[cfg(feature = "clerk")]
@@ -317,7 +320,7 @@ impl AuthService {
     /// Verifies a Clerk JWT by fetching Clerk's JWKS (cached) and validating the token.
     /// Returns ClaimsDto with the internal user_id (resolved via external_identity_mappings, cached).
     /// On first login, auto-provisions an internal user record.
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn verify_clerk_token(&self, token: String) -> anyhow::Result<ClaimsDto> {
         use jsonwebtoken::{Algorithm, DecodingKey};
 
@@ -431,7 +434,10 @@ pub struct AuthService {
 #[cfg(feature = "noauth")]
 impl AuthService {
     pub fn new(providers: &super::ServiceProviders) -> Self {
-        tracing::warn!("⚠️  SECURITY WARNING: Authentication is DISABLED. All requests will be accepted without authentication. Do NOT use this in production!");
+        tracing::warn!(
+            auth_provider = "noauth",
+            "authentication disabled, all requests accepted without verification"
+        );
         Self {
             _db_context: providers.db.clone(),
         }
