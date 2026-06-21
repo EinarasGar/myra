@@ -589,10 +589,10 @@ pub async fn approve_tool(
     };
 
     let body = serde_json::json!({
-        "tool_approval": {
+        "tool_approvals": [{
             "tool_call_id": call_id,
             "approved": approved,
-        },
+        }],
     });
 
     drive_chat_stream(infra, module, conversation_id, &user_id, body, auth_token).await;

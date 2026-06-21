@@ -34,7 +34,7 @@ impl<A: AiActionProvider> Tool for CreateTransactionGroupTool<A> {
                 "properties": {
                     "date": {
                         "type": "string",
-                        "description": "Group date in ISO 8601 format (e.g. '2026-01-15')"
+                        "description": "Group date/time in ISO 8601 format (e.g. '2026-01-15' or '2026-01-15T14:30:00Z'). A date-only value is treated as midnight UTC."
                     },
                     "description": {
                         "type": "string",

@@ -161,15 +161,19 @@ pub async fn send_message(
 ) -> Result<Sse<impl Stream<Item = Result<Event, Infallible>>>, ApiError> {
     request.validate()?;
 
-    let turn = match request.tool_approval {
-        Some(approval) => business::dtos::ai_chat_dto::ChatTurnDto::Approval {
-            tool_call_id: approval.tool_call_id,
-            approved: approval.approved,
-        },
-        None => business::dtos::ai_chat_dto::ChatTurnDto::Message {
+    let turn = if request.tool_approvals.is_empty() {
+        business::dtos::ai_chat_dto::ChatTurnDto::Message {
             message: request.message.map(|m| m.0).unwrap_or_default(),
             file_ids: request.file_ids,
-        },
+        }
+    } else {
+        business::dtos::ai_chat_dto::ChatTurnDto::Approval {
+            approvals: request
+                .tool_approvals
+                .into_iter()
+                .map(|a| (a.tool_call_id, a.approved))
+                .collect(),
+        }
     };
 
     let chat_stream = chat_service

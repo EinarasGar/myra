@@ -198,8 +198,7 @@ pub enum ChatTurnDto {
         file_ids: Vec<Uuid>,
     },
     Approval {
-        tool_call_id: String,
-        approved: bool,
+        approvals: Vec<(String, bool)>,
     },
     Continuation,
 }
@@ -208,13 +207,7 @@ impl From<ChatTurnDto> for ai::models::chat::ChatTurn {
     fn from(t: ChatTurnDto) -> Self {
         match t {
             ChatTurnDto::Message { message, file_ids } => Self::Message { message, file_ids },
-            ChatTurnDto::Approval {
-                tool_call_id,
-                approved,
-            } => Self::Approval {
-                tool_call_id,
-                approved,
-            },
+            ChatTurnDto::Approval { approvals } => Self::Approval { approvals },
             ChatTurnDto::Continuation => Self::Continuation,
         }
     }

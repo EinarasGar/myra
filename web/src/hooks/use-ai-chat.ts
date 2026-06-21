@@ -67,7 +67,7 @@ export interface UseAiChatReturn {
   conversationId: string | null;
   rateLimitedUntil: string | null;
   sendMessage: (message: string, files?: FileUIPart[]) => void;
-  approveToolCall: (callId: string, approved: boolean) => Promise<void>;
+  approveToolCalls: (callIds: string[], approved: boolean) => Promise<void>;
   retry: () => void;
   clearMessages: () => void;
   clearRateLimitedUntil: () => void;
@@ -75,7 +75,7 @@ export interface UseAiChatReturn {
 
 function serverPartsToMessageParts(
   content: unknown,
-  completedCallIds: Set<string>,
+  toolResults: Map<string, string>,
 ): MessagePart[] {
   if (!content || typeof content !== "object") return [];
 
@@ -99,7 +99,7 @@ function serverPartsToMessageParts(
       parsedInput = {};
     }
     const callId = c.tool_call_id as string | undefined;
-    const hasResult = callId ? completedCallIds.has(callId) : true;
+    const hasResult = callId ? toolResults.has(callId) : true;
     return [
       {
         type: "tool_call",
@@ -108,7 +108,7 @@ function serverPartsToMessageParts(
         state: hasResult ? "output-available" : ("approval-requested" as const),
         callId,
         signature: c.signature as string | undefined,
-        output: undefined,
+        output: callId ? toolResults.get(callId) : undefined,
       },
     ];
   }
@@ -204,12 +204,17 @@ export default function useAiChat(
           }
         }
 
-        const completedCallIds = new Set<string>();
+        const toolResults = new Map<string, string>();
         for (const m of res.data) {
           if (m.role === "tool_result") {
             const tc = m.content as Record<string, unknown> | null;
-            if (tc?.tool_call_id)
-              completedCallIds.add(tc.tool_call_id as string);
+            const callId = tc?.tool_call_id;
+            if (typeof callId === "string") {
+              toolResults.set(
+                callId,
+                typeof tc?.content === "string" ? (tc.content as string) : "",
+              );
+            }
           }
         }
 
@@ -219,7 +224,7 @@ export default function useAiChat(
           const role: "user" | "assistant" =
             m.role === "user" ? "user" : "assistant";
 
-          const parts = serverPartsToMessageParts(m.content, completedCallIds);
+          const parts = serverPartsToMessageParts(m.content, toolResults);
 
           // Add file parts for messages with file_ids
           if (m.file_ids && m.file_ids.length > 0) {
@@ -630,15 +635,18 @@ export default function useAiChat(
     ],
   );
 
-  const approveToolCall = useCallback(
-    async (callId: string, approved: boolean) => {
-      if (isStreaming) return;
+  const approveToolCalls = useCallback(
+    async (callIds: string[], approved: boolean) => {
+      if (isStreaming || callIds.length === 0) return;
 
+      const idSet = new Set(callIds);
       const currentMessages = messagesRef.current;
       const assistantMsgIdx = currentMessages.findIndex(
         (m) =>
           m.role === "assistant" &&
-          m.parts.some((p) => p.type === "tool_call" && p.callId === callId),
+          m.parts.some(
+            (p) => p.type === "tool_call" && !!p.callId && idSet.has(p.callId),
+          ),
       );
       if (assistantMsgIdx < 0) return;
 
@@ -648,7 +656,7 @@ export default function useAiChat(
             ? {
                 ...msg,
                 parts: msg.parts.map((p) =>
-                  p.type === "tool_call" && p.callId === callId
+                  p.type === "tool_call" && !!p.callId && idSet.has(p.callId)
                     ? {
                         ...p,
                         state: approved
@@ -704,10 +712,10 @@ export default function useAiChat(
         await streamSse(
           url,
           {
-            tool_approval: {
-              tool_call_id: callId,
+            tool_approvals: callIds.map((id) => ({
+              tool_call_id: id,
               approved,
-            },
+            })),
           },
           controller.signal,
           updateTargetMessage,
@@ -721,7 +729,9 @@ export default function useAiChat(
                   ? {
                       ...msg,
                       parts: msg.parts.map((p) =>
-                        p.type === "tool_call" && p.callId === callId
+                        p.type === "tool_call" &&
+                        !!p.callId &&
+                        idSet.has(p.callId)
                           ? { ...p, state: "output-error" as const }
                           : p,
                       ),
@@ -845,7 +855,7 @@ export default function useAiChat(
     conversationId,
     rateLimitedUntil,
     sendMessage,
-    approveToolCall,
+    approveToolCalls,
     retry,
     clearMessages,
     clearRateLimitedUntil,

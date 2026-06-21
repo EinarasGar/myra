@@ -4,9 +4,11 @@
 //! mid-stream so the UI can ask the user before they execute.
 
 use std::collections::HashSet;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use rig::agent::{PromptHook, ToolCallHookAction};
+use rig::agent::{HookAction, PromptHook, ToolCallHookAction};
+use rig::completion::message::Message;
 use rig::providers::gemini;
 use rig::tool::Tool;
 
@@ -16,6 +18,8 @@ use crate::tools::create_custom_asset::CreateCustomAssetTool;
 use crate::tools::create_transaction::CreateTransactionTool;
 use crate::tools::create_transaction_group::CreateTransactionGroupTool;
 use crate::tools::record_asset_trade::RecordAssetTradeTool;
+
+const PENDING_APPROVAL_RESULT: &str = "Tool call requires user approval. Awaiting response.";
 
 pub(crate) struct GatedToolSet {
     pub toolset: rig::tool::ToolSet,
@@ -47,11 +51,36 @@ pub(crate) fn build_gated_toolset<A: AiActionProvider>(actions: Arc<A>) -> Gated
 
 #[derive(Clone)]
 pub(crate) struct ApprovalHook {
-    pub sender: tokio::sync::mpsc::UnboundedSender<ToolRequestPayload>,
-    pub gated_names: HashSet<String>,
+    sender: tokio::sync::mpsc::UnboundedSender<ToolRequestPayload>,
+    gated_names: HashSet<String>,
+    captured: Arc<AtomicBool>,
+}
+
+impl ApprovalHook {
+    pub(crate) fn new(
+        sender: tokio::sync::mpsc::UnboundedSender<ToolRequestPayload>,
+        gated_names: HashSet<String>,
+    ) -> Self {
+        Self {
+            sender,
+            gated_names,
+            captured: Arc::new(AtomicBool::new(false)),
+        }
+    }
 }
 
 impl PromptHook<gemini::completion::CompletionModel> for ApprovalHook {
+    // Once a gated call has been captured, stop before the next model turn so
+    // the user can approve. Skipping (rather than terminating) on the call
+    // itself lets every gated call in the same turn be captured first.
+    async fn on_completion_call(&self, _prompt: &Message, _history: &[Message]) -> HookAction {
+        if self.captured.load(Ordering::SeqCst) {
+            HookAction::terminate(PENDING_APPROVAL_RESULT)
+        } else {
+            HookAction::cont()
+        }
+    }
+
     async fn on_tool_call(
         &self,
         tool_name: &str,
@@ -65,9 +94,8 @@ impl PromptHook<gemini::completion::CompletionModel> for ApprovalHook {
                 name: tool_name.to_string(),
                 args: args.to_string(),
             });
-            ToolCallHookAction::Terminate {
-                reason: "Tool call requires user approval. Awaiting response.".to_string(),
-            }
+            self.captured.store(true, Ordering::SeqCst);
+            ToolCallHookAction::skip(PENDING_APPROVAL_RESULT)
         } else {
             ToolCallHookAction::Continue
         }

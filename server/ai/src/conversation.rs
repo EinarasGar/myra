@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use futures::{Stream, StreamExt};
 use rig::agent::{Agent, MultiTurnStreamItem};
-use rig::completion::message::{Message, ToolResultContent, UserContent};
+use rig::completion::message::{AssistantContent, Message, ToolResultContent, UserContent};
 use rig::completion::Prompt;
 use rig::streaming::{StreamedAssistantContent, StreamedUserContent, StreamingChat};
 use rig::OneOrMany;
@@ -137,17 +137,16 @@ where
     {
         let (message, file_ids, skip_record) = match &turn {
             ChatTurn::Message { message, file_ids } => (message.clone(), file_ids.clone(), false),
-            ChatTurn::Approval {
-                tool_call_id,
-                approved,
-            } => {
-                self.conversation
-                    .append_message(ChatHistoryMessage::ToolApproval {
-                        tool_call_id: tool_call_id.clone(),
-                        approved: *approved,
-                    })
-                    .await
-                    .map_err(|e| AiError::unknown(format!("{e:#}")))?;
+            ChatTurn::Approval { approvals } => {
+                for (tool_call_id, approved) in approvals {
+                    self.conversation
+                        .append_message(ChatHistoryMessage::ToolApproval {
+                            tool_call_id: tool_call_id.clone(),
+                            approved: *approved,
+                        })
+                        .await
+                        .map_err(|e| AiError::unknown(format!("{e:#}")))?;
+                }
                 (String::new(), Vec::new(), true)
             }
             ChatTurn::Continuation => (String::new(), Vec::new(), true),
@@ -235,6 +234,8 @@ where
             }
         }
 
+        let mut rig_history = coalesce_tool_messages(rig_history);
+
         let chat_prompt_result: Result<Message, AiError> = match turn {
             ChatTurn::Message { .. } => Ok(prepared.current_message),
             ChatTurn::Approval { .. } => rig_history.pop().ok_or_else(|| AiError::Fatal {
@@ -265,10 +266,8 @@ where
         self.clear_turn_error_marker().await;
 
         let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<ToolRequestPayload>();
-        let hook = ApprovalHook {
-            sender: tx,
-            gated_names: gated.gated_names.clone(),
-        };
+        let gated_names = gated.gated_names.clone();
+        let hook = ApprovalHook::new(tx, gated.gated_names.clone());
 
         let conversation = self.conversation.clone();
         let rate_limit = self.rate_limit.clone();
@@ -281,7 +280,7 @@ where
             let mut rig_stream = agent
                 .stream_chat(chat_prompt, rig_history)
                 .with_hook(hook)
-                .multi_turn(5)
+                .multi_turn(8)
                 .await;
 
             let mut pending_text = String::new();
@@ -326,6 +325,7 @@ where
                             signature,
                         };
                     }
+                    Ok(MultiTurnStreamItem::StreamUserItem(StreamedUserContent::ToolResult { .. })) if gated_names.contains(&last_tool_name) => {}
                     Ok(MultiTurnStreamItem::StreamUserItem(StreamedUserContent::ToolResult { tool_result, .. })) => {
                         let raw = match tool_result.content.first() {
                             ToolResultContent::Text(t) => t.text.clone(),
@@ -615,6 +615,48 @@ fn build_user_message(text: &str, attachments: &[Base64Attachment]) -> Message {
     }
 }
 
+/// Gemini expects parallel tool calls and their results grouped as a single
+/// model turn followed by a single tool-result turn. Persisted history stores
+/// each call/result as its own row, so merge adjacent same-kind messages back
+/// into that shape before sending.
+fn coalesce_tool_messages(messages: Vec<Message>) -> Vec<Message> {
+    let mut out: Vec<Message> = Vec::with_capacity(messages.len());
+    for msg in messages {
+        let merged = match (out.last_mut(), &msg) {
+            (
+                Some(Message::Assistant { content: prev, .. }),
+                Message::Assistant { content: cur, .. },
+            ) if is_all_tool_calls(prev) && is_all_tool_calls(cur) => {
+                cur.iter().for_each(|item| prev.push(item.clone()));
+                true
+            }
+            (Some(Message::User { content: prev }), Message::User { content: cur })
+                if is_all_tool_results(prev) && is_all_tool_results(cur) =>
+            {
+                cur.iter().for_each(|item| prev.push(item.clone()));
+                true
+            }
+            _ => false,
+        };
+        if !merged {
+            out.push(msg);
+        }
+    }
+    out
+}
+
+fn is_all_tool_calls(content: &OneOrMany<AssistantContent>) -> bool {
+    content
+        .iter()
+        .all(|c| matches!(c, AssistantContent::ToolCall(_)))
+}
+
+fn is_all_tool_results(content: &OneOrMany<UserContent>) -> bool {
+    content
+        .iter()
+        .all(|c| matches!(c, UserContent::ToolResult(_)))
+}
+
 fn build_rig_history(
     entries: &[HistoryEntry],
     images_by_id: &HashMap<Uuid, Base64Attachment>,
@@ -723,6 +765,7 @@ fn message_to_history_items(message: Message) -> Vec<ChatHistoryMessage> {
 mod tests {
     use super::*;
     use crate::models::chat::ChatHistoryMessage;
+    use rig::completion::message::{ToolCall, ToolFunction};
 
     fn rig_history_from(messages: &[ChatHistoryMessage]) -> Vec<Message> {
         messages.iter().cloned().map(Into::into).collect()
@@ -927,5 +970,70 @@ mod tests {
                 .any(|m| matches!(m, ChatHistoryMessage::ToolResult { .. })),
             "the replayed tool result used as the prompt must not be persisted again"
         );
+    }
+
+    fn asst_call(id: &str) -> Message {
+        Message::Assistant {
+            id: None,
+            content: OneOrMany::one(AssistantContent::ToolCall(ToolCall::new(
+                id.to_string(),
+                ToolFunction::new("record_asset_trade".to_string(), serde_json::json!({})),
+            ))),
+        }
+    }
+
+    fn tool_result(id: &str) -> Message {
+        Message::User {
+            content: OneOrMany::one(UserContent::tool_result(
+                id.to_string(),
+                OneOrMany::one(ToolResultContent::text("ok")),
+            )),
+        }
+    }
+
+    fn tool_call_count(msg: &Message) -> usize {
+        match msg {
+            Message::Assistant { content, .. } => content.iter().count(),
+            Message::User { content } => content.iter().count(),
+        }
+    }
+
+    #[test]
+    fn merges_parallel_calls_and_their_results() {
+        let out = coalesce_tool_messages(vec![
+            asst_call("a"),
+            asst_call("b"),
+            tool_result("a"),
+            tool_result("b"),
+        ]);
+
+        assert_eq!(out.len(), 2);
+        assert!(matches!(out[0], Message::Assistant { .. }));
+        assert_eq!(tool_call_count(&out[0]), 2);
+        assert!(matches!(out[1], Message::User { .. }));
+        assert_eq!(tool_call_count(&out[1]), 2);
+    }
+
+    #[test]
+    fn leaves_alternating_pairs_untouched() {
+        let out = coalesce_tool_messages(vec![
+            asst_call("a"),
+            tool_result("a"),
+            asst_call("b"),
+            tool_result("b"),
+        ]);
+
+        assert_eq!(out.len(), 4);
+    }
+
+    #[test]
+    fn does_not_merge_across_a_text_message() {
+        let out = coalesce_tool_messages(vec![
+            asst_call("a"),
+            Message::user("hello"),
+            asst_call("b"),
+        ]);
+
+        assert_eq!(out.len(), 3);
     }
 }

@@ -75,7 +75,13 @@ import useAiChat, {
 } from "@/hooks/use-ai-chat";
 import { useUserId } from "@/hooks/use-auth";
 import { useCountdown } from "@/hooks/use-countdown";
-import { useState, useEffect } from "react";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useContext,
+  createContext,
+} from "react";
 import {
   AIConversationsApiFactory,
   type IdentifiableConversationResponse,
@@ -135,6 +141,10 @@ function formatParamLabel(key: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function formatToolName(name: string): string {
+  return name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function formatParamValue(value: unknown): string {
   if (value === null || value === undefined) return "—";
   if (typeof value === "object") return JSON.stringify(value);
@@ -183,33 +193,122 @@ function extractGroupMeta(input: unknown): Record<string, unknown> {
   return rest;
 }
 
+// Id -> name lookups harvested from the conversation's own reference-data tool
+// calls (search_assets, list_accounts, search_categories). The global stores are
+// usually empty on the chat page, so this lets the approval cards show names for
+// exactly the entities the assistant looked up while building the action.
+type AiReferenceData = {
+  assets: Map<number, { ticker?: string; name: string }>;
+  accounts: Map<string, string>;
+  categories: Map<number, string>;
+};
+
+const emptyReferenceData: AiReferenceData = {
+  assets: new Map(),
+  accounts: new Map(),
+  categories: new Map(),
+};
+
+const AiReferenceContext = createContext<AiReferenceData>(emptyReferenceData);
+
+function harvestReferenceData(messages: ChatMessage[]): AiReferenceData {
+  const assets = new Map<number, { ticker?: string; name: string }>();
+  const accounts = new Map<string, string>();
+  const categories = new Map<number, string>();
+
+  for (const msg of messages) {
+    for (const part of msg.parts) {
+      if (part.type !== "tool_call" || !part.output) continue;
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(part.output);
+      } catch {
+        continue;
+      }
+      if (!Array.isArray(parsed)) continue;
+
+      if (part.name === "search_assets") {
+        for (const item of parsed) {
+          const r = item as {
+            id?: unknown;
+            asset_name?: unknown;
+            ticker?: unknown;
+          };
+          if (typeof r?.id === "number") {
+            assets.set(r.id, {
+              ticker: typeof r.ticker === "string" ? r.ticker : undefined,
+              name: typeof r.asset_name === "string" ? r.asset_name : "",
+            });
+          }
+        }
+      } else if (part.name === "list_accounts") {
+        for (const item of parsed) {
+          const r = item as { account_id?: unknown; account_name?: unknown };
+          if (typeof r?.account_id === "string") {
+            accounts.set(
+              r.account_id,
+              typeof r.account_name === "string" ? r.account_name : "",
+            );
+          }
+        }
+      } else if (part.name === "search_categories") {
+        for (const item of parsed) {
+          const r = item as { id?: unknown; category?: unknown };
+          if (typeof r?.id === "number") {
+            categories.set(
+              r.id,
+              typeof r.category === "string" ? r.category : "",
+            );
+          }
+        }
+      }
+    }
+  }
+
+  return { assets, accounts, categories };
+}
+
 function useIdResolver() {
   const accounts = useAccountStore((s) => s.accounts);
   const assets = useAssetStore((s) => s.assets);
   const categories = useCategoryStore((s) => s.categorys);
+  const reference = useContext(AiReferenceContext);
 
   return (record: Record<string, unknown>): Record<string, unknown> => {
     const out: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(record)) {
       if (key === "account_id" && typeof value === "string") {
         const account = accounts.find((a) => a.id === value);
-        out["Account"] = account?.name ?? value;
+        out["Account"] =
+          account?.name ?? reference.accounts.get(value) ?? value;
       } else if (
-        key === "asset_id" &&
+        (key === "asset_id" || key === "currency_asset_id") &&
         (typeof value === "number" || typeof value === "string")
       ) {
         const id = typeof value === "string" ? Number(value) : value;
         const asset = assets.find((a) => a.id === id);
-        out["Asset"] = asset
-          ? `${asset.ticker} — ${asset.name}`
-          : String(value);
+        const harvested = reference.assets.get(id);
+        let label: string;
+        if (asset) {
+          label = `${asset.ticker} — ${asset.name}`;
+        } else if (harvested) {
+          label = harvested.ticker
+            ? `${harvested.ticker} — ${harvested.name}`
+            : harvested.name;
+        } else {
+          label = String(value);
+        }
+        out[key === "asset_id" ? "Asset" : "Currency"] = label;
       } else if (
         key === "category_id" &&
         (typeof value === "number" || typeof value === "string")
       ) {
         const id = typeof value === "string" ? Number(value) : value;
         const category = categories.find((c) => c.id === id);
-        out["Category"] = category?.name ?? String(value);
+        out["Category"] =
+          category?.name ?? reference.categories.get(id) ?? String(value);
+      } else if (key === "side" && typeof value === "string") {
+        out["Side"] = value.charAt(0).toUpperCase() + value.slice(1);
       } else {
         out[key] = value;
       }
@@ -225,7 +324,7 @@ function GroupEntriesApprovalCard({
 }: {
   part: ToolCallPart;
   entries: Record<string, unknown>[];
-  onApprove: (callId: string, approved: boolean) => Promise<void>;
+  onApprove: (callIds: string[], approved: boolean) => Promise<void>;
 }) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -240,7 +339,7 @@ function GroupEntriesApprovalCard({
     if (!part.callId) return;
     setSubmitting(true);
     try {
-      await onApprove(part.callId, approved);
+      await onApprove([part.callId], approved);
     } finally {
       setSubmitting(false);
     }
@@ -315,22 +414,27 @@ function BulkApprovalCard({
   onApprove,
 }: {
   parts: ToolCallPart[];
-  onApprove: (callId: string, approved: boolean) => Promise<void>;
+  onApprove: (callIds: string[], approved: boolean) => Promise<void>;
 }) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const resolve = useIdResolver();
 
   const safeIdx = Math.min(currentIdx, Math.max(0, parts.length - 1));
   const current = parts[safeIdx];
+  const resolvedInput =
+    current && current.input && typeof current.input === "object"
+      ? resolve(current.input as Record<string, unknown>)
+      : current?.input;
 
   async function handleAll(approved: boolean) {
+    const callIds = parts
+      .map((p) => p.callId)
+      .filter((id): id is string => !!id);
+    if (callIds.length === 0) return;
     setSubmitting(true);
     try {
-      for (const part of parts) {
-        if (part.callId) {
-          await onApprove(part.callId, approved);
-        }
-      }
+      await onApprove(callIds, approved);
     } finally {
       setSubmitting(false);
     }
@@ -372,9 +476,9 @@ function BulkApprovalCard({
       </div>
 
       <div className="text-xs font-medium text-muted-foreground">
-        {current.name}
+        {formatToolName(current.name)}
       </div>
-      <ToolInputTable input={current.input} />
+      <ToolInputTable input={resolvedInput} />
 
       <div className="flex items-center justify-end gap-2">
         <Button
@@ -464,12 +568,13 @@ function MessageParts({
   msg: ChatMessage;
   isStreaming: boolean;
   isLast: boolean;
-  onApprove: (callId: string, approved: boolean) => Promise<void>;
+  onApprove: (callIds: string[], approved: boolean) => Promise<void>;
   onRetry: () => void;
 }) {
   const isLastAssistant = isStreaming && msg.role === "assistant" && isLast;
   const hasParts = msg.parts.length > 0;
   const isThinking = isLastAssistant && !hasParts;
+  const resolve = useIdResolver();
 
   if (isThinking) {
     return (
@@ -536,6 +641,10 @@ function MessageParts({
               part.name === "create_transaction_group"
                 ? extractGroupEntries(part.input)
                 : null;
+            const resolvedInput =
+              part.input && typeof part.input === "object"
+                ? resolve(part.input as Record<string, unknown>)
+                : part.input;
             return (
               <Tool key={j} defaultOpen={part.state === "approval-requested"}>
                 <ToolHeader type={`tool-${part.name}`} state={part.state} />
@@ -549,7 +658,7 @@ function MessageParts({
                   ) : (
                     <>
                       {isApprovalFlow ? (
-                        <ToolInputTable input={part.input} />
+                        <ToolInputTable input={resolvedInput} />
                       ) : (
                         <ToolInput input={part.input} />
                       )}
@@ -562,13 +671,13 @@ function MessageParts({
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => onApprove(part.callId!, false)}
+                              onClick={() => onApprove([part.callId!], false)}
                             >
                               Reject
                             </Button>
                             <Button
                               size="sm"
-                              onClick={() => onApprove(part.callId!, true)}
+                              onClick={() => onApprove([part.callId!], true)}
                             >
                               Accept
                             </Button>
@@ -777,7 +886,7 @@ export default function AiChatPage() {
     conversationId,
     rateLimitedUntil,
     sendMessage,
-    approveToolCall,
+    approveToolCalls,
     retry,
     clearMessages,
     clearRateLimitedUntil,
@@ -786,6 +895,10 @@ export default function AiChatPage() {
   const hasMessages = messages.length > 0;
   // RateLimitBanner clears rateLimitedUntil when the countdown expires.
   const isRateLimited = rateLimitedUntil !== null;
+  const referenceData = useMemo(
+    () => harvestReferenceData(messages),
+    [messages],
+  );
 
   function handleSend(text: string, files?: FileUIPart[]) {
     if (rateLimitedUntil) return;
@@ -838,106 +951,108 @@ export default function AiChatPage() {
           onNew={handleNewConversation}
         />
 
-        <div className="mx-auto flex h-full w-full max-w-5xl flex-col px-4 pb-4 min-w-0">
-          <Conversation className="min-h-0 flex-1">
-            <ConversationContent>
-              {!hasMessages ? (
-                <ConversationEmptyState
-                  title="How can I help?"
-                  description="Ask questions about your transactions, spending, income, and more."
-                  icon={
-                    <div className="flex size-12 items-center justify-center rounded-full bg-primary/10">
-                      <Sparkles className="size-6 text-primary" />
-                    </div>
-                  }
-                />
-              ) : (
-                messages.map((msg, i) => {
-                  const fileParts = msg.parts.filter(
-                    (p): p is Extract<typeof p, { type: "file" }> =>
-                      p.type === "file",
-                  );
-                  return (
-                    <Message
-                      key={i}
-                      from={msg.role}
-                      avatar={
-                        msg.role === "assistant" ? (
-                          <AssistantAvatar />
-                        ) : undefined
-                      }
-                    >
-                      {fileParts.length > 0 && (
-                        <Attachments variant="grid">
-                          {fileParts.map((part, j) => (
-                            <Attachment
-                              key={`file-${j}`}
-                              data={{ ...part.file, id: `file-${j}` }}
-                            >
-                              <AttachmentPreview />
-                            </Attachment>
-                          ))}
-                        </Attachments>
-                      )}
-                      <MessageContent>
-                        <MessageParts
-                          msg={msg}
-                          isStreaming={isStreaming}
-                          isLast={i === messages.length - 1}
-                          onApprove={approveToolCall}
-                          onRetry={retry}
-                        />
-                      </MessageContent>
-                    </Message>
-                  );
-                })
-              )}
-            </ConversationContent>
-            <ConversationScrollButton />
-          </Conversation>
-
-          {!hasMessages && (
-            <Suggestions className="mb-4 justify-center">
-              {suggestions.map((s) => (
-                <Suggestion key={s} suggestion={s} onClick={handleSend} />
-              ))}
-            </Suggestions>
-          )}
-
-          <div className="shrink-0 pt-2">
-            {rateLimitedUntil && (
-              <RateLimitBanner
-                until={rateLimitedUntil}
-                onExpire={clearRateLimitedUntil}
-              />
-            )}
-            <PromptInputProvider>
-              <PromptInput
-                onSubmit={({ text, files }) => {
-                  handleSend(text, files);
-                }}
-                accept="image/*,application/pdf"
-                multiple
-                className="w-full"
-              >
-                <PromptInputAttachmentsDisplay />
-                <PromptInputTextarea placeholder="Ask about your finances..." />
-                <PromptInputFooter>
-                  <PromptInputActionMenu>
-                    <PromptInputActionMenuTrigger />
-                    <PromptInputActionMenuContent>
-                      <PromptInputActionAddAttachments />
-                    </PromptInputActionMenuContent>
-                  </PromptInputActionMenu>
-                  <PromptInputSubmit
-                    status={isStreaming ? "streaming" : "ready"}
-                    disabled={isRateLimited}
+        <AiReferenceContext.Provider value={referenceData}>
+          <div className="mx-auto flex h-full w-full max-w-5xl flex-col px-4 pb-4 min-w-0">
+            <Conversation className="min-h-0 flex-1">
+              <ConversationContent>
+                {!hasMessages ? (
+                  <ConversationEmptyState
+                    title="How can I help?"
+                    description="Ask questions about your transactions, spending, income, and more."
+                    icon={
+                      <div className="flex size-12 items-center justify-center rounded-full bg-primary/10">
+                        <Sparkles className="size-6 text-primary" />
+                      </div>
+                    }
                   />
-                </PromptInputFooter>
-              </PromptInput>
-            </PromptInputProvider>
+                ) : (
+                  messages.map((msg, i) => {
+                    const fileParts = msg.parts.filter(
+                      (p): p is Extract<typeof p, { type: "file" }> =>
+                        p.type === "file",
+                    );
+                    return (
+                      <Message
+                        key={i}
+                        from={msg.role}
+                        avatar={
+                          msg.role === "assistant" ? (
+                            <AssistantAvatar />
+                          ) : undefined
+                        }
+                      >
+                        {fileParts.length > 0 && (
+                          <Attachments variant="grid">
+                            {fileParts.map((part, j) => (
+                              <Attachment
+                                key={`file-${j}`}
+                                data={{ ...part.file, id: `file-${j}` }}
+                              >
+                                <AttachmentPreview />
+                              </Attachment>
+                            ))}
+                          </Attachments>
+                        )}
+                        <MessageContent>
+                          <MessageParts
+                            msg={msg}
+                            isStreaming={isStreaming}
+                            isLast={i === messages.length - 1}
+                            onApprove={approveToolCalls}
+                            onRetry={retry}
+                          />
+                        </MessageContent>
+                      </Message>
+                    );
+                  })
+                )}
+              </ConversationContent>
+              <ConversationScrollButton />
+            </Conversation>
+
+            {!hasMessages && (
+              <Suggestions className="mb-4 justify-center">
+                {suggestions.map((s) => (
+                  <Suggestion key={s} suggestion={s} onClick={handleSend} />
+                ))}
+              </Suggestions>
+            )}
+
+            <div className="shrink-0 pt-2">
+              {rateLimitedUntil && (
+                <RateLimitBanner
+                  until={rateLimitedUntil}
+                  onExpire={clearRateLimitedUntil}
+                />
+              )}
+              <PromptInputProvider>
+                <PromptInput
+                  onSubmit={({ text, files }) => {
+                    handleSend(text, files);
+                  }}
+                  accept="image/*,application/pdf"
+                  multiple
+                  className="w-full"
+                >
+                  <PromptInputAttachmentsDisplay />
+                  <PromptInputTextarea placeholder="Ask about your finances..." />
+                  <PromptInputFooter>
+                    <PromptInputActionMenu>
+                      <PromptInputActionMenuTrigger />
+                      <PromptInputActionMenuContent>
+                        <PromptInputActionAddAttachments />
+                      </PromptInputActionMenuContent>
+                    </PromptInputActionMenu>
+                    <PromptInputSubmit
+                      status={isStreaming ? "streaming" : "ready"}
+                      disabled={isRateLimited}
+                    />
+                  </PromptInputFooter>
+                </PromptInput>
+              </PromptInputProvider>
+            </div>
           </div>
-        </div>
+        </AiReferenceContext.Provider>
       </div>
     </>
   );
