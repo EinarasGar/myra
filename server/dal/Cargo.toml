@@ -17,6 +17,7 @@ mockall = "0.14.0"
 strum = { version = "0.27.2", features = ["derive"] }
 time = { version = "0.3.46", features = ["macros", "formatting", "parsing"] }
 observability = { path = "../observability" }
+macros = { path = "../macros" }
 uuid = { version = "1", features = ["serde"] }
 rust_decimal = "1"
 pgvector = { version = "0.4", features = ["sqlx"] }

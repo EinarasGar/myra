@@ -57,7 +57,17 @@ impl RateLimiter {
                 self.try_reseed().await;
                 self.check_quota_db_fallback(user_id).await
             }
-            CheckQuotaRedisResult::Exceeded(exceeded) => Err(exceeded.into()),
+            CheckQuotaRedisResult::Exceeded(exceeded) => {
+                tracing::warn!(
+                    user_id = %user_id,
+                    scope = %exceeded.scope,
+                    window = %exceeded.window,
+                    token_type = %exceeded.token_type,
+                    limit = exceeded.limit,
+                    "rate limit exceeded"
+                );
+                Err(exceeded.into())
+            }
         }
     }
 
@@ -141,9 +151,16 @@ impl RateLimiter {
                         "Global monthly output",
                     ),
                 ];
-                for (current, limit, label) in checks {
+                for (current, limit, usage_type) in checks {
                     if limit > 0 && current * 100 >= limit * warn_pct {
-                        tracing::warn!("{} tokens at {}%+ of limit", label, warn_pct);
+                        tracing::warn!(
+                            user_id = %user_id,
+                            usage_type,
+                            current,
+                            limit,
+                            percent = warn_pct,
+                            "token usage at or above warning threshold"
+                        );
                     }
                 }
             }
@@ -162,7 +179,14 @@ impl RateLimiter {
                 ))
                 .await
             {
-                tracing::error!("Failed to upsert hourly user usage: {}", e);
+                tracing::error!(
+                    user_id = %user_id,
+                    scope = "user",
+                    window = "hourly",
+                    error = &e as &dyn std::error::Error,
+                    error.type = "DbError",
+                    "failed to upsert user usage"
+                );
             }
             if let Err(e) = db
                 .execute(rate_limit_queries::upsert_user_usage(
@@ -174,7 +198,14 @@ impl RateLimiter {
                 ))
                 .await
             {
-                tracing::error!("Failed to upsert monthly user usage: {}", e);
+                tracing::error!(
+                    user_id = %user_id,
+                    scope = "user",
+                    window = "monthly",
+                    error = &e as &dyn std::error::Error,
+                    error.type = "DbError",
+                    "failed to upsert user usage"
+                );
             }
             if let Err(e) = db
                 .execute(rate_limit_queries::upsert_global_usage(
@@ -182,7 +213,13 @@ impl RateLimiter {
                 ))
                 .await
             {
-                tracing::error!("Failed to upsert hourly global usage: {}", e);
+                tracing::error!(
+                    scope = "global",
+                    window = "hourly",
+                    error = &e as &dyn std::error::Error,
+                    error.type = "DbError",
+                    "failed to upsert global usage"
+                );
             }
             if let Err(e) = db
                 .execute(rate_limit_queries::upsert_global_usage(
@@ -193,13 +230,19 @@ impl RateLimiter {
                 ))
                 .await
             {
-                tracing::error!("Failed to upsert monthly global usage: {}", e);
+                tracing::error!(
+                    scope = "global",
+                    window = "monthly",
+                    error = &e as &dyn std::error::Error,
+                    error.type = "DbError",
+                    "failed to upsert global usage"
+                );
             }
         });
     }
 
     async fn try_reseed(&self) {
-        tracing::warn!("Possible Redis restart detected — reseeding from database");
+        tracing::warn!("possible redis restart detected, reseeding from database");
 
         let hourly_key = current_hourly_window_key();
         let monthly_key = current_monthly_window_key();
@@ -214,29 +257,64 @@ impl RateLimiter {
                 &windows,
             ))
             .await
-            .unwrap_or_default();
+            .unwrap_or_else(|e| {
+                tracing::warn!(
+                    error = &e as &dyn std::error::Error,
+                    error.type = "DbError",
+                    "failed to load user usage for reseed"
+                );
+                Vec::new()
+            });
         let global_usages = self
             .db
             .fetch_all::<GlobalTokenUsageModel>(
                 rate_limit_queries::get_all_global_usage_for_windows(&windows),
             )
             .await
-            .unwrap_or_default();
+            .unwrap_or_else(|e| {
+                tracing::warn!(
+                    error = &e as &dyn std::error::Error,
+                    error.type = "DbError",
+                    "failed to load global usage for reseed"
+                );
+                Vec::new()
+            });
         let default_limits = self
             .db
             .fetch_one::<TokenRateLimitModel>(rate_limit_queries::get_default_rate_limits())
             .await
+            .inspect_err(|e| {
+                tracing::warn!(
+                    error = e as &dyn std::error::Error,
+                    error.type = "DbError",
+                    "failed to load default rate limits for reseed"
+                );
+            })
             .ok();
         let global_limits = self
             .db
             .fetch_one::<GlobalTokenRateLimitModel>(rate_limit_queries::get_global_rate_limits())
             .await
+            .inspect_err(|e| {
+                tracing::warn!(
+                    error = e as &dyn std::error::Error,
+                    error.type = "DbError",
+                    "failed to load global rate limits for reseed"
+                );
+            })
             .ok();
         let user_overrides = self
             .db
             .fetch_all::<TokenRateLimitModel>(rate_limit_queries::get_all_user_overrides())
             .await
-            .unwrap_or_default();
+            .unwrap_or_else(|e| {
+                tracing::warn!(
+                    error = &e as &dyn std::error::Error,
+                    error.type = "DbError",
+                    "failed to load user overrides for reseed"
+                );
+                Vec::new()
+            });
 
         for usage in &user_usages {
             let (ik, iv, ok, ov, ttl) = rate_limit_redis_queries::seed_user_usage(usage);
@@ -264,8 +342,8 @@ impl RateLimiter {
 
     async fn check_quota_db_fallback(&self, user_id: Uuid) -> Result<(), RateLimitError> {
         tracing::warn!(
-            "Rate limit check using DB fallback — quota enforcement is not atomic, \
-             concurrent requests may exceed limits"
+            user_id = %user_id,
+            "rate limit check using db fallback, quota enforcement is not atomic"
         );
 
         let hourly_key = current_hourly_window_key();
@@ -291,7 +369,10 @@ impl RateLimiter {
         let (limits, global_limits) = match (limits, global_limits) {
             (Some(l), Some(g)) => (l, g),
             _ => {
-                tracing::error!("Cannot load rate limits from DB — allowing request");
+                tracing::error!(
+                    user_id = %user_id,
+                    "cannot load rate limits from db, allowing request"
+                );
                 return Ok(());
             }
         };
@@ -392,10 +473,19 @@ impl RateLimiter {
                     TokenWindow::Hourly => hourly_reset_timestamp(),
                     TokenWindow::Monthly => monthly_reset_timestamp(),
                 };
+                tracing::warn!(
+                    user_id = %user_id,
+                    scope = ?scope,
+                    window = ?window,
+                    token_type = ?token_type,
+                    limit = *limit,
+                    used,
+                    "rate limit exceeded via db fallback"
+                );
                 return Err(RateLimitError {
                     window: window.clone(),
                     token_type: token_type.clone(),
-                    scope: scope.clone(),
+                    scope: *scope,
                     limit: *limit,
                     remaining: 0,
                     reset_at,

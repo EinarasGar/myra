@@ -44,6 +44,7 @@ impl PortfolioOverviewService {
         }
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub async fn get_holdings(
         &self,
         user_id: Uuid,
@@ -54,6 +55,7 @@ impl PortfolioOverviewService {
         Ok(ret.into_iter().map(|h| h.into()).collect())
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, account_id = ?account_id))]
     pub async fn get_portfolio_overview(
         &self,
         reference_asset_id: AssetIdDto,
@@ -71,7 +73,7 @@ impl PortfolioOverviewService {
             .fetch_all::<TransactionWithEntriesModel>(query)
             .await?;
 
-        tracing::trace!("Got transactions: {:#?}", models);
+        tracing::trace!(count = models.len(), "fetched transactions");
         let mut transactions: Vec<Transaction> =
             create_transactions_from_transaction_with_entries_models(models)?;
 
@@ -124,13 +126,6 @@ impl PortfolioOverviewService {
             }
             let rate = rate_iter.next().unwrap().unwrap();
             action.apply_conversion_rate(rate.rate);
-            tracing::trace!(
-                "Dates: {:#?} {:#?}, {:#?} to {:?}",
-                rate.date,
-                action.date(),
-                rate.rate,
-                action
-            );
         }
 
         let mut final_vec: Vec<Box<dyn PortfolioAction>> = regular_actions;
@@ -140,7 +135,7 @@ impl PortfolioOverviewService {
                 .map(|a| a as Box<dyn PortfolioAction>),
         );
 
-        tracing::trace!("final_vec: {:#?}", final_vec);
+        tracing::trace!(count = final_vec.len(), "processing portfolio actions");
         portfolio.process_transactions(final_vec);
 
         if let Some(account_id) = account_id {

@@ -60,8 +60,9 @@ impl Services {
             Ok(provider) => Arc::new(provider),
             Err(e) => {
                 tracing::warn!(
-                    "S3 file provider not configured, file uploads disabled: {}",
-                    e
+                    error = ?e,
+                    error.type = "s3_provider_init",
+                    "S3 file provider not configured, file uploads disabled"
                 );
                 Arc::new(NoOpFileProvider)
             }

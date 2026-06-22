@@ -107,11 +107,6 @@ impl TransactionProcessor for AssetSaleTransaction {
         let sale_entry = self.base.entry(|x| x.quantity < dec!(0))?;
         let proceeds_entry = self.base.entry(|x| x.quantity >= dec!(0))?;
 
-        tracing::trace!(
-            "Processing asset sale transaction with sale entry: {:?} and proceeds entry: {:?}",
-            sale_entry,
-            proceeds_entry
-        );
         let fee_total = self.base.fee_entries_total();
         let cash_units = proceeds_entry.quantity + fee_total;
         Ok(TransactionPortfolioAction::Referential(Box::new(

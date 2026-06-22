@@ -79,7 +79,7 @@ use crate::{
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, asset_id = id))]
 pub async fn get_user_asset(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(AssetIdPath { asset_id: id }): Path<AssetIdPath>,
@@ -115,7 +115,7 @@ pub async fn get_user_asset(
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, asset_id = pair1, reference_id = pair2))]
 pub async fn get_user_asset_pair(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(AssetPairPath {
@@ -178,7 +178,7 @@ pub async fn get_user_asset_pair(
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, asset_id = pair1, reference_id = pair2))]
 pub async fn get_user_asset_pair_rates(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(AssetPairPath {
@@ -237,7 +237,7 @@ pub async fn get_user_asset_pair_rates(
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, asset_id = asset_id))]
 pub async fn put_custom_asset(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(AssetIdPath { asset_id }): Path<AssetIdPath>,
@@ -296,7 +296,7 @@ pub async fn put_custom_asset(
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, asset_id = pair1, reference_id = pair2))]
 pub async fn put_custom_asset_pair(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(AssetPairPath {
@@ -347,7 +347,7 @@ pub async fn put_custom_asset_pair(
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn post_custom_asset(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     AssetsServiceState(assets_service): AssetsServiceState,
@@ -403,7 +403,7 @@ pub async fn post_custom_asset(
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, asset_id = pair1, reference_id = pair2))]
 pub async fn post_custom_asset_rates(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(AssetPairPath {
@@ -465,7 +465,7 @@ pub async fn post_custom_asset_rates(
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, asset_id = pair1, reference_id = pair2))]
 pub async fn delete_asset_pair_rates(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(AssetPairPath {
@@ -516,7 +516,7 @@ pub async fn delete_asset_pair_rates(
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, asset_id = pair1, reference_id = pair2))]
 pub async fn delete_asset_pair(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(AssetPairPath {
@@ -552,7 +552,7 @@ pub async fn delete_asset_pair(
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, asset_id = asset_id))]
 pub async fn delete_asset(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(AssetIdPath { asset_id }): Path<AssetIdPath>,
@@ -580,7 +580,7 @@ pub async fn delete_asset(
         ("auth_token" = [])
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn get_user_assets(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     AssetsServiceState(assets_service): AssetsServiceState,
@@ -635,7 +635,7 @@ pub async fn get_user_assets(
         ("auth_token" = [])
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, asset_id = asset_id))]
 pub async fn post_asset_pair(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(AssetIdPath { asset_id }): Path<AssetIdPath>,

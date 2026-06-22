@@ -7,6 +7,7 @@ use crate::idens::account_idens::AccountIden;
 use crate::idens::account_identifier_idens::AccountIdentifierIden;
 use crate::models::account_models::AccountIdentifierInsert;
 
+#[macros::named_query]
 pub fn insert_account_identifiers(rows: Vec<AccountIdentifierInsert>) -> DbQueryWithValues {
     let mut builder = Query::insert()
         .into_table(AccountIdentifierIden::Table)
@@ -22,6 +23,7 @@ pub fn insert_account_identifiers(rows: Vec<AccountIdentifierInsert>) -> DbQuery
     builder.build_sqlx(PostgresQueryBuilder).into()
 }
 
+#[macros::named_query]
 pub fn get_identifiers_for_accounts(account_ids: Vec<Uuid>) -> DbQueryWithValues {
     Query::select()
         .column(AccountIdentifierIden::AccountId)
@@ -34,6 +36,7 @@ pub fn get_identifiers_for_accounts(account_ids: Vec<Uuid>) -> DbQueryWithValues
         .into()
 }
 
+#[macros::named_query]
 pub fn delete_account_identifiers(account_id: Uuid) -> DbQueryWithValues {
     Query::delete()
         .from_table(AccountIdentifierIden::Table)
@@ -42,6 +45,7 @@ pub fn delete_account_identifiers(account_id: Uuid) -> DbQueryWithValues {
         .into()
 }
 
+#[macros::named_query]
 pub fn find_conflicting_identifiers(
     user_id: Uuid,
     exclude_account_id: Option<Uuid>,

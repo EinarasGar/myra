@@ -42,6 +42,7 @@ impl AiActionService {
         }
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub async fn create_transaction(
         &self,
         user_id: Uuid,
@@ -80,6 +81,7 @@ impl AiActionService {
         })
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub async fn create_transaction_group(
         &self,
         user_id: Uuid,
@@ -129,6 +131,7 @@ impl AiActionService {
         })
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub async fn create_custom_asset(
         &self,
         user_id: Uuid,
@@ -150,6 +153,7 @@ impl AiActionService {
         })
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub async fn record_asset_trade(
         &self,
         user_id: Uuid,

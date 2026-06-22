@@ -23,7 +23,7 @@ impl AiConversationService {
         }
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub async fn create_chat(&self, user_id: Uuid) -> anyhow::Result<ConversationDto> {
         self.db.start_transaction().await?;
         let id: Uuid = self
@@ -46,7 +46,7 @@ impl AiConversationService {
         })
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(conversation_id = %conversation_id, user_id = %user_id))]
     pub async fn get_conversation(
         &self,
         conversation_id: Uuid,
@@ -63,7 +63,7 @@ impl AiConversationService {
     /// Verifies the conversation exists and belongs to the user.
     /// Callers that subsequently mutate the conversation (e.g. insert_message)
     /// rely on this check to avoid per-write authorization round trips.
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(conversation_id = %conversation_id, user_id = %user_id))]
     pub async fn ensure_owns_conversation(
         &self,
         conversation_id: Uuid,
@@ -74,7 +74,7 @@ impl AiConversationService {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, limit, offset))]
     pub async fn get_conversations(
         &self,
         user_id: Uuid,
@@ -88,7 +88,7 @@ impl AiConversationService {
         Ok(models.into_iter().map_into().collect())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(conversation_id = %conversation_id, user_id = %user_id))]
     pub async fn get_messages(
         &self,
         conversation_id: Uuid,
@@ -102,7 +102,7 @@ impl AiConversationService {
         Ok(models.into_iter().map_into().collect())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(conversation_id = %conversation_id, user_id = %user_id))]
     pub async fn get_last_message(
         &self,
         conversation_id: Uuid,
@@ -113,7 +113,7 @@ impl AiConversationService {
         Ok(model.map(Into::into))
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(conversation_id = %conversation_id, file_count = file_ids.len()))]
     pub async fn insert_message(
         &self,
         conversation_id: Uuid,
@@ -133,7 +133,7 @@ impl AiConversationService {
         Ok(id)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(conversation_id = %conversation_id, user_id = %user_id))]
     pub async fn delete_conversation(
         &self,
         conversation_id: Uuid,
@@ -144,7 +144,7 @@ impl AiConversationService {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(limit))]
     pub async fn get_chats_needing_titles(
         &self,
         limit: u64,
@@ -154,7 +154,7 @@ impl AiConversationService {
         Ok(models.into_iter().map_into().collect())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(conversation_id = %conversation_id))]
     pub async fn set_generated_title_if_null(
         &self,
         conversation_id: Uuid,
@@ -164,7 +164,7 @@ impl AiConversationService {
         Ok(self.db.execute_with_rows_affected(query).await?)
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(conversation_id = %conversation_id))]
     pub async fn set_conversation_error(
         &self,
         conversation_id: Uuid,
@@ -177,7 +177,7 @@ impl AiConversationService {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(conversation_id = %conversation_id))]
     pub async fn clear_conversation_error(&self, conversation_id: Uuid) -> anyhow::Result<()> {
         let query = ai_conversation_queries::update_conversation_error(
             UpdateConversationErrorParams::clear(conversation_id),

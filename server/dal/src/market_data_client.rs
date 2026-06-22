@@ -114,12 +114,22 @@ impl MarketDataClient {
         req
     }
 
-    #[tracing::instrument(skip_all, fields(pairs = %pairs_label(pairs)))]
+    #[tracing::instrument(
+        level = "debug",
+        skip_all,
+        fields(
+            otel.kind = "client",
+            server.address = %self.base_url,
+            url.full = tracing::field::Empty,
+            pairs = %pairs_label(pairs)
+        )
+    )]
     pub async fn get_latest(
         &self,
         pairs: &[PairRequest],
     ) -> Result<Vec<LatestRateEntry>, Box<dyn std::error::Error + Send + Sync>> {
         let url = format!("{}/rates/latest", self.base_url);
+        tracing::Span::current().record("url.full", url.as_str());
         Ok(self
             .request(&url)
             .json(&RatesRequestBody { pairs, from: None })
@@ -129,13 +139,23 @@ impl MarketDataClient {
             .await?)
     }
 
-    #[tracing::instrument(skip_all, fields(pairs = %pairs_label(pairs)))]
+    #[tracing::instrument(
+        level = "debug",
+        skip_all,
+        fields(
+            otel.kind = "client",
+            server.address = %self.base_url,
+            url.full = tracing::field::Empty,
+            pairs = %pairs_label(pairs)
+        )
+    )]
     pub async fn get_history(
         &self,
         pairs: &[PairRequest],
         from: Option<OffsetDateTime>,
     ) -> Result<Vec<HistoryEntry>, Box<dyn std::error::Error + Send + Sync>> {
         let url = format!("{}/rates/history", self.base_url);
+        tracing::Span::current().record("url.full", url.as_str());
         let body = RatesRequestBody {
             pairs,
             from: from.map(|f| f.unix_timestamp()),
@@ -156,7 +176,8 @@ impl MarketDataClient {
                             .map_err(|e| {
                                 tracing::warn!(
                                     timestamp = %r.timestamp,
-                                    error = %e,
+                                    error = &e as &dyn std::error::Error,
+                                    error.type = "time::error::Parse",
                                     "unparseable history timestamp, skipping"
                                 )
                             })

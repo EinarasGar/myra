@@ -12,7 +12,7 @@ use crate::{
 
 use super::DbQueryWithValues;
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_category_types(params: GetCategoryTypesParams) -> DbQueryWithValues {
     let mut query = Query::select();
 
@@ -74,7 +74,7 @@ pub fn get_category_types(params: GetCategoryTypesParams) -> DbQueryWithValues {
     query.build_sqlx(PostgresQueryBuilder).into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn insert_category_type(
     user_id: Uuid,
     category_type: InsertCategoryTypeModel,
@@ -91,7 +91,7 @@ pub fn insert_category_type(
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn update_category_type(
     type_id: i32,
     user_id: Uuid,
@@ -110,7 +110,7 @@ pub fn update_category_type(
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_category_type(type_id: i32, user_id: Uuid) -> DbQueryWithValues {
     Query::delete()
         .from_table(TransactionCategoryTypeIden::Table)
@@ -120,7 +120,7 @@ pub fn delete_category_type(type_id: i32, user_id: Uuid) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn check_category_type_usage(type_id: i32) -> DbQueryWithValues {
     Query::select()
         .expr_as(
@@ -133,7 +133,7 @@ pub fn check_category_type_usage(type_id: i32) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_user_category_type_count(user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .expr_as(
@@ -146,7 +146,7 @@ pub fn get_user_category_type_count(user_id: Uuid) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn check_duplicate_category_type_name(
     type_name: &str,
     user_id: Option<Uuid>,

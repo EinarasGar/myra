@@ -23,6 +23,18 @@ pub mod user_queries;
 pub struct DbQueryWithValues {
     pub query: String,
     pub values: SqlxValues,
+    pub name: Option<&'static str>,
+}
+
+impl DbQueryWithValues {
+    pub fn named(mut self, name: &'static str) -> Self {
+        self.name = Some(name);
+        self
+    }
+
+    pub fn display_name(&self) -> &str {
+        self.name.unwrap_or("query")
+    }
 }
 
 impl Debug for DbQueryWithValues {
@@ -44,6 +56,7 @@ impl From<(String, SqlxValues)> for DbQueryWithValues {
         Self {
             query: tuple.0,
             values: tuple.1,
+            name: None,
         }
     }
 }

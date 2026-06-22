@@ -30,7 +30,7 @@ use crate::{
 
 use super::DbQueryWithValues;
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_public_assets(page_length: u64, page: u64, search: Option<String>) -> DbQueryWithValues {
     let rows_to_skip = page_length * page;
 
@@ -98,7 +98,7 @@ pub fn get_public_assets(page_length: u64, page: u64, search: Option<String>) ->
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_asset_types() -> DbQueryWithValues {
     Query::select()
         .columns(vec![AssetTypesIden::Id, AssetTypesIden::AssetTypeName])
@@ -107,7 +107,7 @@ pub fn get_asset_types() -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_users_assets(user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .column((AssetsIden::Table, AssetsIden::Id))
@@ -130,7 +130,7 @@ pub fn get_users_assets(user_id: Uuid) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_asset_with_metadata(params: GetAssetsParams) -> DbQueryWithValues {
     let mut get_assets_builder = Query::select()
         .column((AssetsIden::Table, AssetsIden::Id))
@@ -242,7 +242,7 @@ pub fn get_asset_with_metadata(params: GetAssetsParams) -> DbQueryWithValues {
     get_assets_builder.build_sqlx(PostgresQueryBuilder).into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_rates(params: GetRatesParams) -> DbQueryWithValues {
     let mut builder = Query::select()
         .column((AssetHistoryIden::Table, AssetHistoryIden::Rate))
@@ -292,7 +292,7 @@ pub fn get_rates(params: GetRatesParams) -> DbQueryWithValues {
 ///     JOIN asset_pairs p ON m.pair_id = p.id
 /// WHERE (p.pair1, p.pair2) IN ((4, 1), (5, 2), (6, 3))
 /// ```
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_shared_asset_pair_metadata(pairs: Vec<AssetPair>) -> DbQueryWithValues {
     let tuples: Vec<(i32, i32)> = pairs.iter().map(|x| (x.pair1, x.pair2)).collect();
     Query::select()
@@ -320,7 +320,7 @@ pub fn get_shared_asset_pair_metadata(pairs: Vec<AssetPair>) -> DbQueryWithValue
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_asset(id: i32) -> DbQueryWithValues {
     Query::select()
         .column((AssetsIden::Table, AssetsIden::Id))
@@ -340,7 +340,7 @@ pub fn get_asset(id: i32) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_pair_id(pair1: i32, pair2: i32) -> DbQueryWithValues {
     Query::select()
         .column((AssetPairsIden::Table, AssetPairsIden::Id))
@@ -353,7 +353,7 @@ pub fn get_pair_id(pair1: i32, pair2: i32) -> DbQueryWithValues {
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_pair_market_symbol_info(pair1: i32, pair2: i32) -> DbQueryWithValues {
     let asset2 = Alias::new("asset2");
     Query::select()
@@ -396,7 +396,6 @@ pub fn get_pair_market_symbol_info(pair1: i32, pair2: i32) -> DbQueryWithValues 
         .into()
 }
 
-#[tracing::instrument(skip_all)]
 pub fn copy_in_pair_rates(rates: Vec<AssetPairRateInsert>) -> super::DbCopyCommand {
     use std::fmt::Write;
 
@@ -412,7 +411,7 @@ pub fn copy_in_pair_rates(rates: Vec<AssetPairRateInsert>) -> super::DbCopyComma
     }
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn inser_pair(pair: AssetPair) -> DbQueryWithValues {
     Query::insert()
         .into_table(AssetPairsIden::Table)
@@ -423,7 +422,7 @@ pub fn inser_pair(pair: AssetPair) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn insert_asset(asset: InsertAsset) -> DbQueryWithValues {
     Query::insert()
         .into_table(AssetsIden::Table)
@@ -446,7 +445,7 @@ pub fn insert_asset(asset: InsertAsset) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn asset_exists_by_id_and_user_id(asset_id: i32, user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .expr(Expr::exists(
@@ -460,7 +459,7 @@ pub fn asset_exists_by_id_and_user_id(asset_id: i32, user_id: Uuid) -> DbQueryWi
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn assets_count_by_ids_and_access(asset_ids: Vec<i32>, user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .expr(Expr::col(Asterisk).count())
@@ -475,7 +474,7 @@ pub fn assets_count_by_ids_and_access(asset_ids: Vec<i32>, user_id: Uuid) -> DbQ
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_assets_raw() -> DbQueryWithValues {
     Query::select()
         .column((AssetsIden::Table, AssetsIden::Id))
@@ -527,7 +526,7 @@ pub fn get_assets_raw() -> DbQueryWithValues {
 ///         LIMIT 1
 ///     ) AS "asset_history" ON TRUE
 /// ```
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_latest_asset_pair_rates(
     pairs: Vec<AssetPair>,
     date_floor: Option<OffsetDateTime>,
@@ -707,7 +706,7 @@ pub fn get_latest_asset_pair_rates(
 ///     ) AS "asset_history" ON TRUE
 /// ORDER BY "pair_ids_dates_list"."ord"
 /// ```
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_pair_prices_by_dates(pair_dates: Vec<AssetPairDate>) -> DbQueryWithValues {
     let len = pair_dates.len() as i32;
     let assets_1_array = Value::Array(
@@ -956,7 +955,7 @@ pub fn get_pair_prices_by_dates(pair_dates: Vec<AssetPairDate>) -> DbQueryWithVa
 ///     "binned_date"
 /// ORDER BY "binned_date" ASC
 /// ```
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_asset_pairs_rates_with_conversions(
     reference_asset: i32,
     asset_dates: HashMap<i32, OffsetDateTime>,
@@ -1270,7 +1269,7 @@ pub fn get_asset_pairs_rates_with_conversions(
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_assets_base_pair_ids(ids: HashSet<i32>) -> DbQueryWithValues {
     Query::select()
         .column(AssetsIden::Id)
@@ -1281,7 +1280,7 @@ pub fn get_assets_base_pair_ids(ids: HashSet<i32>) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn update_asset(
     asset_id: i32,
     name: String,
@@ -1302,7 +1301,7 @@ pub fn update_asset(
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_asset_pair_user_metadata(pair_id: i32) -> DbQueryWithValues {
     Query::select()
         .column(AssetPairUserMetadataIden::Exchange)
@@ -1312,7 +1311,7 @@ pub fn get_asset_pair_user_metadata(pair_id: i32) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn upsert_asset_pair_user_metadata(pair_id: i32, exchange: String) -> DbQueryWithValues {
     Query::insert()
         .into_table(AssetPairUserMetadataIden::Table)
@@ -1330,7 +1329,7 @@ pub fn upsert_asset_pair_user_metadata(pair_id: i32, exchange: String) -> DbQuer
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_asset_history_by_asset(asset_id: i32) -> DbQueryWithValues {
     let pair_ids_subquery = Query::select()
         .column(AssetPairsIden::Id)
@@ -1349,7 +1348,7 @@ pub fn delete_asset_history_by_asset(asset_id: i32) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_asset_pair_user_metadata_by_asset(asset_id: i32) -> DbQueryWithValues {
     let pair_ids_subquery = Query::select()
         .column(AssetPairsIden::Id)
@@ -1368,7 +1367,7 @@ pub fn delete_asset_pair_user_metadata_by_asset(asset_id: i32) -> DbQueryWithVal
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_asset_pair_shared_metadata_by_asset(asset_id: i32) -> DbQueryWithValues {
     let pair_ids_subquery = Query::select()
         .column(AssetPairsIden::Id)
@@ -1387,7 +1386,7 @@ pub fn delete_asset_pair_shared_metadata_by_asset(asset_id: i32) -> DbQueryWithV
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_asset_pairs_by_asset(asset_id: i32) -> DbQueryWithValues {
     Query::delete()
         .from_table(AssetPairsIden::Table)
@@ -1400,7 +1399,7 @@ pub fn delete_asset_pairs_by_asset(asset_id: i32) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_asset_by_id_and_user(asset_id: i32, user_id: Uuid) -> DbQueryWithValues {
     Query::delete()
         .from_table(AssetsIden::Table)
@@ -1410,7 +1409,7 @@ pub fn delete_asset_by_id_and_user(asset_id: i32, user_id: Uuid) -> DbQueryWithV
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_asset_pair_rates_in_range(
     pair_id: i32,
     start: OffsetDateTime,
@@ -1424,7 +1423,7 @@ pub fn delete_asset_pair_rates_in_range(
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_asset_pair_rates_by_pair_id(pair_id: i32) -> DbQueryWithValues {
     Query::delete()
         .from_table(AssetHistoryIden::Table)
@@ -1433,7 +1432,7 @@ pub fn delete_asset_pair_rates_by_pair_id(pair_id: i32) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_asset_pair_user_metadata_by_pair_id(pair_id: i32) -> DbQueryWithValues {
     Query::delete()
         .from_table(AssetPairUserMetadataIden::Table)
@@ -1442,7 +1441,7 @@ pub fn delete_asset_pair_user_metadata_by_pair_id(pair_id: i32) -> DbQueryWithVa
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_asset_pair_shared_metadata_by_pair_id(pair_id: i32) -> DbQueryWithValues {
     Query::delete()
         .from_table(AssetPairSharedMetadataIden::Table)
@@ -1451,7 +1450,7 @@ pub fn delete_asset_pair_shared_metadata_by_pair_id(pair_id: i32) -> DbQueryWith
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_asset_pair_by_id(pair_id: i32) -> DbQueryWithValues {
     Query::delete()
         .from_table(AssetPairsIden::Table)
@@ -1460,7 +1459,7 @@ pub fn delete_asset_pair_by_id(pair_id: i32) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_held_asset_pair_details(has_rates: bool) -> DbQueryWithValues {
     let base_asset = Alias::new("base_asset");
 
@@ -1535,7 +1534,7 @@ pub fn get_held_asset_pair_details(has_rates: bool) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_currency_cross_pairs(tickers: Vec<String>, has_rates: bool) -> DbQueryWithValues {
     let base_asset = Alias::new("base_asset");
     let currency_type = asset_type_ids::CURRENCY;

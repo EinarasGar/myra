@@ -6,7 +6,6 @@ use crate::models::TransactionListItem;
 pub struct AccountTransactionsData {
     pub items: Vec<TransactionListItem>,
     pub has_more: bool,
-    pub total_results: i64,
 }
 
 pub fn extract_account_transactions(body: &str) -> Result<AccountTransactionsData, String> {
@@ -22,9 +21,5 @@ pub fn extract_account_transactions(body: &str) -> Result<AccountTransactionsDat
     let total = resp.total_results as i64;
     let has_more = (items.len() as i64) < total;
 
-    Ok(AccountTransactionsData {
-        items,
-        has_more,
-        total_results: total,
-    })
+    Ok(AccountTransactionsData { items, has_more })
 }

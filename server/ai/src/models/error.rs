@@ -50,7 +50,7 @@ impl AiError {
     /// Every `Unknown` is loud: it is the signal to add a classifier arm.
     pub fn unknown(detail: impl Into<String>) -> Self {
         let detail = detail.into();
-        tracing::error!(detail = %detail, "Unclassified AI error");
+        tracing::error!(detail = %detail, error.type = "AiError::Unknown", "Unclassified AI error");
         Self::Unknown { detail }
     }
 

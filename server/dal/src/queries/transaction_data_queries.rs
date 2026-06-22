@@ -17,7 +17,7 @@ use crate::{
 
 use super::DbQueryWithValues;
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn insert_descriptions(models: Vec<AddTransactionDescriptionModel>) -> DbQueryWithValues {
     let mut description_builder = Query::insert()
         .into_table(TransactionDescriptionsIden::Table)
@@ -35,7 +35,7 @@ pub fn insert_descriptions(models: Vec<AddTransactionDescriptionModel>) -> DbQue
     description_builder.build_sqlx(PostgresQueryBuilder).into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_transactions_description(transaction_ids: Vec<Uuid>) -> DbQueryWithValues {
     Query::select()
         .columns([
@@ -48,7 +48,7 @@ pub fn get_transactions_description(transaction_ids: Vec<Uuid>) -> DbQueryWithVa
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn insert_dividends(models: Vec<AddTransactionDividendModel>) -> DbQueryWithValues {
     let mut builder = Query::insert()
         .into_table(TransactionDividendsIden::Table)
@@ -68,7 +68,7 @@ pub fn insert_dividends(models: Vec<AddTransactionDividendModel>) -> DbQueryWith
     builder.build_sqlx(PostgresQueryBuilder).into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_transactions_dividends(transaction_ids: Vec<Uuid>) -> DbQueryWithValues {
     Query::select()
         .columns([
@@ -81,7 +81,7 @@ pub fn get_transactions_dividends(transaction_ids: Vec<Uuid>) -> DbQueryWithValu
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn insert_transactions(models: Vec<AddTransactionModel>) -> DbQueryWithValues {
     let mut builder2 = Query::insert()
         .into_table(TransactionIden::Table)
@@ -104,7 +104,7 @@ pub fn insert_transactions(models: Vec<AddTransactionModel>) -> DbQueryWithValue
     builder2.build_sqlx(PostgresQueryBuilder).into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn update_entry(entry_id: i32, model: UpdateEntryModel) -> DbQueryWithValues {
     Query::update()
         .table(EntryIden::Table)
@@ -117,7 +117,7 @@ pub fn update_entry(entry_id: i32, model: UpdateEntryModel) -> DbQueryWithValues
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_entries_by_ids(entry_ids: Vec<i32>) -> DbQueryWithValues {
     Query::delete()
         .from_table(EntryIden::Table)
@@ -126,7 +126,7 @@ pub fn delete_entries_by_ids(entry_ids: Vec<i32>) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn update_transaction_fields(
     transaction_id: Uuid,
     model: UpdateTransactionFieldsModel,
@@ -140,7 +140,7 @@ pub fn update_transaction_fields(
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn update_description(transaction_id: Uuid, description: String) -> DbQueryWithValues {
     Query::update()
         .table(TransactionDescriptionsIden::Table)
@@ -150,7 +150,7 @@ pub fn update_description(transaction_id: Uuid, description: String) -> DbQueryW
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_descriptions_by_transaction_ids(transaction_ids: Vec<Uuid>) -> DbQueryWithValues {
     Query::delete()
         .from_table(TransactionDescriptionsIden::Table)
@@ -159,7 +159,7 @@ pub fn delete_descriptions_by_transaction_ids(transaction_ids: Vec<Uuid>) -> DbQ
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn update_dividend(transaction_id: Uuid, source_asset_id: i32) -> DbQueryWithValues {
     Query::update()
         .table(TransactionDividendsIden::Table)
@@ -169,7 +169,7 @@ pub fn update_dividend(transaction_id: Uuid, source_asset_id: i32) -> DbQueryWit
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_dividends_by_transaction_ids(transaction_ids: Vec<Uuid>) -> DbQueryWithValues {
     Query::delete()
         .from_table(TransactionDividendsIden::Table)
@@ -178,7 +178,7 @@ pub fn delete_dividends_by_transaction_ids(transaction_ids: Vec<Uuid>) -> DbQuer
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn clear_group_id_on_transaction(transaction_id: Uuid) -> DbQueryWithValues {
     Query::update()
         .table(TransactionIden::Table)
@@ -188,7 +188,7 @@ pub fn clear_group_id_on_transaction(transaction_id: Uuid) -> DbQueryWithValues 
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_entries_by_transaction_ids(transaction_ids: Vec<Uuid>) -> DbQueryWithValues {
     Query::delete()
         .from_table(EntryIden::Table)
@@ -197,7 +197,7 @@ pub fn delete_entries_by_transaction_ids(transaction_ids: Vec<Uuid>) -> DbQueryW
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_transactions_by_ids(transaction_ids: Vec<Uuid>) -> DbQueryWithValues {
     Query::delete()
         .from_table(TransactionIden::Table)

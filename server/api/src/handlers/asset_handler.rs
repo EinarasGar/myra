@@ -57,7 +57,7 @@ use crate::{
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn search_assets(
     ValidatedQuery(query_params): ValidatedQuery<GetAssetsRequestParams>,
     AssetsServiceState(assets_service): AssetsServiceState,
@@ -120,7 +120,7 @@ pub async fn search_assets(
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(asset_id = %id))]
 pub async fn get_asset(
     Path(id): Path<i32>,
     AssetsServiceState(assets_service): AssetsServiceState,
@@ -205,7 +205,7 @@ pub(crate) async fn fetch_asset_response(
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(asset_id = %id, reference_id = %reference_id))]
 pub async fn get_asset_pair(
     Path((id, reference_id)): Path<(i32, i32)>,
     AssetsServiceState(assets_service): AssetsServiceState,
@@ -256,7 +256,7 @@ pub async fn get_asset_pair(
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(asset_id = %id, reference_id = %reference_id))]
 pub async fn get_asset_pair_rates(
     Path((id, reference_id)): Path<(i32, i32)>,
     ValidatedQuery(query_params): ValidatedQuery<GetAssetPairRatesRequestParams>,
@@ -295,7 +295,7 @@ pub async fn get_asset_pair_rates(
         ("auth_token" = [])
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn get_asset_types(
     AssetsServiceState(assets_service): AssetsServiceState,
 ) -> Result<Json<GetAssetTypesResponseViewModel>, ApiError> {

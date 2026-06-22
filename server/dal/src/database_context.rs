@@ -4,7 +4,6 @@ use sqlx::{postgres::PgRow, FromRow, PgPool, Postgres, Transaction};
 
 use anyhow::Result;
 use std::sync::Arc;
-use tracing::Level;
 
 use tokio::sync::Mutex as AsyncMutex;
 
@@ -25,7 +24,7 @@ impl MyraDb {
         }
     }
 
-    #[tracing::instrument(skip(self), err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn start_transaction(&self) -> Result<(), sqlx::Error> {
         let mut tx_guard = self.transaction.lock().await;
 
@@ -37,7 +36,7 @@ impl MyraDb {
         Ok(())
     }
 
-    #[tracing::instrument(skip(self), err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn commit_transaction(&self) -> Result<(), sqlx::Error> {
         let mut tx_guard = self.transaction.lock().await;
 
@@ -53,7 +52,7 @@ impl MyraDb {
         Ok(())
     }
 
-    #[tracing::instrument(skip(self), err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn rollback_transaction(&self) -> Result<(), sqlx::Error> {
         let mut tx_guard = self.transaction.lock().await;
 
@@ -68,137 +67,172 @@ impl MyraDb {
         Ok(())
     }
 
-    #[tracing::instrument(skip(self), err, ret(level = Level::TRACE))]
+    #[tracing::instrument(level = "debug", skip_all, fields(otel.name = %query.display_name(), otel.kind = "client", db.system.name = "postgresql", db.query.text = tracing::field::Empty, db.response.returned_rows = tracing::field::Empty))]
     pub async fn fetch_all<T>(&self, query: DbQueryWithValues) -> Result<Vec<T>, sqlx::Error>
     where
-        for<'r> T: FromRow<'r, PgRow> + Send + Unpin + std::fmt::Debug,
+        for<'r> T: FromRow<'r, PgRow> + Send + Unpin,
     {
+        let span = tracing::Span::current();
+        if tracing::enabled!(tracing::Level::TRACE) {
+            span.record("db.query.text", query.query.as_str());
+        }
+
         let mut tx_guard = self.transaction.lock().await;
-        if let Some(mut tx) = tx_guard.take() {
+        let rows = if let Some(mut tx) = tx_guard.take() {
             match sqlx::query_as_with::<_, T, _>(&query.query, query.values)
                 .fetch_all(&mut *tx)
                 .await
             {
                 Ok(rows) => {
                     *tx_guard = Some(tx);
-                    Ok(rows)
+                    rows
                 }
-                Err(e) => Err(rollback_on_error(tx, e).await),
+                Err(e) => return Err(rollback_on_error(tx, e).await),
             }
         } else {
-            let rows = sqlx::query_as_with::<_, T, _>(&query.query, query.values)
+            sqlx::query_as_with::<_, T, _>(&query.query, query.values)
                 .fetch_all(&self.pool)
-                .await?;
-            Ok(rows)
-        }
+                .await?
+        };
+        span.record("db.response.returned_rows", rows.len());
+        Ok(rows)
     }
 
-    #[tracing::instrument(skip(self), err, ret(level = Level::TRACE))]
+    #[tracing::instrument(level = "debug", skip_all, fields(otel.name = %query.display_name(), otel.kind = "client", db.system.name = "postgresql", db.query.text = tracing::field::Empty, db.response.returned_rows = tracing::field::Empty))]
     pub async fn fetch_all_scalar<T>(&self, query: DbQueryWithValues) -> Result<Vec<T>, sqlx::Error>
     where
-        for<'r> T:
-            Send + Unpin + sqlx::Decode<'r, Postgres> + sqlx::Type<Postgres> + std::fmt::Debug,
+        for<'r> T: Send + Unpin + sqlx::Decode<'r, Postgres> + sqlx::Type<Postgres>,
     {
+        let span = tracing::Span::current();
+        if tracing::enabled!(tracing::Level::TRACE) {
+            span.record("db.query.text", query.query.as_str());
+        }
+
         let mut tx_guard = self.transaction.lock().await;
-        if let Some(mut tx) = tx_guard.take() {
+        let rows = if let Some(mut tx) = tx_guard.take() {
             match sqlx::query_scalar_with::<_, T, _>(&query.query, query.values)
                 .fetch_all(&mut *tx)
                 .await
             {
                 Ok(rows) => {
                     *tx_guard = Some(tx);
-                    Ok(rows)
+                    rows
                 }
-                Err(e) => Err(rollback_on_error(tx, e).await),
+                Err(e) => return Err(rollback_on_error(tx, e).await),
             }
         } else {
-            let rows = sqlx::query_scalar_with::<_, T, _>(&query.query, query.values)
+            sqlx::query_scalar_with::<_, T, _>(&query.query, query.values)
                 .fetch_all(&self.pool)
-                .await?;
-            Ok(rows)
-        }
+                .await?
+        };
+        span.record("db.response.returned_rows", rows.len());
+        Ok(rows)
     }
 
-    #[tracing::instrument(skip(self), err, ret(level = Level::TRACE))]
+    #[tracing::instrument(level = "debug", skip_all, fields(otel.name = %query.display_name(), otel.kind = "client", db.system.name = "postgresql", db.query.text = tracing::field::Empty, db.response.returned_rows = tracing::field::Empty))]
     pub async fn fetch_one<T>(&self, query: DbQueryWithValues) -> Result<T, sqlx::Error>
     where
-        for<'r> T: FromRow<'r, PgRow> + Send + Unpin + std::fmt::Debug,
+        for<'r> T: FromRow<'r, PgRow> + Send + Unpin,
     {
+        let span = tracing::Span::current();
+        if tracing::enabled!(tracing::Level::TRACE) {
+            span.record("db.query.text", query.query.as_str());
+        }
+
         let mut tx_guard = self.transaction.lock().await;
-        if let Some(mut tx) = tx_guard.take() {
+        let row = if let Some(mut tx) = tx_guard.take() {
             match sqlx::query_as_with::<_, T, _>(&query.query, query.values)
                 .fetch_one(&mut *tx)
                 .await
             {
-                Ok(rows) => {
+                Ok(row) => {
                     *tx_guard = Some(tx);
-                    Ok(rows)
+                    row
                 }
-                Err(e) => Err(rollback_on_error(tx, e).await),
+                Err(e) => return Err(rollback_on_error(tx, e).await),
             }
         } else {
-            let rows = sqlx::query_as_with::<_, T, _>(&query.query, query.values)
+            sqlx::query_as_with::<_, T, _>(&query.query, query.values)
                 .fetch_one(&self.pool)
-                .await?;
-            Ok(rows)
-        }
+                .await?
+        };
+        span.record("db.response.returned_rows", 1);
+        Ok(row)
     }
 
-    #[tracing::instrument(skip(self), err, ret(level = Level::TRACE))]
+    #[tracing::instrument(level = "debug", skip_all, fields(otel.name = %query.display_name(), otel.kind = "client", db.system.name = "postgresql", db.query.text = tracing::field::Empty, db.response.returned_rows = tracing::field::Empty))]
     pub async fn fetch_one_scalar<T>(&self, query: DbQueryWithValues) -> Result<T, sqlx::Error>
     where
-        for<'r> T:
-            Send + Unpin + sqlx::Decode<'r, Postgres> + sqlx::Type<Postgres> + std::fmt::Debug,
+        for<'r> T: Send + Unpin + sqlx::Decode<'r, Postgres> + sqlx::Type<Postgres>,
     {
+        let span = tracing::Span::current();
+        if tracing::enabled!(tracing::Level::TRACE) {
+            span.record("db.query.text", query.query.as_str());
+        }
+
         let mut tx_guard = self.transaction.lock().await;
-        if let Some(mut tx) = tx_guard.take() {
+        let row = if let Some(mut tx) = tx_guard.take() {
             match sqlx::query_scalar_with::<_, T, _>(&query.query, query.values)
                 .fetch_one(&mut *tx)
                 .await
             {
-                Ok(rows) => {
+                Ok(row) => {
                     *tx_guard = Some(tx);
-                    Ok(rows)
+                    row
                 }
-                Err(e) => Err(rollback_on_error(tx, e).await),
+                Err(e) => return Err(rollback_on_error(tx, e).await),
             }
         } else {
-            let rows = sqlx::query_scalar_with::<_, T, _>(&query.query, query.values)
+            sqlx::query_scalar_with::<_, T, _>(&query.query, query.values)
                 .fetch_one(&self.pool)
-                .await?;
-            Ok(rows)
-        }
+                .await?
+        };
+        span.record("db.response.returned_rows", 1);
+        Ok(row)
     }
 
-    #[tracing::instrument(skip(self), err, ret(level = Level::TRACE))]
+    #[tracing::instrument(level = "debug", skip_all, fields(otel.name = %query.display_name(), otel.kind = "client", db.system.name = "postgresql", db.query.text = tracing::field::Empty, db.response.returned_rows = tracing::field::Empty))]
     pub async fn fetch_optional<T>(
         &self,
         query: DbQueryWithValues,
     ) -> Result<Option<T>, sqlx::Error>
     where
-        for<'r> T: FromRow<'r, PgRow> + Send + Unpin + std::fmt::Debug,
+        for<'r> T: FromRow<'r, PgRow> + Send + Unpin,
     {
+        let span = tracing::Span::current();
+        if tracing::enabled!(tracing::Level::TRACE) {
+            span.record("db.query.text", query.query.as_str());
+        }
+
         let mut tx_guard = self.transaction.lock().await;
-        if let Some(mut tx) = tx_guard.take() {
+        let result = if let Some(mut tx) = tx_guard.take() {
             match sqlx::query_as_with::<_, T, _>(&query.query, query.values)
                 .fetch_optional(&mut *tx)
                 .await
             {
                 Ok(row) => {
                     *tx_guard = Some(tx);
-                    Ok(row)
+                    row
                 }
-                Err(e) => Err(rollback_on_error(tx, e).await),
+                Err(e) => return Err(rollback_on_error(tx, e).await),
             }
         } else {
             sqlx::query_as_with::<_, T, _>(&query.query, query.values)
                 .fetch_optional(&self.pool)
-                .await
-        }
+                .await?
+        };
+        span.record("db.response.returned_rows", result.is_some() as i64);
+        Ok(result)
     }
 
-    #[tracing::instrument(skip(self), err, ret(level = Level::TRACE))]
+    #[tracing::instrument(level = "debug", skip_all, fields(otel.name = %query.display_name(), otel.kind = "client", db.system.name = "postgresql", db.query.text = tracing::field::Empty, db.response.returned_rows = tracing::field::Empty))]
     pub async fn execute(&self, query: DbQueryWithValues) -> Result<(), sqlx::Error> {
+        let span = tracing::Span::current();
+        span.record("db.response.returned_rows", 0);
+        if tracing::enabled!(tracing::Level::TRACE) {
+            span.record("db.query.text", query.query.as_str());
+        }
+
         let mut tx_guard = self.transaction.lock().await;
         if let Some(mut tx) = tx_guard.take() {
             match sqlx::query_with(&query.query, query.values)
@@ -207,20 +241,18 @@ impl MyraDb {
             {
                 Ok(_) => {
                     *tx_guard = Some(tx);
-                    Ok(())
                 }
-                Err(e) => Err(rollback_on_error(tx, e).await),
+                Err(e) => return Err(rollback_on_error(tx, e).await),
             }
         } else {
             sqlx::query_with(&query.query, query.values)
                 .execute(&self.pool)
                 .await?;
-
-            Ok(())
         }
+        Ok(())
     }
 
-    #[tracing::instrument(skip(self, command), err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn copy_in(&self, command: DbCopyCommand) -> Result<u64, sqlx::Error> {
         let mut copy = self.pool.copy_in_raw(&command.statement).await?;
         copy.send(command.csv_data.as_slice()).await?;
@@ -228,29 +260,36 @@ impl MyraDb {
         Ok(rows)
     }
 
-    #[tracing::instrument(skip(self), err, ret(level = Level::TRACE))]
+    #[tracing::instrument(level = "debug", skip_all, fields(otel.name = %query.display_name(), otel.kind = "client", db.system.name = "postgresql", db.query.text = tracing::field::Empty, db.response.returned_rows = tracing::field::Empty))]
     pub async fn execute_with_rows_affected(
         &self,
         query: DbQueryWithValues,
     ) -> Result<u64, sqlx::Error> {
+        let span = tracing::Span::current();
+        if tracing::enabled!(tracing::Level::TRACE) {
+            span.record("db.query.text", query.query.as_str());
+        }
+
         let mut tx_guard = self.transaction.lock().await;
-        if let Some(mut tx) = tx_guard.take() {
+        let rows_affected = if let Some(mut tx) = tx_guard.take() {
             match sqlx::query_with(&query.query, query.values)
                 .execute(&mut *tx)
                 .await
             {
                 Ok(result) => {
                     *tx_guard = Some(tx);
-                    Ok(result.rows_affected())
+                    result.rows_affected()
                 }
-                Err(e) => Err(rollback_on_error(tx, e).await),
+                Err(e) => return Err(rollback_on_error(tx, e).await),
             }
         } else {
-            let result = sqlx::query_with(&query.query, query.values)
+            sqlx::query_with(&query.query, query.values)
                 .execute(&self.pool)
-                .await?;
-            Ok(result.rows_affected())
-        }
+                .await?
+                .rows_affected()
+        };
+        span.record("db.response.returned_rows", rows_affected);
+        Ok(rows_affected)
     }
 }
 

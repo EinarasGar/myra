@@ -51,7 +51,7 @@ pub struct UserMetadataViewModel {
         AuthResponses
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn get_me(
     auth: AuthenticatedUser,
     UsersServiceState(users_service): UsersServiceState,
@@ -108,7 +108,7 @@ pub async fn get_me(
         AuthResponses
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn post_login_details(
     AuthServiceState(auth_service): AuthServiceState,
     ValidatedJson(params): ValidatedJson<LoginDetailsViewModel>,
@@ -122,7 +122,7 @@ pub async fn post_login_details(
     let (raw_refresh, expires_at) = auth_service
         .create_refresh_token(claims.sub)
         .await
-        .map_err(|e| ApiError::Internal(e))?;
+        .map_err(ApiError::Internal)?;
 
     let mut headers = HeaderMap::new();
     headers.insert(
@@ -191,7 +191,7 @@ fn extract_refresh_token_from_cookie(headers: &HeaderMap) -> Option<String> {
         AuthResponses
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn post_refresh_token(
     headers: HeaderMap,
     AuthServiceState(auth_service): AuthServiceState,
@@ -206,7 +206,7 @@ pub async fn post_refresh_token(
     let access_token = auth_service
         .issue_access_token(user_id)
         .await
-        .map_err(|e| ApiError::Internal(e))?;
+        .map_err(ApiError::Internal)?;
 
     let mut response_headers = HeaderMap::new();
     response_headers.insert(
@@ -275,7 +275,7 @@ pub async fn post_refresh_token() -> Result<Json<serde_json::Value>, ApiError> {
         AuthResponses
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn post_logout(
     auth: AuthenticatedUser,
     AuthServiceState(auth_service): AuthServiceState,
@@ -283,7 +283,7 @@ pub async fn post_logout(
     auth_service
         .revoke_all_refresh_tokens(auth.user_id)
         .await
-        .map_err(|e| ApiError::Internal(e))?;
+        .map_err(ApiError::Internal)?;
 
     let mut headers = HeaderMap::new();
     headers.insert(header::SET_COOKIE, clear_refresh_cookie().parse().unwrap());

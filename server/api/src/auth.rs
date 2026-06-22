@@ -120,10 +120,19 @@ where
         .verify_clerk_token(bearer.token().to_string())
         .await
         .map_err(|e| -> ApiError {
-            tracing::error!("Clerk token verification failed: {}", e);
             if e.to_string().contains("Failed to fetch Clerk JWKS") {
+                tracing::warn!(
+                    error = ?e,
+                    error.type = "clerk_jwks_unavailable",
+                    "clerk token verification failed"
+                );
                 AuthError::ServiceUnavailable.into()
             } else {
+                tracing::warn!(
+                    error = ?e,
+                    error.type = "clerk_invalid_token",
+                    "clerk token verification failed"
+                );
                 AuthError::InvalidToken.into()
             }
         })

@@ -9,7 +9,7 @@ use crate::{
     query_params::get_accounts_params::{GetAccountsParams, GetAccountsParamsSeachType},
 };
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_accounts(params: GetAccountsParams) -> DbQueryWithValues {
     let mut get_accounts_builder = Query::select()
         .column((AccountIden::Table, AccountIden::Id))
@@ -76,6 +76,7 @@ pub fn get_accounts(params: GetAccountsParams) -> DbQueryWithValues {
     get_accounts_builder.build_sqlx(PostgresQueryBuilder).into()
 }
 
+#[macros::named_query]
 pub fn update_account(model: AccountUpdateModel) -> DbQueryWithValues {
     Query::update()
         .table(AccountIden::Table)
@@ -90,6 +91,7 @@ pub fn update_account(model: AccountUpdateModel) -> DbQueryWithValues {
         .into()
 }
 
+#[macros::named_query]
 pub fn insert_account(model: AccountCreationModel) -> DbQueryWithValues {
     Query::insert()
         .into_table(AccountIden::Table)
@@ -114,6 +116,7 @@ pub fn insert_account(model: AccountCreationModel) -> DbQueryWithValues {
         .into()
 }
 
+#[macros::named_query]
 pub fn deactivate_account(user_id: Uuid, account_id: Uuid) -> DbQueryWithValues {
     Query::update()
         .table(AccountIden::Table)
@@ -125,6 +128,7 @@ pub fn deactivate_account(user_id: Uuid, account_id: Uuid) -> DbQueryWithValues 
         .into()
 }
 
+#[macros::named_query]
 pub fn get_account_types() -> DbQueryWithValues {
     Query::select()
         .columns(vec![
@@ -136,6 +140,7 @@ pub fn get_account_types() -> DbQueryWithValues {
         .into()
 }
 
+#[macros::named_query]
 pub fn get_account_liquidity_types() -> DbQueryWithValues {
     Query::select()
         .columns(vec![

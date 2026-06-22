@@ -12,7 +12,7 @@ use crate::query_params::ai_conversation_params::{
 
 use super::DbQueryWithValues;
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn create_conversation(user_id: Uuid) -> DbQueryWithValues {
     Query::insert()
         .into_table(AiConversationsIden::Table)
@@ -23,7 +23,7 @@ pub fn create_conversation(user_id: Uuid) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn create_chat(conversation_id: Uuid) -> DbQueryWithValues {
     Query::insert()
         .into_table(AiChatIden::Table)
@@ -33,7 +33,7 @@ pub fn create_chat(conversation_id: Uuid) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_owned_conversation_id(conversation_id: Uuid, user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .column(AiConversationsIden::Id)
@@ -44,7 +44,7 @@ pub fn get_owned_conversation_id(conversation_id: Uuid, user_id: Uuid) -> DbQuer
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_conversations(params: GetConversationsParams) -> DbQueryWithValues {
     let mut query = Query::select();
     query
@@ -101,7 +101,7 @@ pub fn get_conversations(params: GetConversationsParams) -> DbQueryWithValues {
     query.build_sqlx(PostgresQueryBuilder).into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn update_chat_title_if_null(conversation_id: Uuid, title: String) -> DbQueryWithValues {
     Query::update()
         .table(AiChatIden::Table)
@@ -113,7 +113,7 @@ pub fn update_chat_title_if_null(conversation_id: Uuid, title: String) -> DbQuer
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_chats_needing_titles(limit: u64) -> DbQueryWithValues {
     Query::select()
         .column((AiChatIden::Table, AiChatIden::ConversationId))
@@ -150,7 +150,7 @@ pub fn get_chats_needing_titles(limit: u64) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn insert_message(
     conversation_id: Uuid,
     role: String,
@@ -195,7 +195,7 @@ pub fn insert_message(
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_messages(params: GetMessagesParams) -> DbQueryWithValues {
     let mut query = Query::select();
     query
@@ -223,7 +223,7 @@ pub fn get_messages(params: GetMessagesParams) -> DbQueryWithValues {
     query.build_sqlx(PostgresQueryBuilder).into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_last_message(conversation_id: Uuid, user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .column((AiMessagesIden::Table, AiMessagesIden::Id))
@@ -248,7 +248,7 @@ pub fn get_last_message(conversation_id: Uuid, user_id: Uuid) -> DbQueryWithValu
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_conversation(conversation_id: Uuid, user_id: Uuid) -> DbQueryWithValues {
     Query::delete()
         .from_table(AiConversationsIden::Table)
@@ -258,7 +258,7 @@ pub fn delete_conversation(conversation_id: Uuid, user_id: Uuid) -> DbQueryWithV
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn update_conversation_error(params: UpdateConversationErrorParams) -> DbQueryWithValues {
     let mut query = Query::update();
     query

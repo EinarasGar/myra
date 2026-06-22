@@ -49,6 +49,7 @@ impl FileService {
         }
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
     pub async fn create_file(
         &self,
         user_id: Uuid,
@@ -104,6 +105,7 @@ impl FileService {
         })
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, file_id = %file_id))]
     pub async fn get_file(&self, user_id: Uuid, file_id: Uuid) -> Result<FileDto> {
         let query = file_queries::get_file_by_id_and_user(file_id, user_id);
         let file: Option<FileModel> = self.db.fetch_optional(query).await?;
@@ -143,6 +145,7 @@ impl FileService {
         Ok(file.into())
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, file_id = %file_id))]
     pub async fn confirm_file(&self, user_id: Uuid, file_id: Uuid) -> Result<FileDto> {
         let query = file_queries::update_file_status_conditional(
             file_id,
@@ -180,6 +183,7 @@ impl FileService {
         Ok(file.into())
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, file_id = %file_id))]
     pub async fn get_download_url(&self, user_id: Uuid, file_id: Uuid) -> Result<FileUrlDto> {
         let query = file_queries::get_file_by_id_and_user(file_id, user_id);
         let file: Option<FileModel> = self.db.fetch_optional(query).await?;
@@ -207,6 +211,7 @@ impl FileService {
         })
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, file_id = %file_id))]
     pub async fn get_thumbnail_url(&self, user_id: Uuid, file_id: Uuid) -> Result<FileUrlDto> {
         let query = file_queries::get_file_by_id_and_user(file_id, user_id);
         let file: Option<FileModel> = self.db.fetch_optional(query).await?;
@@ -238,6 +243,7 @@ impl FileService {
         })
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, count = file_ids.len()))]
     pub async fn download_files_as_base64(
         &self,
         user_id: Uuid,
@@ -264,6 +270,7 @@ impl FileService {
         Ok(results)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, file_id = %file_id))]
     pub async fn delete_file(&self, user_id: Uuid, file_id: Uuid) -> Result<()> {
         let query = file_queries::get_file_by_id_and_user(file_id, user_id);
         let file: Option<FileModel> = self.db.fetch_optional(query).await?;
@@ -288,6 +295,7 @@ impl FileService {
         Ok(())
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, count = file_ids.len()))]
     pub async fn fetch_attachments_for_ai(
         &self,
         user_id: Uuid,

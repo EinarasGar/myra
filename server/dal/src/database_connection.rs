@@ -37,19 +37,19 @@ impl MyraDbConnection {
     pub async fn run_migrations(&self) -> anyhow::Result<()> {
         let mut migrator = sqlx::migrate!("../../database/migrations");
         let pending = migrator.iter().len();
-        tracing::info!("Running schema migrations ({pending} registered)...");
+        tracing::info!(pending, "running schema migrations");
         migrator.set_ignore_missing(true).run(&self.pool).await?;
-        tracing::info!("Schema migrations complete.");
+        tracing::info!("schema migrations complete");
         Ok(())
     }
 
     pub async fn run_sample_seed(&self) -> anyhow::Result<()> {
-        tracing::info!("Running sample seed migrations...");
+        tracing::info!("running sample seed migrations");
         sqlx::migrate!("../../database/seed/sample")
             .set_ignore_missing(true)
             .run(&self.pool)
             .await?;
-        tracing::info!("Sample seed migrations complete.");
+        tracing::info!("sample seed migrations complete");
         Ok(())
     }
 
@@ -59,10 +59,7 @@ impl MyraDbConnection {
         let pairs_csv = seed_dir.join("pairs.csv");
 
         if !assets_csv.exists() {
-            tracing::warn!(
-                "Asset seed file not found at {}. Skipping asset seed.",
-                assets_csv.display()
-            );
+            tracing::warn!(path = %assets_csv.display(), "asset seed file not found, skipping asset seed");
             return Ok(());
         }
 
@@ -72,11 +69,11 @@ impl MyraDbConnection {
                 .await?;
 
         if has_assets {
-            tracing::info!("Assets already seeded. Skipping asset seed.");
+            tracing::info!("assets already seeded, skipping asset seed");
             return Ok(());
         }
 
-        tracing::info!("Seeding assets from CSV...");
+        tracing::info!("seeding assets from CSV");
         let mut conn = self.pool.acquire().await?;
 
         // Import assets
@@ -157,21 +154,21 @@ impl MyraDbConnection {
         }
 
         tracing::info!(
-            "Asset seed complete. {} assets, {} pairs inserted.",
-            inserted_assets.len(),
-            inserted_pairs_count
+            assets = inserted_assets.len(),
+            pairs = inserted_pairs_count,
+            "asset seed complete"
         );
 
         Ok(())
     }
 
     pub async fn run_noauth_seed(&self) -> anyhow::Result<()> {
-        tracing::info!("Running noauth seed migrations...");
+        tracing::info!("running noauth seed migrations");
         sqlx::migrate!("../../database/seed/noauth")
             .set_ignore_missing(true)
             .run(&self.pool)
             .await?;
-        tracing::info!("Noauth seed migrations complete.");
+        tracing::info!("noauth seed migrations complete");
         Ok(())
     }
 }

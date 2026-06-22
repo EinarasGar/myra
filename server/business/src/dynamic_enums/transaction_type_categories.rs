@@ -21,7 +21,7 @@ pub struct TransactionTypeCategories;
 
 #[async_trait]
 impl Loader for TransactionTypeCategories {
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all, fields(otel.kind = "client"))]
     async fn load(&self) -> Result<(), LoaderError> {
         let mut m = HashMap::new();
 

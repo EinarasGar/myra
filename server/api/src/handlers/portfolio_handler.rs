@@ -56,7 +56,7 @@ pub struct GetPortfolioQueryParams {
     )
 )]
 #[allow(clippy::too_many_arguments)]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn get_holdings(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     ValidatedQuery(query_params): ValidatedQuery<GetPortfolioQueryParams>,
@@ -88,8 +88,6 @@ pub async fn get_holdings(
         asset_rates_service.get_pairs_latest_converted(asset_ids2, AssetIdDto(default_asset)),
     )?;
 
-    tracing::info!("rates: {:?}", rates);
-
     let response = GetHoldingsResponseViewModel {
         holdings: holdings
             .into_iter()
@@ -98,10 +96,6 @@ pub async fn get_holdings(
                     AssetIdDto(x.asset_id),
                     AssetIdDto(default_asset),
                 ));
-                tracing::info!(
-                    "assets: {:?}",
-                    AssetPairIdsDto::new(AssetIdDto(x.asset_id), AssetIdDto(default_asset),)
-                );
                 GetHoldingsResponseViewModelRow {
                     account_id: RequiredAccountId(x.account_id),
                     asset_id: RequiredAssetId(x.asset_id),
@@ -135,7 +129,7 @@ pub async fn get_holdings(
         GetNetWorthHistoryRequestParams
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn get_networth_history(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     ValidatedQuery(query_params): ValidatedQuery<GetNetWorthHistoryRequestParams>,
@@ -179,7 +173,7 @@ pub async fn get_networth_history(
         GetPortfolioOverviewQueryParams
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn get_portfolio_overview(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     ValidatedQuery(query_params): ValidatedQuery<GetPortfolioOverviewQueryParams>,

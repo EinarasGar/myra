@@ -8,7 +8,7 @@ default-run = "worker"
 business = { path = "../business", default-features = false, features = ["noauth"] }
 dal = { path = "../dal" }
 ai = { path = "../ai" }
-observability = { path = "../observability", features = ["color-sql"] }
+observability = { path = "../observability" }
 apalis = { version = "=1.0.0-rc.9", features = ["tracing", "catch-panic"] }
 apalis-postgres = { git = "https://github.com/EinarasGar/apalis-postgres", rev = "6c4c4af54d34f7e7703195b29a8ef1183f81747a", features = ["time"] }
 apalis-cron = { version = "=1.0.0-rc.8" }

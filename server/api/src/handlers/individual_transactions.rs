@@ -62,7 +62,7 @@ use crate::{
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn add_individual_transaction(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     TransactionManagementServiceState(transaction_service): TransactionManagementServiceState,
@@ -110,7 +110,7 @@ pub async fn add_individual_transaction(
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, transaction_id = %transaction_id))]
 pub async fn update_individual_transaction(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(TransactionIdPath { transaction_id }): Path<TransactionIdPath>,
@@ -166,7 +166,7 @@ pub async fn update_individual_transaction(
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn get_individual_transactions(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     ValidatedQuery(query_params): ValidatedQuery<CursorOrPaginatedSearchQuery>,
@@ -230,7 +230,7 @@ pub async fn get_individual_transactions(
     )
 
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, transaction_id = %transaction_id))]
 pub async fn get_single(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(TransactionIdPath { transaction_id }): Path<TransactionIdPath>,

@@ -20,7 +20,7 @@ impl JobQueueHandle {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn push<T>(&self, job: T) -> anyhow::Result<()>
     where
         T: Serialize + DeserializeOwned + Send + Sync + Unpin + 'static,

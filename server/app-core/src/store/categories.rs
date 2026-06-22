@@ -19,6 +19,12 @@ pub struct CategoriesModule {
     observer: Option<Box<dyn CategoriesObserver>>,
 }
 
+impl Default for CategoriesModule {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CategoriesModule {
     pub fn new() -> Self {
         Self {

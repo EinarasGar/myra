@@ -368,7 +368,7 @@ mod tests {
             .account_portfolios()
             .get(&account_from)
             .expect("source account keeps its sale cash");
-        assert!(source_portfolio.asset_portfolios.get(&1).is_none());
+        assert!(!source_portfolio.asset_portfolios.contains_key(&1));
         assert_eq!(
             source_portfolio
                 .cash_portfolios

@@ -38,7 +38,7 @@ pub struct RegisteredUserViewModel {
         (status = 200, description = "User registered successfully.", body = RegisteredUserViewModel),
     )
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn post_user(
     UsersServiceState(users_service): UsersServiceState,
     ValidatedJson(params): ValidatedJson<AddUserViewModel>,
@@ -76,7 +76,7 @@ pub async fn post_user() -> Result<Json<serde_json::Value>, ApiError> {
     request_body(content = SetBaseAssetRequestViewModel),
     responses((status = 200, description = "Base asset updated."))
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn post_base_asset(
     _auth: AuthenticatedUser,
     Path(user_id): Path<Uuid>,
@@ -97,7 +97,7 @@ pub async fn post_base_asset(
     request_body(content = SetOnboardingVersionRequestViewModel),
     responses((status = 200, description = "Onboarding version updated."))
 )]
-#[tracing::instrument(skip_all, err)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
 pub async fn post_onboarding(
     _auth: AuthenticatedUser,
     Path(user_id): Path<Uuid>,

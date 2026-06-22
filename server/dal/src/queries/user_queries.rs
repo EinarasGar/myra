@@ -13,7 +13,7 @@ use crate::{
 
 use super::DbQueryWithValues;
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn insert_user(user: AddUserModel) -> DbQueryWithValues {
     Query::insert()
         .into_table(UsersIden::Table)
@@ -24,7 +24,7 @@ pub fn insert_user(user: AddUserModel) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_user_auth_info(username: String) -> DbQueryWithValues {
     Query::select()
         .column((UsersIden::Table, UsersIden::Id))
@@ -63,7 +63,7 @@ pub fn get_user_auth_info(username: String) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_user_role(user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .column(UserRolesIden::Id)
@@ -88,7 +88,7 @@ pub fn get_user_role(user_id: Uuid) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_user_basic_info(user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .column((UsersIden::Table, UsersIden::Id))
@@ -100,7 +100,7 @@ pub fn get_user_basic_info(user_id: Uuid) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_user_full_info(user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .column((UsersIden::Table, UsersIden::Id))
@@ -145,7 +145,7 @@ pub fn get_user_full_info(user_id: Uuid) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn insert_user_credentials(user_id: Uuid, password_hash: String) -> DbQueryWithValues {
     Query::insert()
         .into_table(UserCredentialsIden::Table)
@@ -158,7 +158,7 @@ pub fn insert_user_credentials(user_id: Uuid, password_hash: String) -> DbQueryW
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn insert_user_role_assignment(user_id: Uuid, role_id: i32) -> DbQueryWithValues {
     Query::insert()
         .into_table(UserRoleAssignmentsIden::Table)
@@ -171,7 +171,7 @@ pub fn insert_user_role_assignment(user_id: Uuid, role_id: i32) -> DbQueryWithVa
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_user_by_external_id(provider: String, external_user_id: String) -> DbQueryWithValues {
     Query::select()
         .expr_as(
@@ -206,7 +206,7 @@ pub fn get_user_by_external_id(provider: String, external_user_id: String) -> Db
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn insert_refresh_token(
     user_id: Uuid,
     token_hash: String,
@@ -224,7 +224,7 @@ pub fn insert_refresh_token(
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_refresh_token_by_hash(token_hash: String) -> DbQueryWithValues {
     Query::select()
         .column(RefreshTokensIden::Id)
@@ -237,7 +237,7 @@ pub fn get_refresh_token_by_hash(token_hash: String) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_refresh_token_by_id(id: i32) -> DbQueryWithValues {
     Query::delete()
         .from_table(RefreshTokensIden::Table)
@@ -246,7 +246,7 @@ pub fn delete_refresh_token_by_id(id: i32) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_all_refresh_tokens_for_user(user_id: Uuid) -> DbQueryWithValues {
     Query::delete()
         .from_table(RefreshTokensIden::Table)
@@ -255,7 +255,7 @@ pub fn delete_all_refresh_tokens_for_user(user_id: Uuid) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn delete_expired_refresh_tokens() -> DbQueryWithValues {
     Query::delete()
         .from_table(RefreshTokensIden::Table)
@@ -264,7 +264,7 @@ pub fn delete_expired_refresh_tokens() -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn insert_external_identity_mapping(
     provider: String,
     external_user_id: String,
@@ -281,7 +281,8 @@ pub fn insert_external_identity_mapping(
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }
-#[tracing::instrument(skip_all)]
+
+#[macros::named_query]
 pub fn get_user_onboarding_info(user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .column((UsersIden::Table, UsersIden::Id))
@@ -303,7 +304,7 @@ pub fn get_user_onboarding_info(user_id: Uuid) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn update_user_default_asset(user_id: Uuid, asset_id: i32) -> DbQueryWithValues {
     Query::update()
         .table(UsersIden::Table)
@@ -313,7 +314,7 @@ pub fn update_user_default_asset(user_id: Uuid, asset_id: i32) -> DbQueryWithVal
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn update_user_onboarding_version(user_id: Uuid, version: i32) -> DbQueryWithValues {
     Query::update()
         .table(UsersIden::Table)

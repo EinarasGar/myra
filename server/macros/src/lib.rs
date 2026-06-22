@@ -1,5 +1,6 @@
 use proc_macro2::TokenStream;
 
+mod namedquery;
 mod typetag;
 mod util;
 
@@ -17,6 +18,19 @@ pub fn type_tag(
     item: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
     match typetag::type_tag(attr.into(), &item.clone().into()) {
+        Ok(ts) => ts.into(),
+        Err(e) => token_stream_with_error(item.into(), e).into(),
+    }
+}
+
+/// Tags a query-builder function so the `DbQueryWithValues` it returns carries
+/// the function name, which the DAL execution span exports as `otel.name`.
+#[proc_macro_attribute]
+pub fn named_query(
+    _attr: proc_macro::TokenStream,
+    item: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+    match namedquery::named_query(&item.clone().into()) {
         Ok(ts) => ts.into(),
         Err(e) => token_stream_with_error(item.into(), e).into(),
     }

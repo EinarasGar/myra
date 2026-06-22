@@ -414,8 +414,8 @@ mod tests {
             .get(&account_id)
             .expect("Should contain account");
 
-        assert!(account_portfolio.asset_portfolios.get(&1).is_none());
-        assert!(account_portfolio.asset_portfolios.get(&2).is_some());
+        assert!(!account_portfolio.asset_portfolios.contains_key(&1));
+        assert!(account_portfolio.asset_portfolios.contains_key(&2));
     }
 
     #[test]

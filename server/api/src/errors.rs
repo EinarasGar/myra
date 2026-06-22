@@ -138,13 +138,16 @@ impl IntoResponse for ApiError {
                 vec![],
                 Some(details.clone()),
             ),
-            ApiError::Internal(_err) => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ErrorType::InternalServerError,
-                "An internal server error occurred.".to_string(),
-                vec![],
-                None,
-            ),
+            ApiError::Internal(err) => {
+                tracing::error!(error = ?err, error.type = "internal", "request failed with internal error");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ErrorType::InternalServerError,
+                    "An internal server error occurred.".to_string(),
+                    vec![],
+                    None,
+                )
+            }
         };
 
         let stack_trace = if cfg!(debug_assertions) {

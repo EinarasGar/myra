@@ -18,7 +18,7 @@ impl CronJob for GenerateChatTitlesJob {
     const NAME: &'static str = "generate-chat-titles";
     const SCHEDULE: &'static str = "0 */10 * * * *";
 
-    #[tracing::instrument(name = "generate_chat_titles", skip_all, err)]
+    #[tracing::instrument(level = "info", name = "generate_chat_titles", skip_all)]
     async fn tick(providers: &ServiceProviders) -> anyhow::Result<()> {
         let conversation_svc = AiConversationService::new(providers);
 
@@ -29,11 +29,10 @@ impl CronJob for GenerateChatTitlesJob {
             .await?;
 
         if candidates.is_empty() {
-            tracing::info!("No title candidates to process");
             return Ok(());
         }
 
-        tracing::info!("Processing {} title candidates", candidates.len());
+        let mut generated = 0;
 
         for candidate in candidates {
             let Ok(conv_provider) = UserConversationProvider::open(
@@ -44,8 +43,10 @@ impl CronJob for GenerateChatTitlesJob {
             .await
             .inspect_err(|e| {
                 tracing::warn!(
-                    conversation_id = ?candidate.conversation_id,
-                    "Failed to open conversation provider: {e}"
+                    conversation_id = %candidate.conversation_id,
+                    error = ?e,
+                    error.type = "open_conversation_provider",
+                    "failed to open conversation provider"
                 );
             }) else {
                 continue;
@@ -62,8 +63,10 @@ impl CronJob for GenerateChatTitlesJob {
                 .await
                 .inspect_err(|e| {
                     tracing::warn!(
-                        conversation_id = ?candidate.conversation_id,
-                        "Failed to generate title: {e}"
+                        conversation_id = %candidate.conversation_id,
+                        error = ?e,
+                        error.type = "generate_title",
+                        "failed to generate title"
                     );
                 })
             else {
@@ -71,22 +74,15 @@ impl CronJob for GenerateChatTitlesJob {
             };
 
             let rows = conversation_svc
-                .set_generated_title_if_null(candidate.conversation_id, title.clone())
+                .set_generated_title_if_null(candidate.conversation_id, title)
                 .await?;
 
-            if rows == 0 {
-                tracing::info!(
-                    conversation_id = ?candidate.conversation_id,
-                    "Title was already set, skipping update"
-                );
-            } else {
-                tracing::info!(
-                    conversation_id = ?candidate.conversation_id,
-                    title,
-                    "Generated and persisted title"
-                );
+            if rows > 0 {
+                generated += 1;
             }
         }
+
+        tracing::info!(count = generated, "generated chat titles");
 
         Ok(())
     }

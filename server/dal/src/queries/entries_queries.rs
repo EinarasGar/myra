@@ -15,7 +15,7 @@ use crate::{
 
 use super::DbQueryWithValues;
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn insert_entries(models: Vec<AddEntryModel>) -> DbQueryWithValues {
     let mut builder2 = Query::insert()
         .into_table(EntryIden::Table)
@@ -40,7 +40,7 @@ pub fn insert_entries(models: Vec<AddEntryModel>) -> DbQueryWithValues {
     builder2.build_sqlx(PostgresQueryBuilder).into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_holdings(user_id: Uuid, apply_ownership_share: bool) -> DbQueryWithValues {
     let quantity_sum = || {
         if apply_ownership_share {
@@ -117,7 +117,7 @@ pub fn get_holdings(user_id: Uuid, apply_ownership_share: bool) -> DbQueryWithVa
 /// )
 /// ORDER BY "start_time" ASC
 /// ```
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_binned_entries(params: GetBinnedEntriesParams) -> DbQueryWithValues {
     let account_id = params.account_id;
 
@@ -215,7 +215,7 @@ pub fn get_binned_entries(params: GetBinnedEntriesParams) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_oldest_entry_date(user_id: Uuid, account_id: Option<Uuid>) -> DbQueryWithValues {
     let mut query = Query::select()
         .expr(Expr::min(Expr::col((

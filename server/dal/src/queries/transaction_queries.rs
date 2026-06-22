@@ -25,7 +25,7 @@ use crate::{
 
 use super::DbQueryWithValues;
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_transaction_with_entries(params: GetTransactionWithEntriesParams) -> DbQueryWithValues {
     let apply_ownership_share = params.apply_ownership_share;
     let mut eligible_transactions_builder = Query::select()
@@ -205,7 +205,7 @@ pub fn get_transaction_with_entries(params: GetTransactionWithEntriesParams) -> 
     outer_query.build_sqlx(PostgresQueryBuilder).into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_combined_transaction_ids_for_user(
     params: GetCombinedTransactionsParams,
 ) -> DbQueryWithValues {

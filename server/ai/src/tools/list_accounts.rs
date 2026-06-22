@@ -35,6 +35,7 @@ impl<D: AiDataProvider> Tool for ListAccountsTool<D> {
         }
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(tool = Self::NAME))]
     async fn call(&self, _args: Self::Args) -> std::result::Result<Self::Output, Self::Error> {
         let accounts = self
             .data

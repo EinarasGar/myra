@@ -9,7 +9,7 @@ use crate::idens::CommonsIden;
 
 use super::DbQueryWithValues;
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_default_rate_limits() -> DbQueryWithValues {
     Query::select()
         .columns([
@@ -27,7 +27,7 @@ pub fn get_default_rate_limits() -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_user_rate_limits(user_id: Uuid) -> DbQueryWithValues {
     Query::select()
         .columns([
@@ -45,7 +45,7 @@ pub fn get_user_rate_limits(user_id: Uuid) -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_global_rate_limits() -> DbQueryWithValues {
     Query::select()
         .columns([
@@ -61,7 +61,7 @@ pub fn get_global_rate_limits() -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_all_user_overrides() -> DbQueryWithValues {
     Query::select()
         .columns([
@@ -78,7 +78,7 @@ pub fn get_all_user_overrides() -> DbQueryWithValues {
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_user_usage(user_id: Uuid, window_type: &str, window_key: &str) -> DbQueryWithValues {
     Query::select()
         .columns([
@@ -97,7 +97,7 @@ pub fn get_user_usage(user_id: Uuid, window_type: &str, window_key: &str) -> DbQ
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_global_usage(window_type: &str, window_key: &str) -> DbQueryWithValues {
     Query::select()
         .columns([
@@ -114,7 +114,7 @@ pub fn get_global_usage(window_type: &str, window_key: &str) -> DbQueryWithValue
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn upsert_user_usage(
     user_id: Uuid,
     window_type: &str,
@@ -164,7 +164,7 @@ pub fn upsert_user_usage(
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn upsert_global_usage(
     window_type: &str,
     window_key: &str,
@@ -218,7 +218,7 @@ pub fn upsert_global_usage(
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_all_user_usage_for_windows(window_types_and_keys: &[(&str, &str)]) -> DbQueryWithValues {
     let mut condition = Cond::any();
     for (wt, wk) in window_types_and_keys {
@@ -244,7 +244,7 @@ pub fn get_all_user_usage_for_windows(window_types_and_keys: &[(&str, &str)]) ->
         .into()
 }
 
-#[tracing::instrument(skip_all)]
+#[macros::named_query]
 pub fn get_all_global_usage_for_windows(
     window_types_and_keys: &[(&str, &str)],
 ) -> DbQueryWithValues {

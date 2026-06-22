@@ -16,7 +16,7 @@ impl WorkerJob for EmbeddingJob {
         RetryPolicy::fire_and_forget()
     }
 
-    #[tracing::instrument(skip_all, err)]
+    #[tracing::instrument(level = "debug", skip_all)]
     async fn run(&self, providers: &ServiceProviders) -> anyhow::Result<()> {
         let svc = AiEmbeddingService::new(providers);
         match self {
@@ -44,7 +44,7 @@ impl WorkerJob for EmbeddingJob {
     }
 }
 
-#[tracing::instrument(skip_all, err, fields(text_len = text.len()))]
+#[tracing::instrument(level = "debug", skip_all, fields(text_len = text.len()))]
 async fn generate_embedding(text: &str) -> anyhow::Result<Vec<f32>> {
     let config = AiConfig::try_from_env()?;
     let vec_f64 = embed_text(&config, text).await?;

@@ -53,6 +53,7 @@ impl<A: AiActionProvider> Tool for CreateCustomAssetTool<A> {
         }
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(tool = Self::NAME, asset_type = args.asset_type, base_pair_id = args.base_pair_id))]
     async fn call(&self, args: Self::Args) -> std::result::Result<Self::Output, Self::Error> {
         let params = CreateCustomAssetParams {
             ticker: args.ticker,
