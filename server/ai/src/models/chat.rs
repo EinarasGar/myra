@@ -39,8 +39,7 @@ pub enum ChatTurn {
         file_ids: Vec<Uuid>,
     },
     Approval {
-        tool_call_id: String,
-        approved: bool,
+        approvals: Vec<(String, bool)>,
     },
     Continuation,
 }

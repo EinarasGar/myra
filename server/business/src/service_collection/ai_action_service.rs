@@ -48,9 +48,7 @@ impl AiActionService {
         user_id: Uuid,
         params: CreateTransactionParams,
     ) -> Result<CreateTransactionResult> {
-        let format = time::format_description::parse("[year]-[month]-[day]").unwrap();
-        let date = time::Date::parse(&params.date, &format)?;
-        let datetime = date.with_time(time::Time::MIDNIGHT).assume_utc();
+        let datetime = parse_datetime(&params.date)?;
 
         let dto = TransactionDto {
             transaction_id: None,
@@ -89,9 +87,7 @@ impl AiActionService {
         user_id: Uuid,
         params: CreateTransactionGroupParams,
     ) -> Result<CreateTransactionGroupResult> {
-        let format = time::format_description::parse("[year]-[month]-[day]").unwrap();
-        let date = time::Date::parse(&params.date, &format)?;
-        let datetime = date.with_time(time::Time::MIDNIGHT).assume_utc();
+        let datetime = parse_datetime(&params.date)?;
 
         let transaction_dtos: Vec<TransactionDto> = params
             .entries
@@ -242,11 +238,7 @@ impl AiActionService {
     }
 }
 
-fn parse_datetime_or_now(date: Option<&str>) -> Result<time::OffsetDateTime> {
-    let Some(s) = date else {
-        return Ok(time::OffsetDateTime::now_utc());
-    };
-
+fn parse_datetime(s: &str) -> Result<time::OffsetDateTime> {
     if let Ok(dt) = time::OffsetDateTime::parse(s, &time::format_description::well_known::Rfc3339) {
         return Ok(dt);
     }
@@ -254,4 +246,11 @@ fn parse_datetime_or_now(date: Option<&str>) -> Result<time::OffsetDateTime> {
     let date_format = time::format_description::parse("[year]-[month]-[day]").unwrap();
     let date = time::Date::parse(s, &date_format)?;
     Ok(date.with_time(time::Time::MIDNIGHT).assume_utc())
+}
+
+fn parse_datetime_or_now(date: Option<&str>) -> Result<time::OffsetDateTime> {
+    match date {
+        Some(s) => parse_datetime(s),
+        None => Ok(time::OffsetDateTime::now_utc()),
+    }
 }

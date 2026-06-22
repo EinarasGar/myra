@@ -28,7 +28,8 @@ pub struct SendMessageRequestViewModel {
     pub message: Option<UserMessage>,
     #[serde(default)]
     pub file_ids: Vec<Uuid>,
-    pub tool_approval: Option<ToolApprovalViewModel>,
+    #[serde(default)]
+    pub tool_approvals: Vec<ToolApprovalViewModel>,
 }
 
 #[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]

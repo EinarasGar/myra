@@ -78,10 +78,17 @@ impl MyraDb {
         }
 
         let mut tx_guard = self.transaction.lock().await;
-        let rows = if let Some(ref mut tx) = &mut *tx_guard {
-            sqlx::query_as_with::<_, T, _>(&query.query, query.values)
-                .fetch_all(&mut **tx)
-                .await?
+        let rows = if let Some(mut tx) = tx_guard.take() {
+            match sqlx::query_as_with::<_, T, _>(&query.query, query.values)
+                .fetch_all(&mut *tx)
+                .await
+            {
+                Ok(rows) => {
+                    *tx_guard = Some(tx);
+                    rows
+                }
+                Err(e) => return Err(rollback_on_error(tx, e).await),
+            }
         } else {
             sqlx::query_as_with::<_, T, _>(&query.query, query.values)
                 .fetch_all(&self.pool)
@@ -102,10 +109,17 @@ impl MyraDb {
         }
 
         let mut tx_guard = self.transaction.lock().await;
-        let rows = if let Some(ref mut tx) = &mut *tx_guard {
-            sqlx::query_scalar_with::<_, T, _>(&query.query, query.values)
-                .fetch_all(&mut **tx)
-                .await?
+        let rows = if let Some(mut tx) = tx_guard.take() {
+            match sqlx::query_scalar_with::<_, T, _>(&query.query, query.values)
+                .fetch_all(&mut *tx)
+                .await
+            {
+                Ok(rows) => {
+                    *tx_guard = Some(tx);
+                    rows
+                }
+                Err(e) => return Err(rollback_on_error(tx, e).await),
+            }
         } else {
             sqlx::query_scalar_with::<_, T, _>(&query.query, query.values)
                 .fetch_all(&self.pool)
@@ -126,10 +140,17 @@ impl MyraDb {
         }
 
         let mut tx_guard = self.transaction.lock().await;
-        let row = if let Some(ref mut tx) = &mut *tx_guard {
-            sqlx::query_as_with::<_, T, _>(&query.query, query.values)
-                .fetch_one(&mut **tx)
-                .await?
+        let row = if let Some(mut tx) = tx_guard.take() {
+            match sqlx::query_as_with::<_, T, _>(&query.query, query.values)
+                .fetch_one(&mut *tx)
+                .await
+            {
+                Ok(row) => {
+                    *tx_guard = Some(tx);
+                    row
+                }
+                Err(e) => return Err(rollback_on_error(tx, e).await),
+            }
         } else {
             sqlx::query_as_with::<_, T, _>(&query.query, query.values)
                 .fetch_one(&self.pool)
@@ -150,10 +171,17 @@ impl MyraDb {
         }
 
         let mut tx_guard = self.transaction.lock().await;
-        let row = if let Some(ref mut tx) = &mut *tx_guard {
-            sqlx::query_scalar_with::<_, T, _>(&query.query, query.values)
-                .fetch_one(&mut **tx)
-                .await?
+        let row = if let Some(mut tx) = tx_guard.take() {
+            match sqlx::query_scalar_with::<_, T, _>(&query.query, query.values)
+                .fetch_one(&mut *tx)
+                .await
+            {
+                Ok(row) => {
+                    *tx_guard = Some(tx);
+                    row
+                }
+                Err(e) => return Err(rollback_on_error(tx, e).await),
+            }
         } else {
             sqlx::query_scalar_with::<_, T, _>(&query.query, query.values)
                 .fetch_one(&self.pool)
@@ -177,10 +205,17 @@ impl MyraDb {
         }
 
         let mut tx_guard = self.transaction.lock().await;
-        let result = if let Some(ref mut tx) = &mut *tx_guard {
-            sqlx::query_as_with::<_, T, _>(&query.query, query.values)
-                .fetch_optional(&mut **tx)
-                .await?
+        let result = if let Some(mut tx) = tx_guard.take() {
+            match sqlx::query_as_with::<_, T, _>(&query.query, query.values)
+                .fetch_optional(&mut *tx)
+                .await
+            {
+                Ok(row) => {
+                    *tx_guard = Some(tx);
+                    row
+                }
+                Err(e) => return Err(rollback_on_error(tx, e).await),
+            }
         } else {
             sqlx::query_as_with::<_, T, _>(&query.query, query.values)
                 .fetch_optional(&self.pool)
@@ -199,10 +234,16 @@ impl MyraDb {
         }
 
         let mut tx_guard = self.transaction.lock().await;
-        if let Some(ref mut tx) = &mut *tx_guard {
-            sqlx::query_with(&query.query, query.values)
-                .execute(&mut **tx)
-                .await?;
+        if let Some(mut tx) = tx_guard.take() {
+            match sqlx::query_with(&query.query, query.values)
+                .execute(&mut *tx)
+                .await
+            {
+                Ok(_) => {
+                    *tx_guard = Some(tx);
+                }
+                Err(e) => return Err(rollback_on_error(tx, e).await),
+            }
         } else {
             sqlx::query_with(&query.query, query.values)
                 .execute(&self.pool)
@@ -230,11 +271,17 @@ impl MyraDb {
         }
 
         let mut tx_guard = self.transaction.lock().await;
-        let rows_affected = if let Some(ref mut tx) = &mut *tx_guard {
-            sqlx::query_with(&query.query, query.values)
-                .execute(&mut **tx)
-                .await?
-                .rows_affected()
+        let rows_affected = if let Some(mut tx) = tx_guard.take() {
+            match sqlx::query_with(&query.query, query.values)
+                .execute(&mut *tx)
+                .await
+            {
+                Ok(result) => {
+                    *tx_guard = Some(tx);
+                    result.rows_affected()
+                }
+                Err(e) => return Err(rollback_on_error(tx, e).await),
+            }
         } else {
             sqlx::query_with(&query.query, query.values)
                 .execute(&self.pool)
@@ -244,6 +291,20 @@ impl MyraDb {
         span.record("db.response.returned_rows", rows_affected);
         Ok(rows_affected)
     }
+}
+
+/// Rolls back a transaction whose statement just failed, then returns the
+/// original error. Postgres aborts the transaction on the first error, so the
+/// handle would otherwise stay poisoned ("current transaction is aborted")
+/// for every subsequent query sharing this `MyraDb` within the request.
+async fn rollback_on_error(
+    tx: Transaction<'static, Postgres>,
+    err: sqlx::Error,
+) -> sqlx::Error {
+    if let Err(rollback_err) = tx.rollback().await {
+        tracing::warn!(error = %rollback_err, "failed to roll back aborted transaction");
+    }
+    err
 }
 
 mock! {

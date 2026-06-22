@@ -10,12 +10,13 @@ impl Validatable for SendMessageRequestViewModel {
             .map(|m| !m.is_empty())
             .unwrap_or(false);
         let has_files = !self.file_ids.is_empty();
-        let has_approval = self.tool_approval.is_some();
+        let has_approval = !self.tool_approvals.is_empty();
 
         if !has_message && !has_files && !has_approval {
             return Err(vec![FieldError {
                 field: "message".to_string(),
-                message: "Either message, file_ids, or tool_approval must be provided.".to_string(),
+                message: "Either message, file_ids, or tool_approvals must be provided."
+                    .to_string(),
             }]);
         }
 
