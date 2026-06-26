@@ -243,7 +243,8 @@ fn parse_datetime(s: &str) -> Result<time::OffsetDateTime> {
         return Ok(dt);
     }
 
-    let date_format = time::format_description::parse("[year]-[month]-[day]").unwrap();
+    let date_format =
+        time::format_description::parse_borrowed::<2>("[year]-[month]-[day]").unwrap();
     let date = time::Date::parse(s, &date_format)?;
     Ok(date.with_time(time::Time::MIDNIGHT).assume_utc())
 }

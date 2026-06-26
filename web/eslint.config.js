@@ -24,6 +24,7 @@ export default tseslint.config(
         { allowConstantExport: true, allowExportNames: [] },
       ],
       'react-hooks/incompatible-library': 'off',
+      'react-hooks/set-state-in-effect': 'warn',
       '@typescript-eslint/no-unused-vars': [
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },

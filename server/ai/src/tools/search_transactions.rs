@@ -110,7 +110,7 @@ impl<M: EmbeddingModel + Send + Sync, D: AiDataProvider> Tool for SearchTransact
 
         let total_amount: Decimal = transactions.iter().map(|t| t.quantity).sum();
 
-        let format = time::format_description::parse("[year]-[month]-[day]").unwrap();
+        let format = time::format_description::parse_borrowed::<2>("[year]-[month]-[day]").unwrap();
 
         let result = SearchResult {
             total_count: total_count as usize,

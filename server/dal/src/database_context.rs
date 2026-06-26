@@ -1,6 +1,6 @@
 use mockall::mock;
 use sqlx::postgres::PgPoolCopyExt;
-use sqlx::{postgres::PgRow, FromRow, PgPool, Postgres, Transaction};
+use sqlx::{postgres::PgRow, AssertSqlSafe, FromRow, PgPool, Postgres, Transaction};
 
 use anyhow::Result;
 use std::sync::Arc;
@@ -79,7 +79,7 @@ impl MyraDb {
 
         let mut tx_guard = self.transaction.lock().await;
         let rows = if let Some(mut tx) = tx_guard.take() {
-            match sqlx::query_as_with::<_, T, _>(&query.query, query.values)
+            match sqlx::query_as_with::<_, T, _>(AssertSqlSafe(query.query), query.values)
                 .fetch_all(&mut *tx)
                 .await
             {
@@ -90,7 +90,7 @@ impl MyraDb {
                 Err(e) => return Err(rollback_on_error(tx, e).await),
             }
         } else {
-            sqlx::query_as_with::<_, T, _>(&query.query, query.values)
+            sqlx::query_as_with::<_, T, _>(AssertSqlSafe(query.query), query.values)
                 .fetch_all(&self.pool)
                 .await?
         };
@@ -110,7 +110,7 @@ impl MyraDb {
 
         let mut tx_guard = self.transaction.lock().await;
         let rows = if let Some(mut tx) = tx_guard.take() {
-            match sqlx::query_scalar_with::<_, T, _>(&query.query, query.values)
+            match sqlx::query_scalar_with::<_, T, _>(AssertSqlSafe(query.query), query.values)
                 .fetch_all(&mut *tx)
                 .await
             {
@@ -121,7 +121,7 @@ impl MyraDb {
                 Err(e) => return Err(rollback_on_error(tx, e).await),
             }
         } else {
-            sqlx::query_scalar_with::<_, T, _>(&query.query, query.values)
+            sqlx::query_scalar_with::<_, T, _>(AssertSqlSafe(query.query), query.values)
                 .fetch_all(&self.pool)
                 .await?
         };
@@ -141,7 +141,7 @@ impl MyraDb {
 
         let mut tx_guard = self.transaction.lock().await;
         let row = if let Some(mut tx) = tx_guard.take() {
-            match sqlx::query_as_with::<_, T, _>(&query.query, query.values)
+            match sqlx::query_as_with::<_, T, _>(AssertSqlSafe(query.query), query.values)
                 .fetch_one(&mut *tx)
                 .await
             {
@@ -152,7 +152,7 @@ impl MyraDb {
                 Err(e) => return Err(rollback_on_error(tx, e).await),
             }
         } else {
-            sqlx::query_as_with::<_, T, _>(&query.query, query.values)
+            sqlx::query_as_with::<_, T, _>(AssertSqlSafe(query.query), query.values)
                 .fetch_one(&self.pool)
                 .await?
         };
@@ -172,7 +172,7 @@ impl MyraDb {
 
         let mut tx_guard = self.transaction.lock().await;
         let row = if let Some(mut tx) = tx_guard.take() {
-            match sqlx::query_scalar_with::<_, T, _>(&query.query, query.values)
+            match sqlx::query_scalar_with::<_, T, _>(AssertSqlSafe(query.query), query.values)
                 .fetch_one(&mut *tx)
                 .await
             {
@@ -183,7 +183,7 @@ impl MyraDb {
                 Err(e) => return Err(rollback_on_error(tx, e).await),
             }
         } else {
-            sqlx::query_scalar_with::<_, T, _>(&query.query, query.values)
+            sqlx::query_scalar_with::<_, T, _>(AssertSqlSafe(query.query), query.values)
                 .fetch_one(&self.pool)
                 .await?
         };
@@ -206,7 +206,7 @@ impl MyraDb {
 
         let mut tx_guard = self.transaction.lock().await;
         let result = if let Some(mut tx) = tx_guard.take() {
-            match sqlx::query_as_with::<_, T, _>(&query.query, query.values)
+            match sqlx::query_as_with::<_, T, _>(AssertSqlSafe(query.query), query.values)
                 .fetch_optional(&mut *tx)
                 .await
             {
@@ -217,7 +217,7 @@ impl MyraDb {
                 Err(e) => return Err(rollback_on_error(tx, e).await),
             }
         } else {
-            sqlx::query_as_with::<_, T, _>(&query.query, query.values)
+            sqlx::query_as_with::<_, T, _>(AssertSqlSafe(query.query), query.values)
                 .fetch_optional(&self.pool)
                 .await?
         };
@@ -235,7 +235,7 @@ impl MyraDb {
 
         let mut tx_guard = self.transaction.lock().await;
         if let Some(mut tx) = tx_guard.take() {
-            match sqlx::query_with(&query.query, query.values)
+            match sqlx::query_with(AssertSqlSafe(query.query), query.values)
                 .execute(&mut *tx)
                 .await
             {
@@ -245,7 +245,7 @@ impl MyraDb {
                 Err(e) => return Err(rollback_on_error(tx, e).await),
             }
         } else {
-            sqlx::query_with(&query.query, query.values)
+            sqlx::query_with(AssertSqlSafe(query.query), query.values)
                 .execute(&self.pool)
                 .await?;
         }
@@ -272,7 +272,7 @@ impl MyraDb {
 
         let mut tx_guard = self.transaction.lock().await;
         let rows_affected = if let Some(mut tx) = tx_guard.take() {
-            match sqlx::query_with(&query.query, query.values)
+            match sqlx::query_with(AssertSqlSafe(query.query), query.values)
                 .execute(&mut *tx)
                 .await
             {
@@ -283,7 +283,7 @@ impl MyraDb {
                 Err(e) => return Err(rollback_on_error(tx, e).await),
             }
         } else {
-            sqlx::query_with(&query.query, query.values)
+            sqlx::query_with(AssertSqlSafe(query.query), query.values)
                 .execute(&self.pool)
                 .await?
                 .rows_affected()
@@ -297,10 +297,7 @@ impl MyraDb {
 /// original error. Postgres aborts the transaction on the first error, so the
 /// handle would otherwise stay poisoned ("current transaction is aborted")
 /// for every subsequent query sharing this `MyraDb` within the request.
-async fn rollback_on_error(
-    tx: Transaction<'static, Postgres>,
-    err: sqlx::Error,
-) -> sqlx::Error {
+async fn rollback_on_error(tx: Transaction<'static, Postgres>, err: sqlx::Error) -> sqlx::Error {
     if let Err(rollback_err) = tx.rollback().await {
         tracing::warn!(error = %rollback_err, "failed to roll back aborted transaction");
     }

@@ -5,7 +5,6 @@
     { "path": "./tsconfig.node.json" }
   ],
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
       "@/hooks/auth/provider": ["./src/hooks/auth/provider.d.ts"],
       "@/*": ["./src/*"]

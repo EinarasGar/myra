@@ -1,3 +1,5 @@
+use std::any::Any;
+
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
@@ -169,6 +171,15 @@ impl IntoResponse for ApiError {
 
         (status, Json(body)).into_response()
     }
+}
+
+pub fn handle_panic(payload: Box<dyn Any + Send + 'static>) -> Response {
+    let detail = payload
+        .downcast_ref::<&str>()
+        .map(|s| (*s).to_owned())
+        .or_else(|| payload.downcast_ref::<String>().cloned())
+        .unwrap_or_else(|| "non-string panic payload".to_owned());
+    ApiError::Internal(anyhow::anyhow!("handler panicked: {detail}")).into_response()
 }
 
 impl From<business::dtos::ai_chat_error_dto::AiChatError> for ApiError {

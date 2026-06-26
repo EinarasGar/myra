@@ -34,6 +34,17 @@ async fn main() -> Result<()> {
     //Initialize logging and OpenTelemetry
     observability::initialize_tracing_subscriber("myra_api");
 
+    let previous_panic_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        tracing::error!(
+            error.type = "panic",
+            panic = %info,
+            backtrace = %std::backtrace::Backtrace::capture(),
+            "thread panicked"
+        );
+        previous_panic_hook(info);
+    }));
+
     // Run database migrations and feature-gated seed data
     {
         let db = dal::database_connection::MyraDbConnection::new()

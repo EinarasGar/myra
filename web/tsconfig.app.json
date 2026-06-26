@@ -22,7 +22,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
 
-    "baseUrl": ".",
     "paths": {
       "@/hooks/auth/provider": ["./src/hooks/auth/provider.d.ts"],
       "@/*": ["./src/*"]

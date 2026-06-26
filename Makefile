@@ -27,6 +27,10 @@ help: ## Show this help message
 # Setup
 auth ?= noauth
 telemetry ?= local
+# Port scheme: 2<PREFIX><SS> -> 20000-29999. PREFIX = 2-digit worktree id (00 = main,
+# 01-99 = worktree hash); SS = 2-digit service slot (00-99, 100 slots). Add a service
+# by giving it the next free SS. Stays clear of macOS-reserved 5000/7000 and the
+# ephemeral range (49152+).
 .PHONY: setup-env
 setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk telemetry=local|axiom
 	@if [ "$$(git rev-parse --git-common-dir 2>/dev/null)" != "$$(git rev-parse --git-dir 2>/dev/null)" ]; then \
@@ -39,8 +43,8 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk 
 	fi; \
 	case "$(telemetry)" in \
 		local) \
-			OTLP_TRACES_ENDPOINT_VALUE="http://localhost:7$${PREFIX}4/v1/traces"; \
-			OTLP_LOGS_ENDPOINT_VALUE="http://localhost:7$${PREFIX}0/ingest/otlp/v1/logs"; \
+			OTLP_TRACES_ENDPOINT_VALUE="http://localhost:2$${PREFIX}04/v1/traces"; \
+			OTLP_LOGS_ENDPOINT_VALUE="http://localhost:2$${PREFIX}00/ingest/otlp/v1/logs"; \
 			;; \
 		axiom) \
 			OTLP_TRACES_ENDPOINT_VALUE="https://us-east-1.aws.edge.axiom.co/v1/traces"; \
@@ -58,23 +62,23 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk 
 		"RUST_LOG=info,api=debug,business=debug,dal=debug,worker=debug,ai=debug,tower_http=info,rig=info,hyper=warn,h2=warn,reqwest=warn,sqlx=warn" \
 		"JWT_SECRET=devjwtsecret" \
 		"" \
-		"POSTGRES_PORT=7$${PREFIX}1" \
-		"SERVER_PORT=7$${PREFIX}2" \
-		"VITE_PORT=7$${PREFIX}3" \
-		"OTLP_PORT=7$${PREFIX}4" \
+		"POSTGRES_PORT=2$${PREFIX}01" \
+		"SERVER_PORT=2$${PREFIX}02" \
+		"VITE_PORT=2$${PREFIX}03" \
+		"OTLP_PORT=2$${PREFIX}04" \
 		"OTLP_TRACES_ENDPOINT=$${OTLP_TRACES_ENDPOINT_VALUE}" \
 		"OTLP_LOGS_ENDPOINT=$${OTLP_LOGS_ENDPOINT_VALUE}" \
-		"JAEGER_UI_PORT=7$${PREFIX}5" \
-		"SEQ_PORT=7$${PREFIX}0" \
+		"JAEGER_UI_PORT=2$${PREFIX}05" \
+		"SEQ_PORT=2$${PREFIX}00" \
 		"COOKIE_SECURE=false" \
-		"MINIO_PORT=7$${PREFIX}6" \
-		"MINIO_CONSOLE_PORT=7$${PREFIX}7" \
-		"REDIS_PORT=7$${PREFIX}8" \
-		"REDIS_URL=redis://localhost:7$${PREFIX}8" \
-		"MARKET_DATA_PORT=7$${PREFIX}9" \
-		"MARKET_DATA_URL=http://localhost:7$${PREFIX}9" \
+		"MINIO_PORT=2$${PREFIX}06" \
+		"MINIO_CONSOLE_PORT=2$${PREFIX}07" \
+		"REDIS_PORT=2$${PREFIX}08" \
+		"REDIS_URL=redis://localhost:2$${PREFIX}08" \
+		"MARKET_DATA_PORT=2$${PREFIX}09" \
+		"MARKET_DATA_URL=http://localhost:2$${PREFIX}09" \
 		"MARKET_DATA_API_KEY=dev-market-data-key" \
-		"S3_ENDPOINT=http://localhost:7$${PREFIX}6" \
+		"S3_ENDPOINT=http://localhost:2$${PREFIX}06" \
 		"S3_BUCKET_NAME=myra-files" \
 		"S3_ACCESS_KEY=minioadmin" \
 		"S3_SECRET_KEY=minioadmin123" \

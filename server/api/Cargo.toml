@@ -11,37 +11,37 @@ dal = { path = "../dal" }
 macros = {path="../macros"}
 shared = { path = "../shared", features = ["backend"] }
 observability = { path = "../observability" }
-axum = { version = "0.8.8", features = ["query", "macros"] }
+axum = { version = "0.8.9", features = ["query", "macros"] }
 serde = "1.0.228"
-tokio = { version = "1.49.0", features = ["full"] }
+tokio = { version = "1.52.3", features = ["full"] }
 tower = { version = "0.5.3", features = ["full"] }
-tower-http = { version = "0.6.8", features = ["full"] }
-uuid = { version = "1.20.0", features = ["serde", "v4"] }
-anyhow = { version = "1.0.100", features = ["backtrace"] }
-rust_decimal = { version = "1.40.0", features = ["serde-with-arbitrary-precision"] }
-time = { version = "0.3.46", features = ["macros", "formatting", "serde"] }
+tower-http = { version = "0.7.0", features = ["full"] }
+uuid = { version = "1.23.3", features = ["serde", "v4"] }
+anyhow = { version = "1.0.102", features = ["backtrace"] }
+rust_decimal = { version = "1.42.1", features = ["serde-with-arbitrary-precision"] }
+time = { version = "0.3.51", features = ["macros", "formatting", "serde"] }
 tracing = { version = "0.1.44", features = ["async-await", "log"] }
-serde_json = "1.0.149"
-utoipa = { version = "5.4.0", features = ["axum_extras", "time", "uuid", "decimal_float", "config", "debug"] }
+serde_json = "1.0.150"
+utoipa = { version = "5.5.0", features = ["axum_extras", "time", "uuid", "decimal_float", "config", "debug"] }
 utoipa-redoc = { version = "6.0.0", features = ["axum"] }
 utoipa-rapidoc = { version = "6.0.0", features = ["axum"] }
 rust_decimal_macros = "1.40.0"
 paste = "1.0.15"
-axum-extra = { version = "0.12.5", features = ["typed-header"] }
-itertools = "0.14.0"
-reqwest = { version = "0.12", features = ["json"], optional = true }
+axum-extra = { version = "0.12.6", features = ["typed-header"] }
+itertools = "0.15.0"
+reqwest = { version = "0.13", features = ["json"], optional = true }
 async-trait = "0.1.89"
 syn = { version = "2.0", features = ["full", "extra-traits"] }
-quote = "1.0.44"
+quote = "1.0.46"
 proc-macro2 = "1.0.106"
 color-eyre = "0.6.5"
 validator = { version = "0.20", features = ["derive"] }
-jsonwebtoken = { version = "10.3.0", features = ["rust_crypto"] }
+jsonwebtoken = { version = "10.4.0", features = ["rust_crypto"] }
 dotenvy = "0.15"
 thiserror = "2"
 futures = "0.3"
 async-stream = "0.3"
-tower_governor = { version = "0.6", features = ["tracing"] }
+tower_governor = { version = "0.8", features = ["tracing"] }
 
 [features]
 default = ["noauth", "seed"]

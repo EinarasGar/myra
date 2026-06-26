@@ -91,7 +91,7 @@ function serverPartsToMessageParts(
 
   // Stored format: {type: "assistant_tool_call", tool_call_id, name, args, ...}
   if (c.type === "assistant_tool_call") {
-    let parsedInput: unknown = {};
+    let parsedInput: unknown;
     try {
       parsedInput =
         typeof c.args === "string" ? JSON.parse(c.args as string) : c.args;

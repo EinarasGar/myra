@@ -104,7 +104,7 @@ pub fn decide(
 }
 
 pub fn random_global_jitter() -> u64 {
-    use rand::Rng;
+    use rand::RngExt;
     rand::rng().random_range(0..=GLOBAL_JITTER_MAX_SECS)
 }
 

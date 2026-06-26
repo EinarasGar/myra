@@ -354,7 +354,7 @@ mod tests {
     fn prompt_cancelled_is_detected() {
         use rig::agent::StreamingError;
         let cancelled = StreamingError::Prompt(Box::new(PromptError::PromptCancelled {
-            chat_history: Box::new(vec![]),
+            chat_history: vec![],
             reason: "approval".into(),
         }));
         assert!(is_prompt_cancelled(&cancelled));

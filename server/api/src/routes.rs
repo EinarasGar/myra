@@ -14,6 +14,7 @@ use std::sync::Arc;
 use tower_governor::{
     governor::GovernorConfigBuilder, key_extractor::SmartIpKeyExtractor, GovernorLayer,
 };
+use tower_http::catch_panic::CatchPanicLayer;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 use utoipa_rapidoc::RapiDoc;
@@ -117,6 +118,7 @@ pub(crate) fn create_router(state: AppState) -> Router {
         .route("/rapidoc",                      get(serve_rapidoc))
         .merge(build_public_auth_routes())
         .merge(authenticated_routes)
+        .layer(CatchPanicLayer::custom(crate::errors::handle_panic))
         .layer(build_cors_layer())
         .layer(
             TraceLayer::new_for_http()
@@ -180,9 +182,7 @@ fn build_public_auth_routes() -> Router<AppState> {
             post(handlers::auth_handler::post_refresh_token),
         )
         .route("/api/users", post(handlers::user_handler::post_user))
-        .layer(GovernorLayer {
-            config: governor_conf,
-        })
+        .layer(GovernorLayer::new(governor_conf))
 }
 
 fn build_cors_layer() -> CorsLayer {

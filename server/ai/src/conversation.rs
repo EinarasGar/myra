@@ -87,7 +87,7 @@ where
 
         let response_result = agent
             .prompt(prepared.current_message)
-            .with_history(&mut prepared.rig_history.clone())
+            .with_history(prepared.rig_history.clone())
             .extended_details()
             .await;
 
@@ -781,6 +781,13 @@ fn message_to_history_items(message: Message) -> Vec<ChatHistoryMessage> {
             }
             items
         }
+        Message::System { content } => {
+            tracing::warn!(
+                len = content.len(),
+                "dropping unexpected mid-conversation system message (not representable in ChatHistoryMessage)"
+            );
+            Vec::new()
+        }
     }
 }
 
@@ -1018,6 +1025,7 @@ mod tests {
         match msg {
             Message::Assistant { content, .. } => content.iter().count(),
             Message::User { content } => content.iter().count(),
+            Message::System { .. } => 0,
         }
     }
 
@@ -1051,11 +1059,8 @@ mod tests {
 
     #[test]
     fn does_not_merge_across_a_text_message() {
-        let out = coalesce_tool_messages(vec![
-            asst_call("a"),
-            Message::user("hello"),
-            asst_call("b"),
-        ]);
+        let out =
+            coalesce_tool_messages(vec![asst_call("a"), Message::user("hello"), asst_call("b")]);
 
         assert_eq!(out.len(), 3);
     }
