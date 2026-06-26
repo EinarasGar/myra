@@ -1,5 +1,11 @@
 package com.sverto.app.feature.transactions.quickupload
 
+class PreparedQuickUpload(
+    val imageBytes: ByteArray,
+    val thumbnailBytes: ByteArray,
+    val mimeType: String,
+)
+
 data class ProposalSummary(
     val description: String,
     val date: String,

@@ -2,10 +2,12 @@ package com.sverto.app.feature.transactions.quickupload
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import uniffi.sverto_core.AppStore
 import uniffi.sverto_core.QuickUploadsObserver
 import uniffi.sverto_core.QuickUploadsState
@@ -45,8 +47,10 @@ class QuickUploadViewModel(
         thumbnail: ByteArray,
         mimeType: String,
     ) {
-        store.queueQuickUpload(imageData, thumbnail, mimeType)
-        viewModelScope.launch { store.refreshQuickUploads() }
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) { store.queueQuickUpload(imageData, thumbnail, mimeType) }
+            store.refreshQuickUploads()
+        }
     }
 
     fun refresh() {

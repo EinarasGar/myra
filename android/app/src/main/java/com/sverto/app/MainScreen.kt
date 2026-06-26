@@ -1,6 +1,7 @@
 package com.sverto.app
 
-import android.util.Log
+import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -93,7 +94,10 @@ import com.sverto.app.feature.transactions.group.CreateTransactionGroupViewModel
 import com.sverto.app.feature.transactions.group.GroupTransactionItem
 import com.sverto.app.feature.transactions.quickupload.QuickUploadUiItem
 import com.sverto.app.feature.transactions.quickupload.QuickUploadViewModel
+import com.sverto.app.feature.transactions.quickupload.prepareQuickUpload
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import uniffi.sverto_core.ConnectionStatus
 import uniffi.sverto_core.TransactionListItem
 import com.sverto.app.feature.assets.AssetDetailScreen as MarketAssetDetailScreen
@@ -124,6 +128,8 @@ private data class TransactionDetailState(
 )
 @Composable
 fun MainScreen(
+    sharedImageUris: List<Uri> = emptyList(),
+    onSharedImagesHandled: () -> Unit = {},
     transactionsViewModel: TransactionsViewModel = viewModel(factory = SvertoViewModelFactory),
     quickUploadViewModel: QuickUploadViewModel = viewModel(factory = SvertoViewModelFactory),
     aiChatViewModel: AiChatViewModel = viewModel(factory = SvertoViewModelFactory),
@@ -146,35 +152,34 @@ fun MainScreen(
     val context = LocalContext.current
     val appStore = remember { (context.applicationContext as SvertoApp).appStore }
 
+    suspend fun prepareAndQueue(uri: Uri) {
+        val prepared = withContext(Dispatchers.IO) { prepareQuickUpload(context, uri) }
+        if (prepared != null) {
+            quickUploadViewModel.queueUpload(prepared.imageBytes, prepared.thumbnailBytes, prepared.mimeType)
+        } else {
+            Toast.makeText(context, "Couldn't add that image", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     val photoPickerLauncher =
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.PickVisualMedia(),
         ) { uri ->
-            Log.d("MainScreen", "Photo picker result: uri=$uri")
-            if (uri != null) {
-                val contentResolver = context.contentResolver
-                val mimeType = contentResolver.getType(uri) ?: "image/jpeg"
-                val inputStream = contentResolver.openInputStream(uri)
-                val imageBytes = inputStream?.readBytes()
-                inputStream?.close()
-                Log.d("MainScreen", "Image bytes: ${imageBytes?.size}, mimeType=$mimeType")
-                if (imageBytes != null && imageBytes.size <= 10 * 1024 * 1024) {
-                    val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                    if (bitmap != null) {
-                        val thumbWidth = 200
-                        val thumbHeight = (bitmap.height * thumbWidth / bitmap.width.coerceAtLeast(1))
-                        val thumbBitmap = android.graphics.Bitmap.createScaledBitmap(bitmap, thumbWidth, thumbHeight, true)
-                        val thumbStream = java.io.ByteArrayOutputStream()
-                        thumbBitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 60, thumbStream)
-                        val thumbnailBytes = thumbStream.toByteArray()
-                        Log.d("MainScreen", "Queuing upload, thumbnail=${thumbnailBytes.size}")
-                        quickUploadViewModel.queueUpload(imageBytes, thumbnailBytes, mimeType)
-                    } else {
-                        Log.e("MainScreen", "BitmapFactory.decodeByteArray returned null")
-                    }
-                }
-            }
+            if (uri != null) scope.launch { prepareAndQueue(uri) }
         }
+
+    LaunchedEffect(sharedImageUris) {
+        if (sharedImageUris.isNotEmpty()) {
+            val uris = sharedImageUris
+            onSharedImagesHandled()
+            navController.navigate(TopLevelRoute.Transactions.route) {
+                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                launchSingleTop = true
+                restoreState = true
+            }
+            scope.launch { uris.forEach { prepareAndQueue(it) } }
+        }
+    }
 
     fun navigateToDetail(
         transaction: TransactionListItem,
