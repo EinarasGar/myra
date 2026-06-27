@@ -17,6 +17,7 @@ pub mod ai_conversation_service;
 pub mod ai_data_service;
 pub mod ai_embedding_service;
 pub mod ai_quick_upload_service;
+pub mod ai_usage_service;
 pub mod asset_rates_service;
 pub mod asset_service;
 pub mod auth_service;

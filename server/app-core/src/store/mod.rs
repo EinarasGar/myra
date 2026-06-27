@@ -2,6 +2,7 @@ pub mod account_detail;
 pub mod account_transactions;
 pub mod accounts;
 pub mod ai_chat;
+pub mod ai_usage;
 pub mod asset_detail;
 pub mod assets;
 pub mod categories;
@@ -850,6 +851,13 @@ impl AppStore {
         let url = format!("{}/api/auth/me", self.infra.base_url);
         let body = self.infra.persistent_cache.get(&url)?;
         serde_json::from_str(&body).ok()
+    }
+
+    // ── AI Usage ──────────────────────────────────────────────────────────
+
+    pub async fn get_ai_usage(&self) -> Result<crate::models::AiUsage, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        ai_usage::load_ai_usage(&self.infra, token.as_deref()).await
     }
 
     // ── AI Chat ───────────────────────────────────────────────────────────

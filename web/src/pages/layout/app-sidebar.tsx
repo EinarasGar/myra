@@ -89,6 +89,10 @@ const navMain = [
         title: "Base Currency",
         url: "/settings/base-currency",
       },
+      {
+        title: "AI Usage",
+        url: "/settings/ai-usage",
+      },
     ],
   },
 ];

@@ -77,3 +77,6 @@ service_state!(AiConversationService);
 
 use business::service_collection::ai_quick_upload_service::AiQuickUploadService;
 service_state!(AiQuickUploadService);
+
+use business::service_collection::ai_usage_service::AiUsageService;
+service_state!(AiUsageService);

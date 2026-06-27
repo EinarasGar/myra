@@ -116,4 +116,15 @@ mod tests {
         assert_eq!(result.global_usage, [100, 200, 300, 400]);
         assert_eq!(result.global_limits, [500000, 500000, 10000000, 10000000]);
     }
+
+    #[test]
+    fn current_window_keys_have_expected_shape() {
+        let hourly = current_hourly_window_key();
+        let monthly = current_monthly_window_key();
+        assert_eq!(hourly.len(), 10);
+        assert_eq!(monthly.len(), 6);
+        assert!(hourly.starts_with(&monthly));
+        assert!(hourly.chars().all(|c| c.is_ascii_digit()));
+        assert!(monthly.chars().all(|c| c.is_ascii_digit()));
+    }
 }

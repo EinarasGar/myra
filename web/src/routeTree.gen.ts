@@ -30,6 +30,7 @@ import { Route as AuthUserAssetsAssetIdRouteImport } from './routes/_auth.user-a
 import { Route as AuthTransactionsIndividualRouteImport } from './routes/_auth.transactions.individual'
 import { Route as AuthSettingsCategoriesRouteImport } from './routes/_auth.settings.categories'
 import { Route as AuthSettingsBaseCurrencyRouteImport } from './routes/_auth.settings.base-currency'
+import { Route as AuthSettingsAiUsageRouteImport } from './routes/_auth.settings.ai-usage'
 import { Route as AuthSettingsAccountsRouteImport } from './routes/_auth.settings.accounts'
 import { Route as AuthGlobalAssetsAssetIdRouteImport } from './routes/_auth.global-assets.$assetId'
 import { Route as AuthAccountsAccountIdRouteImport } from './routes/_auth.accounts.$accountId'
@@ -140,6 +141,11 @@ const AuthSettingsBaseCurrencyRoute =
     path: '/base-currency',
     getParentRoute: () => AuthSettingsRoute,
   } as any)
+const AuthSettingsAiUsageRoute = AuthSettingsAiUsageRouteImport.update({
+  id: '/ai-usage',
+  path: '/ai-usage',
+  getParentRoute: () => AuthSettingsRoute,
+} as any)
 const AuthSettingsAccountsRoute = AuthSettingsAccountsRouteImport.update({
   id: '/accounts',
   path: '/accounts',
@@ -173,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/accounts/$accountId': typeof AuthAccountsAccountIdRoute
   '/global-assets/$assetId': typeof AuthGlobalAssetsAssetIdRoute
   '/settings/accounts': typeof AuthSettingsAccountsRoute
+  '/settings/ai-usage': typeof AuthSettingsAiUsageRoute
   '/settings/base-currency': typeof AuthSettingsBaseCurrencyRoute
   '/settings/categories': typeof AuthSettingsCategoriesRoute
   '/transactions/individual': typeof AuthTransactionsIndividualRoute
@@ -195,6 +202,7 @@ export interface FileRoutesByTo {
   '/accounts/$accountId': typeof AuthAccountsAccountIdRoute
   '/global-assets/$assetId': typeof AuthGlobalAssetsAssetIdRoute
   '/settings/accounts': typeof AuthSettingsAccountsRoute
+  '/settings/ai-usage': typeof AuthSettingsAiUsageRoute
   '/settings/base-currency': typeof AuthSettingsBaseCurrencyRoute
   '/settings/categories': typeof AuthSettingsCategoriesRoute
   '/transactions/individual': typeof AuthTransactionsIndividualRoute
@@ -222,6 +230,7 @@ export interface FileRoutesById {
   '/_auth/accounts/$accountId': typeof AuthAccountsAccountIdRoute
   '/_auth/global-assets/$assetId': typeof AuthGlobalAssetsAssetIdRoute
   '/_auth/settings/accounts': typeof AuthSettingsAccountsRoute
+  '/_auth/settings/ai-usage': typeof AuthSettingsAiUsageRoute
   '/_auth/settings/base-currency': typeof AuthSettingsBaseCurrencyRoute
   '/_auth/settings/categories': typeof AuthSettingsCategoriesRoute
   '/_auth/transactions/individual': typeof AuthTransactionsIndividualRoute
@@ -249,6 +258,7 @@ export interface FileRouteTypes {
     | '/accounts/$accountId'
     | '/global-assets/$assetId'
     | '/settings/accounts'
+    | '/settings/ai-usage'
     | '/settings/base-currency'
     | '/settings/categories'
     | '/transactions/individual'
@@ -271,6 +281,7 @@ export interface FileRouteTypes {
     | '/accounts/$accountId'
     | '/global-assets/$assetId'
     | '/settings/accounts'
+    | '/settings/ai-usage'
     | '/settings/base-currency'
     | '/settings/categories'
     | '/transactions/individual'
@@ -297,6 +308,7 @@ export interface FileRouteTypes {
     | '/_auth/accounts/$accountId'
     | '/_auth/global-assets/$assetId'
     | '/_auth/settings/accounts'
+    | '/_auth/settings/ai-usage'
     | '/_auth/settings/base-currency'
     | '/_auth/settings/categories'
     | '/_auth/transactions/individual'
@@ -462,6 +474,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSettingsBaseCurrencyRouteImport
       parentRoute: typeof AuthSettingsRoute
     }
+    '/_auth/settings/ai-usage': {
+      id: '/_auth/settings/ai-usage'
+      path: '/ai-usage'
+      fullPath: '/settings/ai-usage'
+      preLoaderRoute: typeof AuthSettingsAiUsageRouteImport
+      parentRoute: typeof AuthSettingsRoute
+    }
     '/_auth/settings/accounts': {
       id: '/_auth/settings/accounts'
       path: '/accounts'
@@ -501,12 +520,14 @@ const AuthGlobalAssetsRouteWithChildren =
 
 interface AuthSettingsRouteChildren {
   AuthSettingsAccountsRoute: typeof AuthSettingsAccountsRoute
+  AuthSettingsAiUsageRoute: typeof AuthSettingsAiUsageRoute
   AuthSettingsBaseCurrencyRoute: typeof AuthSettingsBaseCurrencyRoute
   AuthSettingsCategoriesRoute: typeof AuthSettingsCategoriesRoute
 }
 
 const AuthSettingsRouteChildren: AuthSettingsRouteChildren = {
   AuthSettingsAccountsRoute: AuthSettingsAccountsRoute,
+  AuthSettingsAiUsageRoute: AuthSettingsAiUsageRoute,
   AuthSettingsBaseCurrencyRoute: AuthSettingsBaseCurrencyRoute,
   AuthSettingsCategoriesRoute: AuthSettingsCategoriesRoute,
 }

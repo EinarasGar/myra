@@ -76,6 +76,7 @@ pub(crate) fn create_router(state: AppState) -> Router {
         .route("/ai/conversations/{conversation_id}/messages", get(handlers::ai_conversation_handler::get_messages)
                                                                     .post(handlers::ai_conversation_handler::send_message))
         .route("/ai/conversations/{conversation_id}/retry",    post(handlers::ai_conversation_handler::retry_message))
+        .route("/ai/usage",                                    get(handlers::ai_usage_handler::get_usage))
         .route("/ai/quick-upload",                             post(handlers::ai_quick_upload_handler::create_quick_upload)
                                                                     .get(handlers::ai_quick_upload_handler::list_quick_uploads))
         .route("/ai/quick-upload/{quick_upload_id}",           get(handlers::ai_quick_upload_handler::get_quick_upload))

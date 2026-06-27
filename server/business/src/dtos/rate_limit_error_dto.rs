@@ -132,3 +132,38 @@ pub fn monthly_reset_timestamp() -> OffsetDateTime {
         .map(|d| d.with_time(time::Time::MIDNIGHT).assume_utc())
         .unwrap_or(now)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn hourly_reset_is_next_top_of_hour_utc() {
+        let now = OffsetDateTime::now_utc();
+        let reset = hourly_reset_timestamp();
+        assert_eq!(reset.minute(), 0);
+        assert_eq!(reset.second(), 0);
+        assert_eq!(reset.nanosecond(), 0);
+        assert_eq!(reset.offset(), time::UtcOffset::UTC);
+        assert!(reset > now);
+        assert!(reset - now <= time::Duration::hours(1));
+    }
+
+    #[test]
+    fn monthly_reset_is_first_of_next_month_utc() {
+        let now = OffsetDateTime::now_utc();
+        let reset = monthly_reset_timestamp();
+        assert_eq!(reset.day(), 1);
+        assert_eq!(reset.hour(), 0);
+        assert_eq!(reset.minute(), 0);
+        assert_eq!(reset.second(), 0);
+        assert_eq!(reset.offset(), time::UtcOffset::UTC);
+        assert!(reset > now);
+        let expected_month = if now.month() == time::Month::December {
+            time::Month::January
+        } else {
+            now.month().next()
+        };
+        assert_eq!(reset.month(), expected_month);
+    }
+}

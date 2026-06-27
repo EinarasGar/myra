@@ -84,7 +84,7 @@ impl AuthService {
     pub fn generate_refresh_token() -> String {
         use base64::engine::general_purpose::URL_SAFE_NO_PAD;
         use base64::Engine;
-        use rand::Rng;
+        use rand::RngExt;
 
         let mut bytes = [0u8; 32];
         rand::rng().fill(&mut bytes);

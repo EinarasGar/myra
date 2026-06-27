@@ -27,4 +27,5 @@ export const QueryKeys = {
   COMBINED_TRANSACTIONS: "combined-transactions",
   QUICK_UPLOADS: "quick-uploads",
   QUICK_UPLOAD: "quick-upload",
+  AI_USAGE: "ai-usage",
 };

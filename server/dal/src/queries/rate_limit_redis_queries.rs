@@ -19,6 +19,8 @@ static RELEASE_SCRIPT: Lazy<redis::Script> =
     Lazy::new(|| redis::Script::new(RELEASE_RESERVATION_LUA));
 static CONCURRENCY_SCRIPT: Lazy<redis::Script> =
     Lazy::new(|| redis::Script::new(ACQUIRE_CONCURRENCY_LUA));
+static READ_USER_USAGE_SCRIPT: Lazy<redis::Script> =
+    Lazy::new(|| redis::Script::new(READ_USER_USAGE_LUA));
 
 pub fn max_concurrent_requests() -> i64 {
     MAX_CONCURRENT_REQUESTS
@@ -61,6 +63,15 @@ pub fn release_reservation(
         .key(&keys[4])
         .key(&keys[6])
         .arg_int(estimated_input_tokens)
+}
+
+pub fn read_user_usage(user_id: Uuid, hourly_key: &str, monthly_key: &str) -> RedisScript {
+    let keys = build_usage_keys(user_id, hourly_key, monthly_key);
+    RedisScript::new(&READ_USER_USAGE_SCRIPT)
+        .key(&keys[0])
+        .key(&keys[1])
+        .key(&keys[2])
+        .key(&keys[3])
 }
 
 pub fn acquire_concurrency(user_id: Uuid) -> RedisScript {
@@ -277,3 +288,38 @@ local count = redis.call('INCR', KEYS[1])
 redis.call('EXPIRE', KEYS[1], tonumber(ARGV[1]))
 return count
 "#;
+
+const READ_USER_USAGE_LUA: &str = r#"
+local result = {}
+for i = 1, 4 do
+    result[i] = tonumber(redis.call('GET', KEYS[i]) or '0')
+end
+return result
+"#;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn read_user_usage_keys_match_enforcement_layout() {
+        let user_id = Uuid::nil();
+        let keys = build_usage_keys(user_id, "2026062714", "202606");
+        assert_eq!(
+            keys[0],
+            format!("ai:rl:user:{}:hourly:2026062714:input", user_id)
+        );
+        assert_eq!(
+            keys[1],
+            format!("ai:rl:user:{}:hourly:2026062714:output", user_id)
+        );
+        assert_eq!(
+            keys[2],
+            format!("ai:rl:user:{}:monthly:202606:input", user_id)
+        );
+        assert_eq!(
+            keys[3],
+            format!("ai:rl:user:{}:monthly:202606:output", user_id)
+        );
+    }
+}

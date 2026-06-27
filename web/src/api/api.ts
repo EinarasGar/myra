@@ -654,6 +654,69 @@ export interface AiError {
 /**
  *
  * @export
+ * @interface AiUsageMetric
+ */
+export interface AiUsageMetric {
+  /**
+   *
+   * @type {number}
+   * @memberof AiUsageMetric
+   */
+  limit: number;
+  /**
+   *
+   * @type {number}
+   * @memberof AiUsageMetric
+   */
+  used: number;
+}
+/**
+ *
+ * @export
+ * @interface AiUsageResponse
+ */
+export interface AiUsageResponse {
+  /**
+   *
+   * @type {AiUsageWindow}
+   * @memberof AiUsageResponse
+   */
+  hourly: AiUsageWindow;
+  /**
+   *
+   * @type {AiUsageWindow}
+   * @memberof AiUsageResponse
+   */
+  monthly: AiUsageWindow;
+}
+/**
+ *
+ * @export
+ * @interface AiUsageWindow
+ */
+export interface AiUsageWindow {
+  /**
+   *
+   * @type {AiUsageMetric}
+   * @memberof AiUsageWindow
+   */
+  input: AiUsageMetric;
+  /**
+   *
+   * @type {AiUsageMetric}
+   * @memberof AiUsageWindow
+   */
+  output: AiUsageMetric;
+  /**
+   *
+   * @type {string}
+   * @memberof AiUsageWindow
+   */
+  reset_at: string;
+}
+/**
+ *
+ * @export
  * @interface ApiErrorResponse
  */
 export interface ApiErrorResponse {
@@ -5980,6 +6043,173 @@ export interface UserMetadata {
    * @memberof UserMetadata
    */
   username: string;
+}
+
+/**
+ * AIApi - axios parameter creator
+ * @export
+ */
+export const AIApiAxiosParamCreator = function (configuration?: Configuration) {
+  return {
+    /**
+     *
+     * @param {string} userId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getUsage: async (
+      userId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("getUsage", "userId", userId);
+      const localVarPath = `/api/users/{user_id}/ai/usage`.replace(
+        `{${"user_id"}}`,
+        encodeURIComponent(String(userId)),
+      );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+  };
+};
+
+/**
+ * AIApi - functional programming interface
+ * @export
+ */
+export const AIApiFp = function (configuration?: Configuration) {
+  const localVarAxiosParamCreator = AIApiAxiosParamCreator(configuration);
+  return {
+    /**
+     *
+     * @param {string} userId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getUsage(
+      userId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<AiUsageResponse>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.getUsage(
+        userId,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["AIApi.getUsage"]?.[localVarOperationServerIndex]
+          ?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+  };
+};
+
+/**
+ * AIApi - factory interface
+ * @export
+ */
+export const AIApiFactory = function (
+  configuration?: Configuration,
+  basePath?: string,
+  axios?: AxiosInstance,
+) {
+  const localVarFp = AIApiFp(configuration);
+  return {
+    /**
+     *
+     * @param {string} userId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getUsage(
+      userId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<AiUsageResponse> {
+      return localVarFp
+        .getUsage(userId, options)
+        .then((request) => request(axios, basePath));
+    },
+  };
+};
+
+/**
+ * AIApi - interface
+ * @export
+ * @interface AIApi
+ */
+export interface AIApiInterface {
+  /**
+   *
+   * @param {string} userId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AIApiInterface
+   */
+  getUsage(
+    userId: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<AiUsageResponse>;
+}
+
+/**
+ * AIApi - object-oriented interface
+ * @export
+ * @class AIApi
+ * @extends {BaseAPI}
+ */
+export class AIApi extends BaseAPI implements AIApiInterface {
+  /**
+   *
+   * @param {string} userId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AIApi
+   */
+  public getUsage(userId: string, options?: RawAxiosRequestConfig) {
+    return AIApiFp(this.configuration)
+      .getUsage(userId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
 }
 
 /**

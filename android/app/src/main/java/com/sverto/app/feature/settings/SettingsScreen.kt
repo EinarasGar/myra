@@ -1,9 +1,14 @@
 package com.sverto.app.feature.settings
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -18,6 +23,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -38,15 +44,24 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.clerk.api.Clerk
 import com.sverto.app.BuildConfig
 import com.sverto.app.SvertoApp
+import com.sverto.app.core.SvertoViewModelFactory
 import com.sverto.app.core.icons.LucideIcon
 import com.sverto.app.core.theme.LocalClerkTheme
 import com.sverto.app.feature.assets.components.CurrencyPickerSheet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import uniffi.sverto_core.AiUsageWindow
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -55,6 +70,7 @@ fun SettingsScreen(
     onCustomAssets: () -> Unit,
     onCustomCategories: () -> Unit,
     modifier: Modifier = Modifier,
+    aiUsageViewModel: AiUsageViewModel = viewModel(factory = SvertoViewModelFactory),
 ) {
     val isClerk = BuildConfig.CLERK_PUBLISHABLE_KEY.isNotBlank()
     val user = if (isClerk) Clerk.user else null
@@ -69,6 +85,7 @@ fun SettingsScreen(
     var showCurrencyPicker by remember { mutableStateOf(false) }
     var baseCurrencyId by remember { mutableStateOf(appStore.getCachedMe()?.defaultAsset?.id) }
     var baseCurrencyTicker by remember { mutableStateOf<String?>(null) }
+    val aiUsageState by aiUsageViewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(baseCurrencyId) {
         val id = baseCurrencyId ?: return@LaunchedEffect
@@ -140,6 +157,7 @@ fun SettingsScreen(
                 if (isClerk) {
                     ProfileSettingsRow()
                 }
+                AiUsageSection(state = aiUsageState)
             }
             if (showCurrencyPicker) {
                 CurrencyPickerSheet(
@@ -241,6 +259,102 @@ private fun SettingsRow(
             )
         },
     )
+}
+
+@Composable
+private fun AiUsageSection(state: AiUsageUiState) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        HorizontalDivider(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            color = MaterialTheme.colorScheme.outlineVariant,
+        )
+        Text(
+            text = "AI Usage",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        )
+        val usage = state.usage
+        when {
+            usage != null -> {
+                AiUsageWindowGroup(title = "Hourly", window = usage.hourly)
+                AiUsageWindowGroup(title = "Monthly", window = usage.monthly)
+            }
+            else -> {
+                Text(
+                    text = state.error ?: "Loading usage…",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+            }
+        }
+        Spacer(Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun AiUsageWindowGroup(
+    title: String,
+    window: AiUsageWindow,
+) {
+    Column(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(text = title, style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = "Resets ${formatReset(window.resetAt)}",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        AiUsageBar(label = "Input", used = window.input.used, limit = window.input.limit)
+        AiUsageBar(label = "Output", used = window.output.used, limit = window.output.limit)
+    }
+}
+
+@Composable
+private fun AiUsageBar(
+    label: String,
+    used: Long,
+    limit: Long,
+) {
+    val percent = usagePercent(used, limit)
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(text = label, style = MaterialTheme.typography.labelLarge)
+            Text(
+                text = "$percent%",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        LinearProgressIndicator(
+            progress = { percent / 100f },
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+        )
+    }
+}
+
+private fun usagePercent(
+    used: Long,
+    limit: Long,
+): Int =
+    if (limit <= 0L) {
+        0
+    } else {
+        ((used.toDouble() / limit.toDouble()) * 100).roundToInt().coerceIn(0, 100)
+    }
+
+private fun formatReset(epochSeconds: Long): String {
+    val zoned = Instant.ofEpochSecond(epochSeconds).atZone(ZoneId.systemDefault())
+    return zoned.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT))
 }
 
 @Composable

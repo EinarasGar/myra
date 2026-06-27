@@ -10,6 +10,7 @@ pub mod ai_conversation_dto;
 pub mod ai_error_dto;
 pub mod ai_message_dto;
 pub mod ai_quick_upload_dto;
+pub mod ai_usage_dto;
 pub mod asset_dto;
 pub mod asset_id_date_dto;
 pub mod asset_insert_dto;

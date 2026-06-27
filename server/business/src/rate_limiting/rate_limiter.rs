@@ -11,6 +11,7 @@ use dal::redis_connection::RedisConnection;
 use uuid::Uuid;
 
 use super::constants::WARNING_THRESHOLD_PCT;
+use crate::dtos::ai_usage_dto::{AiUsageDto, AiUsageMetricDto, AiUsageWindowDto};
 use crate::dtos::rate_limit_error_dto::*;
 
 #[derive(Clone)]
@@ -22,6 +23,104 @@ pub struct RateLimiter {
 impl RateLimiter {
     pub fn new(redis: RedisConnection, db: MyraDb) -> Self {
         Self { redis, db }
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
+    pub async fn get_usage(&self, user_id: Uuid) -> anyhow::Result<AiUsageDto> {
+        let hourly_key = current_hourly_window_key();
+        let monthly_key = current_monthly_window_key();
+
+        let limits = self.load_user_limits(user_id).await?;
+        let usage = self
+            .read_live_usage(user_id, &hourly_key, &monthly_key)
+            .await;
+
+        Ok(AiUsageDto {
+            hourly: AiUsageWindowDto {
+                input: AiUsageMetricDto {
+                    used: usage[0],
+                    limit: limits.hourly_input_tokens,
+                },
+                output: AiUsageMetricDto {
+                    used: usage[1],
+                    limit: limits.hourly_output_tokens,
+                },
+                reset_at: hourly_reset_timestamp(),
+            },
+            monthly: AiUsageWindowDto {
+                input: AiUsageMetricDto {
+                    used: usage[2],
+                    limit: limits.monthly_input_tokens,
+                },
+                output: AiUsageMetricDto {
+                    used: usage[3],
+                    limit: limits.monthly_output_tokens,
+                },
+                reset_at: monthly_reset_timestamp(),
+            },
+        })
+    }
+
+    async fn load_user_limits(&self, user_id: Uuid) -> anyhow::Result<TokenRateLimitModel> {
+        if let Some(limits) = self
+            .db
+            .fetch_optional::<TokenRateLimitModel>(rate_limit_queries::get_user_rate_limits(
+                user_id,
+            ))
+            .await?
+        {
+            return Ok(limits);
+        }
+        Ok(self
+            .db
+            .fetch_one::<TokenRateLimitModel>(rate_limit_queries::get_default_rate_limits())
+            .await?)
+    }
+
+    async fn read_live_usage(
+        &self,
+        user_id: Uuid,
+        hourly_key: &str,
+        monthly_key: &str,
+    ) -> [i64; 4] {
+        let cmd = rate_limit_redis_queries::read_user_usage(user_id, hourly_key, monthly_key);
+        if let Some(vals) = self.redis.execute_script_vec(cmd).await {
+            if vals.len() >= 4 {
+                return [vals[0], vals[1], vals[2], vals[3]];
+            }
+        }
+        self.read_usage_db_fallback(user_id, hourly_key, monthly_key)
+            .await
+    }
+
+    async fn read_usage_db_fallback(
+        &self,
+        user_id: Uuid,
+        hourly_key: &str,
+        monthly_key: &str,
+    ) -> [i64; 4] {
+        let hourly = self
+            .db
+            .fetch_optional::<TokenUsageModel>(rate_limit_queries::get_user_usage(
+                user_id, "hourly", hourly_key,
+            ))
+            .await
+            .unwrap_or(None);
+        let monthly = self
+            .db
+            .fetch_optional::<TokenUsageModel>(rate_limit_queries::get_user_usage(
+                user_id,
+                "monthly",
+                monthly_key,
+            ))
+            .await
+            .unwrap_or(None);
+        [
+            hourly.as_ref().map(|u| u.input_tokens).unwrap_or(0),
+            hourly.as_ref().map(|u| u.output_tokens).unwrap_or(0),
+            monthly.as_ref().map(|u| u.input_tokens).unwrap_or(0),
+            monthly.as_ref().map(|u| u.output_tokens).unwrap_or(0),
+        ]
     }
 
     /// Checks quota and atomically reserves estimated input tokens.
@@ -826,5 +925,140 @@ mod tests {
 
         let limiter = RateLimiter::new(redis, db);
         limiter.record_usage(test_user_id(), 500, 50, 400).await;
+    }
+
+    // --- get_usage tests ---
+
+    #[tokio::test]
+    async fn get_usage_uses_redis_live_counters_with_default_limits() {
+        let mut redis = RedisConnection::default();
+        redis
+            .expect_execute_script_vec()
+            .returning(|_| Some(vec![10, 20, 30, 40]));
+
+        let mut db = MyraDb::default();
+        db.expect_fetch_optional::<TokenRateLimitModel>()
+            .returning(|_| Ok(None));
+        let dl = default_limits();
+        db.expect_fetch_one::<TokenRateLimitModel>()
+            .returning(move |_| Ok(dl.clone()));
+
+        let limiter = RateLimiter::new(redis, db);
+        let usage = limiter.get_usage(test_user_id()).await.unwrap();
+
+        assert_eq!(usage.hourly.input.used, 10);
+        assert_eq!(usage.hourly.output.used, 20);
+        assert_eq!(usage.monthly.input.used, 30);
+        assert_eq!(usage.monthly.output.used, 40);
+        assert_eq!(usage.hourly.input.limit, 50000);
+        assert_eq!(usage.hourly.output.limit, 50000);
+        assert_eq!(usage.monthly.input.limit, 1000000);
+        assert_eq!(usage.monthly.output.limit, 1000000);
+    }
+
+    #[tokio::test]
+    async fn get_usage_missing_redis_keys_are_zero() {
+        let mut redis = RedisConnection::default();
+        redis
+            .expect_execute_script_vec()
+            .returning(|_| Some(vec![0, 0, 0, 0]));
+
+        let mut db = MyraDb::default();
+        db.expect_fetch_optional::<TokenRateLimitModel>()
+            .returning(|_| Ok(None));
+        let dl = default_limits();
+        db.expect_fetch_one::<TokenRateLimitModel>()
+            .returning(move |_| Ok(dl.clone()));
+
+        let limiter = RateLimiter::new(redis, db);
+        let usage = limiter.get_usage(test_user_id()).await.unwrap();
+
+        assert_eq!(usage.hourly.input.used, 0);
+        assert_eq!(usage.hourly.output.used, 0);
+        assert_eq!(usage.monthly.input.used, 0);
+        assert_eq!(usage.monthly.output.used, 0);
+    }
+
+    #[tokio::test]
+    async fn get_usage_prefers_user_override_limits() {
+        let mut redis = RedisConnection::default();
+        redis
+            .expect_execute_script_vec()
+            .returning(|_| Some(vec![1, 2, 3, 4]));
+
+        let mut db = MyraDb::default();
+        let override_limits = TokenRateLimitModel {
+            id: 2,
+            user_id: Some(test_user_id()),
+            hourly_input_tokens: 111,
+            hourly_output_tokens: 222,
+            monthly_input_tokens: 333,
+            monthly_output_tokens: 444,
+        };
+        db.expect_fetch_optional::<TokenRateLimitModel>()
+            .returning(move |_| Ok(Some(override_limits.clone())));
+
+        let limiter = RateLimiter::new(redis, db);
+        let usage = limiter.get_usage(test_user_id()).await.unwrap();
+
+        assert_eq!(usage.hourly.input.limit, 111);
+        assert_eq!(usage.hourly.output.limit, 222);
+        assert_eq!(usage.monthly.input.limit, 333);
+        assert_eq!(usage.monthly.output.limit, 444);
+    }
+
+    #[tokio::test]
+    async fn get_usage_falls_back_to_postgres_when_redis_unavailable() {
+        let mut redis = RedisConnection::default();
+        redis.expect_execute_script_vec().returning(|_| None);
+
+        let mut db = MyraDb::default();
+        db.expect_fetch_optional::<TokenRateLimitModel>()
+            .returning(|_| Ok(None));
+        let dl = default_limits();
+        db.expect_fetch_one::<TokenRateLimitModel>()
+            .returning(move |_| Ok(dl.clone()));
+        db.expect_fetch_optional::<TokenUsageModel>()
+            .returning(|_| {
+                Ok(Some(TokenUsageModel {
+                    id: 1,
+                    user_id: test_user_id(),
+                    window_type: "hourly".to_string(),
+                    window_key: "2026062714".to_string(),
+                    input_tokens: 777,
+                    output_tokens: 88,
+                }))
+            });
+
+        let limiter = RateLimiter::new(redis, db);
+        let usage = limiter.get_usage(test_user_id()).await.unwrap();
+
+        assert_eq!(usage.hourly.input.used, 777);
+        assert_eq!(usage.hourly.output.used, 88);
+        assert_eq!(usage.monthly.input.used, 777);
+        assert_eq!(usage.monthly.output.used, 88);
+    }
+
+    #[tokio::test]
+    async fn get_usage_db_fallback_missing_rows_are_zero() {
+        let mut redis = RedisConnection::default();
+        redis.expect_execute_script_vec().returning(|_| None);
+
+        let mut db = MyraDb::default();
+        db.expect_fetch_optional::<TokenRateLimitModel>()
+            .returning(|_| Ok(None));
+        let dl = default_limits();
+        db.expect_fetch_one::<TokenRateLimitModel>()
+            .returning(move |_| Ok(dl.clone()));
+        db.expect_fetch_optional::<TokenUsageModel>()
+            .returning(|_| Ok(None));
+
+        let limiter = RateLimiter::new(redis, db);
+        let usage = limiter.get_usage(test_user_id()).await.unwrap();
+
+        assert_eq!(usage.hourly.input.used, 0);
+        assert_eq!(usage.hourly.output.used, 0);
+        assert_eq!(usage.monthly.input.used, 0);
+        assert_eq!(usage.monthly.output.used, 0);
     }
 }

@@ -121,6 +121,7 @@ mod modifiers;
         super::handlers::ai_quick_upload_handler::send_correction,
         super::handlers::ai_quick_upload_handler::retry_quick_upload,
         super::handlers::ai_quick_upload_handler::complete,
+        super::handlers::ai_usage_handler::get_usage,
     ),
     components(
         schemas(RequiredEntryId),

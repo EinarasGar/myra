@@ -505,3 +505,24 @@ pub enum ChatStreamEvent {
 pub struct FileUploadResult {
     pub file_id: String,
 }
+
+// ── AI Usage ─────────────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct AiUsageMetric {
+    pub used: i64,
+    pub limit: i64,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct AiUsageWindow {
+    pub input: AiUsageMetric,
+    pub output: AiUsageMetric,
+    pub reset_at: i64,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct AiUsage {
+    pub hourly: AiUsageWindow,
+    pub monthly: AiUsageWindow,
+}
