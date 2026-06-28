@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use super::ToolError;
+use super::{ToolError, ToolMode};
 use crate::data_provider::AiDataProvider;
 use crate::models::aggregate::AggregateParams;
 use crate::models::tool_output::{AggregateGroup, AggregateResult, AggregateTransactionsArgs};
@@ -9,11 +9,16 @@ use serde_json::json;
 
 pub struct AggregateTransactionsTool<D: AiDataProvider> {
     data: Arc<D>,
+    mode: ToolMode,
 }
 
 impl<D: AiDataProvider> AggregateTransactionsTool<D> {
     pub fn new(data: Arc<D>) -> Self {
-        Self { data }
+        Self::with_mode(data, ToolMode::Normal)
+    }
+
+    pub fn with_mode(data: Arc<D>, mode: ToolMode) -> Self {
+        Self { data, mode }
     }
 }
 
@@ -25,9 +30,13 @@ impl<D: AiDataProvider> Tool for AggregateTransactionsTool<D> {
     type Output = String;
 
     async fn definition(&self, _prompt: String) -> ToolDefinition {
+        let description = match self.mode {
+            ToolMode::Normal => "Get spending or income totals grouped by a dimension. Use this for summary questions like 'how much did I spend by category' or 'monthly spending breakdown'. Negative amounts are spending, positive amounts are income.",
+            ToolMode::CodeMode => "Spending/income totals grouped by a dimension. args {group_by (category|description|account|month), date_from?, date_to?, description_filter?}. Each row: {group_name, total_amount (number, negative = spending), transaction_count}.",
+        };
         ToolDefinition {
             name: Self::NAME.to_string(),
-            description: "Get spending or income totals grouped by a dimension. Use this for summary questions like 'how much did I spend by category' or 'monthly spending breakdown'. Negative amounts are spending, positive amounts are income.".to_string(),
+            description: description.to_string(),
             parameters: json!({
                 "type": "object",
                 "properties": {
@@ -69,17 +78,21 @@ impl<D: AiDataProvider> Tool for AggregateTransactionsTool<D> {
             .await
             .map_err(|e| ToolError(e.to_string()))?;
 
-        let result = AggregateResult {
-            groups: groups
-                .into_iter()
-                .map(|g| AggregateGroup {
-                    group_name: g.group_name,
-                    total_amount: g.total_amount,
-                    transaction_count: g.transaction_count,
-                })
-                .collect(),
-        };
-
-        serde_json::to_string(&result).map_err(Into::into)
+        match self.mode {
+            ToolMode::CodeMode => serde_json::to_string(&groups).map_err(Into::into),
+            ToolMode::Normal => {
+                let result = AggregateResult {
+                    groups: groups
+                        .into_iter()
+                        .map(|g| AggregateGroup {
+                            group_name: g.group_name,
+                            total_amount: g.total_amount,
+                            transaction_count: g.transaction_count,
+                        })
+                        .collect(),
+                };
+                serde_json::to_string(&result).map_err(Into::into)
+            }
+        }
     }
 }

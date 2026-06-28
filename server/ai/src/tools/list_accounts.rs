@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use super::ToolError;
+use super::{ToolError, ToolMode};
 use crate::data_provider::AiDataProvider;
 use crate::models::tool_output::ListAccountsArgs;
 use rig::{completion::request::ToolDefinition, tool::Tool};
@@ -12,6 +12,10 @@ pub struct ListAccountsTool<D: AiDataProvider> {
 
 impl<D: AiDataProvider> ListAccountsTool<D> {
     pub fn new(data: Arc<D>) -> Self {
+        Self { data }
+    }
+
+    pub fn with_mode(data: Arc<D>, _mode: ToolMode) -> Self {
         Self { data }
     }
 }
@@ -26,7 +30,7 @@ impl<D: AiDataProvider> Tool for ListAccountsTool<D> {
     async fn definition(&self, _prompt: String) -> ToolDefinition {
         ToolDefinition {
             name: Self::NAME.to_string(),
-            description: "List all active accounts for the user. Returns each account's name, type, liquidity type, and identifiers (typed: card_last4, account_number, iban).".to_string(),
+            description: "List the user's accounts. Returns each account's name, type, liquidity type, and identifiers (typed: card_last4, account_number, iban). Each row: {account_id, account_name, account_type, liquidity_type, identifiers: [{kind, value}]}.".to_string(),
             parameters: json!({
                 "type": "object",
                 "properties": {},

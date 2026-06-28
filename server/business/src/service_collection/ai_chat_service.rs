@@ -48,7 +48,8 @@ impl AiChatService {
         );
 
         let config = ai::config::AiConfig::try_from_env()?;
-        let agent = ai::agents::chat::build_chat_agent_for_user(config, data, actions.clone());
+        let agent =
+            ai::agents::chat::build_chat_agent_for_user(config, data, actions.clone()).await;
 
         let rate_limit = Arc::new(UserRateLimiter::new(self.rate_limiter.clone(), user_id));
         let conv = ai::conversation::Conversation::new(conv_agent.clone(), rate_limit);

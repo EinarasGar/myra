@@ -4,6 +4,7 @@ use serde::Serialize;
 #[derive(Serialize)]
 pub struct AggregateGroupResult {
     pub group_name: String,
+    #[serde(with = "rust_decimal::serde::arbitrary_precision")]
     pub total_amount: Decimal,
     pub transaction_count: i64,
 }

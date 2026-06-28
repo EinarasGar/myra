@@ -2,7 +2,9 @@ use std::sync::Arc;
 
 use rig::agent::Agent;
 use rig::client::{CompletionClient, EmbeddingsClient};
+use rig::embeddings::EmbeddingModel;
 use rig::providers::gemini;
+use rig::tool::{ToolDyn, ToolSet};
 
 use crate::action_provider::AiActionProvider;
 use crate::config::AiConfig;
@@ -15,9 +17,11 @@ use crate::tools::create_transaction::CreateTransactionTool;
 use crate::tools::create_transaction_group::CreateTransactionGroupTool;
 use crate::tools::list_accounts::ListAccountsTool;
 use crate::tools::record_asset_trade::RecordAssetTradeTool;
+use crate::tools::run_script::RunScriptTool;
 use crate::tools::search_assets::SearchAssetsTool;
 use crate::tools::search_categories::SearchCategoriesTool;
 use crate::tools::search_transactions::SearchTransactionsTool;
+use crate::tools::ToolMode;
 use gemini::completion::gemini_api_types::{
     AdditionalParameters, GenerationConfig, ThinkingConfig,
 };
@@ -32,6 +36,7 @@ const SYSTEM_PROMPT: &str = r#"You are Myra, a personal finance assistant. You h
 - When the user mentions relative dates like "last month", "this week", "last year", calculate the actual date range based on the current date provided below.
 - Be concise and helpful. If you cannot find relevant data, say so clearly.
 - When showing totals, make sure to clarify whether values are spending (negative) or income (positive).
+- For non-trivial calculations or data transformations (filtering, grouping, deduplicating, computing ratios or running totals over a list), use the run_script tool to compute the answer in JavaScript rather than doing the arithmetic yourself. To process the user's data, declare `datasets` on run_script (e.g. search_transactions scoped by date range) — each is fetched server-side and exposed to the script as a global array, so you do not need to list the data into the prompt first.
 
 ## Transaction Creation
 - When the user asks to create, add, or record a transaction, first call search_categories and search_assets (and list_accounts) to discover valid IDs.
@@ -60,7 +65,7 @@ const SYSTEM_PROMPT: &str = r#"You are Myra, a personal finance assistant. You h
 {current_date}
 "#;
 
-pub fn build_chat_agent_for_user<D: AiDataProvider, A: AiActionProvider>(
+pub async fn build_chat_agent_for_user<D: AiDataProvider, A: AiActionProvider>(
     config: AiConfig,
     data: Arc<D>,
     actions: Arc<A>,
@@ -71,6 +76,12 @@ pub fn build_chat_agent_for_user<D: AiDataProvider, A: AiActionProvider>(
 
     let current_date = time::OffsetDateTime::now_utc().date().to_string();
     let preamble = SYSTEM_PROMPT.replace("{current_date}", &current_date);
+
+    let code_mode_sources: Arc<ToolSet> = Arc::new(ToolSet::from_tools_boxed(read_tools(
+        &data,
+        &embedding_model,
+        ToolMode::CodeMode,
+    )));
 
     client
         .agent(&config.model)
@@ -86,22 +97,41 @@ pub fn build_chat_agent_for_user<D: AiDataProvider, A: AiActionProvider>(
             )
             .unwrap(),
         )
-        .tool(SearchTransactionsTool::new(
-            data.clone(),
-            embedding_model.clone(),
-        ))
-        .tool(AggregateTransactionsTool::new(data.clone()))
-        .tool(ListAccountsTool::new(data.clone()))
-        .tool(SearchCategoriesTool::new(
-            data.clone(),
-            embedding_model.clone(),
-        ))
-        .tool(SearchAssetsTool::new(data.clone(), embedding_model.clone()))
+        .tools(read_tools(&data, &embedding_model, ToolMode::Normal))
         .tool(CreateTransactionTool::new(actions.clone()))
         .tool(CreateTransactionGroupTool::new(actions.clone()))
         .tool(CreateCustomAssetTool::new(actions.clone()))
         .tool(RecordAssetTradeTool::new(actions.clone()))
+        .tool(RunScriptTool::new(code_mode_sources).await)
         .build()
+}
+
+/// The read-only tools, built once for a given mode. `Normal` instances are
+/// registered on the agent; `CodeMode` instances back `run_script`'s datasets.
+fn read_tools<D, M>(data: &Arc<D>, embedding_model: &M, mode: ToolMode) -> Vec<Box<dyn ToolDyn>>
+where
+    D: AiDataProvider,
+    M: EmbeddingModel + Clone + Send + Sync + 'static,
+{
+    vec![
+        Box::new(SearchTransactionsTool::with_mode(
+            data.clone(),
+            embedding_model.clone(),
+            mode,
+        )) as Box<dyn ToolDyn>,
+        Box::new(AggregateTransactionsTool::with_mode(data.clone(), mode)) as Box<dyn ToolDyn>,
+        Box::new(ListAccountsTool::with_mode(data.clone(), mode)) as Box<dyn ToolDyn>,
+        Box::new(SearchCategoriesTool::with_mode(
+            data.clone(),
+            embedding_model.clone(),
+            mode,
+        )) as Box<dyn ToolDyn>,
+        Box::new(SearchAssetsTool::with_mode(
+            data.clone(),
+            embedding_model.clone(),
+            mode,
+        )) as Box<dyn ToolDyn>,
+    ]
 }
 
 fn build_thinking_config(model: &str) -> ThinkingConfig {
