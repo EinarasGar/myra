@@ -74,6 +74,25 @@ pub fn get_transaction_with_entries(params: GetTransactionWithEntriesParams) -> 
         );
     }
 
+    if let Some(ref type_ids) = params.transaction_type_ids {
+        if !type_ids.is_empty() {
+            eligible_transactions_builder.and_where(
+                Expr::col((TransactionIden::Table, TransactionIden::TypeId))
+                    .is_in(type_ids.iter().copied()),
+            );
+        }
+    }
+    if let Some(date_from) = params.date_from {
+        eligible_transactions_builder.and_where(
+            Expr::col((TransactionIden::Table, TransactionIden::DateTransacted)).gte(date_from),
+        );
+    }
+    if let Some(date_to) = params.date_to {
+        eligible_transactions_builder.and_where(
+            Expr::col((TransactionIden::Table, TransactionIden::DateTransacted)).lte(date_to),
+        );
+    }
+
     match params.group_filter {
         GroupFilter::IndividualOnly => {
             eligible_transactions_builder

@@ -126,7 +126,10 @@ impl TransactionGroupService {
             .await?;
 
         // Fetch back full transactions
-        let transaction_dtos = self.fetch_transactions_by_ids(created_ids).await?;
+        let transaction_dtos = self
+            .management_service
+            .get_transactions_by_ids(user_id, created_ids)
+            .await?;
 
         Ok(TransactionGroupDto {
             group_id: Some(group_id),
@@ -135,6 +138,80 @@ impl TransactionGroupService {
             date,
             transactions: transaction_dtos,
         })
+    }
+
+    pub async fn group_existing_transactions(
+        &self,
+        user_id: Uuid,
+        transaction_ids: Vec<Uuid>,
+        description: String,
+        category_id: i32,
+        date: Option<OffsetDateTime>,
+    ) -> anyhow::Result<(Uuid, usize)> {
+        let mut seen = HashSet::new();
+        let unique_ids: Vec<Uuid> = transaction_ids
+            .into_iter()
+            .filter(|id| seen.insert(*id))
+            .collect();
+
+        if unique_ids.len() < 2 {
+            return Err(anyhow::anyhow!(
+                "At least two distinct transactions are required to form a group"
+            ));
+        }
+
+        let ownership_params =
+            GetTransactionWithEntriesParams::by_transaction_ids(unique_ids.clone());
+        let ownership_query = transaction_queries::get_transaction_with_entries(ownership_params);
+        let models = self
+            .db
+            .fetch_all::<TransactionWithEntriesModel>(ownership_query)
+            .await?;
+
+        let found_ids: HashSet<Uuid> = models.iter().map(|m| m.transaction_id).collect();
+        let all_owned = models.iter().all(|m| m.user_id == user_id);
+        if !all_owned || !unique_ids.iter().all(|id| found_ids.contains(id)) {
+            return Err(anyhow::anyhow!(
+                "One or more transactions were not found or do not belong to you"
+            ));
+        }
+
+        let group_date = match date {
+            Some(d) => d,
+            None => models
+                .iter()
+                .map(|m| m.date_transacted)
+                .max()
+                .ok_or_else(|| anyhow::anyhow!("Could not determine a group date"))?,
+        };
+
+        self.db.start_transaction().await?;
+
+        let insert_group_query =
+            transaction_group_queries::insert_transaction_group(AddTransactionGroupModel {
+                category_id,
+                description: description.clone(),
+                date_added: group_date,
+            });
+        let group_id = self.db.fetch_one_scalar::<Uuid>(insert_group_query).await?;
+
+        let expected = unique_ids.len();
+        let set_group_query =
+            transaction_group_queries::set_group_id_on_transactions(group_id, unique_ids);
+        let affected = self.db.execute_with_rows_affected(set_group_query).await?;
+        if affected != expected as u64 {
+            return Err(anyhow::anyhow!(
+                "One or more transactions are already part of a group"
+            ));
+        }
+
+        self.db.commit_transaction().await?;
+
+        self.embedding_service
+            .enqueue_embed_group(group_id, description)
+            .await?;
+
+        Ok((group_id, expected))
     }
 
     pub async fn group_individual_transactions(
@@ -336,7 +413,10 @@ impl TransactionGroupService {
             .chain(new_ids.iter().cloned())
             .collect();
 
-        let transaction_results = self.fetch_transactions_by_ids(all_ids).await?;
+        let transaction_results = self
+            .management_service
+            .get_transactions_by_ids(user_id, all_ids)
+            .await?;
 
         Ok(TransactionGroupDto {
             group_id: Some(group_id),
@@ -526,31 +606,5 @@ impl TransactionGroupService {
             next_cursor,
             total_results,
         })
-    }
-
-    async fn fetch_transactions_by_ids(
-        &self,
-        ids: Vec<Uuid>,
-    ) -> anyhow::Result<Vec<TransactionDto>> {
-        if ids.is_empty() {
-            return Ok(Vec::new());
-        }
-
-        let params = GetTransactionWithEntriesParams::by_transaction_ids(ids);
-        let query = transaction_queries::get_transaction_with_entries(params);
-        let models = self
-            .db
-            .fetch_all::<TransactionWithEntriesModel>(query)
-            .await?;
-
-        let mut transactions = create_transactions_from_transaction_with_entries_models(models)?;
-        self.transaction_metadata_service
-            .load_metadata(&mut transactions, MetadataKinds::all())
-            .await?;
-
-        transactions
-            .into_iter()
-            .map(|t| t.try_into_dto())
-            .collect::<Result<Vec<TransactionDto>>>()
     }
 }

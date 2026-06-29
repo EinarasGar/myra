@@ -31,6 +31,7 @@ pub mod entry_dto;
 pub mod fee_entry_dto;
 pub mod fee_entry_types_dto;
 pub mod file_dto;
+pub mod individual_transaction_filters_dto;
 pub mod net_worth;
 pub mod not_found_error_dto;
 pub mod page_of_results_dto;

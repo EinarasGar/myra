@@ -1,11 +1,20 @@
-use crate::models::search::TransactionSearchResult;
 use rust_decimal::Decimal;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::Value;
-use time::format_description::well_known::Rfc3339;
 
 #[derive(Deserialize)]
 pub struct ListAccountsArgs {}
+
+#[derive(Deserialize)]
+pub struct QueryTransactionsArgs {
+    pub query: Option<String>,
+    pub account_id: Option<String>,
+    pub transaction_types: Option<Vec<String>>,
+    pub date_from: Option<String>,
+    pub date_to: Option<String>,
+    pub limit: Option<i64>,
+    pub cursor: Option<String>,
+}
 
 #[derive(Deserialize)]
 pub struct RunScriptArgs {
@@ -22,76 +31,14 @@ pub struct DatasetSpec {
     pub args: Value,
 }
 
-#[derive(Serialize)]
-pub struct InjectedTransaction {
-    pub id: String,
-    pub description: String,
-    pub date: String,
-    #[serde(with = "rust_decimal::serde::arbitrary_precision")]
-    pub amount: Decimal,
-    pub asset: String,
-    pub account: String,
-}
-
-impl From<TransactionSearchResult> for InjectedTransaction {
-    fn from(t: TransactionSearchResult) -> Self {
-        Self {
-            id: t.transaction_id.to_string(),
-            description: t.description,
-            date: t.date_transacted.format(&Rfc3339).unwrap_or_default(),
-            amount: t.quantity,
-            asset: t.asset_name,
-            account: t.account_name,
-        }
-    }
-}
-
-#[derive(Deserialize)]
-pub struct SearchTransactionsArgs {
-    #[serde(default)]
-    pub query: Option<String>,
-    pub date_from: Option<String>,
-    pub date_to: Option<String>,
-    pub limit: Option<i64>,
-}
-
-#[derive(Serialize)]
-pub struct SearchResult {
-    pub transactions: Vec<TransactionResult>,
-    pub returned_count: usize,
-    pub total_count: usize,
-    pub total_amount: Decimal,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub note: Option<String>,
-}
-
-#[derive(Serialize)]
-pub struct TransactionResult {
-    pub description: String,
-    pub date: String,
-    pub amount: Decimal,
-    pub asset: String,
-    pub account: String,
-}
-
 #[derive(Deserialize)]
 pub struct AggregateTransactionsArgs {
     pub group_by: String,
     pub date_from: Option<String>,
     pub date_to: Option<String>,
     pub description_filter: Option<String>,
-}
-
-#[derive(Serialize)]
-pub struct AggregateResult {
-    pub groups: Vec<AggregateGroup>,
-}
-
-#[derive(Serialize)]
-pub struct AggregateGroup {
-    pub group_name: String,
-    pub total_amount: Decimal,
-    pub transaction_count: i64,
+    pub account_id: Option<String>,
+    pub currency_asset_id: Option<i32>,
 }
 
 #[derive(Deserialize)]
@@ -116,21 +63,11 @@ pub struct CreateTransactionArgs {
 }
 
 #[derive(Deserialize)]
-pub struct TransactionEntryArg {
-    #[serde(with = "rust_decimal::serde::arbitrary_precision")]
-    pub amount: Decimal,
-    pub account_id: String,
-    pub asset_id: i32,
-    pub description: Option<String>,
-    pub category_id: Option<i32>,
-}
-
-#[derive(Deserialize)]
-pub struct CreateTransactionGroupArgs {
-    pub date: String,
+pub struct GroupTransactionsArgs {
+    pub transaction_ids: Vec<String>,
     pub description: String,
     pub category_id: i32,
-    pub entries: Vec<TransactionEntryArg>,
+    pub date: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -152,4 +89,131 @@ pub struct RecordAssetTradeArgs {
     pub currency_asset_id: Option<i32>,
     pub account_id: String,
     pub date: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct GetNetWorthHistoryArgs {
+    pub range: String,
+    pub account_id: Option<String>,
+    pub reference_asset_id: Option<i32>,
+}
+
+#[derive(Deserialize)]
+pub struct GetHoldingsArgs {
+    pub account_id: Option<String>,
+    pub asset_id: Option<i32>,
+    pub group_by: Option<String>,
+    pub summary: Option<bool>,
+    pub reference_asset_id: Option<i32>,
+}
+
+#[derive(Deserialize)]
+pub struct GetPortfolioOverviewArgs {
+    pub account_id: Option<String>,
+    pub asset_id: Option<i32>,
+    pub include_positions: Option<bool>,
+    pub reference_asset_id: Option<i32>,
+}
+
+#[derive(Deserialize)]
+pub struct GetAssetPriceArgs {
+    pub asset_id: i32,
+    pub quote_asset_id: Option<i32>,
+    pub range: Option<String>,
+    pub date_from: Option<String>,
+    pub date_to: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct GetTransactionDetailArgs {
+    pub transaction_id: String,
+}
+
+#[derive(Deserialize)]
+pub struct RecordTransferArgs {
+    pub transfer_kind: String,
+    pub from_account_id: String,
+    pub to_account_id: String,
+    pub asset_id: i32,
+    #[serde(with = "rust_decimal::serde::arbitrary_precision")]
+    pub amount: Decimal,
+    pub date: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct RecordCashTransferArgs {
+    pub direction: String,
+    pub account_id: String,
+    pub asset_id: i32,
+    #[serde(with = "rust_decimal::serde::arbitrary_precision")]
+    pub amount: Decimal,
+    pub date: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct RecordAssetTransferArgs {
+    pub direction: String,
+    pub account_id: String,
+    pub asset_id: i32,
+    #[serde(with = "rust_decimal::serde::arbitrary_precision")]
+    pub quantity: Decimal,
+    pub date: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct RecordAssetSwapArgs {
+    pub account_id: String,
+    pub from_asset_id: i32,
+    #[serde(with = "rust_decimal::serde::arbitrary_precision")]
+    pub from_quantity: Decimal,
+    pub to_asset_id: i32,
+    #[serde(with = "rust_decimal::serde::arbitrary_precision")]
+    pub to_quantity: Decimal,
+    pub date: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct UpdateAssetValuationArgs {
+    pub asset_id: i32,
+    #[serde(with = "rust_decimal::serde::arbitrary_precision")]
+    pub value: Decimal,
+    pub currency_asset_id: Option<i32>,
+    pub date: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct RecordDividendArgs {
+    pub dividend_kind: String,
+    pub paying_asset_id: i32,
+    pub account_id: String,
+    #[serde(with = "rust_decimal::serde::arbitrary_precision")]
+    pub amount: Decimal,
+    pub currency_asset_id: Option<i32>,
+    #[serde(default, with = "rust_decimal::serde::arbitrary_precision_option")]
+    pub withholding_amount: Option<Decimal>,
+    pub date: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct RecordFeeArgs {
+    pub account_id: String,
+    pub asset_id: i32,
+    #[serde(with = "rust_decimal::serde::arbitrary_precision")]
+    pub amount: Decimal,
+    pub date: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct UpdateTransactionArgs {
+    pub transaction_id: String,
+    pub date: Option<String>,
+    pub description: Option<String>,
+    #[serde(default, with = "rust_decimal::serde::arbitrary_precision_option")]
+    pub amount: Option<Decimal>,
+    pub category_id: Option<i32>,
+}
+
+#[derive(Deserialize)]
+pub struct DeleteTransactionArgs {
+    pub transaction_id: String,
 }

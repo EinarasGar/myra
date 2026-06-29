@@ -30,7 +30,7 @@ impl<D: AiDataProvider> Tool for ListAccountsTool<D> {
     async fn definition(&self, _prompt: String) -> ToolDefinition {
         ToolDefinition {
             name: Self::NAME.to_string(),
-            description: "List the user's accounts. Returns each account's name, type, liquidity type, and identifiers (typed: card_last4, account_number, iban). Each row: {account_id, account_name, account_type, liquidity_type, identifiers: [{kind, value}]}.".to_string(),
+            description: "List the user's accounts. Returns each account's name, type, liquidity type, ownership share (the user's fraction of the account, 1 = sole owner), and identifiers (typed: card_last4, account_number, iban). Each row: {account_id, account_name, account_type, liquidity_type, ownership_share (number), identifiers: [{kind, value}]}.".to_string(),
             parameters: json!({
                 "type": "object",
                 "properties": {},

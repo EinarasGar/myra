@@ -1,13 +1,27 @@
 pub mod aggregate_transactions;
 pub mod create_custom_asset;
 pub mod create_transaction;
-pub mod create_transaction_group;
+pub mod delete_transaction;
+pub mod get_asset_price;
+pub mod get_holdings;
+pub mod get_net_worth_history;
+pub mod get_portfolio_overview;
+pub mod get_transaction_detail;
+pub mod group_transactions;
 pub mod list_accounts;
+pub mod query_transactions;
+pub mod record_asset_swap;
 pub mod record_asset_trade;
+pub mod record_asset_transfer;
+pub mod record_cash_transfer;
+pub mod record_dividend;
+pub mod record_fee;
+pub mod record_transfer;
 pub mod run_script;
 pub mod search_assets;
 pub mod search_categories;
-pub mod search_transactions;
+pub mod update_asset_valuation;
+pub mod update_transaction;
 
 use std::fmt;
 

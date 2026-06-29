@@ -2,9 +2,15 @@
 //! in `providers::user_action_provider`). Methods take `user_id` explicitly.
 
 use ai::models::action::{
-    CreateCustomAssetParams, CreateCustomAssetResult, CreateTransactionGroupParams,
-    CreateTransactionGroupResult, CreateTransactionParams, CreateTransactionResult,
+    CreateCustomAssetParams, CreateCustomAssetResult, CreateTransactionParams,
+    CreateTransactionResult, DeleteTransactionParams, DeleteTransactionResult, DividendKind,
+    GroupTransactionsParams, GroupTransactionsResult, RecordAssetSwapParams, RecordAssetSwapResult,
     RecordAssetTradeParams, RecordAssetTradeResult, RecordAssetTradeSide,
+    RecordAssetTransferParams, RecordAssetTransferResult, RecordCashTransferParams,
+    RecordCashTransferResult, RecordDividendParams, RecordDividendResult, RecordFeeParams,
+    RecordFeeResult, RecordTransferParams, RecordTransferResult, TransferDirection, TransferKind,
+    UpdateAssetValuationParams, UpdateAssetValuationResult, UpdateTransactionParams,
+    UpdateTransactionResult,
 };
 use anyhow::Result;
 use rust_decimal::Decimal;
@@ -13,13 +19,21 @@ use uuid::Uuid;
 use crate::{
     dtos::{
         add_custom_asset_dto::AddCustomAssetDto,
+        asset_pair_rate_insert_dto::AssetPairRateInsertDto,
         entry_dto::EntryDto,
+        fee_entry_dto::FeeEntryDto,
+        fee_entry_types_dto::FeeEntryTypesDto,
         transaction_dto::{
-            AssetPurchaseMetadataDto, AssetSaleMetadataDto, RegularTransactionMetadataDto,
-            TransactionDto, TransactionTypeDto,
+            AccountFeesMetadataDto, AssetBalanceTransferMetadataDto, AssetDividendMetadataDto,
+            AssetPurchaseMetadataDto, AssetSaleMetadataDto, AssetTradeMetadataDto,
+            AssetTransferInMetadataDto, AssetTransferOutMetadataDto,
+            CashBalanceTransferMetadataDto, CashDividendMetadataDto, CashTransferInMetadataDto,
+            CashTransferOutMetadataDto, RegularTransactionMetadataDto, TransactionDto,
+            TransactionTypeDto,
         },
     },
     service_collection::{
+        ai_data_service::type_name, asset_rates_service::AssetRatesService,
         asset_service::AssetsService, transaction_group_service::TransactionGroupService,
         transaction_management_service::TransactionManagementService, user_service::UsersService,
     },
@@ -30,6 +44,7 @@ pub struct AiActionService {
     group_service: TransactionGroupService,
     asset_service: AssetsService,
     users_service: UsersService,
+    asset_rates_service: AssetRatesService,
 }
 
 impl AiActionService {
@@ -39,7 +54,16 @@ impl AiActionService {
             group_service: TransactionGroupService::new(providers),
             asset_service: AssetsService::new(providers),
             users_service: UsersService::new(providers),
+            asset_rates_service: AssetRatesService::new(providers),
         }
+    }
+
+    async fn insert_transaction(&self, user_id: Uuid, dto: TransactionDto) -> Result<Uuid> {
+        self.transaction_service
+            .add_individual_transaction(user_id, dto)
+            .await?
+            .transaction_id
+            .ok_or_else(|| anyhow::anyhow!("Transaction was created but no ID was returned"))
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
@@ -66,14 +90,7 @@ impl AiActionService {
             }),
         };
 
-        let result = self
-            .transaction_service
-            .add_individual_transaction(user_id, dto)
-            .await?;
-
-        let transaction_id = result
-            .transaction_id
-            .ok_or_else(|| anyhow::anyhow!("Transaction was created but no ID was returned"))?;
+        let transaction_id = self.insert_transaction(user_id, dto).await?;
 
         Ok(CreateTransactionResult {
             transaction_id,
@@ -82,52 +99,28 @@ impl AiActionService {
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
-    pub async fn create_transaction_group(
+    pub async fn group_transactions(
         &self,
         user_id: Uuid,
-        params: CreateTransactionGroupParams,
-    ) -> Result<CreateTransactionGroupResult> {
-        let datetime = parse_datetime(&params.date)?;
+        params: GroupTransactionsParams,
+    ) -> Result<GroupTransactionsResult> {
+        let date = params.date.as_deref().map(parse_datetime).transpose()?;
 
-        let transaction_dtos: Vec<TransactionDto> = params
-            .entries
-            .into_iter()
-            .map(|e| TransactionDto {
-                transaction_id: None,
-                date: datetime,
-                fee_entries: vec![],
-                transaction_type: TransactionTypeDto::Regular(RegularTransactionMetadataDto {
-                    description: e.description,
-                    entry: EntryDto {
-                        entry_id: None,
-                        asset_id: e.asset_id,
-                        quantity: e.amount,
-                        account_id: e.account_id,
-                    },
-                    category_id: e.category_id.unwrap_or(params.category_id),
-                }),
-            })
-            .collect();
-
-        let result = self
+        let (group_id, transaction_count) = self
             .group_service
-            .create_transaction_group(
+            .group_existing_transactions(
                 user_id,
+                params.transaction_ids,
                 params.description,
                 params.category_id,
-                datetime,
-                transaction_dtos,
+                date,
             )
             .await?;
 
-        let group_id = result.group_id.ok_or_else(|| {
-            anyhow::anyhow!("Transaction group was created but no ID was returned")
-        })?;
-
-        Ok(CreateTransactionGroupResult {
+        Ok(GroupTransactionsResult {
             group_id,
-            transaction_count: result.transactions.len(),
-            message: "Transaction group created successfully".to_string(),
+            transaction_count,
+            message: "Transactions grouped successfully.".to_string(),
         })
     }
 
@@ -173,8 +166,10 @@ impl AiActionService {
         let currency = match params.currency_asset_id {
             Some(id) => self.asset_service.get_asset(id).await?,
             None => {
-                let (_, _, default_asset_id) = self.users_service.get_basic_user(user_id).await?;
-                let default_asset_id = default_asset_id
+                let default_asset_id = self
+                    .users_service
+                    .get_default_asset(user_id)
+                    .await?
                     .ok_or_else(|| anyhow::anyhow!("User has no base currency set"))?;
                 self.asset_service.get_asset(default_asset_id).await?
             }
@@ -220,20 +215,473 @@ impl AiActionService {
             transaction_type,
         };
 
-        let result = self
-            .transaction_service
-            .add_individual_transaction(user_id, dto)
-            .await?;
-
-        let transaction_id = result
-            .transaction_id
-            .ok_or_else(|| anyhow::anyhow!("Transaction was created but no ID was returned"))?;
+        let transaction_id = self.insert_transaction(user_id, dto).await?;
 
         Ok(RecordAssetTradeResult {
             transaction_id,
             asset_ticker: asset.ticker,
             currency_ticker: currency.ticker,
             message: format!("{} recorded successfully.", action_word),
+        })
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
+    pub async fn record_transfer(
+        &self,
+        user_id: Uuid,
+        params: RecordTransferParams,
+    ) -> Result<RecordTransferResult> {
+        if params.amount <= Decimal::ZERO {
+            return Err(anyhow::anyhow!("Amount must be positive."));
+        }
+        if params.from_account_id == params.to_account_id {
+            return Err(anyhow::anyhow!(
+                "Source and destination accounts must differ."
+            ));
+        }
+
+        let datetime = parse_datetime_or_now(params.date.as_deref())?;
+
+        let outgoing_change = EntryDto {
+            entry_id: None,
+            asset_id: params.asset_id,
+            quantity: -params.amount,
+            account_id: params.from_account_id,
+        };
+        let incoming_change = EntryDto {
+            entry_id: None,
+            asset_id: params.asset_id,
+            quantity: params.amount,
+            account_id: params.to_account_id,
+        };
+
+        let transaction_type = match params.kind {
+            TransferKind::Cash => {
+                TransactionTypeDto::CashBalanceTransfer(CashBalanceTransferMetadataDto {
+                    outgoing_change,
+                    incoming_change,
+                })
+            }
+            TransferKind::Asset => {
+                TransactionTypeDto::AssetBalanceTransfer(AssetBalanceTransferMetadataDto {
+                    outgoing_change,
+                    incoming_change,
+                })
+            }
+        };
+
+        let dto = TransactionDto {
+            transaction_id: None,
+            date: datetime,
+            fee_entries: vec![],
+            transaction_type,
+        };
+
+        let transaction_id = self.insert_transaction(user_id, dto).await?;
+
+        Ok(RecordTransferResult {
+            transaction_id,
+            message: "Transfer recorded successfully.".to_string(),
+        })
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
+    pub async fn record_cash_transfer(
+        &self,
+        user_id: Uuid,
+        params: RecordCashTransferParams,
+    ) -> Result<RecordCashTransferResult> {
+        if params.amount <= Decimal::ZERO {
+            return Err(anyhow::anyhow!("Amount must be positive."));
+        }
+
+        let datetime = parse_datetime_or_now(params.date.as_deref())?;
+
+        let make_entry = |quantity: Decimal| EntryDto {
+            entry_id: None,
+            asset_id: params.asset_id,
+            quantity,
+            account_id: params.account_id,
+        };
+
+        let transaction_type = match params.direction {
+            TransferDirection::In => {
+                TransactionTypeDto::CashTransferIn(CashTransferInMetadataDto {
+                    entry: make_entry(params.amount),
+                })
+            }
+            TransferDirection::Out => {
+                TransactionTypeDto::CashTransferOut(CashTransferOutMetadataDto {
+                    entry: make_entry(-params.amount),
+                })
+            }
+        };
+
+        let dto = TransactionDto {
+            transaction_id: None,
+            date: datetime,
+            fee_entries: vec![],
+            transaction_type,
+        };
+
+        let transaction_id = self.insert_transaction(user_id, dto).await?;
+
+        Ok(RecordCashTransferResult {
+            transaction_id,
+            message: "Cash transfer recorded successfully.".to_string(),
+        })
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
+    pub async fn record_asset_transfer(
+        &self,
+        user_id: Uuid,
+        params: RecordAssetTransferParams,
+    ) -> Result<RecordAssetTransferResult> {
+        if params.quantity <= Decimal::ZERO {
+            return Err(anyhow::anyhow!("Quantity must be positive."));
+        }
+
+        let datetime = parse_datetime_or_now(params.date.as_deref())?;
+
+        let make_entry = |quantity: Decimal| EntryDto {
+            entry_id: None,
+            asset_id: params.asset_id,
+            quantity,
+            account_id: params.account_id,
+        };
+
+        let transaction_type = match params.direction {
+            TransferDirection::In => {
+                TransactionTypeDto::AssetTransferIn(AssetTransferInMetadataDto {
+                    entry: make_entry(params.quantity),
+                })
+            }
+            TransferDirection::Out => {
+                TransactionTypeDto::AssetTransferOut(AssetTransferOutMetadataDto {
+                    entry: make_entry(-params.quantity),
+                })
+            }
+        };
+
+        let dto = TransactionDto {
+            transaction_id: None,
+            date: datetime,
+            fee_entries: vec![],
+            transaction_type,
+        };
+
+        let transaction_id = self.insert_transaction(user_id, dto).await?;
+
+        Ok(RecordAssetTransferResult {
+            transaction_id,
+            message: "Asset transfer recorded successfully.".to_string(),
+        })
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
+    pub async fn record_asset_swap(
+        &self,
+        user_id: Uuid,
+        params: RecordAssetSwapParams,
+    ) -> Result<RecordAssetSwapResult> {
+        if params.from_asset_id == params.to_asset_id {
+            return Err(anyhow::anyhow!(
+                "The two assets in a swap must be different."
+            ));
+        }
+        if params.from_quantity <= Decimal::ZERO || params.to_quantity <= Decimal::ZERO {
+            return Err(anyhow::anyhow!("Both swap quantities must be positive."));
+        }
+
+        let datetime = parse_datetime_or_now(params.date.as_deref())?;
+
+        let outgoing_entry = EntryDto {
+            entry_id: None,
+            asset_id: params.from_asset_id,
+            quantity: -params.from_quantity,
+            account_id: params.account_id,
+        };
+        let incoming_entry = EntryDto {
+            entry_id: None,
+            asset_id: params.to_asset_id,
+            quantity: params.to_quantity,
+            account_id: params.account_id,
+        };
+
+        let dto = TransactionDto {
+            transaction_id: None,
+            date: datetime,
+            fee_entries: vec![],
+            transaction_type: TransactionTypeDto::AssetTrade(AssetTradeMetadataDto {
+                outgoing_entry,
+                incoming_entry,
+            }),
+        };
+
+        let transaction_id = self.insert_transaction(user_id, dto).await?;
+
+        Ok(RecordAssetSwapResult {
+            transaction_id,
+            message: "Asset swap recorded successfully.".to_string(),
+        })
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
+    pub async fn update_asset_valuation(
+        &self,
+        user_id: Uuid,
+        params: UpdateAssetValuationParams,
+    ) -> Result<UpdateAssetValuationResult> {
+        if params.value <= Decimal::ZERO {
+            return Err(anyhow::anyhow!("Value must be positive."));
+        }
+
+        if !self
+            .asset_service
+            .validate_asset_ownership(user_id, params.asset_id)
+            .await?
+        {
+            return Err(anyhow::anyhow!(
+                "Only your own custom assets can be revalued."
+            ));
+        }
+
+        let (currency_id, asset_ticker) = match params.currency_asset_id {
+            Some(c) => (
+                c,
+                self.asset_service.get_asset(params.asset_id).await?.ticker,
+            ),
+            None => {
+                let full = self
+                    .asset_service
+                    .get_asset_with_metadata(params.asset_id)
+                    .await?;
+                let currency_id = full.base_asset_id.map(|b| b.0).ok_or_else(|| {
+                    anyhow::anyhow!("Asset has no denominating currency; pass currency_asset_id")
+                })?;
+                (currency_id, full.asset.ticker)
+            }
+        };
+
+        let pair_id = self
+            .asset_service
+            .get_asset_pair_id(params.asset_id, currency_id)
+            .await?;
+
+        let datetime = parse_datetime_or_now(params.date.as_deref())?;
+
+        self.asset_rates_service
+            .insert_pair_single(AssetPairRateInsertDto {
+                pair_id,
+                rate: params.value,
+                date: datetime,
+            })
+            .await?;
+
+        Ok(UpdateAssetValuationResult {
+            asset_id: params.asset_id,
+            asset_ticker,
+            message: "Valuation recorded successfully.".to_string(),
+        })
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
+    pub async fn record_dividend(
+        &self,
+        user_id: Uuid,
+        params: RecordDividendParams,
+    ) -> Result<RecordDividendResult> {
+        if params.amount <= Decimal::ZERO {
+            return Err(anyhow::anyhow!("Amount must be positive."));
+        }
+
+        let datetime = parse_datetime_or_now(params.date.as_deref())?;
+
+        let (transaction_type, fee_entries) = match params.kind {
+            DividendKind::Cash => {
+                let currency_id = match params.currency_asset_id {
+                    Some(c) => c,
+                    None => self
+                        .users_service
+                        .get_default_asset(user_id)
+                        .await?
+                        .ok_or_else(|| anyhow::anyhow!("User has no base currency set"))?,
+                };
+
+                let entry = EntryDto {
+                    entry_id: None,
+                    asset_id: currency_id,
+                    quantity: params.amount,
+                    account_id: params.account_id,
+                };
+
+                let fee_entries = params
+                    .withholding_amount
+                    .filter(|w| *w > Decimal::ZERO)
+                    .map(|w| {
+                        vec![FeeEntryDto {
+                            entry: EntryDto {
+                                entry_id: None,
+                                asset_id: currency_id,
+                                quantity: -w,
+                                account_id: params.account_id,
+                            },
+                            entry_type: FeeEntryTypesDto::WithholdingTax,
+                        }]
+                    })
+                    .unwrap_or_default();
+
+                (
+                    TransactionTypeDto::CashDividend(CashDividendMetadataDto {
+                        entry,
+                        origin_asset_id: params.paying_asset_id,
+                    }),
+                    fee_entries,
+                )
+            }
+            DividendKind::Asset => {
+                if params.withholding_amount.is_some() || params.currency_asset_id.is_some() {
+                    return Err(anyhow::anyhow!(
+                        "Withholding and currency are only valid for cash dividends."
+                    ));
+                }
+                let entry = EntryDto {
+                    entry_id: None,
+                    asset_id: params.paying_asset_id,
+                    quantity: params.amount,
+                    account_id: params.account_id,
+                };
+                (
+                    TransactionTypeDto::AssetDividend(AssetDividendMetadataDto { entry }),
+                    vec![],
+                )
+            }
+        };
+
+        let dto = TransactionDto {
+            transaction_id: None,
+            date: datetime,
+            fee_entries,
+            transaction_type,
+        };
+
+        let transaction_id = self.insert_transaction(user_id, dto).await?;
+
+        Ok(RecordDividendResult {
+            transaction_id,
+            message: "Dividend recorded successfully.".to_string(),
+        })
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
+    pub async fn record_fee(
+        &self,
+        user_id: Uuid,
+        params: RecordFeeParams,
+    ) -> Result<RecordFeeResult> {
+        if params.amount <= Decimal::ZERO {
+            return Err(anyhow::anyhow!("Amount must be positive."));
+        }
+
+        let datetime = parse_datetime_or_now(params.date.as_deref())?;
+
+        let entry = EntryDto {
+            entry_id: None,
+            asset_id: params.asset_id,
+            quantity: -params.amount,
+            account_id: params.account_id,
+        };
+
+        let dto = TransactionDto {
+            transaction_id: None,
+            date: datetime,
+            fee_entries: vec![],
+            transaction_type: TransactionTypeDto::AccountFees(AccountFeesMetadataDto { entry }),
+        };
+
+        let transaction_id = self.insert_transaction(user_id, dto).await?;
+
+        Ok(RecordFeeResult {
+            transaction_id,
+            message: "Fee recorded successfully.".to_string(),
+        })
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
+    pub async fn update_transaction(
+        &self,
+        user_id: Uuid,
+        params: UpdateTransactionParams,
+    ) -> Result<UpdateTransactionResult> {
+        let existing = self
+            .transaction_service
+            .get_individual_transaction(user_id, params.transaction_id)
+            .await?;
+
+        let date = params
+            .date
+            .as_deref()
+            .map(parse_datetime)
+            .transpose()?
+            .unwrap_or(existing.date);
+
+        let new_type = match existing.transaction_type {
+            TransactionTypeDto::Regular(meta) => {
+                TransactionTypeDto::Regular(RegularTransactionMetadataDto {
+                    description: params.description.or(meta.description),
+                    entry: EntryDto {
+                        entry_id: meta.entry.entry_id,
+                        asset_id: meta.entry.asset_id,
+                        account_id: meta.entry.account_id,
+                        quantity: params.amount.unwrap_or(meta.entry.quantity),
+                    },
+                    category_id: params.category_id.unwrap_or(meta.category_id),
+                })
+            }
+            other => {
+                if params.amount.is_some()
+                    || params.description.is_some()
+                    || params.category_id.is_some()
+                {
+                    return Err(anyhow::anyhow!(
+                        "This is a {name} transaction, so only its date can be edited here. Description, amount, and category can only be changed on regular transactions. To change anything else on a {name}, delete it and re-record it with the matching tool.",
+                        name = type_name(&other)
+                    ));
+                }
+                other
+            }
+        };
+
+        let new_dto = TransactionDto {
+            transaction_id: None,
+            date,
+            fee_entries: existing.fee_entries,
+            transaction_type: new_type,
+        };
+
+        self.transaction_service
+            .update_individual_transaction(user_id, params.transaction_id, new_dto)
+            .await?;
+
+        Ok(UpdateTransactionResult {
+            transaction_id: params.transaction_id,
+            message: "Transaction updated successfully.".to_string(),
+        })
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
+    pub async fn delete_transaction(
+        &self,
+        user_id: Uuid,
+        params: DeleteTransactionParams,
+    ) -> Result<DeleteTransactionResult> {
+        self.transaction_service
+            .delete_transactions(user_id, vec![params.transaction_id])
+            .await?;
+
+        Ok(DeleteTransactionResult {
+            message: "Transaction deleted successfully.".to_string(),
         })
     }
 }

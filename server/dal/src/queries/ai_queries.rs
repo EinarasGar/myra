@@ -103,6 +103,21 @@ pub fn search_transactions_by_description(params: &SearchTransactionsParams) -> 
             ),
         );
     }
+    if let Some(ref account_ids) = params.account_ids {
+        if !account_ids.is_empty() {
+            let sub = Query::select()
+                .column((EntryIden::Table, EntryIden::TransactionId))
+                .from(EntryIden::Table)
+                .and_where(
+                    Expr::col((EntryIden::Table, EntryIden::AccountId))
+                        .is_in(account_ids.iter().copied()),
+                )
+                .to_owned();
+            query.and_where(
+                Expr::col((TransactionIden::Table, TransactionIden::Id)).in_subquery(sub),
+            );
+        }
+    }
 
     query.build_sqlx(PostgresQueryBuilder).into()
 }
@@ -146,6 +161,21 @@ pub fn count_transactions_by_description(params: &SearchTransactionsParams) -> D
             ),
         );
     }
+    if let Some(ref account_ids) = params.account_ids {
+        if !account_ids.is_empty() {
+            let sub = Query::select()
+                .column((EntryIden::Table, EntryIden::TransactionId))
+                .from(EntryIden::Table)
+                .and_where(
+                    Expr::col((EntryIden::Table, EntryIden::AccountId))
+                        .is_in(account_ids.iter().copied()),
+                )
+                .to_owned();
+            query.and_where(
+                Expr::col((TransactionIden::Table, TransactionIden::Id)).in_subquery(sub),
+            );
+        }
+    }
 
     query.build_sqlx(PostgresQueryBuilder).into()
 }
@@ -156,6 +186,7 @@ pub fn search_transactions_by_embedding(
     query_vector: Vector,
     date_from: Option<&str>,
     date_to: Option<&str>,
+    account_ids: Option<Vec<Uuid>>,
     limit: i64,
 ) -> DbQueryWithValues {
     let mut query = Query::select();
@@ -245,6 +276,21 @@ pub fn search_transactions_by_embedding(
                 .lte(Expr::cust_with_values("$1::timestamptz", [date_to])),
         );
     }
+    if let Some(ref account_ids) = account_ids {
+        if !account_ids.is_empty() {
+            let sub = Query::select()
+                .column((EntryIden::Table, EntryIden::TransactionId))
+                .from(EntryIden::Table)
+                .and_where(
+                    Expr::col((EntryIden::Table, EntryIden::AccountId))
+                        .is_in(account_ids.iter().copied()),
+                )
+                .to_owned();
+            query.and_where(
+                Expr::col((TransactionIden::Table, TransactionIden::Id)).in_subquery(sub),
+            );
+        }
+    }
 
     query.build_sqlx(PostgresQueryBuilder).into()
 }
@@ -306,9 +352,20 @@ pub fn aggregate_transactions(params: &AggregateTransactionsParams) -> DbQueryWi
             p = param_idx
         ));
         values.push(escape_ilike_pattern(desc).into());
+        param_idx += 1;
+    }
+    if let Some(account_id) = params.account_id {
+        conditions.push(format!("e.account_id = ${param_idx}"));
+        values.push(account_id.into());
+        param_idx += 1;
+    }
+    if let Some(currency_asset_id) = params.currency_asset_id {
+        conditions.push(format!("e.asset_id = ${param_idx}"));
+        values.push(currency_asset_id.into());
     }
 
     let where_clause = conditions.join(" AND ");
+    let limit = params.limit;
 
     let sql = format!(
         r#"
@@ -321,7 +378,7 @@ pub fn aggregate_transactions(params: &AggregateTransactionsParams) -> DbQueryWi
         WHERE {where_clause}
         GROUP BY {group_expr}
         ORDER BY total_amount ASC
-        LIMIT 100
+        LIMIT {limit}
         "#,
     );
 
@@ -352,6 +409,7 @@ pub fn get_active_accounts(params: &ListAccountsParams) -> DbQueryWithValues {
             Alias::new("liquidity_type"),
         )
         .column((AccountIden::Table, AccountIden::Active))
+        .column((AccountIden::Table, AccountIden::OwnershipShare))
         .from(AccountIden::Table)
         .inner_join(
             AccountTypesIden::Table,

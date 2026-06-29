@@ -19,6 +19,7 @@ pub struct AiAccountModel {
     pub account_type: String,
     pub liquidity_type: String,
     pub active: bool,
+    pub ownership_share: Decimal,
 }
 
 #[derive(sqlx::FromRow, Debug)]

@@ -1,4 +1,5 @@
 use axum::{extract::Path, Json};
+use business::dtos::individual_transaction_filters_dto::IndividualTransactionFiltersDto;
 use business::dtos::paging_dto::PaginationModeDto;
 use business::dtos::transaction_dto::TransactionDto;
 use itertools::Itertools;
@@ -177,7 +178,14 @@ pub async fn get_individual_transactions(
     let pagination = PaginationModeDto::from(&query_params);
 
     let result = transaction_service
-        .search_individual_transactions(user_id, pagination, query_params.query, None)
+        .search_individual_transactions(
+            user_id,
+            pagination,
+            IndividualTransactionFiltersDto {
+                search_query: query_params.query,
+                ..Default::default()
+            },
+        )
         .await?;
 
     let asset_ids =

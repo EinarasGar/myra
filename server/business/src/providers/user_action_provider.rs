@@ -4,9 +4,14 @@
 
 use ai::action_provider::AiActionProvider;
 use ai::models::action::{
-    CreateCustomAssetParams, CreateCustomAssetResult, CreateTransactionGroupParams,
-    CreateTransactionGroupResult, CreateTransactionParams, CreateTransactionResult,
-    RecordAssetTradeParams, RecordAssetTradeResult,
+    CreateCustomAssetParams, CreateCustomAssetResult, CreateTransactionParams,
+    CreateTransactionResult, DeleteTransactionParams, DeleteTransactionResult,
+    GroupTransactionsParams, GroupTransactionsResult, RecordAssetSwapParams, RecordAssetSwapResult,
+    RecordAssetTradeParams, RecordAssetTradeResult, RecordAssetTransferParams,
+    RecordAssetTransferResult, RecordCashTransferParams, RecordCashTransferResult,
+    RecordDividendParams, RecordDividendResult, RecordFeeParams, RecordFeeResult,
+    RecordTransferParams, RecordTransferResult, UpdateAssetValuationParams,
+    UpdateAssetValuationResult, UpdateTransactionParams, UpdateTransactionResult,
 };
 use anyhow::Result;
 use uuid::Uuid;
@@ -32,13 +37,11 @@ impl AiActionProvider for UserActionProvider {
         self.service.create_transaction(self.user_id, params).await
     }
 
-    async fn create_transaction_group(
+    async fn group_transactions(
         &self,
-        params: CreateTransactionGroupParams,
-    ) -> Result<CreateTransactionGroupResult> {
-        self.service
-            .create_transaction_group(self.user_id, params)
-            .await
+        params: GroupTransactionsParams,
+    ) -> Result<GroupTransactionsResult> {
+        self.service.group_transactions(self.user_id, params).await
     }
 
     async fn create_custom_asset(
@@ -53,5 +56,65 @@ impl AiActionProvider for UserActionProvider {
         params: RecordAssetTradeParams,
     ) -> Result<RecordAssetTradeResult> {
         self.service.record_asset_trade(self.user_id, params).await
+    }
+
+    async fn record_transfer(&self, params: RecordTransferParams) -> Result<RecordTransferResult> {
+        self.service.record_transfer(self.user_id, params).await
+    }
+
+    async fn record_cash_transfer(
+        &self,
+        params: RecordCashTransferParams,
+    ) -> Result<RecordCashTransferResult> {
+        self.service
+            .record_cash_transfer(self.user_id, params)
+            .await
+    }
+
+    async fn record_asset_transfer(
+        &self,
+        params: RecordAssetTransferParams,
+    ) -> Result<RecordAssetTransferResult> {
+        self.service
+            .record_asset_transfer(self.user_id, params)
+            .await
+    }
+
+    async fn record_asset_swap(
+        &self,
+        params: RecordAssetSwapParams,
+    ) -> Result<RecordAssetSwapResult> {
+        self.service.record_asset_swap(self.user_id, params).await
+    }
+
+    async fn update_asset_valuation(
+        &self,
+        params: UpdateAssetValuationParams,
+    ) -> Result<UpdateAssetValuationResult> {
+        self.service
+            .update_asset_valuation(self.user_id, params)
+            .await
+    }
+
+    async fn record_dividend(&self, params: RecordDividendParams) -> Result<RecordDividendResult> {
+        self.service.record_dividend(self.user_id, params).await
+    }
+
+    async fn record_fee(&self, params: RecordFeeParams) -> Result<RecordFeeResult> {
+        self.service.record_fee(self.user_id, params).await
+    }
+
+    async fn update_transaction(
+        &self,
+        params: UpdateTransactionParams,
+    ) -> Result<UpdateTransactionResult> {
+        self.service.update_transaction(self.user_id, params).await
+    }
+
+    async fn delete_transaction(
+        &self,
+        params: DeleteTransactionParams,
+    ) -> Result<DeleteTransactionResult> {
+        self.service.delete_transaction(self.user_id, params).await
     }
 }

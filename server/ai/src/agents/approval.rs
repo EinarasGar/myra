@@ -16,8 +16,16 @@ use crate::action_provider::AiActionProvider;
 use crate::models::chat::ToolRequestPayload;
 use crate::tools::create_custom_asset::CreateCustomAssetTool;
 use crate::tools::create_transaction::CreateTransactionTool;
-use crate::tools::create_transaction_group::CreateTransactionGroupTool;
+use crate::tools::delete_transaction::DeleteTransactionTool;
+use crate::tools::record_asset_swap::RecordAssetSwapTool;
 use crate::tools::record_asset_trade::RecordAssetTradeTool;
+use crate::tools::record_asset_transfer::RecordAssetTransferTool;
+use crate::tools::record_cash_transfer::RecordCashTransferTool;
+use crate::tools::record_dividend::RecordDividendTool;
+use crate::tools::record_fee::RecordFeeTool;
+use crate::tools::record_transfer::RecordTransferTool;
+use crate::tools::update_asset_valuation::UpdateAssetValuationTool;
+use crate::tools::update_transaction::UpdateTransactionTool;
 
 const PENDING_APPROVAL_RESULT: &str = "Tool call requires user approval. Awaiting response.";
 
@@ -29,15 +37,31 @@ pub(crate) struct GatedToolSet {
 pub(crate) fn build_gated_toolset<A: AiActionProvider>(actions: Arc<A>) -> GatedToolSet {
     let mut toolset = rig::tool::ToolSet::default();
     toolset.add_tool(CreateTransactionTool::new(actions.clone()));
-    toolset.add_tool(CreateTransactionGroupTool::new(actions.clone()));
     toolset.add_tool(CreateCustomAssetTool::new(actions.clone()));
-    toolset.add_tool(RecordAssetTradeTool::new(actions));
+    toolset.add_tool(RecordAssetTradeTool::new(actions.clone()));
+    toolset.add_tool(RecordTransferTool::new(actions.clone()));
+    toolset.add_tool(RecordCashTransferTool::new(actions.clone()));
+    toolset.add_tool(RecordAssetTransferTool::new(actions.clone()));
+    toolset.add_tool(RecordAssetSwapTool::new(actions.clone()));
+    toolset.add_tool(UpdateAssetValuationTool::new(actions.clone()));
+    toolset.add_tool(RecordDividendTool::new(actions.clone()));
+    toolset.add_tool(RecordFeeTool::new(actions.clone()));
+    toolset.add_tool(UpdateTransactionTool::new(actions.clone()));
+    toolset.add_tool(DeleteTransactionTool::new(actions));
 
     let gated_names: HashSet<String> = [
         CreateTransactionTool::<A>::NAME,
-        CreateTransactionGroupTool::<A>::NAME,
         CreateCustomAssetTool::<A>::NAME,
         RecordAssetTradeTool::<A>::NAME,
+        RecordTransferTool::<A>::NAME,
+        RecordCashTransferTool::<A>::NAME,
+        RecordAssetTransferTool::<A>::NAME,
+        RecordAssetSwapTool::<A>::NAME,
+        UpdateAssetValuationTool::<A>::NAME,
+        RecordDividendTool::<A>::NAME,
+        RecordFeeTool::<A>::NAME,
+        UpdateTransactionTool::<A>::NAME,
+        DeleteTransactionTool::<A>::NAME,
     ]
     .iter()
     .map(|s: &&str| s.to_string())

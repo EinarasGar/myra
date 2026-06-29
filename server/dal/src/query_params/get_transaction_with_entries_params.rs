@@ -1,3 +1,4 @@
+use sqlx::types::time::OffsetDateTime;
 use sqlx::types::Uuid;
 
 use super::paging_params::{CursorPagingParams, PagingParams};
@@ -17,6 +18,9 @@ pub struct GetTransactionWithEntriesParams {
     pub group_filter: GroupFilter,
     pub search_query: Option<String>,
     pub cursor_paging: Option<CursorPagingParams>,
+    pub transaction_type_ids: Option<Vec<i32>>,
+    pub date_from: Option<OffsetDateTime>,
+    pub date_to: Option<OffsetDateTime>,
 }
 
 impl GetTransactionWithEntriesParams {
@@ -29,6 +33,9 @@ impl GetTransactionWithEntriesParams {
             group_filter: GroupFilter::All,
             search_query: None,
             cursor_paging: None,
+            transaction_type_ids: None,
+            date_from: None,
+            date_to: None,
         }
     }
 
@@ -43,6 +50,9 @@ impl GetTransactionWithEntriesParams {
             group_filter: GroupFilter::All,
             search_query: None,
             cursor_paging: None,
+            transaction_type_ids: None,
+            date_from: None,
+            date_to: None,
         }
     }
 
@@ -55,6 +65,9 @@ impl GetTransactionWithEntriesParams {
             group_filter: GroupFilter::All,
             search_query: None,
             cursor_paging: None,
+            transaction_type_ids: None,
+            date_from: None,
+            date_to: None,
         }
     }
 
@@ -67,6 +80,9 @@ impl GetTransactionWithEntriesParams {
             group_filter: GroupFilter::All,
             search_query: None,
             cursor_paging: None,
+            transaction_type_ids: None,
+            date_from: None,
+            date_to: None,
         }
     }
 
@@ -79,6 +95,9 @@ impl GetTransactionWithEntriesParams {
             group_filter: GroupFilter::All,
             search_query: None,
             cursor_paging: None,
+            transaction_type_ids: None,
+            date_from: None,
+            date_to: None,
         }
     }
 
@@ -91,6 +110,9 @@ impl GetTransactionWithEntriesParams {
             group_filter: GroupFilter::All,
             search_query: None,
             cursor_paging: None,
+            transaction_type_ids: None,
+            date_from: None,
+            date_to: None,
         }
     }
 
@@ -107,6 +129,9 @@ impl GetTransactionWithEntriesParams {
             group_filter: GroupFilter::All,
             search_query: None,
             cursor_paging: None,
+            transaction_type_ids: None,
+            date_from: None,
+            date_to: None,
         }
     }
 
@@ -119,6 +144,9 @@ impl GetTransactionWithEntriesParams {
             group_filter: GroupFilter::IndividualOnly,
             search_query: None,
             cursor_paging: None,
+            transaction_type_ids: None,
+            date_from: None,
+            date_to: None,
         }
     }
 }

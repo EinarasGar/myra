@@ -11,10 +11,3 @@ pub struct TransactionSearchResult {
     pub asset_name: String,
     pub account_name: String,
 }
-
-pub struct SearchParams {
-    pub query: String,
-    pub date_from: Option<String>,
-    pub date_to: Option<String>,
-    pub limit: i64,
-}

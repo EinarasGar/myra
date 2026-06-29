@@ -54,7 +54,7 @@ impl<A: AiActionProvider> Tool for CreateTransactionTool<A> {
                     },
                     "asset_id": {
                         "type": "integer",
-                        "description": "Asset ID for the transaction entry (use 1 for cash/currency)"
+                        "description": "Asset ID of the currency or asset for this entry. Resolve the user's cash currency via search_assets; never assume an id."
                     }
                 },
                 "required": ["date", "description", "amount", "account_id", "category_id", "asset_id"]

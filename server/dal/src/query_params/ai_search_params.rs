@@ -6,6 +6,7 @@ pub struct SearchTransactionsParams {
     pub query: String,
     pub date_from: Option<String>,
     pub date_to: Option<String>,
+    pub account_ids: Option<Vec<Uuid>>,
     pub limit: i64,
 }
 
@@ -15,6 +16,9 @@ pub struct AggregateTransactionsParams {
     pub date_from: Option<String>,
     pub date_to: Option<String>,
     pub description_filter: Option<String>,
+    pub account_id: Option<Uuid>,
+    pub currency_asset_id: Option<i32>,
+    pub limit: i64,
 }
 
 pub struct ListAccountsParams {

@@ -28,6 +28,7 @@ use uuid::Uuid;
 use crate::{
     dtos::{
         combined_transaction_dto::CombinedTransactionItem,
+        individual_transaction_filters_dto::IndividualTransactionFiltersDto,
         page_of_results_dto::PageOfResultsDto,
         paging_dto::{CursorPageOfResultsDto, PaginationModeDto, PagingDto},
         transaction_dto::TransactionDto,
@@ -95,6 +96,37 @@ impl TransactionManagementService {
             .expect("No transaction found in the vector");
 
         Ok(transaction.try_into_dto()?)
+    }
+
+    pub async fn get_transactions_by_ids(
+        &self,
+        user_id: Uuid,
+        transaction_ids: Vec<Uuid>,
+    ) -> anyhow::Result<Vec<TransactionDto>> {
+        if transaction_ids.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        let query_params = GetTransactionWithEntriesParams::by_transaction_ids(transaction_ids);
+        let query = transaction_queries::get_transaction_with_entries(query_params);
+        let models = self
+            .db
+            .fetch_all::<TransactionWithEntriesModel>(query)
+            .await?;
+
+        if !models.iter().all(|x| x.user_id == user_id) {
+            return Err(anyhow::anyhow!("User_id is not the owner of transaction"));
+        }
+
+        let mut transactions = create_transactions_from_transaction_with_entries_models(models)?;
+        self.transaction_metadata_service
+            .load_metadata(&mut transactions, MetadataKinds::all())
+            .await?;
+
+        transactions
+            .into_iter()
+            .map(|x| x.try_into_dto())
+            .collect::<anyhow::Result<Vec<TransactionDto>>>()
     }
 
     // pub async fn get_transactions(&self, user_id: Uuid) -> anyhow::Result<Vec<TransactionDto>> {
@@ -209,16 +241,17 @@ impl TransactionManagementService {
         &self,
         user_id: Uuid,
         pagination: PaginationModeDto,
-        search_query: Option<String>,
-        account_id: Option<Uuid>,
+        filters: IndividualTransactionFiltersDto,
     ) -> anyhow::Result<CursorPageOfResultsDto<TransactionDto>> {
         let limit = pagination.page_size();
         let is_offset = matches!(pagination, PaginationModeDto::Offset { .. });
 
-        // Build params using the IndividualOnly constructor; set pagination and optional fields
         let mut query_params = GetTransactionWithEntriesParams::by_user_id_individual_only(user_id);
-        query_params.account_filter = account_id;
-        query_params.search_query = search_query;
+        query_params.account_filter = filters.account_id;
+        query_params.search_query = filters.search_query;
+        query_params.transaction_type_ids = filters.transaction_type_ids;
+        query_params.date_from = filters.date_from;
+        query_params.date_to = filters.date_to;
 
         // Map pagination mode, adding +1 for has_more detection
         match &pagination {
