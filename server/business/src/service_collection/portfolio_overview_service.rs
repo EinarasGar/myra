@@ -55,12 +55,13 @@ impl PortfolioOverviewService {
         Ok(ret.into_iter().map(|h| h.into()).collect())
     }
 
-    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, account_id = ?account_id))]
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, account_id = ?account_id, asset_id = ?asset_id))]
     pub async fn get_portfolio_overview(
         &self,
         reference_asset_id: AssetIdDto,
         user_id: Uuid,
         account_id: Option<Uuid>,
+        asset_id: Option<i32>,
     ) -> anyhow::Result<PortfolioOverviewDto> {
         let query_params = match account_id {
             Some(_) => GetTransactionWithEntriesParams::by_user_id(user_id),
@@ -140,6 +141,10 @@ impl PortfolioOverviewService {
 
         if let Some(account_id) = account_id {
             portfolio.retain_account(account_id);
+        }
+
+        if let Some(asset_id) = asset_id {
+            portfolio.retain_asset(asset_id);
         }
 
         let held_asset_ids: HashSet<AssetIdDto> = portfolio

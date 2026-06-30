@@ -1,6 +1,7 @@
 package com.sverto.app.feature.portfolio
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -34,6 +35,7 @@ import java.util.Locale
 fun HoldingsList(
     holdings: List<HoldingItem>,
     baseTicker: String,
+    onAssetClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (holdings.isEmpty()) return
@@ -52,7 +54,7 @@ fun HoldingsList(
         ) {
             Column {
                 holdings.forEachIndexed { index, holding ->
-                    HoldingRow(holding, baseTicker)
+                    HoldingRow(holding, baseTicker, onClick = { onAssetClick(holding.assetId) })
                     if (index < holdings.lastIndex) {
                         RowDivider()
                     }
@@ -66,11 +68,13 @@ fun HoldingsList(
 private fun HoldingRow(
     holding: HoldingItem,
     baseTicker: String,
+    onClick: () -> Unit,
 ) {
     val icon = holdingIcon(holding.assetTypeId)
     val iconTint = holdingIconTint(holding.assetTypeId)
 
     ListItem(
+        modifier = Modifier.clickable(onClick = onClick),
         colors =
             ListItemDefaults.colors(
                 containerColor = MaterialTheme.colorScheme.surfaceBright,
@@ -131,26 +135,23 @@ private fun HoldingRow(
 
 private fun holdingIcon(assetTypeId: Int): ImageVector =
     when (assetTypeId) {
-        1 -> Icons.Outlined.AccountBalance // Currency
-        4, 5, 6 -> Icons.AutoMirrored.Outlined.ShowChart // Funds, ETFs, Pension funds
-        8, 9 -> Icons.Outlined.Home // Property
-        else -> Icons.Outlined.Savings
+        1 -> Icons.Outlined.Home
+        2 -> Icons.Outlined.Savings
+        3 -> Icons.AutoMirrored.Outlined.ShowChart
+        else -> Icons.Outlined.AccountBalance
     }
 
 @Composable
 private fun holdingIconTint(assetTypeId: Int) =
     when (assetTypeId) {
         1 -> MaterialTheme.colorScheme.primary
-        4, 5, 6 -> MaterialTheme.colorScheme.tertiary
-        8, 9 -> MaterialTheme.colorScheme.secondary
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
+        2 -> MaterialTheme.colorScheme.tertiary
+        3 -> MaterialTheme.colorScheme.secondary
+        else -> MaterialTheme.colorScheme.tertiary
     }
 
 private fun formatUnits(units: Double): String {
-    val fmt =
-        NumberFormat.getNumberInstance(Locale.UK).apply {
-            minimumFractionDigits = 0
-            maximumFractionDigits = 3
-        }
+    val fmt = NumberFormat.getNumberInstance(Locale.getDefault())
+    fmt.maximumFractionDigits = 4
     return fmt.format(units)
 }

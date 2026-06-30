@@ -37,10 +37,13 @@ private fun formatUnits(value: Double): String =
         "%.4f".format(value)
     }
 
+private fun formatLotPercent(value: Double): String = "%.1f".format(value)
+
 @Composable
 fun LotCard(
     lot: LotItem,
     baseTicker: String,
+    showAccount: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val isClosed = lot.unitsRemaining <= 0.0
@@ -64,6 +67,14 @@ fun LotCard(
             modifier = Modifier.padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            if (showAccount) {
+                Text(
+                    text = lot.accountName,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
             // Units held (remaining of bought) + unrealized % badge (open lots only)
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -92,7 +103,7 @@ fun LotCard(
                                 ).padding(horizontal = 8.dp, vertical = 2.dp),
                     ) {
                         Text(
-                            text = "$gainSign${formatPercent(lot.gainPercent)}%",
+                            text = "$gainSign${formatLotPercent(lot.gainPercent)}%",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Medium,
                             color = gainColor,

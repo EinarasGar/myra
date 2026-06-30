@@ -12729,6 +12729,66 @@ export const PortfolioApiAxiosParamCreator = function (
       };
     },
     /**
+     * Returns portfolio overview scoped to a specific asset across all accounts.
+     * @summary Get Portfolio Asset Overview
+     * @param {string} userId
+     * @param {number} assetId
+     * @param {number} [defaultAssetId]
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getPortfolioAssetOverview: async (
+      userId: string,
+      assetId: number,
+      defaultAssetId?: number,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("getPortfolioAssetOverview", "userId", userId);
+      // verify required parameter 'assetId' is not null or undefined
+      assertParamExists("getPortfolioAssetOverview", "assetId", assetId);
+      const localVarPath =
+        `/api/users/{user_id}/portfolio/assets/{asset_id}/overview`
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+          .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)));
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      if (defaultAssetId !== undefined) {
+        localVarQueryParameter["default_asset_id"] = defaultAssetId;
+      }
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
      * Retunrs information about the entire portfolio and statistics such as gains/losses
      * @summary Get Portfolio Overview
      * @param {string} userId
@@ -12872,6 +12932,46 @@ export const PortfolioApiFp = function (configuration?: Configuration) {
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
+     * Returns portfolio overview scoped to a specific asset across all accounts.
+     * @summary Get Portfolio Asset Overview
+     * @param {string} userId
+     * @param {number} assetId
+     * @param {number} [defaultAssetId]
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getPortfolioAssetOverview(
+      userId: string,
+      assetId: number,
+      defaultAssetId?: number,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<GetPortfolioOverview>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.getPortfolioAssetOverview(
+          userId,
+          assetId,
+          defaultAssetId,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["PortfolioApi.getPortfolioAssetOverview"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
      * Retunrs information about the entire portfolio and statistics such as gains/losses
      * @summary Get Portfolio Overview
      * @param {string} userId
@@ -12959,6 +13059,25 @@ export const PortfolioApiFactory = function (
         .then((request) => request(axios, basePath));
     },
     /**
+     * Returns portfolio overview scoped to a specific asset across all accounts.
+     * @summary Get Portfolio Asset Overview
+     * @param {string} userId
+     * @param {number} assetId
+     * @param {number} [defaultAssetId]
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getPortfolioAssetOverview(
+      userId: string,
+      assetId: number,
+      defaultAssetId?: number,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<GetPortfolioOverview> {
+      return localVarFp
+        .getPortfolioAssetOverview(userId, assetId, defaultAssetId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
      * Retunrs information about the entire portfolio and statistics such as gains/losses
      * @summary Get Portfolio Overview
      * @param {string} userId
@@ -13015,6 +13134,23 @@ export interface PortfolioApiInterface {
     defaultAssetId?: number,
     options?: RawAxiosRequestConfig,
   ): AxiosPromise<GetNetWorthHistoryResponse>;
+
+  /**
+   * Returns portfolio overview scoped to a specific asset across all accounts.
+   * @summary Get Portfolio Asset Overview
+   * @param {string} userId
+   * @param {number} assetId
+   * @param {number} [defaultAssetId]
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof PortfolioApiInterface
+   */
+  getPortfolioAssetOverview(
+    userId: string,
+    assetId: number,
+    defaultAssetId?: number,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<GetPortfolioOverview>;
 
   /**
    * Retunrs information about the entire portfolio and statistics such as gains/losses
@@ -13076,6 +13212,27 @@ export class PortfolioApi extends BaseAPI implements PortfolioApiInterface {
   ) {
     return PortfolioApiFp(this.configuration)
       .getNetworthHistory(userId, range, defaultAssetId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Returns portfolio overview scoped to a specific asset across all accounts.
+   * @summary Get Portfolio Asset Overview
+   * @param {string} userId
+   * @param {number} assetId
+   * @param {number} [defaultAssetId]
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof PortfolioApi
+   */
+  public getPortfolioAssetOverview(
+    userId: string,
+    assetId: number,
+    defaultAssetId?: number,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return PortfolioApiFp(this.configuration)
+      .getPortfolioAssetOverview(userId, assetId, defaultAssetId, options)
       .then((request) => request(this.axios, this.basePath));
   }
 

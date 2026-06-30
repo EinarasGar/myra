@@ -127,7 +127,7 @@ pub async fn get_account_portfolio_overview(
     };
 
     let overview = portfolio_service
-        .get_portfolio_overview(default_asset, user_id, Some(account_id))
+        .get_portfolio_overview(default_asset, user_id, Some(account_id), None)
         .await?;
 
     let account_ids = overview

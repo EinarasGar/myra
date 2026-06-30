@@ -223,7 +223,7 @@ fun AssetDetailScreen(
 }
 
 @Composable
-private fun AssetInfoCard(info: uniffi.sverto_core.AssetPairDetail) {
+fun AssetInfoCard(info: uniffi.sverto_core.AssetPairDetail) {
     Surface(
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surfaceBright,
@@ -240,7 +240,7 @@ private fun AssetInfoCard(info: uniffi.sverto_core.AssetPairDetail) {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun PairAnchor(
+fun PairAnchor(
     label: String,
     switchable: Boolean,
     onClick: () -> Unit,

@@ -23,8 +23,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ChevronRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 export type AssetPortfolioRow = {
+  asset_id: number;
   asset_name: string;
   account_name: string;
   units_held: number;
@@ -67,27 +69,45 @@ function makeColumns(baseTicker: string): ColumnDef<AssetPortfolioRow>[] {
       id: "asset_name",
       accessorKey: "asset_name",
       header: () => <span>Asset</span>,
-      cell: ({ row, getValue }) => (
-        <div
-          className="flex items-center gap-1"
-          style={{ paddingLeft: `${row.depth * 1.5}rem` }}
-        >
-          {row.getCanExpand() ? (
-            <button
-              onClick={row.getToggleExpandedHandler()}
-              className="cursor-pointer p-0.5"
-            >
-              <ChevronRight
-                className={cn(
-                  "h-4 w-4 transition-transform",
-                  row.getIsExpanded() && "rotate-90",
-                )}
-              />
-            </button>
-          ) : null}
-          <span>{getValue<string>()}</span>
-        </div>
-      ),
+      cell: ({ row, getValue }) => {
+        const assetName = getValue<string>();
+        const content = (
+          <span>
+            {row.getCanExpand() ? (
+              <button
+                onClick={row.getToggleExpandedHandler()}
+                className="cursor-pointer p-0.5"
+              >
+                <ChevronRight
+                  className={cn(
+                    "h-4 w-4 transition-transform",
+                    row.getIsExpanded() && "rotate-90",
+                  )}
+                />
+              </button>
+            ) : null}
+            {assetName}
+          </span>
+        );
+        return (
+          <div
+            className="flex items-center gap-1"
+            style={{ paddingLeft: `${row.depth * 1.5}rem` }}
+          >
+            {row.depth === 0 ? (
+              <Link
+                to="/portfolio-overview/$assetId"
+                params={{ assetId: String(row.original.asset_id) }}
+                className="text-blue-600 hover:underline"
+              >
+                {content}
+              </Link>
+            ) : (
+              content
+            )}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "account_name",
@@ -174,8 +194,9 @@ export default function AssetPortfoliosTable() {
         const asset = assets.find((a) => a.id === d.asset_id);
         const account = accounts.find((a) => a.id === d.account_id);
         return {
-          asset_name: asset?.name ?? "",
+          asset_id: d.asset_id,
           account_name: account?.name ?? "",
+          asset_name: asset?.name ?? "",
           units_held: d.remaining_units,
           cost_basis: d.total_cost_basis,
           unrealized_gains: d.unrealized_gains,

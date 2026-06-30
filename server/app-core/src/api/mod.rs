@@ -2,6 +2,7 @@ pub(crate) mod account_overview;
 pub(crate) mod account_transactions;
 pub(crate) mod accounts;
 pub(crate) mod ai_usage;
+pub(crate) mod asset_overview;
 pub(crate) mod asset_rates;
 pub(crate) mod assets;
 pub(crate) mod cache;

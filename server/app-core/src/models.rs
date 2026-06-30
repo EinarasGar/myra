@@ -76,6 +76,7 @@ pub struct HoldingItem {
     pub units: f64,
     pub value: f64,
     pub asset_type_id: i32,
+    pub asset_id: i32,
 }
 
 #[derive(Debug, Clone, uniffi::Record)]
@@ -384,6 +385,8 @@ pub struct LotItem {
     pub unrealized_gains: f64,
     pub gain_percent: f64,
     pub current_value: f64,
+    pub account_id: String,
+    pub account_name: String,
 }
 
 #[derive(Debug, Clone, uniffi::Record)]
@@ -402,6 +405,24 @@ pub struct AssetDetailState {
     pub chart_data: Vec<ChartPeriodData>,
     pub lots: Vec<LotItem>,
     pub base_ticker: String,
+    pub price_ticker: String,
+}
+
+#[derive(Debug, Clone, Default, uniffi::Record)]
+pub struct AssetOverviewState {
+    pub is_loading: bool,
+    pub error: Option<String>,
+    pub asset_id: i32,
+    pub ticker: String,
+    pub name: String,
+    pub units: f64,
+    pub value: f64,
+    pub cost_basis: f64,
+    pub unrealized_gains: f64,
+    pub total_fees: f64,
+    pub current_price: f64,
+    pub chart_data: Vec<ChartPeriodData>,
+    pub lots: Vec<LotItem>,
     pub price_ticker: String,
 }
 

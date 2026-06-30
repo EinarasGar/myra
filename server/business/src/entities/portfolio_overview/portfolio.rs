@@ -111,6 +111,14 @@ impl Portfolio {
         self.account_portfolios.retain(|id, _| *id == account_id);
     }
 
+    pub fn retain_asset(&mut self, asset_id: i32) {
+        self.account_portfolios
+            .retain(|_, ap| ap.asset_portfolios.contains_key(&asset_id));
+        for ap in self.account_portfolios.values_mut() {
+            ap.asset_portfolios.retain(|id, _| *id == asset_id);
+        }
+    }
+
     pub fn try_into_dto(
         &self,
         current_rates: HashMap<AssetIdDto, Decimal>,
@@ -274,6 +282,79 @@ mod tests {
         assert_eq!(oldest.amount_sold(), dec!(5));
         assert_eq!(oldest.get_realized_gains(), dec!(250));
         assert_eq!(newest.amount_sold(), dec!(0));
+    }
+
+    #[test]
+    fn retain_asset_drops_accounts_without_asset_and_keeps_only_target_asset() {
+        let mut portfolio = Portfolio::new();
+        let account_a = Uuid::new_v4();
+        let account_b = Uuid::new_v4();
+
+        let input: Vec<Box<dyn PortfolioAction>> = vec![
+            Box::new(AssetPurchase {
+                instrument_asset_id: 1,
+                account_id: account_a,
+                instrument_units: dec!(10),
+                instrument_price: dec!(100),
+                fees: dec!(0),
+                cash_asset_id: 10,
+                cash_units: dec!(1000),
+                date: datetime!(2000-01-01 00:00:00 UTC),
+            }),
+            Box::new(AssetPurchase {
+                instrument_asset_id: 2,
+                account_id: account_b,
+                instrument_units: dec!(5),
+                instrument_price: dec!(200),
+                fees: dec!(0),
+                cash_asset_id: 10,
+                cash_units: dec!(1000),
+                date: datetime!(2000-01-01 00:00:00 UTC),
+            }),
+        ];
+
+        portfolio.process_transactions(input);
+
+        assert!(portfolio.account_portfolios().contains_key(&account_a));
+        assert!(portfolio.account_portfolios().contains_key(&account_b));
+        assert_eq!(
+            portfolio
+                .account_portfolios()
+                .get(&account_a)
+                .unwrap()
+                .asset_portfolios
+                .len(),
+            1
+        );
+        assert_eq!(
+            portfolio
+                .account_portfolios()
+                .get(&account_b)
+                .unwrap()
+                .asset_portfolios
+                .len(),
+            1
+        );
+
+        portfolio.retain_asset(1);
+
+        assert!(portfolio.account_portfolios().contains_key(&account_a));
+        assert!(!portfolio.account_portfolios().contains_key(&account_b));
+        assert!(portfolio
+            .account_portfolios()
+            .get(&account_a)
+            .unwrap()
+            .asset_portfolios
+            .contains_key(&1));
+        assert_eq!(
+            portfolio
+                .account_portfolios()
+                .get(&account_a)
+                .unwrap()
+                .asset_portfolios
+                .len(),
+            1
+        );
     }
 
     #[test]

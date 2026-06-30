@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use axum::Json;
+use axum::{extract::Path, Json};
 use business::dtos::{
     assets::{asset_id_dto::AssetIdDto, asset_pair_ids_dto::AssetPairIdsDto},
     net_worth::range_dto::RangeDto,
@@ -37,6 +37,11 @@ use crate::{
 pub struct GetPortfolioQueryParams {
     default_asset_id: Option<i32>,
     apply_ownership_share: Option<bool>,
+}
+
+#[derive(Deserialize)]
+pub(crate) struct AssetIdPath {
+    asset_id: i32,
 }
 
 /// Get Holdings
@@ -193,7 +198,82 @@ pub async fn get_portfolio_overview(
     };
 
     let overview = portfolio_service
-        .get_portfolio_overview(default_asset, user_id, None)
+        .get_portfolio_overview(default_asset, user_id, None, None)
+        .await?;
+
+    let account_ids = overview
+        .portfolios
+        .iter()
+        .map(|x| match x {
+            PortfolioOverviewType::Asset(a) => a.account_id,
+            PortfolioOverviewType::Cash(c) => c.account_id,
+        })
+        .collect::<HashSet<Uuid>>();
+
+    let asset_ids = overview
+        .portfolios
+        .iter()
+        .map(|x| match x {
+            PortfolioOverviewType::Asset(a) => a.asset_id,
+            PortfolioOverviewType::Cash(c) => c.asset_id,
+        })
+        .collect::<HashSet<i32>>();
+
+    let (assets, accounts) = tokio::try_join!(
+        asset_service.get_assets(asset_ids),
+        accounts_service.get_accounts(account_ids),
+    )?;
+
+    let response = GetPortfolioOverviewViewModel {
+        portfolios: overview.into(),
+        lookup_tables: HoldingsMetadataLookupTables {
+            accounts: accounts.into_iter().map_into().collect(),
+            assets: assets.into_iter().map_into().collect(),
+        },
+    };
+
+    Ok(response.into())
+}
+
+/// Get Portfolio Asset Overview
+///
+/// Returns portfolio overview scoped to a specific asset across all accounts.
+#[utoipa::path(
+    get,
+    path = "/api/users/{user_id}/portfolio/assets/{asset_id}/overview",
+    tag = "Portfolio",
+    responses(
+        (status = 200, description = "Portfolio Asset Overview", body = GetPortfolioOverviewViewModel),
+        GetResponses
+    ),
+    params(
+        ("user_id" = Uuid, Path, description = "User id for who to retrieve asset portfolio overview"),
+        ("asset_id" = i32, Path, description = "Asset ID"),
+        GetPortfolioOverviewQueryParams
+    ),
+)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, asset_id = asset_id))]
+pub async fn get_portfolio_asset_overview(
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(AssetIdPath { asset_id }): Path<AssetIdPath>,
+    ValidatedQuery(query_params): ValidatedQuery<GetPortfolioOverviewQueryParams>,
+    PortfolioOverviewServiceState(portfolio_service): PortfolioOverviewServiceState,
+    UsersServiceState(user_service): UsersServiceState,
+    AccountsServiceState(accounts_service): AccountsServiceState,
+    AssetsServiceState(asset_service): AssetsServiceState,
+) -> Result<Json<GetPortfolioOverviewViewModel>, ApiError> {
+    let default_asset = match query_params.default_asset_id {
+        Some(id) => AssetIdDto(id),
+        None => AssetIdDto(
+            user_service
+                .get_default_asset(user_id)
+                .await?
+                .ok_or_else(|| ApiError::Conflict("User has no base currency set".to_string()))?,
+        ),
+    };
+
+    let overview = portfolio_service
+        .get_portfolio_overview(default_asset, user_id, None, Some(asset_id))
         .await?;
 
     let account_ids = overview

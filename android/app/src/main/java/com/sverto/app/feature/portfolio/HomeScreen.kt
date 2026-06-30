@@ -37,6 +37,7 @@ import com.sverto.app.core.ui.PortfolioChartSkeleton
 @Composable
 fun PortfolioScreen(
     modifier: Modifier = Modifier,
+    onAssetClick: (Int) -> Unit = {},
     viewModel: HomeViewModel = viewModel(factory = SvertoViewModelFactory),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -90,7 +91,7 @@ fun PortfolioScreen(
                     if (portfolioData.isNotEmpty()) {
                         PortfolioChart(portfolioData = portfolioData, currencyTicker = state.baseTicker)
                     }
-                    HoldingsList(holdings = state.holdings, baseTicker = state.baseTicker)
+                    HoldingsList(holdings = state.holdings, baseTicker = state.baseTicker, onAssetClick = onAssetClick)
                 }
             }
 

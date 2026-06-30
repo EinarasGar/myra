@@ -4,6 +4,7 @@ pub mod accounts;
 pub mod ai_chat;
 pub mod ai_usage;
 pub mod asset_detail;
+pub mod asset_overview;
 pub mod assets;
 pub mod categories;
 pub mod infra;
@@ -60,6 +61,7 @@ pub struct AppStore {
     account_detail: Mutex<account_detail::AccountDetailModule>,
     account_transactions: Mutex<account_transactions::AccountTransactionsModule>,
     asset_detail: Mutex<asset_detail::AssetDetailModule>,
+    asset_overview: Mutex<asset_overview::AssetOverviewModule>,
     transactions: Mutex<transactions::TransactionsModule>,
     quick_uploads: Arc<Mutex<quick_uploads::QuickUploadsModule>>,
     ai_chat: Arc<Mutex<ai_chat::AiChatModule>>,
@@ -119,6 +121,7 @@ impl AppStore {
             account_detail: Mutex::new(account_detail::AccountDetailModule::new()),
             account_transactions: Mutex::new(account_transactions::AccountTransactionsModule::new()),
             asset_detail: Mutex::new(asset_detail::AssetDetailModule::new()),
+            asset_overview: Mutex::new(asset_overview::AssetOverviewModule::new()),
             transactions: Mutex::new(transactions::TransactionsModule::new()),
             quick_uploads: Arc::new(Mutex::new(quick_uploads::QuickUploadsModule::new())),
             ai_chat: Arc::new(Mutex::new(ai_chat::AiChatModule::new())),
@@ -224,6 +227,7 @@ impl AppStore {
         self.portfolio.lock().unwrap().clear_state();
         self.accounts.lock().unwrap().clear_state();
         self.categories.lock().unwrap().clear_state();
+        self.asset_overview.lock().unwrap().clear_state();
         self.account_detail.lock().unwrap().clear_state();
         self.account_transactions.lock().unwrap().clear_state();
         self.asset_detail.lock().unwrap().clear_state();
@@ -515,6 +519,33 @@ impl AppStore {
     pub async fn refresh_asset_detail(&self) {
         let token = self.get_auth_token();
         asset_detail::refresh_asset_detail(&self.infra, &self.asset_detail, token.as_deref()).await;
+    }
+    // ── Asset Overview ────────────────────────────────────────────────
+
+    pub fn observe_asset_overview(&self, observer: Box<dyn asset_overview::AssetOverviewObserver>) {
+        self.asset_overview.lock().unwrap().set_observer(observer);
+    }
+
+    pub fn unobserve_asset_overview(&self) {
+        self.asset_overview.lock().unwrap().clear_observer();
+    }
+
+    pub async fn load_asset_overview(&self, asset_id: i32, reference_asset_id: i32) {
+        let token = self.get_auth_token();
+        asset_overview::load_asset_overview(
+            &self.infra,
+            &self.asset_overview,
+            asset_id,
+            reference_asset_id,
+            token.as_deref(),
+        )
+        .await;
+    }
+
+    pub async fn refresh_asset_overview(&self) {
+        let token = self.get_auth_token();
+        asset_overview::refresh_asset_overview(&self.infra, &self.asset_overview, token.as_deref())
+            .await;
     }
 
     // ── Transactions (observer-based) ────────────────────────────────────

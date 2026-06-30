@@ -26,6 +26,18 @@ pub fn extract_account_overview(body: &str) -> Result<AccountOverviewData, Strin
         .map(|a| (a.asset_id.0, a))
         .collect();
 
+    let account_map: HashMap<String, String> = resp
+        .lookup_tables
+        .accounts
+        .iter()
+        .map(|a| {
+            (
+                a.account_id.0.to_string(),
+                a.account.name.as_str().to_string(),
+            )
+        })
+        .collect();
+
     let mut holdings: Vec<AccountHoldingItem> = Vec::new();
     let mut lots_by_asset: HashMap<i32, Vec<LotItem>> = HashMap::new();
     let mut total_market_value: f64 = 0.0;
@@ -69,6 +81,9 @@ pub fn extract_account_overview(body: &str) -> Result<AccountOverviewData, Strin
         realized_gains += rg;
         total_fees += fees;
 
+        let acct_id = ap.account_id.0.to_string();
+        let acct_name = account_map.get(&acct_id).cloned().unwrap_or_default();
+
         let mut lots: Vec<LotItem> = ap
             .positions
             .iter()
@@ -93,6 +108,8 @@ pub fn extract_account_overview(body: &str) -> Result<AccountOverviewData, Strin
                     unrealized_gains: pug,
                     gain_percent: gain_pct,
                     current_value: left * current_price,
+                    account_id: acct_id.clone(),
+                    account_name: acct_name.clone(),
                 }
             })
             .collect();

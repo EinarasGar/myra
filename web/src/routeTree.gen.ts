@@ -32,6 +32,7 @@ import { Route as AuthSettingsCategoriesRouteImport } from './routes/_auth.setti
 import { Route as AuthSettingsBaseCurrencyRouteImport } from './routes/_auth.settings.base-currency'
 import { Route as AuthSettingsAiUsageRouteImport } from './routes/_auth.settings.ai-usage'
 import { Route as AuthSettingsAccountsRouteImport } from './routes/_auth.settings.accounts'
+import { Route as AuthPortfolioOverviewAssetIdRouteImport } from './routes/_auth.portfolio-overview.$assetId'
 import { Route as AuthGlobalAssetsAssetIdRouteImport } from './routes/_auth.global-assets.$assetId'
 import { Route as AuthAccountsAccountIdRouteImport } from './routes/_auth.accounts.$accountId'
 
@@ -151,6 +152,12 @@ const AuthSettingsAccountsRoute = AuthSettingsAccountsRouteImport.update({
   path: '/accounts',
   getParentRoute: () => AuthSettingsRoute,
 } as any)
+const AuthPortfolioOverviewAssetIdRoute =
+  AuthPortfolioOverviewAssetIdRouteImport.update({
+    id: '/$assetId',
+    path: '/$assetId',
+    getParentRoute: () => AuthPortfolioOverviewRoute,
+  } as any)
 const AuthGlobalAssetsAssetIdRoute = AuthGlobalAssetsAssetIdRouteImport.update({
   id: '/$assetId',
   path: '/$assetId',
@@ -172,12 +179,13 @@ export interface FileRoutesByFullPath {
   '/global-assets': typeof AuthGlobalAssetsRouteWithChildren
   '/onboarding': typeof AuthOnboardingRoute
   '/portfolio': typeof AuthPortfolioRoute
-  '/portfolio-overview': typeof AuthPortfolioOverviewRoute
+  '/portfolio-overview': typeof AuthPortfolioOverviewRouteWithChildren
   '/settings': typeof AuthSettingsRouteWithChildren
   '/transactions': typeof AuthTransactionsRouteWithChildren
   '/user-assets': typeof AuthUserAssetsRouteWithChildren
   '/accounts/$accountId': typeof AuthAccountsAccountIdRoute
   '/global-assets/$assetId': typeof AuthGlobalAssetsAssetIdRoute
+  '/portfolio-overview/$assetId': typeof AuthPortfolioOverviewAssetIdRoute
   '/settings/accounts': typeof AuthSettingsAccountsRoute
   '/settings/ai-usage': typeof AuthSettingsAiUsageRoute
   '/settings/base-currency': typeof AuthSettingsBaseCurrencyRoute
@@ -196,11 +204,12 @@ export interface FileRoutesByTo {
   '/component-testing': typeof AuthComponentTestingRoute
   '/onboarding': typeof AuthOnboardingRoute
   '/portfolio': typeof AuthPortfolioRoute
-  '/portfolio-overview': typeof AuthPortfolioOverviewRoute
+  '/portfolio-overview': typeof AuthPortfolioOverviewRouteWithChildren
   '/settings': typeof AuthSettingsRouteWithChildren
   '/': typeof AuthIndexRoute
   '/accounts/$accountId': typeof AuthAccountsAccountIdRoute
   '/global-assets/$assetId': typeof AuthGlobalAssetsAssetIdRoute
+  '/portfolio-overview/$assetId': typeof AuthPortfolioOverviewAssetIdRoute
   '/settings/accounts': typeof AuthSettingsAccountsRoute
   '/settings/ai-usage': typeof AuthSettingsAiUsageRoute
   '/settings/base-currency': typeof AuthSettingsBaseCurrencyRoute
@@ -222,13 +231,14 @@ export interface FileRoutesById {
   '/_auth/global-assets': typeof AuthGlobalAssetsRouteWithChildren
   '/_auth/onboarding': typeof AuthOnboardingRoute
   '/_auth/portfolio': typeof AuthPortfolioRoute
-  '/_auth/portfolio-overview': typeof AuthPortfolioOverviewRoute
+  '/_auth/portfolio-overview': typeof AuthPortfolioOverviewRouteWithChildren
   '/_auth/settings': typeof AuthSettingsRouteWithChildren
   '/_auth/transactions': typeof AuthTransactionsRouteWithChildren
   '/_auth/user-assets': typeof AuthUserAssetsRouteWithChildren
   '/_auth/': typeof AuthIndexRoute
   '/_auth/accounts/$accountId': typeof AuthAccountsAccountIdRoute
   '/_auth/global-assets/$assetId': typeof AuthGlobalAssetsAssetIdRoute
+  '/_auth/portfolio-overview/$assetId': typeof AuthPortfolioOverviewAssetIdRoute
   '/_auth/settings/accounts': typeof AuthSettingsAccountsRoute
   '/_auth/settings/ai-usage': typeof AuthSettingsAiUsageRoute
   '/_auth/settings/base-currency': typeof AuthSettingsBaseCurrencyRoute
@@ -257,6 +267,7 @@ export interface FileRouteTypes {
     | '/user-assets'
     | '/accounts/$accountId'
     | '/global-assets/$assetId'
+    | '/portfolio-overview/$assetId'
     | '/settings/accounts'
     | '/settings/ai-usage'
     | '/settings/base-currency'
@@ -280,6 +291,7 @@ export interface FileRouteTypes {
     | '/'
     | '/accounts/$accountId'
     | '/global-assets/$assetId'
+    | '/portfolio-overview/$assetId'
     | '/settings/accounts'
     | '/settings/ai-usage'
     | '/settings/base-currency'
@@ -307,6 +319,7 @@ export interface FileRouteTypes {
     | '/_auth/'
     | '/_auth/accounts/$accountId'
     | '/_auth/global-assets/$assetId'
+    | '/_auth/portfolio-overview/$assetId'
     | '/_auth/settings/accounts'
     | '/_auth/settings/ai-usage'
     | '/_auth/settings/base-currency'
@@ -488,6 +501,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSettingsAccountsRouteImport
       parentRoute: typeof AuthSettingsRoute
     }
+    '/_auth/portfolio-overview/$assetId': {
+      id: '/_auth/portfolio-overview/$assetId'
+      path: '/$assetId'
+      fullPath: '/portfolio-overview/$assetId'
+      preLoaderRoute: typeof AuthPortfolioOverviewAssetIdRouteImport
+      parentRoute: typeof AuthPortfolioOverviewRoute
+    }
     '/_auth/global-assets/$assetId': {
       id: '/_auth/global-assets/$assetId'
       path: '/$assetId'
@@ -517,6 +537,19 @@ const AuthGlobalAssetsRouteChildren: AuthGlobalAssetsRouteChildren = {
 
 const AuthGlobalAssetsRouteWithChildren =
   AuthGlobalAssetsRoute._addFileChildren(AuthGlobalAssetsRouteChildren)
+
+interface AuthPortfolioOverviewRouteChildren {
+  AuthPortfolioOverviewAssetIdRoute: typeof AuthPortfolioOverviewAssetIdRoute
+}
+
+const AuthPortfolioOverviewRouteChildren: AuthPortfolioOverviewRouteChildren = {
+  AuthPortfolioOverviewAssetIdRoute: AuthPortfolioOverviewAssetIdRoute,
+}
+
+const AuthPortfolioOverviewRouteWithChildren =
+  AuthPortfolioOverviewRoute._addFileChildren(
+    AuthPortfolioOverviewRouteChildren,
+  )
 
 interface AuthSettingsRouteChildren {
   AuthSettingsAccountsRoute: typeof AuthSettingsAccountsRoute
@@ -569,7 +602,7 @@ interface AuthRouteChildren {
   AuthGlobalAssetsRoute: typeof AuthGlobalAssetsRouteWithChildren
   AuthOnboardingRoute: typeof AuthOnboardingRoute
   AuthPortfolioRoute: typeof AuthPortfolioRoute
-  AuthPortfolioOverviewRoute: typeof AuthPortfolioOverviewRoute
+  AuthPortfolioOverviewRoute: typeof AuthPortfolioOverviewRouteWithChildren
   AuthSettingsRoute: typeof AuthSettingsRouteWithChildren
   AuthTransactionsRoute: typeof AuthTransactionsRouteWithChildren
   AuthUserAssetsRoute: typeof AuthUserAssetsRouteWithChildren
@@ -583,7 +616,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthGlobalAssetsRoute: AuthGlobalAssetsRouteWithChildren,
   AuthOnboardingRoute: AuthOnboardingRoute,
   AuthPortfolioRoute: AuthPortfolioRoute,
-  AuthPortfolioOverviewRoute: AuthPortfolioOverviewRoute,
+  AuthPortfolioOverviewRoute: AuthPortfolioOverviewRouteWithChildren,
   AuthSettingsRoute: AuthSettingsRouteWithChildren,
   AuthTransactionsRoute: AuthTransactionsRouteWithChildren,
   AuthUserAssetsRoute: AuthUserAssetsRouteWithChildren,

@@ -42,6 +42,7 @@ pub fn extract_holdings(body: &str) -> Result<Vec<HoldingItem>, String> {
                 units,
                 value,
                 asset_type_id: asset.map(|a| a.asset.asset_type.0).unwrap_or(0),
+                asset_id,
             }
         })
         .collect();

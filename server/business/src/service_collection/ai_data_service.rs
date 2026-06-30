@@ -432,7 +432,7 @@ impl AiDataService {
             .await?;
         let dto = self
             .portfolio_overview_service
-            .get_portfolio_overview(AssetIdDto(ref_id), user_id, account_id)
+            .get_portfolio_overview(AssetIdDto(ref_id), user_id, account_id, None)
             .await?;
 
         let mut asset_overviews: Vec<PortfolioAssetOverviewDto> = Vec::new();

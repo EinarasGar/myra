@@ -77,6 +77,8 @@ import com.sverto.app.feature.accounts.AssetDetailScreen
 import com.sverto.app.feature.aichat.AiChatScreen
 import com.sverto.app.feature.aichat.AiChatViewModel
 import com.sverto.app.feature.aichat.ConversationDrawer
+import com.sverto.app.feature.assets.AssetOverviewScreen
+import com.sverto.app.feature.assets.AssetOverviewViewModel
 import com.sverto.app.feature.assets.AssetSearchAppBar
 import com.sverto.app.feature.assets.CustomAssetsScreen
 import com.sverto.app.feature.categories.CustomCategoriesScreen
@@ -113,6 +115,7 @@ private const val ACCOUNT_TRANSACTIONS_ROUTE = "accountTransactions/{accountId}"
 private const val ADD_ACCOUNT_ROUTE = "addAccount"
 private const val EDIT_ACCOUNT_ROUTE = "editAccount/{accountId}"
 private const val MARKET_ASSET_DETAIL_ROUTE = "asset/{assetId}?userAsset={userAsset}"
+private const val ASSET_OVERVIEW_ROUTE = "assetOverview/{assetId}?userAsset={userAsset}"
 private const val CUSTOM_ASSETS_ROUTE = "customAssets"
 
 private data class TransactionDetailState(
@@ -275,7 +278,7 @@ fun MainScreen(
                                     if (currentRoute == TopLevelRoute.Portfolio.route) {
                                         AssetSearchAppBar(
                                             onAssetClick = { id ->
-                                                navController.navigate("asset/$id?userAsset=false")
+                                                navController.navigate("assetOverview/$id?userAsset=false")
                                             },
                                         )
                                     } else {
@@ -420,6 +423,7 @@ private fun MainNavGraph(
                         .fillMaxSize()
                         .padding(innerPadding)
                         .consumeWindowInsets(innerPadding),
+                onAssetClick = { assetId -> navController.navigate("assetOverview/$assetId?userAsset=false") },
             )
         }
         composable(TopLevelRoute.Transactions.route) {
@@ -915,7 +919,30 @@ private fun MainNavGraph(
         composable(CUSTOM_ASSETS_ROUTE) {
             CustomAssetsScreen(
                 onBack = { navController.popBackStack() },
-                onAssetClick = { assetId -> navController.navigate("asset/$assetId?userAsset=true") },
+                onAssetClick = { assetId -> navController.navigate("assetOverview/$assetId?userAsset=true") },
+            )
+        }
+        composable(
+            route = ASSET_OVERVIEW_ROUTE,
+            arguments =
+                listOf(
+                    navArgument("assetId") { type = NavType.IntType },
+                    navArgument("userAsset") {
+                        type = NavType.BoolType
+                        defaultValue = false
+                    },
+                ),
+        ) { backStackEntry ->
+            val assetId = backStackEntry.arguments?.getInt("assetId") ?: return@composable
+            val userAsset = backStackEntry.arguments?.getBoolean("userAsset") ?: false
+
+            @Suppress("ViewModelForwarding")
+            val vm: AssetOverviewViewModel = viewModel(factory = SvertoViewModelFactory)
+            AssetOverviewScreen(
+                assetId = assetId,
+                userAsset = userAsset,
+                onBack = { navController.popBackStack() },
+                viewModel = vm,
             )
         }
     }
