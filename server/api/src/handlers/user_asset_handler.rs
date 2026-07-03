@@ -6,7 +6,7 @@ use crate::view_models::assets::{
     },
     delete_asset_pair_rates::DeleteAssetPairRatesParams,
     get_asset_pair_rates::GetAssetPairRatesRequestParams,
-    get_assets::GetAssetsLineResponseViewModel,
+    get_converted_asset_pair::GetConvertedAssetPairResponseViewModel,
     get_user_assets::GetUserAssetsResponseViewModel,
 };
 use axum::{extract::Path, Json};
@@ -52,6 +52,7 @@ use crate::{
         },
         get_asset::GetAssetResponseViewModel,
         get_asset_pair_rates::GetAssetPairRatesResponseViewModel,
+        get_assets::GetAssetsLineResponseViewModel,
         get_user_asset_pair::GetUserAssetPairResponseViewModel,
         update_asset::{UpdateAssetRequestViewModel, UpdateAssetResponseViewModel},
         update_asset_pair::{UpdateAssetPairRequestViewModel, UpdateAssetPairResponseViewModel},
@@ -652,5 +653,108 @@ pub async fn post_asset_pair(
         metadata: None,
         user_metadata: None,
     };
+    Ok(ret.into())
+}
+
+/// Get converted asset pair (derived)
+///
+/// Returns the asset's latest price in the reference currency, derived by hopping through
+/// the asset's base pair. Calling this endpoint means the result is a computed conversion,
+/// not an exact stored rate.
+#[utoipa::path(
+    get,
+    path = "/api/users/{user_id}/assets/{asset_id}/{reference_id}/converted",
+    tag = "User Assets",
+    responses(
+        (status = 200, description = "Derived user asset pair rate retrieved successfully.", body = GetConvertedAssetPairResponseViewModel),
+        GetResponses
+    ),
+    security(
+        ("auth_token" = [])
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, asset_id = pair1, reference_id = pair2))]
+pub async fn get_user_asset_pair_converted(
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(AssetPairPath {
+        asset_id: pair1,
+        reference_id: pair2,
+    }): Path<AssetPairPath>,
+    AssetsServiceState(assets_service): AssetsServiceState,
+    AssetRatesServiceState(asset_rates_service): AssetRatesServiceState,
+) -> Result<Json<GetConvertedAssetPairResponseViewModel>, ApiError> {
+    let is_owned = assets_service
+        .validate_asset_ownership(user_id, pair1)
+        .await?;
+    if !is_owned {
+        return Err(AuthError::Unauthorized.into());
+    }
+
+    let latest = asset_rates_service
+        .get_pair_latest_converted(AssetIdDto(pair1), AssetIdDto(pair2))
+        .await?;
+
+    let ret = GetConvertedAssetPairResponseViewModel {
+        metadata: latest.map(|rate| AssetPairMetadataViewModel {
+            latest_rate: rate.rate,
+            last_updated: rate.date,
+        }),
+    };
+
+    Ok(ret.into())
+}
+
+/// Get converted asset pair rates series (derived)
+///
+/// Returns the asset's price series in the reference currency, derived by hopping through
+/// the asset's base pair. Each historical point is converted at the pair's own rate for that date.
+#[utoipa::path(
+    get,
+    path = "/api/users/{user_id}/assets/{asset_id}/{reference_id}/converted/rates",
+    tag = "User Assets",
+    params(
+        ("range" = String, Query, description = "Time range for the rates (e.g. 1m, 3m, 1y)."),
+    ),
+    responses(
+        (status = 200, description = "Derived user asset pair rates series retrieved successfully.", body = GetAssetPairRatesResponseViewModel),
+        GetResponses
+    ),
+    security(
+        ("auth_token" = [])
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, asset_id = pair1, reference_id = pair2))]
+pub async fn get_user_asset_pair_converted_rates(
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(AssetPairPath {
+        asset_id: pair1,
+        reference_id: pair2,
+    }): Path<AssetPairPath>,
+    ValidatedQuery(query_params): ValidatedQuery<GetAssetPairRatesRequestParams>,
+    AssetsServiceState(assets_service): AssetsServiceState,
+    AssetRatesServiceState(asset_rates_service): AssetRatesServiceState,
+) -> Result<Json<GetAssetPairRatesResponseViewModel>, ApiError> {
+    let is_owned = assets_service
+        .validate_asset_ownership(user_id, pair1)
+        .await?;
+    if !is_owned {
+        return Err(AuthError::Unauthorized.into());
+    }
+
+    let range = RangeDto::StringBased(query_params.range.clone());
+    let rates = asset_rates_service
+        .get_market_pair_rates_by_range_converted(
+            AssetPairIdsDto::new(AssetIdDto(pair1), AssetIdDto(pair2)),
+            range,
+        )
+        .await?;
+
+    let ret_rates: Vec<AssetRateViewModel> = rates.into_iter().map(Into::into).collect();
+
+    let ret = GetAssetPairRatesResponseViewModel {
+        rates: ret_rates,
+        range: query_params.range.clone(),
+    };
+
     Ok(ret.into())
 }

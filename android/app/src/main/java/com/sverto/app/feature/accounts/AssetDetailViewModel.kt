@@ -31,6 +31,8 @@ class AssetDetailViewModel(
                 lots = emptyList(),
                 baseTicker = "",
                 priceTicker = "",
+                supportsBaseConversion = false,
+                baseChartData = emptyList(),
             ),
         )
     val state: StateFlow<AssetDetailState> = _state.asStateFlow()
@@ -63,6 +65,10 @@ class AssetDetailViewModel(
     fun refresh() {
         _isRefreshing.value = true
         viewModelScope.launch { store.refreshAssetDetail() }
+    }
+
+    fun loadBaseChart() {
+        viewModelScope.launch { store.loadAssetDetailBaseChart() }
     }
 
     override fun onCleared() {

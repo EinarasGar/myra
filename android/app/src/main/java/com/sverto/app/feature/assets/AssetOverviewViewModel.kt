@@ -117,10 +117,34 @@ class AssetOverviewViewModel(
         if (!_state.value.chartByPeriod.containsKey(period)) loadRates(period)
     }
 
+    private fun isConverted(referenceId: Int): Boolean =
+        _state.value.detail
+            ?.pairs
+            ?.firstOrNull { it.assetId == referenceId }
+            ?.converted == true
+
     private fun loadPairInfo(referenceId: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val info = store.getAssetPair(assetId, referenceId, _state.value.isUserAsset)
+                val info =
+                    if (isConverted(referenceId)) {
+                        val conv =
+                            store.getAssetPairConverted(assetId, referenceId, _state.value.isUserAsset)
+                        val detail = _state.value.detail
+                        val pair = detail?.pairs?.firstOrNull { it.assetId == referenceId }
+                        AssetPairDetail(
+                            mainTicker = detail?.displaySymbol ?: "",
+                            mainName = detail?.name ?: "",
+                            refTicker = pair?.ticker ?: "",
+                            refName = pair?.name ?: "",
+                            latestRate = conv.latestRate,
+                            lastUpdated = conv.lastUpdated,
+                            volume = null,
+                            exchange = null,
+                        )
+                    } else {
+                        store.getAssetPair(assetId, referenceId, _state.value.isUserAsset)
+                    }
                 _state.value = _state.value.copy(pairInfo = info)
             } catch (
                 @Suppress("TooGenericExceptionCaught") e: Exception,
@@ -132,10 +156,25 @@ class AssetOverviewViewModel(
 
     private fun loadRates(period: TimePeriod) {
         val referenceId = _state.value.selectedPairId ?: return
+        val converted = isConverted(referenceId)
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val rates =
-                    store.getAssetPairRates(assetId, referenceId, period.apiRange, _state.value.isUserAsset)
+                    if (converted) {
+                        store.getAssetPairConvertedRates(
+                            assetId,
+                            referenceId,
+                            period.apiRange,
+                            _state.value.isUserAsset,
+                        )
+                    } else {
+                        store.getAssetPairRates(
+                            assetId,
+                            referenceId,
+                            period.apiRange,
+                            _state.value.isUserAsset,
+                        )
+                    }
                 val points = rates.map { ChartPoint(date = it.timestamp, value = it.value) }
                 _state.value =
                     _state.value.copy(chartByPeriod = _state.value.chartByPeriod + (period to points))

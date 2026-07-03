@@ -8,6 +8,7 @@ pub mod get_asset_pair;
 pub mod get_asset_pair_rates;
 pub mod get_asset_types;
 pub mod get_assets;
+pub mod get_converted_asset_pair;
 pub mod get_user_asset_pair;
 pub mod get_user_assets;
 pub mod update_asset;

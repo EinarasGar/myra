@@ -9513,6 +9513,131 @@ export const AssetsApiAxiosParamCreator = function (
       };
     },
     /**
+     * Returns the asset\'s latest price in the reference currency, derived by hopping through the asset\'s base pair. Calling this endpoint means the result is a computed conversion, not an exact stored rate.
+     * @summary Get converted asset pair (derived)
+     * @param {number} assetId
+     * @param {number} referenceId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getAssetPairConverted: async (
+      assetId: number,
+      referenceId: number,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'assetId' is not null or undefined
+      assertParamExists("getAssetPairConverted", "assetId", assetId);
+      // verify required parameter 'referenceId' is not null or undefined
+      assertParamExists("getAssetPairConverted", "referenceId", referenceId);
+      const localVarPath = `/api/assets/{asset_id}/{reference_id}/converted`
+        .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
+        .replace(
+          `{${"reference_id"}}`,
+          encodeURIComponent(String(referenceId)),
+        );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Returns the asset\'s price series in the reference currency, derived by hopping through the asset\'s base pair. Each historical point is converted at the pair\'s own rate for that date.
+     * @summary Get converted asset pair rates series (derived)
+     * @param {string} range
+     * @param {number} assetId
+     * @param {number} referenceId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getAssetPairConvertedRates: async (
+      range: string,
+      assetId: number,
+      referenceId: number,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'range' is not null or undefined
+      assertParamExists("getAssetPairConvertedRates", "range", range);
+      // verify required parameter 'assetId' is not null or undefined
+      assertParamExists("getAssetPairConvertedRates", "assetId", assetId);
+      // verify required parameter 'referenceId' is not null or undefined
+      assertParamExists(
+        "getAssetPairConvertedRates",
+        "referenceId",
+        referenceId,
+      );
+      const localVarPath =
+        `/api/assets/{asset_id}/{reference_id}/converted/rates`
+          .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
+          .replace(
+            `{${"reference_id"}}`,
+            encodeURIComponent(String(referenceId)),
+          );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      if (range !== undefined) {
+        localVarQueryParameter["range"] = range;
+      }
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
      * Gets asset pair rates based on provided query params
      * @summary Get asset pair rates
      * @param {number} assetId
@@ -9763,6 +9888,83 @@ export const AssetsApiFp = function (configuration?: Configuration) {
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
+     * Returns the asset\'s latest price in the reference currency, derived by hopping through the asset\'s base pair. Calling this endpoint means the result is a computed conversion, not an exact stored rate.
+     * @summary Get converted asset pair (derived)
+     * @param {number} assetId
+     * @param {number} referenceId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getAssetPairConverted(
+      assetId: number,
+      referenceId: number,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<AssetPairMetadata>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.getAssetPairConverted(
+          assetId,
+          referenceId,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["AssetsApi.getAssetPairConverted"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Returns the asset\'s price series in the reference currency, derived by hopping through the asset\'s base pair. Each historical point is converted at the pair\'s own rate for that date.
+     * @summary Get converted asset pair rates series (derived)
+     * @param {string} range
+     * @param {number} assetId
+     * @param {number} referenceId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getAssetPairConvertedRates(
+      range: string,
+      assetId: number,
+      referenceId: number,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<GetAssetPairRatesResponse>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.getAssetPairConvertedRates(
+          range,
+          assetId,
+          referenceId,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["AssetsApi.getAssetPairConvertedRates"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
      * Gets asset pair rates based on provided query params
      * @summary Get asset pair rates
      * @param {number} assetId
@@ -9917,6 +10119,42 @@ export const AssetsApiFactory = function (
         .then((request) => request(axios, basePath));
     },
     /**
+     * Returns the asset\'s latest price in the reference currency, derived by hopping through the asset\'s base pair. Calling this endpoint means the result is a computed conversion, not an exact stored rate.
+     * @summary Get converted asset pair (derived)
+     * @param {number} assetId
+     * @param {number} referenceId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getAssetPairConverted(
+      assetId: number,
+      referenceId: number,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<AssetPairMetadata> {
+      return localVarFp
+        .getAssetPairConverted(assetId, referenceId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Returns the asset\'s price series in the reference currency, derived by hopping through the asset\'s base pair. Each historical point is converted at the pair\'s own rate for that date.
+     * @summary Get converted asset pair rates series (derived)
+     * @param {string} range
+     * @param {number} assetId
+     * @param {number} referenceId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getAssetPairConvertedRates(
+      range: string,
+      assetId: number,
+      referenceId: number,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<GetAssetPairRatesResponse> {
+      return localVarFp
+        .getAssetPairConvertedRates(range, assetId, referenceId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
      * Gets asset pair rates based on provided query params
      * @summary Get asset pair rates
      * @param {number} assetId
@@ -10007,6 +10245,38 @@ export interface AssetsApiInterface {
   ): AxiosPromise<GetAssetPairResponse>;
 
   /**
+   * Returns the asset\'s latest price in the reference currency, derived by hopping through the asset\'s base pair. Calling this endpoint means the result is a computed conversion, not an exact stored rate.
+   * @summary Get converted asset pair (derived)
+   * @param {number} assetId
+   * @param {number} referenceId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AssetsApiInterface
+   */
+  getAssetPairConverted(
+    assetId: number,
+    referenceId: number,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<AssetPairMetadata>;
+
+  /**
+   * Returns the asset\'s price series in the reference currency, derived by hopping through the asset\'s base pair. Each historical point is converted at the pair\'s own rate for that date.
+   * @summary Get converted asset pair rates series (derived)
+   * @param {string} range
+   * @param {number} assetId
+   * @param {number} referenceId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AssetsApiInterface
+   */
+  getAssetPairConvertedRates(
+    range: string,
+    assetId: number,
+    referenceId: number,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<GetAssetPairRatesResponse>;
+
+  /**
    * Gets asset pair rates based on provided query params
    * @summary Get asset pair rates
    * @param {number} assetId
@@ -10091,6 +10361,46 @@ export class AssetsApi extends BaseAPI implements AssetsApiInterface {
   ) {
     return AssetsApiFp(this.configuration)
       .getAssetPair(assetId, referenceId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Returns the asset\'s latest price in the reference currency, derived by hopping through the asset\'s base pair. Calling this endpoint means the result is a computed conversion, not an exact stored rate.
+   * @summary Get converted asset pair (derived)
+   * @param {number} assetId
+   * @param {number} referenceId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AssetsApi
+   */
+  public getAssetPairConverted(
+    assetId: number,
+    referenceId: number,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return AssetsApiFp(this.configuration)
+      .getAssetPairConverted(assetId, referenceId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Returns the asset\'s price series in the reference currency, derived by hopping through the asset\'s base pair. Each historical point is converted at the pair\'s own rate for that date.
+   * @summary Get converted asset pair rates series (derived)
+   * @param {string} range
+   * @param {number} assetId
+   * @param {number} referenceId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof AssetsApi
+   */
+  public getAssetPairConvertedRates(
+    range: string,
+    assetId: number,
+    referenceId: number,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return AssetsApiFp(this.configuration)
+      .getAssetPairConvertedRates(range, assetId, referenceId, options)
       .then((request) => request(this.axios, this.basePath));
   }
 
@@ -15062,6 +15372,100 @@ export const UserAssetsApiAxiosParamCreator = function (
       };
     },
     /**
+     * Returns the asset\'s latest price in the reference currency, derived by hopping through the asset\'s base pair. Calling this endpoint means the result is a computed conversion, not an exact stored rate.
+     * @summary Get converted asset pair (derived)
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getUserAssetPairConverted: async (
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      const localVarPath = `/api/users/{user_id}/assets/{asset_id}/{reference_id}/converted`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Returns the asset\'s price series in the reference currency, derived by hopping through the asset\'s base pair. Each historical point is converted at the pair\'s own rate for that date.
+     * @summary Get converted asset pair rates series (derived)
+     * @param {string} range
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getUserAssetPairConvertedRates: async (
+      range: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'range' is not null or undefined
+      assertParamExists("getUserAssetPairConvertedRates", "range", range);
+      const localVarPath = `/api/users/{user_id}/assets/{asset_id}/{reference_id}/converted/rates`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      if (range !== undefined) {
+        localVarQueryParameter["range"] = range;
+      }
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
      * Gets user asset pair rates based on provided query params
      * @summary Get user asset pair rates
      * @param {string} userId
@@ -15726,6 +16130,69 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
+     * Returns the asset\'s latest price in the reference currency, derived by hopping through the asset\'s base pair. Calling this endpoint means the result is a computed conversion, not an exact stored rate.
+     * @summary Get converted asset pair (derived)
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getUserAssetPairConverted(
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<AssetPairMetadata>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.getUserAssetPairConverted(options);
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["UserAssetsApi.getUserAssetPairConverted"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Returns the asset\'s price series in the reference currency, derived by hopping through the asset\'s base pair. Each historical point is converted at the pair\'s own rate for that date.
+     * @summary Get converted asset pair rates series (derived)
+     * @param {string} range
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getUserAssetPairConvertedRates(
+      range: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<GetAssetPairRatesResponse>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.getUserAssetPairConvertedRates(
+          range,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["UserAssetsApi.getUserAssetPairConvertedRates"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
      * Gets user asset pair rates based on provided query params
      * @summary Get user asset pair rates
      * @param {string} userId
@@ -16118,6 +16585,34 @@ export const UserAssetsApiFactory = function (
         .then((request) => request(axios, basePath));
     },
     /**
+     * Returns the asset\'s latest price in the reference currency, derived by hopping through the asset\'s base pair. Calling this endpoint means the result is a computed conversion, not an exact stored rate.
+     * @summary Get converted asset pair (derived)
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getUserAssetPairConverted(
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<AssetPairMetadata> {
+      return localVarFp
+        .getUserAssetPairConverted(options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Returns the asset\'s price series in the reference currency, derived by hopping through the asset\'s base pair. Each historical point is converted at the pair\'s own rate for that date.
+     * @summary Get converted asset pair rates series (derived)
+     * @param {string} range
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getUserAssetPairConvertedRates(
+      range: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<GetAssetPairRatesResponse> {
+      return localVarFp
+        .getUserAssetPairConvertedRates(range, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
      * Gets user asset pair rates based on provided query params
      * @summary Get user asset pair rates
      * @param {string} userId
@@ -16357,6 +16852,30 @@ export interface UserAssetsApiInterface {
   ): AxiosPromise<GetUserAssetPairResponse>;
 
   /**
+   * Returns the asset\'s latest price in the reference currency, derived by hopping through the asset\'s base pair. Calling this endpoint means the result is a computed conversion, not an exact stored rate.
+   * @summary Get converted asset pair (derived)
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserAssetsApiInterface
+   */
+  getUserAssetPairConverted(
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<AssetPairMetadata>;
+
+  /**
+   * Returns the asset\'s price series in the reference currency, derived by hopping through the asset\'s base pair. Each historical point is converted at the pair\'s own rate for that date.
+   * @summary Get converted asset pair rates series (derived)
+   * @param {string} range
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserAssetsApiInterface
+   */
+  getUserAssetPairConvertedRates(
+    range: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<GetAssetPairRatesResponse>;
+
+  /**
    * Gets user asset pair rates based on provided query params
    * @summary Get user asset pair rates
    * @param {string} userId
@@ -16592,6 +17111,36 @@ export class UserAssetsApi extends BaseAPI implements UserAssetsApiInterface {
   ) {
     return UserAssetsApiFp(this.configuration)
       .getUserAssetPair(userId, assetId, referenceId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Returns the asset\'s latest price in the reference currency, derived by hopping through the asset\'s base pair. Calling this endpoint means the result is a computed conversion, not an exact stored rate.
+   * @summary Get converted asset pair (derived)
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserAssetsApi
+   */
+  public getUserAssetPairConverted(options?: RawAxiosRequestConfig) {
+    return UserAssetsApiFp(this.configuration)
+      .getUserAssetPairConverted(options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Returns the asset\'s price series in the reference currency, derived by hopping through the asset\'s base pair. Each historical point is converted at the pair\'s own rate for that date.
+   * @summary Get converted asset pair rates series (derived)
+   * @param {string} range
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserAssetsApi
+   */
+  public getUserAssetPairConvertedRates(
+    range: string,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return UserAssetsApiFp(this.configuration)
+      .getUserAssetPairConvertedRates(range, options)
       .then((request) => request(this.axios, this.basePath));
   }
 

@@ -520,6 +520,16 @@ impl AppStore {
         let token = self.get_auth_token();
         asset_detail::refresh_asset_detail(&self.infra, &self.asset_detail, token.as_deref()).await;
     }
+
+    pub async fn load_asset_detail_base_chart(&self) {
+        let token = self.get_auth_token();
+        asset_detail::load_asset_detail_base_chart(
+            &self.infra,
+            &self.asset_detail,
+            token.as_deref(),
+        )
+        .await;
+    }
     // ── Asset Overview ────────────────────────────────────────────────
 
     pub fn observe_asset_overview(&self, observer: Box<dyn asset_overview::AssetOverviewObserver>) {
@@ -709,6 +719,42 @@ impl AppStore {
     ) -> Result<Vec<crate::models::ChartPoint>, crate::error::ApiError> {
         let token = self.get_auth_token();
         assets::get_asset_pair_rates(
+            &self.infra,
+            asset_id,
+            reference_id,
+            &range,
+            user_asset,
+            token.as_deref(),
+        )
+        .await
+    }
+
+    pub async fn get_asset_pair_converted(
+        &self,
+        asset_id: i32,
+        reference_id: i32,
+        user_asset: bool,
+    ) -> Result<crate::models::ConvertedPairRate, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        assets::get_asset_pair_converted(
+            &self.infra,
+            asset_id,
+            reference_id,
+            user_asset,
+            token.as_deref(),
+        )
+        .await
+    }
+
+    pub async fn get_asset_pair_converted_rates(
+        &self,
+        asset_id: i32,
+        reference_id: i32,
+        range: String,
+        user_asset: bool,
+    ) -> Result<Vec<crate::models::ChartPoint>, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        assets::get_asset_pair_converted_rates(
             &self.infra,
             asset_id,
             reference_id,

@@ -44,6 +44,8 @@ impl AssetDetailModule {
                 lots: vec![],
                 base_ticker: String::new(),
                 price_ticker: String::new(),
+                supports_base_conversion: false,
+                base_chart_data: vec![],
             },
             observer: None,
             account_id: String::new(),
@@ -77,6 +79,8 @@ impl AssetDetailModule {
             lots: vec![],
             base_ticker: String::new(),
             price_ticker: String::new(),
+            supports_base_conversion: false,
+            base_chart_data: vec![],
         };
         self.account_id = String::new();
         self.asset_id = 0;
@@ -133,6 +137,10 @@ pub async fn load_asset_detail(
             None => (asset_id, None),
         },
     };
+    let supports_base_conversion = infra
+        .default_asset_id()
+        .map(|b| b != reference_id && b != asset_id)
+        .unwrap_or(false);
 
     // Phase 2: Fetch rate chart data with resolved reference_id
     let rate_paths: Vec<String> = CHART_RANGES
@@ -200,6 +208,8 @@ pub async fn load_asset_detail(
     m.state.price_ticker = reference_ticker.unwrap_or_else(|| m.state.ticker.clone());
     m.state.error = error;
     m.state.is_loading = false;
+    m.state.supports_base_conversion = supports_base_conversion;
+    m.state.base_chart_data = vec![];
     m.notify();
 }
 
@@ -226,4 +236,48 @@ pub async fn refresh_asset_detail(
     infra.evict_memory_cache_prefix(&format!("/api/assets/{}", asset_id));
 
     load_asset_detail(infra, module, &account_id, asset_id, auth_token).await;
+}
+
+pub async fn load_asset_detail_base_chart(
+    infra: &SharedInfra,
+    module: &Mutex<AssetDetailModule>,
+    auth_token: Option<&str>,
+) {
+    let (asset_id, already_loaded) = {
+        let m = module.lock().unwrap();
+        (m.asset_id, !m.state.base_chart_data.is_empty())
+    };
+    if already_loaded {
+        return;
+    }
+    let base_id = match infra.default_asset_id() {
+        Some(id) => id,
+        None => return,
+    };
+
+    let rate_paths: Vec<String> = CHART_RANGES
+        .iter()
+        .map(|range| format!("/api/assets/{asset_id}/{base_id}/converted/rates?range={range}"))
+        .collect();
+    let rate_futures: Vec<_> = rate_paths
+        .iter()
+        .map(|p| infra.get(p, auth_token))
+        .collect();
+    let rate_results = futures_util::future::join_all(rate_futures).await;
+
+    let mut chart_data: Vec<ChartPeriodData> = Vec::new();
+    for (i, result) in rate_results.into_iter().enumerate() {
+        if let Ok(resp) = result {
+            if let Ok(points) = extract_asset_rates(&resp.body) {
+                chart_data.push(ChartPeriodData {
+                    period: CHART_LABELS[i].to_string(),
+                    points,
+                });
+            }
+        }
+    }
+
+    let mut m = module.lock().unwrap();
+    m.state.base_chart_data = chart_data;
+    m.notify();
 }

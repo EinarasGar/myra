@@ -16,6 +16,7 @@ use shared::view_models::assets::get_asset::GetAssetResponseViewModel;
 use shared::view_models::assets::get_asset_pair::GetAssetPairResponseViewModel;
 use shared::view_models::assets::get_asset_types::GetAssetTypesResponseViewModel;
 use shared::view_models::assets::get_assets::GetAssetsLineResponseViewModel;
+use shared::view_models::assets::get_converted_asset_pair::GetConvertedAssetPairResponseViewModel;
 use shared::view_models::assets::get_user_asset_pair::GetUserAssetPairResponseViewModel;
 use shared::view_models::assets::get_user_assets::GetUserAssetsResponseViewModel;
 use shared::view_models::base_models::search::AssetsPage;
@@ -24,7 +25,7 @@ use time::OffsetDateTime;
 use crate::error::ApiError;
 use crate::models::{
     AssetDetail, AssetItem, AssetPairDetail, AssetPairRef, AssetSearchPage, AssetSummary,
-    AssetTypeOption,
+    AssetTypeOption, ConvertedPairRate,
 };
 
 pub fn extract_assets(body: &str) -> Result<Vec<AssetItem>, String> {
@@ -101,6 +102,7 @@ pub fn extract_asset_detail(body: &str, user_asset: bool) -> Result<AssetDetail,
             asset_id: p.asset_id.0,
             ticker: p.ticker,
             name: p.name,
+            converted: false,
         })
         .collect();
     let ticker = resp.asset.ticker.into_inner();
@@ -151,6 +153,18 @@ pub fn extract_user_asset_pair(body: &str) -> Result<AssetPairDetail, String> {
             .map(|m| m.last_updated.unix_timestamp()),
         volume: None,
         exchange: resp.user_metadata.map(|u| u.exchange.into_inner()),
+    })
+}
+
+pub fn extract_converted_pair_rate(body: &str) -> Result<ConvertedPairRate, String> {
+    let resp: GetConvertedAssetPairResponseViewModel =
+        serde_json::from_str(body).map_err(|e| e.to_string())?;
+    Ok(ConvertedPairRate {
+        latest_rate: resp.metadata.as_ref().and_then(|m| m.latest_rate.to_f64()),
+        last_updated: resp
+            .metadata
+            .as_ref()
+            .map(|m| m.last_updated.unix_timestamp()),
     })
 }
 

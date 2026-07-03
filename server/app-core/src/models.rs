@@ -161,6 +161,7 @@ pub struct AssetPairRef {
     pub asset_id: i32,
     pub ticker: String,
     pub name: String,
+    pub converted: bool,
 }
 #[derive(Debug, Clone, uniffi::Record)]
 pub struct AssetDetail {
@@ -182,6 +183,11 @@ pub struct AssetPairDetail {
     pub last_updated: Option<i64>,
     pub volume: Option<f64>,
     pub exchange: Option<String>,
+}
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct ConvertedPairRate {
+    pub latest_rate: Option<f64>,
+    pub last_updated: Option<i64>,
 }
 #[derive(Debug, Clone, uniffi::Record)]
 pub struct AssetTypeOption {
@@ -406,6 +412,8 @@ pub struct AssetDetailState {
     pub lots: Vec<LotItem>,
     pub base_ticker: String,
     pub price_ticker: String,
+    pub supports_base_conversion: bool,
+    pub base_chart_data: Vec<ChartPeriodData>,
 }
 
 #[derive(Debug, Clone, Default, uniffi::Record)]

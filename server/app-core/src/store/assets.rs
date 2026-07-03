@@ -2,12 +2,14 @@ use super::infra::SharedInfra;
 use crate::api::asset_rates::extract_asset_rates;
 use crate::api::assets::{
     build_add_pair_body, build_add_rate_body, build_create_asset_body, extract_asset_detail,
-    extract_asset_search_page, extract_asset_types, extract_created_asset_id,
-    extract_global_asset_pair, extract_user_asset_pair, extract_user_assets,
+    extract_asset_search_page, extract_asset_types, extract_converted_pair_rate,
+    extract_created_asset_id, extract_global_asset_pair, extract_user_asset_pair,
+    extract_user_assets,
 };
 use crate::error::{server_error, ApiError};
 use crate::models::{
-    AssetDetail, AssetPairDetail, AssetSearchPage, AssetSummary, AssetTypeOption, ChartPoint,
+    AssetDetail, AssetPairDetail, AssetPairRef, AssetSearchPage, AssetSummary, AssetTypeOption,
+    ChartPoint, ConvertedPairRate,
 };
 
 pub async fn search_global_assets(
@@ -49,7 +51,24 @@ pub async fn get_asset_detail(
     if resp.status >= 400 {
         return Err(server_error(resp.status, &resp.body));
     }
-    extract_asset_detail(&resp.body, user_asset).map_err(|e| ApiError::Parse { reason: e })
+    let mut detail =
+        extract_asset_detail(&resp.body, user_asset).map_err(|e| ApiError::Parse { reason: e })?;
+
+    if let (Some(base_id), Some(base_ticker)) =
+        (infra.default_asset_id(), infra.default_asset_ticker())
+    {
+        let already_present = detail.pairs.iter().any(|p| p.asset_id == base_id);
+        if base_id != asset_id && detail.base_pair_id.is_some() && !already_present {
+            detail.pairs.push(AssetPairRef {
+                asset_id: base_id,
+                ticker: base_ticker.clone(),
+                name: base_ticker,
+                converted: true,
+            });
+        }
+    }
+
+    Ok(detail)
 }
 
 pub async fn get_asset_pair(
@@ -83,6 +102,39 @@ pub async fn get_asset_pair_rates(
 ) -> Result<Vec<ChartPoint>, ApiError> {
     let base = asset_base_path(infra, user_asset)?;
     let path = format!("{base}/{asset_id}/{reference_id}/rates?range={range}");
+    let resp = infra.get(&path, auth_token).await?;
+    if resp.status >= 400 {
+        return Err(server_error(resp.status, &resp.body));
+    }
+    extract_asset_rates(&resp.body).map_err(|e| ApiError::Parse { reason: e })
+}
+
+pub async fn get_asset_pair_converted(
+    infra: &SharedInfra,
+    asset_id: i32,
+    reference_id: i32,
+    user_asset: bool,
+    auth_token: Option<&str>,
+) -> Result<ConvertedPairRate, ApiError> {
+    let base = asset_base_path(infra, user_asset)?;
+    let path = format!("{base}/{asset_id}/{reference_id}/converted");
+    let resp = infra.get(&path, auth_token).await?;
+    if resp.status >= 400 {
+        return Err(server_error(resp.status, &resp.body));
+    }
+    extract_converted_pair_rate(&resp.body).map_err(|e| ApiError::Parse { reason: e })
+}
+
+pub async fn get_asset_pair_converted_rates(
+    infra: &SharedInfra,
+    asset_id: i32,
+    reference_id: i32,
+    range: &str,
+    user_asset: bool,
+    auth_token: Option<&str>,
+) -> Result<Vec<ChartPoint>, ApiError> {
+    let base = asset_base_path(infra, user_asset)?;
+    let path = format!("{base}/{asset_id}/{reference_id}/converted/rates?range={range}");
     let resp = infra.get(&path, auth_token).await?;
     if resp.status >= 400 {
         return Err(server_error(resp.status, &resp.body));

@@ -22,6 +22,9 @@ import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumFlexibleTopAppBar
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -69,6 +72,15 @@ fun AssetDetailScreen(
     // Convert chart data from UniFFI to portfolio ChartPoint
     val chartData: Map<TimePeriod, List<ChartPoint>> =
         state.chartData.associate { periodData ->
+            val period =
+                TimePeriod.entries.find { it.apiRange == periodData.period.lowercase() }
+                    ?: return@associate TimePeriod.MONTH to emptyList()
+            val points = periodData.points.map { ChartPoint(date = it.timestamp, value = it.value) }
+            period to points
+        }
+
+    val baseChartData: Map<TimePeriod, List<ChartPoint>> =
+        state.baseChartData.associate { periodData ->
             val period =
                 TimePeriod.entries.find { it.apiRange == periodData.period.lowercase() }
                     ?: return@associate TimePeriod.MONTH to emptyList()
@@ -176,7 +188,25 @@ fun AssetDetailScreen(
                                 fadeIn(motionScheme.defaultEffectsSpec()) +
                                     slideInVertically(motionScheme.defaultSpatialSpec()) { it / 4 },
                         ) {
-                            PortfolioChart(portfolioData = chartData, currencyTicker = state.priceTicker)
+                            var showBase by remember { mutableStateOf(false) }
+                            val activeChart = if (showBase) baseChartData else chartData
+                            val activeTicker = if (showBase) state.baseTicker else state.priceTicker
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                if (state.supportsBaseConversion) {
+                                    CurrencyToggle(
+                                        nativeTicker = state.priceTicker,
+                                        baseTicker = state.baseTicker,
+                                        showBase = showBase,
+                                        onSelect = { base ->
+                                            showBase = base
+                                            if (base && state.baseChartData.isEmpty()) {
+                                                viewModel.loadBaseChart()
+                                            }
+                                        },
+                                    )
+                                }
+                                PortfolioChart(portfolioData = activeChart, currencyTicker = activeTicker)
+                            }
                         }
                     }
 
@@ -246,6 +276,32 @@ fun AssetDetailScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CurrencyToggle(
+    nativeTicker: String,
+    baseTicker: String,
+    showBase: Boolean,
+    onSelect: (Boolean) -> Unit,
+) {
+    SingleChoiceSegmentedButtonRow {
+        SegmentedButton(
+            selected = !showBase,
+            onClick = { onSelect(false) },
+            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+        ) {
+            Text(nativeTicker)
+        }
+        SegmentedButton(
+            selected = showBase,
+            onClick = { onSelect(true) },
+            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+        ) {
+            Text(baseTicker)
         }
     }
 }

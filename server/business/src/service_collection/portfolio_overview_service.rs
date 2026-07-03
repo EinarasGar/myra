@@ -125,8 +125,14 @@ impl PortfolioOverviewService {
             if cash_asset_id == reference_asset_id.0 {
                 continue;
             }
-            let rate = rate_iter.next().unwrap().unwrap();
-            action.apply_conversion_rate(rate.rate);
+            match rate_iter.next().flatten() {
+                Some(rate) => action.apply_conversion_rate(rate.rate),
+                None => tracing::warn!(
+                    conversion_asset_id = cash_asset_id,
+                    date = %action.date(),
+                    "no conversion rate available for referential action; leaving unconverted"
+                ),
+            }
         }
 
         let mut final_vec: Vec<Box<dyn PortfolioAction>> = regular_actions;

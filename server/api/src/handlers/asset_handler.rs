@@ -32,6 +32,7 @@ use crate::{
                 GetAssetPairRatesRequestParams, GetAssetPairRatesResponseViewModel,
             },
             get_assets::{GetAssetsLineResponseViewModel, GetAssetsRequestParams},
+            get_converted_asset_pair::GetConvertedAssetPairResponseViewModel,
         },
         base_models::search::AssetsPage,
     },
@@ -265,6 +266,85 @@ pub async fn get_asset_pair_rates(
     let range = RangeDto::StringBased(query_params.range.clone());
     let rates = asset_rates_service
         .get_market_pair_rates_by_range(
+            AssetPairIdsDto::new(AssetIdDto(id), AssetIdDto(reference_id)),
+            range,
+        )
+        .await?;
+
+    let ret_rates: Vec<AssetRateViewModel> = rates.into_iter().map(Into::into).collect();
+
+    let ret = GetAssetPairRatesResponseViewModel {
+        rates: ret_rates,
+        range: query_params.range.clone(),
+    };
+
+    Ok(ret.into())
+}
+
+/// Get converted asset pair (derived)
+///
+/// Returns the asset's latest price in the reference currency, derived by hopping through
+/// the asset's base pair. Calling this endpoint means the result is a computed conversion,
+/// not an exact stored rate.
+#[utoipa::path(
+    get,
+    path = "/api/assets/{asset_id}/{reference_id}/converted",
+    tag = "Assets",
+    responses(
+        (status = 200, description = "Derived asset pair rate retrieved successfully.", body = GetConvertedAssetPairResponseViewModel),
+        GetResponses
+    ),
+    security(
+        ("auth_token" = [])
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(asset_id = %id, reference_id = %reference_id))]
+pub async fn get_asset_pair_converted(
+    Path((id, reference_id)): Path<(i32, i32)>,
+    AssetRatesServiceState(asset_rates_service): AssetRatesServiceState,
+) -> Result<Json<GetConvertedAssetPairResponseViewModel>, ApiError> {
+    let latest = asset_rates_service
+        .get_pair_latest_converted(AssetIdDto(id), AssetIdDto(reference_id))
+        .await?;
+
+    let ret = GetConvertedAssetPairResponseViewModel {
+        metadata: latest.map(|rate| AssetPairMetadataViewModel {
+            latest_rate: rate.rate,
+            last_updated: rate.date,
+        }),
+    };
+
+    Ok(ret.into())
+}
+
+/// Get converted asset pair rates series (derived)
+///
+/// Returns the asset's price series in the reference currency, derived by hopping through
+/// the asset's base pair. Each historical point is converted at the pair's own rate for that date.
+#[utoipa::path(
+    get,
+    path = "/api/assets/{asset_id}/{reference_id}/converted/rates",
+    tag = "Assets",
+    params(
+        ("range" = String, Query, description = "Time range for the rates (e.g. 1m, 3m, 1y)."),
+    ),
+    responses(
+        (status = 200, description = "Derived asset pair rates series retrieved successfully.", body = GetAssetPairRatesResponseViewModel),
+        GetResponses
+    ),
+    security(
+        ("auth_token" = [])
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(asset_id = %id, reference_id = %reference_id))]
+pub async fn get_asset_pair_converted_rates(
+    Path((id, reference_id)): Path<(i32, i32)>,
+    ValidatedQuery(query_params): ValidatedQuery<GetAssetPairRatesRequestParams>,
+    AssetRatesServiceState(asset_rates_service): AssetRatesServiceState,
+) -> Result<Json<GetAssetPairRatesResponseViewModel>, ApiError> {
+    let range = RangeDto::StringBased(query_params.range.clone());
+    let rates = asset_rates_service
+        .get_market_pair_rates_by_range_converted(
             AssetPairIdsDto::new(AssetIdDto(id), AssetIdDto(reference_id)),
             range,
         )

@@ -55,6 +55,8 @@ pub(crate) fn create_router(state: AppState) -> Router {
         .route("/assets/{asset_id}/{reference_id}/rates",       get(handlers::user_asset_handler::get_user_asset_pair_rates)
                                                                     .post(handlers::user_asset_handler::post_custom_asset_rates)
                                                                     .delete(handlers::user_asset_handler::delete_asset_pair_rates))
+        .route("/assets/{asset_id}/{reference_id}/converted",       get(handlers::user_asset_handler::get_user_asset_pair_converted))
+        .route("/assets/{asset_id}/{reference_id}/converted/rates", get(handlers::user_asset_handler::get_user_asset_pair_converted_rates))
         .route("/assets/{asset_id}/{reference_id}/usermetadata", put(handlers::user_asset_handler::put_custom_asset_pair))
         .route("/base-asset",                                    post(handlers::user_handler::post_base_asset))
         .route("/onboarding",                                    post(handlers::user_handler::post_onboarding))
@@ -103,6 +105,8 @@ pub(crate) fn create_router(state: AppState) -> Router {
         .route("/api/assets/{asset_id}",        get(handlers::asset_handler::get_asset))
         .route("/api/assets/{asset_id}/{reference_id}",       get(handlers::asset_handler::get_asset_pair))
         .route("/api/assets/{asset_id}/{reference_id}/rates", get(handlers::asset_handler::get_asset_pair_rates))
+        .route("/api/assets/{asset_id}/{reference_id}/converted",       get(handlers::asset_handler::get_asset_pair_converted))
+        .route("/api/assets/{asset_id}/{reference_id}/converted/rates", get(handlers::asset_handler::get_asset_pair_converted_rates))
         .route("/api/assets",                   get(handlers::asset_handler::search_assets))
         .route("/api/auth/me",                  get(handlers::auth_handler::get_me))
         .route("/api/auth/logout",              post(handlers::auth_handler::post_logout));

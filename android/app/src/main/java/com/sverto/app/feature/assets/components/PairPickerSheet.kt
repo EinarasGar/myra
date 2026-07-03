@@ -63,7 +63,10 @@ fun PairPickerSheet(
                             )
                         },
                         supportingContent = {
-                            Text(pair.name, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                if (pair.converted) "Converted" else pair.name,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         },
                         trailingContent = {
                             if (selected) {

@@ -138,6 +138,86 @@ impl AssetRatesService {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn get_pair_latest_converted(
+        &self,
+        asset_id: AssetIdDto,
+        reference_asset_id: AssetIdDto,
+    ) -> anyhow::Result<Option<AssetRateDto>> {
+        if asset_id == reference_asset_id {
+            return Ok(Some(AssetRateDto {
+                rate: dec!(1),
+                date: OffsetDateTime::now_utc(),
+            }));
+        }
+        let mut asset_ids = HashSet::new();
+        asset_ids.insert(asset_id);
+        let rates = self
+            .get_pairs_latest_converted(asset_ids, reference_asset_id)
+            .await?;
+        Ok(rates.into_iter().next().map(|(_, v)| v))
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn get_market_pair_rates_by_range_converted(
+        &self,
+        pair: AssetPairIdsDto,
+        range_dto: RangeDto,
+    ) -> anyhow::Result<Vec<AssetRateDto>> {
+        let asset_id = pair.pair1.clone();
+        let reference_id = pair.pair2.clone();
+        if asset_id == reference_id {
+            return Ok(vec![]);
+        }
+
+        let (start_date, interval) = match Range::try_from(range_dto) {
+            Ok(range) => (range.start_time(), range.interval()),
+            Err(RangeError::StartDateNotSpecified) => (
+                OffsetDateTime::now_utc() - Duration::days(365 * 30),
+                Duration::weeks(1),
+            ),
+            Err(err) => return Err(err.into()),
+        };
+
+        let assets = HashMap::from([(asset_id.clone(), start_date)]);
+        let mut map = self
+            .get_assets_rates_default_from_date(reference_id.clone(), assets, interval)
+            .await?;
+
+        if let Some(direct) = map.remove(&AssetPairIdsDto::new(
+            asset_id.clone(),
+            reference_id.clone(),
+        )) {
+            return Ok(direct.into_iter().collect());
+        }
+
+        let Some(primary_key) = map.keys().find(|k| k.pair1 == asset_id).cloned() else {
+            return Ok(vec![]);
+        };
+        let base_id = primary_key.pair2.clone();
+        let primary = map.remove(&primary_key).unwrap_or_default();
+        let secondary: Vec<AssetRateDto> = map
+            .remove(&AssetPairIdsDto::new(base_id, reference_id))
+            .map(|v| v.into_iter().collect())
+            .unwrap_or_default();
+        if secondary.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let mut si = 0usize;
+        let mut result = Vec::with_capacity(primary.len());
+        for p in primary {
+            while si + 1 < secondary.len() && secondary[si + 1].date <= p.date {
+                si += 1;
+            }
+            result.push(AssetRateDto {
+                date: p.date,
+                rate: p.rate * secondary[si].rate,
+            });
+        }
+        Ok(result)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn get_pairs_by_range_direct(
         &self,
         pair: AssetPairIdsDto,
