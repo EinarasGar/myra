@@ -16,6 +16,10 @@
   <img src="https://img.shields.io/badge/self--hosted-ready-green" alt="Self-hosted ready" />
 </p>
 
+<p align="center">
+  <img src=".github/assets/hero.png" alt="Sverto on web and Android — two years of net worth history with holdings across property, pension, ETFs, stocks, and crypto" width="940" />
+</p>
+
 ---
 
 ## Your finances, your way
@@ -67,7 +71,11 @@ The AI assistant has full context of your financial data through a set of tools:
 
 The AI assistant uses Gemini and stores embeddings in your PostgreSQL database. When self-hosting, you'll need your own Gemini API key. Hosted users get AI and market data included.
 
-> *Example: "I paid 50€ for dinner with friends, 30€ of that was my share. Create a transaction for my portion."*
+> *Example: "Can you add a £24 Lidl bill to my joint account for yesterday?"*
+
+<p align="center">
+  <img src=".github/assets/android-myra.png" alt="Myra resolving the account, category, and currency, then asking for approval before saving the transaction" width="340" />
+</p>
 
 ---
 
@@ -76,6 +84,12 @@ The AI assistant uses Gemini and stores embeddings in your PostgreSQL database. 
 - **Web** — Full-featured web app. Run it on your own server or access it from any browser.
 - **Android** — Native Kotlin app with Jetpack Compose, powered by the shared Rust core.
 - **iOS** — Coming soon
+
+<p align="center">
+  <img src=".github/assets/android-portfolio.png" alt="Net worth and holdings on Android" width="30%" />
+  <img src=".github/assets/android-transactions.png" alt="Transactions feed on Android" width="30%" />
+  <img src=".github/assets/android-asset-lots.png" alt="Asset detail with purchase lots and per-lot P&L on Android" width="30%" />
+</p>
 
 ---
 
