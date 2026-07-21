@@ -31,3 +31,9 @@ pub enum QuickUploadJob {
         user_id: Uuid,
     },
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SyncConnectorBindingJob {
+    pub binding_id: Uuid,
+    pub user_id: Uuid,
+}

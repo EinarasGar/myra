@@ -12,6 +12,7 @@ pub struct AddTransactionModel {
     pub group_id: Option<Uuid>,
     pub date: OffsetDateTime,
     pub transaction_type_id: i32,
+    pub visibility: String,
 }
 
 #[derive(Clone)]
@@ -43,6 +44,7 @@ pub struct TransactionWithEntriesModel {
     pub user_id: Uuid,
     pub type_id: DatabaseTransactionTypes,
     pub date_transacted: OffsetDateTime,
+    pub visibility: String,
 }
 
 #[derive(sqlx::FromRow, Debug)]

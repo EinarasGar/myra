@@ -8,3 +8,4 @@ pub mod transaction_fee;
 pub mod transaction_group;
 pub mod transaction_group_id;
 pub mod transaction_id;
+pub mod visibility;

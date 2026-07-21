@@ -2,11 +2,14 @@
 use dal::database_context::MyraDb;
 
 use dal::{
-    models::transaction_models::{
-        AddTransactionDescriptionModel, AddTransactionDividendModel, TransactionDescriptionModel,
-        TransactionDividendModel,
+    models::{
+        connector_models::AddConnectorTransactionModel,
+        transaction_models::{
+            AddTransactionDescriptionModel, AddTransactionDividendModel,
+            TransactionDescriptionModel, TransactionDividendModel,
+        },
     },
-    queries::transaction_data_queries,
+    queries::{connector_queries, transaction_data_queries},
 };
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -35,6 +38,45 @@ impl TransactionMetadataService {
     pub async fn write_metadata(&self, transactions: &mut [Transaction]) -> anyhow::Result<()> {
         self.write_transaction_descriptions(transactions).await?;
         self.write_transaction_dividends(transactions).await?;
+        self.write_connector_links(transactions).await?;
+        Ok(())
+    }
+
+    async fn write_connector_links(&self, transactions: &[Transaction]) -> anyhow::Result<()> {
+        let models: Vec<AddConnectorTransactionModel> = transactions
+            .iter()
+            .filter_map(|transaction| {
+                let link = transaction.connector_link()?;
+                let transaction_id = transaction.get_transaction_id()?;
+                Some(AddConnectorTransactionModel {
+                    binding_id: link.binding_id,
+                    transaction_id: Some(transaction_id),
+                    external_id: link.external_id.clone(),
+                    external_hash: link.external_hash.clone(),
+                })
+            })
+            .collect();
+
+        if !models.is_empty() {
+            self.db
+                .execute(connector_queries::insert_connector_transactions(models))
+                .await?;
+        }
+        Ok(())
+    }
+
+    pub async fn mark_connector_links_edited(
+        &self,
+        transaction_ids: &[Uuid],
+    ) -> anyhow::Result<()> {
+        if transaction_ids.is_empty() {
+            return Ok(());
+        }
+        self.db
+            .execute(connector_queries::mark_connector_transactions_edited(
+                transaction_ids.to_vec(),
+            ))
+            .await?;
         Ok(())
     }
 
@@ -68,6 +110,8 @@ impl TransactionMetadataService {
             .await?;
         self.diff_dividends(transaction_id, old_transaction, new_transaction)
             .await?;
+
+        self.mark_connector_links_edited(&[transaction_id]).await?;
 
         Ok(())
     }

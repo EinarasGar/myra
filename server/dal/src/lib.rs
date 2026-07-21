@@ -12,3 +12,4 @@ pub mod queries;
 pub mod query_params;
 pub mod redis_connection;
 pub mod s3_file_provider;
+pub mod secrets;

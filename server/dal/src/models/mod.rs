@@ -4,6 +4,7 @@ pub mod ai_models;
 pub mod asset_models;
 pub mod base;
 pub mod category_models;
+pub mod connector_models;
 pub mod entry_models;
 pub mod external_identity_models;
 pub mod file_models;

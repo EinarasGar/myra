@@ -99,6 +99,22 @@ pub fn get_public_assets(page_length: u64, page: u64, search: Option<String>) ->
 }
 
 #[macros::named_query]
+pub fn get_asset_ids_by_tickers(user_id: Uuid, tickers: Vec<String>) -> DbQueryWithValues {
+    Query::select()
+        .column((AssetsIden::Table, AssetsIden::Id))
+        .column((AssetsIden::Table, AssetsIden::Ticker))
+        .from(AssetsIden::Table)
+        .and_where(Expr::col((AssetsIden::Table, AssetsIden::Ticker)).is_in(tickers))
+        .and_where(
+            Expr::col((AssetsIden::Table, AssetsIden::UserId))
+                .is_null()
+                .or(Expr::col((AssetsIden::Table, AssetsIden::UserId)).eq(user_id)),
+        )
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[macros::named_query]
 pub fn get_asset_types() -> DbQueryWithValues {
     Query::select()
         .columns(vec![AssetTypesIden::Id, AssetTypesIden::AssetTypeName])

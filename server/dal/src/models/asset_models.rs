@@ -28,6 +28,12 @@ pub struct Asset {
 }
 
 #[derive(sqlx::FromRow, Debug)]
+pub struct AssetTickerId {
+    pub id: i32,
+    pub ticker: String,
+}
+
+#[derive(sqlx::FromRow, Debug)]
 pub struct AssetRaw {
     pub ticker: String,
     pub asset_name: String,

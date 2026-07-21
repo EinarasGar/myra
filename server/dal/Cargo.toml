@@ -30,3 +30,7 @@ apalis = { version = "=1.0.0-rc.9", features = ["tracing"] }
 apalis-postgres = { git = "https://github.com/EinarasGar/apalis-postgres", rev = "b13a033efb4d720be702dce5e4f1b5f3493c4099", features = ["time"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1.0"
+aes-gcm = "0.10"
+base64 = "0.22"
+hex = "0.4"
+rand = "0.8"

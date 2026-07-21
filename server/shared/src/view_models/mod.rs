@@ -6,6 +6,7 @@ pub mod ai;
 pub mod assets;
 pub mod base_models;
 pub mod categories;
+pub mod connectors;
 pub mod errors;
 pub mod files;
 pub mod portfolio;

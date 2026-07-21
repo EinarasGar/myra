@@ -257,6 +257,100 @@ impl RedisConnection {
         }
     }
 
+    #[tracing::instrument(
+        level = "debug",
+        skip_all,
+        fields(otel.kind = "client", db.system.name = "redis")
+    )]
+    pub async fn set_string_ex(&self, key: &str, value: &str, ttl_secs: u64) {
+        if let Some(mut conn) = self.get_connection().await {
+            let _ = tokio::time::timeout(COMMAND_TIMEOUT, async {
+                let _: Result<(), _> = conn.set_ex(key, value, ttl_secs).await;
+            })
+            .await;
+        }
+    }
+
+    /// Atomic `SET key value NX EX ttl` — the acquire half of a distributed lock. Returns
+    /// true if the key was set (lock acquired), false if it already existed (another holder).
+    /// Degrades to `true` (proceed) when Redis is unavailable, so callers never block on it.
+    #[tracing::instrument(
+        level = "debug",
+        skip_all,
+        fields(otel.kind = "client", db.system.name = "redis")
+    )]
+    pub async fn set_string_nx_ex(&self, key: &str, value: &str, ttl_secs: u64) -> bool {
+        let Some(mut conn) = self.get_connection().await else {
+            return true;
+        };
+        let fut = async {
+            let res: redis::RedisResult<Option<String>> = redis::cmd("SET")
+                .arg(key)
+                .arg(value)
+                .arg("NX")
+                .arg("EX")
+                .arg(ttl_secs)
+                .query_async(&mut conn)
+                .await;
+            res
+        };
+        match tokio::time::timeout(COMMAND_TIMEOUT, fut).await {
+            Ok(Ok(Some(_))) => true,
+            Ok(Ok(None)) => false,
+            Ok(Err(e)) => {
+                tracing::warn!(
+                    error = &e as &dyn std::error::Error,
+                    error.type = "redis::RedisError",
+                    "redis set_nx failed"
+                );
+                true
+            }
+            Err(_) => {
+                tracing::warn!("redis set_nx timed out");
+                true
+            }
+        }
+    }
+
+    #[tracing::instrument(
+        level = "debug",
+        skip_all,
+        fields(otel.kind = "client", db.system.name = "redis")
+    )]
+    pub async fn get_string(&self, key: &str) -> Option<String> {
+        let mut conn = self.get_connection().await?;
+        let fut = async { conn.get::<_, Option<String>>(key).await };
+        match tokio::time::timeout(COMMAND_TIMEOUT, fut).await {
+            Ok(Ok(val)) => val,
+            Ok(Err(e)) => {
+                tracing::warn!(
+                    error = &e as &dyn std::error::Error,
+                    error.type = "redis::RedisError",
+                    "redis get_string failed"
+                );
+                None
+            }
+            Err(_) => {
+                tracing::warn!("redis get_string timed out");
+                None
+            }
+        }
+    }
+
+    #[tracing::instrument(
+        level = "debug",
+        skip_all,
+        fields(otel.kind = "client", db.system.name = "redis")
+    )]
+    pub async fn del(&self, key: &str) {
+        if let Some(mut conn) = self.get_connection().await {
+            let _ = tokio::time::timeout(COMMAND_TIMEOUT, async {
+                let _: Result<(), _> = conn.del(key).await;
+            })
+            .await;
+        }
+    }
+
     pub(crate) async fn get_connection(&self) -> Option<ConnectionManager> {
         let client = self.client.as_ref()?;
 
@@ -304,6 +398,10 @@ mock! {
         pub async fn set_ex(&self, key: &str, value: i64, ttl_secs: u64);
         pub async fn hset_with_expire(&self, key: &str, fields: &[(&'static str, i64)], ttl_secs: i64);
         pub async fn decr(&self, key: &str);
+        pub async fn set_string_ex(&self, key: &str, value: &str, ttl_secs: u64);
+        pub async fn set_string_nx_ex(&self, key: &str, value: &str, ttl_secs: u64) -> bool;
+        pub async fn get_string(&self, key: &str) -> Option<String>;
+        pub async fn del(&self, key: &str);
     }
 
     impl Clone for RedisConnection {

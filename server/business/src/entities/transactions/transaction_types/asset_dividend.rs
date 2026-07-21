@@ -50,6 +50,19 @@ impl TransactionProcessor for AssetDividendTransaction {
         self.base.set_transaction_id(transaction_id)
     }
 
+    fn connector_link(
+        &self,
+    ) -> Option<&crate::entities::transactions::metadata::ConnectorLinkMeta> {
+        self.base.connector_link()
+    }
+
+    fn set_connector_link(
+        &mut self,
+        link: Option<crate::entities::transactions::metadata::ConnectorLinkMeta>,
+    ) {
+        self.base.set_connector_link(link)
+    }
+
     fn get_entries(&self) -> &Vec<Entry> {
         self.base.entries()
     }
@@ -68,7 +81,13 @@ impl TransactionProcessor for AssetDividendTransaction {
             _ => panic!("Invalid transaction type"),
         };
 
-        let mut base = BaseTransaction::new(user_id, dto.transaction_id, dto.date, vec![]);
+        let mut base = BaseTransaction::new(
+            user_id,
+            dto.transaction_id,
+            dto.date,
+            dto.visibility,
+            vec![],
+        );
         base.add_fee_entries_from_dtos(dto.fee_entries)?;
 
         let entry = Entry::from_dto(
@@ -147,6 +166,7 @@ mod tests {
     fn dividend_dto(account_id: Uuid, fee_entries: Vec<FeeEntryDto>) -> TransactionDto {
         TransactionDto {
             transaction_id: None,
+            visibility: crate::dtos::transaction_dto::TransactionVisibilityDto::Default,
             date: datetime!(2000-03-22 00:00:00 UTC),
             fee_entries,
             transaction_type: TransactionTypeDto::AssetDividend(AssetDividendMetadataDto {

@@ -11,5 +11,6 @@ members = [
   "shared",
   "app-core",
   "observability",
+  "connectors",
   "worker",
 ]

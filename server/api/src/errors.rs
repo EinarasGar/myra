@@ -39,11 +39,20 @@ pub enum ApiError {
     #[error("Service unavailable")]
     ServiceUnavailable,
 
+    #[error("Bad gateway: {0}")]
+    BadGateway(String),
+
     #[error("Rate limit exceeded")]
     RateLimited(serde_json::Value),
 
     #[error("{0}")]
-    Internal(#[from] anyhow::Error),
+    Internal(anyhow::Error),
+}
+
+impl From<anyhow::Error> for ApiError {
+    fn from(err: anyhow::Error) -> Self {
+        ApiError::from_anyhow(err)
+    }
 }
 
 impl ApiError {
@@ -66,10 +75,18 @@ impl ApiError {
             err.downcast_ref::<business::dtos::not_found_error_dto::BusinessNotFoundError>()
         {
             ApiError::NotFound(not_found_err.message.clone())
+        } else if let Some(bad_request_err) =
+            err.downcast_ref::<business::dtos::bad_request_error_dto::BusinessBadRequestError>()
+        {
+            ApiError::BadRequest(bad_request_err.message.clone())
         } else if let Some(conflict_err) =
             err.downcast_ref::<business::dtos::conflict_error_dto::BusinessConflictError>()
         {
             ApiError::Conflict(conflict_err.message.clone())
+        } else if let Some(bad_gateway_err) =
+            err.downcast_ref::<business::dtos::bad_gateway_error_dto::BusinessBadGatewayError>()
+        {
+            ApiError::BadGateway(bad_gateway_err.message.clone())
         } else if err
             .downcast_ref::<business::dtos::service_unavailable_error_dto::BusinessServiceUnavailableError>()
             .is_some()
@@ -130,6 +147,13 @@ impl IntoResponse for ApiError {
                 StatusCode::SERVICE_UNAVAILABLE,
                 ErrorType::ServiceUnavailable,
                 "Service temporarily unavailable.".to_string(),
+                vec![],
+                None,
+            ),
+            ApiError::BadGateway(msg) => (
+                StatusCode::BAD_GATEWAY,
+                ErrorType::BadGateway,
+                msg.clone(),
                 vec![],
                 None,
             ),

@@ -52,6 +52,19 @@ impl TransactionProcessor for AssetTradeTransaction {
         self.base.set_transaction_id(transaction_id)
     }
 
+    fn connector_link(
+        &self,
+    ) -> Option<&crate::entities::transactions::metadata::ConnectorLinkMeta> {
+        self.base.connector_link()
+    }
+
+    fn set_connector_link(
+        &mut self,
+        link: Option<crate::entities::transactions::metadata::ConnectorLinkMeta>,
+    ) {
+        self.base.set_connector_link(link)
+    }
+
     fn get_entries(&self) -> &Vec<Entry> {
         self.base.entries()
     }
@@ -70,7 +83,13 @@ impl TransactionProcessor for AssetTradeTransaction {
             _ => panic!("Invalid transaction type"),
         };
 
-        let mut base = BaseTransaction::new(user_id, dto.transaction_id, dto.date, vec![]);
+        let mut base = BaseTransaction::new(
+            user_id,
+            dto.transaction_id,
+            dto.date,
+            dto.visibility,
+            vec![],
+        );
         base.add_fee_entries_from_dtos(dto.fee_entries)?;
 
         let outgoing_entry = Entry::from_dto(
@@ -155,6 +174,7 @@ mod tests {
     ) -> TransactionDto {
         TransactionDto {
             transaction_id: None,
+            visibility: crate::dtos::transaction_dto::TransactionVisibilityDto::Default,
             date: datetime!(2024-05-20 00:00:00 UTC),
             fee_entries,
             transaction_type: TransactionTypeDto::AssetTrade(AssetTradeMetadataDto {
@@ -182,6 +202,7 @@ mod tests {
             transaction_id,
             user_id,
             type_id: DatabaseTransactionTypes::AssetTrade,
+            visibility: "default".to_string(),
             date_transacted: datetime!(2024-05-20 00:00:00 UTC),
         }
     }

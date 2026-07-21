@@ -56,6 +56,7 @@ impl From<AssetSaleViewModel> for TransactionDto {
         TransactionDto {
             transaction_id: None,
             date: value.base.date,
+            visibility: business::dtos::transaction_dto::TransactionVisibilityDto::Default,
             fee_entries: match value.base.fees {
                 Some(f) => f.into_iter().map(|x| x.into()).collect(),
                 None => [].into(),

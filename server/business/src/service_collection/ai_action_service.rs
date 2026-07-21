@@ -76,6 +76,7 @@ impl AiActionService {
 
         let dto = TransactionDto {
             transaction_id: None,
+            visibility: crate::dtos::transaction_dto::TransactionVisibilityDto::Default,
             date: datetime,
             fee_entries: vec![],
             transaction_type: TransactionTypeDto::Regular(RegularTransactionMetadataDto {
@@ -210,6 +211,7 @@ impl AiActionService {
 
         let dto = TransactionDto {
             transaction_id: None,
+            visibility: crate::dtos::transaction_dto::TransactionVisibilityDto::Default,
             date: datetime,
             fee_entries: vec![],
             transaction_type,
@@ -272,6 +274,7 @@ impl AiActionService {
 
         let dto = TransactionDto {
             transaction_id: None,
+            visibility: crate::dtos::transaction_dto::TransactionVisibilityDto::Default,
             date: datetime,
             fee_entries: vec![],
             transaction_type,
@@ -319,6 +322,7 @@ impl AiActionService {
 
         let dto = TransactionDto {
             transaction_id: None,
+            visibility: crate::dtos::transaction_dto::TransactionVisibilityDto::Default,
             date: datetime,
             fee_entries: vec![],
             transaction_type,
@@ -366,6 +370,7 @@ impl AiActionService {
 
         let dto = TransactionDto {
             transaction_id: None,
+            visibility: crate::dtos::transaction_dto::TransactionVisibilityDto::Default,
             date: datetime,
             fee_entries: vec![],
             transaction_type,
@@ -411,6 +416,7 @@ impl AiActionService {
 
         let dto = TransactionDto {
             transaction_id: None,
+            visibility: crate::dtos::transaction_dto::TransactionVisibilityDto::Default,
             date: datetime,
             fee_entries: vec![],
             transaction_type: TransactionTypeDto::AssetTrade(AssetTradeMetadataDto {
@@ -561,6 +567,7 @@ impl AiActionService {
 
         let dto = TransactionDto {
             transaction_id: None,
+            visibility: crate::dtos::transaction_dto::TransactionVisibilityDto::Default,
             date: datetime,
             fee_entries,
             transaction_type,
@@ -595,6 +602,7 @@ impl AiActionService {
 
         let dto = TransactionDto {
             transaction_id: None,
+            visibility: crate::dtos::transaction_dto::TransactionVisibilityDto::Default,
             date: datetime,
             fee_entries: vec![],
             transaction_type: TransactionTypeDto::AccountFees(AccountFeesMetadataDto { entry }),
@@ -655,6 +663,7 @@ impl AiActionService {
 
         let new_dto = TransactionDto {
             transaction_id: None,
+            visibility: crate::dtos::transaction_dto::TransactionVisibilityDto::Default,
             date,
             fee_entries: existing.fee_entries,
             transaction_type: new_type,

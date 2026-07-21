@@ -12,7 +12,7 @@ use crate::{
     },
 };
 
-use super::metadata::MetadataField;
+use super::metadata::{ConnectorLinkMeta, MetadataField};
 
 pub enum TransactionPortfolioAction {
     None,
@@ -42,6 +42,9 @@ pub trait TransactionProcessor {
             field
         )
     }
+
+    fn connector_link(&self) -> Option<&ConnectorLinkMeta>;
+    fn set_connector_link(&mut self, link: Option<ConnectorLinkMeta>);
     fn get_portfolio_action(&self) -> anyhow::Result<TransactionPortfolioAction> {
         Ok(TransactionPortfolioAction::None)
     }

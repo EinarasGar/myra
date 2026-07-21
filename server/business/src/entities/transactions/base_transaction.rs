@@ -12,12 +12,15 @@ use crate::dtos::fee_entry_dto::FeeEntryDto;
 use crate::dtos::transaction_dto::TransactionDto;
 use crate::dtos::transaction_dto::TransactionTypeDto;
 use crate::entities::entries::entry::Entry;
+use crate::entities::transactions::metadata::ConnectorLinkMeta;
 
 pub struct BaseTransaction {
     user_id: Uuid,
     transaction_id: Option<Uuid>,
     date: OffsetDateTime,
+    visibility: crate::dtos::transaction_dto::TransactionVisibilityDto,
     entries: Vec<Entry>,
+    connector_link: Option<ConnectorLinkMeta>,
 }
 
 impl BaseTransaction {
@@ -25,14 +28,25 @@ impl BaseTransaction {
         user_id: Uuid,
         transaction_id: Option<Uuid>,
         date: OffsetDateTime,
+        visibility: crate::dtos::transaction_dto::TransactionVisibilityDto,
         entries: Vec<Entry>,
     ) -> Self {
         Self {
             user_id,
             transaction_id,
             date,
+            visibility,
             entries,
+            connector_link: None,
         }
+    }
+
+    pub fn connector_link(&self) -> Option<&ConnectorLinkMeta> {
+        self.connector_link.as_ref()
+    }
+
+    pub fn set_connector_link(&mut self, link: Option<ConnectorLinkMeta>) {
+        self.connector_link = link;
     }
 
     pub fn from_models(models: Vec<TransactionWithEntriesModel>) -> Self {
@@ -40,6 +54,10 @@ impl BaseTransaction {
             models[0].user_id,
             Some(models[0].transaction_id),
             models[0].date_transacted,
+            crate::dtos::transaction_dto::TransactionVisibilityDto::from_db_str(
+                &models[0].visibility,
+            )
+            .unwrap_or_default(),
             models
                 .iter()
                 .map(|x| Entry {
@@ -80,6 +98,7 @@ impl BaseTransaction {
         Ok(TransactionDto {
             transaction_id: self.transaction_id,
             date: self.date,
+            visibility: self.visibility,
             transaction_type: metadata,
             fee_entries: self.fee_entries_dtos()?,
         })
@@ -94,6 +113,7 @@ impl BaseTransaction {
             group_id: None,
             date: self.date,
             transaction_type_id: transaction_type as i32,
+            visibility: self.visibility.as_str().to_string(),
         }
     }
 
@@ -157,6 +177,7 @@ mod tests {
             Uuid::new_v4(),
             None,
             datetime!(2000-03-22 00:00:00 UTC),
+            Default::default(),
             vec![fee_entry, main_entry],
         );
 
@@ -177,6 +198,7 @@ mod tests {
             Uuid::new_v4(),
             None,
             datetime!(2000-03-22 00:00:00 UTC),
+            Default::default(),
             vec![fee_entry],
         );
 
@@ -198,6 +220,7 @@ mod tests {
             Uuid::new_v4(),
             None,
             datetime!(2000-03-22 00:00:00 UTC),
+            Default::default(),
             entries,
         );
 
@@ -216,6 +239,7 @@ mod tests {
             Uuid::new_v4(),
             None,
             datetime!(2000-03-22 00:00:00 UTC),
+            Default::default(),
             entries,
         );
 
@@ -230,6 +254,7 @@ mod tests {
             Uuid::new_v4(),
             None,
             datetime!(2000-03-22 00:00:00 UTC),
+            Default::default(),
             vec![],
         );
 
@@ -281,6 +306,7 @@ mod tests {
                 user_id,
                 type_id: DatabaseTransactionTypes::CashBalanceTransfer,
                 date_transacted: date,
+                visibility: "default".to_string(),
             },
             TransactionWithEntriesModel {
                 id: 8,
@@ -292,6 +318,7 @@ mod tests {
                 user_id,
                 type_id: DatabaseTransactionTypes::CashBalanceTransfer,
                 date_transacted: date,
+                visibility: "default".to_string(),
             },
         ];
 
@@ -323,7 +350,13 @@ mod tests {
             Entry::new(None, 1, dec!(-1), account_id, 2),
             Entry::new(None, 1, dec!(-0.25), account_id, 8),
         ];
-        let base = BaseTransaction::new(Uuid::new_v4(), Some(transaction_id), date, entries);
+        let base = BaseTransaction::new(
+            Uuid::new_v4(),
+            Some(transaction_id),
+            date,
+            Default::default(),
+            entries,
+        );
         let metadata = TransactionTypeDto::CashTransferIn(CashTransferInMetadataDto {
             entry: EntryDto::new(1, account_id, dec!(100)),
         });

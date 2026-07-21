@@ -4,6 +4,7 @@ pub mod base_models;
 pub mod get_individual_transaction;
 pub mod get_transaction_group;
 pub mod get_transactions;
+pub mod set_visibility;
 pub mod transaction_types;
 pub mod update_individual_transaction;
 pub mod update_transaction;

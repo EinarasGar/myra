@@ -26,7 +26,7 @@ impl MyraDbConnection {
             .log_statements(tracing::log::LevelFilter::Debug);
 
         let pool: PgPool = PgPoolOptions::new()
-            .max_connections(5)
+            .max_connections(15)
             .connect_with(connection_options)
             .await
             .expect("can't connect to database");

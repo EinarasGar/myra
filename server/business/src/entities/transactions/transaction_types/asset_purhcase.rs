@@ -52,6 +52,19 @@ impl TransactionProcessor for AssetPurchaseTransaction {
         self.base.set_transaction_id(transaction_id)
     }
 
+    fn connector_link(
+        &self,
+    ) -> Option<&crate::entities::transactions::metadata::ConnectorLinkMeta> {
+        self.base.connector_link()
+    }
+
+    fn set_connector_link(
+        &mut self,
+        link: Option<crate::entities::transactions::metadata::ConnectorLinkMeta>,
+    ) {
+        self.base.set_connector_link(link)
+    }
+
     fn get_entries(&self) -> &Vec<Entry> {
         self.base.entries()
     }
@@ -70,7 +83,13 @@ impl TransactionProcessor for AssetPurchaseTransaction {
             _ => panic!("Invalid transaction type"),
         };
 
-        let mut base = BaseTransaction::new(user_id, dto.transaction_id, dto.date, vec![]);
+        let mut base = BaseTransaction::new(
+            user_id,
+            dto.transaction_id,
+            dto.date,
+            dto.visibility,
+            vec![],
+        );
         base.add_fee_entries_from_dtos(dto.fee_entries)?;
 
         let purchase_entry = Entry::from_dto(
@@ -154,6 +173,7 @@ mod tests {
     ) -> TransactionDto {
         TransactionDto {
             transaction_id,
+            visibility: crate::dtos::transaction_dto::TransactionVisibilityDto::Default,
             date: datetime!(2024-05-01 00:00:00 UTC),
             fee_entries,
             transaction_type: TransactionTypeDto::AssetPurchase(AssetPurchaseMetadataDto {
@@ -182,6 +202,7 @@ mod tests {
             user_id,
             type_id: DatabaseTransactionTypes::AssetPurchase,
             date_transacted: datetime!(2024-05-01 00:00:00 UTC),
+            visibility: "default".to_string(),
         }
     }
 
@@ -309,6 +330,7 @@ mod tests {
         let cash_account = Uuid::new_v4();
         let dto = TransactionDto {
             transaction_id: None,
+            visibility: crate::dtos::transaction_dto::TransactionVisibilityDto::Default,
             date: datetime!(2024-05-01 00:00:00 UTC),
             fee_entries: vec![],
             transaction_type: TransactionTypeDto::AssetPurchase(AssetPurchaseMetadataDto {

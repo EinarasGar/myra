@@ -81,6 +81,7 @@ fn build_child(
     let base_inner = TransactionBaseWithIdentifiableEntries { date, fees: None };
     let base = IdentifiableTransactionBaseWithIdentifiableEntries {
         transaction_id: TransactionId(transaction_id),
+        visibility: Default::default(),
         base: base_inner,
     };
 

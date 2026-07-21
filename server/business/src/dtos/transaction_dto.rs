@@ -5,10 +5,38 @@ use crate::entities::transactions::transaction_types::TransactionTypes;
 
 use super::{entry_dto::EntryDto, fee_entry_dto::FeeEntryDto};
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum TransactionVisibilityDto {
+    #[default]
+    Default,
+    Ghost,
+    Hidden,
+}
+
+impl TransactionVisibilityDto {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Default => "default",
+            Self::Ghost => "ghost",
+            Self::Hidden => "hidden",
+        }
+    }
+
+    pub fn from_db_str(s: &str) -> Option<Self> {
+        match s {
+            "default" => Some(Self::Default),
+            "ghost" => Some(Self::Ghost),
+            "hidden" => Some(Self::Hidden),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct TransactionDto {
     pub transaction_id: Option<Uuid>,
     pub date: OffsetDateTime,
+    pub visibility: TransactionVisibilityDto,
     pub fee_entries: Vec<FeeEntryDto>,
     pub transaction_type: TransactionTypeDto,
 }

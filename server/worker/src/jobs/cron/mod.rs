@@ -1,10 +1,14 @@
 pub mod generate_chat_titles;
 pub mod refresh_assets;
+pub mod refresh_oauth_tokens;
 pub mod seed_asset_history;
+pub mod sync_connectors;
 
 pub use generate_chat_titles::GenerateChatTitlesJob;
 pub use refresh_assets::RefreshAssetsJob;
+pub use refresh_oauth_tokens::RefreshOauthTokensJob;
 pub use seed_asset_history::SeedAssetHistoryJob;
+pub use sync_connectors::SyncConnectorsJob;
 
 use business::service_collection::asset_rates_service::AssetRatesService;
 use dal::market_data_client::PairRequest;

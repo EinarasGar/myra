@@ -90,6 +90,7 @@ pub fn insert_transactions(models: Vec<AddTransactionModel>) -> DbQueryWithValue
             TransactionIden::UserId,
             TransactionIden::TypeId,
             TransactionIden::DateTransacted,
+            TransactionIden::Visibility,
         ])
         .returning_col(TransactionIden::Id)
         .to_owned();
@@ -99,6 +100,7 @@ pub fn insert_transactions(models: Vec<AddTransactionModel>) -> DbQueryWithValue
             model.user_id.into(),
             model.transaction_type_id.into(),
             model.date.into(),
+            model.visibility.into(),
         ]);
     }
     builder2.build_sqlx(PostgresQueryBuilder).into()
@@ -184,6 +186,21 @@ pub fn clear_group_id_on_transaction(transaction_id: Uuid) -> DbQueryWithValues 
         .table(TransactionIden::Table)
         .value(TransactionIden::GroupId, Option::<Uuid>::None)
         .and_where(Expr::col(TransactionIden::Id).eq(transaction_id))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[macros::named_query]
+pub fn update_transaction_visibility(
+    user_id: Uuid,
+    transaction_id: Uuid,
+    visibility: String,
+) -> DbQueryWithValues {
+    Query::update()
+        .table(TransactionIden::Table)
+        .value(TransactionIden::Visibility, visibility)
+        .and_where(Expr::col(TransactionIden::Id).eq(transaction_id))
+        .and_where(Expr::col(TransactionIden::UserId).eq(user_id))
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }

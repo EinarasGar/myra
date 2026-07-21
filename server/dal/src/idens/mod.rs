@@ -5,6 +5,7 @@ pub mod account_idens;
 pub mod account_identifier_idens;
 pub mod ai_conversation_idens;
 pub mod asset_idens;
+pub mod connector_idens;
 pub mod entries_idens;
 pub(crate) mod file_idens;
 pub mod rate_limit_idens;

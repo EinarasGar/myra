@@ -29,6 +29,7 @@ use crate::{
         transactions::{
             base_models::metadata_lookup::MetadataLookupTables,
             get_transactions::CombinedTransactionItemViewModel,
+            set_visibility::SetTransactionVisibilityRequestViewModel,
             update_transaction::{
                 UpdateTransactionRequestViewModel, UpdateTransactionResponseViewModel,
             },
@@ -127,6 +128,43 @@ pub async fn delete_transaction(
 ) -> Result<(), ApiError> {
     service
         .delete_transactions(user_id, vec![transaction_id])
+        .await
+        .map_err(ApiError::from_anyhow)?;
+    Ok(())
+}
+
+/// Set Visibility
+///
+/// Sets a transaction's visibility: default, ghost (pending review), or hidden.
+#[utoipa::path(
+    put,
+    path = "/api/users/{user_id}/transactions/{transaction_id}/visibility",
+    tag = "Transactions",
+    operation_id = "Set transaction visibility.",
+    params(
+        ("user_id" = Uuid, Path, description = "User id for which the transaction belongs to."),
+        ("transaction_id" = Uuid, Path, description = "The id of the transaction to update."),
+    ),
+    request_body(
+        content = SetTransactionVisibilityRequestViewModel,
+    ),
+    responses(
+        (status = 200, description = "Transaction visibility updated successfully."),
+        UpdateResponses
+    ),
+    security(
+        ("auth_token" = [])
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, transaction_id = %transaction_id))]
+pub async fn set_transaction_visibility(
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(TransactionIdPath { transaction_id }): Path<TransactionIdPath>,
+    TransactionManagementServiceState(service): TransactionManagementServiceState,
+    ValidatedJson(body): ValidatedJson<SetTransactionVisibilityRequestViewModel>,
+) -> Result<(), ApiError> {
+    service
+        .set_transaction_visibility(user_id, transaction_id, body.visibility.to_business())
         .await
         .map_err(ApiError::from_anyhow)?;
     Ok(())

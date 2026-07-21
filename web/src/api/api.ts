@@ -101,6 +101,12 @@ export interface AccountFeesIdentifiableTransaction {
    * @memberof AccountFeesIdentifiableTransaction
    */
   type: AccountFeesIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof AccountFeesIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const AccountFeesIdentifiableTransactionTypeEnum = {
@@ -146,6 +152,12 @@ export interface AccountFeesRequiredIdentifiableTransaction {
    * @memberof AccountFeesRequiredIdentifiableTransaction
    */
   type: AccountFeesRequiredIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof AccountFeesRequiredIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const AccountFeesRequiredIdentifiableTransactionTypeEnum = {
@@ -825,6 +837,12 @@ export interface AssetBalanceTransferIdentifiableTransaction {
    * @memberof AssetBalanceTransferIdentifiableTransaction
    */
   type: AssetBalanceTransferIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof AssetBalanceTransferIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const AssetBalanceTransferIdentifiableTransactionTypeEnum = {
@@ -876,6 +894,12 @@ export interface AssetBalanceTransferRequiredIdentifiableTransaction {
    * @memberof AssetBalanceTransferRequiredIdentifiableTransaction
    */
   type: AssetBalanceTransferRequiredIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof AssetBalanceTransferRequiredIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const AssetBalanceTransferRequiredIdentifiableTransactionTypeEnum = {
@@ -1056,6 +1080,12 @@ export interface AssetDividendIdentifiableTransaction {
    * @memberof AssetDividendIdentifiableTransaction
    */
   type: AssetDividendIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof AssetDividendIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const AssetDividendIdentifiableTransactionTypeEnum = {
@@ -1101,6 +1131,12 @@ export interface AssetDividendRequiredIdentifiableTransaction {
    * @memberof AssetDividendRequiredIdentifiableTransaction
    */
   type: AssetDividendRequiredIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof AssetDividendRequiredIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const AssetDividendRequiredIdentifiableTransactionTypeEnum = {
@@ -1521,6 +1557,12 @@ export interface AssetPurchaseIdentifiableTransaction {
    * @memberof AssetPurchaseIdentifiableTransaction
    */
   type: AssetPurchaseIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof AssetPurchaseIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const AssetPurchaseIdentifiableTransactionTypeEnum = {
@@ -1572,6 +1614,12 @@ export interface AssetPurchaseRequiredIdentifiableTransaction {
    * @memberof AssetPurchaseRequiredIdentifiableTransaction
    */
   type: AssetPurchaseRequiredIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof AssetPurchaseRequiredIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const AssetPurchaseRequiredIdentifiableTransactionTypeEnum = {
@@ -1777,6 +1825,12 @@ export interface AssetSaleIdentifiableTransaction {
    * @memberof AssetSaleIdentifiableTransaction
    */
   type: AssetSaleIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof AssetSaleIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const AssetSaleIdentifiableTransactionTypeEnum = {
@@ -1828,6 +1882,12 @@ export interface AssetSaleRequiredIdentifiableTransaction {
    * @memberof AssetSaleRequiredIdentifiableTransaction
    */
   type: AssetSaleRequiredIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof AssetSaleRequiredIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const AssetSaleRequiredIdentifiableTransactionTypeEnum = {
@@ -2014,6 +2074,12 @@ export interface AssetTradeIdentifiableTransaction {
    * @memberof AssetTradeIdentifiableTransaction
    */
   type: AssetTradeIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof AssetTradeIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const AssetTradeIdentifiableTransactionTypeEnum = {
@@ -2065,6 +2131,12 @@ export interface AssetTradeRequiredIdentifiableTransaction {
    * @memberof AssetTradeRequiredIdentifiableTransaction
    */
   type: AssetTradeRequiredIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof AssetTradeRequiredIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const AssetTradeRequiredIdentifiableTransactionTypeEnum = {
@@ -2245,6 +2317,12 @@ export interface AssetTransferInIdentifiableTransaction {
    * @memberof AssetTransferInIdentifiableTransaction
    */
   type: AssetTransferInIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof AssetTransferInIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const AssetTransferInIdentifiableTransactionTypeEnum = {
@@ -2290,6 +2368,12 @@ export interface AssetTransferInRequiredIdentifiableTransaction {
    * @memberof AssetTransferInRequiredIdentifiableTransaction
    */
   type: AssetTransferInRequiredIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof AssetTransferInRequiredIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const AssetTransferInRequiredIdentifiableTransactionTypeEnum = {
@@ -2452,6 +2536,12 @@ export interface AssetTransferOutIdentifiableTransaction {
    * @memberof AssetTransferOutIdentifiableTransaction
    */
   type: AssetTransferOutIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof AssetTransferOutIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const AssetTransferOutIdentifiableTransactionTypeEnum = {
@@ -2497,6 +2587,12 @@ export interface AssetTransferOutRequiredIdentifiableTransaction {
    * @memberof AssetTransferOutRequiredIdentifiableTransaction
    */
   type: AssetTransferOutRequiredIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof AssetTransferOutRequiredIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const AssetTransferOutRequiredIdentifiableTransactionTypeEnum = {
@@ -2720,6 +2816,34 @@ export interface AuthMe {
 /**
  *
  * @export
+ * @enum {string}
+ */
+
+export const BindingUpdateStatus = {
+  Active: "active",
+  Paused: "paused",
+} as const;
+
+export type BindingUpdateStatus =
+  (typeof BindingUpdateStatus)[keyof typeof BindingUpdateStatus];
+
+/**
+ *
+ * @export
+ * @enum {string}
+ */
+
+export const BindingWriteMode = {
+  Ghost: "ghost",
+  Trusted: "trusted",
+} as const;
+
+export type BindingWriteMode =
+  (typeof BindingWriteMode)[keyof typeof BindingWriteMode];
+
+/**
+ *
+ * @export
  * @interface CashBalanceTransferIdentifiableTransaction
  */
 export interface CashBalanceTransferIdentifiableTransaction {
@@ -2759,6 +2883,12 @@ export interface CashBalanceTransferIdentifiableTransaction {
    * @memberof CashBalanceTransferIdentifiableTransaction
    */
   type: CashBalanceTransferIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof CashBalanceTransferIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const CashBalanceTransferIdentifiableTransactionTypeEnum = {
@@ -2810,6 +2940,12 @@ export interface CashBalanceTransferRequiredIdentifiableTransaction {
    * @memberof CashBalanceTransferRequiredIdentifiableTransaction
    */
   type: CashBalanceTransferRequiredIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof CashBalanceTransferRequiredIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const CashBalanceTransferRequiredIdentifiableTransactionTypeEnum = {
@@ -2996,6 +3132,12 @@ export interface CashDividendIdentifiableTransaction {
    * @memberof CashDividendIdentifiableTransaction
    */
   type: CashDividendIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof CashDividendIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const CashDividendIdentifiableTransactionTypeEnum = {
@@ -3047,6 +3189,12 @@ export interface CashDividendRequiredIdentifiableTransaction {
    * @memberof CashDividendRequiredIdentifiableTransaction
    */
   type: CashDividendRequiredIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof CashDividendRequiredIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const CashDividendRequiredIdentifiableTransactionTypeEnum = {
@@ -3264,6 +3412,12 @@ export interface CashTransferInIdentifiableTransaction {
    * @memberof CashTransferInIdentifiableTransaction
    */
   type: CashTransferInIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof CashTransferInIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const CashTransferInIdentifiableTransactionTypeEnum = {
@@ -3309,6 +3463,12 @@ export interface CashTransferInRequiredIdentifiableTransaction {
    * @memberof CashTransferInRequiredIdentifiableTransaction
    */
   type: CashTransferInRequiredIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof CashTransferInRequiredIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const CashTransferInRequiredIdentifiableTransactionTypeEnum = {
@@ -3471,6 +3631,12 @@ export interface CashTransferOutIdentifiableTransaction {
    * @memberof CashTransferOutIdentifiableTransaction
    */
   type: CashTransferOutIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof CashTransferOutIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const CashTransferOutIdentifiableTransactionTypeEnum = {
@@ -3516,6 +3682,12 @@ export interface CashTransferOutRequiredIdentifiableTransaction {
    * @memberof CashTransferOutRequiredIdentifiableTransaction
    */
   type: CashTransferOutRequiredIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof CashTransferOutRequiredIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const CashTransferOutRequiredIdentifiableTransactionTypeEnum = {
@@ -3865,6 +4037,85 @@ export interface ConfirmFileResponse {
 /**
  *
  * @export
+ * @interface ConnectorBinding
+ */
+export interface ConnectorBinding {
+  /**
+   *
+   * @type {string}
+   * @memberof ConnectorBinding
+   */
+  connection_id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConnectorBinding
+   */
+  created_at: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConnectorBinding
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConnectorBinding
+   */
+  last_sync_at?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof ConnectorBinding
+   */
+  last_sync_error?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof ConnectorBinding
+   */
+  last_sync_status?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof ConnectorBinding
+   */
+  provider_account_id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConnectorBinding
+   */
+  status: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConnectorBinding
+   */
+  sverto_account_id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConnectorBinding
+   */
+  synced_through?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof ConnectorBinding
+   */
+  updated_at: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConnectorBinding
+   */
+  write_mode: string;
+}
+/**
+ *
+ * @export
  * @interface ConversationResponse
  */
 export interface ConversationResponse {
@@ -4064,6 +4315,7 @@ export const ErrorType = {
   InternalServerError: "InternalServerError",
   ServiceUnavailable: "ServiceUnavailable",
   RateLimited: "RateLimited",
+  BadGateway: "BadGateway",
 } as const;
 
 export type ErrorType = (typeof ErrorType)[keyof typeof ErrorType];
@@ -4496,6 +4748,25 @@ export interface GetPortfolioOverview {
 /**
  *
  * @export
+ * @interface GetSyncCheckpointResponse
+ */
+export interface GetSyncCheckpointResponse {
+  /**
+   *
+   * @type {any}
+   * @memberof GetSyncCheckpointResponse
+   */
+  cursor?: any;
+  /**
+   *
+   * @type {string}
+   * @memberof GetSyncCheckpointResponse
+   */
+  synced_through?: string | null;
+}
+/**
+ *
+ * @export
  * @interface GetUserAssetPairResponse
  */
 export interface GetUserAssetPairResponse {
@@ -4857,6 +5128,69 @@ export interface IndividualTransactionsPage {
 /**
  *
  * @export
+ * @interface IngestStream
+ */
+export interface IngestStream {
+  /**
+   *
+   * @type {Array<any>}
+   * @memberof IngestStream
+   */
+  items: Array<any>;
+  /**
+   *
+   * @type {string}
+   * @memberof IngestStream
+   */
+  stream: string;
+}
+/**
+ *
+ * @export
+ * @interface IngestTransactionsRequest
+ */
+export interface IngestTransactionsRequest {
+  /**
+   *
+   * @type {string}
+   * @memberof IngestTransactionsRequest
+   */
+  provider_kind: string;
+  /**
+   *
+   * @type {any}
+   * @memberof IngestTransactionsRequest
+   */
+  raw_balance: any;
+  /**
+   *
+   * @type {Array<IngestStream>}
+   * @memberof IngestTransactionsRequest
+   */
+  streams: Array<IngestStream>;
+}
+/**
+ *
+ * @export
+ * @interface IngestTransactionsResponse
+ */
+export interface IngestTransactionsResponse {
+  /**
+   *
+   * @type {any}
+   * @memberof IngestTransactionsResponse
+   */
+  next_cursor?: any;
+  /**
+   *
+   * @type {SyncReport}
+   * @memberof IngestTransactionsResponse
+   */
+  report?: SyncReport | null;
+}
+/**
+ *
+ * @export
  * @interface LoginDetails
  */
 export interface LoginDetails {
@@ -5103,6 +5437,12 @@ export interface RegularIdentifiableTransaction {
    * @memberof RegularIdentifiableTransaction
    */
   type: RegularIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof RegularIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const RegularIdentifiableTransactionTypeEnum = {
@@ -5160,6 +5500,12 @@ export interface RegularRequiredIdentifiableTransaction {
    * @memberof RegularRequiredIdentifiableTransaction
    */
   type: RegularRequiredIdentifiableTransactionTypeEnum;
+  /**
+   * Whether the transaction is shown normally, pending review (ghost), or hidden.
+   * @type {TransactionVisibility}
+   * @memberof RegularRequiredIdentifiableTransaction
+   */
+  visibility?: TransactionVisibility;
 }
 
 export const RegularRequiredIdentifiableTransactionTypeEnum = {
@@ -5428,6 +5774,20 @@ export interface SetOnboardingVersionRequest {
 /**
  *
  * @export
+ * @interface SetTransactionVisibilityRequest
+ */
+export interface SetTransactionVisibilityRequest {
+  /**
+   *
+   * @type {TransactionVisibility}
+   * @memberof SetTransactionVisibilityRequest
+   */
+  visibility: TransactionVisibility;
+}
+
+/**
+ *
+ * @export
  * @interface SharedAssetPairMetadata
  */
 export interface SharedAssetPairMetadata {
@@ -5449,6 +5809,55 @@ export interface SharedAssetPairMetadata {
    * @memberof SharedAssetPairMetadata
    */
   volume?: number | null;
+}
+/**
+ * Outcome counts of one committed sync run — empty (all zeros bar `unchanged`) when the provider had nothing new.
+ * @export
+ * @interface SyncReport
+ */
+export interface SyncReport {
+  /**
+   *
+   * @type {number}
+   * @memberof SyncReport
+   */
+  amended: number;
+  /**
+   *
+   * @type {number}
+   * @memberof SyncReport
+   */
+  conflicts: number;
+  /**
+   *
+   * @type {number}
+   * @memberof SyncReport
+   */
+  duplicates: number;
+  /**
+   *
+   * @type {number}
+   * @memberof SyncReport
+   */
+  new_transactions: number;
+  /**
+   *
+   * @type {number}
+   * @memberof SyncReport
+   */
+  pages_projected: number;
+  /**
+   *
+   * @type {number}
+   * @memberof SyncReport
+   */
+  unchanged: number;
+  /**
+   *
+   * @type {number}
+   * @memberof SyncReport
+   */
+  unresolved: number;
 }
 /**
  * A single account-asset-entry in a transaction.  The generic parameter `A` determines the amount type: - `Amount` – unvalidated (default, used in response models & macro-generated enums) - `PositiveAmount` – must be > 0, validated at parse time - `NegativeAmount` – must be < 0, validated at parse time - `NonZeroAmount` – must not be 0, validated at parse time
@@ -5847,6 +6256,21 @@ export type TransactionInput =
   | ({ type: "regular" } & RegularTransactionInput);
 
 /**
+ *
+ * @export
+ * @enum {string}
+ */
+
+export const TransactionVisibility = {
+  Default: "default",
+  Ghost: "ghost",
+  Hidden: "hidden",
+} as const;
+
+export type TransactionVisibility =
+  (typeof TransactionVisibility)[keyof typeof TransactionVisibility];
+
+/**
  * @type TransactionWithEntryIds
  * @export
  */
@@ -5906,6 +6330,26 @@ export interface UpdateAccount {
    */
   ownership_share: number;
 }
+/**
+ *
+ * @export
+ * @interface UpdateBindingRequest
+ */
+export interface UpdateBindingRequest {
+  /**
+   *
+   * @type {BindingUpdateStatus}
+   * @memberof UpdateBindingRequest
+   */
+  status: BindingUpdateStatus;
+  /**
+   *
+   * @type {BindingWriteMode}
+   * @memberof UpdateBindingRequest
+   */
+  write_mode: BindingWriteMode;
+}
+
 /**
  *
  * @export
@@ -11266,6 +11710,535 @@ export class CategoriesApi extends BaseAPI implements CategoriesApiInterface {
 }
 
 /**
+ * ConnectorsApi - axios parameter creator
+ * @export
+ */
+export const ConnectorsApiAxiosParamCreator = function (
+  configuration?: Configuration,
+) {
+  return {
+    /**
+     * Reads the resumable sync checkpoint (cursor + last committed sync time) for a binding.
+     * @summary Get Sync Checkpoint
+     * @param {string} userId
+     * @param {string} bindingId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getSyncCheckpoint: async (
+      userId: string,
+      bindingId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("getSyncCheckpoint", "userId", userId);
+      // verify required parameter 'bindingId' is not null or undefined
+      assertParamExists("getSyncCheckpoint", "bindingId", bindingId);
+      const localVarPath =
+        `/api/users/{user_id}/connectors/bindings/{binding_id}/sync-checkpoint`
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+          .replace(`{${"binding_id"}}`, encodeURIComponent(String(bindingId)));
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Ingests client-supplied raw provider data for a ClientSupplied-mode binding.
+     * @summary Ingest Transactions
+     * @param {string} userId
+     * @param {string} bindingId
+     * @param {IngestTransactionsRequest} ingestTransactionsRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    ingestTransactions: async (
+      userId: string,
+      bindingId: string,
+      ingestTransactionsRequest: IngestTransactionsRequest,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("ingestTransactions", "userId", userId);
+      // verify required parameter 'bindingId' is not null or undefined
+      assertParamExists("ingestTransactions", "bindingId", bindingId);
+      // verify required parameter 'ingestTransactionsRequest' is not null or undefined
+      assertParamExists(
+        "ingestTransactions",
+        "ingestTransactionsRequest",
+        ingestTransactionsRequest,
+      );
+      const localVarPath =
+        `/api/users/{user_id}/connectors/bindings/{binding_id}/ingest`
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+          .replace(`{${"binding_id"}}`, encodeURIComponent(String(bindingId)));
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "POST",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        ingestTransactionsRequest,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Updates a binding\'s write mode and status.
+     * @summary Update Binding
+     * @param {string} userId
+     * @param {string} bindingId
+     * @param {UpdateBindingRequest} updateBindingRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    updateBinding: async (
+      userId: string,
+      bindingId: string,
+      updateBindingRequest: UpdateBindingRequest,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("updateBinding", "userId", userId);
+      // verify required parameter 'bindingId' is not null or undefined
+      assertParamExists("updateBinding", "bindingId", bindingId);
+      // verify required parameter 'updateBindingRequest' is not null or undefined
+      assertParamExists(
+        "updateBinding",
+        "updateBindingRequest",
+        updateBindingRequest,
+      );
+      const localVarPath =
+        `/api/users/{user_id}/connectors/bindings/{binding_id}`
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+          .replace(`{${"binding_id"}}`, encodeURIComponent(String(bindingId)));
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "PUT",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        updateBindingRequest,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+  };
+};
+
+/**
+ * ConnectorsApi - functional programming interface
+ * @export
+ */
+export const ConnectorsApiFp = function (configuration?: Configuration) {
+  const localVarAxiosParamCreator =
+    ConnectorsApiAxiosParamCreator(configuration);
+  return {
+    /**
+     * Reads the resumable sync checkpoint (cursor + last committed sync time) for a binding.
+     * @summary Get Sync Checkpoint
+     * @param {string} userId
+     * @param {string} bindingId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getSyncCheckpoint(
+      userId: string,
+      bindingId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<GetSyncCheckpointResponse>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.getSyncCheckpoint(
+          userId,
+          bindingId,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["ConnectorsApi.getSyncCheckpoint"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Ingests client-supplied raw provider data for a ClientSupplied-mode binding.
+     * @summary Ingest Transactions
+     * @param {string} userId
+     * @param {string} bindingId
+     * @param {IngestTransactionsRequest} ingestTransactionsRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async ingestTransactions(
+      userId: string,
+      bindingId: string,
+      ingestTransactionsRequest: IngestTransactionsRequest,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<IngestTransactionsResponse>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.ingestTransactions(
+          userId,
+          bindingId,
+          ingestTransactionsRequest,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["ConnectorsApi.ingestTransactions"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Updates a binding\'s write mode and status.
+     * @summary Update Binding
+     * @param {string} userId
+     * @param {string} bindingId
+     * @param {UpdateBindingRequest} updateBindingRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async updateBinding(
+      userId: string,
+      bindingId: string,
+      updateBindingRequest: UpdateBindingRequest,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<ConnectorBinding>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.updateBinding(
+        userId,
+        bindingId,
+        updateBindingRequest,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["ConnectorsApi.updateBinding"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+  };
+};
+
+/**
+ * ConnectorsApi - factory interface
+ * @export
+ */
+export const ConnectorsApiFactory = function (
+  configuration?: Configuration,
+  basePath?: string,
+  axios?: AxiosInstance,
+) {
+  const localVarFp = ConnectorsApiFp(configuration);
+  return {
+    /**
+     * Reads the resumable sync checkpoint (cursor + last committed sync time) for a binding.
+     * @summary Get Sync Checkpoint
+     * @param {string} userId
+     * @param {string} bindingId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getSyncCheckpoint(
+      userId: string,
+      bindingId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<GetSyncCheckpointResponse> {
+      return localVarFp
+        .getSyncCheckpoint(userId, bindingId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Ingests client-supplied raw provider data for a ClientSupplied-mode binding.
+     * @summary Ingest Transactions
+     * @param {string} userId
+     * @param {string} bindingId
+     * @param {IngestTransactionsRequest} ingestTransactionsRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    ingestTransactions(
+      userId: string,
+      bindingId: string,
+      ingestTransactionsRequest: IngestTransactionsRequest,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<IngestTransactionsResponse> {
+      return localVarFp
+        .ingestTransactions(
+          userId,
+          bindingId,
+          ingestTransactionsRequest,
+          options,
+        )
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Updates a binding\'s write mode and status.
+     * @summary Update Binding
+     * @param {string} userId
+     * @param {string} bindingId
+     * @param {UpdateBindingRequest} updateBindingRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    updateBinding(
+      userId: string,
+      bindingId: string,
+      updateBindingRequest: UpdateBindingRequest,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<ConnectorBinding> {
+      return localVarFp
+        .updateBinding(userId, bindingId, updateBindingRequest, options)
+        .then((request) => request(axios, basePath));
+    },
+  };
+};
+
+/**
+ * ConnectorsApi - interface
+ * @export
+ * @interface ConnectorsApi
+ */
+export interface ConnectorsApiInterface {
+  /**
+   * Reads the resumable sync checkpoint (cursor + last committed sync time) for a binding.
+   * @summary Get Sync Checkpoint
+   * @param {string} userId
+   * @param {string} bindingId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApiInterface
+   */
+  getSyncCheckpoint(
+    userId: string,
+    bindingId: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<GetSyncCheckpointResponse>;
+
+  /**
+   * Ingests client-supplied raw provider data for a ClientSupplied-mode binding.
+   * @summary Ingest Transactions
+   * @param {string} userId
+   * @param {string} bindingId
+   * @param {IngestTransactionsRequest} ingestTransactionsRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApiInterface
+   */
+  ingestTransactions(
+    userId: string,
+    bindingId: string,
+    ingestTransactionsRequest: IngestTransactionsRequest,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<IngestTransactionsResponse>;
+
+  /**
+   * Updates a binding\'s write mode and status.
+   * @summary Update Binding
+   * @param {string} userId
+   * @param {string} bindingId
+   * @param {UpdateBindingRequest} updateBindingRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApiInterface
+   */
+  updateBinding(
+    userId: string,
+    bindingId: string,
+    updateBindingRequest: UpdateBindingRequest,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<ConnectorBinding>;
+}
+
+/**
+ * ConnectorsApi - object-oriented interface
+ * @export
+ * @class ConnectorsApi
+ * @extends {BaseAPI}
+ */
+export class ConnectorsApi extends BaseAPI implements ConnectorsApiInterface {
+  /**
+   * Reads the resumable sync checkpoint (cursor + last committed sync time) for a binding.
+   * @summary Get Sync Checkpoint
+   * @param {string} userId
+   * @param {string} bindingId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApi
+   */
+  public getSyncCheckpoint(
+    userId: string,
+    bindingId: string,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return ConnectorsApiFp(this.configuration)
+      .getSyncCheckpoint(userId, bindingId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Ingests client-supplied raw provider data for a ClientSupplied-mode binding.
+   * @summary Ingest Transactions
+   * @param {string} userId
+   * @param {string} bindingId
+   * @param {IngestTransactionsRequest} ingestTransactionsRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApi
+   */
+  public ingestTransactions(
+    userId: string,
+    bindingId: string,
+    ingestTransactionsRequest: IngestTransactionsRequest,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return ConnectorsApiFp(this.configuration)
+      .ingestTransactions(userId, bindingId, ingestTransactionsRequest, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Updates a binding\'s write mode and status.
+   * @summary Update Binding
+   * @param {string} userId
+   * @param {string} bindingId
+   * @param {UpdateBindingRequest} updateBindingRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApi
+   */
+  public updateBinding(
+    userId: string,
+    bindingId: string,
+    updateBindingRequest: UpdateBindingRequest,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return ConnectorsApiFp(this.configuration)
+      .updateBinding(userId, bindingId, updateBindingRequest, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+}
+
+/**
  * FilesApi - axios parameter creator
  * @export
  */
@@ -14616,6 +15589,82 @@ export const TransactionsApiAxiosParamCreator = function (
       };
     },
     /**
+     * Sets a transaction\'s visibility: default, ghost (pending review), or hidden.
+     * @summary Set Visibility
+     * @param {string} userId
+     * @param {string} transactionId
+     * @param {SetTransactionVisibilityRequest} setTransactionVisibilityRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    setTransactionVisibility: async (
+      userId: string,
+      transactionId: string,
+      setTransactionVisibilityRequest: SetTransactionVisibilityRequest,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("setTransactionVisibility", "userId", userId);
+      // verify required parameter 'transactionId' is not null or undefined
+      assertParamExists(
+        "setTransactionVisibility",
+        "transactionId",
+        transactionId,
+      );
+      // verify required parameter 'setTransactionVisibilityRequest' is not null or undefined
+      assertParamExists(
+        "setTransactionVisibility",
+        "setTransactionVisibilityRequest",
+        setTransactionVisibilityRequest,
+      );
+      const localVarPath =
+        `/api/users/{user_id}/transactions/{transaction_id}/visibility`
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+          .replace(
+            `{${"transaction_id"}}`,
+            encodeURIComponent(String(transactionId)),
+          );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "PUT",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        setTransactionVisibilityRequest,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
      * This is a generic update endpoint which does not assume whether transaction is individual or group. It only updates the contents of the transaction without moving it.
      * @summary Update existing
      * @param {string} transactionId
@@ -14784,6 +15833,43 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
+     * Sets a transaction\'s visibility: default, ghost (pending review), or hidden.
+     * @summary Set Visibility
+     * @param {string} userId
+     * @param {string} transactionId
+     * @param {SetTransactionVisibilityRequest} setTransactionVisibilityRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async setTransactionVisibility(
+      userId: string,
+      transactionId: string,
+      setTransactionVisibilityRequest: SetTransactionVisibilityRequest,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.setTransactionVisibility(
+          userId,
+          transactionId,
+          setTransactionVisibilityRequest,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["TransactionsApi.setTransactionVisibility"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
      * This is a generic update endpoint which does not assume whether transaction is individual or group. It only updates the contents of the transaction without moving it.
      * @summary Update existing
      * @param {string} transactionId
@@ -14880,6 +15966,30 @@ export const TransactionsApiFactory = function (
         .then((request) => request(axios, basePath));
     },
     /**
+     * Sets a transaction\'s visibility: default, ghost (pending review), or hidden.
+     * @summary Set Visibility
+     * @param {string} userId
+     * @param {string} transactionId
+     * @param {SetTransactionVisibilityRequest} setTransactionVisibilityRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    setTransactionVisibility(
+      userId: string,
+      transactionId: string,
+      setTransactionVisibilityRequest: SetTransactionVisibilityRequest,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<void> {
+      return localVarFp
+        .setTransactionVisibility(
+          userId,
+          transactionId,
+          setTransactionVisibilityRequest,
+          options,
+        )
+        .then((request) => request(axios, basePath));
+    },
+    /**
      * This is a generic update endpoint which does not assume whether transaction is individual or group. It only updates the contents of the transaction without moving it.
      * @summary Update existing
      * @param {string} transactionId
@@ -14949,6 +16059,23 @@ export interface TransactionsApiInterface {
     query?: string,
     options?: RawAxiosRequestConfig,
   ): AxiosPromise<CombinedTransactionsPage>;
+
+  /**
+   * Sets a transaction\'s visibility: default, ghost (pending review), or hidden.
+   * @summary Set Visibility
+   * @param {string} userId
+   * @param {string} transactionId
+   * @param {SetTransactionVisibilityRequest} setTransactionVisibilityRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof TransactionsApiInterface
+   */
+  setTransactionVisibility(
+    userId: string,
+    transactionId: string,
+    setTransactionVisibilityRequest: SetTransactionVisibilityRequest,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<void>;
 
   /**
    * This is a generic update endpoint which does not assume whether transaction is individual or group. It only updates the contents of the transaction without moving it.
@@ -15021,6 +16148,32 @@ export class TransactionsApi
   ) {
     return TransactionsApiFp(this.configuration)
       .getTransactions(userId, limit, cursor, start, count, query, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Sets a transaction\'s visibility: default, ghost (pending review), or hidden.
+   * @summary Set Visibility
+   * @param {string} userId
+   * @param {string} transactionId
+   * @param {SetTransactionVisibilityRequest} setTransactionVisibilityRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof TransactionsApi
+   */
+  public setTransactionVisibility(
+    userId: string,
+    transactionId: string,
+    setTransactionVisibilityRequest: SetTransactionVisibilityRequest,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return TransactionsApiFp(this.configuration)
+      .setTransactionVisibility(
+        userId,
+        transactionId,
+        setTransactionVisibilityRequest,
+        options,
+      )
       .then((request) => request(this.axios, this.basePath));
   }
 

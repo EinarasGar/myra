@@ -510,6 +510,22 @@ impl TransactionManagementService {
             .await
     }
 
+    pub async fn set_transaction_visibility(
+        &self,
+        user_id: Uuid,
+        transaction_id: Uuid,
+        visibility: crate::dtos::transaction_dto::TransactionVisibilityDto,
+    ) -> anyhow::Result<()> {
+        let query = transaction_data_queries::update_transaction_visibility(
+            user_id,
+            transaction_id,
+            visibility.as_str().to_string(),
+        );
+        self.db.execute(query).await?;
+
+        Ok(())
+    }
+
     pub async fn delete_transactions(
         &self,
         user_id: Uuid,
@@ -601,7 +617,6 @@ impl TransactionManagementService {
         user_id: Uuid,
         transaction_ids: Vec<Uuid>,
     ) -> anyhow::Result<()> {
-        // Verify ownership
         let query_params =
             GetTransactionWithEntriesParams::by_transaction_ids(transaction_ids.clone());
         let query = transaction_queries::get_transaction_with_entries(query_params);
@@ -616,6 +631,10 @@ impl TransactionManagementService {
             ));
         }
 
+        self.transaction_metadata_service
+            .mark_connector_links_edited(&transaction_ids)
+            .await?;
+
         // Cascade delete in FK order
         let query = transaction_data_queries::delete_descriptions_by_transaction_ids(
             transaction_ids.clone(),
@@ -628,7 +647,7 @@ impl TransactionManagementService {
             .delete_entries_by_transaction_ids(&transaction_ids)
             .await?;
 
-        let query = transaction_data_queries::delete_transactions_by_ids(transaction_ids);
+        let query = transaction_data_queries::delete_transactions_by_ids(transaction_ids.clone());
         self.db.execute(query).await?;
 
         Ok(())

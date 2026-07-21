@@ -27,12 +27,13 @@ help: ## Show this help message
 # Setup
 auth ?= noauth
 telemetry ?= local
+secrets ?= db
 # Port scheme: 2<PREFIX><SS> -> 20000-29999. PREFIX = 2-digit worktree id (00 = main,
 # 01-99 = worktree hash); SS = 2-digit service slot (00-99, 100 slots). Add a service
 # by giving it the next free SS. Stays clear of macOS-reserved 5000/7000 and the
 # ephemeral range (49152+).
 .PHONY: setup-env
-setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk telemetry=local|axiom
+setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk telemetry=local|axiom secrets=db|vault
 	@if [ "$$(git rev-parse --git-common-dir 2>/dev/null)" != "$$(git rev-parse --git-dir 2>/dev/null)" ]; then \
 		WORKTREE_NAME=$$(basename $$(pwd)); \
 		HASH=$$(printf '%s' "$$WORKTREE_NAME" | cksum | awk '{print $$1}'); \
@@ -75,6 +76,8 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk 
 		"MINIO_CONSOLE_PORT=2$${PREFIX}07" \
 		"REDIS_PORT=2$${PREFIX}08" \
 		"REDIS_URL=redis://localhost:2$${PREFIX}08" \
+		"VAULT_PORT=2$${PREFIX}10" \
+		"VAULT_TOKEN=dev-token" \
 		"MARKET_DATA_PORT=2$${PREFIX}09" \
 		"MARKET_DATA_URL=http://localhost:2$${PREFIX}09" \
 		"MARKET_DATA_API_KEY=dev-market-data-key" \
@@ -127,6 +130,24 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk 
 			exit 1; \
 			;; \
 	esac; \
+	case "$(secrets)" in \
+		db) \
+			printf '\n%s\n%s\n' \
+				"SECRET_PROVIDER=local_encrypted" \
+				"CONNECTOR_ENC_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" \
+				>> .env; \
+			;; \
+		vault) \
+			printf '\n%s\n%s\n' \
+				"SECRET_PROVIDER=vault" \
+				"VAULT_ADDR=http://localhost:2$${PREFIX}10" \
+				>> .env; \
+			;; \
+		*) \
+			echo "$(RED)Error: Unknown secrets provider '$(secrets)'. Use db or vault.$(NC)"; \
+			exit 1; \
+			;; \
+	esac; \
 	printf '\n%s\n%s\n%s\n%s\n%s\n' \
 		"# Android signing" \
 		"SVERTO_STORE_FILE=$${SVERTO_STORE_FILE}" \
@@ -135,7 +156,7 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk 
 		"SVERTO_KEY_PASSWORD=$${SVERTO_KEY_PASSWORD}" \
 		>> .env; \
 	printf '\n%s\n' "APP_ENV=dev" >> .env; \
-	echo "$(GREEN).env created (auth=$(auth), telemetry=$(telemetry)):$(NC)"; \
+	echo "$(GREEN).env created (auth=$(auth), telemetry=$(telemetry), secrets=$(secrets)):$(NC)"; \
 	cat .env
 	@echo ""
 	@echo "$(GREEN)Installing UI dependencies...$(NC)"
@@ -148,7 +169,8 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk 
 .PHONY: status
 status: ## Show service ports, status, and useful links
 	@echo "$(GREEN)Auth Provider:$(NC)    $(YELLOW)$(AUTH_PROVIDER)$(NC)"
-	@PROJ=$$(basename $$(pwd)); \
+	@echo "$(GREEN)Secret Provider:$(NC)  $(YELLOW)$(SECRET_PROVIDER)$(NC)"
+	@PROJ=$(basename $(pwd)); \
 	if docker volume inspect $${PROJ}_myra-postgres-data >/dev/null 2>&1; then \
 		echo "$(GREEN)Database Volume:$(NC)  $(GREEN)Yes$(NC)"; \
 	else \
@@ -204,7 +226,8 @@ status: ## Show service ports, status, and useful links
 	check_infra "Seq Logs      " $(SEQ_PORT) seq; \
 	check_infra "MinIO         " $(MINIO_PORT) minio; \
 	check_infra "MinIO Console " $(MINIO_CONSOLE_PORT) minio; \
-	check_infra "Redis         " $(REDIS_PORT) redis
+	check_infra "Redis         " $(REDIS_PORT) redis; \
+	check_infra "Vault         " $(VAULT_PORT) vault
 
 # Run
 .PHONY: backend-run

@@ -28,4 +28,5 @@ pub enum ErrorType {
     InternalServerError,
     ServiceUnavailable,
     RateLimited,
+    BadGateway,
 }

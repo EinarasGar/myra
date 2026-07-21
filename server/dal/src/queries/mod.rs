@@ -10,6 +10,7 @@ pub mod ai_quick_upload_queries;
 pub mod asset_queries;
 pub mod category_queries;
 pub mod category_type_queries;
+pub mod connector_queries;
 pub mod entries_queries;
 pub mod file_queries;
 pub mod rate_limit_queries;

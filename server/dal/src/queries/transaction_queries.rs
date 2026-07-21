@@ -33,6 +33,7 @@ pub fn get_transaction_with_entries(params: GetTransactionWithEntriesParams) -> 
         .column(TransactionIden::UserId)
         .column(TransactionIden::TypeId)
         .column(TransactionIden::DateTransacted)
+        .column(TransactionIden::Visibility)
         .conditions(
             params.paging.is_some(),
             |q| {
@@ -183,6 +184,7 @@ pub fn get_transaction_with_entries(params: GetTransactionWithEntriesParams) -> 
         .column((TransactionIden::Table, TransactionIden::UserId))
         .column((TransactionIden::Table, TransactionIden::TypeId))
         .column((TransactionIden::Table, TransactionIden::DateTransacted))
+        .column((TransactionIden::Table, TransactionIden::Visibility))
         .conditions(
             is_paged,
             |q| {

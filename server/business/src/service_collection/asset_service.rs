@@ -1,10 +1,10 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use dal::{
     models::{
         asset_models::{
             Asset, AssetBasePair, AssetId, AssetPair, AssetPairId, AssetPairSharedMetadata,
-            AssetPairUserMetadata, AssetRaw, AssetWithMetadata, PublicAsset,
+            AssetPairUserMetadata, AssetRaw, AssetTickerId, AssetWithMetadata, PublicAsset,
         },
         base::{Count, Exsists, TotalCount},
     },
@@ -128,6 +128,20 @@ impl AssetsService {
         let models = self.db.fetch_all::<Asset>(query).await?;
         let ret_vec: Vec<asset_dto::AssetDto> = models.into_iter().map(Into::into).collect();
         Ok(ret_vec)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
+    pub async fn resolve_tickers(
+        &self,
+        user_id: Uuid,
+        tickers: HashSet<String>,
+    ) -> anyhow::Result<HashMap<String, i32>> {
+        if tickers.is_empty() {
+            return Ok(HashMap::new());
+        }
+        let query = asset_queries::get_asset_ids_by_tickers(user_id, tickers.into_iter().collect());
+        let rows = self.db.fetch_all::<AssetTickerId>(query).await?;
+        Ok(rows.into_iter().map(|row| (row.ticker, row.id)).collect())
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(pair1, pair2))]

@@ -11,6 +11,7 @@ use super::transaction_fee::{
     IdentifiableTransactionFeeViewModel, RequiredIdentifiableTransactionFeeViewModel,
     TransactionFeeViewModel,
 };
+use super::visibility::TransactionVisibility;
 
 pub type TransactionBaseWithEntries = TransactionBase<TransactionFeeViewModel>;
 pub type TransactionBaseWithIdentifiableEntries =
@@ -59,6 +60,10 @@ pub struct IdentifiableTransactionBase<B, I> {
     #[schema(inline = false)]
     pub transaction_id: I,
 
+    /// Whether the transaction is shown normally, pending review (ghost), or hidden.
+    #[serde(default)]
+    pub visibility: TransactionVisibility,
+
     /// Date when the transaction occured.
     #[serde(flatten)]
     pub base: B,
@@ -73,6 +78,7 @@ impl From<TransactionDto> for RequiredIdentifiableTransactionBaseWithIdentifiabl
                     .transaction_id
                     .expect("Transaction Id mut not be None"),
             ),
+            visibility: value.visibility.into(),
             base: value.into(),
         }
     }
@@ -83,6 +89,7 @@ impl From<TransactionDto> for IdentifiableTransactionBaseWithIdentifiableEntries
     fn from(value: TransactionDto) -> Self {
         Self {
             transaction_id: TransactionId(value.transaction_id),
+            visibility: value.visibility.into(),
             base: value.into(),
         }
     }

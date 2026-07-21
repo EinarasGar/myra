@@ -2,6 +2,7 @@ pub mod cron;
 pub mod embeddings;
 pub mod file_processing;
 pub mod quick_upload;
+pub mod sync_connector;
 
 use std::panic::AssertUnwindSafe;
 use std::str::FromStr;

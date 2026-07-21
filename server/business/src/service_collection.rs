@@ -8,6 +8,9 @@ use dal::pg_notify_connection::PgNotifyConnection;
 #[mockall_double::double]
 use dal::redis_connection::RedisConnection;
 use dal::s3_file_provider::S3FileProvider;
+use dal::secrets::{
+    LocalEncryptedSecretProvider, NoOpSecretProvider, SecretProvider, VaultSecretProvider,
+};
 use std::sync::Arc;
 
 pub mod accounts_service;
@@ -24,6 +27,8 @@ pub mod auth_service;
 pub mod category_service;
 pub mod category_type_service;
 pub mod category_validation_service;
+pub mod connector_service;
+pub mod connector_sync_service;
 pub mod entries_service;
 pub mod file_service;
 pub mod portfolio_overview_service;
@@ -41,6 +46,7 @@ pub struct Services {
     pub redis: RedisConnection,
     pub job_queue: JobQueueHandle,
     pub pg_notify: PgNotifyConnection,
+    pub secret_provider: Arc<dyn SecretProvider>,
 }
 
 #[derive(Clone)]
@@ -50,6 +56,7 @@ pub struct ServiceProviders {
     pub file_provider: Arc<dyn FileProvider>,
     pub redis: RedisConnection,
     pub pg_notify: PgNotifyConnection,
+    pub secret_provider: Arc<dyn SecretProvider>,
     pub services: Services,
 }
 
@@ -69,6 +76,37 @@ impl Services {
             }
         };
 
+        let secret_provider: Arc<dyn SecretProvider> = match std::env::var("SECRET_PROVIDER")
+            .as_deref()
+        {
+            Ok("vault") => match VaultSecretProvider::new() {
+                Ok(provider) => Arc::new(provider),
+                Err(e) => {
+                    tracing::warn!(error = ?e, "Vault secret provider init failed, using NoOpSecretProvider");
+                    Arc::new(NoOpSecretProvider)
+                }
+            },
+            Ok("local_encrypted") | Err(_) => {
+                match LocalEncryptedSecretProvider::new(connection.pool.clone()) {
+                    Ok(provider) => Arc::new(provider),
+                    Err(e) => {
+                        tracing::warn!(
+                            error = ?e,
+                            "CONNECTOR_ENC_KEY not configured, using NoOpSecretProvider"
+                        );
+                        Arc::new(NoOpSecretProvider)
+                    }
+                }
+            }
+            Ok(other) => {
+                tracing::warn!(
+                    provider = other,
+                    "Unknown SECRET_PROVIDER value, using NoOpSecretProvider"
+                );
+                Arc::new(NoOpSecretProvider)
+            }
+        };
+
         let redis = RedisConnection::new().await;
         let job_queue = JobQueueHandle::new(connection.pool.clone());
         let pg_notify = PgNotifyConnection::new(connection.pool.clone());
@@ -79,6 +117,7 @@ impl Services {
             redis,
             job_queue,
             pg_notify,
+            secret_provider,
         })
     }
 
@@ -89,6 +128,7 @@ impl Services {
             file_provider: self.file_provider.clone(),
             redis: self.redis.clone(),
             pg_notify: self.pg_notify.clone(),
+            secret_provider: self.secret_provider.clone(),
             services: self.clone(),
         }
     }

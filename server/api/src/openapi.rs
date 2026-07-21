@@ -127,6 +127,10 @@ mod modifiers;
         super::handlers::ai_quick_upload_handler::retry_quick_upload,
         super::handlers::ai_quick_upload_handler::complete,
         super::handlers::ai_usage_handler::get_usage,
+        super::handlers::connectors_handler::get_sync_checkpoint,
+        super::handlers::connectors_handler::ingest_transactions,
+        super::handlers::connectors_handler::update_binding,
+        super::handlers::transactions::set_transaction_visibility,
     ),
     components(
         schemas(RequiredEntryId),
