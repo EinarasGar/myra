@@ -29,4 +29,7 @@ export const QueryKeys = {
   QUICK_UPLOADS: "quick-uploads",
   QUICK_UPLOAD: "quick-upload",
   AI_USAGE: "ai-usage",
+  CONNECTOR_CONNECTIONS: "connector-connections",
+  CONNECTOR_BINDINGS: "connector-bindings",
+  CONNECTOR_PROVIDER_ACCOUNTS: "connector-provider-accounts",
 };

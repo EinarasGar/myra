@@ -7,6 +7,8 @@ pub mod asset_detail;
 pub mod asset_overview;
 pub mod assets;
 pub mod categories;
+pub mod connector_local;
+pub mod connectors;
 pub mod infra;
 pub mod onboarding;
 pub mod portfolio;
@@ -1022,6 +1024,169 @@ impl AppStore {
 
     pub fn cancel_stream(&self) {
         ai_chat::cancel_stream(&self.ai_chat);
+    }
+
+    pub async fn list_connector_connections(
+        &self,
+    ) -> Result<Vec<crate::models::ConnectorConnection>, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        connectors::list_connections(&self.infra, token.as_deref()).await
+    }
+
+    pub async fn create_connector_connection(
+        &self,
+        input: crate::models::CreateConnectionInput,
+    ) -> Result<String, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        connectors::create_connection(&self.infra, input, token.as_deref()).await
+    }
+
+    pub async fn revoke_connector_connection(
+        &self,
+        connection_id: String,
+    ) -> Result<(), crate::error::ApiError> {
+        let token = self.get_auth_token();
+        connectors::revoke_connection(&self.infra, &connection_id, token.as_deref()).await
+    }
+
+    pub async fn create_connector_oauth_session(
+        &self,
+        connection_id: String,
+    ) -> Result<crate::models::OAuthSessionStart, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        connectors::create_oauth_session(&self.infra, &connection_id, token.as_deref()).await
+    }
+
+    pub async fn complete_connector_oauth_session(
+        &self,
+        state: String,
+        code: Option<String>,
+        error: Option<String>,
+    ) -> Result<crate::models::CompleteOAuthResult, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        connectors::complete_oauth_session(&self.infra, &state, code, error, token.as_deref()).await
+    }
+
+    pub fn get_pending_connector_oauth(&self) -> Option<crate::models::PendingOAuth> {
+        connector_local::get_pending_oauth(&self.infra)
+    }
+
+    pub async fn list_connector_provider_accounts(
+        &self,
+        connection_id: String,
+    ) -> Result<Vec<crate::models::ProviderAccount>, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        connectors::list_provider_accounts(&self.infra, &connection_id, token.as_deref()).await
+    }
+
+    pub async fn list_connector_bindings(
+        &self,
+    ) -> Result<Vec<crate::models::ConnectorBinding>, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        connectors::list_bindings(&self.infra, token.as_deref()).await
+    }
+
+    pub async fn create_connector_binding(
+        &self,
+        connection_id: String,
+        sverto_account_id: String,
+        provider_account_id: Option<String>,
+    ) -> Result<String, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        connectors::create_binding(
+            &self.infra,
+            &connection_id,
+            &sverto_account_id,
+            provider_account_id,
+            token.as_deref(),
+        )
+        .await
+    }
+
+    pub async fn update_connector_binding(
+        &self,
+        binding_id: String,
+        write_mode: crate::models::BindingWriteMode,
+        status: crate::models::BindingStatus,
+    ) -> Result<crate::models::ConnectorBinding, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        connectors::update_binding(
+            &self.infra,
+            &binding_id,
+            write_mode,
+            status,
+            token.as_deref(),
+        )
+        .await
+    }
+
+    pub async fn delete_connector_binding(
+        &self,
+        binding_id: String,
+    ) -> Result<(), crate::error::ApiError> {
+        let token = self.get_auth_token();
+        connectors::delete_binding(&self.infra, &binding_id, token.as_deref()).await
+    }
+
+    pub async fn sync_connector_binding(
+        &self,
+        binding_id: String,
+        connection_id: String,
+        credential_mode: crate::models::CredentialMode,
+    ) -> Result<crate::models::SyncOutcome, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        connectors::sync_binding(
+            &self.infra,
+            &binding_id,
+            &connection_id,
+            credential_mode,
+            token.as_deref(),
+        )
+        .await
+    }
+
+    pub fn save_connector_credential(&self, connection_id: String, secret: String) {
+        connector_local::save_credential(&self.infra, &connection_id, &secret);
+    }
+
+    pub fn has_connector_credential(&self, connection_id: String) -> bool {
+        connector_local::has_credential(&self.infra, &connection_id)
+    }
+
+    pub async fn list_sverto_accounts(
+        &self,
+    ) -> Result<Vec<crate::models::AccountListItem>, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        let uid = self
+            .infra
+            .user_id()
+            .ok_or_else(|| crate::error::ApiError::Parse {
+                reason: "no user_id".into(),
+            })?;
+        let resp = self
+            .infra
+            .get(&format!("/api/users/{uid}/accounts"), token.as_deref())
+            .await?;
+        if resp.status >= 400 {
+            return Err(crate::error::server_error(resp.status, &resp.body));
+        }
+        crate::api::accounts::extract_accounts(&resp.body)
+            .map_err(|e| crate::error::ApiError::Parse { reason: e })
+    }
+
+    pub async fn set_transaction_visibility(
+        &self,
+        transaction_id: String,
+        visibility: crate::models::TransactionVisibility,
+    ) -> Result<(), crate::error::ApiError> {
+        let token = self.get_auth_token();
+        transactions::set_transaction_visibility(
+            &self.infra,
+            &transaction_id,
+            visibility,
+            token.as_deref(),
+        )
+        .await
     }
 }
 

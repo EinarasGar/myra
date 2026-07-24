@@ -33,6 +33,8 @@ import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumFlexibleTopAppBar
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -45,6 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -57,12 +60,15 @@ import com.sverto.app.core.ui.RowDivider
 import com.sverto.app.feature.accounts.components.HoldingRow
 import com.sverto.app.feature.accounts.components.MetricItem
 import com.sverto.app.feature.accounts.components.MetricsGrid
+import com.sverto.app.feature.connectors.TransientKeySheet
+import com.sverto.app.feature.connectors.relativeTime
 import com.sverto.app.feature.portfolio.ChartPoint
 import com.sverto.app.feature.portfolio.PortfolioChart
 import com.sverto.app.feature.portfolio.TimePeriod
 import com.sverto.app.feature.transactions.TransactionAmount
 import com.sverto.app.feature.transactions.TransactionGlyph
 import uniffi.sverto_core.TransactionListItem
+import uniffi.sverto_core.TransactionVisibility
 
 @Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -82,9 +88,19 @@ fun AccountDetailScreen(
     viewModel: AccountDetailViewModel = viewModel(factory = SvertoViewModelFactory),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val syncState by viewModel.syncState.collectAsStateWithLifecycle()
 
     LaunchedEffect(accountId) {
         viewModel.load(accountId, accountName, accountTypeId)
+        viewModel.loadSyncInfo(accountId)
+    }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(syncState.message) {
+        syncState.message?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.consumeSyncMessage()
+        }
     }
 
     val isBrokerage = accountTypeId == 3 // Investment account
@@ -111,6 +127,7 @@ fun AccountDetailScreen(
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             MediumFlexibleTopAppBar(
                 title = { Text(accountName) },
@@ -140,6 +157,16 @@ fun AccountDetailScreen(
                                 onEdit(accountId)
                             },
                         )
+                        if (syncState.targets.isNotEmpty()) {
+                            DropdownMenuItem(
+                                text = { Text(if (syncState.syncing) "Syncing…" else "Sync") },
+                                enabled = !syncState.syncing,
+                                onClick = {
+                                    menuOpen = false
+                                    viewModel.sync(accountId)
+                                },
+                            )
+                        }
                         DropdownMenuItem(
                             text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
                             onClick = {
@@ -289,11 +316,24 @@ fun AccountDetailScreen(
 
                         item(key = "transactions") {
                             Column(modifier = Modifier.animateItem()) {
-                                Text(
-                                    text = "Transactions",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        text = "Transactions",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                    syncState.lastSyncAt?.let {
+                                        Text(
+                                            text = "Last synced ${relativeTime(it)}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                }
                                 Spacer(modifier = Modifier.height(8.dp))
 
                                 Surface(
@@ -309,7 +349,8 @@ fun AccountDetailScreen(
                                                         .sharedBounds(
                                                             sharedContentState = rememberSharedContentState(key = "tx_${tx.id}"),
                                                             animatedVisibilityScope = animatedVisibilityScope,
-                                                        ).clickable { onTransactionClick(tx) },
+                                                        ).clickable { onTransactionClick(tx) }
+                                                        .alpha(if (tx.visibility == TransactionVisibility.GHOST) 0.55f else 1f),
                                                 leadingContent = {
                                                     TransactionGlyph(
                                                         transaction = tx,
@@ -365,6 +406,13 @@ fun AccountDetailScreen(
                     }
                 }
             }
+        }
+
+        syncState.promptConnectionId?.let { connectionId ->
+            TransientKeySheet(
+                onSave = { key -> viewModel.saveTransientKey(connectionId, key, accountId) },
+                onDismiss = { viewModel.dismissKeyPrompt() },
+            )
         }
 
         if (showDeleteConfirm) {

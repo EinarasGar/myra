@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import uniffi.sverto_core.AppStore
+import uniffi.sverto_core.TransactionVisibility
 import uniffi.sverto_core.TransactionsObserver
 import uniffi.sverto_core.TransactionsState
 
@@ -78,6 +79,20 @@ class TransactionsViewModel(
             try {
                 store.deleteTransactionGroup(groupId)
                 onSuccess()
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    fun markReviewed(
+        txId: String,
+        onDone: () -> Unit = {},
+    ) {
+        viewModelScope.launch {
+            try {
+                store.setTransactionVisibility(txId, TransactionVisibility.DEFAULT)
+                refresh()
+                onDone()
             } catch (_: Exception) {
             }
         }

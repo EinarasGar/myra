@@ -56,6 +56,7 @@ export default function TransactionRow({
       className={cn(
         "cursor-pointer",
         isChild && "bg-muted/20 border-l-2 border-l-primary/40",
+        transaction.visibility === "ghost" && "opacity-60",
       )}
       onClick={onClick}
     >

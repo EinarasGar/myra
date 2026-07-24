@@ -98,6 +98,15 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk 
 	fi; \
 	. ./$$SECRETS_FILE; \
 	printf '%s\n' "AI_API_KEY=$${AI_API_KEY}" >> .env; \
+	if [ -n "$${TRUELAYER_CLIENT_ID}" ]; then \
+		printf '\n%s\n%s\n%s\n%s\n%s\n' \
+			"# TrueLayer" \
+			"TRUELAYER_CLIENT_ID=$${TRUELAYER_CLIENT_ID}" \
+			"TRUELAYER_CLIENT_SECRET=$${TRUELAYER_CLIENT_SECRET}" \
+			"TRUELAYER_ENV=$${TRUELAYER_ENV}" \
+			"TRUELAYER_REDIRECT_URI_ALLOWLIST=$${TRUELAYER_REDIRECT_URI_ALLOWLIST}" \
+			>> .env; \
+	fi; \
 	if [ "$(telemetry)" = "axiom" ]; then \
 		if [ -z "$${AXIOM_API_TOKEN}" ]; then \
 			echo "$(RED)Error: AXIOM_API_TOKEN not found in $$SECRETS_FILE$(NC)"; \

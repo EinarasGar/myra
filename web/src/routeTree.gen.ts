@@ -35,6 +35,10 @@ import { Route as AuthSettingsAccountsRouteImport } from './routes/_auth.setting
 import { Route as AuthPortfolioOverviewAssetIdRouteImport } from './routes/_auth.portfolio-overview.$assetId'
 import { Route as AuthGlobalAssetsAssetIdRouteImport } from './routes/_auth.global-assets.$assetId'
 import { Route as AuthAccountsAccountIdRouteImport } from './routes/_auth.accounts.$accountId'
+import { Route as AuthSettingsConnectorsIndexRouteImport } from './routes/_auth.settings.connectors.index'
+import { Route as AuthSettingsConnectorsProviderKindRouteImport } from './routes/_auth.settings.connectors.$providerKind'
+import { Route as AuthSettingsConnectorsTruelayerCallbackRouteImport } from './routes/_auth.settings.connectors.truelayer.callback'
+import { Route as AuthSettingsConnectorsConnectionsConnectionIdRouteImport } from './routes/_auth.settings.connectors.connections.$connectionId'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -168,6 +172,30 @@ const AuthAccountsAccountIdRoute = AuthAccountsAccountIdRouteImport.update({
   path: '/accounts/$accountId',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthSettingsConnectorsIndexRoute =
+  AuthSettingsConnectorsIndexRouteImport.update({
+    id: '/connectors/',
+    path: '/connectors/',
+    getParentRoute: () => AuthSettingsRoute,
+  } as any)
+const AuthSettingsConnectorsProviderKindRoute =
+  AuthSettingsConnectorsProviderKindRouteImport.update({
+    id: '/connectors/$providerKind',
+    path: '/connectors/$providerKind',
+    getParentRoute: () => AuthSettingsRoute,
+  } as any)
+const AuthSettingsConnectorsTruelayerCallbackRoute =
+  AuthSettingsConnectorsTruelayerCallbackRouteImport.update({
+    id: '/connectors/truelayer/callback',
+    path: '/connectors/truelayer/callback',
+    getParentRoute: () => AuthSettingsRoute,
+  } as any)
+const AuthSettingsConnectorsConnectionsConnectionIdRoute =
+  AuthSettingsConnectorsConnectionsConnectionIdRouteImport.update({
+    id: '/connectors/connections/$connectionId',
+    path: '/connectors/connections/$connectionId',
+    getParentRoute: () => AuthSettingsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthIndexRoute
@@ -195,6 +223,10 @@ export interface FileRoutesByFullPath {
   '/global-assets/': typeof AuthGlobalAssetsIndexRoute
   '/transactions/': typeof AuthTransactionsIndexRoute
   '/user-assets/': typeof AuthUserAssetsIndexRoute
+  '/settings/connectors/$providerKind': typeof AuthSettingsConnectorsProviderKindRoute
+  '/settings/connectors/': typeof AuthSettingsConnectorsIndexRoute
+  '/settings/connectors/connections/$connectionId': typeof AuthSettingsConnectorsConnectionsConnectionIdRoute
+  '/settings/connectors/truelayer/callback': typeof AuthSettingsConnectorsTruelayerCallbackRoute
 }
 export interface FileRoutesByTo {
   '/about': typeof AboutRoute
@@ -219,6 +251,10 @@ export interface FileRoutesByTo {
   '/global-assets': typeof AuthGlobalAssetsIndexRoute
   '/transactions': typeof AuthTransactionsIndexRoute
   '/user-assets': typeof AuthUserAssetsIndexRoute
+  '/settings/connectors/$providerKind': typeof AuthSettingsConnectorsProviderKindRoute
+  '/settings/connectors': typeof AuthSettingsConnectorsIndexRoute
+  '/settings/connectors/connections/$connectionId': typeof AuthSettingsConnectorsConnectionsConnectionIdRoute
+  '/settings/connectors/truelayer/callback': typeof AuthSettingsConnectorsTruelayerCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -248,6 +284,10 @@ export interface FileRoutesById {
   '/_auth/global-assets/': typeof AuthGlobalAssetsIndexRoute
   '/_auth/transactions/': typeof AuthTransactionsIndexRoute
   '/_auth/user-assets/': typeof AuthUserAssetsIndexRoute
+  '/_auth/settings/connectors/$providerKind': typeof AuthSettingsConnectorsProviderKindRoute
+  '/_auth/settings/connectors/': typeof AuthSettingsConnectorsIndexRoute
+  '/_auth/settings/connectors/connections/$connectionId': typeof AuthSettingsConnectorsConnectionsConnectionIdRoute
+  '/_auth/settings/connectors/truelayer/callback': typeof AuthSettingsConnectorsTruelayerCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -277,6 +317,10 @@ export interface FileRouteTypes {
     | '/global-assets/'
     | '/transactions/'
     | '/user-assets/'
+    | '/settings/connectors/$providerKind'
+    | '/settings/connectors/'
+    | '/settings/connectors/connections/$connectionId'
+    | '/settings/connectors/truelayer/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/about'
@@ -301,6 +345,10 @@ export interface FileRouteTypes {
     | '/global-assets'
     | '/transactions'
     | '/user-assets'
+    | '/settings/connectors/$providerKind'
+    | '/settings/connectors'
+    | '/settings/connectors/connections/$connectionId'
+    | '/settings/connectors/truelayer/callback'
   id:
     | '__root__'
     | '/_auth'
@@ -329,6 +377,10 @@ export interface FileRouteTypes {
     | '/_auth/global-assets/'
     | '/_auth/transactions/'
     | '/_auth/user-assets/'
+    | '/_auth/settings/connectors/$providerKind'
+    | '/_auth/settings/connectors/'
+    | '/_auth/settings/connectors/connections/$connectionId'
+    | '/_auth/settings/connectors/truelayer/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -522,6 +574,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthAccountsAccountIdRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/settings/connectors/': {
+      id: '/_auth/settings/connectors/'
+      path: '/connectors'
+      fullPath: '/settings/connectors/'
+      preLoaderRoute: typeof AuthSettingsConnectorsIndexRouteImport
+      parentRoute: typeof AuthSettingsRoute
+    }
+    '/_auth/settings/connectors/$providerKind': {
+      id: '/_auth/settings/connectors/$providerKind'
+      path: '/connectors/$providerKind'
+      fullPath: '/settings/connectors/$providerKind'
+      preLoaderRoute: typeof AuthSettingsConnectorsProviderKindRouteImport
+      parentRoute: typeof AuthSettingsRoute
+    }
+    '/_auth/settings/connectors/truelayer/callback': {
+      id: '/_auth/settings/connectors/truelayer/callback'
+      path: '/connectors/truelayer/callback'
+      fullPath: '/settings/connectors/truelayer/callback'
+      preLoaderRoute: typeof AuthSettingsConnectorsTruelayerCallbackRouteImport
+      parentRoute: typeof AuthSettingsRoute
+    }
+    '/_auth/settings/connectors/connections/$connectionId': {
+      id: '/_auth/settings/connectors/connections/$connectionId'
+      path: '/connectors/connections/$connectionId'
+      fullPath: '/settings/connectors/connections/$connectionId'
+      preLoaderRoute: typeof AuthSettingsConnectorsConnectionsConnectionIdRouteImport
+      parentRoute: typeof AuthSettingsRoute
+    }
   }
 }
 
@@ -556,6 +636,10 @@ interface AuthSettingsRouteChildren {
   AuthSettingsAiUsageRoute: typeof AuthSettingsAiUsageRoute
   AuthSettingsBaseCurrencyRoute: typeof AuthSettingsBaseCurrencyRoute
   AuthSettingsCategoriesRoute: typeof AuthSettingsCategoriesRoute
+  AuthSettingsConnectorsProviderKindRoute: typeof AuthSettingsConnectorsProviderKindRoute
+  AuthSettingsConnectorsIndexRoute: typeof AuthSettingsConnectorsIndexRoute
+  AuthSettingsConnectorsConnectionsConnectionIdRoute: typeof AuthSettingsConnectorsConnectionsConnectionIdRoute
+  AuthSettingsConnectorsTruelayerCallbackRoute: typeof AuthSettingsConnectorsTruelayerCallbackRoute
 }
 
 const AuthSettingsRouteChildren: AuthSettingsRouteChildren = {
@@ -563,6 +647,13 @@ const AuthSettingsRouteChildren: AuthSettingsRouteChildren = {
   AuthSettingsAiUsageRoute: AuthSettingsAiUsageRoute,
   AuthSettingsBaseCurrencyRoute: AuthSettingsBaseCurrencyRoute,
   AuthSettingsCategoriesRoute: AuthSettingsCategoriesRoute,
+  AuthSettingsConnectorsProviderKindRoute:
+    AuthSettingsConnectorsProviderKindRoute,
+  AuthSettingsConnectorsIndexRoute: AuthSettingsConnectorsIndexRoute,
+  AuthSettingsConnectorsConnectionsConnectionIdRoute:
+    AuthSettingsConnectorsConnectionsConnectionIdRoute,
+  AuthSettingsConnectorsTruelayerCallbackRoute:
+    AuthSettingsConnectorsTruelayerCallbackRoute,
 }
 
 const AuthSettingsRouteWithChildren = AuthSettingsRoute._addFileChildren(

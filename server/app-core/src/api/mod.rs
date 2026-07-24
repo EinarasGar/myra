@@ -7,6 +7,7 @@ pub(crate) mod asset_rates;
 pub(crate) mod assets;
 pub(crate) mod cache;
 pub(crate) mod categories;
+pub(crate) mod connectors;
 pub(crate) mod create_transaction;
 pub(crate) mod create_transaction_group;
 mod entry_helpers;

@@ -86,6 +86,10 @@ const navMain = [
         url: "/settings/accounts",
       },
       {
+        title: "Connected Services",
+        url: "/settings/connectors",
+      },
+      {
         title: "Base Currency",
         url: "/settings/base-currency",
       },

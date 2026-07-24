@@ -2,10 +2,14 @@ import type { RequiredIdentifiableTransaction } from "@/api/api";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useUserId } from "@/hooks/use-auth";
+import { useSetTransactionVisibility } from "@/hooks/api/use-transaction-visibility";
 import { useAccountStore } from "@/hooks/store/use-account-store";
 import { useAssetStore } from "@/hooks/store/use-asset-store";
 import { useCategoryStore } from "@/hooks/store/use-category-store";
@@ -33,6 +37,8 @@ export default function TransactionDetailModal({
   const accounts = useAccountStore((state) => state.accounts);
   const assets = useAssetStore((state) => state.assets);
   const categories = useCategoryStore((state) => state.categorys);
+  const userId = useUserId();
+  const setVisibility = useSetTransactionVisibility(userId);
 
   if (!transaction) return null;
 
@@ -124,6 +130,21 @@ export default function TransactionDetailModal({
               </>
             )}
         </div>
+        {transaction.visibility === "ghost" && (
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                setVisibility.mutate({
+                  transactionId: transaction.transaction_id,
+                  visibility: "default",
+                });
+                onOpenChange(false);
+              }}
+            >
+              Mark reviewed
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -26,6 +26,7 @@ interface DataTableProps<TData> {
   rowCount?: number;
   pagination?: PaginationState;
   setPagination?: React.Dispatch<React.SetStateAction<PaginationState>>;
+  rowClassName?: (row: TData) => string | undefined;
 }
 
 export const MemoizedDataTable = genericMemo(DataTable);
@@ -36,6 +37,7 @@ export function DataTable<TData>({
   rowCount,
   pagination,
   setPagination,
+  rowClassName,
 }: DataTableProps<TData>) {
   const table = useReactTable({
     ...(pagination && setPagination
@@ -80,6 +82,7 @@ export function DataTable<TData>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  className={rowClassName?.(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>

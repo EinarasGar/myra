@@ -26,6 +26,7 @@ import AccountTransactions, {
   AccountTransactionsSkeleton,
 } from "./account-transactions";
 import AccountIdentifiers from "./account-identifiers";
+import { AccountSync } from "./account-sync";
 
 export default function AccountDetailPage() {
   const { accountId } = useParams({ from: "/_auth/accounts/$accountId" });
@@ -139,6 +140,11 @@ export default function AccountDetailPage() {
           <div className="grid flex-1 gap-1 text-center sm:text-left">
             <CardTitle>Transactions</CardTitle>
           </div>
+          <ErrorBoundary fallback={null}>
+            <Suspense fallback={null}>
+              <AccountSync accountId={accountId} />
+            </Suspense>
+          </ErrorBoundary>
         </CardHeader>
         <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
           <ErrorBoundary fallback={<ErrorBoundaryFallback />}>

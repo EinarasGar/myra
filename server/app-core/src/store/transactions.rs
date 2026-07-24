@@ -11,7 +11,7 @@ use crate::api::get_transaction::extract_editable_transaction;
 use crate::api::transactions::{extract_page, to_list_item_with_id};
 use crate::api::update_transaction::build_update_request_body;
 use crate::api::update_transaction_group::build_update_group_request_body;
-use crate::error::ApiError;
+use crate::error::{server_error, ApiError};
 use crate::models::{
     AccountItem, AssetItem, CategoryItem, CreateTransactionGroupInput, CreateTransactionInput,
     EditableTransaction, TransactionListItem, TransactionsState,
@@ -516,4 +516,34 @@ pub async fn get_accounts_list(
                 .collect()
         })
         .map_err(|e| ApiError::Parse { reason: e })
+}
+
+pub async fn set_transaction_visibility(
+    infra: &SharedInfra,
+    tx_id: &str,
+    visibility: crate::models::TransactionVisibility,
+    auth_token: Option<&str>,
+) -> Result<(), ApiError> {
+    let user_id = infra.user_id().ok_or_else(|| ApiError::Parse {
+        reason: "no user_id".into(),
+    })?;
+    let vis = match visibility {
+        crate::models::TransactionVisibility::Default => "default",
+        crate::models::TransactionVisibility::Ghost => "ghost",
+        crate::models::TransactionVisibility::Hidden => "hidden",
+    };
+    let body = format!("{{\"visibility\":\"{vis}\"}}");
+    let resp = infra
+        .put(
+            &format!("/api/users/{user_id}/transactions/{tx_id}/visibility"),
+            &body,
+            auth_token,
+        )
+        .await?;
+    if resp.status >= 400 {
+        return Err(server_error(resp.status, &resp.body));
+    }
+    infra.evict_memory_cache_prefix(&format!("/api/users/{}/transactions", user_id));
+    infra.evict_memory_cache_prefix(&format!("/api/users/{}/accounts", user_id));
+    Ok(())
 }

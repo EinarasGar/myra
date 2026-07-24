@@ -38,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -48,6 +49,7 @@ import com.sverto.app.core.ui.RowDivider
 import com.sverto.app.feature.transactions.TransactionAmount
 import com.sverto.app.feature.transactions.TransactionGlyph
 import uniffi.sverto_core.TransactionListItem
+import uniffi.sverto_core.TransactionVisibility
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -213,7 +215,8 @@ fun AccountTransactionsScreen(
                                                             .sharedBounds(
                                                                 sharedContentState = rememberSharedContentState(key = "tx_${tx.id}"),
                                                                 animatedVisibilityScope = animatedVisibilityScope,
-                                                            ).clickable { onTransactionClick(tx) },
+                                                            ).clickable { onTransactionClick(tx) }
+                                                            .alpha(if (tx.visibility == TransactionVisibility.GHOST) 0.55f else 1f),
                                                     leadingContent = {
                                                         TransactionGlyph(
                                                             transaction = tx,

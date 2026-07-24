@@ -11,6 +11,9 @@ pub enum ApiError {
 
     #[error("Failed to parse response: {reason}")]
     Parse { reason: String },
+
+    #[error("No local credential stored for this connection")]
+    MissingLocalCredential,
 }
 
 impl ApiError {

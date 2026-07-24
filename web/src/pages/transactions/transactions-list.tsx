@@ -13,6 +13,7 @@ import useDeleteTransaction from "@/hooks/api/use-delete-transaction";
 import useDeleteTransactionGroup from "@/hooks/api/use-delete-transaction-group";
 import useMoveTransactionToIndividual from "@/hooks/api/use-move-transaction-to-individual";
 import useUpdateTransactionGroup from "@/hooks/api/use-update-transaction-group";
+import { useSetTransactionVisibility } from "@/hooks/api/use-transaction-visibility";
 import { useTransactionSelectionStore } from "@/hooks/store/use-transaction-selection-store";
 import {
   TableHeader,
@@ -71,6 +72,7 @@ export default function TransactionsList({
   const deleteTransaction = useDeleteTransaction(userId);
   const deleteTransactionGroup = useDeleteTransactionGroup(userId);
   const moveToIndividual = useMoveTransactionToIndividual(userId);
+  const setVisibility = useSetTransactionVisibility(userId);
 
   const allItems = useMemo(
     () => data?.pages.flatMap((p) => p.results) ?? [],
@@ -207,6 +209,15 @@ export default function TransactionsList({
             onSelect={() =>
               enterSelectionMode(childTx.transaction_id, "individual")
             }
+            onMarkReviewed={
+              childTx.visibility === "ghost"
+                ? () =>
+                    setVisibility.mutate({
+                      transactionId: childTx.transaction_id,
+                      visibility: "default",
+                    })
+                : undefined
+            }
             onMoveOutOfGroup={() => {
               const { transaction_id: _, ...transaction } = childTx;
               moveToIndividual.mutate({
@@ -267,6 +278,10 @@ export default function TransactionsList({
         </TableCell>
       );
     }
+    const individualTx =
+      row.type === "item"
+        ? (row.data as unknown as RequiredIdentifiableTransaction)
+        : null;
     return (
       <TableCell onClick={(e) => e.stopPropagation()}>
         <TransactionContextMenu
@@ -278,6 +293,15 @@ export default function TransactionsList({
             }
           }}
           onSelect={() => enterSelectionMode(rowId, rowItemType)}
+          onMarkReviewed={
+            individualTx?.visibility === "ghost"
+              ? () =>
+                  setVisibility.mutate({
+                    transactionId: individualTx.transaction_id,
+                    visibility: "default",
+                  })
+              : undefined
+          }
         />
       </TableCell>
     );

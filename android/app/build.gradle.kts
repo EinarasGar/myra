@@ -39,6 +39,7 @@ tasks.register("buildRustCore") {
     description = "Cross-compile Rust core for Android and generate UniFFI bindings"
     inputs.dir(coreDir.resolve("src"))
     inputs.file(coreDir.resolve("Cargo.toml"))
+    inputs.dir(rootProject.file("../server/shared/src"))
     outputs.dir(jniLibsDir)
 
     doLast {
@@ -265,6 +266,9 @@ dependencies {
 
     // Navigation
     implementation(libs.navigation.compose)
+
+    // Custom Tabs for OAuth (TrueLayer connect flow)
+    implementation(libs.androidx.browser)
 
     // JNA is required by UniFFI-generated Kotlin code to call into native libraries
     implementation(libs.jna) { artifact { type = "aar" } }

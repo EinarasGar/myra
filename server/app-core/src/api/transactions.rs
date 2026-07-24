@@ -42,9 +42,52 @@ pub fn extract_page(body: &str) -> Result<TransactionsPage, String> {
     })
 }
 
+fn map_visibility(
+    v: &shared::view_models::transactions::base_models::visibility::TransactionVisibility,
+) -> crate::models::TransactionVisibility {
+    use shared::view_models::transactions::base_models::visibility::TransactionVisibility as Vm;
+    match v {
+        Vm::Default => crate::models::TransactionVisibility::Default,
+        Vm::Ghost => crate::models::TransactionVisibility::Ghost,
+        Vm::Hidden => crate::models::TransactionVisibility::Hidden,
+    }
+}
+
+fn tx_visibility(tx: &TxEnum) -> crate::models::TransactionVisibility {
+    macro_rules! vis {
+        ($($variant:ident),+) => {
+            match tx { $(TxEnum::$variant(t) => map_visibility(&t.base.visibility),)+ }
+        };
+    }
+    vis!(
+        RegularTransaction,
+        CashTransferOut,
+        CashTransferIn,
+        CashDividend,
+        AssetTransferOut,
+        AssetTransferIn,
+        AssetTrade,
+        AssetSale,
+        AssetPurchase,
+        AssetDividend,
+        AssetBalanceTransfer,
+        AccountFees,
+        CashBalanceTransfer
+    )
+}
+
 pub(crate) fn to_list_item(tx: &TxEnum, tables: &MetadataLookupTables) -> TransactionListItem {
     let (id, date, tx_type, desc, cat_id, entries) = flatten(tx);
-    build_list_item(id, date, tx_type, desc, cat_id, entries, tables)
+    build_list_item(
+        id,
+        date,
+        tx_type,
+        desc,
+        cat_id,
+        entries,
+        tx_visibility(tx),
+        tables,
+    )
 }
 
 /// Build a list item for the update-individual-transaction response, which returns the
@@ -55,9 +98,19 @@ pub(crate) fn to_list_item_with_id(
     tables: &MetadataLookupTables,
 ) -> TransactionListItem {
     let (date, tx_type, desc, cat_id, entries) = flatten_required(tx);
-    build_list_item(transaction_id, date, tx_type, desc, cat_id, entries, tables)
+    build_list_item(
+        transaction_id,
+        date,
+        tx_type,
+        desc,
+        cat_id,
+        entries,
+        crate::models::TransactionVisibility::Default,
+        tables,
+    )
 }
 
+#[allow(clippy::too_many_arguments)]
 fn build_list_item(
     id: String,
     date: i64,
@@ -65,6 +118,7 @@ fn build_list_item(
     desc: Option<String>,
     cat_id: Option<i32>,
     entries: Vec<ET>,
+    visibility: crate::models::TransactionVisibility,
     tables: &MetadataLookupTables,
 ) -> TransactionListItem {
     let first = entries.first();
@@ -95,6 +149,7 @@ fn build_list_item(
         category_icon: cat_id
             .and_then(|id| find_category_icon(tables, id))
             .unwrap_or_default(),
+        visibility,
         is_group: false,
         group_size: 1,
         children: vec![],
@@ -287,6 +342,13 @@ fn group_to_list_item(
         ),
     };
 
+    let children: Vec<TransactionListItem> = tg
+        .group
+        .transactions
+        .iter()
+        .map(|c| to_list_item(c, tables))
+        .collect();
+
     TransactionListItem {
         id: tg.group_id.0.to_string(),
         date: tg.group.date.unix_timestamp(),
@@ -312,15 +374,22 @@ fn group_to_list_item(
         category_id: Some(tg.group.category_id.0),
         // Groups keep their dedicated "layers" glyph rather than a category icon.
         category_icon: String::new(),
+        visibility: if children_visible_all_ghost(&children) {
+            crate::models::TransactionVisibility::Ghost
+        } else {
+            crate::models::TransactionVisibility::Default
+        },
         is_group: true,
         group_size,
-        children: tg
-            .group
-            .transactions
-            .iter()
-            .map(|c| to_list_item(c, tables))
-            .collect(),
+        children,
     }
+}
+
+fn children_visible_all_ghost(children: &[TransactionListItem]) -> bool {
+    !children.is_empty()
+        && children
+            .iter()
+            .all(|c| c.visibility == crate::models::TransactionVisibility::Ghost)
 }
 
 pub(crate) fn find_account(t: &MetadataLookupTables, id: &str) -> Option<String> {

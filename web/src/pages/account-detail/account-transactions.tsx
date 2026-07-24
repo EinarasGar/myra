@@ -71,6 +71,8 @@ export default function AccountTransactions({
       rowCount: dataQuery.data?.totalCount,
       pagination,
       setPagination,
+      rowClassName: (row: Transaction) =>
+        row.visibility === "ghost" ? "opacity-60" : undefined,
     }),
     [tableData, dataQuery.data?.totalCount, pagination],
   );

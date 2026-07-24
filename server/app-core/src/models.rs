@@ -56,6 +56,7 @@ pub struct TransactionListItem {
     /// Lucide icon name for the transaction's category, when it has one.
     /// Empty for asset/cash operations that carry no category.
     pub category_icon: String,
+    pub visibility: TransactionVisibility,
     pub is_group: bool,
     pub group_size: u32,
     pub children: Vec<TransactionListItem>,
@@ -554,4 +555,112 @@ pub struct AiUsageWindow {
 pub struct AiUsage {
     pub hourly: AiUsageWindow,
     pub monthly: AiUsageWindow,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, uniffi::Enum)]
+pub enum CredentialMode {
+    Stored,
+    Transient,
+    ClientSupplied,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, uniffi::Enum)]
+pub enum BindingWriteMode {
+    Ghost,
+    Trusted,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, uniffi::Enum)]
+pub enum BindingStatus {
+    Active,
+    Paused,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, uniffi::Enum)]
+pub enum TransactionVisibility {
+    Default,
+    Ghost,
+    Hidden,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct ConnectorConnection {
+    pub id: String,
+    pub provider_kind: String,
+    pub credential_mode: CredentialMode,
+    pub provider_key_id: Option<String>,
+    pub status: String,
+    pub consent_expires_at: Option<i64>,
+    pub created_at: i64,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct ConnectorBinding {
+    pub id: String,
+    pub connection_id: String,
+    pub sverto_account_id: String,
+    pub sverto_account_name: String,
+    pub provider_account_id: String,
+    pub write_mode: BindingWriteMode,
+    pub status: String,
+    pub synced_through: Option<i64>,
+    pub last_sync_at: Option<i64>,
+    pub last_sync_status: Option<String>,
+    pub last_sync_error: Option<String>,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct ProviderAccount {
+    pub provider_account_id: String,
+    pub display_name: String,
+    pub currency: Option<String>,
+    pub account_type: Option<String>,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct CreateConnectionInput {
+    pub provider_kind: String,
+    pub credential_mode: CredentialMode,
+    pub credential: Option<String>,
+    pub provider_key_id: Option<String>,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct OAuthSessionStart {
+    pub session_id: String,
+    pub auth_url: String,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct PendingOAuth {
+    pub connection_id: String,
+    pub session_id: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, uniffi::Enum)]
+pub enum OAuthCompletionStatus {
+    Completed,
+    Denied,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct CompleteOAuthResult {
+    pub status: OAuthCompletionStatus,
+    pub connection: ConnectorConnection,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct SyncReport {
+    pub new_transactions: i64,
+    pub unchanged: i64,
+    pub amended: i64,
+    pub conflicts: i64,
+    pub unresolved: i64,
+    pub duplicates: i64,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct SyncOutcome {
+    pub status: String,
+    pub report: Option<SyncReport>,
 }

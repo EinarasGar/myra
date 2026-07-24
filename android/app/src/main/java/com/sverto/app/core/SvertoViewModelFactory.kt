@@ -14,6 +14,11 @@ import com.sverto.app.feature.assets.AssetOverviewViewModel
 import com.sverto.app.feature.assets.CustomAssetsViewModel
 import com.sverto.app.feature.assets.MarketsListViewModel
 import com.sverto.app.feature.categories.CustomCategoriesViewModel
+import com.sverto.app.feature.connectors.BindingSetupViewModel
+import com.sverto.app.feature.connectors.ConnectTrading212ViewModel
+import com.sverto.app.feature.connectors.ConnectTrueLayerViewModel
+import com.sverto.app.feature.connectors.ConnectionDetailViewModel
+import com.sverto.app.feature.connectors.ConnectorsViewModel
 import com.sverto.app.feature.onboarding.OnboardingViewModel
 import com.sverto.app.feature.portfolio.HomeViewModel
 import com.sverto.app.feature.settings.AiUsageViewModel
@@ -68,6 +73,16 @@ object SvertoViewModelFactory : ViewModelProvider.Factory {
                 AiUsageViewModel(appStore) as T
             modelClass.isAssignableFrom(AssetOverviewViewModel::class.java) ->
                 AssetOverviewViewModel(appStore) as T
+            modelClass.isAssignableFrom(ConnectorsViewModel::class.java) ->
+                ConnectorsViewModel(appStore) as T
+            modelClass.isAssignableFrom(ConnectionDetailViewModel::class.java) ->
+                ConnectionDetailViewModel(appStore) as T
+            modelClass.isAssignableFrom(BindingSetupViewModel::class.java) ->
+                BindingSetupViewModel(appStore) as T
+            modelClass.isAssignableFrom(ConnectTrueLayerViewModel::class.java) ->
+                ConnectTrueLayerViewModel(appStore) as T
+            modelClass.isAssignableFrom(ConnectTrading212ViewModel::class.java) ->
+                ConnectTrading212ViewModel(appStore) as T
             else -> throw IllegalArgumentException("Unknown ViewModel: ${modelClass.name}")
         }
     }

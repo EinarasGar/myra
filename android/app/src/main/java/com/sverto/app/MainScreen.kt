@@ -1,15 +1,19 @@
 package com.sverto.app
 
+import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -57,7 +61,11 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NamedNavArgument
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavDeepLink
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -65,6 +73,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import com.sverto.app.core.SvertoViewModelFactory
 import com.sverto.app.core.components.ProfileAvatarButton
 import com.sverto.app.core.navigation.TopLevelRoute
@@ -82,6 +91,12 @@ import com.sverto.app.feature.assets.AssetOverviewViewModel
 import com.sverto.app.feature.assets.AssetSearchAppBar
 import com.sverto.app.feature.assets.CustomAssetsScreen
 import com.sverto.app.feature.categories.CustomCategoriesScreen
+import com.sverto.app.feature.connectors.BindingSetupScreen
+import com.sverto.app.feature.connectors.ConnectTrading212Screen
+import com.sverto.app.feature.connectors.ConnectTrueLayerScreen
+import com.sverto.app.feature.connectors.ConnectionDetailScreen
+import com.sverto.app.feature.connectors.ConnectorDetailScreen
+import com.sverto.app.feature.connectors.ConnectorsScreen
 import com.sverto.app.feature.portfolio.PortfolioScreen
 import com.sverto.app.feature.settings.SettingsScreen
 import com.sverto.app.feature.transactions.TransactionDetailScreen
@@ -117,6 +132,12 @@ private const val EDIT_ACCOUNT_ROUTE = "editAccount/{accountId}"
 private const val MARKET_ASSET_DETAIL_ROUTE = "asset/{assetId}?userAsset={userAsset}"
 private const val ASSET_OVERVIEW_ROUTE = "assetOverview/{assetId}?userAsset={userAsset}"
 private const val CUSTOM_ASSETS_ROUTE = "customAssets"
+private const val CONNECTORS_ROUTE = "connectors"
+private const val CONNECTOR_DETAIL_ROUTE = "connectorDetail/{providerKind}"
+private const val CONNECTION_DETAIL_ROUTE = "connectionDetail/{connectionId}"
+private const val CONNECT_TRUELAYER_ROUTE = "connectTrueLayer?code={code}&state={state}&error={error}"
+private const val CONNECT_TRADING212_ROUTE = "connectTrading212"
+private const val BINDING_SETUP_ROUTE = "bindingSetup/{connectionId}"
 
 private data class TransactionDetailState(
     val transaction: TransactionListItem,
@@ -154,6 +175,16 @@ fun MainScreen(
 
     val context = LocalContext.current
     val appStore = remember { (context.applicationContext as SvertoApp).appStore }
+
+    val activity = context as ComponentActivity
+    DisposableEffect(navController) {
+        val listener =
+            androidx.core.util.Consumer<Intent> { intent ->
+                navController.handleDeepLink(intent)
+            }
+        activity.addOnNewIntentListener(listener)
+        onDispose { activity.removeOnNewIntentListener(listener) }
+    }
 
     suspend fun prepareAndQueue(uri: Uri) {
         val prepared = withContext(Dispatchers.IO) { prepareQuickUpload(context, uri) }
@@ -534,6 +565,9 @@ private fun MainNavGraph(
                         }
                         navController.popBackStack()
                     },
+                    onMarkReviewed = {
+                        transactionsViewModel.markReviewed(detailState.transaction.id)
+                    },
                     onChildClick = { child -> onNavigateToDetail(child, true) },
                     sharedTransitionScope = sharedScope,
                     animatedVisibilityScope = this@composable,
@@ -866,6 +900,7 @@ private fun MainNavGraph(
                 onBack = { navController.popBackStack() },
                 onCustomCategories = { navController.navigate("customCategories") },
                 onCustomAssets = { navController.navigate("customAssets") },
+                onConnectors = { navController.navigate(CONNECTORS_ROUTE) },
             )
         }
         composable(
@@ -896,6 +931,108 @@ private fun MainNavGraph(
             },
         ) {
             CustomCategoriesScreen(onBack = { navController.popBackStack() })
+        }
+        slideComposable(CONNECTORS_ROUTE, slideSpec) {
+            ConnectorsScreen(
+                onBack = { navController.popBackStack() },
+                onConnectorClick = { kind -> navController.navigate("connectorDetail/$kind") },
+            )
+        }
+        slideComposable(
+            CONNECTOR_DETAIL_ROUTE,
+            slideSpec,
+            arguments = listOf(navArgument("providerKind") { type = NavType.StringType }),
+        ) { entry ->
+            val kind = entry.arguments?.getString("providerKind") ?: return@slideComposable
+            ConnectorDetailScreen(
+                providerKind = kind,
+                onBack = { navController.popBackStack() },
+                onConnectionClick = { id -> navController.navigate("connectionDetail/$id") },
+                onConnect = {
+                    if (kind == "truelayer") {
+                        navController.navigate("connectTrueLayer")
+                    } else {
+                        navController.navigate("connectTrading212")
+                    }
+                },
+            )
+        }
+        slideComposable(
+            CONNECTION_DETAIL_ROUTE,
+            slideSpec,
+            arguments = listOf(navArgument("connectionId") { type = NavType.StringType }),
+        ) { entry ->
+            val connectionId = entry.arguments?.getString("connectionId") ?: return@slideComposable
+            ConnectionDetailScreen(
+                connectionId = connectionId,
+                onBack = { navController.popBackStack() },
+                onAddBinding = { navController.navigate("bindingSetup/$connectionId") },
+                onRevoked = { navController.popBackStack(CONNECTORS_ROUTE, inclusive = false) },
+            )
+        }
+        slideComposable(
+            BINDING_SETUP_ROUTE,
+            slideSpec,
+            arguments = listOf(navArgument("connectionId") { type = NavType.StringType }),
+        ) { entry ->
+            val connectionId = entry.arguments?.getString("connectionId") ?: return@slideComposable
+            BindingSetupScreen(
+                connectionId = connectionId,
+                onBack = { navController.popBackStack() },
+                onDone = { navController.popBackStack() },
+            )
+        }
+        slideComposable(
+            CONNECT_TRUELAYER_ROUTE,
+            slideSpec,
+            arguments =
+                listOf(
+                    navArgument("code") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument("state") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument("error") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
+            deepLinks =
+                listOf(
+                    navDeepLink {
+                        uriPattern = "sverto://connectors/truelayer?code={code}&state={state}&error={error}"
+                    },
+                ),
+        ) { entry ->
+            ConnectTrueLayerScreen(
+                oauthState = entry.arguments?.getString("state"),
+                oauthCode = entry.arguments?.getString("code"),
+                oauthError = entry.arguments?.getString("error"),
+                onBack = { navController.popBackStack() },
+                onCompleted = { connectionId ->
+                    navController.navigate("connectionDetail/$connectionId") {
+                        popUpTo(CONNECT_TRUELAYER_ROUTE) { inclusive = true }
+                    }
+                    navController.navigate("bindingSetup/$connectionId")
+                },
+            )
+        }
+        slideComposable(CONNECT_TRADING212_ROUTE, slideSpec) {
+            ConnectTrading212Screen(
+                onBack = { navController.popBackStack() },
+                onCreated = { id ->
+                    navController.navigate("connectionDetail/$id") {
+                        popUpTo(CONNECT_TRADING212_ROUTE) { inclusive = true }
+                    }
+                    navController.navigate("bindingSetup/$id")
+                },
+            )
         }
         composable(
             route = MARKET_ASSET_DETAIL_ROUTE,
@@ -946,4 +1083,31 @@ private fun MainNavGraph(
             )
         }
     }
+}
+
+private fun NavGraphBuilder.slideComposable(
+    route: String,
+    slideSpec: FiniteAnimationSpec<IntOffset>,
+    arguments: List<NamedNavArgument> = emptyList(),
+    deepLinks: List<NavDeepLink> = emptyList(),
+    content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit,
+) {
+    composable(
+        route = route,
+        arguments = arguments,
+        deepLinks = deepLinks,
+        enterTransition = {
+            slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, slideSpec)
+        },
+        exitTransition = {
+            slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, slideSpec)
+        },
+        popEnterTransition = {
+            slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, slideSpec)
+        },
+        popExitTransition = {
+            slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, slideSpec)
+        },
+        content = content,
+    )
 }

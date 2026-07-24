@@ -69,6 +69,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onCustomAssets: () -> Unit,
     onCustomCategories: () -> Unit,
+    onConnectors: () -> Unit,
     modifier: Modifier = Modifier,
     aiUsageViewModel: AiUsageViewModel = viewModel(factory = SvertoViewModelFactory),
 ) {
@@ -153,6 +154,11 @@ fun SettingsScreen(
                     label = "Base Currency",
                     supporting = baseCurrencyTicker,
                     onClick = { showCurrencyPicker = true },
+                )
+                SettingsRow(
+                    icon = "cable",
+                    label = "Connected Services",
+                    onClick = onConnectors,
                 )
                 if (isClerk) {
                     ProfileSettingsRow()

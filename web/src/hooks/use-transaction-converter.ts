@@ -5,12 +5,14 @@ export interface Transaction {
   description: string;
   date: number;
   deltas: string;
+  visibility: "default" | "ghost" | "hidden";
 }
 
 interface TransactionConverterProps {
   type: string;
   description?: string | null;
   date: number;
+  visibility?: "default" | "ghost" | "hidden";
   entry?: {
     amount: number;
     asset_id: number;
@@ -136,6 +138,7 @@ export default function useTransactionViewModelConverter(
       description: description,
       date: viewModel.date,
       deltas: delta,
+      visibility: viewModel.visibility ?? "default",
     };
   });
 }

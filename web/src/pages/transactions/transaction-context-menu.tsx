@@ -20,6 +20,7 @@ interface TransactionContextMenuProps {
   onSelect: () => void;
   onMoveToGroup?: () => void;
   onMoveOutOfGroup?: () => void;
+  onMarkReviewed?: () => void;
 }
 
 export function TransactionContextMenu({
@@ -27,6 +28,7 @@ export function TransactionContextMenu({
   onSelect,
   onMoveToGroup,
   onMoveOutOfGroup,
+  onMarkReviewed,
 }: TransactionContextMenuProps) {
   return (
     <DropdownMenu>
@@ -47,6 +49,11 @@ export function TransactionContextMenu({
         {onMoveOutOfGroup && (
           <DropdownMenuItem onClick={onMoveOutOfGroup}>
             <ArrowLeftFromLine className="h-4 w-4 mr-2" /> Move out of group
+          </DropdownMenuItem>
+        )}
+        {onMarkReviewed && (
+          <DropdownMenuItem onClick={onMarkReviewed}>
+            <Check className="h-4 w-4 mr-2" /> Mark reviewed
           </DropdownMenuItem>
         )}
         <DropdownMenuItem onClick={onDelete} variant="destructive">

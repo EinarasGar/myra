@@ -24,6 +24,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Layers
@@ -47,6 +48,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -56,6 +58,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.sverto.app.core.ui.RowDivider
 import uniffi.sverto_core.TransactionListItem
+import uniffi.sverto_core.TransactionVisibility
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -73,12 +76,14 @@ fun TransactionDetailScreen(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
+    onMarkReviewed: () -> Unit,
     onChildClick: (TransactionListItem) -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
 ) {
     with(sharedTransitionScope) {
         var showDeleteConfirmation by remember { mutableStateOf(false) }
+        var visibility by remember(transaction.id) { mutableStateOf(transaction.visibility) }
         val quickActionLabel = if (isInGroup) "Ungroup" else "Group"
 
         Surface(
@@ -159,6 +164,11 @@ fun TransactionDetailScreen(
                         onGroup = {},
                         onShare = {},
                         onDelete = { showDeleteConfirmation = true },
+                        showReviewed = visibility == TransactionVisibility.GHOST,
+                        onReviewed = {
+                            visibility = TransactionVisibility.DEFAULT
+                            onMarkReviewed()
+                        },
                         modifier = Modifier.padding(horizontal = 16.dp),
                     )
 
@@ -394,6 +404,8 @@ private fun QuickActionRow(
     onGroup: () -> Unit,
     onShare: () -> Unit,
     onDelete: () -> Unit,
+    showReviewed: Boolean,
+    onReviewed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -401,6 +413,13 @@ private fun QuickActionRow(
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.Top,
     ) {
+        if (showReviewed) {
+            QuickActionButton(
+                icon = Icons.Outlined.CheckCircle,
+                label = "Reviewed",
+                onClick = onReviewed,
+            )
+        }
         QuickActionButton(
             icon = Icons.Outlined.Edit,
             label = "Edit",
@@ -491,7 +510,8 @@ private fun ChildTransactionRow(
                     .sharedBounds(
                         sharedContentState = rememberSharedContentState(key = "tx_${child.id}"),
                         animatedVisibilityScope = animatedVisibilityScope,
-                    ).clickable(onClick = onClick),
+                    ).clickable(onClick = onClick)
+                    .alpha(if (child.visibility == TransactionVisibility.GHOST) 0.55f else 1f),
             colors =
                 ListItemDefaults.colors(
                     containerColor = MaterialTheme.colorScheme.surfaceBright,

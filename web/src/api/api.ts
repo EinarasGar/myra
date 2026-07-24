@@ -3997,6 +3997,57 @@ export interface CombinedTransactionsPage {
   total_results?: number | null;
 }
 /**
+ * Relays the provider\'s OAuth redirect back to the server. Per RFC 6749 the provider returns either `code` (consent granted) or `error` (e.g. access_denied) — never both.
+ * @export
+ * @interface CompleteOAuthSessionRequest
+ */
+export interface CompleteOAuthSessionRequest {
+  /**
+   *
+   * @type {string}
+   * @memberof CompleteOAuthSessionRequest
+   */
+  code?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof CompleteOAuthSessionRequest
+   */
+  error?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof CompleteOAuthSessionRequest
+   */
+  error_description?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof CompleteOAuthSessionRequest
+   */
+  state: string;
+}
+/**
+ *
+ * @export
+ * @interface CompleteOAuthSessionResponse
+ */
+export interface CompleteOAuthSessionResponse {
+  /**
+   *
+   * @type {ConnectorConnection}
+   * @memberof CompleteOAuthSessionResponse
+   */
+  connection: ConnectorConnection;
+  /**
+   *
+   * @type {OAuthSessionStatus}
+   * @memberof CompleteOAuthSessionResponse
+   */
+  status: OAuthSessionStatus;
+}
+
+/**
  *
  * @export
  * @interface CompleteQuickUploadRequest
@@ -4048,10 +4099,10 @@ export interface ConnectorBinding {
   connection_id: string;
   /**
    *
-   * @type {string}
+   * @type {number}
    * @memberof ConnectorBinding
    */
-  created_at: string;
+  created_at: number;
   /**
    *
    * @type {string}
@@ -4060,10 +4111,10 @@ export interface ConnectorBinding {
   id: string;
   /**
    *
-   * @type {string}
+   * @type {number}
    * @memberof ConnectorBinding
    */
-  last_sync_at?: string | null;
+  last_sync_at?: number | null;
   /**
    *
    * @type {string}
@@ -4096,16 +4147,16 @@ export interface ConnectorBinding {
   sverto_account_id: string;
   /**
    *
-   * @type {string}
+   * @type {number}
    * @memberof ConnectorBinding
    */
-  synced_through?: string | null;
+  synced_through?: number | null;
   /**
    *
-   * @type {string}
+   * @type {number}
    * @memberof ConnectorBinding
    */
-  updated_at: string;
+  updated_at: number;
   /**
    *
    * @type {string}
@@ -4113,6 +4164,62 @@ export interface ConnectorBinding {
    */
   write_mode: string;
 }
+/**
+ *
+ * @export
+ * @interface ConnectorConnection
+ */
+export interface ConnectorConnection {
+  /**
+   *
+   * @type {number}
+   * @memberof ConnectorConnection
+   */
+  consent_expires_at?: number | null;
+  /**
+   *
+   * @type {number}
+   * @memberof ConnectorConnection
+   */
+  created_at: number;
+  /**
+   *
+   * @type {CredentialMode}
+   * @memberof ConnectorConnection
+   */
+  credential_mode: CredentialMode;
+  /**
+   *
+   * @type {string}
+   * @memberof ConnectorConnection
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConnectorConnection
+   */
+  provider_key_id?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof ConnectorConnection
+   */
+  provider_kind: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConnectorConnection
+   */
+  status: string;
+  /**
+   *
+   * @type {number}
+   * @memberof ConnectorConnection
+   */
+  updated_at: number;
+}
+
 /**
  *
  * @export
@@ -4143,6 +4250,38 @@ export interface ConversationResponse {
    * @memberof ConversationResponse
    */
   updated_at: string;
+}
+/**
+ *
+ * @export
+ * @interface CreateBindingRequest
+ */
+export interface CreateBindingRequest {
+  /**
+   *
+   * @type {string}
+   * @memberof CreateBindingRequest
+   */
+  provider_account_id?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateBindingRequest
+   */
+  sverto_account_id: string;
+}
+/**
+ *
+ * @export
+ * @interface CreateBindingResponse
+ */
+export interface CreateBindingResponse {
+  /**
+   *
+   * @type {string}
+   * @memberof CreateBindingResponse
+   */
+  binding_id: string;
 }
 /**
  *
@@ -4181,6 +4320,51 @@ export interface CreateCategoryTypeRequest {
    * @memberof CreateCategoryTypeRequest
    */
   name: string;
+}
+/**
+ *
+ * @export
+ * @interface CreateConnectionRequest
+ */
+export interface CreateConnectionRequest {
+  /**
+   *
+   * @type {string}
+   * @memberof CreateConnectionRequest
+   */
+  credential?: string | null;
+  /**
+   *
+   * @type {CredentialMode}
+   * @memberof CreateConnectionRequest
+   */
+  credential_mode: CredentialMode;
+  /**
+   * Non-secret credential identifier (e.g. Trading 212\'s API Key ID). Not routed through SecretProvider — only the actual secret half needs vault-grade storage.
+   * @type {string}
+   * @memberof CreateConnectionRequest
+   */
+  provider_key_id?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateConnectionRequest
+   */
+  provider_kind: string;
+}
+
+/**
+ *
+ * @export
+ * @interface CreateConnectionResponse
+ */
+export interface CreateConnectionResponse {
+  /**
+   *
+   * @type {string}
+   * @memberof CreateConnectionResponse
+   */
+  connection_id: string;
 }
 /**
  *
@@ -4271,6 +4455,38 @@ export interface CreateFileResponse {
 /**
  *
  * @export
+ * @interface CreateOAuthSessionRequest
+ */
+export interface CreateOAuthSessionRequest {
+  /**
+   *
+   * @type {string}
+   * @memberof CreateOAuthSessionRequest
+   */
+  redirect_uri?: string | null;
+}
+/**
+ *
+ * @export
+ * @interface CreateOAuthSessionResponse
+ */
+export interface CreateOAuthSessionResponse {
+  /**
+   *
+   * @type {string}
+   * @memberof CreateOAuthSessionResponse
+   */
+  auth_url: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateOAuthSessionResponse
+   */
+  session_id: string;
+}
+/**
+ *
+ * @export
  * @interface CreateQuickUploadRequest
  */
 export interface CreateQuickUploadRequest {
@@ -4281,6 +4497,21 @@ export interface CreateQuickUploadRequest {
    */
   file_id: string;
 }
+/**
+ *
+ * @export
+ * @enum {string}
+ */
+
+export const CredentialMode = {
+  Stored: "stored",
+  Transient: "transient",
+  ClientSupplied: "client_supplied",
+} as const;
+
+export type CredentialMode =
+  (typeof CredentialMode)[keyof typeof CredentialMode];
+
 /**
  *
  * @export
@@ -4567,6 +4798,19 @@ export interface GetAssetResponse {
 /**
  *
  * @export
+ * @interface GetBindingsResponse
+ */
+export interface GetBindingsResponse {
+  /**
+   *
+   * @type {Array<ConnectorBinding>}
+   * @memberof GetBindingsResponse
+   */
+  bindings: Array<ConnectorBinding>;
+}
+/**
+ *
+ * @export
  * @interface GetCategoriesResponse
  */
 export interface GetCategoriesResponse {
@@ -4582,6 +4826,19 @@ export interface GetCategoriesResponse {
    * @memberof GetCategoriesResponse
    */
   lookup_tables: CategoryMetadataLookupTables;
+}
+/**
+ *
+ * @export
+ * @interface GetConnectionsResponse
+ */
+export interface GetConnectionsResponse {
+  /**
+   *
+   * @type {Array<ConnectorConnection>}
+   * @memberof GetConnectionsResponse
+   */
+  connections: Array<ConnectorConnection>;
 }
 /**
  *
@@ -5191,6 +5448,19 @@ export interface IngestTransactionsResponse {
 /**
  *
  * @export
+ * @interface ListProviderAccountsResponse
+ */
+export interface ListProviderAccountsResponse {
+  /**
+   *
+   * @type {Array<ProviderAccount>}
+   * @memberof ListProviderAccountsResponse
+   */
+  accounts: Array<ProviderAccount>;
+}
+/**
+ *
+ * @export
  * @interface LoginDetails
  */
 export interface LoginDetails {
@@ -5254,6 +5524,20 @@ export interface NetWorthPoint {
 /**
  *
  * @export
+ * @enum {string}
+ */
+
+export const OAuthSessionStatus = {
+  Completed: "completed",
+  Denied: "denied",
+} as const;
+
+export type OAuthSessionStatus =
+  (typeof OAuthSessionStatus)[keyof typeof OAuthSessionStatus];
+
+/**
+ *
+ * @export
  * @interface PortfolioOverview
  */
 export interface PortfolioOverview {
@@ -5269,6 +5553,37 @@ export interface PortfolioOverview {
    * @memberof PortfolioOverview
    */
   cash_portfolios: Array<CashPortfolio>;
+}
+/**
+ *
+ * @export
+ * @interface ProviderAccount
+ */
+export interface ProviderAccount {
+  /**
+   *
+   * @type {string}
+   * @memberof ProviderAccount
+   */
+  account_type?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof ProviderAccount
+   */
+  currency?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof ProviderAccount
+   */
+  display_name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProviderAccount
+   */
+  provider_account_id: string;
 }
 /**
  *
@@ -5809,6 +6124,50 @@ export interface SharedAssetPairMetadata {
    * @memberof SharedAssetPairMetadata
    */
   volume?: number | null;
+}
+/**
+ *
+ * @export
+ * @interface SyncBindingRequest
+ */
+export interface SyncBindingRequest {
+  /**
+   *
+   * @type {string}
+   * @memberof SyncBindingRequest
+   */
+  credential?: string | null;
+}
+/**
+ *
+ * @export
+ * @interface SyncBindingResponse
+ */
+export interface SyncBindingResponse {
+  /**
+   *
+   * @type {string}
+   * @memberof SyncBindingResponse
+   */
+  binding_id: string;
+  /**
+   *
+   * @type {number}
+   * @memberof SyncBindingResponse
+   */
+  pages_fetched?: number | null;
+  /**
+   *
+   * @type {SyncReport}
+   * @memberof SyncBindingResponse
+   */
+  report?: SyncReport | null;
+  /**
+   *
+   * @type {string}
+   * @memberof SyncBindingResponse
+   */
+  status: string;
 }
 /**
  * Outcome counts of one committed sync run — empty (all zeros bar `unchanged`) when the provider had nothing new.
@@ -11718,6 +12077,401 @@ export const ConnectorsApiAxiosParamCreator = function (
 ) {
   return {
     /**
+     * Completes an OAuth session with the provider redirect result. Consent denial is a valid outcome and returns 200 with status `denied` — not an error response.
+     * @summary Complete OAuth Session
+     * @param {string} userId
+     * @param {string} connectionId
+     * @param {string} sessionId Id of the OAuth session to complete.
+     * @param {CompleteOAuthSessionRequest} completeOAuthSessionRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    completeOauthSession: async (
+      userId: string,
+      connectionId: string,
+      sessionId: string,
+      completeOAuthSessionRequest: CompleteOAuthSessionRequest,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("completeOauthSession", "userId", userId);
+      // verify required parameter 'connectionId' is not null or undefined
+      assertParamExists("completeOauthSession", "connectionId", connectionId);
+      // verify required parameter 'sessionId' is not null or undefined
+      assertParamExists("completeOauthSession", "sessionId", sessionId);
+      // verify required parameter 'completeOAuthSessionRequest' is not null or undefined
+      assertParamExists(
+        "completeOauthSession",
+        "completeOAuthSessionRequest",
+        completeOAuthSessionRequest,
+      );
+      const localVarPath =
+        `/api/users/{user_id}/connectors/connections/{connection_id}/oauth/sessions/{session_id}`
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+          .replace(
+            `{${"connection_id"}}`,
+            encodeURIComponent(String(connectionId)),
+          )
+          .replace(`{${"session_id"}}`, encodeURIComponent(String(sessionId)));
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "PUT",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        completeOAuthSessionRequest,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Creates a new binding between a connection and a provider account.
+     * @summary Create Binding
+     * @param {string} userId
+     * @param {string} connectionId
+     * @param {CreateBindingRequest} createBindingRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    createBinding: async (
+      userId: string,
+      connectionId: string,
+      createBindingRequest: CreateBindingRequest,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("createBinding", "userId", userId);
+      // verify required parameter 'connectionId' is not null or undefined
+      assertParamExists("createBinding", "connectionId", connectionId);
+      // verify required parameter 'createBindingRequest' is not null or undefined
+      assertParamExists(
+        "createBinding",
+        "createBindingRequest",
+        createBindingRequest,
+      );
+      const localVarPath =
+        `/api/users/{user_id}/connectors/connections/{connection_id}/bindings`
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+          .replace(
+            `{${"connection_id"}}`,
+            encodeURIComponent(String(connectionId)),
+          );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "POST",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        createBindingRequest,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Creates a new connector connection for the user.
+     * @summary Create Connection
+     * @param {string} userId
+     * @param {CreateConnectionRequest} createConnectionRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    createConnection: async (
+      userId: string,
+      createConnectionRequest: CreateConnectionRequest,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("createConnection", "userId", userId);
+      // verify required parameter 'createConnectionRequest' is not null or undefined
+      assertParamExists(
+        "createConnection",
+        "createConnectionRequest",
+        createConnectionRequest,
+      );
+      const localVarPath =
+        `/api/users/{user_id}/connectors/connections`.replace(
+          `{${"user_id"}}`,
+          encodeURIComponent(String(userId)),
+        );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "POST",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        createConnectionRequest,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Creates an OAuth authorization session for a connection and returns the provider consent URL.
+     * @summary Create OAuth Session
+     * @param {string} userId
+     * @param {string} connectionId
+     * @param {CreateOAuthSessionRequest} createOAuthSessionRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    createOauthSession: async (
+      userId: string,
+      connectionId: string,
+      createOAuthSessionRequest: CreateOAuthSessionRequest,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("createOauthSession", "userId", userId);
+      // verify required parameter 'connectionId' is not null or undefined
+      assertParamExists("createOauthSession", "connectionId", connectionId);
+      // verify required parameter 'createOAuthSessionRequest' is not null or undefined
+      assertParamExists(
+        "createOauthSession",
+        "createOAuthSessionRequest",
+        createOAuthSessionRequest,
+      );
+      const localVarPath =
+        `/api/users/{user_id}/connectors/connections/{connection_id}/oauth/sessions`
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+          .replace(
+            `{${"connection_id"}}`,
+            encodeURIComponent(String(connectionId)),
+          );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "POST",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        createOAuthSessionRequest,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Deletes a binding.
+     * @summary Delete Binding
+     * @param {string} bindingId
+     * @param {string} userId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    deleteBinding: async (
+      bindingId: string,
+      userId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'bindingId' is not null or undefined
+      assertParamExists("deleteBinding", "bindingId", bindingId);
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("deleteBinding", "userId", userId);
+      const localVarPath =
+        `/api/users/{user_id}/connectors/bindings/{binding_id}`
+          .replace(`{${"binding_id"}}`, encodeURIComponent(String(bindingId)))
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "DELETE",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Gets a specific binding by ID.
+     * @summary Get Binding
+     * @param {string} bindingId
+     * @param {string} userId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getBinding: async (
+      bindingId: string,
+      userId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'bindingId' is not null or undefined
+      assertParamExists("getBinding", "bindingId", bindingId);
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("getBinding", "userId", userId);
+      const localVarPath =
+        `/api/users/{user_id}/connectors/bindings/{binding_id}`
+          .replace(`{${"binding_id"}}`, encodeURIComponent(String(bindingId)))
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
      * Reads the resumable sync checkpoint (cursor + last committed sync time) for a binding.
      * @summary Get Sync Checkpoint
      * @param {string} userId
@@ -11841,24 +12595,308 @@ export const ConnectorsApiAxiosParamCreator = function (
       };
     },
     /**
-     * Updates a binding\'s write mode and status.
-     * @summary Update Binding
+     * Gets all bindings associated with the user.
+     * @summary List Bindings
+     * @param {string} userId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    listBindings: async (
+      userId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("listBindings", "userId", userId);
+      const localVarPath = `/api/users/{user_id}/connectors/bindings`.replace(
+        `{${"user_id"}}`,
+        encodeURIComponent(String(userId)),
+      );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Gets all connector connections associated with the user.
+     * @summary List Connections
+     * @param {string} userId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    listConnections: async (
+      userId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("listConnections", "userId", userId);
+      const localVarPath =
+        `/api/users/{user_id}/connectors/connections`.replace(
+          `{${"user_id"}}`,
+          encodeURIComponent(String(userId)),
+        );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Lists available provider accounts for a connection.
+     * @summary List Provider Accounts
+     * @param {string} userId
+     * @param {string} connectionId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    listProviderAccounts: async (
+      userId: string,
+      connectionId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("listProviderAccounts", "userId", userId);
+      // verify required parameter 'connectionId' is not null or undefined
+      assertParamExists("listProviderAccounts", "connectionId", connectionId);
+      const localVarPath =
+        `/api/users/{user_id}/connectors/connections/{connection_id}/accounts`
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+          .replace(
+            `{${"connection_id"}}`,
+            encodeURIComponent(String(connectionId)),
+          );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Revokes a specific connector connection.
+     * @summary Revoke Connection
+     * @param {string} userId
+     * @param {string} connectionId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    revokeConnection: async (
+      userId: string,
+      connectionId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("revokeConnection", "userId", userId);
+      // verify required parameter 'connectionId' is not null or undefined
+      assertParamExists("revokeConnection", "connectionId", connectionId);
+      const localVarPath =
+        `/api/users/{user_id}/connectors/connections/{connection_id}`
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+          .replace(
+            `{${"connection_id"}}`,
+            encodeURIComponent(String(connectionId)),
+          );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "DELETE",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Triggers a sync for a binding. Stored mode enqueues a job, transient mode is synchronous.
+     * @summary Sync Binding
      * @param {string} userId
      * @param {string} bindingId
+     * @param {SyncBindingRequest} syncBindingRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    syncBinding: async (
+      userId: string,
+      bindingId: string,
+      syncBindingRequest: SyncBindingRequest,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("syncBinding", "userId", userId);
+      // verify required parameter 'bindingId' is not null or undefined
+      assertParamExists("syncBinding", "bindingId", bindingId);
+      // verify required parameter 'syncBindingRequest' is not null or undefined
+      assertParamExists(
+        "syncBinding",
+        "syncBindingRequest",
+        syncBindingRequest,
+      );
+      const localVarPath =
+        `/api/users/{user_id}/connectors/bindings/{binding_id}/sync`
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+          .replace(`{${"binding_id"}}`, encodeURIComponent(String(bindingId)));
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "POST",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        syncBindingRequest,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     * Updates a binding\'s write mode and status.
+     * @summary Update Binding
+     * @param {string} bindingId
+     * @param {string} userId
      * @param {UpdateBindingRequest} updateBindingRequest
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     updateBinding: async (
-      userId: string,
       bindingId: string,
+      userId: string,
       updateBindingRequest: UpdateBindingRequest,
       options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
-      // verify required parameter 'userId' is not null or undefined
-      assertParamExists("updateBinding", "userId", userId);
       // verify required parameter 'bindingId' is not null or undefined
       assertParamExists("updateBinding", "bindingId", bindingId);
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("updateBinding", "userId", userId);
       // verify required parameter 'updateBindingRequest' is not null or undefined
       assertParamExists(
         "updateBinding",
@@ -11867,8 +12905,8 @@ export const ConnectorsApiAxiosParamCreator = function (
       );
       const localVarPath =
         `/api/users/{user_id}/connectors/bindings/{binding_id}`
-          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-          .replace(`{${"binding_id"}}`, encodeURIComponent(String(bindingId)));
+          .replace(`{${"binding_id"}}`, encodeURIComponent(String(bindingId)))
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
       let baseOptions;
@@ -11920,6 +12958,234 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
   const localVarAxiosParamCreator =
     ConnectorsApiAxiosParamCreator(configuration);
   return {
+    /**
+     * Completes an OAuth session with the provider redirect result. Consent denial is a valid outcome and returns 200 with status `denied` — not an error response.
+     * @summary Complete OAuth Session
+     * @param {string} userId
+     * @param {string} connectionId
+     * @param {string} sessionId Id of the OAuth session to complete.
+     * @param {CompleteOAuthSessionRequest} completeOAuthSessionRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async completeOauthSession(
+      userId: string,
+      connectionId: string,
+      sessionId: string,
+      completeOAuthSessionRequest: CompleteOAuthSessionRequest,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<CompleteOAuthSessionResponse>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.completeOauthSession(
+          userId,
+          connectionId,
+          sessionId,
+          completeOAuthSessionRequest,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["ConnectorsApi.completeOauthSession"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Creates a new binding between a connection and a provider account.
+     * @summary Create Binding
+     * @param {string} userId
+     * @param {string} connectionId
+     * @param {CreateBindingRequest} createBindingRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async createBinding(
+      userId: string,
+      connectionId: string,
+      createBindingRequest: CreateBindingRequest,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<CreateBindingResponse>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.createBinding(
+        userId,
+        connectionId,
+        createBindingRequest,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["ConnectorsApi.createBinding"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Creates a new connector connection for the user.
+     * @summary Create Connection
+     * @param {string} userId
+     * @param {CreateConnectionRequest} createConnectionRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async createConnection(
+      userId: string,
+      createConnectionRequest: CreateConnectionRequest,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<CreateConnectionResponse>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.createConnection(
+          userId,
+          createConnectionRequest,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["ConnectorsApi.createConnection"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Creates an OAuth authorization session for a connection and returns the provider consent URL.
+     * @summary Create OAuth Session
+     * @param {string} userId
+     * @param {string} connectionId
+     * @param {CreateOAuthSessionRequest} createOAuthSessionRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async createOauthSession(
+      userId: string,
+      connectionId: string,
+      createOAuthSessionRequest: CreateOAuthSessionRequest,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<CreateOAuthSessionResponse>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.createOauthSession(
+          userId,
+          connectionId,
+          createOAuthSessionRequest,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["ConnectorsApi.createOauthSession"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Deletes a binding.
+     * @summary Delete Binding
+     * @param {string} bindingId
+     * @param {string} userId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async deleteBinding(
+      bindingId: string,
+      userId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.deleteBinding(
+        bindingId,
+        userId,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["ConnectorsApi.deleteBinding"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Gets a specific binding by ID.
+     * @summary Get Binding
+     * @param {string} bindingId
+     * @param {string} userId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getBinding(
+      bindingId: string,
+      userId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<ConnectorBinding>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.getBinding(
+        bindingId,
+        userId,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["ConnectorsApi.getBinding"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
     /**
      * Reads the resumable sync checkpoint (cursor + last committed sync time) for a binding.
      * @summary Get Sync Checkpoint
@@ -11998,17 +13264,193 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
-     * Updates a binding\'s write mode and status.
-     * @summary Update Binding
+     * Gets all bindings associated with the user.
+     * @summary List Bindings
+     * @param {string} userId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async listBindings(
+      userId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<GetBindingsResponse>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.listBindings(
+        userId,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["ConnectorsApi.listBindings"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Gets all connector connections associated with the user.
+     * @summary List Connections
+     * @param {string} userId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async listConnections(
+      userId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<GetConnectionsResponse>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.listConnections(
+        userId,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["ConnectorsApi.listConnections"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Lists available provider accounts for a connection.
+     * @summary List Provider Accounts
+     * @param {string} userId
+     * @param {string} connectionId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async listProviderAccounts(
+      userId: string,
+      connectionId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<ListProviderAccountsResponse>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.listProviderAccounts(
+          userId,
+          connectionId,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["ConnectorsApi.listProviderAccounts"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Revokes a specific connector connection.
+     * @summary Revoke Connection
+     * @param {string} userId
+     * @param {string} connectionId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async revokeConnection(
+      userId: string,
+      connectionId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.revokeConnection(
+          userId,
+          connectionId,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["ConnectorsApi.revokeConnection"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Triggers a sync for a binding. Stored mode enqueues a job, transient mode is synchronous.
+     * @summary Sync Binding
      * @param {string} userId
      * @param {string} bindingId
+     * @param {SyncBindingRequest} syncBindingRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async syncBinding(
+      userId: string,
+      bindingId: string,
+      syncBindingRequest: SyncBindingRequest,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<SyncBindingResponse>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.syncBinding(
+        userId,
+        bindingId,
+        syncBindingRequest,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["ConnectorsApi.syncBinding"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     * Updates a binding\'s write mode and status.
+     * @summary Update Binding
+     * @param {string} bindingId
+     * @param {string} userId
      * @param {UpdateBindingRequest} updateBindingRequest
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     async updateBinding(
-      userId: string,
       bindingId: string,
+      userId: string,
       updateBindingRequest: UpdateBindingRequest,
       options?: RawAxiosRequestConfig,
     ): Promise<
@@ -12018,8 +13460,8 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
       ) => AxiosPromise<ConnectorBinding>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.updateBinding(
-        userId,
         bindingId,
+        userId,
         updateBindingRequest,
         options,
       );
@@ -12050,6 +13492,127 @@ export const ConnectorsApiFactory = function (
 ) {
   const localVarFp = ConnectorsApiFp(configuration);
   return {
+    /**
+     * Completes an OAuth session with the provider redirect result. Consent denial is a valid outcome and returns 200 with status `denied` — not an error response.
+     * @summary Complete OAuth Session
+     * @param {string} userId
+     * @param {string} connectionId
+     * @param {string} sessionId Id of the OAuth session to complete.
+     * @param {CompleteOAuthSessionRequest} completeOAuthSessionRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    completeOauthSession(
+      userId: string,
+      connectionId: string,
+      sessionId: string,
+      completeOAuthSessionRequest: CompleteOAuthSessionRequest,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<CompleteOAuthSessionResponse> {
+      return localVarFp
+        .completeOauthSession(
+          userId,
+          connectionId,
+          sessionId,
+          completeOAuthSessionRequest,
+          options,
+        )
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Creates a new binding between a connection and a provider account.
+     * @summary Create Binding
+     * @param {string} userId
+     * @param {string} connectionId
+     * @param {CreateBindingRequest} createBindingRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    createBinding(
+      userId: string,
+      connectionId: string,
+      createBindingRequest: CreateBindingRequest,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<CreateBindingResponse> {
+      return localVarFp
+        .createBinding(userId, connectionId, createBindingRequest, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Creates a new connector connection for the user.
+     * @summary Create Connection
+     * @param {string} userId
+     * @param {CreateConnectionRequest} createConnectionRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    createConnection(
+      userId: string,
+      createConnectionRequest: CreateConnectionRequest,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<CreateConnectionResponse> {
+      return localVarFp
+        .createConnection(userId, createConnectionRequest, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Creates an OAuth authorization session for a connection and returns the provider consent URL.
+     * @summary Create OAuth Session
+     * @param {string} userId
+     * @param {string} connectionId
+     * @param {CreateOAuthSessionRequest} createOAuthSessionRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    createOauthSession(
+      userId: string,
+      connectionId: string,
+      createOAuthSessionRequest: CreateOAuthSessionRequest,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<CreateOAuthSessionResponse> {
+      return localVarFp
+        .createOauthSession(
+          userId,
+          connectionId,
+          createOAuthSessionRequest,
+          options,
+        )
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Deletes a binding.
+     * @summary Delete Binding
+     * @param {string} bindingId
+     * @param {string} userId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    deleteBinding(
+      bindingId: string,
+      userId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<void> {
+      return localVarFp
+        .deleteBinding(bindingId, userId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Gets a specific binding by ID.
+     * @summary Get Binding
+     * @param {string} bindingId
+     * @param {string} userId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getBinding(
+      bindingId: string,
+      userId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<ConnectorBinding> {
+      return localVarFp
+        .getBinding(bindingId, userId, options)
+        .then((request) => request(axios, basePath));
+    },
     /**
      * Reads the resumable sync checkpoint (cursor + last committed sync time) for a binding.
      * @summary Get Sync Checkpoint
@@ -12092,22 +13655,105 @@ export const ConnectorsApiFactory = function (
         .then((request) => request(axios, basePath));
     },
     /**
-     * Updates a binding\'s write mode and status.
-     * @summary Update Binding
+     * Gets all bindings associated with the user.
+     * @summary List Bindings
+     * @param {string} userId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    listBindings(
+      userId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<GetBindingsResponse> {
+      return localVarFp
+        .listBindings(userId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Gets all connector connections associated with the user.
+     * @summary List Connections
+     * @param {string} userId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    listConnections(
+      userId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<GetConnectionsResponse> {
+      return localVarFp
+        .listConnections(userId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Lists available provider accounts for a connection.
+     * @summary List Provider Accounts
+     * @param {string} userId
+     * @param {string} connectionId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    listProviderAccounts(
+      userId: string,
+      connectionId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<ListProviderAccountsResponse> {
+      return localVarFp
+        .listProviderAccounts(userId, connectionId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Revokes a specific connector connection.
+     * @summary Revoke Connection
+     * @param {string} userId
+     * @param {string} connectionId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    revokeConnection(
+      userId: string,
+      connectionId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<void> {
+      return localVarFp
+        .revokeConnection(userId, connectionId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Triggers a sync for a binding. Stored mode enqueues a job, transient mode is synchronous.
+     * @summary Sync Binding
      * @param {string} userId
      * @param {string} bindingId
+     * @param {SyncBindingRequest} syncBindingRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    syncBinding(
+      userId: string,
+      bindingId: string,
+      syncBindingRequest: SyncBindingRequest,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<SyncBindingResponse> {
+      return localVarFp
+        .syncBinding(userId, bindingId, syncBindingRequest, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     * Updates a binding\'s write mode and status.
+     * @summary Update Binding
+     * @param {string} bindingId
+     * @param {string} userId
      * @param {UpdateBindingRequest} updateBindingRequest
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     updateBinding(
-      userId: string,
       bindingId: string,
+      userId: string,
       updateBindingRequest: UpdateBindingRequest,
       options?: RawAxiosRequestConfig,
     ): AxiosPromise<ConnectorBinding> {
       return localVarFp
-        .updateBinding(userId, bindingId, updateBindingRequest, options)
+        .updateBinding(bindingId, userId, updateBindingRequest, options)
         .then((request) => request(axios, basePath));
     },
   };
@@ -12119,6 +13765,104 @@ export const ConnectorsApiFactory = function (
  * @interface ConnectorsApi
  */
 export interface ConnectorsApiInterface {
+  /**
+   * Completes an OAuth session with the provider redirect result. Consent denial is a valid outcome and returns 200 with status `denied` — not an error response.
+   * @summary Complete OAuth Session
+   * @param {string} userId
+   * @param {string} connectionId
+   * @param {string} sessionId Id of the OAuth session to complete.
+   * @param {CompleteOAuthSessionRequest} completeOAuthSessionRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApiInterface
+   */
+  completeOauthSession(
+    userId: string,
+    connectionId: string,
+    sessionId: string,
+    completeOAuthSessionRequest: CompleteOAuthSessionRequest,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<CompleteOAuthSessionResponse>;
+
+  /**
+   * Creates a new binding between a connection and a provider account.
+   * @summary Create Binding
+   * @param {string} userId
+   * @param {string} connectionId
+   * @param {CreateBindingRequest} createBindingRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApiInterface
+   */
+  createBinding(
+    userId: string,
+    connectionId: string,
+    createBindingRequest: CreateBindingRequest,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<CreateBindingResponse>;
+
+  /**
+   * Creates a new connector connection for the user.
+   * @summary Create Connection
+   * @param {string} userId
+   * @param {CreateConnectionRequest} createConnectionRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApiInterface
+   */
+  createConnection(
+    userId: string,
+    createConnectionRequest: CreateConnectionRequest,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<CreateConnectionResponse>;
+
+  /**
+   * Creates an OAuth authorization session for a connection and returns the provider consent URL.
+   * @summary Create OAuth Session
+   * @param {string} userId
+   * @param {string} connectionId
+   * @param {CreateOAuthSessionRequest} createOAuthSessionRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApiInterface
+   */
+  createOauthSession(
+    userId: string,
+    connectionId: string,
+    createOAuthSessionRequest: CreateOAuthSessionRequest,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<CreateOAuthSessionResponse>;
+
+  /**
+   * Deletes a binding.
+   * @summary Delete Binding
+   * @param {string} bindingId
+   * @param {string} userId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApiInterface
+   */
+  deleteBinding(
+    bindingId: string,
+    userId: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<void>;
+
+  /**
+   * Gets a specific binding by ID.
+   * @summary Get Binding
+   * @param {string} bindingId
+   * @param {string} userId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApiInterface
+   */
+  getBinding(
+    bindingId: string,
+    userId: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<ConnectorBinding>;
+
   /**
    * Reads the resumable sync checkpoint (cursor + last committed sync time) for a binding.
    * @summary Get Sync Checkpoint
@@ -12152,18 +13896,91 @@ export interface ConnectorsApiInterface {
   ): AxiosPromise<IngestTransactionsResponse>;
 
   /**
-   * Updates a binding\'s write mode and status.
-   * @summary Update Binding
+   * Gets all bindings associated with the user.
+   * @summary List Bindings
+   * @param {string} userId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApiInterface
+   */
+  listBindings(
+    userId: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<GetBindingsResponse>;
+
+  /**
+   * Gets all connector connections associated with the user.
+   * @summary List Connections
+   * @param {string} userId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApiInterface
+   */
+  listConnections(
+    userId: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<GetConnectionsResponse>;
+
+  /**
+   * Lists available provider accounts for a connection.
+   * @summary List Provider Accounts
+   * @param {string} userId
+   * @param {string} connectionId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApiInterface
+   */
+  listProviderAccounts(
+    userId: string,
+    connectionId: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<ListProviderAccountsResponse>;
+
+  /**
+   * Revokes a specific connector connection.
+   * @summary Revoke Connection
+   * @param {string} userId
+   * @param {string} connectionId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApiInterface
+   */
+  revokeConnection(
+    userId: string,
+    connectionId: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<void>;
+
+  /**
+   * Triggers a sync for a binding. Stored mode enqueues a job, transient mode is synchronous.
+   * @summary Sync Binding
    * @param {string} userId
    * @param {string} bindingId
+   * @param {SyncBindingRequest} syncBindingRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApiInterface
+   */
+  syncBinding(
+    userId: string,
+    bindingId: string,
+    syncBindingRequest: SyncBindingRequest,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<SyncBindingResponse>;
+
+  /**
+   * Updates a binding\'s write mode and status.
+   * @summary Update Binding
+   * @param {string} bindingId
+   * @param {string} userId
    * @param {UpdateBindingRequest} updateBindingRequest
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    * @memberof ConnectorsApiInterface
    */
   updateBinding(
-    userId: string,
     bindingId: string,
+    userId: string,
     updateBindingRequest: UpdateBindingRequest,
     options?: RawAxiosRequestConfig,
   ): AxiosPromise<ConnectorBinding>;
@@ -12176,6 +13993,139 @@ export interface ConnectorsApiInterface {
  * @extends {BaseAPI}
  */
 export class ConnectorsApi extends BaseAPI implements ConnectorsApiInterface {
+  /**
+   * Completes an OAuth session with the provider redirect result. Consent denial is a valid outcome and returns 200 with status `denied` — not an error response.
+   * @summary Complete OAuth Session
+   * @param {string} userId
+   * @param {string} connectionId
+   * @param {string} sessionId Id of the OAuth session to complete.
+   * @param {CompleteOAuthSessionRequest} completeOAuthSessionRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApi
+   */
+  public completeOauthSession(
+    userId: string,
+    connectionId: string,
+    sessionId: string,
+    completeOAuthSessionRequest: CompleteOAuthSessionRequest,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return ConnectorsApiFp(this.configuration)
+      .completeOauthSession(
+        userId,
+        connectionId,
+        sessionId,
+        completeOAuthSessionRequest,
+        options,
+      )
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Creates a new binding between a connection and a provider account.
+   * @summary Create Binding
+   * @param {string} userId
+   * @param {string} connectionId
+   * @param {CreateBindingRequest} createBindingRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApi
+   */
+  public createBinding(
+    userId: string,
+    connectionId: string,
+    createBindingRequest: CreateBindingRequest,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return ConnectorsApiFp(this.configuration)
+      .createBinding(userId, connectionId, createBindingRequest, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Creates a new connector connection for the user.
+   * @summary Create Connection
+   * @param {string} userId
+   * @param {CreateConnectionRequest} createConnectionRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApi
+   */
+  public createConnection(
+    userId: string,
+    createConnectionRequest: CreateConnectionRequest,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return ConnectorsApiFp(this.configuration)
+      .createConnection(userId, createConnectionRequest, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Creates an OAuth authorization session for a connection and returns the provider consent URL.
+   * @summary Create OAuth Session
+   * @param {string} userId
+   * @param {string} connectionId
+   * @param {CreateOAuthSessionRequest} createOAuthSessionRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApi
+   */
+  public createOauthSession(
+    userId: string,
+    connectionId: string,
+    createOAuthSessionRequest: CreateOAuthSessionRequest,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return ConnectorsApiFp(this.configuration)
+      .createOauthSession(
+        userId,
+        connectionId,
+        createOAuthSessionRequest,
+        options,
+      )
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Deletes a binding.
+   * @summary Delete Binding
+   * @param {string} bindingId
+   * @param {string} userId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApi
+   */
+  public deleteBinding(
+    bindingId: string,
+    userId: string,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return ConnectorsApiFp(this.configuration)
+      .deleteBinding(bindingId, userId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Gets a specific binding by ID.
+   * @summary Get Binding
+   * @param {string} bindingId
+   * @param {string} userId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApi
+   */
+  public getBinding(
+    bindingId: string,
+    userId: string,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return ConnectorsApiFp(this.configuration)
+      .getBinding(bindingId, userId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
   /**
    * Reads the resumable sync checkpoint (cursor + last committed sync time) for a binding.
    * @summary Get Sync Checkpoint
@@ -12217,23 +14167,110 @@ export class ConnectorsApi extends BaseAPI implements ConnectorsApiInterface {
   }
 
   /**
-   * Updates a binding\'s write mode and status.
-   * @summary Update Binding
+   * Gets all bindings associated with the user.
+   * @summary List Bindings
+   * @param {string} userId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApi
+   */
+  public listBindings(userId: string, options?: RawAxiosRequestConfig) {
+    return ConnectorsApiFp(this.configuration)
+      .listBindings(userId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Gets all connector connections associated with the user.
+   * @summary List Connections
+   * @param {string} userId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApi
+   */
+  public listConnections(userId: string, options?: RawAxiosRequestConfig) {
+    return ConnectorsApiFp(this.configuration)
+      .listConnections(userId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Lists available provider accounts for a connection.
+   * @summary List Provider Accounts
+   * @param {string} userId
+   * @param {string} connectionId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApi
+   */
+  public listProviderAccounts(
+    userId: string,
+    connectionId: string,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return ConnectorsApiFp(this.configuration)
+      .listProviderAccounts(userId, connectionId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Revokes a specific connector connection.
+   * @summary Revoke Connection
+   * @param {string} userId
+   * @param {string} connectionId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApi
+   */
+  public revokeConnection(
+    userId: string,
+    connectionId: string,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return ConnectorsApiFp(this.configuration)
+      .revokeConnection(userId, connectionId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Triggers a sync for a binding. Stored mode enqueues a job, transient mode is synchronous.
+   * @summary Sync Binding
    * @param {string} userId
    * @param {string} bindingId
+   * @param {SyncBindingRequest} syncBindingRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApi
+   */
+  public syncBinding(
+    userId: string,
+    bindingId: string,
+    syncBindingRequest: SyncBindingRequest,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return ConnectorsApiFp(this.configuration)
+      .syncBinding(userId, bindingId, syncBindingRequest, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Updates a binding\'s write mode and status.
+   * @summary Update Binding
+   * @param {string} bindingId
+   * @param {string} userId
    * @param {UpdateBindingRequest} updateBindingRequest
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    * @memberof ConnectorsApi
    */
   public updateBinding(
-    userId: string,
     bindingId: string,
+    userId: string,
     updateBindingRequest: UpdateBindingRequest,
     options?: RawAxiosRequestConfig,
   ) {
     return ConnectorsApiFp(this.configuration)
-      .updateBinding(userId, bindingId, updateBindingRequest, options)
+      .updateBinding(bindingId, userId, updateBindingRequest, options)
       .then((request) => request(this.axios, this.basePath));
   }
 }

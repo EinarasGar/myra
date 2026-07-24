@@ -11,6 +11,7 @@ clerk = "1.0.30"
 jna = "5.19.1"
 navigation-compose = "2.9.0"
 lucide = "2.2.1"
+browser = "1.8.0"
 
 [libraries]
 compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose-bom" }
@@ -27,6 +28,7 @@ jna = { group = "net.java.dev.jna", name = "jna", version.ref = "jna" }
 clerk-api = { group = "com.clerk", name = "clerk-android-api", version.ref = "clerk" }
 clerk-ui = { group = "com.clerk", name = "clerk-android-ui", version.ref = "clerk" }
 navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation-compose" }
+androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
 compose-detekt = { group = "io.nlopez.compose.rules", name = "detekt", version = "0.6.2" }
 icons-lucide = { group = "com.composables", name = "icons-lucide-android", version.ref = "lucide" }
 composeMaterialIconsCore = { group = "androidx.compose.material", name = "material-icons-core" }
