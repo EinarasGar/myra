@@ -4,6 +4,11 @@ use utoipa::ToSchema;
 use super::base_models::ConnectorConnectionViewModel;
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+pub struct CreateOAuthSessionRequestViewModel {
+    pub redirect_uri: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct CreateOAuthSessionResponseViewModel {
     pub session_id: String,
     pub auth_url: String,
@@ -15,6 +20,16 @@ pub struct CreateOAuthSessionResponseViewModel {
 pub struct CompleteOAuthSessionRequestViewModel {
     pub state: String,
     pub code: Option<String>,
+    pub error: Option<String>,
+    pub error_description: Option<String>,
+}
+
+#[derive(Clone, Debug, Default, Serialize, Deserialize, utoipa::IntoParams)]
+#[into_params(parameter_in = Query)]
+#[serde(default)]
+pub struct OAuthCallbackQuery {
+    pub code: Option<String>,
+    pub state: Option<String>,
     pub error: Option<String>,
     pub error_description: Option<String>,
 }

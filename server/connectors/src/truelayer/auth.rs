@@ -93,10 +93,18 @@ pub struct TokenResponse {
     pub refresh_token: String,
 }
 
-pub fn build_auth_link(state: &str) -> String {
+pub fn resolve_redirect_uri(config: &TrueLayerConfig, requested: Option<&str>) -> Result<String> {
+    let uri = requested.ok_or_else(|| anyhow::anyhow!("redirect_uri is required"))?;
+    if config.redirect_uri_allowlist.iter().any(|a| a == uri) {
+        Ok(uri.to_string())
+    } else {
+        anyhow::bail!("redirect_uri is not allowlisted")
+    }
+}
+
+pub fn build_auth_link(state: &str, redirect_uri: &str) -> String {
     let config = TrueLayerConfig::get();
     let client_id = config.client_id.as_deref().unwrap_or("");
-    let redirect_uri = config.redirect_uri.as_deref().unwrap_or("");
     let providers = if config.sandbox {
         "&providers=uk-cs-mock"
     } else {
@@ -130,7 +138,7 @@ async fn post_token(params: &[(&str, &str)]) -> Result<TokenResponse> {
     Ok(resp.json().await?)
 }
 
-pub async fn exchange_code(code: &str) -> Result<TokenResponse> {
+pub async fn exchange_code(code: &str, redirect_uri: &str) -> Result<TokenResponse> {
     let config = TrueLayerConfig::get();
     let client_id = config
         .client_id
@@ -140,16 +148,12 @@ pub async fn exchange_code(code: &str) -> Result<TokenResponse> {
         .client_secret
         .as_ref()
         .ok_or_else(|| anyhow::anyhow!("TrueLayer not configured"))?;
-    let redirect_uri = config
-        .redirect_uri
-        .as_ref()
-        .ok_or_else(|| anyhow::anyhow!("TrueLayer not configured"))?;
 
     post_token(&[
         ("grant_type", "authorization_code"),
         ("client_id", client_id.as_str()),
         ("client_secret", client_secret.as_str()),
-        ("redirect_uri", redirect_uri.as_str()),
+        ("redirect_uri", redirect_uri),
         ("code", code),
     ])
     .await
@@ -173,4 +177,45 @@ pub async fn refresh_token(refresh_token: &str) -> Result<TokenResponse> {
         ("refresh_token", refresh_token),
     ])
     .await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn config(allowlist: &[&str]) -> TrueLayerConfig {
+        TrueLayerConfig {
+            client_id: None,
+            client_secret: None,
+            redirect_uri_allowlist: allowlist.iter().map(|s| s.to_string()).collect(),
+            sandbox: true,
+        }
+    }
+
+    #[test]
+    fn allowlisted_redirect_is_accepted() {
+        let c = config(&["https://app.example/cb", "https://web.example/cb"]);
+        assert_eq!(
+            resolve_redirect_uri(&c, Some("https://web.example/cb")).unwrap(),
+            "https://web.example/cb"
+        );
+    }
+
+    #[test]
+    fn unlisted_redirect_is_rejected() {
+        let c = config(&["https://app.example/cb"]);
+        assert!(resolve_redirect_uri(&c, Some("https://evil.example")).is_err());
+    }
+
+    #[test]
+    fn omitted_redirect_errors() {
+        let c = config(&["https://app.example/cb"]);
+        assert!(resolve_redirect_uri(&c, None).is_err());
+    }
+
+    #[test]
+    fn empty_allowlist_rejects_everything() {
+        let c = config(&[]);
+        assert!(resolve_redirect_uri(&c, Some("https://app.example/cb")).is_err());
+    }
 }

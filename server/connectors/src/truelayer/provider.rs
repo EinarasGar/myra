@@ -4,6 +4,7 @@ use crate::models::account::ProviderAccount;
 use crate::port::{Connector, ConnectorStore};
 use crate::provider::{CredentialSource, Provider, ProviderKind};
 use crate::truelayer::client::TrueLayerClient;
+use crate::truelayer::config::TrueLayerConfig;
 use crate::Result;
 
 pub struct TrueLayerProvider;
@@ -49,16 +50,26 @@ impl Provider for TrueLayerProvider {
         TrueLayerClient::list_accounts(&access_token).await
     }
 
-    fn begin_oauth(&self, _store: &dyn ConnectorStore, state: &str) -> Result<String> {
-        Ok(crate::truelayer::auth::build_auth_link(state))
+    fn begin_oauth(
+        &self,
+        _store: &dyn ConnectorStore,
+        state: &str,
+        redirect_uri: Option<&str>,
+    ) -> Result<String> {
+        let uri =
+            crate::truelayer::auth::resolve_redirect_uri(TrueLayerConfig::get(), redirect_uri)?;
+        Ok(crate::truelayer::auth::build_auth_link(state, &uri))
     }
 
     async fn complete_oauth(
         &self,
         store: &dyn ConnectorStore,
         code: &str,
+        redirect_uri: Option<&str>,
     ) -> Result<Option<time::OffsetDateTime>> {
-        let token = crate::truelayer::auth::exchange_code(code).await?;
+        let uri =
+            crate::truelayer::auth::resolve_redirect_uri(TrueLayerConfig::get(), redirect_uri)?;
+        let token = crate::truelayer::auth::exchange_code(code, &uri).await?;
         store.put_credential(token.refresh_token.as_bytes()).await?;
 
         Ok(Some(

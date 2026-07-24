@@ -37,7 +37,8 @@ use crate::{
         list_provider_accounts::ListProviderAccountsResponseViewModel,
         oauth::{
             CompleteOAuthSessionRequestViewModel, CompleteOAuthSessionResponseViewModel,
-            CreateOAuthSessionResponseViewModel, OAuthSessionStatus,
+            CreateOAuthSessionRequestViewModel, CreateOAuthSessionResponseViewModel,
+            OAuthCallbackQuery, OAuthSessionStatus,
         },
         sync_binding::{SyncBindingRequestViewModel, SyncBindingResponseViewModel},
         sync_checkpoint::GetSyncCheckpointResponseViewModel,
@@ -162,6 +163,9 @@ pub async fn revoke_connection(
         ("user_id" = Uuid, Path, description = "Unique Identifier of the user."),
         ("connection_id" = Uuid, Path, description = "Id of the connection to authorize."),
     ),
+    request_body(
+        content = CreateOAuthSessionRequestViewModel,
+    ),
     security(
         ("auth_token" = [])
     )
@@ -171,9 +175,10 @@ pub async fn create_oauth_session(
     AuthenticatedUserId(user_id): AuthenticatedUserId,
     Path(ConnectionIdPath { connection_id }): Path<ConnectionIdPath>,
     ConnectorServiceState(connector_service): ConnectorServiceState,
+    ValidatedJson(body): ValidatedJson<CreateOAuthSessionRequestViewModel>,
 ) -> Result<(StatusCode, Json<CreateOAuthSessionResponseViewModel>), ApiError> {
     let session = connector_service
-        .begin_oauth_session(user_id, connection_id)
+        .begin_oauth_session(user_id, connection_id, body.redirect_uri)
         .await?;
 
     Ok((
@@ -223,14 +228,14 @@ pub async fn complete_oauth_session(
 ) -> Result<Json<CompleteOAuthSessionResponseViewModel>, ApiError> {
     // State is validated even on provider-error redirects — RFC 6749 error responses still
     // carry state, and skipping the check would let a forged request cancel a pending flow.
-    if !connector_service
-        .validate_oauth_state(user_id, &session_id, &body.state)
+    let Some(session_state) = connector_service
+        .consume_oauth_state(user_id, &session_id, &body.state)
         .await
-    {
+    else {
         return Err(ApiError::NotFound(
             "oauth session not found or expired".to_string(),
         ));
-    }
+    };
 
     if let Some(error) = body.error {
         let detail = body.error_description.unwrap_or_default();
@@ -249,7 +254,12 @@ pub async fn complete_oauth_session(
     })?;
 
     connector_service
-        .complete_oauth(user_id, connection_id, &code)
+        .complete_oauth(
+            user_id,
+            connection_id,
+            &code,
+            session_state.redirect_uri.as_deref(),
+        )
         .await?;
 
     if let Err(e) = sync_service
@@ -645,4 +655,47 @@ pub async fn ingest_transactions(
         }
         SyncOutcomeDto::Failed { error } => Err(ApiError::BadRequest(error)),
     }
+}
+
+#[derive(Deserialize)]
+pub(crate) struct ProviderKindPath {
+    provider_kind: String,
+}
+
+// Providers only permit https redirect URIs, so the app registers this public endpoint and we
+// forward the consent result into the app via its sverto:// deep link. The provider kind is
+// validated before being embedded in the redirect target.
+pub async fn oauth_callback(
+    Path(ProviderKindPath { provider_kind }): Path<ProviderKindPath>,
+    axum::extract::Query(query): axum::extract::Query<OAuthCallbackQuery>,
+) -> Result<axum::response::Html<String>, ApiError> {
+    if !business::dtos::connectors::is_supported_provider(&provider_kind) {
+        return Err(ApiError::NotFound("unknown provider".to_string()));
+    }
+    let mut params: Vec<(&str, String)> = Vec::new();
+    if let Some(code) = query.code {
+        params.push(("code", code));
+    }
+    if let Some(state) = query.state {
+        params.push(("state", state));
+    }
+    if let Some(error) = query.error {
+        params.push(("error", error));
+    }
+    if let Some(desc) = query.error_description {
+        params.push(("error_description", desc));
+    }
+    let encoded = serde_urlencoded::to_string(&params).unwrap_or_default();
+    let target = format!("sverto://connectors/{provider_kind}?{encoded}");
+    let href = target.replace('&', "&amp;");
+    Ok(axum::response::Html(format!(
+        "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">\
+<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\
+<title>Returning to Sverto</title></head>\
+<body style=\"font-family:system-ui,sans-serif;text-align:center;padding:3rem 1.5rem\">\
+<script>window.location.replace(\"{target}\");</script>\
+<h2>Returning to Sverto…</h2>\
+<p>If the app didn't reopen, <a href=\"{href}\">tap here to return</a>.</p>\
+</body></html>"
+    )))
 }

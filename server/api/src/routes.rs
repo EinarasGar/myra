@@ -138,6 +138,7 @@ pub(crate) fn create_router(state: AppState) -> Router {
         .route("/api-docs/openapi.json",        get(serve_openapi_json))
         .route("/redoc",                        get(serve_redoc))
         .route("/rapidoc",                      get(serve_rapidoc))
+        .route("/connectors/{provider_kind}/callback", get(handlers::connectors_handler::oauth_callback))
         .merge(build_public_auth_routes())
         .merge(authenticated_routes)
         .layer(CatchPanicLayer::custom(crate::errors::handle_panic))

@@ -19,7 +19,7 @@ use crate::dtos::bad_request_error_dto::BusinessBadRequestError;
 use crate::dtos::connectors::{
     BindingStatusDto, BindingUpdateStatusDto, BindingWriteModeDto, ConnectionStatusDto,
     ConnectorBindingDto, ConnectorConnectionDto, CredentialModeDto, OAuthSessionStartDto,
-    ProviderAccountDto,
+    OAuthSessionStateDto, ProviderAccountDto,
 };
 use crate::dtos::not_found_error_dto::BusinessNotFoundError;
 use crate::providers::connector_store::BusinessConnectorStore;
@@ -297,24 +297,30 @@ impl ConnectorService {
         &self,
         user_id: Uuid,
         connection_id: Uuid,
+        redirect_uri: Option<String>,
     ) -> anyhow::Result<OAuthSessionStartDto> {
         let connection = self.get_connection(user_id, connection_id).await?;
         let store = self.store_for_connection(&connection)?;
 
         let session_id = Uuid::new_v4().to_string();
         let state = Uuid::new_v4().to_string();
-        let key = format!("oauth:state:{}:{}", user_id, session_id);
-        self.redis.set_string_ex(&key, &state, 300).await;
 
         let auth_url = store
             .provider_kind()
             .provider()
-            .begin_oauth(&store, &state)
+            .begin_oauth(&store, &state, redirect_uri.as_deref())
             .map_err(|e| {
                 anyhow::Error::new(BusinessBadRequestError {
                     message: e.to_string(),
                 })
             })?;
+
+        let key = format!("oauth:state:{}:{}", user_id, session_id);
+        let session_state = serde_json::to_string(&OAuthSessionStateDto {
+            state,
+            redirect_uri,
+        })?;
+        self.redis.set_string_ex(&key, &session_state, 300).await;
 
         Ok(OAuthSessionStartDto {
             session_id,
@@ -328,6 +334,7 @@ impl ConnectorService {
         user_id: Uuid,
         connection_id: Uuid,
         code: &str,
+        redirect_uri: Option<&str>,
     ) -> anyhow::Result<()> {
         let connection = self.get_connection(user_id, connection_id).await?;
         let store = self.store_for_connection(&connection)?;
@@ -335,7 +342,7 @@ impl ConnectorService {
         let consent_expires_at = store
             .provider_kind()
             .provider()
-            .complete_oauth(&store, code)
+            .complete_oauth(&store, code, redirect_uri)
             .await?;
 
         let query = connector_queries::activate_connector_connection(
@@ -349,14 +356,16 @@ impl ConnectorService {
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, session_id = %session_id))]
-    pub async fn validate_oauth_state(&self, user_id: Uuid, session_id: &str, state: &str) -> bool {
+    pub async fn consume_oauth_state(
+        &self,
+        user_id: Uuid,
+        session_id: &str,
+        state: &str,
+    ) -> Option<OAuthSessionStateDto> {
         let key = format!("oauth:state:{}:{}", user_id, session_id);
-
-        if let Some(stored_state) = self.redis.get_string(&key).await {
-            self.redis.del(&key).await;
-            return stored_state == state;
-        }
-
-        false
+        let stored = self.redis.get_string(&key).await?;
+        self.redis.del(&key).await;
+        let parsed: OAuthSessionStateDto = serde_json::from_str(&stored).ok()?;
+        (parsed.state == state).then_some(parsed)
     }
 }

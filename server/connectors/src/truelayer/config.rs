@@ -1,7 +1,7 @@
 pub struct TrueLayerConfig {
     pub client_id: Option<String>,
     pub client_secret: Option<String>,
-    pub redirect_uri: Option<String>,
+    pub redirect_uri_allowlist: Vec<String>,
     pub sandbox: bool,
 }
 
@@ -15,7 +15,14 @@ impl TrueLayerConfig {
         Self {
             client_id: std::env::var("TRUELAYER_CLIENT_ID").ok(),
             client_secret: std::env::var("TRUELAYER_CLIENT_SECRET").ok(),
-            redirect_uri: std::env::var("TRUELAYER_REDIRECT_URI").ok(),
+            redirect_uri_allowlist: std::env::var("TRUELAYER_REDIRECT_URI_ALLOWLIST")
+                .map(|v| {
+                    v.split(',')
+                        .map(|s| s.trim().to_string())
+                        .filter(|s| !s.is_empty())
+                        .collect()
+                })
+                .unwrap_or_default(),
             sandbox: std::env::var("TRUELAYER_ENV").as_deref() == Ok("sandbox"),
         }
     }

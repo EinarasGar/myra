@@ -3,6 +3,7 @@ use business::dtos::connectors::CredentialModeDto;
 #[cfg(feature = "backend")]
 use business::dtos::connectors::{ConnectorBindingDto, ConnectorConnectionDto};
 use serde::{Deserialize, Serialize};
+use time::serde::timestamp;
 use utoipa::ToSchema;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
@@ -42,8 +43,14 @@ pub struct ConnectorConnectionViewModel {
     pub credential_mode: CredentialMode,
     pub provider_key_id: Option<String>,
     pub status: String,
+    #[serde(with = "timestamp::option")]
+    #[schema(value_type = Option<i64>)]
     pub consent_expires_at: Option<time::OffsetDateTime>,
+    #[serde(with = "timestamp")]
+    #[schema(value_type = i64)]
     pub created_at: time::OffsetDateTime,
+    #[serde(with = "timestamp")]
+    #[schema(value_type = i64)]
     pub updated_at: time::OffsetDateTime,
 }
 
@@ -55,11 +62,19 @@ pub struct ConnectorBindingViewModel {
     pub provider_account_id: String,
     pub write_mode: String,
     pub status: String,
+    #[serde(with = "timestamp::option")]
+    #[schema(value_type = Option<i64>)]
     pub synced_through: Option<time::OffsetDateTime>,
+    #[serde(with = "timestamp::option")]
+    #[schema(value_type = Option<i64>)]
     pub last_sync_at: Option<time::OffsetDateTime>,
     pub last_sync_status: Option<String>,
     pub last_sync_error: Option<String>,
+    #[serde(with = "timestamp")]
+    #[schema(value_type = i64)]
     pub created_at: time::OffsetDateTime,
+    #[serde(with = "timestamp")]
+    #[schema(value_type = i64)]
     pub updated_at: time::OffsetDateTime,
 }
 

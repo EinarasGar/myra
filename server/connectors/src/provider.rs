@@ -80,7 +80,12 @@ pub trait Provider: Send + Sync {
         false
     }
 
-    fn begin_oauth(&self, _store: &dyn ConnectorStore, _state: &str) -> Result<String> {
+    fn begin_oauth(
+        &self,
+        _store: &dyn ConnectorStore,
+        _state: &str,
+        _redirect_uri: Option<&str>,
+    ) -> Result<String> {
         anyhow::bail!("provider does not support OAuth: {}", self.kind().as_str())
     }
 
@@ -88,6 +93,7 @@ pub trait Provider: Send + Sync {
         &self,
         _store: &dyn ConnectorStore,
         _code: &str,
+        _redirect_uri: Option<&str>,
     ) -> Result<Option<time::OffsetDateTime>> {
         anyhow::bail!("provider does not support OAuth: {}", self.kind().as_str())
     }

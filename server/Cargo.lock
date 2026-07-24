@@ -322,6 +322,7 @@ dependencies = [
  "rust_decimal_macros",
  "serde",
  "serde_json",
+ "serde_urlencoded",
  "shared",
  "syn 2.0.118",
  "thiserror 2.0.18",
