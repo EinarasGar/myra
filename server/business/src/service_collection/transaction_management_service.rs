@@ -510,15 +510,15 @@ impl TransactionManagementService {
             .await
     }
 
-    pub async fn set_transaction_visibility(
+    pub async fn set_transactions_visibility(
         &self,
         user_id: Uuid,
-        transaction_id: Uuid,
+        transaction_ids: Vec<Uuid>,
         visibility: crate::dtos::transaction_dto::TransactionVisibilityDto,
     ) -> anyhow::Result<()> {
-        let query = transaction_data_queries::update_transaction_visibility(
+        let query = transaction_data_queries::update_transactions_visibility(
             user_id,
-            transaction_id,
+            transaction_ids,
             visibility.as_str().to_string(),
         );
         self.db.execute(query).await?;

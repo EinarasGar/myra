@@ -6103,6 +6103,26 @@ export interface SetTransactionVisibilityRequest {
 /**
  *
  * @export
+ * @interface SetTransactionsVisibilityRequest
+ */
+export interface SetTransactionsVisibilityRequest {
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof SetTransactionsVisibilityRequest
+   */
+  transaction_ids: Array<string>;
+  /**
+   *
+   * @type {TransactionVisibility}
+   * @memberof SetTransactionsVisibilityRequest
+   */
+  visibility: TransactionVisibility;
+}
+
+/**
+ *
+ * @export
  * @interface SharedAssetPairMetadata
  */
 export interface SharedAssetPairMetadata {
@@ -17702,6 +17722,76 @@ export const TransactionsApiAxiosParamCreator = function (
       };
     },
     /**
+     * Sets visibility for multiple transactions at once: default, ghost (pending review), or hidden.
+     * @summary Set Visibility (bulk)
+     * @param {string} userId
+     * @param {SetTransactionsVisibilityRequest} setTransactionsVisibilityRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    setVisibilityForMultipleTransactions: async (
+      userId: string,
+      setTransactionsVisibilityRequest: SetTransactionsVisibilityRequest,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists(
+        "setVisibilityForMultipleTransactions",
+        "userId",
+        userId,
+      );
+      // verify required parameter 'setTransactionsVisibilityRequest' is not null or undefined
+      assertParamExists(
+        "setVisibilityForMultipleTransactions",
+        "setTransactionsVisibilityRequest",
+        setTransactionsVisibilityRequest,
+      );
+      const localVarPath =
+        `/api/users/{user_id}/transactions/visibility`.replace(
+          `{${"user_id"}}`,
+          encodeURIComponent(String(userId)),
+        );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "PUT",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        setTransactionsVisibilityRequest,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
      * This is a generic update endpoint which does not assume whether transaction is individual or group. It only updates the contents of the transaction without moving it.
      * @summary Update existing
      * @param {string} transactionId
@@ -17907,6 +17997,40 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
+     * Sets visibility for multiple transactions at once: default, ghost (pending review), or hidden.
+     * @summary Set Visibility (bulk)
+     * @param {string} userId
+     * @param {SetTransactionsVisibilityRequest} setTransactionsVisibilityRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async setVisibilityForMultipleTransactions(
+      userId: string,
+      setTransactionsVisibilityRequest: SetTransactionsVisibilityRequest,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.setVisibilityForMultipleTransactions(
+          userId,
+          setTransactionsVisibilityRequest,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap[
+          "TransactionsApi.setVisibilityForMultipleTransactions"
+        ]?.[localVarOperationServerIndex]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
      * This is a generic update endpoint which does not assume whether transaction is individual or group. It only updates the contents of the transaction without moving it.
      * @summary Update existing
      * @param {string} transactionId
@@ -18027,6 +18151,27 @@ export const TransactionsApiFactory = function (
         .then((request) => request(axios, basePath));
     },
     /**
+     * Sets visibility for multiple transactions at once: default, ghost (pending review), or hidden.
+     * @summary Set Visibility (bulk)
+     * @param {string} userId
+     * @param {SetTransactionsVisibilityRequest} setTransactionsVisibilityRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    setVisibilityForMultipleTransactions(
+      userId: string,
+      setTransactionsVisibilityRequest: SetTransactionsVisibilityRequest,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<void> {
+      return localVarFp
+        .setVisibilityForMultipleTransactions(
+          userId,
+          setTransactionsVisibilityRequest,
+          options,
+        )
+        .then((request) => request(axios, basePath));
+    },
+    /**
      * This is a generic update endpoint which does not assume whether transaction is individual or group. It only updates the contents of the transaction without moving it.
      * @summary Update existing
      * @param {string} transactionId
@@ -18111,6 +18256,21 @@ export interface TransactionsApiInterface {
     userId: string,
     transactionId: string,
     setTransactionVisibilityRequest: SetTransactionVisibilityRequest,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<void>;
+
+  /**
+   * Sets visibility for multiple transactions at once: default, ghost (pending review), or hidden.
+   * @summary Set Visibility (bulk)
+   * @param {string} userId
+   * @param {SetTransactionsVisibilityRequest} setTransactionsVisibilityRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof TransactionsApiInterface
+   */
+  setVisibilityForMultipleTransactions(
+    userId: string,
+    setTransactionsVisibilityRequest: SetTransactionsVisibilityRequest,
     options?: RawAxiosRequestConfig,
   ): AxiosPromise<void>;
 
@@ -18209,6 +18369,29 @@ export class TransactionsApi
         userId,
         transactionId,
         setTransactionVisibilityRequest,
+        options,
+      )
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Sets visibility for multiple transactions at once: default, ghost (pending review), or hidden.
+   * @summary Set Visibility (bulk)
+   * @param {string} userId
+   * @param {SetTransactionsVisibilityRequest} setTransactionsVisibilityRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof TransactionsApi
+   */
+  public setVisibilityForMultipleTransactions(
+    userId: string,
+    setTransactionsVisibilityRequest: SetTransactionsVisibilityRequest,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return TransactionsApiFp(this.configuration)
+      .setVisibilityForMultipleTransactions(
+        userId,
+        setTransactionsVisibilityRequest,
         options,
       )
       .then((request) => request(this.axios, this.basePath));

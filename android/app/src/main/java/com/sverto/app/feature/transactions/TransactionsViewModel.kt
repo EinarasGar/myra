@@ -29,11 +29,21 @@ class TransactionsViewModel(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+    private val _selectedIds = MutableStateFlow<Set<String>>(emptySet())
+    val selectedIds: StateFlow<Set<String>> = _selectedIds.asStateFlow()
+
+    private val _isBulkMarking = MutableStateFlow(false)
+    val isBulkMarking: StateFlow<Boolean> = _isBulkMarking.asStateFlow()
+
     private val observer =
         object : TransactionsObserver {
             override fun onTransactionsChanged(state: TransactionsState) {
                 val wasRefreshing = _isRefreshing.value
                 _state.value = state
+                if (_selectedIds.value.isNotEmpty() && !state.isLoading) {
+                    val existing = state.items.mapTo(mutableSetOf()) { it.id }
+                    _selectedIds.value = _selectedIds.value intersect existing
+                }
                 if (wasRefreshing && !state.isLoading) {
                     _isRefreshing.value = false
                 }
@@ -94,6 +104,40 @@ class TransactionsViewModel(
                 refresh()
                 onDone()
             } catch (_: Exception) {
+            }
+        }
+    }
+
+    fun toggleSelection(transactionId: String) {
+        _selectedIds.value =
+            _selectedIds.value.toMutableSet().apply {
+                if (!add(transactionId)) remove(transactionId)
+            }
+    }
+
+    fun clearSelection() {
+        _selectedIds.value = emptySet()
+    }
+
+    fun markSelectedReviewed() {
+        if (_isBulkMarking.value) return
+        val selected = _selectedIds.value
+        val txIds =
+            state.value.items
+                .filter { it.id in selected }
+                .flatMap { item ->
+                    if (item.isGroup) item.children.map { it.id } else listOf(item.id)
+                }
+        if (txIds.isEmpty()) return
+        viewModelScope.launch {
+            _isBulkMarking.value = true
+            try {
+                store.setTransactionsVisibility(txIds, TransactionVisibility.DEFAULT)
+                _selectedIds.value = emptySet()
+                refresh()
+            } catch (_: Exception) {
+            } finally {
+                _isBulkMarking.value = false
             }
         }
     }

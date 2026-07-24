@@ -172,6 +172,9 @@ fun MainScreen(
     val editingGroupIndex = remember { mutableStateOf<Int?>(null) }
 
     val quickUploadItems by quickUploadViewModel.items.collectAsStateWithLifecycle()
+    val selectedTransactionIds by transactionsViewModel.selectedIds.collectAsStateWithLifecycle()
+    val transactionSelectionActive =
+        currentRoute == TopLevelRoute.Transactions.route && selectedTransactionIds.isNotEmpty()
 
     val context = LocalContext.current
     val appStore = remember { (context.applicationContext as SvertoApp).appStore }
@@ -341,7 +344,7 @@ fun MainScreen(
                 },
                 bottomBar = {
                     AnimatedVisibility(
-                        visible = isTopLevel,
+                        visible = isTopLevel && !transactionSelectionActive,
                         enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                         exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
                     ) {

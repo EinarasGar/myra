@@ -3,6 +3,7 @@ use rust_decimal::Decimal;
 use crate::errors::FieldError;
 use crate::view_models::transactions::base_models::account_asset_entry::AccountAssetEntryViewModel;
 use crate::view_models::transactions::base_models::transaction_group::TransactionGroup;
+use crate::view_models::transactions::set_visibility::SetTransactionsVisibilityRequestViewModel;
 use crate::view_models::transactions::transaction_types::IdentifiableTransactionWithIdentifiableEntries;
 use crate::view_models::transactions::transaction_types::TransactionWithEntries;
 use crate::view_models::transactions::transaction_types::TransactionWithIdentifiableEntries;
@@ -395,6 +396,18 @@ impl Validatable for TransactionWithIdentifiableEntries {
                 validate_cash_balance_transfer(&t.outgoing_change.entry, &t.incoming_change.entry)
             }
         }
+    }
+}
+
+impl Validatable for SetTransactionsVisibilityRequestViewModel {
+    fn validate(&self) -> Result<(), Vec<FieldError>> {
+        if self.transaction_ids.is_empty() {
+            return Err(vec![FieldError {
+                field: "transaction_ids".to_string(),
+                message: "At least one transaction id is required.".to_string(),
+            }]);
+        }
+        Ok(())
     }
 }
 

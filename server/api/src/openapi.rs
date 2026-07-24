@@ -142,6 +142,7 @@ mod modifiers;
         super::handlers::connectors_handler::sync_binding,
         super::handlers::connectors_handler::ingest_transactions,
         super::handlers::transactions::set_transaction_visibility,
+        super::handlers::transactions::set_transactions_visibility,
     ),
     components(
         schemas(RequiredEntryId),

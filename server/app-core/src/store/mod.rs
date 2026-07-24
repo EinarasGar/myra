@@ -1188,6 +1188,21 @@ impl AppStore {
         )
         .await
     }
+
+    pub async fn set_transactions_visibility(
+        &self,
+        transaction_ids: Vec<String>,
+        visibility: crate::models::TransactionVisibility,
+    ) -> Result<(), crate::error::ApiError> {
+        let token = self.get_auth_token();
+        transactions::set_transactions_visibility(
+            &self.infra,
+            &transaction_ids,
+            visibility,
+            token.as_deref(),
+        )
+        .await
+    }
 }
 
 impl AppStore {

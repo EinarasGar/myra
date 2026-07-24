@@ -29,7 +29,9 @@ use crate::{
         transactions::{
             base_models::metadata_lookup::MetadataLookupTables,
             get_transactions::CombinedTransactionItemViewModel,
-            set_visibility::SetTransactionVisibilityRequestViewModel,
+            set_visibility::{
+                SetTransactionVisibilityRequestViewModel, SetTransactionsVisibilityRequestViewModel,
+            },
             update_transaction::{
                 UpdateTransactionRequestViewModel, UpdateTransactionResponseViewModel,
             },
@@ -164,7 +166,43 @@ pub async fn set_transaction_visibility(
     ValidatedJson(body): ValidatedJson<SetTransactionVisibilityRequestViewModel>,
 ) -> Result<(), ApiError> {
     service
-        .set_transaction_visibility(user_id, transaction_id, body.visibility.to_business())
+        .set_transactions_visibility(user_id, vec![transaction_id], body.visibility.to_business())
+        .await
+        .map_err(ApiError::from_anyhow)?;
+    Ok(())
+}
+
+/// Set Visibility (bulk)
+///
+/// Sets visibility for multiple transactions at once: default, ghost (pending review), or hidden.
+#[utoipa::path(
+    put,
+    path = "/api/users/{user_id}/transactions/visibility",
+    tag = "Transactions",
+    operation_id = "Set visibility for multiple transactions.",
+    params(
+        ("user_id" = Uuid, Path, description = "User id for which the transactions belong to."),
+    ),
+    request_body(
+        content = SetTransactionsVisibilityRequestViewModel,
+    ),
+    responses(
+        (status = 200, description = "Transaction visibility updated successfully."),
+        UpdateResponses
+    ),
+    security(
+        ("auth_token" = [])
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
+pub async fn set_transactions_visibility(
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    TransactionManagementServiceState(service): TransactionManagementServiceState,
+    ValidatedJson(body): ValidatedJson<SetTransactionsVisibilityRequestViewModel>,
+) -> Result<(), ApiError> {
+    body.validate()?;
+    service
+        .set_transactions_visibility(user_id, body.transaction_ids, body.visibility.to_business())
         .await
         .map_err(ApiError::from_anyhow)?;
     Ok(())

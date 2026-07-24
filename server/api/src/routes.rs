@@ -31,6 +31,7 @@ pub(crate) fn create_router(state: AppState) -> Router {
         .route("/transactions/{transaction_id}",                put(handlers::transactions::update_transaction))
         .route("/transactions/{transaction_id}",                delete(handlers::transactions::delete_transaction))
         .route("/transactions/{transaction_id}/visibility",     put(handlers::transactions::set_transaction_visibility))
+        .route("/transactions/visibility",                      put(handlers::transactions::set_transactions_visibility))
         .route("/transactions",                                 get(handlers::transactions::get_transactions))
         .route("/transactions/individual",                      post(handlers::individual_transactions::add_individual_transaction)
                                                                     .get(handlers::individual_transactions::get_individual_transactions))

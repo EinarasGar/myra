@@ -518,6 +518,14 @@ pub async fn get_accounts_list(
         .map_err(|e| ApiError::Parse { reason: e })
 }
 
+fn visibility_str(visibility: crate::models::TransactionVisibility) -> &'static str {
+    match visibility {
+        crate::models::TransactionVisibility::Default => "default",
+        crate::models::TransactionVisibility::Ghost => "ghost",
+        crate::models::TransactionVisibility::Hidden => "hidden",
+    }
+}
+
 pub async fn set_transaction_visibility(
     infra: &SharedInfra,
     tx_id: &str,
@@ -527,15 +535,40 @@ pub async fn set_transaction_visibility(
     let user_id = infra.user_id().ok_or_else(|| ApiError::Parse {
         reason: "no user_id".into(),
     })?;
-    let vis = match visibility {
-        crate::models::TransactionVisibility::Default => "default",
-        crate::models::TransactionVisibility::Ghost => "ghost",
-        crate::models::TransactionVisibility::Hidden => "hidden",
-    };
+    let vis = visibility_str(visibility);
     let body = format!("{{\"visibility\":\"{vis}\"}}");
     let resp = infra
         .put(
             &format!("/api/users/{user_id}/transactions/{tx_id}/visibility"),
+            &body,
+            auth_token,
+        )
+        .await?;
+    if resp.status >= 400 {
+        return Err(server_error(resp.status, &resp.body));
+    }
+    infra.evict_memory_cache_prefix(&format!("/api/users/{}/transactions", user_id));
+    infra.evict_memory_cache_prefix(&format!("/api/users/{}/accounts", user_id));
+    Ok(())
+}
+
+pub async fn set_transactions_visibility(
+    infra: &SharedInfra,
+    tx_ids: &[String],
+    visibility: crate::models::TransactionVisibility,
+    auth_token: Option<&str>,
+) -> Result<(), ApiError> {
+    let user_id = infra.user_id().ok_or_else(|| ApiError::Parse {
+        reason: "no user_id".into(),
+    })?;
+    let body = serde_json::json!({
+        "transaction_ids": tx_ids,
+        "visibility": visibility_str(visibility),
+    })
+    .to_string();
+    let resp = infra
+        .put(
+            &format!("/api/users/{user_id}/transactions/visibility"),
             &body,
             auth_token,
         )

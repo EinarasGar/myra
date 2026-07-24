@@ -1,11 +1,23 @@
 package com.sverto.app.feature.transactions
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,15 +28,25 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material.icons.outlined.Workspaces
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FloatingToolbarDefaults
+import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LoadingIndicator
@@ -47,6 +69,9 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -87,10 +112,25 @@ fun TransactionsScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
+    val isBulkMarking by viewModel.isBulkMarking.collectAsStateWithLifecycle()
+    val selectionActive = selectedIds.isNotEmpty()
+    val hasGhostSelected =
+        remember(selectedIds, state.items) {
+            state.items.any { item ->
+                item.id in selectedIds &&
+                    (
+                        item.visibility == TransactionVisibility.GHOST ||
+                            item.children.any { it.visibility == TransactionVisibility.GHOST }
+                    )
+            }
+        }
+    val context = LocalContext.current
     var showNewTransactionSheet by rememberSaveable { mutableStateOf(false) }
     var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
 
     BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
+    BackHandler(selectionActive) { viewModel.clearSelection() }
 
     Box(modifier = modifier.fillMaxSize()) {
         when {
@@ -114,6 +154,9 @@ fun TransactionsScreen(
                     },
                     onLoadMore = viewModel::loadMore,
                     onTransactionClick = onTransactionClick,
+                    selectedIds = selectedIds,
+                    selectionActive = selectionActive,
+                    onToggleSelect = viewModel::toggleSelection,
                     onQuickUploadItemClick = onQuickUploadItemClick,
                     onQuickUploadRetry = onQuickUploadRetry,
                     onQuickUploadDismiss = onQuickUploadDismiss,
@@ -123,16 +166,44 @@ fun TransactionsScreen(
             }
         }
 
-        FabMenu(
-            expanded = fabMenuExpanded,
-            onToggle = { fabMenuExpanded = !fabMenuExpanded },
-            onQuickUpload = onQuickUpload,
-            onManualEntry = { showNewTransactionSheet = true },
+        AnimatedVisibility(
+            visible = !selectionActive,
+            enter = scaleIn() + fadeIn(),
+            exit = scaleOut() + fadeOut(),
             modifier =
                 Modifier
                     .align(Alignment.BottomEnd)
                     .padding(end = 16.dp, bottom = 24.dp),
-        )
+        ) {
+            FabMenu(
+                expanded = fabMenuExpanded,
+                onToggle = { fabMenuExpanded = !fabMenuExpanded },
+                onQuickUpload = onQuickUpload,
+                onManualEntry = { showNewTransactionSheet = true },
+            )
+        }
+
+        AnimatedVisibility(
+            visible = selectionActive,
+            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
+            modifier = Modifier.align(Alignment.BottomCenter),
+        ) {
+            SelectionToolbar(
+                count = selectedIds.size,
+                isBusy = isBulkMarking,
+                showMarkReviewed = hasGhostSelected,
+                onClose = viewModel::clearSelection,
+                onMarkReviewed = viewModel::markSelectedReviewed,
+                onGroup = {
+                    Toast.makeText(context, "Grouping coming soon", Toast.LENGTH_SHORT).show()
+                },
+                onDelete = {
+                    Toast.makeText(context, "Bulk delete coming soon", Toast.LENGTH_SHORT).show()
+                },
+                modifier = Modifier.padding(bottom = 24.dp),
+            )
+        }
     }
 
     if (showNewTransactionSheet) {
@@ -165,6 +236,9 @@ private fun TransactionList(
     onRefresh: () -> Unit,
     onLoadMore: () -> Unit,
     onTransactionClick: (TransactionListItem) -> Unit,
+    selectedIds: Set<String>,
+    selectionActive: Boolean,
+    onToggleSelect: (String) -> Unit,
     onQuickUploadItemClick: (QuickUploadUiItem) -> Unit,
     onQuickUploadRetry: (String) -> Unit,
     onQuickUploadDismiss: (String) -> Unit,
@@ -258,7 +332,15 @@ private fun TransactionList(
                                 groupItems.forEachIndexed { index, transaction ->
                                     TransactionRow(
                                         transaction = transaction,
-                                        onClick = { onTransactionClick(transaction) },
+                                        selected = transaction.id in selectedIds,
+                                        onClick = {
+                                            if (selectionActive) {
+                                                onToggleSelect(transaction.id)
+                                            } else {
+                                                onTransactionClick(transaction)
+                                            }
+                                        },
+                                        onLongClick = { onToggleSelect(transaction.id) },
                                         sharedTransitionScope = sharedTransitionScope,
                                         animatedVisibilityScope = animatedVisibilityScope,
                                     )
@@ -310,14 +392,27 @@ private fun DateHeader(
     )
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun TransactionRow(
     transaction: TransactionListItem,
+    selected: Boolean,
     onClick: () -> Unit,
+    onLongClick: () -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
 ) {
+    val haptics = LocalHapticFeedback.current
+    val containerColor by
+        animateColorAsState(
+            targetValue =
+                if (selected) {
+                    MaterialTheme.colorScheme.secondaryContainer
+                } else {
+                    MaterialTheme.colorScheme.surfaceBright
+                },
+            label = "rowContainerColor",
+        )
     with(sharedTransitionScope) {
         ListItem(
             modifier =
@@ -325,17 +420,41 @@ private fun TransactionRow(
                     .sharedBounds(
                         sharedContentState = rememberSharedContentState(key = "tx_${transaction.id}"),
                         animatedVisibilityScope = animatedVisibilityScope,
-                    ).clickable(onClick = onClick)
-                    .alpha(if (transaction.visibility == TransactionVisibility.GHOST) 0.55f else 1f),
+                    ).combinedClickable(
+                        onClick = onClick,
+                        onLongClick = {
+                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onLongClick()
+                        },
+                    ).alpha(
+                        if (transaction.visibility == TransactionVisibility.GHOST && !selected) 0.55f else 1f,
+                    ),
             colors =
                 ListItemDefaults.colors(
-                    containerColor = MaterialTheme.colorScheme.surfaceBright,
+                    containerColor = containerColor,
                 ),
             leadingContent = {
-                TransactionGlyph(
-                    transaction = transaction,
-                    modifier = Modifier.size(24.dp),
-                )
+                if (selected) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier =
+                            Modifier
+                                .size(24.dp)
+                                .background(MaterialTheme.colorScheme.primary, CircleShape),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Check,
+                            contentDescription = "Selected",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(16.dp),
+                        )
+                    }
+                } else {
+                    TransactionGlyph(
+                        transaction = transaction,
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
             },
             headlineContent = {
                 Text(
@@ -364,6 +483,71 @@ private fun TransactionRow(
                 TransactionAmount(transaction = transaction)
             },
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun SelectionToolbar(
+    count: Int,
+    isBusy: Boolean,
+    showMarkReviewed: Boolean,
+    onClose: () -> Unit,
+    onMarkReviewed: () -> Unit,
+    onGroup: () -> Unit,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    HorizontalFloatingToolbar(
+        expanded = true,
+        colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(),
+        modifier = modifier,
+    ) {
+        IconButton(onClick = onClose) {
+            Icon(
+                imageVector = Icons.Filled.Close,
+                contentDescription = "Exit selection",
+            )
+        }
+        Text(
+            text = "$count selected",
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.align(Alignment.CenterVertically),
+        )
+        Spacer(Modifier.width(8.dp))
+        AnimatedVisibility(
+            visible = showMarkReviewed,
+            enter = expandHorizontally() + fadeIn(),
+            exit = shrinkHorizontally() + fadeOut(),
+        ) {
+            FilledIconButton(
+                onClick = onMarkReviewed,
+                enabled = !isBusy,
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Check,
+                    contentDescription = "Mark reviewed",
+                )
+            }
+        }
+        AnimatedVisibility(
+            visible = count >= 2,
+            enter = expandHorizontally() + fadeIn(),
+            exit = shrinkHorizontally() + fadeOut(),
+        ) {
+            IconButton(onClick = onGroup) {
+                Icon(
+                    imageVector = Icons.Outlined.Workspaces,
+                    contentDescription = "Group transactions",
+                )
+            }
+        }
+        IconButton(onClick = onDelete) {
+            Icon(
+                imageVector = Icons.Outlined.Delete,
+                contentDescription = "Delete",
+            )
+        }
     }
 }
 
