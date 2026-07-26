@@ -1,15 +1,19 @@
 package com.sverto.app.feature.transactions.create
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ShowChart
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Category
@@ -25,12 +29,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -164,6 +171,8 @@ fun CategoryPickerField(
     selectedName: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    aiLoading: Boolean = false,
+    aiFilled: Boolean = false,
 ) {
     PickerField(
         label = "Category",
@@ -171,6 +180,8 @@ fun CategoryPickerField(
         leadingIcon = Icons.Outlined.Category,
         iconTint = MaterialTheme.colorScheme.secondary,
         placeholder = "Choose a category",
+        trailingBadge = if (aiFilled) Icons.Default.AutoAwesome else null,
+        aiLoading = aiLoading,
         onClick = onClick,
         modifier = modifier,
     )
@@ -192,20 +203,36 @@ fun DatePickerField(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun DescriptionField(
     value: String,
     onValueChange: (String) -> Unit,
+    onCommit: () -> Unit,
     modifier: Modifier = Modifier,
     placeholder: String? = null,
 ) {
+    var focused by remember { mutableStateOf(false) }
+    var editing by remember { mutableStateOf(false) }
+    val imeVisible = WindowInsets.isImeVisible
+    val currentOnCommit by rememberUpdatedState(onCommit)
+    LaunchedEffect(focused, imeVisible) {
+        if (focused && imeVisible) {
+            editing = true
+        } else if (editing) {
+            editing = false
+            currentOnCommit()
+        }
+    }
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text("Description") },
         placeholder = placeholder?.let { { Text(it) } },
-        modifier = modifier.fillMaxWidth(),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .onFocusChanged { focused = it.isFocused },
         singleLine = false,
         minLines = 2,
         shape = MaterialTheme.shapes.large,

@@ -274,6 +274,7 @@ dependencies {
     implementation(libs.jna) { artifact { type = "aar" } }
 
     implementation(libs.icons.lucide)
+    implementation(libs.mlkit.genai.prompt)
 
     // Image loading for chat attachments (coil-network-okhttp is required for remote https URLs;
     // coil-compose alone only handles local content:// uris)
@@ -287,6 +288,7 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation(libs.kotlinx.coroutines.test)
 
     androidTestImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test:core-ktx:1.6.1")

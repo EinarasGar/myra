@@ -67,6 +67,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sverto.app.core.SvertoViewModelFactory
+import com.sverto.app.core.ai.SuggestionState
 import com.sverto.app.feature.transactions.NewTransactionSheet
 import com.sverto.app.feature.transactions.group.GroupTransactionItem
 import uniffi.sverto_core.TransactionListItem
@@ -116,6 +117,7 @@ fun CreateTransactionScreen(
     val assetResults by viewModel.assetResults.collectAsStateWithLifecycle()
     val categoryResults by viewModel.categoryResults.collectAsStateWithLifecycle()
     val categoriesLoading by viewModel.categoriesLoading.collectAsStateWithLifecycle()
+    val suggestionState by viewModel.suggestionState.collectAsStateWithLifecycle()
     val submitState by viewModel.submitState.collectAsStateWithLifecycle()
     val submittedTransaction by viewModel.submittedTransaction.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
@@ -203,6 +205,9 @@ fun CreateTransactionScreen(
                             onChangePrimaryAmount = viewModel::updatePrimaryAmount,
                             onChangeSecondaryAmount = viewModel::updateSecondaryAmount,
                             onChangeDescription = viewModel::updateDescription,
+                            onDescriptionCommit = viewModel::onDescriptionCommitted,
+                            suggestionState = suggestionState,
+                            onApplySuggestion = viewModel::applySuggestion,
                             onSendCorrection = { viewModel.sendCorrection(it) },
                         )
 
@@ -329,6 +334,9 @@ private fun CreateTransactionForm(
     onChangePrimaryAmount: (String) -> Unit,
     onChangeSecondaryAmount: (String) -> Unit,
     onChangeDescription: (String) -> Unit,
+    onDescriptionCommit: () -> Unit,
+    suggestionState: SuggestionState,
+    onApplySuggestion: () -> Unit,
     onSendCorrection: (String) -> Unit,
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -396,6 +404,9 @@ private fun CreateTransactionForm(
                         onPickCategory = onPickCategory,
                         onChangeAmount = onChangePrimaryAmount,
                         onChangeDescription = onChangeDescription,
+                        onDescriptionCommit = onDescriptionCommit,
+                        suggestionState = suggestionState,
+                        onApplySuggestion = onApplySuggestion,
                     )
 
                 is EntryMode.Dual ->
@@ -440,6 +451,9 @@ private fun SingleEntrySections(
     onPickCategory: () -> Unit,
     onChangeAmount: (String) -> Unit,
     onChangeDescription: (String) -> Unit,
+    onDescriptionCommit: () -> Unit,
+    suggestionState: SuggestionState,
+    onApplySuggestion: () -> Unit,
 ) {
     HeroAmountInput(
         value = formState.primaryEntry.amount,
@@ -499,6 +513,8 @@ private fun SingleEntrySections(
                     CategoryPickerField(
                         selectedName = formState.categoryName,
                         onClick = onPickCategory,
+                        aiLoading = suggestionState is SuggestionState.Loading,
+                        aiFilled = formState.categoryFromAi,
                         modifier =
                             Modifier.sharedBounds(
                                 sharedContentState =
@@ -506,13 +522,21 @@ private fun SingleEntrySections(
                                 animatedVisibilityScope = animatedVisibilityScope,
                             ),
                     )
-                    Spacer(Modifier.height(8.dp))
                 }
+                (suggestionState as? SuggestionState.Suggested)?.let { suggested ->
+                    Spacer(Modifier.height(4.dp))
+                    CategorySuggestionOfferChip(
+                        name = suggested.category.name,
+                        onApply = onApplySuggestion,
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
             }
             if (mode.hasDescription) {
                 DescriptionField(
                     value = formState.description,
                     onValueChange = onChangeDescription,
+                    onCommit = onDescriptionCommit,
                 )
             }
         }

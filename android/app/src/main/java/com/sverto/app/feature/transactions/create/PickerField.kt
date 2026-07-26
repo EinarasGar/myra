@@ -45,6 +45,8 @@ fun PickerField(
     modifier: Modifier = Modifier,
     iconTint: Color = MaterialTheme.colorScheme.primary,
     placeholder: String = "Choose",
+    trailingBadge: ImageVector? = null,
+    aiLoading: Boolean = false,
 ) {
     val displayText = value?.takeIf { it.isNotBlank() } ?: placeholder
     val isEmpty = value.isNullOrBlank()
@@ -64,6 +66,7 @@ fun PickerField(
             modifier
                 .fillMaxWidth()
                 .heightIn(min = 64.dp)
+                .aiThinkingBorder(aiLoading, cornerRadius)
                 .clickable(
                     interactionSource = interactionSource,
                     indication = LocalIndication.current,
@@ -112,6 +115,15 @@ fun PickerField(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+            }
+            if (trailingBadge != null) {
+                Icon(
+                    imageVector = trailingBadge,
+                    contentDescription = "AI suggested",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(4.dp))
             }
             Spacer(Modifier.width(8.dp))
             Icon(

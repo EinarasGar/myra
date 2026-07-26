@@ -69,11 +69,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sverto.app.core.SvertoViewModelFactory
+import com.sverto.app.core.ai.SuggestionState
 import com.sverto.app.core.ui.RowDivider
 import com.sverto.app.feature.transactions.NewTransactionSheet
 import com.sverto.app.feature.transactions.create.CATEGORY_SHARED_KEY
 import com.sverto.app.feature.transactions.create.CategoryPickerField
 import com.sverto.app.feature.transactions.create.CategorySearchScene
+import com.sverto.app.feature.transactions.create.CategorySuggestionOfferChip
 import com.sverto.app.feature.transactions.create.CorrectionInput
 import com.sverto.app.feature.transactions.create.CorrectionTypeChange
 import com.sverto.app.feature.transactions.create.DatePickerField
@@ -111,6 +113,7 @@ fun CreateTransactionGroupScreen(
     val qUploadId by viewModel.quickUploadId.collectAsStateWithLifecycle()
     val correctionState by viewModel.correctionState.collectAsStateWithLifecycle()
     val correctionTypeChange by viewModel.correctionTypeChange.collectAsStateWithLifecycle()
+    val suggestionState by viewModel.suggestionState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(correctionTypeChange) {
@@ -230,6 +233,8 @@ fun CreateTransactionGroupScreen(
                                         viewModel.loadCategories()
                                         showCategorySearch = true
                                     },
+                                    aiLoading = suggestionState is SuggestionState.Loading,
+                                    aiFilled = formState.categoryFromAi,
                                     modifier =
                                         Modifier.sharedBounds(
                                             sharedContentState =
@@ -238,11 +243,19 @@ fun CreateTransactionGroupScreen(
                                         ),
                                 )
                             }
+                            (suggestionState as? SuggestionState.Suggested)?.let { suggested ->
+                                Spacer(Modifier.height(4.dp))
+                                CategorySuggestionOfferChip(
+                                    name = suggested.category.name,
+                                    onApply = viewModel::applySuggestion,
+                                )
+                            }
                             Spacer(Modifier.height(8.dp))
                             DescriptionField(
                                 value = formState.description,
                                 onValueChange = viewModel::updateDescription,
                                 placeholder = "e.g. Primark Shopping",
+                                onCommit = viewModel::onDescriptionCommitted,
                             )
                         }
 

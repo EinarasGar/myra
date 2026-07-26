@@ -3,6 +3,9 @@ package com.sverto.app.feature.transactions.group
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sverto.app.core.ai.CategorySuggester
+import com.sverto.app.core.ai.CategorySuggestionController
+import com.sverto.app.core.ai.SuggestionState
 import com.sverto.app.feature.transactions.create.CorrectionState
 import com.sverto.app.feature.transactions.create.CorrectionTypeChange
 import com.sverto.app.feature.transactions.create.apiTypeToConfigKey
@@ -16,6 +19,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import uniffi.sverto_core.AppStore
 import uniffi.sverto_core.CategoryItem
@@ -36,6 +40,7 @@ class CreateTransactionGroupViewModel(
     private val _formState = MutableStateFlow(GroupFormState())
     val formState: StateFlow<GroupFormState> = _formState.asStateFlow()
 
+    @Volatile
     private var allCategories: List<CategoryItem> = emptyList()
     private val _categoryResults = MutableStateFlow<List<CategoryItem>>(emptyList())
     val categoryResults: StateFlow<List<CategoryItem>> = _categoryResults.asStateFlow()
@@ -62,6 +67,60 @@ class CreateTransactionGroupViewModel(
     val correctionTypeChange: StateFlow<CorrectionTypeChange?> = _correctionTypeChange.asStateFlow()
 
     private var categorySearchJob: Job? = null
+
+    private val suggestionController =
+        CategorySuggestionController(
+            isAvailable = { CategorySuggester.isAvailable() },
+            loadCategories = { ensureCategories() },
+            suggest = { description, categories -> CategorySuggester.suggest(description, categories) },
+        )
+    val suggestionState: StateFlow<SuggestionState> = suggestionController.state
+
+    init {
+        CategorySuggester.prefetch(viewModelScope)
+    }
+
+    private suspend fun ensureCategories(): List<CategoryItem> {
+        if (allCategories.isEmpty()) {
+            allCategories = store.getAllCategories()
+        }
+        return allCategories
+    }
+
+    fun onDescriptionCommitted() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val committed = _formState.value.description
+            val suggested = suggestionController.suggestFor(committed) ?: return@launch
+            val fresh = _formState.value
+            if (fresh.description != committed) return@launch
+            if (fresh.categoryId == null || fresh.categoryFromAi) {
+                _formState.update { state ->
+                    if (state.description == committed && (state.categoryId == null || state.categoryFromAi)) {
+                        state.copy(
+                            categoryId = suggested.id,
+                            categoryName = suggested.name,
+                            categoryFromAi = true,
+                        )
+                    } else {
+                        state
+                    }
+                }
+            } else if (fresh.categoryId != suggested.id) {
+                suggestionController.offer(suggested)
+            }
+        }
+    }
+
+    fun applySuggestion() {
+        val category = suggestionController.takeSuggestion() ?: return
+        _formState.update { state ->
+            state.copy(
+                categoryId = category.id,
+                categoryName = category.name,
+                categoryFromAi = true,
+            )
+        }
+    }
 
     fun init() {
         if (initialized) return
@@ -90,6 +149,7 @@ class CreateTransactionGroupViewModel(
                 categoryId = group.categoryId,
                 categoryName = group.categoryName,
             )
+        suggestionController.markCommitted(group.description)
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -156,6 +216,7 @@ class CreateTransactionGroupViewModel(
                         detail.lookupTables,
                     )
                 _formState.value = formState
+                suggestionController.markCommitted(formState.description)
                 _quickUploadId.value = quickUploadId
             } catch (
                 @Suppress("TooGenericExceptionCaught") e: Exception,
@@ -179,11 +240,13 @@ class CreateTransactionGroupViewModel(
                     _correctionTypeChange.value = CorrectionTypeChange(uploadId, detail.proposalType!!)
                     return@launch
                 }
-                _formState.value =
+                val corrected =
                     proposalToGroupFormState(
                         detail.proposalData ?: "{}",
                         detail.lookupTables,
                     )
+                _formState.value = corrected
+                suggestionController.markCommitted(corrected.description)
                 _correctionState.value = CorrectionState.UPDATED
                 delay(2000)
                 _correctionState.value = CorrectionState.IDLE
@@ -201,14 +264,17 @@ class CreateTransactionGroupViewModel(
     }
 
     fun updateDescription(value: String) {
+        suggestionController.onDescriptionChanged(value)
         _formState.value = _formState.value.copy(description = value)
     }
 
     fun selectCategory(item: CategoryItem) {
+        suggestionController.reset()
         _formState.value =
             _formState.value.copy(
                 categoryId = item.id,
                 categoryName = item.name,
+                categoryFromAi = false,
             )
         _categoryResults.value = emptyList()
     }

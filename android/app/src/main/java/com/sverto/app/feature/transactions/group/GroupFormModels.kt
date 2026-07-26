@@ -7,6 +7,7 @@ data class GroupFormState(
     val description: String = "",
     val categoryId: Int? = null,
     val categoryName: String = "",
+    val categoryFromAi: Boolean = false,
     val transactions: List<GroupTransactionItem> = emptyList(),
 )
 
