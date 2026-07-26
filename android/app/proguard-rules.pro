@@ -10,6 +10,11 @@
 # Keep UniFFI generated bindings
 -keep class uniffi.** { *; }
 
+# ML Kit GenAI (beta) ships incomplete consumer rules: its component registrars
+# are instantiated reflectively from manifest meta-data, but R8 strips their
+# no-arg constructors, making Generation.getClient() throw NPE in release builds.
+-keep class * implements com.google.firebase.components.ComponentRegistrar { <init>(); }
+
 # Lucide icon picker enumerates icons by reflecting over the library's R drawable
 # class and resolves them by name via Resources.getIdentifier (core/icons/LucideIcon.kt).
 # R8 can't see these dynamic references, so without this the fields are stripped and
