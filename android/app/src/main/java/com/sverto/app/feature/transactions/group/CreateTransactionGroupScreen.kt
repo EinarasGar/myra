@@ -1,7 +1,8 @@
 package com.sverto.app.feature.transactions.group
 
-import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -30,8 +31,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.ArrowOutward
-import androidx.compose.material.icons.outlined.CalendarToday
-import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
@@ -45,15 +44,12 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumFlexibleTopAppBar
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
@@ -62,6 +58,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -74,20 +71,22 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sverto.app.core.SvertoViewModelFactory
 import com.sverto.app.core.ui.RowDivider
 import com.sverto.app.feature.transactions.NewTransactionSheet
+import com.sverto.app.feature.transactions.create.CATEGORY_SHARED_KEY
+import com.sverto.app.feature.transactions.create.CategoryPickerField
+import com.sverto.app.feature.transactions.create.CategorySearchScene
 import com.sverto.app.feature.transactions.create.CorrectionInput
 import com.sverto.app.feature.transactions.create.CorrectionTypeChange
+import com.sverto.app.feature.transactions.create.DatePickerField
+import com.sverto.app.feature.transactions.create.DescriptionField
+import com.sverto.app.feature.transactions.create.SectionCard
 import com.sverto.app.feature.transactions.create.apiTypeToConfigKey
-import uniffi.sverto_core.CategoryItem
 import uniffi.sverto_core.TransactionListItem
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
-@SuppressLint("NewApi")
-private val dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy 'at' h:mm a", Locale.US)
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(
+    ExperimentalMaterial3Api::class,
+    ExperimentalMaterial3ExpressiveApi::class,
+    ExperimentalSharedTransitionApi::class,
+)
 @Composable
 @Suppress("LongMethod", "ParameterNaming")
 fun CreateTransactionGroupScreen(
@@ -105,6 +104,7 @@ fun CreateTransactionGroupScreen(
 ) {
     val formState by viewModel.formState.collectAsStateWithLifecycle()
     val categoryResults by viewModel.categoryResults.collectAsStateWithLifecycle()
+    val categoriesLoading by viewModel.categoriesLoading.collectAsStateWithLifecycle()
     val submitState by viewModel.submitState.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
@@ -121,7 +121,7 @@ fun CreateTransactionGroupScreen(
 
     var showTypePicker by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
-    var showCategorySearch by remember { mutableStateOf(false) }
+    var showCategorySearch by rememberSaveable { mutableStateOf(false) }
     val motionScheme = MaterialTheme.motionScheme
 
     LaunchedEffect(editGroupId) {
@@ -142,254 +142,197 @@ fun CreateTransactionGroupScreen(
         errorMessage?.let { snackbarHostState.showSnackbar(it) }
     }
 
-    AnimatedContent(
-        targetState = showCategorySearch,
-        transitionSpec = {
-            fadeIn(animationSpec = motionScheme.defaultEffectsSpec()) togetherWith
-                fadeOut(animationSpec = motionScheme.defaultEffectsSpec())
-        },
-        label = "group_scene",
-    ) { isCategorySearch ->
-        if (isCategorySearch) {
-            CategorySearchForGroup(
-                results = categoryResults,
-                onQueryChange = viewModel::filterCategories,
-                onSelect = { category ->
-                    viewModel.selectCategory(category)
-                    showCategorySearch = false
-                },
-                onBack = { showCategorySearch = false },
-            )
-        } else {
-            val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-            Scaffold(
-                modifier =
-                    modifier
-                        .fillMaxSize()
-                        .nestedScroll(scrollBehavior.nestedScrollConnection),
-                snackbarHost = { SnackbarHost(snackbarHostState) },
-                topBar = {
-                    MediumFlexibleTopAppBar(
-                        title = {
-                            Text(
-                                text = if (isEditMode) "Edit Group" else "New Group",
-                                fontWeight = FontWeight.SemiBold,
-                            )
+    SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
+        val sharedScope = this
+        AnimatedContent(
+            targetState = showCategorySearch,
+            transitionSpec = {
+                fadeIn(animationSpec = motionScheme.defaultEffectsSpec()) togetherWith
+                    fadeOut(animationSpec = motionScheme.defaultEffectsSpec())
+            },
+            label = "group_scene",
+        ) { isCategorySearch ->
+            val avScope = this
+            if (isCategorySearch) {
+                with(sharedScope) {
+                    CategorySearchScene(
+                        sharedKey = CATEGORY_SHARED_KEY,
+                        results = categoryResults,
+                        loading = categoriesLoading,
+                        onQueryChange = viewModel::filterCategories,
+                        onSelect = { category ->
+                            viewModel.selectCategory(category)
+                            showCategorySearch = false
                         },
-                        navigationIcon = {
-                            IconButton(onClick = onDiscard) {
-                                Icon(Icons.Default.Close, contentDescription = "Discard")
-                            }
-                        },
-                        colors =
-                            TopAppBarDefaults.topAppBarColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                                scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                            ),
-                        scrollBehavior = scrollBehavior,
+                        onBack = { showCategorySearch = false },
+                        animatedVisibilityScope = avScope,
                     )
-                },
-                bottomBar = {
-                    GroupSaveBar(
-                        submitState = submitState,
-                        isEditMode = isEditMode,
-                        enabled = formState.transactions.isNotEmpty(),
-                        onSubmit = viewModel::submit,
-                    )
-                },
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            ) { innerPadding ->
-                Column(
+                }
+            } else {
+                val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+                Scaffold(
                     modifier =
-                        Modifier
+                        modifier
                             .fillMaxSize()
-                            .padding(innerPadding)
-                            .verticalScroll(rememberScrollState())
-                            .padding(horizontal = 20.dp),
-                ) {
-                    Spacer(Modifier.height(8.dp))
-
-                    Text(
-                        text = "Date",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Surface(
-                        shape = MaterialTheme.shapes.large,
-                        color = MaterialTheme.colorScheme.surfaceBright,
-                        modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = formState.date?.let { formatDate(it) } ?: "Select date",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color =
-                                    if (formState.date != null) {
-                                        MaterialTheme.colorScheme.onSurface
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    },
-                            )
-                            Icon(
-                                Icons.Outlined.CalendarToday,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(20.dp),
-                            )
-                        }
-                    }
-
-                    Spacer(Modifier.height(16.dp))
-
-                    OutlinedTextField(
-                        value = formState.description,
-                        onValueChange = viewModel::updateDescription,
-                        label = { Text("Description") },
-                        placeholder = { Text("e.g. Primark Shopping") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = MaterialTheme.shapes.large,
-                        colors =
-                            OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = MaterialTheme.colorScheme.surfaceBright,
-                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceBright,
-                            ),
-                    )
-
-                    Spacer(Modifier.height(16.dp))
-
-                    Text(
-                        text = "Category",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Surface(
-                        shape = MaterialTheme.shapes.large,
-                        color = MaterialTheme.colorScheme.surfaceBright,
-                        modifier =
-                            Modifier.fillMaxWidth().clickable {
-                                viewModel.loadCategories()
-                                showCategorySearch = true
+                            .nestedScroll(scrollBehavior.nestedScrollConnection),
+                    snackbarHost = { SnackbarHost(snackbarHostState) },
+                    topBar = {
+                        MediumFlexibleTopAppBar(
+                            title = {
+                                Text(
+                                    text = if (isEditMode) "Edit Group" else "New Group",
+                                    fontWeight = FontWeight.SemiBold,
+                                )
                             },
+                            navigationIcon = {
+                                IconButton(onClick = onDiscard) {
+                                    Icon(Icons.Default.Close, contentDescription = "Discard")
+                                }
+                            },
+                            colors =
+                                TopAppBarDefaults.topAppBarColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                ),
+                            scrollBehavior = scrollBehavior,
+                        )
+                    },
+                    bottomBar = {
+                        GroupSaveBar(
+                            submitState = submitState,
+                            isEditMode = isEditMode,
+                            enabled = formState.transactions.isNotEmpty(),
+                            onSubmit = viewModel::submit,
+                        )
+                    },
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                ) { innerPadding ->
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(innerPadding)
+                                .verticalScroll(rememberScrollState())
+                                .padding(horizontal = 20.dp),
                     ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = formState.categoryName.ifEmpty { "Select category" },
-                                style = MaterialTheme.typography.bodyLarge,
-                                color =
-                                    if (formState.categoryName.isNotEmpty()) {
-                                        MaterialTheme.colorScheme.onSurface
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    },
+                        Spacer(Modifier.height(8.dp))
+
+                        SectionCard(label = "Details") {
+                            DatePickerField(
+                                dateEpochSeconds = formState.date,
+                                onClick = { showDatePicker = true },
                             )
-                            Icon(
-                                Icons.Outlined.Category,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(20.dp),
+                            Spacer(Modifier.height(8.dp))
+                            with(sharedScope) {
+                                CategoryPickerField(
+                                    selectedName = formState.categoryName,
+                                    onClick = {
+                                        viewModel.loadCategories()
+                                        showCategorySearch = true
+                                    },
+                                    modifier =
+                                        Modifier.sharedBounds(
+                                            sharedContentState =
+                                                rememberSharedContentState(key = CATEGORY_SHARED_KEY),
+                                            animatedVisibilityScope = avScope,
+                                        ),
+                                )
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            DescriptionField(
+                                value = formState.description,
+                                onValueChange = viewModel::updateDescription,
+                                placeholder = "e.g. Primark Shopping",
                             )
                         }
-                    }
 
-                    Spacer(Modifier.height(24.dp))
+                        Text(
+                            text = "Transactions (${formState.transactions.size})",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
 
-                    Text(
-                        text = "Transactions (${formState.transactions.size})",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
+                        Spacer(Modifier.height(12.dp))
 
-                    Spacer(Modifier.height(12.dp))
-
-                    if (formState.transactions.isNotEmpty()) {
-                        Surface(
-                            shape = RoundedCornerShape(18.dp),
-                            color = MaterialTheme.colorScheme.surfaceBright,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Column(
-                                modifier =
-                                    Modifier.animateContentSize(motionScheme.defaultSpatialSpec()),
+                        if (formState.transactions.isNotEmpty()) {
+                            Surface(
+                                shape = RoundedCornerShape(18.dp),
+                                color = MaterialTheme.colorScheme.surfaceBright,
+                                modifier = Modifier.fillMaxWidth(),
                             ) {
-                                formState.transactions.forEachIndexed { index, item ->
-                                    GroupTransactionRow(
-                                        index = index,
-                                        item = item,
-                                        onClick = {
-                                            val configKey = apiTypeToConfigKey(item.input.typeKey)
-                                            onEditTransaction(index, configKey)
-                                        },
-                                        onRemove = { viewModel.removeTransaction(index) },
-                                    )
-                                    if (index < formState.transactions.lastIndex) {
-                                        RowDivider()
+                                Column(
+                                    modifier =
+                                        Modifier.animateContentSize(motionScheme.defaultSpatialSpec()),
+                                ) {
+                                    formState.transactions.forEachIndexed { index, item ->
+                                        GroupTransactionRow(
+                                            index = index,
+                                            item = item,
+                                            onClick = {
+                                                val configKey = apiTypeToConfigKey(item.input.typeKey)
+                                                onEditTransaction(index, configKey)
+                                            },
+                                            onRemove = { viewModel.removeTransaction(index) },
+                                        )
+                                        if (index < formState.transactions.lastIndex) {
+                                            RowDivider()
+                                        }
                                     }
                                 }
                             }
+                            Spacer(Modifier.height(12.dp))
                         }
-                        Spacer(Modifier.height(12.dp))
-                    }
 
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainer,
-                        border =
-                            BorderStroke(
-                                width = 2.dp,
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                            ),
-                        modifier = Modifier.fillMaxWidth().clickable { showTypePicker = true },
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically,
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainer,
+                            border =
+                                BorderStroke(
+                                    width = 2.dp,
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                                ),
+                            modifier = Modifier.fillMaxWidth().clickable { showTypePicker = true },
                         ) {
-                            Icon(
-                                Icons.Default.Add,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp),
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = "Add Transaction",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.primary,
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    Icons.Default.Add,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    text = "Add Transaction",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                            }
+                        }
+
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = "${formState.transactions.size} transactions",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+
+                        val effectiveQuickUploadId = qUploadId ?: quickUploadId
+                        if (effectiveQuickUploadId != null) {
+                            Spacer(Modifier.height(16.dp))
+                            CorrectionInput(
+                                state = correctionState,
+                                onSend = { viewModel.sendCorrection(it) },
                             )
                         }
+
+                        Spacer(Modifier.height(24.dp))
                     }
-
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = "${formState.transactions.size} transactions",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-
-                    val effectiveQuickUploadId = qUploadId ?: quickUploadId
-                    if (effectiveQuickUploadId != null) {
-                        Spacer(Modifier.height(16.dp))
-                        CorrectionInput(
-                            state = correctionState,
-                            onSend = { viewModel.sendCorrection(it) },
-                        )
-                    }
-
-                    Spacer(Modifier.height(24.dp))
                 }
             }
         }
@@ -546,65 +489,6 @@ private fun GroupSaveBar(
                             style = MaterialTheme.typography.titleMedium,
                         )
                     }
-                }
-            }
-        }
-    }
-}
-
-@Suppress("NewApi")
-private fun formatDate(epochSeconds: Long): String =
-    Instant
-        .ofEpochSecond(epochSeconds)
-        .atZone(ZoneId.systemDefault())
-        .format(dateFormatter)
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun CategorySearchForGroup(
-    results: List<CategoryItem>,
-    onQueryChange: (String) -> Unit,
-    onSelect: (CategoryItem) -> Unit,
-    onBack: () -> Unit,
-) {
-    var query by remember { mutableStateOf("") }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Search Category") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.Close, contentDescription = "Back")
-                    }
-                },
-                colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    ),
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-    ) { innerPadding ->
-        Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            OutlinedTextField(
-                value = query,
-                onValueChange = {
-                    query = it
-                    onQueryChange(it)
-                },
-                placeholder = { Text("Search categories...") },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                singleLine = true,
-                shape = MaterialTheme.shapes.large,
-            )
-            androidx.compose.foundation.lazy.LazyColumn {
-                items(results.size) { index ->
-                    val category = results[index]
-                    ListItem(
-                        headlineContent = { Text(category.name) },
-                        modifier = Modifier.clickable { onSelect(category) },
-                    )
                 }
             }
         }

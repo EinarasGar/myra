@@ -3,6 +3,7 @@ package com.sverto.app.feature.transactions.create
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -11,11 +12,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ShowChart
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -152,5 +156,63 @@ fun AssetPickerField(
         placeholder = "Search assets",
         onClick = onClick,
         modifier = modifier,
+    )
+}
+
+@Composable
+fun CategoryPickerField(
+    selectedName: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    PickerField(
+        label = "Category",
+        value = selectedName.ifEmpty { null },
+        leadingIcon = Icons.Outlined.Category,
+        iconTint = MaterialTheme.colorScheme.secondary,
+        placeholder = "Choose a category",
+        onClick = onClick,
+        modifier = modifier,
+    )
+}
+
+@Composable
+fun DatePickerField(
+    dateEpochSeconds: Long?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    PickerField(
+        label = "Date",
+        value = dateEpochSeconds?.let { formatRelativeDate(it) },
+        leadingIcon = Icons.Outlined.CalendarMonth,
+        placeholder = "Select date",
+        onClick = onClick,
+        modifier = modifier,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DescriptionField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    placeholder: String? = null,
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text("Description") },
+        placeholder = placeholder?.let { { Text(it) } },
+        modifier = modifier.fillMaxWidth(),
+        singleLine = false,
+        minLines = 2,
+        shape = MaterialTheme.shapes.large,
+        colors =
+            OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+            ),
     )
 }

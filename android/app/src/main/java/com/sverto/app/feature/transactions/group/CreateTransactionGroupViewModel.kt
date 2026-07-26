@@ -40,6 +40,9 @@ class CreateTransactionGroupViewModel(
     private val _categoryResults = MutableStateFlow<List<CategoryItem>>(emptyList())
     val categoryResults: StateFlow<List<CategoryItem>> = _categoryResults.asStateFlow()
 
+    private val _categoriesLoading = MutableStateFlow(false)
+    val categoriesLoading: StateFlow<Boolean> = _categoriesLoading.asStateFlow()
+
     private val _submitState = MutableStateFlow(GroupSubmitState.IDLE)
     val submitState: StateFlow<GroupSubmitState> = _submitState.asStateFlow()
 
@@ -214,6 +217,7 @@ class CreateTransactionGroupViewModel(
         categorySearchJob?.cancel()
         categorySearchJob =
             viewModelScope.launch(Dispatchers.IO) {
+                _categoriesLoading.value = true
                 try {
                     allCategories = store.getAllCategories()
                     _categoryResults.value = allCategories
@@ -221,6 +225,8 @@ class CreateTransactionGroupViewModel(
                     @Suppress("TooGenericExceptionCaught") e: Exception,
                 ) {
                     Log.e(TAG, "Loading categories failed", e)
+                } finally {
+                    _categoriesLoading.value = false
                 }
             }
     }

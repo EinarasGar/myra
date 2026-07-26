@@ -56,6 +56,8 @@ import androidx.compose.ui.unit.dp
 import com.sverto.app.core.icons.LucideIcon
 import uniffi.sverto_core.CategoryItem
 
+internal const val CATEGORY_SHARED_KEY = "category_field"
+
 @OptIn(
     ExperimentalSharedTransitionApi::class,
     ExperimentalMaterial3Api::class,

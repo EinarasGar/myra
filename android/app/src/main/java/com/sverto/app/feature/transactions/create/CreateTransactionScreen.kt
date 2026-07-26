@@ -29,7 +29,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.ArrowOutward
-import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,8 +38,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumFlexibleTopAppBar
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -92,8 +89,6 @@ private fun assetSharedKey(target: SearchTarget): String =
         SearchTarget.SECONDARY_ASSET -> "asset_field_secondary"
         SearchTarget.ORIGIN_ASSET -> "asset_field_origin"
     }
-
-private const val CATEGORY_SHARED_KEY = "category_field"
 
 @OptIn(
     ExperimentalMaterial3Api::class,
@@ -501,7 +496,7 @@ private fun SingleEntrySections(
             }
             if (mode.hasCategory) {
                 with(sharedScope) {
-                    CategoryPickerFieldRow(
+                    CategoryPickerField(
                         selectedName = formState.categoryName,
                         onClick = onPickCategory,
                         modifier =
@@ -642,46 +637,6 @@ private fun DualEntrySections(
             )
         }
     }
-}
-
-@Composable
-private fun CategoryPickerFieldRow(
-    selectedName: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    PickerField(
-        label = "Category",
-        value = selectedName.ifEmpty { null },
-        leadingIcon = Icons.Outlined.Category,
-        iconTint = MaterialTheme.colorScheme.secondary,
-        placeholder = "Choose a category",
-        onClick = onClick,
-        modifier = modifier,
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun DescriptionField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text("Description") },
-        modifier = modifier.fillMaxWidth(),
-        singleLine = false,
-        minLines = 2,
-        shape = MaterialTheme.shapes.large,
-        colors =
-            OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-            ),
-    )
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
