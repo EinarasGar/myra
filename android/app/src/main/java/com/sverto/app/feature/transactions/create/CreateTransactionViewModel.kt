@@ -24,12 +24,28 @@ import kotlin.math.abs
 
 private const val TAG = "CreateTransactionVM"
 private const val SEARCH_DEBOUNCE_MS = 300L
+private const val DEFAULT_TYPE_KEY = "regular_transaction"
 
 class CreateTransactionViewModel(
     private val store: AppStore,
 ) : ViewModel() {
     private var initialized = false
     private var editTransactionId: String? = null
+
+    private val _typeKey = MutableStateFlow(DEFAULT_TYPE_KEY)
+    val typeKey: StateFlow<String> = _typeKey.asStateFlow()
+
+    private val config: TransactionTypeConfig
+        get() = getTransactionTypeConfig(_typeKey.value)
+
+    fun changeType(newTypeKey: String) {
+        val currentKey = _typeKey.value
+        if (currentKey == newTypeKey) return
+        val from = getTransactionTypeConfig(currentKey)
+        val to = getTransactionTypeConfig(newTypeKey)
+        _typeKey.value = newTypeKey
+        _formState.value = convertFormState(_formState.value, from, to)
+    }
 
     private var groupTransactionCallback: ((GroupTransactionItem) -> Unit)? = null
 
@@ -77,10 +93,11 @@ class CreateTransactionViewModel(
     private var assetSearchJob: Job? = null
     private var categorySearchJob: Job? = null
 
-    fun init() {
+    fun init(typeKey: String) {
         if (initialized) return
         initialized = true
         editTransactionId = null
+        _typeKey.value = typeKey
         resetUiState()
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -94,10 +111,14 @@ class CreateTransactionViewModel(
         }
     }
 
-    fun initForEdit(transactionId: String) {
+    fun initForEdit(
+        typeKey: String,
+        transactionId: String,
+    ) {
         if (initialized) return
         initialized = true
         editTransactionId = transactionId
+        _typeKey.value = typeKey
         resetUiState()
         _isLoading.value = true
         _formState.value = TransactionFormState()
@@ -106,6 +127,7 @@ class CreateTransactionViewModel(
             try {
                 _accounts.value = store.getAccountsList()
                 val editable = store.getEditableTransaction(transactionId)
+                _typeKey.value = apiTypeToConfigKey(editable.typeKey)
                 _formState.value = editable.toFormState(transactionId = transactionId)
             } catch (
                 @Suppress("TooGenericExceptionCaught") e: Exception,
@@ -125,6 +147,7 @@ class CreateTransactionViewModel(
         if (initialized) return
         initialized = true
         editTransactionId = existingInput.transactionId
+        _typeKey.value = apiTypeToConfigKey(existingInput.typeKey)
         resetUiState()
         _formState.value =
             TransactionFormState(
@@ -165,10 +188,14 @@ class CreateTransactionViewModel(
         }
     }
 
-    fun initFromProposal(quickUploadId: String) {
+    fun initFromProposal(
+        typeKey: String,
+        quickUploadId: String,
+    ) {
         if (initialized) return
         initialized = true
         editTransactionId = null
+        _typeKey.value = typeKey
         resetUiState()
         _isLoading.value = true
 
@@ -363,7 +390,8 @@ class CreateTransactionViewModel(
             )
     }
 
-    fun submit(config: TransactionTypeConfig) {
+    fun submit() {
+        val config = this.config
         val input = buildInput(config, _formState.value)
         if (input == null) {
             _errorMessage.value = "Missing required fields"

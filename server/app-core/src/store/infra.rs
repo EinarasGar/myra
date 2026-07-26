@@ -251,6 +251,17 @@ impl SharedInfra {
             .await
     }
 
+    pub async fn delete_with_body(
+        &self,
+        path: &str,
+        body: &str,
+        auth_token: Option<&str>,
+    ) -> Result<ApiResponse, ApiError> {
+        let url = format!("{}{}", self.base_url, path);
+        self.do_request(reqwest::Method::DELETE, &url, Some(body), auth_token, None)
+            .await
+    }
+
     fn serve_from_persistent_cache(&self, url: &str) -> Result<ApiResponse, ApiError> {
         if let Some(body) = self.persistent_cache.get(url) {
             self.set_is_offline(true);

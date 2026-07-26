@@ -30,6 +30,7 @@ class CreateTransactionGroupViewModel(
     private val store: AppStore,
 ) : ViewModel() {
     private var editGroupId: String? = null
+    private var fromSelection = false
     private var initialized = false
 
     private val _formState = MutableStateFlow(GroupFormState())
@@ -91,46 +92,42 @@ class CreateTransactionGroupViewModel(
             try {
                 val items =
                     group.children
-                        .map { child ->
-                            async {
-                                val editable = store.getEditableTransaction(child.id)
-                                val config = getTransactionTypeConfig(apiTypeToConfigKey(editable.typeKey))
-                                GroupTransactionItem(
-                                    input =
-                                        CreateTransactionInput(
-                                            transactionId = child.id,
-                                            typeKey = editable.typeKey,
-                                            date = editable.date,
-                                            primaryEntryId = editable.primaryEntryId,
-                                            primaryAccountId = editable.primaryAccountId,
-                                            primaryAssetId = editable.primaryAssetId,
-                                            primaryAmount = editable.primaryAmount,
-                                            secondaryEntryId = editable.secondaryEntryId,
-                                            secondaryAccountId = editable.secondaryAccountId,
-                                            secondaryAssetId = editable.secondaryAssetId,
-                                            secondaryAmount = editable.secondaryAmount,
-                                            originAssetId = editable.originAssetId,
-                                            categoryId = editable.categoryId,
-                                            description = editable.description.ifBlank { null },
-                                        ),
-                                    descriptionDisplay = editable.description.ifBlank { config.label },
-                                    typeLabel = config.label,
-                                    amountDisplay =
-                                        BigDecimal
-                                            .valueOf(editable.primaryAmount)
-                                            .stripTrailingZeros()
-                                            .toPlainString(),
-                                    accountName = editable.primaryAccountName,
-                                    assetDisplay = editable.primaryAssetDisplay,
-                                    categoryName = editable.categoryName,
-                                )
-                            }
-                        }.awaitAll()
+                        .map { child -> async { loadGroupItem(child.id) } }
+                        .awaitAll()
                 _formState.value = _formState.value.copy(transactions = items)
             } catch (
                 @Suppress("TooGenericExceptionCaught") e: Exception,
             ) {
                 Log.e(TAG, "Edit init failed", e)
+                _errorMessage.value = e.message ?: "Unknown error"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun initFromSelection(transactionIds: List<String>) {
+        if (initialized) return
+        initialized = true
+        editGroupId = null
+        fromSelection = true
+        _submitState.value = GroupSubmitState.IDLE
+        _errorMessage.value = null
+        _categoryResults.value = emptyList()
+        _isLoading.value = true
+        _formState.value = GroupFormState(date = System.currentTimeMillis() / 1000)
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val items =
+                    transactionIds
+                        .map { id -> async { loadGroupItem(id) } }
+                        .awaitAll()
+                _formState.value = _formState.value.copy(transactions = items)
+            } catch (
+                @Suppress("TooGenericExceptionCaught") e: Exception,
+            ) {
+                Log.e(TAG, "Selection init failed", e)
                 _errorMessage.value = e.message ?: "Unknown error"
             } finally {
                 _isLoading.value = false
@@ -292,10 +289,10 @@ class CreateTransactionGroupViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val groupId = editGroupId
-                if (groupId == null) {
-                    store.createTransactionGroup(input)
-                } else {
-                    store.updateTransactionGroup(groupId, input)
+                when {
+                    groupId != null -> store.updateTransactionGroup(groupId, input)
+                    fromSelection -> store.groupIndividualTransactions(input)
+                    else -> store.createTransactionGroup(input)
                 }
                 val qId = _quickUploadId.value
                 if (qId != null) {
@@ -311,5 +308,39 @@ class CreateTransactionGroupViewModel(
                 _submitState.value = GroupSubmitState.IDLE
             }
         }
+    }
+
+    private suspend fun loadGroupItem(transactionId: String): GroupTransactionItem {
+        val editable = store.getEditableTransaction(transactionId)
+        val config = getTransactionTypeConfig(apiTypeToConfigKey(editable.typeKey))
+        return GroupTransactionItem(
+            input =
+                CreateTransactionInput(
+                    transactionId = transactionId,
+                    typeKey = editable.typeKey,
+                    date = editable.date,
+                    primaryEntryId = editable.primaryEntryId,
+                    primaryAccountId = editable.primaryAccountId,
+                    primaryAssetId = editable.primaryAssetId,
+                    primaryAmount = editable.primaryAmount,
+                    secondaryEntryId = editable.secondaryEntryId,
+                    secondaryAccountId = editable.secondaryAccountId,
+                    secondaryAssetId = editable.secondaryAssetId,
+                    secondaryAmount = editable.secondaryAmount,
+                    originAssetId = editable.originAssetId,
+                    categoryId = editable.categoryId,
+                    description = editable.description.ifBlank { null },
+                ),
+            descriptionDisplay = editable.description.ifBlank { config.label },
+            typeLabel = config.label,
+            amountDisplay =
+                BigDecimal
+                    .valueOf(editable.primaryAmount)
+                    .stripTrailingZeros()
+                    .toPlainString(),
+            accountName = editable.primaryAccountName,
+            assetDisplay = editable.primaryAssetDisplay,
+            categoryName = editable.categoryName,
+        )
     }
 }

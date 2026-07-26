@@ -7,6 +7,7 @@ use crate::api::assets::extract_assets;
 use crate::api::categories::{extract_categories, extract_user_categories};
 use crate::api::create_transaction::build_request_body;
 use crate::api::create_transaction_group::build_create_group_request_body;
+use crate::api::delete_transactions::build_delete_transactions_request_body;
 use crate::api::get_transaction::extract_editable_transaction;
 use crate::api::transactions::{extract_page, to_list_item_with_id};
 use crate::api::update_transaction::build_update_request_body;
@@ -252,13 +253,11 @@ pub async fn delete_transaction(
     let path = format!("/api/users/{user_id}/transactions/{tx_id}");
     let resp = infra.delete(&path, auth_token).await?;
     if resp.status >= 400 {
-        return Err(ApiError::Server {
-            reason: format!("HTTP {}", resp.status),
-            status: resp.status,
-        });
+        return Err(server_error(resp.status, &resp.body));
     }
 
     infra.evict_memory_cache_prefix(&format!("/api/users/{}/transactions", user_id));
+    infra.evict_memory_cache_prefix(&format!("/api/users/{}/accounts", user_id));
     refresh_transactions(infra, module, auth_token).await;
     Ok(())
 }
@@ -276,13 +275,35 @@ pub async fn delete_transaction_group(
     let path = format!("/api/users/{user_id}/transactions/groups/{group_id}");
     let resp = infra.delete(&path, auth_token).await?;
     if resp.status >= 400 {
-        return Err(ApiError::Server {
-            reason: format!("HTTP {}", resp.status),
-            status: resp.status,
-        });
+        return Err(server_error(resp.status, &resp.body));
     }
 
     infra.evict_memory_cache_prefix(&format!("/api/users/{}/transactions", user_id));
+    infra.evict_memory_cache_prefix(&format!("/api/users/{}/accounts", user_id));
+    refresh_transactions(infra, module, auth_token).await;
+    Ok(())
+}
+
+pub async fn delete_transactions(
+    infra: &SharedInfra,
+    module: &Mutex<TransactionsModule>,
+    transaction_ids: Vec<String>,
+    group_ids: Vec<String>,
+    auth_token: Option<&str>,
+) -> Result<(), ApiError> {
+    let user_id = infra.user_id().ok_or_else(|| ApiError::Parse {
+        reason: "no user_id".into(),
+    })?;
+
+    let body = build_delete_transactions_request_body(transaction_ids, group_ids)?;
+    let path = format!("/api/users/{user_id}/transactions");
+    let resp = infra.delete_with_body(&path, &body, auth_token).await?;
+    if resp.status >= 400 {
+        return Err(server_error(resp.status, &resp.body));
+    }
+
+    infra.evict_memory_cache_prefix(&format!("/api/users/{}/transactions", user_id));
+    infra.evict_memory_cache_prefix(&format!("/api/users/{}/accounts", user_id));
     refresh_transactions(infra, module, auth_token).await;
     Ok(())
 }
@@ -322,13 +343,11 @@ pub async fn create_individual_transaction(
     let path = format!("/api/users/{user_id}/transactions/individual");
     let resp = infra.post(&path, &body, auth_token).await?;
     if resp.status >= 400 {
-        return Err(ApiError::Server {
-            reason: format!("HTTP {}", resp.status),
-            status: resp.status,
-        });
+        return Err(server_error(resp.status, &resp.body));
     }
 
     infra.evict_memory_cache_prefix(&format!("/api/users/{}/transactions", user_id));
+    infra.evict_memory_cache_prefix(&format!("/api/users/{}/accounts", user_id));
     refresh_transactions(infra, module, auth_token).await;
     Ok(())
 }
@@ -348,10 +367,7 @@ pub async fn update_individual_transaction(
     let path = format!("/api/users/{user_id}/transactions/individual/{tx_id}");
     let resp = infra.put(&path, &body, auth_token).await?;
     if resp.status >= 400 {
-        return Err(ApiError::Server {
-            reason: format!("HTTP {}", resp.status),
-            status: resp.status,
-        });
+        return Err(server_error(resp.status, &resp.body));
     }
 
     let parsed: UpdateIndividualTransactionResponseViewModel = serde_json::from_str(&resp.body)
@@ -362,6 +378,7 @@ pub async fn update_individual_transaction(
     let list_item = to_list_item_with_id(tx_id.to_string(), &parsed.transaction, &parsed.metadata);
 
     infra.evict_memory_cache_prefix(&format!("/api/users/{}/transactions", user_id));
+    infra.evict_memory_cache_prefix(&format!("/api/users/{}/accounts", user_id));
     refresh_transactions(infra, module, auth_token).await;
 
     Ok(list_item)
@@ -381,13 +398,34 @@ pub async fn create_transaction_group(
     let path = format!("/api/users/{user_id}/transactions/groups");
     let resp = infra.post(&path, &body, auth_token).await?;
     if resp.status >= 400 {
-        return Err(ApiError::Server {
-            reason: format!("HTTP {}", resp.status),
-            status: resp.status,
-        });
+        return Err(server_error(resp.status, &resp.body));
     }
 
     infra.evict_memory_cache_prefix(&format!("/api/users/{}/transactions", user_id));
+    infra.evict_memory_cache_prefix(&format!("/api/users/{}/accounts", user_id));
+    refresh_transactions(infra, module, auth_token).await;
+    Ok(())
+}
+
+pub async fn group_individual_transactions(
+    infra: &SharedInfra,
+    module: &Mutex<TransactionsModule>,
+    input: CreateTransactionGroupInput,
+    auth_token: Option<&str>,
+) -> Result<(), ApiError> {
+    let user_id = infra.user_id().ok_or_else(|| ApiError::Parse {
+        reason: "no user_id".into(),
+    })?;
+
+    let body = build_update_group_request_body(input)?;
+    let path = format!("/api/users/{user_id}/transactions/groups");
+    let resp = infra.put(&path, &body, auth_token).await?;
+    if resp.status >= 400 {
+        return Err(server_error(resp.status, &resp.body));
+    }
+
+    infra.evict_memory_cache_prefix(&format!("/api/users/{}/transactions", user_id));
+    infra.evict_memory_cache_prefix(&format!("/api/users/{}/accounts", user_id));
     refresh_transactions(infra, module, auth_token).await;
     Ok(())
 }
@@ -407,13 +445,11 @@ pub async fn update_transaction_group(
     let path = format!("/api/users/{user_id}/transactions/groups/{group_id}");
     let resp = infra.put(&path, &body, auth_token).await?;
     if resp.status >= 400 {
-        return Err(ApiError::Server {
-            reason: format!("HTTP {}", resp.status),
-            status: resp.status,
-        });
+        return Err(server_error(resp.status, &resp.body));
     }
 
     infra.evict_memory_cache_prefix(&format!("/api/users/{}/transactions", user_id));
+    infra.evict_memory_cache_prefix(&format!("/api/users/{}/accounts", user_id));
     refresh_transactions(infra, module, auth_token).await;
     Ok(())
 }

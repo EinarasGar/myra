@@ -432,18 +432,50 @@ impl TransactionGroupService {
         user_id: Uuid,
         group_id: Uuid,
     ) -> anyhow::Result<()> {
-        // Fetch group's transaction IDs to verify ownership
-        let id_query = transaction_group_queries::get_transaction_ids_by_groups(vec![group_id]);
+        self.db.start_transaction().await?;
+        self.delete_transaction_groups_inner(user_id, &[group_id])
+            .await?;
+        self.db.commit_transaction().await?;
+        Ok(())
+    }
+
+    pub async fn delete_transactions_and_groups(
+        &self,
+        user_id: Uuid,
+        transaction_ids: Vec<Uuid>,
+        group_ids: Vec<Uuid>,
+    ) -> anyhow::Result<()> {
+        self.db.start_transaction().await?;
+        self.delete_transaction_groups_inner(user_id, &group_ids)
+            .await?;
+        if !transaction_ids.is_empty() {
+            self.management_service
+                .delete_transactions_inner(user_id, transaction_ids)
+                .await?;
+        }
+        self.db.commit_transaction().await?;
+        Ok(())
+    }
+
+    async fn delete_transaction_groups_inner(
+        &self,
+        user_id: Uuid,
+        group_ids: &[Uuid],
+    ) -> anyhow::Result<()> {
+        if group_ids.is_empty() {
+            return Ok(());
+        }
+
+        let id_query = transaction_group_queries::get_transaction_ids_by_groups(group_ids.to_vec());
         let transaction_ids = self.db.fetch_all_scalar::<Uuid>(id_query).await?;
 
-        // Verify group exists
-        let group_exists_query =
-            transaction_group_queries::get_transaction_groups_by_ids(vec![group_id]);
-        let group_exists = self
+        let groups_query =
+            transaction_group_queries::get_transaction_groups_by_ids(group_ids.to_vec());
+        let groups = self
             .db
-            .fetch_optional::<TransactionGroupModel>(group_exists_query)
+            .fetch_all::<TransactionGroupModel>(groups_query)
             .await?;
-        if group_exists.is_none() {
+        if groups.len() != group_ids.len() {
             return Err(anyhow::anyhow!("Transaction group not found"));
         }
 
@@ -466,25 +498,22 @@ impl TransactionGroupService {
             ));
         }
 
-        self.db.start_transaction().await?;
+        for group_id in group_ids {
+            let delete_descriptions_query =
+                transaction_group_queries::delete_transaction_descriptions_by_group(*group_id);
+            self.db.execute(delete_descriptions_query).await?;
 
-        // Delete in dependency order: descriptions → entries → transactions → group
-        let delete_descriptions_query =
-            transaction_group_queries::delete_transaction_descriptions_by_group(group_id);
-        self.db.execute(delete_descriptions_query).await?;
+            let delete_entries_query =
+                transaction_group_queries::delete_transaction_entries_by_group(*group_id);
+            self.db.execute(delete_entries_query).await?;
 
-        let delete_entries_query =
-            transaction_group_queries::delete_transaction_entries_by_group(group_id);
-        self.db.execute(delete_entries_query).await?;
+            let delete_transactions_query =
+                transaction_group_queries::delete_transactions_by_group(*group_id);
+            self.db.execute(delete_transactions_query).await?;
 
-        let delete_transactions_query =
-            transaction_group_queries::delete_transactions_by_group(group_id);
-        self.db.execute(delete_transactions_query).await?;
-
-        let delete_group_query = transaction_group_queries::delete_transaction_group(group_id);
-        self.db.execute(delete_group_query).await?;
-
-        self.db.commit_transaction().await?;
+            let delete_group_query = transaction_group_queries::delete_transaction_group(*group_id);
+            self.db.execute(delete_group_query).await?;
+        }
 
         Ok(())
     }

@@ -32,8 +32,8 @@ class TransactionsViewModel(
     private val _selectedIds = MutableStateFlow<Set<String>>(emptySet())
     val selectedIds: StateFlow<Set<String>> = _selectedIds.asStateFlow()
 
-    private val _isBulkMarking = MutableStateFlow(false)
-    val isBulkMarking: StateFlow<Boolean> = _isBulkMarking.asStateFlow()
+    private val _isBulkBusy = MutableStateFlow(false)
+    val isBulkBusy: StateFlow<Boolean> = _isBulkBusy.asStateFlow()
 
     private val observer =
         object : TransactionsObserver {
@@ -120,7 +120,7 @@ class TransactionsViewModel(
     }
 
     fun markSelectedReviewed() {
-        if (_isBulkMarking.value) return
+        if (_isBulkBusy.value) return
         val selected = _selectedIds.value
         val txIds =
             state.value.items
@@ -130,14 +130,35 @@ class TransactionsViewModel(
                 }
         if (txIds.isEmpty()) return
         viewModelScope.launch {
-            _isBulkMarking.value = true
+            _isBulkBusy.value = true
             try {
                 store.setTransactionsVisibility(txIds, TransactionVisibility.DEFAULT)
                 _selectedIds.value = emptySet()
                 refresh()
             } catch (_: Exception) {
             } finally {
-                _isBulkMarking.value = false
+                _isBulkBusy.value = false
+            }
+        }
+    }
+
+    fun deleteSelected() {
+        if (_isBulkBusy.value) return
+        val selected = _selectedIds.value
+        val items = state.value.items.filter { it.id in selected }
+        if (items.isEmpty()) return
+        val groupIds = items.filter { it.isGroup }.map { it.id }
+        val transactionIds = items.filterNot { it.isGroup }.map { it.id }
+        viewModelScope.launch {
+            _isBulkBusy.value = true
+            try {
+                store.deleteTransactions(transactionIds, groupIds)
+                _selectedIds.value = emptySet()
+            } catch (
+                @Suppress("TooGenericExceptionCaught") _: Exception,
+            ) {
+            } finally {
+                _isBulkBusy.value = false
             }
         }
     }

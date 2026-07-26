@@ -1,6 +1,5 @@
 package com.sverto.app.feature.transactions
 
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
@@ -39,6 +38,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material.icons.outlined.Workspaces
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
@@ -53,6 +53,7 @@ import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -70,7 +71,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -99,6 +99,7 @@ fun TransactionsScreen(
     onTransactionClick: (TransactionListItem) -> Unit,
     onCreateTransaction: (String) -> Unit,
     onCreateGroup: () -> Unit,
+    onGroupSelected: (List<String>) -> Unit,
     onQuickUpload: () -> Unit,
     quickUploadItems: List<QuickUploadUiItem>,
     onQuickUploadItemClick: (QuickUploadUiItem) -> Unit,
@@ -113,7 +114,7 @@ fun TransactionsScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
-    val isBulkMarking by viewModel.isBulkMarking.collectAsStateWithLifecycle()
+    val isBulkBusy by viewModel.isBulkBusy.collectAsStateWithLifecycle()
     val selectionActive = selectedIds.isNotEmpty()
     val hasGhostSelected =
         remember(selectedIds, state.items) {
@@ -125,7 +126,11 @@ fun TransactionsScreen(
                     )
             }
         }
-    val context = LocalContext.current
+    val selectedGroupCount =
+        remember(selectedIds, state.items) {
+            state.items.count { it.isGroup && it.id in selectedIds }
+        }
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
     var showNewTransactionSheet by rememberSaveable { mutableStateOf(false) }
     var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
 
@@ -191,16 +196,13 @@ fun TransactionsScreen(
         ) {
             SelectionToolbar(
                 count = selectedIds.size,
-                isBusy = isBulkMarking,
+                isBusy = isBulkBusy,
                 showMarkReviewed = hasGhostSelected,
+                showGroup = selectedIds.size >= 2 && selectedGroupCount == 0,
                 onClose = viewModel::clearSelection,
                 onMarkReviewed = viewModel::markSelectedReviewed,
-                onGroup = {
-                    Toast.makeText(context, "Grouping coming soon", Toast.LENGTH_SHORT).show()
-                },
-                onDelete = {
-                    Toast.makeText(context, "Bulk delete coming soon", Toast.LENGTH_SHORT).show()
-                },
+                onGroup = { onGroupSelected(selectedIds.toList()) },
+                onDelete = { showDeleteConfirmation = true },
                 modifier = Modifier.padding(bottom = 24.dp),
             )
         }
@@ -216,6 +218,36 @@ fun TransactionsScreen(
             onSelectGroup = {
                 showNewTransactionSheet = false
                 onCreateGroup()
+            },
+        )
+    }
+
+    if (showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = { Text("Delete selection?") },
+            text = {
+                Text(
+                    deleteConfirmationMessage(
+                        transactionCount = selectedIds.size - selectedGroupCount,
+                        groupCount = selectedGroupCount,
+                    ),
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteConfirmation = false
+                        viewModel.deleteSelected()
+                    },
+                ) {
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmation = false }) {
+                    Text("Cancel")
+                }
             },
         )
     }
@@ -492,6 +524,7 @@ private fun SelectionToolbar(
     count: Int,
     isBusy: Boolean,
     showMarkReviewed: Boolean,
+    showGroup: Boolean,
     onClose: () -> Unit,
     onMarkReviewed: () -> Unit,
     onGroup: () -> Unit,
@@ -531,7 +564,7 @@ private fun SelectionToolbar(
             }
         }
         AnimatedVisibility(
-            visible = count >= 2,
+            visible = showGroup,
             enter = expandHorizontally() + fadeIn(),
             exit = shrinkHorizontally() + fadeOut(),
         ) {
@@ -542,7 +575,7 @@ private fun SelectionToolbar(
                 )
             }
         }
-        IconButton(onClick = onDelete) {
+        IconButton(onClick = onDelete, enabled = !isBusy) {
             Icon(
                 imageVector = Icons.Outlined.Delete,
                 contentDescription = "Delete",
@@ -612,4 +645,18 @@ private fun groupByDate(transactions: List<TransactionListItem>): List<Pair<Stri
                 else -> date.format(dateFormatter)
             }
         }.toList()
+}
+
+private fun deleteConfirmationMessage(
+    transactionCount: Int,
+    groupCount: Int,
+): String {
+    val transactions = "$transactionCount transaction${if (transactionCount == 1) "" else "s"}"
+    val groups = "$groupCount group${if (groupCount == 1) "" else "s"}"
+    val groupWarning = "Deleting a group also deletes the transactions inside it."
+    return when {
+        groupCount == 0 -> "Delete $transactions? This action can't be undone."
+        transactionCount == 0 -> "Delete $groups? $groupWarning"
+        else -> "Delete $transactions and $groups? $groupWarning"
+    }
 }

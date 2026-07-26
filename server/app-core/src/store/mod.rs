@@ -606,6 +606,22 @@ impl AppStore {
         .await
     }
 
+    pub async fn delete_transactions(
+        &self,
+        transaction_ids: Vec<String>,
+        group_ids: Vec<String>,
+    ) -> Result<(), crate::error::ApiError> {
+        let token = self.get_auth_token();
+        transactions::delete_transactions(
+            &self.infra,
+            &self.transactions,
+            transaction_ids,
+            group_ids,
+            token.as_deref(),
+        )
+        .await
+    }
+
     // ── Transactions (direct return) ─────────────────────────────────────
 
     pub async fn get_editable_transaction(
@@ -652,6 +668,20 @@ impl AppStore {
     ) -> Result<(), crate::error::ApiError> {
         let token = self.get_auth_token();
         transactions::create_transaction_group(
+            &self.infra,
+            &self.transactions,
+            input,
+            token.as_deref(),
+        )
+        .await
+    }
+
+    pub async fn group_individual_transactions(
+        &self,
+        input: crate::models::CreateTransactionGroupInput,
+    ) -> Result<(), crate::error::ApiError> {
+        let token = self.get_auth_token();
+        transactions::group_individual_transactions(
             &self.infra,
             &self.transactions,
             input,

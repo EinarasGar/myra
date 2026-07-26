@@ -4534,6 +4534,25 @@ export interface DefaultAsset {
 /**
  *
  * @export
+ * @interface DeleteTransactionsRequest
+ */
+export interface DeleteTransactionsRequest {
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof DeleteTransactionsRequest
+   */
+  group_ids: Array<string>;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof DeleteTransactionsRequest
+   */
+  transaction_ids: Array<string>;
+}
+/**
+ *
+ * @export
  * @enum {string}
  */
 
@@ -17802,6 +17821,75 @@ export const TransactionsApiAxiosParamCreator = function (
       };
     },
     /**
+     * Deletes any combination of individual transactions and whole transaction groups in one call. Deleting a group also deletes every transaction inside it.
+     * @summary Delete multiple
+     * @param {string} userId
+     * @param {DeleteTransactionsRequest} deleteTransactionsRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    deleteMultipleTransactionsAndGroups: async (
+      userId: string,
+      deleteTransactionsRequest: DeleteTransactionsRequest,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists(
+        "deleteMultipleTransactionsAndGroups",
+        "userId",
+        userId,
+      );
+      // verify required parameter 'deleteTransactionsRequest' is not null or undefined
+      assertParamExists(
+        "deleteMultipleTransactionsAndGroups",
+        "deleteTransactionsRequest",
+        deleteTransactionsRequest,
+      );
+      const localVarPath = `/api/users/{user_id}/transactions`.replace(
+        `{${"user_id"}}`,
+        encodeURIComponent(String(userId)),
+      );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "DELETE",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter["Content-Type"] = "application/json";
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        deleteTransactionsRequest,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
      * Retrieves a list of all individual and grouped transactions
      * @summary Get all
      * @param {string} userId
@@ -18148,6 +18236,40 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
+     * Deletes any combination of individual transactions and whole transaction groups in one call. Deleting a group also deletes every transaction inside it.
+     * @summary Delete multiple
+     * @param {string} userId
+     * @param {DeleteTransactionsRequest} deleteTransactionsRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async deleteMultipleTransactionsAndGroups(
+      userId: string,
+      deleteTransactionsRequest: DeleteTransactionsRequest,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.deleteMultipleTransactionsAndGroups(
+          userId,
+          deleteTransactionsRequest,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap[
+          "TransactionsApi.deleteMultipleTransactionsAndGroups"
+        ]?.[localVarOperationServerIndex]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
      * Retrieves a list of all individual and grouped transactions
      * @summary Get all
      * @param {string} userId
@@ -18338,6 +18460,27 @@ export const TransactionsApiFactory = function (
         .then((request) => request(axios, basePath));
     },
     /**
+     * Deletes any combination of individual transactions and whole transaction groups in one call. Deleting a group also deletes every transaction inside it.
+     * @summary Delete multiple
+     * @param {string} userId
+     * @param {DeleteTransactionsRequest} deleteTransactionsRequest
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    deleteMultipleTransactionsAndGroups(
+      userId: string,
+      deleteTransactionsRequest: DeleteTransactionsRequest,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<void> {
+      return localVarFp
+        .deleteMultipleTransactionsAndGroups(
+          userId,
+          deleteTransactionsRequest,
+          options,
+        )
+        .then((request) => request(axios, basePath));
+    },
+    /**
      * Retrieves a list of all individual and grouped transactions
      * @summary Get all
      * @param {string} userId
@@ -18456,6 +18599,21 @@ export interface TransactionsApiInterface {
   ): AxiosPromise<void>;
 
   /**
+   * Deletes any combination of individual transactions and whole transaction groups in one call. Deleting a group also deletes every transaction inside it.
+   * @summary Delete multiple
+   * @param {string} userId
+   * @param {DeleteTransactionsRequest} deleteTransactionsRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof TransactionsApiInterface
+   */
+  deleteMultipleTransactionsAndGroups(
+    userId: string,
+    deleteTransactionsRequest: DeleteTransactionsRequest,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<void>;
+
+  /**
    * Retrieves a list of all individual and grouped transactions
    * @summary Get all
    * @param {string} userId
@@ -18554,6 +18712,29 @@ export class TransactionsApi
   ) {
     return TransactionsApiFp(this.configuration)
       .deleteAnExistingTransaction(transactionId, userId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Deletes any combination of individual transactions and whole transaction groups in one call. Deleting a group also deletes every transaction inside it.
+   * @summary Delete multiple
+   * @param {string} userId
+   * @param {DeleteTransactionsRequest} deleteTransactionsRequest
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof TransactionsApi
+   */
+  public deleteMultipleTransactionsAndGroups(
+    userId: string,
+    deleteTransactionsRequest: DeleteTransactionsRequest,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return TransactionsApiFp(this.configuration)
+      .deleteMultipleTransactionsAndGroups(
+        userId,
+        deleteTransactionsRequest,
+        options,
+      )
       .then((request) => request(this.axios, this.basePath));
   }
 

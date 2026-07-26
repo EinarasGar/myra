@@ -173,6 +173,7 @@ fun MainScreen(
     val transactionCache = remember { mutableMapOf<String, TransactionDetailState>() }
     val pendingGroupTransaction = remember { mutableStateOf<GroupTransactionItem?>(null) }
     val editingGroupIndex = remember { mutableStateOf<Int?>(null) }
+    val pendingGroupSelection = remember { mutableStateOf<List<String>>(emptyList()) }
 
     val quickUploadItems by quickUploadViewModel.items.collectAsStateWithLifecycle()
     val selectedTransactionIds by transactionsViewModel.selectedIds.collectAsStateWithLifecycle()
@@ -406,6 +407,7 @@ fun MainScreen(
                     transactionCache = transactionCache,
                     pendingGroupTransaction = pendingGroupTransaction,
                     editingGroupIndex = editingGroupIndex,
+                    pendingGroupSelection = pendingGroupSelection,
                     onNavigateToDetail = ::navigateToDetail,
                     aiChatViewModel = aiChatViewModel,
                     onEdit = { id -> navController.navigate("editAccount/$id") },
@@ -440,6 +442,7 @@ private fun MainNavGraph(
     transactionCache: MutableMap<String, TransactionDetailState>,
     pendingGroupTransaction: MutableState<GroupTransactionItem?>,
     editingGroupIndex: MutableState<Int?>,
+    pendingGroupSelection: MutableState<List<String>>,
     onNavigateToDetail: (TransactionListItem, Boolean) -> Unit,
     aiChatViewModel: AiChatViewModel,
     onEdit: (String) -> Unit,
@@ -477,6 +480,10 @@ private fun MainNavGraph(
                 },
                 onCreateGroup = {
                     navController.navigate("createTransactionGroup")
+                },
+                onGroupSelected = { ids ->
+                    pendingGroupSelection.value = ids
+                    navController.navigate("createTransactionGroup?fromSelection=true")
                 },
                 onQuickUpload = {
                     photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
@@ -646,7 +653,7 @@ private fun MainNavGraph(
             )
         }
         composable(
-            route = "createTransactionGroup?quickUploadId={quickUploadId}",
+            route = "createTransactionGroup?quickUploadId={quickUploadId}&fromSelection={fromSelection}",
             arguments =
                 listOf(
                     navArgument("quickUploadId") {
@@ -654,15 +661,30 @@ private fun MainNavGraph(
                         nullable = true
                         defaultValue = null
                     },
+                    navArgument("fromSelection") {
+                        type = NavType.BoolType
+                        defaultValue = false
+                    },
                 ),
         ) { backStackEntry ->
             val quickUploadId = backStackEntry.arguments?.getString("quickUploadId")
+            val fromSelection = backStackEntry.arguments?.getBoolean("fromSelection") ?: false
             val pending = pendingGroupTransaction.value
             val vm: CreateTransactionGroupViewModel = viewModel(factory = SvertoViewModelFactory)
 
             LaunchedEffect(quickUploadId) {
                 if (quickUploadId != null) {
                     vm.initFromProposal(quickUploadId)
+                }
+            }
+
+            LaunchedEffect(fromSelection) {
+                if (fromSelection) {
+                    val ids = pendingGroupSelection.value
+                    if (ids.isNotEmpty()) {
+                        vm.initFromSelection(ids)
+                        pendingGroupSelection.value = emptyList()
+                    }
                 }
             }
 
@@ -681,8 +703,10 @@ private fun MainNavGraph(
 
             CreateTransactionGroupScreen(
                 quickUploadId = quickUploadId,
+                fromSelection = fromSelection,
                 onDiscard = { navController.popBackStack() },
                 onSuccess = {
+                    transactionsViewModel.clearSelection()
                     transactionsViewModel.refresh()
                     if (quickUploadId != null) {
                         onProposalCompleted(quickUploadId)

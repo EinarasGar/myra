@@ -17,17 +17,18 @@ use crate::{
         combined_items_to_category_ids_hashset, transaction_dtos_to_account_ids_hashset,
         transaction_dtos_to_asset_ids_hashset,
     },
-    errors::ApiError,
+    errors::{ApiError, ApiErrorResponse},
     extractors::{ValidatedJson, ValidatedQuery},
     states::{
         AccountsServiceState, AssetsServiceState, CategoryServiceState,
-        TransactionManagementServiceState,
+        TransactionGroupServiceState, TransactionManagementServiceState,
     },
     view_models::{
         base_models::search::{CombinedTransactionsPage, CursorOrPaginatedSearchQuery},
         errors::{DeleteResponses, GetResponses, UpdateResponses},
         transactions::{
             base_models::metadata_lookup::MetadataLookupTables,
+            delete_transactions::DeleteTransactionsRequestViewModel,
             get_transactions::CombinedTransactionItemViewModel,
             set_visibility::{
                 SetTransactionVisibilityRequestViewModel, SetTransactionsVisibilityRequestViewModel,
@@ -130,6 +131,53 @@ pub async fn delete_transaction(
 ) -> Result<(), ApiError> {
     service
         .delete_transactions(user_id, vec![transaction_id])
+        .await
+        .map_err(ApiError::from_anyhow)?;
+    Ok(())
+}
+
+/// Delete multiple
+///
+/// Deletes any combination of individual transactions and whole transaction groups in one call.
+/// Deleting a group also deletes every transaction inside it.
+#[utoipa::path(
+    delete,
+    path = "/api/users/{user_id}/transactions",
+    tag = "Transactions",
+    operation_id = "Delete multiple transactions and groups.",
+    request_body(
+        content = DeleteTransactionsRequestViewModel,
+    ),
+    responses(
+        (status = 200, description = "Transactions deleted successfully."),
+        (
+            status = 422,
+            description = "Validation error",
+            body = ApiErrorResponse,
+            content_type = "application/json"
+        ),
+        DeleteResponses
+    ),
+    params(
+        ("user_id" = Uuid, Path, description = "User id for which the transactions belong to."),
+    ),
+    security(
+        ("auth_token" = [])
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
+pub async fn delete_transactions(
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    TransactionGroupServiceState(service): TransactionGroupServiceState,
+    ValidatedJson(body): ValidatedJson<DeleteTransactionsRequestViewModel>,
+) -> Result<(), ApiError> {
+    body.validate()?;
+    service
+        .delete_transactions_and_groups(
+            user_id,
+            body.transaction_ids.into_iter().unique().collect(),
+            body.group_ids.into_iter().unique().collect(),
+        )
         .await
         .map_err(ApiError::from_anyhow)?;
     Ok(())

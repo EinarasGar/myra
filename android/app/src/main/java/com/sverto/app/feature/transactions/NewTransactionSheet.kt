@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -91,6 +92,9 @@ fun NewTransactionSheet(
     modifier: Modifier = Modifier,
     showGroupOption: Boolean = true,
     onSelectGroup: () -> Unit = {},
+    title: String = "New transaction",
+    subtitle: String = "What did you just do?",
+    selectedTypeKey: String? = null,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -108,14 +112,14 @@ fun NewTransactionSheet(
                     .padding(horizontal = 24.dp),
         ) {
             Text(
-                text = "New transaction",
+                text = title,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "What did you just do?",
+                text = subtitle,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -162,6 +166,7 @@ fun NewTransactionSheet(
                             TransactionTypeCard(
                                 type = item.type,
                                 palette = palette,
+                                selected = item.type.key == selectedTypeKey,
                                 shape =
                                     if (item.indexInGroup % 2 == 0) {
                                         palette.containerShapes.first
@@ -306,12 +311,18 @@ private fun GroupPillCard(onClick: () -> Unit) {
 private fun TransactionTypeCard(
     type: TransactionTypeDefinition,
     palette: GroupPalette,
+    selected: Boolean,
     shape: RoundedCornerShape,
     onClick: () -> Unit,
 ) {
     Surface(
         shape = shape,
-        color = MaterialTheme.colorScheme.surfaceBright,
+        color =
+            if (selected) {
+                MaterialTheme.colorScheme.secondaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceBright
+            },
         modifier =
             Modifier
                 .fillMaxWidth()
@@ -332,7 +343,7 @@ private fun TransactionTypeCard(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = type.icon,
+                    imageVector = if (selected) Icons.Filled.Check else type.icon,
                     contentDescription = null,
                     tint = palette.iconTint,
                     modifier = Modifier.size(20.dp),

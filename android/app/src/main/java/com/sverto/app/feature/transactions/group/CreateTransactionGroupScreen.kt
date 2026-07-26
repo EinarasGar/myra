@@ -99,6 +99,7 @@ fun CreateTransactionGroupScreen(
     editGroupId: String? = null,
     editGroup: TransactionListItem? = null,
     quickUploadId: String? = null,
+    fromSelection: Boolean = false,
     onCorrectionTypeChanged: ((CorrectionTypeChange) -> Unit)? = null,
     viewModel: CreateTransactionGroupViewModel = viewModel(factory = SvertoViewModelFactory),
 ) {
@@ -126,7 +127,7 @@ fun CreateTransactionGroupScreen(
     LaunchedEffect(editGroupId) {
         if (editGroup != null) {
             viewModel.initForEdit(editGroup)
-        } else if (quickUploadId == null) {
+        } else if (quickUploadId == null && !fromSelection) {
             viewModel.init()
         }
     }

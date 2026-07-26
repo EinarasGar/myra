@@ -8,6 +8,7 @@ import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.ArrowOutward
 import androidx.compose.material.icons.outlined.Category
@@ -45,6 +47,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -56,12 +59,18 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sverto.app.core.SvertoViewModelFactory
+import com.sverto.app.feature.transactions.NewTransactionSheet
 import com.sverto.app.feature.transactions.group.GroupTransactionItem
 import uniffi.sverto_core.TransactionListItem
 
@@ -105,7 +114,8 @@ fun CreateTransactionScreen(
     onCorrectionTypeChanged: ((CorrectionTypeChange) -> Unit)? = null,
     viewModel: CreateTransactionViewModel = viewModel(factory = SvertoViewModelFactory),
 ) {
-    val config = remember(typeKey) { getTransactionTypeConfig(typeKey) }
+    val currentTypeKey by viewModel.typeKey.collectAsStateWithLifecycle()
+    val config = remember(currentTypeKey) { getTransactionTypeConfig(currentTypeKey) }
     val formState by viewModel.formState.collectAsStateWithLifecycle()
     val accounts by viewModel.accounts.collectAsStateWithLifecycle()
     val assetResults by viewModel.assetResults.collectAsStateWithLifecycle()
@@ -120,16 +130,17 @@ fun CreateTransactionScreen(
 
     var scene by rememberSaveable(stateSaver = sceneSaver()) { mutableStateOf<Scene>(Scene.Form) }
     var showAccountPicker by remember { mutableStateOf<AccountTarget?>(null) }
+    var showTypePicker by remember { mutableStateOf(false) }
     val motionScheme = MaterialTheme.motionScheme
 
     LaunchedEffect(typeKey, editTransactionId, quickUploadId) {
         viewModel.setGroupCallback(onGroupTransactionReady)
         if (quickUploadId != null) {
-            viewModel.initFromProposal(quickUploadId)
+            viewModel.initFromProposal(typeKey, quickUploadId)
         } else if (editTransactionId == null) {
-            viewModel.init()
+            viewModel.init(typeKey)
         } else {
-            viewModel.initForEdit(editTransactionId)
+            viewModel.initForEdit(typeKey, editTransactionId)
         }
     }
     LaunchedEffect(submitState) {
@@ -173,7 +184,8 @@ fun CreateTransactionScreen(
                             sharedScope = sharedScope,
                             animatedVisibilityScope = avScope,
                             onDiscard = onDiscard,
-                            onSubmit = { viewModel.submit(config) },
+                            onSubmit = { viewModel.submit() },
+                            onPickType = { showTypePicker = true },
                             onSelectDate = viewModel::updateDate,
                             onPickPrimaryAccount = { showAccountPicker = AccountTarget.PRIMARY },
                             onPickSecondaryAccount = { showAccountPicker = AccountTarget.SECONDARY },
@@ -259,6 +271,20 @@ fun CreateTransactionScreen(
             )
         }
 
+        if (showTypePicker) {
+            NewTransactionSheet(
+                onDismiss = { showTypePicker = false },
+                onSelectType = { newTypeKey ->
+                    showTypePicker = false
+                    viewModel.changeType(newTypeKey)
+                },
+                showGroupOption = false,
+                title = "Change type",
+                subtitle = "Pick a different transaction type",
+                selectedTypeKey = currentTypeKey,
+            )
+        }
+
         if (isLoading) {
             Surface(
                 color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.92f),
@@ -297,6 +323,7 @@ private fun CreateTransactionForm(
     animatedVisibilityScope: AnimatedVisibilityScope,
     onDiscard: () -> Unit,
     onSubmit: () -> Unit,
+    onPickType: () -> Unit,
     onSelectDate: (Long) -> Unit,
     onPickPrimaryAccount: () -> Unit,
     onPickSecondaryAccount: () -> Unit,
@@ -323,10 +350,7 @@ private fun CreateTransactionForm(
                     }
                 },
                 title = {
-                    Text(
-                        text = config.label,
-                        fontWeight = FontWeight.SemiBold,
-                    )
+                    TypeTitleButton(label = config.label, onClick = onPickType)
                 },
                 colors =
                     TopAppBarDefaults.topAppBarColors(
@@ -724,6 +748,32 @@ private fun SaveBar(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun TypeTitleButton(
+    label: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier =
+            Modifier
+                .clip(MaterialTheme.shapes.medium)
+                .clickable(onClick = onClick)
+                .semantics {
+                    role = Role.Button
+                    onClick(label = "Change transaction type", action = null)
+                }.minimumInteractiveComponentSize()
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+    ) {
+        Text(text = label, fontWeight = FontWeight.SemiBold)
+        Spacer(Modifier.width(4.dp))
+        Icon(
+            imageVector = Icons.Default.ArrowDropDown,
+            contentDescription = null,
+        )
     }
 }
 

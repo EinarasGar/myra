@@ -51,6 +51,7 @@ mod modifiers;
         super::handlers::transaction_groups::get_transaction_groups,
         super::handlers::transactions::update_transaction,
         super::handlers::transactions::delete_transaction,
+        super::handlers::transactions::delete_transactions,
         super::handlers::transactions::get_transactions,
         super::handlers::individual_transactions::add_individual_transaction,
         super::handlers::individual_transactions::update_individual_transaction,
