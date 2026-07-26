@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAddIndividualTransaction } from "@/hooks/api/use-add-individual-transaction";
 import { useUserId } from "@/hooks/use-auth";
+import { useSuggestedCurrency } from "@/hooks/use-suggested-currency";
 import type { ExpandedAsset } from "@/types/assets";
 import type { ExpandedAccount } from "@/types/account";
 import type { Category } from "@/types/category";
@@ -38,6 +39,7 @@ export default function AddTransactionForm({
 }: AddTransactionFormProps) {
   const userId = useUserId();
   const addTransaction = useAddIndividualTransaction(userId);
+  const suggestCurrency = useSuggestedCurrency();
 
   const [assetAmount, setAssetAmount] = useState<{
     asset: ExpandedAsset | null;
@@ -120,7 +122,18 @@ export default function AddTransactionForm({
         }
       />
       <DateTimeLanguagePicker value={selectedDate} onChange={setSelectedDate} />
-      <AccountPicker value={selectedAccount} onChange={setSelectedAccount} />
+      <AccountPicker
+        value={selectedAccount}
+        onChange={(account) => {
+          setSelectedAccount(account);
+          const suggested = suggestCurrency(account);
+          if (suggested) {
+            setAssetAmount((prev) =>
+              prev.asset ? prev : { ...prev, asset: suggested },
+            );
+          }
+        }}
+      />
       <CategoryPicker value={selectedCategory} onChange={setSelectedCategory} />
       <Input
         placeholder="Description (optional)"

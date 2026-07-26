@@ -9,6 +9,7 @@ sealed interface EntryMode {
         val hasCategory: Boolean = false,
         val hasDescription: Boolean = false,
         val hasOriginAsset: Boolean = false,
+        val isCash: Boolean = false,
     ) : EntryMode
 
     data class Dual(
@@ -23,6 +24,8 @@ sealed interface EntryMode {
         val sameAccount: Boolean = false,
         val sameAsset: Boolean = false,
         val sharedAmount: Boolean = false,
+        val primaryIsCash: Boolean = false,
+        val secondaryIsCash: Boolean = false,
     ) : EntryMode
 }
 
@@ -44,25 +47,26 @@ fun getTransactionTypeConfig(typeKey: String): TransactionTypeConfig =
                         amountSign = AmountSign.ANY,
                         hasCategory = true,
                         hasDescription = true,
+                        isCash = true,
                     ),
             )
         "account_fees" ->
             TransactionTypeConfig(
                 apiType = "account_fees",
                 label = "Account Fees",
-                entryMode = EntryMode.Single(amountSign = AmountSign.NEGATIVE),
+                entryMode = EntryMode.Single(amountSign = AmountSign.NEGATIVE, isCash = true),
             )
         "cash_transfer_in" ->
             TransactionTypeConfig(
                 apiType = "cash_transfer_in",
                 label = "Cash In",
-                entryMode = EntryMode.Single(amountSign = AmountSign.POSITIVE),
+                entryMode = EntryMode.Single(amountSign = AmountSign.POSITIVE, isCash = true),
             )
         "cash_transfer_out" ->
             TransactionTypeConfig(
                 apiType = "cash_transfer_out",
                 label = "Cash Out",
-                entryMode = EntryMode.Single(amountSign = AmountSign.NEGATIVE),
+                entryMode = EntryMode.Single(amountSign = AmountSign.NEGATIVE, isCash = true),
             )
         "asset_transfer_in" ->
             TransactionTypeConfig(
@@ -84,6 +88,7 @@ fun getTransactionTypeConfig(typeKey: String): TransactionTypeConfig =
                     EntryMode.Single(
                         amountSign = AmountSign.POSITIVE,
                         hasOriginAsset = true,
+                        isCash = true,
                     ),
             )
         "asset_dividend" ->
@@ -107,6 +112,7 @@ fun getTransactionTypeConfig(typeKey: String): TransactionTypeConfig =
                         secondarySign = AmountSign.NEGATIVE,
                         secondaryAmountLabel = "Amount paid",
                         sameAccount = true,
+                        secondaryIsCash = true,
                     ),
             )
         "asset_sale" ->
@@ -124,6 +130,7 @@ fun getTransactionTypeConfig(typeKey: String): TransactionTypeConfig =
                         secondarySign = AmountSign.POSITIVE,
                         secondaryAmountLabel = "Proceeds",
                         sameAccount = true,
+                        secondaryIsCash = true,
                     ),
             )
         "asset_trade" ->
@@ -174,6 +181,8 @@ fun getTransactionTypeConfig(typeKey: String): TransactionTypeConfig =
                         secondaryAmountLabel = "Amount arriving",
                         sameAsset = true,
                         sharedAmount = true,
+                        primaryIsCash = true,
+                        secondaryIsCash = true,
                     ),
             )
         else -> error("Unknown transaction type: $typeKey")

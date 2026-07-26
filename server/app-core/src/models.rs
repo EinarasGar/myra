@@ -84,6 +84,7 @@ pub struct HoldingItem {
 pub struct AccountItem {
     pub id: String,
     pub name: String,
+    pub suggested_currency: Option<AssetItem>,
 }
 
 #[derive(Debug, Clone, uniffi::Record)]
@@ -102,6 +103,7 @@ pub struct AccountListItem {
     pub balance: Option<f64>,
     pub unrealized_gain: Option<f64>,
     pub holdings_count: Option<u32>,
+    pub suggested_currency: Option<AssetItem>,
 }
 
 #[derive(Debug, Clone, uniffi::Record, serde::Serialize)]

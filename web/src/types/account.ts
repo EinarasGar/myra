@@ -15,6 +15,7 @@ export interface Account {
   account_type_id: number;
   liquidity_type_id: number;
   name: string;
+  suggested_currency_id: number | null;
 }
 
 export interface AccountIdentifier {
@@ -29,6 +30,7 @@ export interface ExpandedAccount {
   liquidityType?: LiquidityType;
   ownershipShare: number;
   identifiers: AccountIdentifier[];
+  suggestedCurrencyId: number | null;
 }
 
 export const mapAccountComboBoxProps = <T extends Account | ExpandedAccount>(

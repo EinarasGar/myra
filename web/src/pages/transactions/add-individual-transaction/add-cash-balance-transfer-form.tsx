@@ -5,6 +5,7 @@ import { DateTimeLanguagePicker } from "@/components/feature/date-time-language-
 import { Button } from "@/components/ui/button";
 import { useAddIndividualTransaction } from "@/hooks/api/use-add-individual-transaction";
 import { useUserId } from "@/hooks/use-auth";
+import { useSuggestedCurrency } from "@/hooks/use-suggested-currency";
 import type { ExpandedAsset } from "@/types/assets";
 import type { ExpandedAccount } from "@/types/account";
 import type { TransactionInput } from "@/api";
@@ -20,6 +21,7 @@ export default function AddCashBalanceTransferForm({
 }: AddCashBalanceTransferFormProps) {
   const userId = useUserId();
   const addTransaction = useAddIndividualTransaction(userId);
+  const suggestCurrency = useSuggestedCurrency();
 
   const [selectedDate, setSelectedDate] = useState<Date>();
 
@@ -79,12 +81,34 @@ export default function AddCashBalanceTransferForm({
 
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium">Transfer From</span>
-        <AccountPicker value={outgoingAccount} onChange={setOutgoingAccount} />
+        <AccountPicker
+          value={outgoingAccount}
+          onChange={(account) => {
+            setOutgoingAccount(account);
+            const suggested = suggestCurrency(account);
+            if (suggested) {
+              setEntry((prev) =>
+                prev.asset ? prev : { ...prev, asset: suggested },
+              );
+            }
+          }}
+        />
       </div>
 
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium">Transfer To</span>
-        <AccountPicker value={incomingAccount} onChange={setIncomingAccount} />
+        <AccountPicker
+          value={incomingAccount}
+          onChange={(account) => {
+            setIncomingAccount(account);
+            const suggested = suggestCurrency(account);
+            if (suggested) {
+              setEntry((prev) =>
+                prev.asset ? prev : { ...prev, asset: suggested },
+              );
+            }
+          }}
+        />
       </div>
 
       <div className="flex flex-col gap-2">

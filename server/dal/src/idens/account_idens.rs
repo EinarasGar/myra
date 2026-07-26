@@ -60,3 +60,35 @@ impl Iden for AccountLiquidityTypesIden {
         }
     }
 }
+
+#[allow(dead_code)]
+pub enum AccountsAliasIden {
+    SuggestedCurrencySubquery,
+}
+
+impl Iden for AccountsAliasIden {
+    fn unquoted(&self) -> &str {
+        match self {
+            Self::SuggestedCurrencySubquery => "suggested_currency",
+        }
+    }
+}
+
+#[allow(dead_code)]
+pub enum SuggestedCurrencyIden {
+    Id,
+    Ticker,
+    Name,
+    AssetType,
+}
+
+impl Iden for SuggestedCurrencyIden {
+    fn unquoted(&self) -> &str {
+        match self {
+            Self::Id => "suggested_currency_id",
+            Self::Ticker => "suggested_currency_ticker",
+            Self::Name => "suggested_currency_name",
+            Self::AssetType => "suggested_currency_type",
+        }
+    }
+}

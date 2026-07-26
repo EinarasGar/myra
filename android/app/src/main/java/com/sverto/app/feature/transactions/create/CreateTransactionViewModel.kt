@@ -331,14 +331,16 @@ class CreateTransactionViewModel(
     }
 
     fun updatePrimaryAccount(item: AccountItem) {
-        _formState.value =
-            _formState.value.copy(
+        val state = _formState.value
+        val withAccount =
+            state.copy(
                 primaryEntry =
-                    _formState.value.primaryEntry.copy(
+                    state.primaryEntry.copy(
                         accountId = item.id,
                         accountName = item.name,
                     ),
             )
+        _formState.value = applySuggestedCurrency(withAccount, item, AccountTarget.PRIMARY)
     }
 
     fun updatePrimaryAsset(item: AssetItem) {
@@ -361,14 +363,16 @@ class CreateTransactionViewModel(
     }
 
     fun updateSecondaryAccount(item: AccountItem) {
-        _formState.value =
-            _formState.value.copy(
+        val state = _formState.value
+        val withAccount =
+            state.copy(
                 secondaryEntry =
-                    _formState.value.secondaryEntry.copy(
+                    state.secondaryEntry.copy(
                         accountId = item.id,
                         accountName = item.name,
                     ),
             )
+        _formState.value = applySuggestedCurrency(withAccount, item, AccountTarget.SECONDARY)
     }
 
     fun updateSecondaryAsset(item: AssetItem) {
@@ -388,6 +392,42 @@ class CreateTransactionViewModel(
             _formState.value.copy(
                 secondaryEntry = _formState.value.secondaryEntry.copy(amount = value),
             )
+    }
+
+    private enum class AccountTarget { PRIMARY, SECONDARY }
+
+    private fun applySuggestedCurrency(
+        state: TransactionFormState,
+        item: AccountItem,
+        target: AccountTarget,
+    ): TransactionFormState {
+        val currency = item.suggestedCurrency ?: return state
+        return when (val mode = config.entryMode) {
+            is EntryMode.Single ->
+                if (mode.isCash && target == AccountTarget.PRIMARY) {
+                    state.copy(primaryEntry = state.primaryEntry.withAsset(currency))
+                } else {
+                    state
+                }
+            is EntryMode.Dual -> {
+                val fillsPrimary =
+                    mode.primaryIsCash && (target == AccountTarget.PRIMARY || mode.sameAccount)
+                val fillsSecondary =
+                    mode.secondaryIsCash &&
+                        (target == AccountTarget.SECONDARY || mode.sameAccount || mode.sameAsset)
+                var next = state
+                if (fillsPrimary) {
+                    next = next.copy(primaryEntry = next.primaryEntry.withAsset(currency))
+                }
+                if (fillsSecondary && !mode.sameAsset) {
+                    next = next.copy(secondaryEntry = next.secondaryEntry.withAsset(currency))
+                }
+                if (fillsSecondary && mode.sameAsset) {
+                    next = next.copy(primaryEntry = next.primaryEntry.withAsset(currency))
+                }
+                next
+            }
+        }
     }
 
     fun submit() {
@@ -548,3 +588,6 @@ private fun signedAmount(
 }
 
 private fun formatAmount(input: CreateTransactionInput): String = editableAmount(input.primaryAmount)
+
+private fun EntryFormState.withAsset(asset: AssetItem): EntryFormState =
+    if (assetId != null) this else copy(assetId = asset.id, assetDisplay = asset.display)

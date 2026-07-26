@@ -19,6 +19,14 @@ pub struct AccountWithMetadata {
     pub liquidity_type: i32,
     pub liquidity_type_name: String,
     pub ownership_share: Decimal,
+    #[sqlx(default)]
+    pub suggested_currency_id: Option<i32>,
+    #[sqlx(default)]
+    pub suggested_currency_ticker: Option<String>,
+    #[sqlx(default)]
+    pub suggested_currency_name: Option<String>,
+    #[sqlx(default)]
+    pub suggested_currency_type: Option<i32>,
 }
 
 #[derive(sqlx::FromRow, Debug)]

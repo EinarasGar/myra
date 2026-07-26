@@ -32,6 +32,7 @@ export function useGetUserAccounts(userId: string) {
             : undefined,
           ownershipShare: acc.ownership_share ?? 1,
           identifiers: [],
+          suggestedCurrencyId: acc.suggested_currency ?? null,
         };
       });
 

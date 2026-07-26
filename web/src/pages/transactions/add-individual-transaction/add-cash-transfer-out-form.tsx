@@ -5,6 +5,7 @@ import { DateTimeLanguagePicker } from "@/components/feature/date-time-language-
 import { Button } from "@/components/ui/button";
 import { useAddIndividualTransaction } from "@/hooks/api/use-add-individual-transaction";
 import { useUserId } from "@/hooks/use-auth";
+import { useSuggestedCurrency } from "@/hooks/use-suggested-currency";
 import type { ExpandedAsset } from "@/types/assets";
 import type { ExpandedAccount } from "@/types/account";
 import type { TransactionInput } from "@/api";
@@ -20,6 +21,7 @@ export default function AddCashTransferOutForm({
 }: AddCashTransferOutFormProps) {
   const userId = useUserId();
   const addTransaction = useAddIndividualTransaction(userId);
+  const suggestCurrency = useSuggestedCurrency();
 
   const [selectedDate, setSelectedDate] = useState<Date>();
 
@@ -66,7 +68,18 @@ export default function AddCashTransferOutForm({
 
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium">Entry</span>
-        <AccountPicker value={entryAccount} onChange={setEntryAccount} />
+        <AccountPicker
+          value={entryAccount}
+          onChange={(account) => {
+            setEntryAccount(account);
+            const suggested = suggestCurrency(account);
+            if (suggested) {
+              setEntry((prev) =>
+                prev.asset ? prev : { ...prev, asset: suggested },
+              );
+            }
+          }}
+        />
         <AssetAmountInput
           value={entry}
           defaultSign="negative"

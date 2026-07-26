@@ -32,6 +32,13 @@ use crate::{
         get_accounts::GetAccountsResponseViewModel,
         update_account::UpdateAccountViewModel,
     },
+    view_models::assets::base_models::{
+        asset::{Asset, IdentifiableAsset, IdentifiableAssetViewModel},
+        asset_id::RequiredAssetId,
+        asset_name::AssetName,
+        asset_ticker::AssetTicker,
+        asset_type_id::RequiredAssetTypeId,
+    },
     view_models::errors::{CreateResponses, DeleteResponses, GetResponses, UpdateResponses},
     view_models::transactions::validation::Validatable,
 };
@@ -116,6 +123,7 @@ pub async fn get_accounts(
         i32,
         IdentifiableAccountLiquidityTypeViewModel,
     > = HashMap::new();
+    let mut assets_hashmap: HashMap<i32, IdentifiableAssetViewModel> = HashMap::new();
 
     account.iter().for_each(|x| {
         account_types_hashmap
@@ -131,6 +139,19 @@ pub async fn get_accounts(
                 name: x.liquidity_type.name.clone(),
                 id: RequiredLiquidityTypeId(x.liquidity_type.id),
             });
+
+        if let Some(currency) = &x.suggested_currency {
+            assets_hashmap
+                .entry(currency.id)
+                .or_insert_with(|| IdentifiableAsset {
+                    asset_id: RequiredAssetId(currency.id),
+                    asset: Asset {
+                        ticker: AssetTicker::from_trusted(currency.ticker.clone()),
+                        name: AssetName::from_trusted(currency.name.clone()),
+                        asset_type: RequiredAssetTypeId(currency.asset_type),
+                    },
+                });
+        }
     });
 
     let ret = GetAccountsResponseViewModel {
@@ -138,6 +159,7 @@ pub async fn get_accounts(
         lookup_tables: AccountMetadataLookupTables {
             account_types: account_types_hashmap.values().cloned().collect(),
             account_liquidity_types: account_liquidity_types_hashmap.values().cloned().collect(),
+            assets: assets_hashmap.values().cloned().collect(),
         },
     };
 

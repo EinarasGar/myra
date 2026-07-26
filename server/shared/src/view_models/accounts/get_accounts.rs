@@ -3,6 +3,7 @@ use business::dtos::accounts::full_account_dto::FullAccountDto;
 use serde::{Deserialize, Serialize};
 
 use crate::view_models::accounts::base_models::ownership_share::OwnershipShare;
+use crate::view_models::assets::base_models::asset_id::AssetId;
 
 use super::base_models::liquidity_type_id::RequiredLiquidityTypeId;
 use super::base_models::{
@@ -15,6 +16,7 @@ pub struct GetAccountsResponseViewModelRow {
     pub account: IdentifiableAccountViewModel,
     pub ownership_share: OwnershipShare,
     pub liquidity_type: RequiredLiquidityTypeId,
+    pub suggested_currency: AssetId,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, utoipa::ToSchema)]
@@ -29,6 +31,7 @@ impl From<FullAccountDto> for GetAccountsResponseViewModelRow {
         Self {
             liquidity_type: RequiredLiquidityTypeId(account.liquidity_type.id),
             ownership_share: OwnershipShare::from_trusted(account.ownership_share),
+            suggested_currency: AssetId(account.suggested_currency.as_ref().map(|c| c.id)),
             account: account.into(),
         }
     }

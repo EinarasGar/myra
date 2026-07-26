@@ -5,6 +5,7 @@ use uuid::Uuid;
 use super::{
     account_identifier_dto::AccountIdentifierDto,
     account_liquidity_type_dto::AccountLiquidityTypeDto, account_type_dto::AccountTypeDto,
+    suggested_currency_dto::SuggestedCurrencyDto,
 };
 
 pub struct FullAccountDto {
@@ -15,10 +16,26 @@ pub struct FullAccountDto {
     pub liquidity_type: AccountLiquidityTypeDto,
     pub ownership_share: Decimal,
     pub identifiers: Vec<AccountIdentifierDto>,
+    pub suggested_currency: Option<SuggestedCurrencyDto>,
 }
 
 impl From<AccountWithMetadata> for FullAccountDto {
     fn from(account: AccountWithMetadata) -> Self {
+        let suggested_currency = match (
+            account.suggested_currency_id,
+            account.suggested_currency_ticker,
+            account.suggested_currency_name,
+            account.suggested_currency_type,
+        ) {
+            (Some(id), Some(ticker), Some(name), Some(asset_type)) => Some(SuggestedCurrencyDto {
+                id,
+                ticker,
+                name,
+                asset_type,
+            }),
+            _ => None,
+        };
+
         Self {
             id: account.id,
             user_id: account.user_id,
@@ -33,6 +50,7 @@ impl From<AccountWithMetadata> for FullAccountDto {
             },
             ownership_share: account.ownership_share,
             identifiers: Vec::new(),
+            suggested_currency,
         }
     }
 }

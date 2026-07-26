@@ -23,16 +23,26 @@ export const useAccountStore = create<AccountsState>((set) => ({
   accountTypes: [],
   liquidityTypes: [],
   add: (newAccounts) =>
-    set((state) => ({
-      ...state,
-      accounts: [
-        ...state.accounts,
-        ...newAccounts.filter(
-          (newAccount) =>
-            !state.accounts.some((account) => account.id === newAccount.id),
-        ),
-      ],
-    })),
+    set((state) => {
+      const merged = new Map(
+        state.accounts.map((account) => [account.id, account]),
+      );
+      newAccounts.forEach((incoming) => {
+        const existing = merged.get(incoming.id);
+        merged.set(
+          incoming.id,
+          existing
+            ? {
+                ...existing,
+                suggested_currency_id:
+                  incoming.suggested_currency_id ??
+                  existing.suggested_currency_id,
+              }
+            : incoming,
+        );
+      });
+      return { ...state, accounts: [...merged.values()] };
+    }),
   addAccountType: (newAccountTypes) =>
     set((state) => ({
       ...state,
@@ -82,6 +92,7 @@ export const useExpandedAccounts = () => {
           liquidityType: liquidityTypes.find(
             (t) => t.id === account.liquidity_type_id,
           ),
+          suggestedCurrencyId: account.suggested_currency_id,
         }) as ExpandedAccount,
     );
   }, [accounts, accountTypes, liquidityTypes]);

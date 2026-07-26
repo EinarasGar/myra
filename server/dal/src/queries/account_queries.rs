@@ -1,11 +1,21 @@
-use sea_query::{Expr, ExprTrait, PostgresQueryBuilder, Query};
+use sea_query::{Expr, ExprTrait, Func, JoinType, Order, PostgresQueryBuilder, Query};
 use sea_query_sqlx::SqlxBinder;
 use sqlx::types::Uuid;
 
 use super::DbQueryWithValues;
 use crate::{
-    idens::account_idens::{AccountIden, AccountLiquidityTypesIden, AccountTypesIden},
-    models::account_models::{AccountCreationModel, AccountUpdateModel},
+    idens::{
+        account_idens::{
+            AccountIden, AccountLiquidityTypesIden, AccountTypesIden, AccountsAliasIden,
+            SuggestedCurrencyIden,
+        },
+        asset_idens::AssetsIden,
+        entries_idens::EntryIden,
+    },
+    models::{
+        account_models::{AccountCreationModel, AccountUpdateModel},
+        asset_models::asset_type_ids,
+    },
     query_params::get_accounts_params::{GetAccountsParams, GetAccountsParamsSeachType},
 };
 
@@ -45,6 +55,34 @@ pub fn get_accounts(params: GetAccountsParams) -> DbQueryWithValues {
             |_q| {},
         )
         .conditions(
+            params.include_suggested_currency,
+            |q| {
+                q.column((
+                    AccountsAliasIden::SuggestedCurrencySubquery,
+                    SuggestedCurrencyIden::Id,
+                ))
+                .column((
+                    AccountsAliasIden::SuggestedCurrencySubquery,
+                    SuggestedCurrencyIden::Ticker,
+                ))
+                .column((
+                    AccountsAliasIden::SuggestedCurrencySubquery,
+                    SuggestedCurrencyIden::Name,
+                ))
+                .column((
+                    AccountsAliasIden::SuggestedCurrencySubquery,
+                    SuggestedCurrencyIden::AssetType,
+                ))
+                .join_lateral(
+                    JoinType::LeftJoin,
+                    suggested_currency_subquery(),
+                    AccountsAliasIden::SuggestedCurrencySubquery,
+                    Expr::cust("TRUE"),
+                );
+            },
+            |_q| {},
+        )
+        .conditions(
             params.include_inactive,
             |_q| {},
             |q| {
@@ -74,6 +112,52 @@ pub fn get_accounts(params: GetAccountsParams) -> DbQueryWithValues {
     }
 
     get_accounts_builder.build_sqlx(PostgresQueryBuilder).into()
+}
+
+fn suggested_currency_subquery() -> sea_query::SelectStatement {
+    Query::select()
+        .expr_as(
+            Expr::col((EntryIden::Table, EntryIden::AssetId)),
+            SuggestedCurrencyIden::Id,
+        )
+        .expr_as(
+            Expr::col((AssetsIden::Table, AssetsIden::Ticker)),
+            SuggestedCurrencyIden::Ticker,
+        )
+        .expr_as(
+            Expr::col((AssetsIden::Table, AssetsIden::AssetName)),
+            SuggestedCurrencyIden::Name,
+        )
+        .expr_as(
+            Expr::col((AssetsIden::Table, AssetsIden::AssetType)),
+            SuggestedCurrencyIden::AssetType,
+        )
+        .from(EntryIden::Table)
+        .join(
+            JoinType::Join,
+            AssetsIden::Table,
+            Expr::col((AssetsIden::Table, AssetsIden::Id))
+                .equals((EntryIden::Table, EntryIden::AssetId))
+                .and(
+                    Expr::col((AssetsIden::Table, AssetsIden::AssetType))
+                        .eq(asset_type_ids::CURRENCY),
+                ),
+        )
+        .and_where(
+            Expr::col((EntryIden::Table, EntryIden::AccountId))
+                .equals((AccountIden::Table, AccountIden::Id)),
+        )
+        .group_by_col((EntryIden::Table, EntryIden::AssetId))
+        .group_by_col((AssetsIden::Table, AssetsIden::Ticker))
+        .group_by_col((AssetsIden::Table, AssetsIden::AssetName))
+        .group_by_col((AssetsIden::Table, AssetsIden::AssetType))
+        .order_by_expr(
+            Func::count(Expr::col((EntryIden::Table, EntryIden::AssetId))).into(),
+            Order::Desc,
+        )
+        .order_by((EntryIden::Table, EntryIden::AssetId), Order::Asc)
+        .limit(1)
+        .take()
 }
 
 #[macros::named_query]

@@ -5,6 +5,7 @@ import { DateTimeLanguagePicker } from "@/components/feature/date-time-language-
 import { Button } from "@/components/ui/button";
 import { useAddIndividualTransaction } from "@/hooks/api/use-add-individual-transaction";
 import { useUserId } from "@/hooks/use-auth";
+import { useSuggestedCurrency } from "@/hooks/use-suggested-currency";
 import type { ExpandedAsset } from "@/types/assets";
 import type { ExpandedAccount } from "@/types/account";
 import type { TransactionInput } from "@/api";
@@ -20,6 +21,7 @@ export default function AddAssetSaleForm({
 }: AddAssetSaleFormProps) {
   const userId = useUserId();
   const addTransaction = useAddIndividualTransaction(userId);
+  const suggestCurrency = useSuggestedCurrency();
 
   const [selectedDate, setSelectedDate] = useState<Date>();
 
@@ -95,7 +97,18 @@ export default function AddAssetSaleForm({
 
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium">Proceeds</span>
-        <AccountPicker value={proceedsAccount} onChange={setProceedsAccount} />
+        <AccountPicker
+          value={proceedsAccount}
+          onChange={(account) => {
+            setProceedsAccount(account);
+            const suggested = suggestCurrency(account);
+            if (suggested) {
+              setProceeds((prev) =>
+                prev.asset ? prev : { ...prev, asset: suggested },
+              );
+            }
+          }}
+        />
         <AssetAmountInput
           value={proceeds}
           defaultSign="positive"

@@ -41,6 +41,7 @@ export default function useGetCombinedTransactions(
           id: account.account_id,
           account_type_id: account.account_type,
           liquidity_type_id: 0,
+          suggested_currency_id: null,
           ...account,
         })),
       );

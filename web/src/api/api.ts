@@ -337,6 +337,12 @@ export interface AccountMetadataLookupTables {
    * @memberof AccountMetadataLookupTables
    */
   account_types: Array<AccountType>;
+  /**
+   *
+   * @type {Array<AssetAssetRequiredAssetTypeIdWithId>}
+   * @memberof AccountMetadataLookupTables
+   */
+  assets: Array<AssetAssetRequiredAssetTypeIdWithId>;
 }
 /**
  *
@@ -4732,6 +4738,12 @@ export interface GetAccountsResponseViewModelRow {
    * @memberof GetAccountsResponseViewModelRow
    */
   ownership_share: number;
+  /**
+   *
+   * @type {number}
+   * @memberof GetAccountsResponseViewModelRow
+   */
+  suggested_currency: number | null;
 }
 /**
  *

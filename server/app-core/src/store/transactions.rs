@@ -548,6 +548,7 @@ pub async fn get_accounts_list(
                 .map(|item| AccountItem {
                     id: item.id,
                     name: item.name,
+                    suggested_currency: item.suggested_currency,
                 })
                 .collect()
         })

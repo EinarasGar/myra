@@ -4,3 +4,4 @@ pub mod account_identifier_dto;
 pub mod account_liquidity_type_dto;
 pub mod account_type_dto;
 pub mod full_account_dto;
+pub mod suggested_currency_dto;
