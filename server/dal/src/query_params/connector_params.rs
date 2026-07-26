@@ -28,6 +28,42 @@ impl GetConnectorConnectionsParams {
 }
 
 #[derive(Debug)]
+pub struct GetRawPagesParams {
+    pub search_type: GetRawPagesParamsSearchType,
+    pub after_page_id: Option<Uuid>,
+}
+
+#[derive(Debug)]
+pub enum GetRawPagesParamsSearchType {
+    ByProviderAccountRef(Uuid),
+    ByExternalAccount {
+        connection_id: Uuid,
+        external_account_id: String,
+    },
+}
+
+impl GetRawPagesParams {
+    pub fn by_provider_account_ref(
+        provider_account_ref: Uuid,
+        after_page_id: Option<Uuid>,
+    ) -> Self {
+        Self {
+            search_type: GetRawPagesParamsSearchType::ByProviderAccountRef(provider_account_ref),
+            after_page_id,
+        }
+    }
+    pub fn by_external_account(connection_id: Uuid, external_account_id: String) -> Self {
+        Self {
+            search_type: GetRawPagesParamsSearchType::ByExternalAccount {
+                connection_id,
+                external_account_id,
+            },
+            after_page_id: None,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct GetConnectorBindingsParams {
     pub user_id: Uuid,
     pub search_type: GetConnectorBindingsParamsSearchType,

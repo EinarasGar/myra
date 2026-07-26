@@ -17,7 +17,8 @@ use crate::api::connectors::*;
 use crate::error::{server_error, ApiError};
 use crate::models::{
     BindingStatus, BindingWriteMode, CompleteOAuthResult, ConnectorBinding, ConnectorConnection,
-    CreateConnectionInput, CredentialMode, OAuthSessionStart, ProviderAccount, SyncOutcome,
+    CreateConnectionInput, CredentialMode, OAuthSessionStart, ProviderAccount,
+    ProviderAccountTransaction, SyncOutcome,
 };
 
 fn user_id(infra: &SharedInfra) -> Result<String, ApiError> {
@@ -198,6 +199,25 @@ pub async fn list_provider_accounts(
         .await?;
     ok_or_err(resp.status, &resp.body)?;
     extract_provider_accounts(&resp.body).map_err(|e| ApiError::Parse { reason: e })
+}
+
+pub async fn list_provider_account_transactions(
+    infra: &SharedInfra,
+    connection_id: &str,
+    provider_account_id: &str,
+    auth_token: Option<&str>,
+) -> Result<Vec<ProviderAccountTransaction>, ApiError> {
+    let uid = user_id(infra)?;
+    let resp = infra
+        .get(
+            &format!(
+                "/api/users/{uid}/connectors/connections/{connection_id}/accounts/{provider_account_id}/transactions"
+            ),
+            auth_token,
+        )
+        .await?;
+    ok_or_err(resp.status, &resp.body)?;
+    extract_provider_account_transactions(&resp.body).map_err(|e| ApiError::Parse { reason: e })
 }
 
 pub async fn list_bindings(

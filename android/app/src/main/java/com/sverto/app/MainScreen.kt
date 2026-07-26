@@ -97,6 +97,7 @@ import com.sverto.app.feature.connectors.ConnectTrueLayerScreen
 import com.sverto.app.feature.connectors.ConnectionDetailScreen
 import com.sverto.app.feature.connectors.ConnectorDetailScreen
 import com.sverto.app.feature.connectors.ConnectorsScreen
+import com.sverto.app.feature.connectors.ProviderAccountDetailScreen
 import com.sverto.app.feature.portfolio.PortfolioScreen
 import com.sverto.app.feature.settings.SettingsScreen
 import com.sverto.app.feature.transactions.TransactionDetailScreen
@@ -138,6 +139,8 @@ private const val CONNECTION_DETAIL_ROUTE = "connectionDetail/{connectionId}"
 private const val CONNECT_TRUELAYER_ROUTE = "connectTrueLayer?code={code}&state={state}&error={error}"
 private const val CONNECT_TRADING212_ROUTE = "connectTrading212"
 private const val BINDING_SETUP_ROUTE = "bindingSetup/{connectionId}"
+private const val PROVIDER_ACCOUNT_DETAIL_ROUTE =
+    "providerAccountDetail/{connectionId}/{providerAccountId}?name={name}&currency={currency}"
 
 private data class TransactionDetailState(
     val transaction: TransactionListItem,
@@ -971,6 +974,13 @@ private fun MainNavGraph(
                 onBack = { navController.popBackStack() },
                 onAddBinding = { navController.navigate("bindingSetup/$connectionId") },
                 onRevoked = { navController.popBackStack(CONNECTORS_ROUTE, inclusive = false) },
+                onOpenAccount = { providerAccountId, displayName ->
+                    navController.navigate(
+                        "providerAccountDetail/$connectionId/" +
+                            Uri.encode(providerAccountId) +
+                            "?name=${Uri.encode(displayName)}",
+                    )
+                },
             )
         }
         slideComposable(
@@ -983,6 +993,47 @@ private fun MainNavGraph(
                 connectionId = connectionId,
                 onBack = { navController.popBackStack() },
                 onDone = { navController.popBackStack() },
+                onOpenAccount = { account ->
+                    navController.navigate(
+                        "providerAccountDetail/$connectionId/" +
+                            Uri.encode(account.providerAccountId) +
+                            "?name=${Uri.encode(account.displayName)}" +
+                            "&currency=${Uri.encode(account.currency ?: "")}",
+                    )
+                },
+            )
+        }
+        slideComposable(
+            PROVIDER_ACCOUNT_DETAIL_ROUTE,
+            slideSpec,
+            arguments =
+                listOf(
+                    navArgument("connectionId") { type = NavType.StringType },
+                    navArgument("providerAccountId") { type = NavType.StringType },
+                    navArgument("name") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                    navArgument("currency") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                ),
+        ) { entry ->
+            val connectionId = entry.arguments?.getString("connectionId") ?: return@slideComposable
+            val providerAccountId =
+                entry.arguments?.getString("providerAccountId") ?: return@slideComposable
+            ProviderAccountDetailScreen(
+                connectionId = connectionId,
+                providerAccountId = providerAccountId,
+                displayName =
+                    entry.arguments
+                        ?.getString("name")
+                        .orEmpty()
+                        .ifEmpty { providerAccountId },
+                currency = entry.arguments?.getString("currency")?.takeIf { it.isNotEmpty() },
+                onBack = { navController.popBackStack() },
+                onLinked = { navController.popBackStack() },
             )
         }
         slideComposable(

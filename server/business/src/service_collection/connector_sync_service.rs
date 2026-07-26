@@ -6,7 +6,7 @@ use dal::models::connector_models::{
     ConnectorRawPageRow, ConnectorTransactionRow, UpdateProviderAccountSyncResultModel,
 };
 use dal::queries::connector_queries;
-use dal::query_params::connector_params::GetConnectorBindingsParams;
+use dal::query_params::connector_params::{GetConnectorBindingsParams, GetRawPagesParams};
 #[mockall_double::double]
 use dal::redis_connection::RedisConnection;
 use dal::secrets::SecretProvider;
@@ -553,8 +553,9 @@ impl ConnectorSyncService {
 
         let checkpoint = binding_row.projected_page_id;
 
-        let pages_query =
-            connector_queries::get_raw_pages_for_provider_account(provider_account_ref, checkpoint);
+        let pages_query = connector_queries::get_connector_raw_pages(
+            GetRawPagesParams::by_provider_account_ref(provider_account_ref, checkpoint),
+        );
         let raw_pages = self
             .db
             .fetch_all::<ConnectorRawPageRow>(pages_query)

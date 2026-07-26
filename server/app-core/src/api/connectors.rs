@@ -1,3 +1,4 @@
+use rust_decimal::prelude::ToPrimitive;
 use shared::view_models::connectors::base_models::{
     ConnectorBindingViewModel, ConnectorConnectionViewModel, CredentialMode,
 };
@@ -5,6 +6,7 @@ use shared::view_models::connectors::create_binding::CreateBindingResponseViewMo
 use shared::view_models::connectors::create_connection::CreateConnectionResponseViewModel;
 use shared::view_models::connectors::get_bindings::GetBindingsResponseViewModel;
 use shared::view_models::connectors::get_connections::GetConnectionsResponseViewModel;
+use shared::view_models::connectors::list_provider_account_transactions::ListProviderAccountTransactionsResponseViewModel;
 use shared::view_models::connectors::list_provider_accounts::ListProviderAccountsResponseViewModel;
 use shared::view_models::connectors::oauth::{
     CompleteOAuthSessionResponseViewModel, CreateOAuthSessionResponseViewModel, OAuthSessionStatus,
@@ -15,7 +17,7 @@ use shared::view_models::connectors::update_binding::BindingWriteMode as VmWrite
 use crate::models::{
     BindingWriteMode, CompleteOAuthResult, ConnectorBinding, ConnectorConnection,
     CredentialMode as AppCredentialMode, OAuthCompletionStatus, OAuthSessionStart, ProviderAccount,
-    SyncOutcome, SyncReport,
+    ProviderAccountTransaction, SyncOutcome, SyncReport,
 };
 
 fn mode_from(vm: CredentialMode) -> AppCredentialMode {
@@ -145,6 +147,25 @@ pub fn extract_provider_accounts(body: &str) -> Result<Vec<ProviderAccount>, Str
             display_name: a.display_name,
             currency: a.currency,
             account_type: a.account_type,
+        })
+        .collect())
+}
+
+pub fn extract_provider_account_transactions(
+    body: &str,
+) -> Result<Vec<ProviderAccountTransaction>, String> {
+    let resp: ListProviderAccountTransactionsResponseViewModel =
+        serde_json::from_str(body).map_err(|e| e.to_string())?;
+    Ok(resp
+        .transactions
+        .into_iter()
+        .map(|t| ProviderAccountTransaction {
+            date: t.date.unix_timestamp(),
+            description: t.description,
+            amount: t.amount.to_f64().unwrap_or(0.0),
+            currency: t.currency,
+            asset_identifier: t.asset_identifier,
+            quantity: t.quantity.and_then(|q| q.to_f64()),
         })
         .collect())
 }

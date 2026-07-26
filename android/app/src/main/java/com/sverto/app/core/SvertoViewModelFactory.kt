@@ -19,6 +19,7 @@ import com.sverto.app.feature.connectors.ConnectTrading212ViewModel
 import com.sverto.app.feature.connectors.ConnectTrueLayerViewModel
 import com.sverto.app.feature.connectors.ConnectionDetailViewModel
 import com.sverto.app.feature.connectors.ConnectorsViewModel
+import com.sverto.app.feature.connectors.ProviderAccountDetailViewModel
 import com.sverto.app.feature.onboarding.OnboardingViewModel
 import com.sverto.app.feature.portfolio.HomeViewModel
 import com.sverto.app.feature.settings.AiUsageViewModel
@@ -79,6 +80,8 @@ object SvertoViewModelFactory : ViewModelProvider.Factory {
                 ConnectionDetailViewModel(appStore) as T
             modelClass.isAssignableFrom(BindingSetupViewModel::class.java) ->
                 BindingSetupViewModel(appStore) as T
+            modelClass.isAssignableFrom(ProviderAccountDetailViewModel::class.java) ->
+                ProviderAccountDetailViewModel(appStore) as T
             modelClass.isAssignableFrom(ConnectTrueLayerViewModel::class.java) ->
                 ConnectTrueLayerViewModel(appStore) as T
             modelClass.isAssignableFrom(ConnectTrading212ViewModel::class.java) ->

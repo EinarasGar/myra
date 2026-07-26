@@ -101,6 +101,7 @@ pub(crate) fn create_router(state: AppState) -> Router {
         .route("/connectors/connections/{connection_id}/oauth/sessions", post(handlers::connectors_handler::create_oauth_session))
         .route("/connectors/connections/{connection_id}/oauth/sessions/{session_id}", put(handlers::connectors_handler::complete_oauth_session))
         .route("/connectors/connections/{connection_id}/accounts", get(handlers::connectors_handler::list_provider_accounts))
+        .route("/connectors/connections/{connection_id}/accounts/{provider_account_id}/transactions", get(handlers::connectors_handler::list_provider_account_transactions))
         .route("/connectors/connections/{connection_id}/bindings", post(handlers::connectors_handler::create_binding))
         .route("/connectors/bindings",                           get(handlers::connectors_handler::list_bindings))
         .route("/connectors/bindings/{binding_id}",              get(handlers::connectors_handler::get_binding)

@@ -10,6 +10,12 @@ import {
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { AsyncBoundary } from "@/components/async-boundary";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useUserId } from "@/hooks/use-auth";
 import { useGetUserAccounts } from "@/hooks/api/use-user-account-api";
@@ -19,6 +25,7 @@ import {
   useGetBindings,
   useGetConnections,
   useGetProviderAccounts,
+  useGetProviderAccountTransactions,
   useRevokeConnection,
   useUpdateBinding,
 } from "@/hooks/api/use-connectors-api";
@@ -45,6 +52,9 @@ function ConnectionDetail({ connectionId }: { connectionId: string }) {
 
   const [providerAccountId, setProviderAccountId] = useState("");
   const [svertoAccountId, setSvertoAccountId] = useState("");
+  const [previewAccount, setPreviewAccount] = useState<
+    (typeof providerAccounts)[number] | null
+  >(null);
 
   if (!connection) return <p>Connection not found.</p>;
 
@@ -103,6 +113,22 @@ function ConnectionDetail({ connectionId }: { connectionId: string }) {
         ))}
       </ul>
       <div>
+        <h3>Provider accounts</h3>
+        <ul className="space-y-1">
+          {providerAccounts.map((p) => (
+            <li key={p.provider_account_id}>
+              <button
+                className="underline"
+                onClick={() => setPreviewAccount(p)}
+              >
+                {p.display_name}
+              </button>
+              {p.currency ? ` · ${p.currency}` : ""}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div>
         <h3>Add binding</h3>
         <select
           value={providerAccountId}
@@ -150,7 +176,59 @@ function ConnectionDetail({ connectionId }: { connectionId: string }) {
       >
         Revoke connection
       </button>
+      <Dialog
+        open={previewAccount !== null}
+        onOpenChange={(open) => {
+          if (!open) setPreviewAccount(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{previewAccount?.display_name}</DialogTitle>
+          </DialogHeader>
+          {previewAccount && (
+            <div className="max-h-96 overflow-y-auto">
+              <AsyncBoundary>
+                <AccountTransactionsList
+                  connectionId={connectionId}
+                  providerAccountId={previewAccount.provider_account_id}
+                />
+              </AsyncBoundary>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+function AccountTransactionsList({
+  connectionId,
+  providerAccountId,
+}: {
+  connectionId: string;
+  providerAccountId: string;
+}) {
+  const userId = useUserId();
+  const { data: transactions } = useGetProviderAccountTransactions(
+    userId,
+    connectionId,
+    providerAccountId,
+  );
+  if (transactions.length === 0) return <p>No transactions fetched yet.</p>;
+  return (
+    <ul className="space-y-1">
+      {transactions.map((t, i) => (
+        <li key={i} className="flex justify-between gap-4 border-b py-1">
+          <span>
+            {new Date(t.date * 1000).toLocaleDateString()} — {t.description}
+          </span>
+          <span className="whitespace-nowrap">
+            {t.amount} {t.currency}
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }
 

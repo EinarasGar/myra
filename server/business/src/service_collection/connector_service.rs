@@ -2,24 +2,26 @@
 use dal::database_context::MyraDb;
 use dal::models::connector_models::{
     AddConnectorBindingModel, AddConnectorConnectionModel, AddConnectorProviderAccountModel,
-    ConnectorBindingRow, ConnectorConnectionRow,
+    ConnectorBindingRow, ConnectorConnectionRow, ConnectorRawPageRow,
 };
 use dal::queries::connector_queries;
 use dal::query_params::connector_params::{
-    GetConnectorBindingsParams, GetConnectorConnectionsParams,
+    GetConnectorBindingsParams, GetConnectorConnectionsParams, GetRawPagesParams,
 };
 #[mockall_double::double]
 use dal::redis_connection::RedisConnection;
 use dal::secrets::SecretProvider;
 
+use connectors::models::sync::RawPage;
 use connectors::port::ConnectorStore;
+use connectors::provider::{map_pages, ProviderKind};
 use itertools::Itertools;
 
 use crate::dtos::bad_request_error_dto::BusinessBadRequestError;
 use crate::dtos::connectors::{
     BindingStatusDto, BindingUpdateStatusDto, BindingWriteModeDto, ConnectionStatusDto,
     ConnectorBindingDto, ConnectorConnectionDto, CredentialModeDto, OAuthSessionStartDto,
-    OAuthSessionStateDto, ProviderAccountDto,
+    OAuthSessionStateDto, ProviderAccountDto, ProviderAccountTransactionDto,
 };
 use crate::dtos::not_found_error_dto::BusinessNotFoundError;
 use crate::providers::connector_store::BusinessConnectorStore;
@@ -155,6 +157,40 @@ impl ConnectorService {
             })?;
 
         Ok(accounts.into_iter().map(Into::into).collect())
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, connection_id = %connection_id))]
+    pub async fn list_provider_account_transactions(
+        &self,
+        user_id: Uuid,
+        connection_id: Uuid,
+        external_account_id: &str,
+    ) -> anyhow::Result<Vec<ProviderAccountTransactionDto>> {
+        let connection = self.get_connection(user_id, connection_id).await?;
+        let kind: ProviderKind = connection.provider_kind.parse()?;
+
+        let raw_pages = self
+            .db
+            .fetch_all::<ConnectorRawPageRow>(connector_queries::get_connector_raw_pages(
+                GetRawPagesParams::by_external_account(
+                    connection_id,
+                    external_account_id.to_string(),
+                ),
+            ))
+            .await?;
+
+        let pages: Vec<RawPage> = raw_pages
+            .into_iter()
+            .map(|page| RawPage {
+                stream: page.stream,
+                payload: page.payload.0,
+            })
+            .collect();
+
+        let mut transactions = map_pages(kind, &pages);
+        transactions.sort_by(|a, b| b.date.cmp(&a.date));
+
+        Ok(transactions.into_iter().map(Into::into).collect())
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, connection_id = %connection_id))]

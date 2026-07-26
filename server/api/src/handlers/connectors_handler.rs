@@ -22,6 +22,12 @@ pub(crate) struct ConnectionSessionPath {
     session_id: String,
 }
 
+#[derive(Deserialize)]
+pub(crate) struct ConnectionAccountPath {
+    connection_id: Uuid,
+    provider_account_id: String,
+}
+
 use crate::{
     auth::AuthenticatedUserId,
     errors::ApiError,
@@ -34,6 +40,7 @@ use crate::{
         get_bindings::GetBindingsResponseViewModel,
         get_connections::GetConnectionsResponseViewModel,
         ingest::{IngestTransactionsRequestViewModel, IngestTransactionsResponseViewModel},
+        list_provider_account_transactions::ListProviderAccountTransactionsResponseViewModel,
         list_provider_accounts::ListProviderAccountsResponseViewModel,
         oauth::{
             CompleteOAuthSessionRequestViewModel, CompleteOAuthSessionResponseViewModel,
@@ -311,6 +318,45 @@ pub async fn list_provider_accounts(
 
     Ok(Json(ListProviderAccountsResponseViewModel {
         accounts: accounts.into_iter().map(Into::into).collect(),
+    }))
+}
+
+/// List Provider Account Transactions
+///
+/// Lists mapped transactions from the fetched archive for a provider account.
+#[utoipa::path(
+    get,
+    path = "/api/users/{user_id}/connectors/connections/{connection_id}/accounts/{provider_account_id}/transactions",
+    tag = "Connectors",
+    responses(
+        (status = 200, description = "Provider account transactions retrieved successfully.", body = ListProviderAccountTransactionsResponseViewModel),
+        GetResponses
+    ),
+    params(
+        ("user_id" = Uuid, Path, description = "Unique Identifier of the user."),
+        ("connection_id" = Uuid, Path, description = "Id of the connection."),
+        ("provider_account_id" = String, Path, description = "External id of the provider account."),
+    ),
+    security(
+        ("auth_token" = [])
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, connection_id = %connection_id, provider_account_id = %provider_account_id))]
+pub async fn list_provider_account_transactions(
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(ConnectionAccountPath {
+        connection_id,
+        provider_account_id,
+    }): Path<ConnectionAccountPath>,
+    ConnectorServiceState(connector_service): ConnectorServiceState,
+) -> Result<Json<ListProviderAccountTransactionsResponseViewModel>, ApiError> {
+    let transactions = connector_service
+        .list_provider_account_transactions(user_id, connection_id, &provider_account_id)
+        .await
+        .map_err(ApiError::from_anyhow)?;
+
+    Ok(Json(ListProviderAccountTransactionsResponseViewModel {
+        transactions: transactions.into_iter().map(Into::into).collect(),
     }))
 }
 

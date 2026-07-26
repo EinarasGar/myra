@@ -133,6 +133,7 @@ mod modifiers;
         super::handlers::connectors_handler::create_oauth_session,
         super::handlers::connectors_handler::complete_oauth_session,
         super::handlers::connectors_handler::list_provider_accounts,
+        super::handlers::connectors_handler::list_provider_account_transactions,
         super::handlers::connectors_handler::create_binding,
         super::handlers::connectors_handler::list_bindings,
         super::handlers::connectors_handler::get_binding,

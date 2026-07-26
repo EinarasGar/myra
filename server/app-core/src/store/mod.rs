@@ -1079,6 +1079,21 @@ impl AppStore {
         connectors::list_provider_accounts(&self.infra, &connection_id, token.as_deref()).await
     }
 
+    pub async fn list_connector_provider_account_transactions(
+        &self,
+        connection_id: String,
+        provider_account_id: String,
+    ) -> Result<Vec<crate::models::ProviderAccountTransaction>, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        connectors::list_provider_account_transactions(
+            &self.infra,
+            &connection_id,
+            &provider_account_id,
+            token.as_deref(),
+        )
+        .await
+    }
+
     pub async fn list_connector_bindings(
         &self,
     ) -> Result<Vec<crate::models::ConnectorBinding>, crate::error::ApiError> {

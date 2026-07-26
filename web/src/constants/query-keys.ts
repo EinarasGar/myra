@@ -32,4 +32,5 @@ export const QueryKeys = {
   CONNECTOR_CONNECTIONS: "connector-connections",
   CONNECTOR_BINDINGS: "connector-bindings",
   CONNECTOR_PROVIDER_ACCOUNTS: "connector-provider-accounts",
+  CONNECTOR_ACCOUNT_TRANSACTIONS: "connector-account-transactions",
 };

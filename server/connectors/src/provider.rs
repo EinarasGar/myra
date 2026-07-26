@@ -99,7 +99,7 @@ pub trait Provider: Send + Sync {
     }
 }
 
-pub(crate) fn map_pages(
+pub fn map_pages(
     kind: ProviderKind,
     pages: &[crate::models::sync::RawPage],
 ) -> Vec<crate::models::transaction::ProviderTransaction> {

@@ -4,6 +4,7 @@ pub mod create_connection;
 pub mod get_bindings;
 pub mod get_connections;
 pub mod ingest;
+pub mod list_provider_account_transactions;
 pub mod list_provider_accounts;
 pub mod oauth;
 pub mod sync_binding;

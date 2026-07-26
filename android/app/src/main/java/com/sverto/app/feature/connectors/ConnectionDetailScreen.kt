@@ -1,5 +1,7 @@
 package com.sverto.app.feature.connectors
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +18,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
@@ -44,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -67,6 +72,7 @@ fun ConnectionDetailScreen(
     onBack: () -> Unit,
     onAddBinding: () -> Unit,
     onRevoked: () -> Unit,
+    onOpenAccount: (providerAccountId: String, displayName: String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ConnectionDetailViewModel = viewModel(factory = SvertoViewModelFactory),
 ) {
@@ -194,112 +200,171 @@ fun ConnectionDetailScreen(
                 }
                 Spacer(Modifier.height(8.dp))
                 if (hasBindings) {
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = MaterialTheme.colorScheme.surfaceBright,
-                    ) {
-                        Column {
-                            state.bindings.forEachIndexed { index, binding ->
-                                val paused = binding.status == "paused"
-                                val expanded = expandedBindingId == binding.id
-                                ListItem(
-                                    modifier =
-                                        Modifier
-                                            .clickable {
-                                                expandedBindingId = if (expanded) null else binding.id
-                                            }.alpha(if (paused) 0.55f else 1f),
-                                    colors =
-                                        ListItemDefaults.colors(
-                                            containerColor = MaterialTheme.colorScheme.surfaceBright,
-                                        ),
-                                    headlineContent = {
-                                        Text(
-                                            humanizeAccountName(
-                                                state.providerAccountNames[binding.providerAccountId]
-                                                    ?: binding.providerAccountId,
-                                            ),
-                                        )
-                                    },
-                                    supportingContent = {
-                                        Column {
-                                            Text(
-                                                "Writes into ${binding.svertoAccountName}",
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            )
-                                            val sync =
-                                                binding.lastSyncAt?.let {
-                                                    "Last synced ${relativeTime(it)}" +
-                                                        (binding.lastSyncStatus?.let { s -> " · $s" } ?: "")
-                                                } ?: "Never synced"
-                                            Text(
-                                                text = binding.lastSyncError ?: sync,
-                                                color =
-                                                    if (binding.lastSyncError != null) {
-                                                        MaterialTheme.colorScheme.error
-                                                    } else {
-                                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                                    },
-                                            )
-                                        }
-                                    },
-                                    trailingContent = {
-                                        IconButton(onClick = { deleteBindingId = binding.id }) {
-                                            Icon(
-                                                Icons.Outlined.Delete,
-                                                contentDescription = "Delete binding",
-                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            )
-                                        }
-                                    },
-                                )
-                                if (expanded) {
+                    Column {
+                        state.bindings.forEachIndexed { index, binding ->
+                            val paused = binding.status == "paused"
+                            val expanded = expandedBindingId == binding.id
+                            val rawName =
+                                state.providerAccountNames[binding.providerAccountId]
+                                    ?: binding.providerAccountId
+                            val prevExpanded =
+                                index > 0 && expandedBindingId == state.bindings[index - 1].id
+                            val nextExpanded =
+                                index < state.bindings.lastIndex &&
+                                    expandedBindingId == state.bindings[index + 1].id
+                            val topRounded = expanded || index == 0 || prevExpanded
+                            val bottomRounded =
+                                expanded || index == state.bindings.lastIndex || nextExpanded
+                            if (expanded && index > 0) Spacer(Modifier.height(8.dp))
+                            Surface(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .animateContentSize(),
+                                shape =
+                                    RoundedCornerShape(
+                                        topStart = if (topRounded) 20.dp else 0.dp,
+                                        topEnd = if (topRounded) 20.dp else 0.dp,
+                                        bottomStart = if (bottomRounded) 20.dp else 0.dp,
+                                        bottomEnd = if (bottomRounded) 20.dp else 0.dp,
+                                    ),
+                                color = MaterialTheme.colorScheme.surfaceBright,
+                            ) {
+                                Column {
+                                    val chevronRotation by animateFloatAsState(if (expanded) 180f else 0f)
                                     ListItem(
+                                        modifier =
+                                            Modifier
+                                                .clickable {
+                                                    expandedBindingId = if (expanded) null else binding.id
+                                                }.alpha(if (paused) 0.55f else 1f),
                                         colors =
                                             ListItemDefaults.colors(
                                                 containerColor = MaterialTheme.colorScheme.surfaceBright,
                                             ),
-                                        headlineContent = { Text("Trusted writes") },
+                                        headlineContent = { Text(humanizeAccountName(rawName)) },
                                         supportingContent = {
-                                            Text(
-                                                "Off: imports arrive as ghosts pending your review. " +
-                                                    "On: imports are normal transactions.",
-                                            )
+                                            Column {
+                                                Text(
+                                                    "Writes into ${binding.svertoAccountName}",
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                )
+                                                val sync =
+                                                    binding.lastSyncAt?.let {
+                                                        "Last synced ${relativeTime(it)}" +
+                                                            (binding.lastSyncStatus?.let { s -> " · $s" } ?: "")
+                                                    } ?: "Never synced"
+                                                Text(
+                                                    text = binding.lastSyncError ?: sync,
+                                                    color =
+                                                        if (binding.lastSyncError != null) {
+                                                            MaterialTheme.colorScheme.error
+                                                        } else {
+                                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                                        },
+                                                )
+                                            }
                                         },
                                         trailingContent = {
-                                            Switch(
-                                                checked = binding.writeMode == BindingWriteMode.TRUSTED,
-                                                onCheckedChange = { checked ->
-                                                    viewModel.updateBinding(
-                                                        binding,
-                                                        if (checked) BindingWriteMode.TRUSTED else BindingWriteMode.GHOST,
-                                                        if (paused) BindingStatus.PAUSED else BindingStatus.ACTIVE,
-                                                    )
-                                                },
+                                            Icon(
+                                                Icons.Filled.ExpandMore,
+                                                contentDescription = if (expanded) "Collapse" else "Expand",
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.rotate(chevronRotation),
                                             )
                                         },
                                     )
-                                    ListItem(
-                                        colors =
-                                            ListItemDefaults.colors(
-                                                containerColor = MaterialTheme.colorScheme.surfaceBright,
-                                            ),
-                                        headlineContent = { Text("Enabled") },
-                                        supportingContent = { Text("Paused bindings are skipped when syncing.") },
-                                        trailingContent = {
-                                            Switch(
-                                                checked = !paused,
-                                                onCheckedChange = { checked ->
-                                                    viewModel.updateBinding(
-                                                        binding,
-                                                        binding.writeMode,
-                                                        if (checked) BindingStatus.ACTIVE else BindingStatus.PAUSED,
-                                                    )
+                                    if (expanded) {
+                                        ListItem(
+                                            modifier =
+                                                Modifier.clickable {
+                                                    onOpenAccount(binding.providerAccountId, rawName)
                                                 },
-                                            )
-                                        },
-                                    )
+                                            colors =
+                                                ListItemDefaults.colors(
+                                                    containerColor = MaterialTheme.colorScheme.surfaceBright,
+                                                ),
+                                            headlineContent = { Text("View transactions") },
+                                            trailingContent = {
+                                                Icon(
+                                                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                )
+                                            },
+                                        )
+                                        ListItem(
+                                            colors =
+                                                ListItemDefaults.colors(
+                                                    containerColor = MaterialTheme.colorScheme.surfaceBright,
+                                                ),
+                                            headlineContent = { Text("Trusted writes") },
+                                            supportingContent = {
+                                                Text(
+                                                    "Off: imports arrive as ghosts pending your review. " +
+                                                        "On: imports are normal transactions.",
+                                                )
+                                            },
+                                            trailingContent = {
+                                                Switch(
+                                                    checked = binding.writeMode == BindingWriteMode.TRUSTED,
+                                                    onCheckedChange = { checked ->
+                                                        viewModel.updateBinding(
+                                                            binding,
+                                                            if (checked) BindingWriteMode.TRUSTED else BindingWriteMode.GHOST,
+                                                            if (paused) BindingStatus.PAUSED else BindingStatus.ACTIVE,
+                                                        )
+                                                    },
+                                                )
+                                            },
+                                        )
+                                        ListItem(
+                                            colors =
+                                                ListItemDefaults.colors(
+                                                    containerColor = MaterialTheme.colorScheme.surfaceBright,
+                                                ),
+                                            headlineContent = { Text("Enabled") },
+                                            supportingContent = { Text("Paused bindings are skipped when syncing.") },
+                                            trailingContent = {
+                                                Switch(
+                                                    checked = !paused,
+                                                    onCheckedChange = { checked ->
+                                                        viewModel.updateBinding(
+                                                            binding,
+                                                            binding.writeMode,
+                                                            if (checked) BindingStatus.ACTIVE else BindingStatus.PAUSED,
+                                                        )
+                                                    },
+                                                )
+                                            },
+                                        )
+                                        ListItem(
+                                            modifier = Modifier.clickable { deleteBindingId = binding.id },
+                                            colors =
+                                                ListItemDefaults.colors(
+                                                    containerColor = MaterialTheme.colorScheme.surfaceBright,
+                                                ),
+                                            headlineContent = {
+                                                Text(
+                                                    "Remove linked account",
+                                                    color = MaterialTheme.colorScheme.error,
+                                                )
+                                            },
+                                            trailingContent = {
+                                                Icon(
+                                                    Icons.Outlined.Delete,
+                                                    contentDescription = "Remove linked account",
+                                                    tint = MaterialTheme.colorScheme.error,
+                                                )
+                                            },
+                                        )
+                                    }
                                 }
-                                if (index < state.bindings.lastIndex) HorizontalDivider()
+                            }
+                            if (expanded && index < state.bindings.lastIndex) {
+                                Spacer(Modifier.height(8.dp))
+                            } else if (index < state.bindings.lastIndex && !nextExpanded) {
+                                HorizontalDivider()
                             }
                         }
                     }

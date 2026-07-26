@@ -15,7 +15,8 @@ use crate::{
     },
     query_params::connector_params::{
         GetConnectorBindingsParams, GetConnectorBindingsParamsSearchType,
-        GetConnectorConnectionsParams, GetConnectorConnectionsParamsSearchType,
+        GetConnectorConnectionsParams, GetConnectorConnectionsParamsSearchType, GetRawPagesParams,
+        GetRawPagesParamsSearchType,
     },
 };
 
@@ -668,29 +669,62 @@ pub fn get_latest_raw_page_cursor(provider_account_ref: Uuid) -> DbQueryWithValu
 }
 
 #[macros::named_query]
-pub fn get_raw_pages_for_provider_account(
-    provider_account_ref: Uuid,
-    after_page_id: Option<Uuid>,
-) -> DbQueryWithValues {
+pub fn get_connector_raw_pages(params: GetRawPagesParams) -> DbQueryWithValues {
     let mut query = Query::select();
     query
         .column((ConnectorRawPageIden::Table, ConnectorRawPageIden::Id))
         .column((ConnectorRawPageIden::Table, ConnectorRawPageIden::Stream))
         .column((ConnectorRawPageIden::Table, ConnectorRawPageIden::Payload))
         .from(ConnectorRawPageIden::Table)
-        .and_where(
-            Expr::col((
-                ConnectorRawPageIden::Table,
-                ConnectorRawPageIden::ProviderAccountId,
-            ))
-            .eq(provider_account_ref),
-        )
         .order_by(
             (ConnectorRawPageIden::Table, ConnectorRawPageIden::Id),
             sea_query::Order::Asc,
         );
 
-    if let Some(after) = after_page_id {
+    match params.search_type {
+        GetRawPagesParamsSearchType::ByProviderAccountRef(provider_account_ref) => {
+            query.and_where(
+                Expr::col((
+                    ConnectorRawPageIden::Table,
+                    ConnectorRawPageIden::ProviderAccountId,
+                ))
+                .eq(provider_account_ref),
+            );
+        }
+        GetRawPagesParamsSearchType::ByExternalAccount {
+            connection_id,
+            external_account_id,
+        } => {
+            query
+                .inner_join(
+                    ConnectorProviderAccountIden::Table,
+                    Expr::col((
+                        ConnectorRawPageIden::Table,
+                        ConnectorRawPageIden::ProviderAccountId,
+                    ))
+                    .equals((
+                        ConnectorProviderAccountIden::Table,
+                        ConnectorProviderAccountIden::Id,
+                    )),
+                )
+                .and_where(
+                    Expr::col((
+                        ConnectorProviderAccountIden::Table,
+                        ConnectorProviderAccountIden::ConnectionId,
+                    ))
+                    .eq(connection_id),
+                )
+                .and_where(
+                    Expr::col((
+                        ConnectorProviderAccountIden::Table,
+                        ConnectorProviderAccountIden::ExternalAccountId,
+                    ))
+                    .eq(external_account_id),
+                );
+        }
+    }
+
+    if let Some(after) = params.after_page_id {
         query.and_where(
             Expr::col((ConnectorRawPageIden::Table, ConnectorRawPageIden::Id)).gt(after),
         );

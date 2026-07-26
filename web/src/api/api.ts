@@ -5448,6 +5448,19 @@ export interface IngestTransactionsResponse {
 /**
  *
  * @export
+ * @interface ListProviderAccountTransactionsResponse
+ */
+export interface ListProviderAccountTransactionsResponse {
+  /**
+   *
+   * @type {Array<ProviderAccountTransaction>}
+   * @memberof ListProviderAccountTransactionsResponse
+   */
+  transactions: Array<ProviderAccountTransaction>;
+}
+/**
+ *
+ * @export
  * @interface ListProviderAccountsResponse
  */
 export interface ListProviderAccountsResponse {
@@ -5584,6 +5597,49 @@ export interface ProviderAccount {
    * @memberof ProviderAccount
    */
   provider_account_id: string;
+}
+/**
+ *
+ * @export
+ * @interface ProviderAccountTransaction
+ */
+export interface ProviderAccountTransaction {
+  /**
+   *
+   * @type {number}
+   * @memberof ProviderAccountTransaction
+   */
+  amount: number;
+  /**
+   *
+   * @type {string}
+   * @memberof ProviderAccountTransaction
+   */
+  asset_identifier?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof ProviderAccountTransaction
+   */
+  currency: string;
+  /**
+   *
+   * @type {number}
+   * @memberof ProviderAccountTransaction
+   */
+  date: number;
+  /**
+   *
+   * @type {string}
+   * @memberof ProviderAccountTransaction
+   */
+  description: string;
+  /**
+   *
+   * @type {number}
+   * @memberof ProviderAccountTransaction
+   */
+  quantity?: number | null;
 }
 /**
  *
@@ -12716,6 +12772,79 @@ export const ConnectorsApiAxiosParamCreator = function (
       };
     },
     /**
+     * Lists mapped transactions from the fetched archive for a provider account.
+     * @summary List Provider Account Transactions
+     * @param {string} userId
+     * @param {string} connectionId
+     * @param {string} providerAccountId External id of the provider account.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    listProviderAccountTransactions: async (
+      userId: string,
+      connectionId: string,
+      providerAccountId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'userId' is not null or undefined
+      assertParamExists("listProviderAccountTransactions", "userId", userId);
+      // verify required parameter 'connectionId' is not null or undefined
+      assertParamExists(
+        "listProviderAccountTransactions",
+        "connectionId",
+        connectionId,
+      );
+      // verify required parameter 'providerAccountId' is not null or undefined
+      assertParamExists(
+        "listProviderAccountTransactions",
+        "providerAccountId",
+        providerAccountId,
+      );
+      const localVarPath =
+        `/api/users/{user_id}/connectors/connections/{connection_id}/accounts/{provider_account_id}/transactions`
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+          .replace(
+            `{${"connection_id"}}`,
+            encodeURIComponent(String(connectionId)),
+          )
+          .replace(
+            `{${"provider_account_id"}}`,
+            encodeURIComponent(String(providerAccountId)),
+          );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: "GET",
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication auth_token required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
      * Lists available provider accounts for a connection.
      * @summary List Provider Accounts
      * @param {string} userId
@@ -13350,6 +13479,46 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
         )(axios, localVarOperationServerBasePath || basePath);
     },
     /**
+     * Lists mapped transactions from the fetched archive for a provider account.
+     * @summary List Provider Account Transactions
+     * @param {string} userId
+     * @param {string} connectionId
+     * @param {string} providerAccountId External id of the provider account.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async listProviderAccountTransactions(
+      userId: string,
+      connectionId: string,
+      providerAccountId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<ListProviderAccountTransactionsResponse>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.listProviderAccountTransactions(
+          userId,
+          connectionId,
+          providerAccountId,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap["ConnectorsApi.listProviderAccountTransactions"]?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
      * Lists available provider accounts for a connection.
      * @summary List Provider Accounts
      * @param {string} userId
@@ -13705,6 +13874,30 @@ export const ConnectorsApiFactory = function (
         .then((request) => request(axios, basePath));
     },
     /**
+     * Lists mapped transactions from the fetched archive for a provider account.
+     * @summary List Provider Account Transactions
+     * @param {string} userId
+     * @param {string} connectionId
+     * @param {string} providerAccountId External id of the provider account.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    listProviderAccountTransactions(
+      userId: string,
+      connectionId: string,
+      providerAccountId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<ListProviderAccountTransactionsResponse> {
+      return localVarFp
+        .listProviderAccountTransactions(
+          userId,
+          connectionId,
+          providerAccountId,
+          options,
+        )
+        .then((request) => request(axios, basePath));
+    },
+    /**
      * Lists available provider accounts for a connection.
      * @summary List Provider Accounts
      * @param {string} userId
@@ -13940,6 +14133,23 @@ export interface ConnectorsApiInterface {
     userId: string,
     options?: RawAxiosRequestConfig,
   ): AxiosPromise<GetConnectionsResponse>;
+
+  /**
+   * Lists mapped transactions from the fetched archive for a provider account.
+   * @summary List Provider Account Transactions
+   * @param {string} userId
+   * @param {string} connectionId
+   * @param {string} providerAccountId External id of the provider account.
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApiInterface
+   */
+  listProviderAccountTransactions(
+    userId: string,
+    connectionId: string,
+    providerAccountId: string,
+    options?: RawAxiosRequestConfig,
+  ): AxiosPromise<ListProviderAccountTransactionsResponse>;
 
   /**
    * Lists available provider accounts for a connection.
@@ -14211,6 +14421,32 @@ export class ConnectorsApi extends BaseAPI implements ConnectorsApiInterface {
   public listConnections(userId: string, options?: RawAxiosRequestConfig) {
     return ConnectorsApiFp(this.configuration)
       .listConnections(userId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   * Lists mapped transactions from the fetched archive for a provider account.
+   * @summary List Provider Account Transactions
+   * @param {string} userId
+   * @param {string} connectionId
+   * @param {string} providerAccountId External id of the provider account.
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ConnectorsApi
+   */
+  public listProviderAccountTransactions(
+    userId: string,
+    connectionId: string,
+    providerAccountId: string,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return ConnectorsApiFp(this.configuration)
+      .listProviderAccountTransactions(
+        userId,
+        connectionId,
+        providerAccountId,
+        options,
+      )
       .then((request) => request(this.axios, this.basePath));
   }
 

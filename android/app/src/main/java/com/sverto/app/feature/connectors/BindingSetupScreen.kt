@@ -32,7 +32,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sverto.app.core.SvertoViewModelFactory
@@ -54,11 +54,15 @@ fun BindingSetupScreen(
     connectionId: String,
     onBack: () -> Unit,
     onDone: () -> Unit,
+    onOpenAccount: (ProviderAccount) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: BindingSetupViewModel = viewModel(factory = SvertoViewModelFactory),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    LaunchedEffect(connectionId) { viewModel.load(connectionId) }
+    LifecycleResumeEffect(connectionId) {
+        viewModel.load(connectionId)
+        onPauseOrDispose { }
+    }
     var pickingFor by remember { mutableStateOf<ProviderAccount?>(null) }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -139,7 +143,7 @@ fun BindingSetupScreen(
                                     modifier =
                                         Modifier
                                             .fillMaxWidth()
-                                            .clickable(enabled = !bound) { pickingFor = account }
+                                            .clickable { onOpenAccount(account) }
                                             .heightIn(min = 56.dp)
                                             .padding(horizontal = 16.dp, vertical = 8.dp),
                                     verticalAlignment = Alignment.CenterVertically,

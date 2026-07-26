@@ -44,6 +44,29 @@ export function useGetProviderAccounts(userId: string, connectionId: string) {
   });
 }
 
+export function useGetProviderAccountTransactions(
+  userId: string,
+  connectionId: string,
+  providerAccountId: string,
+) {
+  return useSuspenseQuery({
+    queryKey: [
+      QueryKeys.CONNECTOR_ACCOUNT_TRANSACTIONS,
+      userId,
+      connectionId,
+      providerAccountId,
+    ],
+    queryFn: async () =>
+      (
+        await ConnectorsApiFactory().listProviderAccountTransactions(
+          userId,
+          connectionId,
+          providerAccountId,
+        )
+      ).data.transactions,
+  });
+}
+
 export function useCreateConnection(userId: string) {
   const queryClient = useQueryClient();
   return useMutation({

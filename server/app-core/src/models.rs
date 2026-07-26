@@ -618,6 +618,16 @@ pub struct ProviderAccount {
 }
 
 #[derive(Debug, Clone, uniffi::Record)]
+pub struct ProviderAccountTransaction {
+    pub date: i64,
+    pub description: String,
+    pub amount: f64,
+    pub currency: String,
+    pub asset_identifier: Option<String>,
+    pub quantity: Option<f64>,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
 pub struct CreateConnectionInput {
     pub provider_kind: String,
     pub credential_mode: CredentialMode,
