@@ -41,6 +41,12 @@ private fun accountTone(accountTypeId: Int): AccountTone =
         else -> AccountTone.Banking
     }
 
+fun isInvestmentAccountType(accountTypeId: Int): Boolean =
+    when (accountTypeId) {
+        3, 5, 6, 10 -> true
+        else -> false
+    }
+
 fun accountTypeLabel(accountTypeId: Int): String =
     when (accountTypeId) {
         1 -> "Current"

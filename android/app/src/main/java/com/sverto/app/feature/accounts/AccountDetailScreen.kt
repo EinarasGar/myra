@@ -60,6 +60,7 @@ import com.sverto.app.core.ui.RowDivider
 import com.sverto.app.feature.accounts.components.HoldingRow
 import com.sverto.app.feature.accounts.components.MetricItem
 import com.sverto.app.feature.accounts.components.MetricsGrid
+import com.sverto.app.feature.accounts.components.isInvestmentAccountType
 import com.sverto.app.feature.connectors.TransientKeySheet
 import com.sverto.app.feature.connectors.relativeTime
 import com.sverto.app.feature.portfolio.ChartPoint
@@ -103,7 +104,7 @@ fun AccountDetailScreen(
         }
     }
 
-    val isBrokerage = accountTypeId == 3 // Investment account
+    val showsInvestmentView = isInvestmentAccountType(accountTypeId)
 
     var menuOpen by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
@@ -230,7 +231,7 @@ fun AccountDetailScreen(
                             }
                         }
 
-                        if (isBrokerage) {
+                        if (showsInvestmentView) {
                             item(key = "investment_summary") {
                                 Column(modifier = Modifier.animateItem()) {
                                     Text(

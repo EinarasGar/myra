@@ -5,6 +5,7 @@ import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.test.core.app.ApplicationProvider
 import com.sverto.app.SvertoApp
 import com.sverto.app.feature.assets.AssetOverviewViewModel
+import com.sverto.app.feature.transactions.TransactionSearchViewModel
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -25,5 +26,19 @@ class SvertoViewModelFactoryTest {
 
         assertNotNull(viewModel)
         assertTrue(viewModel is AssetOverviewViewModel)
+    }
+
+    @Test
+    fun createsTransactionSearchViewModel() {
+        val app = ApplicationProvider.getApplicationContext<SvertoApp>()
+        val extras =
+            MutableCreationExtras().apply {
+                set(ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY, app)
+            }
+
+        val viewModel = SvertoViewModelFactory.create(TransactionSearchViewModel::class.java, extras)
+
+        assertNotNull(viewModel)
+        assertTrue(viewModel is TransactionSearchViewModel)
     }
 }

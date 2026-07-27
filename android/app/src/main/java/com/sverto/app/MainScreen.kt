@@ -29,6 +29,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -45,6 +47,7 @@ import androidx.compose.material3.ShortNavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -101,6 +104,7 @@ import com.sverto.app.feature.connectors.ProviderAccountDetailScreen
 import com.sverto.app.feature.portfolio.PortfolioScreen
 import com.sverto.app.feature.settings.SettingsScreen
 import com.sverto.app.feature.transactions.TransactionDetailScreen
+import com.sverto.app.feature.transactions.TransactionSearchAppBar
 import com.sverto.app.feature.transactions.TransactionsScreen
 import com.sverto.app.feature.transactions.TransactionsViewModel
 import com.sverto.app.feature.transactions.create.CreateTransactionScreen
@@ -169,6 +173,12 @@ fun MainScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val aiChatState by aiChatViewModel.uiState.collectAsStateWithLifecycle()
+
+    // Hoisted above the app bar's AnimatedVisibility so opening a transaction from search
+    // doesn't tear down the query and results when the top bar leaves composition.
+    val transactionSearchBarState = rememberSearchBarState()
+    val transactionSearchTextState = rememberTextFieldState()
+    val transactionSearchListState = rememberLazyListState()
 
     val transactionCache = remember { mutableMapOf<String, TransactionDetailState>() }
     val pendingGroupTransaction = remember { mutableStateOf<GroupTransactionItem?>(null) }
@@ -295,7 +305,9 @@ fun MainScreen(
                                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                                             Icon(Icons.Default.Menu, contentDescription = "Menu")
                                         }
-                                    } else if (currentRoute == TopLevelRoute.Portfolio.route) {
+                                    } else if (currentRoute == TopLevelRoute.Portfolio.route ||
+                                        currentRoute == TopLevelRoute.Transactions.route
+                                    ) {
                                         // Decorative logo sized like an IconButton so the
                                         // app-bar layout matches the other tabs, without a
                                         // ripple-emitting dead button.
@@ -313,23 +325,35 @@ fun MainScreen(
                                     }
                                 },
                                 title = {
-                                    if (currentRoute == TopLevelRoute.Portfolio.route) {
-                                        AssetSearchAppBar(
-                                            onAssetClick = { id ->
-                                                navController.navigate("assetOverview/$id?userAsset=false")
-                                            },
-                                        )
-                                    } else {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(
-                                                painter = painterResource(id = R.drawable.ic_sverto_logo),
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.height(24.dp),
+                                    when (currentRoute) {
+                                        TopLevelRoute.Portfolio.route ->
+                                            AssetSearchAppBar(
+                                                onAssetClick = { id ->
+                                                    navController.navigate("assetOverview/$id?userAsset=false")
+                                                },
                                             )
-                                            Spacer(Modifier.width(8.dp))
-                                            Text("Sverto")
-                                        }
+
+                                        TopLevelRoute.Transactions.route ->
+                                            TransactionSearchAppBar(
+                                                searchBarState = transactionSearchBarState,
+                                                textFieldState = transactionSearchTextState,
+                                                listState = transactionSearchListState,
+                                                onTransactionClick = { transaction ->
+                                                    navigateToDetail(transaction, false)
+                                                },
+                                            )
+
+                                        else ->
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Icon(
+                                                    painter = painterResource(id = R.drawable.ic_sverto_logo),
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.primary,
+                                                    modifier = Modifier.height(24.dp),
+                                                )
+                                                Spacer(Modifier.width(8.dp))
+                                                Text("Sverto")
+                                            }
                                     }
                                 },
                                 actions = {

@@ -109,7 +109,7 @@ fun AccountCard(
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                         val gain = account.unrealizedGain
-                        if (account.accountTypeId == 3 && gain != null) {
+                        if (isInvestmentAccountType(account.accountTypeId) && gain != null) {
                             Spacer(modifier = Modifier.height(2.dp))
                             val gainColor =
                                 if (gain >= 0) {

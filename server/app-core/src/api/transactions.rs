@@ -15,6 +15,19 @@ use shared::view_models::{
 
 use crate::models::{TransactionListItem, TransactionsPage};
 
+const SEARCH_PAGE_SIZE: u32 = 25;
+
+pub fn build_search_transactions_path(user_id: &str, query: &str, cursor: Option<&str>) -> String {
+    let mut path = format!("/api/users/{user_id}/transactions?limit={SEARCH_PAGE_SIZE}");
+    if !query.is_empty() {
+        path.push_str(&format!("&query={}", urlencoding::encode(query)));
+    }
+    if let Some(cursor) = cursor {
+        path.push_str(&format!("&cursor={}", urlencoding::encode(cursor)));
+    }
+    path
+}
+
 type Entry = shared::view_models::transactions::base_models::account_asset_entry::IdentifiableAccountAssetEntry<
     shared::view_models::transactions::base_models::entry_id::RequiredEntryId,
 >;
@@ -467,4 +480,54 @@ fn type_label(t: &str) -> &str {
 
 fn fmt(amount: f64, ticker: &str) -> String {
     crate::money::format_money(amount, ticker.to_string(), false)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn builds_search_path_with_encoded_query() {
+        let path = build_search_transactions_path("u-1", "coffee & tea", None);
+        assert_eq!(
+            path,
+            "/api/users/u-1/transactions?limit=25&query=coffee%20%26%20tea"
+        );
+    }
+
+    #[test]
+    fn builds_search_path_with_cursor() {
+        let path = build_search_transactions_path("u-1", "rent", Some("cur-9"));
+        assert_eq!(
+            path,
+            "/api/users/u-1/transactions?limit=25&query=rent&cursor=cur-9"
+        );
+    }
+
+    #[test]
+    fn escapes_percent_and_underscore_in_query() {
+        let path = build_search_transactions_path("u-1", "50%_off", None);
+        assert_eq!(path, "/api/users/u-1/transactions?limit=25&query=50%25_off");
+    }
+
+    #[test]
+    fn builds_search_path_with_empty_query() {
+        let path = build_search_transactions_path("u-1", "", None);
+        assert_eq!(path, "/api/users/u-1/transactions?limit=25");
+    }
+
+    #[test]
+    fn escapes_url_structural_characters_in_query() {
+        let path = build_search_transactions_path("u-1", "a#b?c/d=e", None);
+        assert_eq!(
+            path,
+            "/api/users/u-1/transactions?limit=25&query=a%23b%3Fc%2Fd%3De"
+        );
+    }
+
+    #[test]
+    fn escapes_unicode_query() {
+        let path = build_search_transactions_path("u-1", "café", None);
+        assert_eq!(path, "/api/users/u-1/transactions?limit=25&query=caf%C3%A9");
+    }
 }

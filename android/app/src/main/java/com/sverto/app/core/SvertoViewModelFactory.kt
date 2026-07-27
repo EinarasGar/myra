@@ -23,6 +23,7 @@ import com.sverto.app.feature.connectors.ProviderAccountDetailViewModel
 import com.sverto.app.feature.onboarding.OnboardingViewModel
 import com.sverto.app.feature.portfolio.HomeViewModel
 import com.sverto.app.feature.settings.AiUsageViewModel
+import com.sverto.app.feature.transactions.TransactionSearchViewModel
 import com.sverto.app.feature.transactions.TransactionsViewModel
 import com.sverto.app.feature.transactions.create.CreateTransactionViewModel
 import com.sverto.app.feature.transactions.group.CreateTransactionGroupViewModel
@@ -42,6 +43,8 @@ object SvertoViewModelFactory : ViewModelProvider.Factory {
                 HomeViewModel(appStore) as T
             modelClass.isAssignableFrom(TransactionsViewModel::class.java) ->
                 TransactionsViewModel(appStore) as T
+            modelClass.isAssignableFrom(TransactionSearchViewModel::class.java) ->
+                TransactionSearchViewModel(appStore) as T
             modelClass.isAssignableFrom(CreateTransactionViewModel::class.java) ->
                 CreateTransactionViewModel(appStore) as T
             modelClass.isAssignableFrom(CreateTransactionGroupViewModel::class.java) ->

@@ -5,7 +5,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -14,9 +13,6 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,8 +26,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -47,11 +41,8 @@ import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -69,25 +60,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.sverto.app.core.ui.RowDivider
 import com.sverto.app.core.ui.TransactionListSkeleton
+import com.sverto.app.feature.transactions.components.groupByDate
+import com.sverto.app.feature.transactions.components.transactionDayItems
 import com.sverto.app.feature.transactions.quickupload.QuickUploadUiItem
 import com.sverto.app.feature.transactions.quickupload.QuickUploadsSection
 import kotlinx.coroutines.flow.distinctUntilChanged
 import uniffi.sverto_core.TransactionListItem
 import uniffi.sverto_core.TransactionVisibility
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 @OptIn(
     ExperimentalMaterial3Api::class,
@@ -343,47 +326,15 @@ private fun TransactionList(
                     )
                 }
 
-                grouped.forEach { (dateLabel, groupItems) ->
-                    // NOTE: no Modifier.animateItem() here. This list is date-grouped and updates
-                    // via bulk pull-to-refresh (the whole list is replaced), and animateItem() on a
-                    // stickyHeader makes the placement animation fire across the whole list on
-                    // refresh — the "list flies to the bottom and back" + frame-hitch glitch.
-                    stickyHeader(key = dateLabel) {
-                        DateHeader(dateLabel)
-                    }
-                    item(key = "card_$dateLabel") {
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = MaterialTheme.colorScheme.surfaceBright,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp),
-                        ) {
-                            Column {
-                                groupItems.forEachIndexed { index, transaction ->
-                                    TransactionRow(
-                                        transaction = transaction,
-                                        selected = transaction.id in selectedIds,
-                                        onClick = {
-                                            if (selectionActive) {
-                                                onToggleSelect(transaction.id)
-                                            } else {
-                                                onTransactionClick(transaction)
-                                            }
-                                        },
-                                        onLongClick = { onToggleSelect(transaction.id) },
-                                        sharedTransitionScope = sharedTransitionScope,
-                                        animatedVisibilityScope = animatedVisibilityScope,
-                                    )
-                                    if (index < groupItems.lastIndex) {
-                                        RowDivider()
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                transactionDayItems(
+                    groupedTransactions = grouped,
+                    selectedIds = selectedIds,
+                    selectionActive = selectionActive,
+                    onTransactionClick = onTransactionClick,
+                    onToggleSelect = onToggleSelect,
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = animatedVisibilityScope,
+                )
 
                 if (isLoadingMore) {
                     item {
@@ -399,122 +350,6 @@ private fun TransactionList(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun DateHeader(
-    label: String,
-    modifier: Modifier = Modifier,
-) {
-    Text(
-        text = label,
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceContainer)
-                .padding(
-                    start = 16.dp,
-                    end = 16.dp,
-                    top = 16.dp,
-                    bottom = 8.dp,
-                ),
-    )
-}
-
-@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalFoundationApi::class)
-@Composable
-private fun TransactionRow(
-    transaction: TransactionListItem,
-    selected: Boolean,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit,
-    sharedTransitionScope: SharedTransitionScope,
-    animatedVisibilityScope: AnimatedVisibilityScope,
-) {
-    val haptics = LocalHapticFeedback.current
-    val containerColor by
-        animateColorAsState(
-            targetValue =
-                if (selected) {
-                    MaterialTheme.colorScheme.secondaryContainer
-                } else {
-                    MaterialTheme.colorScheme.surfaceBright
-                },
-            label = "rowContainerColor",
-        )
-    with(sharedTransitionScope) {
-        ListItem(
-            modifier =
-                Modifier
-                    .sharedBounds(
-                        sharedContentState = rememberSharedContentState(key = "tx_${transaction.id}"),
-                        animatedVisibilityScope = animatedVisibilityScope,
-                    ).combinedClickable(
-                        onClick = onClick,
-                        onLongClick = {
-                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                            onLongClick()
-                        },
-                    ).alpha(
-                        if (transaction.visibility == TransactionVisibility.GHOST && !selected) 0.55f else 1f,
-                    ),
-            colors =
-                ListItemDefaults.colors(
-                    containerColor = containerColor,
-                ),
-            leadingContent = {
-                if (selected) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier =
-                            Modifier
-                                .size(24.dp)
-                                .background(MaterialTheme.colorScheme.primary, CircleShape),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Check,
-                            contentDescription = "Selected",
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(16.dp),
-                        )
-                    }
-                } else {
-                    TransactionGlyph(
-                        transaction = transaction,
-                        modifier = Modifier.size(24.dp),
-                    )
-                }
-            },
-            headlineContent = {
-                Text(
-                    text = transaction.description,
-                    style = MaterialTheme.typography.bodyLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            },
-            supportingContent = {
-                val subtitle =
-                    transaction.categoryName.ifEmpty {
-                        transaction.typeLabel
-                    }
-                if (subtitle.isNotEmpty()) {
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            },
-            trailingContent = {
-                TransactionAmount(transaction = transaction)
-            },
-        )
     }
 }
 
@@ -623,29 +458,6 @@ private fun ErrorState(
 }
 
 private const val LOAD_MORE_BUFFER = 3
-
-@Suppress("NewApi")
-private val dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.US)
-
-@Suppress("NewApi")
-private fun groupByDate(transactions: List<TransactionListItem>): List<Pair<String, List<TransactionListItem>>> {
-    val today = LocalDate.now()
-    val yesterday = today.minusDays(1)
-
-    return transactions
-        .groupBy { tx ->
-            val date =
-                Instant
-                    .ofEpochSecond(tx.date)
-                    .atZone(ZoneId.systemDefault())
-                    .toLocalDate()
-            when (date) {
-                today -> "Today"
-                yesterday -> "Yesterday"
-                else -> date.format(dateFormatter)
-            }
-        }.toList()
-}
 
 private fun deleteConfirmationMessage(
     transactionCount: Int,

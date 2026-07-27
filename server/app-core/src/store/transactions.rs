@@ -9,13 +9,15 @@ use crate::api::create_transaction::build_request_body;
 use crate::api::create_transaction_group::build_create_group_request_body;
 use crate::api::delete_transactions::build_delete_transactions_request_body;
 use crate::api::get_transaction::extract_editable_transaction;
-use crate::api::transactions::{extract_page, to_list_item_with_id};
+use crate::api::transactions::{
+    build_search_transactions_path, extract_page, to_list_item_with_id,
+};
 use crate::api::update_transaction::build_update_request_body;
 use crate::api::update_transaction_group::build_update_group_request_body;
 use crate::error::{server_error, ApiError};
 use crate::models::{
     AccountItem, AssetItem, CategoryItem, CreateTransactionGroupInput, CreateTransactionInput,
-    EditableTransaction, TransactionListItem, TransactionsState,
+    EditableTransaction, TransactionListItem, TransactionsPage, TransactionsState,
 };
 
 use super::infra::SharedInfra;
@@ -587,6 +589,24 @@ pub async fn set_transaction_visibility(
     infra.evict_memory_cache_prefix(&format!("/api/users/{}/transactions", user_id));
     infra.evict_memory_cache_prefix(&format!("/api/users/{}/accounts", user_id));
     Ok(())
+}
+
+pub async fn search_transactions(
+    infra: &SharedInfra,
+    query: &str,
+    cursor: Option<&str>,
+    auth_token: Option<&str>,
+) -> Result<TransactionsPage, ApiError> {
+    let user_id = infra.user_id().ok_or_else(|| ApiError::Parse {
+        reason: "no user_id".into(),
+    })?;
+
+    let path = build_search_transactions_path(&user_id, query, cursor);
+    let resp = infra.get(&path, auth_token).await?;
+    if resp.status >= 400 {
+        return Err(server_error(resp.status, &resp.body));
+    }
+    extract_page(&resp.body).map_err(|e| ApiError::Parse { reason: e })
 }
 
 pub async fn set_transactions_visibility(

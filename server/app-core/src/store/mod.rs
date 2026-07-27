@@ -708,6 +708,16 @@ impl AppStore {
 
     // ── Search (direct return) ───────────────────────────────────────────
 
+    pub async fn search_transactions(
+        &self,
+        query: String,
+        cursor: Option<String>,
+    ) -> Result<crate::models::TransactionsPage, crate::error::ApiError> {
+        let token = self.get_auth_token();
+        transactions::search_transactions(&self.infra, &query, cursor.as_deref(), token.as_deref())
+            .await
+    }
+
     // ── Assets (direct return) ───────────────────────────────────────────
     pub async fn search_global_assets(
         &self,
