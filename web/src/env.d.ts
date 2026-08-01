@@ -1,4 +1,7 @@
 /// <reference types="vite/client" />
 
-declare const __AUTH_PROVIDER__: "database" | "clerk" | "noauth";
-declare const __CLERK_PUBLISHABLE_KEY__: string;
+interface ImportMetaEnv {
+  readonly AUTH_PROVIDER?: string
+  readonly CLERK_PUBLISHABLE_KEY?: string
+  readonly VITE_API_BASE_URL?: string
+}

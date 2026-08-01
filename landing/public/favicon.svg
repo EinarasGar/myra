@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="80 80 352 352">
+  <style>
+    :root { color: oklch(0.545 0.115 168); }
+    @media (prefers-color-scheme: dark) { :root { color: oklch(0.745 0.125 168); } }
+  </style>
+  <circle cx="256" cy="256" r="146" fill="none" stroke="currentColor" stroke-width="28" />
+  <line x1="104" y1="334" x2="408" y2="178" stroke="currentColor" stroke-width="28" stroke-linecap="round" />
+  <circle cx="256" cy="256" r="28" fill="currentColor" />
+</svg>

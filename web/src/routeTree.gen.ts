@@ -9,40 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SignupRouteImport } from './routes/signup'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthRouteImport } from './routes/_auth'
-import { Route as AuthIndexRouteImport } from './routes/_auth.index'
-import { Route as AuthUserAssetsRouteImport } from './routes/_auth.user-assets'
-import { Route as AuthTransactionsRouteImport } from './routes/_auth.transactions'
-import { Route as AuthSettingsRouteImport } from './routes/_auth.settings'
-import { Route as AuthPortfolioOverviewRouteImport } from './routes/_auth.portfolio-overview'
-import { Route as AuthPortfolioRouteImport } from './routes/_auth.portfolio'
-import { Route as AuthOnboardingRouteImport } from './routes/_auth.onboarding'
-import { Route as AuthGlobalAssetsRouteImport } from './routes/_auth.global-assets'
-import { Route as AuthComponentTestingRouteImport } from './routes/_auth.component-testing'
-import { Route as AuthAiChatRouteImport } from './routes/_auth.ai-chat'
-import { Route as AuthUserAssetsIndexRouteImport } from './routes/_auth.user-assets.index'
-import { Route as AuthTransactionsIndexRouteImport } from './routes/_auth.transactions.index'
-import { Route as AuthGlobalAssetsIndexRouteImport } from './routes/_auth.global-assets.index'
-import { Route as AuthUserAssetsAssetIdRouteImport } from './routes/_auth.user-assets.$assetId'
-import { Route as AuthTransactionsIndividualRouteImport } from './routes/_auth.transactions.individual'
-import { Route as AuthSettingsCategoriesRouteImport } from './routes/_auth.settings.categories'
-import { Route as AuthSettingsBaseCurrencyRouteImport } from './routes/_auth.settings.base-currency'
-import { Route as AuthSettingsAiUsageRouteImport } from './routes/_auth.settings.ai-usage'
-import { Route as AuthSettingsAccountsRouteImport } from './routes/_auth.settings.accounts'
-import { Route as AuthPortfolioOverviewAssetIdRouteImport } from './routes/_auth.portfolio-overview.$assetId'
-import { Route as AuthGlobalAssetsAssetIdRouteImport } from './routes/_auth.global-assets.$assetId'
-import { Route as AuthAccountsAccountIdRouteImport } from './routes/_auth.accounts.$accountId'
-import { Route as AuthSettingsConnectorsIndexRouteImport } from './routes/_auth.settings.connectors.index'
-import { Route as AuthSettingsConnectorsProviderKindRouteImport } from './routes/_auth.settings.connectors.$providerKind'
-import { Route as AuthSettingsConnectorsTruelayerCallbackRouteImport } from './routes/_auth.settings.connectors.truelayer.callback'
-import { Route as AuthSettingsConnectorsConnectionsConnectionIdRouteImport } from './routes/_auth.settings.connectors.connections.$connectionId'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as AuthShellRouteImport } from './routes/_auth/_shell'
+import { Route as AuthOnboardingRouteImport } from './routes/_auth/onboarding'
+import { Route as AuthShellIndexRouteImport } from './routes/_auth/_shell/index'
+import { Route as AuthShellAiChatRouteImport } from './routes/_auth/_shell/ai-chat'
+import { Route as AuthShellSettingsRouteImport } from './routes/_auth/_shell/settings'
+import { Route as AuthShellTransactionsRouteImport } from './routes/_auth/_shell/transactions'
+import { Route as AuthShellAccountsIndexRouteImport } from './routes/_auth/_shell/accounts.index'
+import { Route as AuthShellAccountsAccountIdRouteImport } from './routes/_auth/_shell/accounts.$accountId'
+import { Route as AuthShellPortfolioIndexRouteImport } from './routes/_auth/_shell/portfolio.index'
+import { Route as AuthShellPortfolioAssetIdRouteImport } from './routes/_auth/_shell/portfolio.$assetId'
 
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
+const AuthRoute = AuthRouteImport.update({
+  id: '/_auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -50,43 +32,13 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/_auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthIndexRoute = AuthIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthUserAssetsRoute = AuthUserAssetsRouteImport.update({
-  id: '/user-assets',
-  path: '/user-assets',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthTransactionsRoute = AuthTransactionsRouteImport.update({
-  id: '/transactions',
-  path: '/transactions',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthSettingsRoute = AuthSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthPortfolioOverviewRoute = AuthPortfolioOverviewRouteImport.update({
-  id: '/portfolio-overview',
-  path: '/portfolio-overview',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthPortfolioRoute = AuthPortfolioRouteImport.update({
-  id: '/portfolio',
-  path: '/portfolio',
+const AuthShellRoute = AuthShellRouteImport.update({
+  id: '/_shell',
   getParentRoute: () => AuthRoute,
 } as any)
 const AuthOnboardingRoute = AuthOnboardingRouteImport.update({
@@ -94,309 +46,148 @@ const AuthOnboardingRoute = AuthOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AuthRoute,
 } as any)
-const AuthGlobalAssetsRoute = AuthGlobalAssetsRouteImport.update({
-  id: '/global-assets',
-  path: '/global-assets',
-  getParentRoute: () => AuthRoute,
+const AuthShellIndexRoute = AuthShellIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthShellRoute,
 } as any)
-const AuthComponentTestingRoute = AuthComponentTestingRouteImport.update({
-  id: '/component-testing',
-  path: '/component-testing',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthAiChatRoute = AuthAiChatRouteImport.update({
+const AuthShellAiChatRoute = AuthShellAiChatRouteImport.update({
   id: '/ai-chat',
   path: '/ai-chat',
-  getParentRoute: () => AuthRoute,
+  getParentRoute: () => AuthShellRoute,
 } as any)
-const AuthUserAssetsIndexRoute = AuthUserAssetsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthUserAssetsRoute,
+const AuthShellSettingsRoute = AuthShellSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthShellRoute,
 } as any)
-const AuthTransactionsIndexRoute = AuthTransactionsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthTransactionsRoute,
+const AuthShellTransactionsRoute = AuthShellTransactionsRouteImport.update({
+  id: '/transactions',
+  path: '/transactions',
+  getParentRoute: () => AuthShellRoute,
 } as any)
-const AuthGlobalAssetsIndexRoute = AuthGlobalAssetsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthGlobalAssetsRoute,
+const AuthShellAccountsIndexRoute = AuthShellAccountsIndexRouteImport.update({
+  id: '/accounts/',
+  path: '/accounts/',
+  getParentRoute: () => AuthShellRoute,
 } as any)
-const AuthUserAssetsAssetIdRoute = AuthUserAssetsAssetIdRouteImport.update({
-  id: '/$assetId',
-  path: '/$assetId',
-  getParentRoute: () => AuthUserAssetsRoute,
-} as any)
-const AuthTransactionsIndividualRoute =
-  AuthTransactionsIndividualRouteImport.update({
-    id: '/individual',
-    path: '/individual',
-    getParentRoute: () => AuthTransactionsRoute,
+const AuthShellAccountsAccountIdRoute =
+  AuthShellAccountsAccountIdRouteImport.update({
+    id: '/accounts/$accountId',
+    path: '/accounts/$accountId',
+    getParentRoute: () => AuthShellRoute,
   } as any)
-const AuthSettingsCategoriesRoute = AuthSettingsCategoriesRouteImport.update({
-  id: '/categories',
-  path: '/categories',
-  getParentRoute: () => AuthSettingsRoute,
+const AuthShellPortfolioIndexRoute = AuthShellPortfolioIndexRouteImport.update({
+  id: '/portfolio/',
+  path: '/portfolio/',
+  getParentRoute: () => AuthShellRoute,
 } as any)
-const AuthSettingsBaseCurrencyRoute =
-  AuthSettingsBaseCurrencyRouteImport.update({
-    id: '/base-currency',
-    path: '/base-currency',
-    getParentRoute: () => AuthSettingsRoute,
-  } as any)
-const AuthSettingsAiUsageRoute = AuthSettingsAiUsageRouteImport.update({
-  id: '/ai-usage',
-  path: '/ai-usage',
-  getParentRoute: () => AuthSettingsRoute,
-} as any)
-const AuthSettingsAccountsRoute = AuthSettingsAccountsRouteImport.update({
-  id: '/accounts',
-  path: '/accounts',
-  getParentRoute: () => AuthSettingsRoute,
-} as any)
-const AuthPortfolioOverviewAssetIdRoute =
-  AuthPortfolioOverviewAssetIdRouteImport.update({
-    id: '/$assetId',
-    path: '/$assetId',
-    getParentRoute: () => AuthPortfolioOverviewRoute,
-  } as any)
-const AuthGlobalAssetsAssetIdRoute = AuthGlobalAssetsAssetIdRouteImport.update({
-  id: '/$assetId',
-  path: '/$assetId',
-  getParentRoute: () => AuthGlobalAssetsRoute,
-} as any)
-const AuthAccountsAccountIdRoute = AuthAccountsAccountIdRouteImport.update({
-  id: '/accounts/$accountId',
-  path: '/accounts/$accountId',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthSettingsConnectorsIndexRoute =
-  AuthSettingsConnectorsIndexRouteImport.update({
-    id: '/connectors/',
-    path: '/connectors/',
-    getParentRoute: () => AuthSettingsRoute,
-  } as any)
-const AuthSettingsConnectorsProviderKindRoute =
-  AuthSettingsConnectorsProviderKindRouteImport.update({
-    id: '/connectors/$providerKind',
-    path: '/connectors/$providerKind',
-    getParentRoute: () => AuthSettingsRoute,
-  } as any)
-const AuthSettingsConnectorsTruelayerCallbackRoute =
-  AuthSettingsConnectorsTruelayerCallbackRouteImport.update({
-    id: '/connectors/truelayer/callback',
-    path: '/connectors/truelayer/callback',
-    getParentRoute: () => AuthSettingsRoute,
-  } as any)
-const AuthSettingsConnectorsConnectionsConnectionIdRoute =
-  AuthSettingsConnectorsConnectionsConnectionIdRouteImport.update({
-    id: '/connectors/connections/$connectionId',
-    path: '/connectors/connections/$connectionId',
-    getParentRoute: () => AuthSettingsRoute,
+const AuthShellPortfolioAssetIdRoute =
+  AuthShellPortfolioAssetIdRouteImport.update({
+    id: '/portfolio/$assetId',
+    path: '/portfolio/$assetId',
+    getParentRoute: () => AuthShellRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AuthIndexRoute
-  '/about': typeof AboutRoute
+  '/': typeof AuthShellIndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/ai-chat': typeof AuthAiChatRoute
-  '/component-testing': typeof AuthComponentTestingRoute
-  '/global-assets': typeof AuthGlobalAssetsRouteWithChildren
   '/onboarding': typeof AuthOnboardingRoute
-  '/portfolio': typeof AuthPortfolioRoute
-  '/portfolio-overview': typeof AuthPortfolioOverviewRouteWithChildren
-  '/settings': typeof AuthSettingsRouteWithChildren
-  '/transactions': typeof AuthTransactionsRouteWithChildren
-  '/user-assets': typeof AuthUserAssetsRouteWithChildren
-  '/accounts/$accountId': typeof AuthAccountsAccountIdRoute
-  '/global-assets/$assetId': typeof AuthGlobalAssetsAssetIdRoute
-  '/portfolio-overview/$assetId': typeof AuthPortfolioOverviewAssetIdRoute
-  '/settings/accounts': typeof AuthSettingsAccountsRoute
-  '/settings/ai-usage': typeof AuthSettingsAiUsageRoute
-  '/settings/base-currency': typeof AuthSettingsBaseCurrencyRoute
-  '/settings/categories': typeof AuthSettingsCategoriesRoute
-  '/transactions/individual': typeof AuthTransactionsIndividualRoute
-  '/user-assets/$assetId': typeof AuthUserAssetsAssetIdRoute
-  '/global-assets/': typeof AuthGlobalAssetsIndexRoute
-  '/transactions/': typeof AuthTransactionsIndexRoute
-  '/user-assets/': typeof AuthUserAssetsIndexRoute
-  '/settings/connectors/$providerKind': typeof AuthSettingsConnectorsProviderKindRoute
-  '/settings/connectors/': typeof AuthSettingsConnectorsIndexRoute
-  '/settings/connectors/connections/$connectionId': typeof AuthSettingsConnectorsConnectionsConnectionIdRoute
-  '/settings/connectors/truelayer/callback': typeof AuthSettingsConnectorsTruelayerCallbackRoute
+  '/ai-chat': typeof AuthShellAiChatRoute
+  '/settings': typeof AuthShellSettingsRoute
+  '/transactions': typeof AuthShellTransactionsRoute
+  '/accounts/$accountId': typeof AuthShellAccountsAccountIdRoute
+  '/portfolio/$assetId': typeof AuthShellPortfolioAssetIdRoute
+  '/accounts/': typeof AuthShellAccountsIndexRoute
+  '/portfolio/': typeof AuthShellPortfolioIndexRoute
 }
 export interface FileRoutesByTo {
-  '/about': typeof AboutRoute
+  '/': typeof AuthShellIndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/ai-chat': typeof AuthAiChatRoute
-  '/component-testing': typeof AuthComponentTestingRoute
   '/onboarding': typeof AuthOnboardingRoute
-  '/portfolio': typeof AuthPortfolioRoute
-  '/portfolio-overview': typeof AuthPortfolioOverviewRouteWithChildren
-  '/settings': typeof AuthSettingsRouteWithChildren
-  '/': typeof AuthIndexRoute
-  '/accounts/$accountId': typeof AuthAccountsAccountIdRoute
-  '/global-assets/$assetId': typeof AuthGlobalAssetsAssetIdRoute
-  '/portfolio-overview/$assetId': typeof AuthPortfolioOverviewAssetIdRoute
-  '/settings/accounts': typeof AuthSettingsAccountsRoute
-  '/settings/ai-usage': typeof AuthSettingsAiUsageRoute
-  '/settings/base-currency': typeof AuthSettingsBaseCurrencyRoute
-  '/settings/categories': typeof AuthSettingsCategoriesRoute
-  '/transactions/individual': typeof AuthTransactionsIndividualRoute
-  '/user-assets/$assetId': typeof AuthUserAssetsAssetIdRoute
-  '/global-assets': typeof AuthGlobalAssetsIndexRoute
-  '/transactions': typeof AuthTransactionsIndexRoute
-  '/user-assets': typeof AuthUserAssetsIndexRoute
-  '/settings/connectors/$providerKind': typeof AuthSettingsConnectorsProviderKindRoute
-  '/settings/connectors': typeof AuthSettingsConnectorsIndexRoute
-  '/settings/connectors/connections/$connectionId': typeof AuthSettingsConnectorsConnectionsConnectionIdRoute
-  '/settings/connectors/truelayer/callback': typeof AuthSettingsConnectorsTruelayerCallbackRoute
+  '/ai-chat': typeof AuthShellAiChatRoute
+  '/settings': typeof AuthShellSettingsRoute
+  '/transactions': typeof AuthShellTransactionsRoute
+  '/accounts/$accountId': typeof AuthShellAccountsAccountIdRoute
+  '/portfolio/$assetId': typeof AuthShellPortfolioAssetIdRoute
+  '/accounts': typeof AuthShellAccountsIndexRoute
+  '/portfolio': typeof AuthShellPortfolioIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_auth': typeof AuthRouteWithChildren
-  '/about': typeof AboutRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/_auth/ai-chat': typeof AuthAiChatRoute
-  '/_auth/component-testing': typeof AuthComponentTestingRoute
-  '/_auth/global-assets': typeof AuthGlobalAssetsRouteWithChildren
+  '/_auth/_shell': typeof AuthShellRouteWithChildren
   '/_auth/onboarding': typeof AuthOnboardingRoute
-  '/_auth/portfolio': typeof AuthPortfolioRoute
-  '/_auth/portfolio-overview': typeof AuthPortfolioOverviewRouteWithChildren
-  '/_auth/settings': typeof AuthSettingsRouteWithChildren
-  '/_auth/transactions': typeof AuthTransactionsRouteWithChildren
-  '/_auth/user-assets': typeof AuthUserAssetsRouteWithChildren
-  '/_auth/': typeof AuthIndexRoute
-  '/_auth/accounts/$accountId': typeof AuthAccountsAccountIdRoute
-  '/_auth/global-assets/$assetId': typeof AuthGlobalAssetsAssetIdRoute
-  '/_auth/portfolio-overview/$assetId': typeof AuthPortfolioOverviewAssetIdRoute
-  '/_auth/settings/accounts': typeof AuthSettingsAccountsRoute
-  '/_auth/settings/ai-usage': typeof AuthSettingsAiUsageRoute
-  '/_auth/settings/base-currency': typeof AuthSettingsBaseCurrencyRoute
-  '/_auth/settings/categories': typeof AuthSettingsCategoriesRoute
-  '/_auth/transactions/individual': typeof AuthTransactionsIndividualRoute
-  '/_auth/user-assets/$assetId': typeof AuthUserAssetsAssetIdRoute
-  '/_auth/global-assets/': typeof AuthGlobalAssetsIndexRoute
-  '/_auth/transactions/': typeof AuthTransactionsIndexRoute
-  '/_auth/user-assets/': typeof AuthUserAssetsIndexRoute
-  '/_auth/settings/connectors/$providerKind': typeof AuthSettingsConnectorsProviderKindRoute
-  '/_auth/settings/connectors/': typeof AuthSettingsConnectorsIndexRoute
-  '/_auth/settings/connectors/connections/$connectionId': typeof AuthSettingsConnectorsConnectionsConnectionIdRoute
-  '/_auth/settings/connectors/truelayer/callback': typeof AuthSettingsConnectorsTruelayerCallbackRoute
+  '/_auth/_shell/ai-chat': typeof AuthShellAiChatRoute
+  '/_auth/_shell/settings': typeof AuthShellSettingsRoute
+  '/_auth/_shell/transactions': typeof AuthShellTransactionsRoute
+  '/_auth/_shell/': typeof AuthShellIndexRoute
+  '/_auth/_shell/accounts/$accountId': typeof AuthShellAccountsAccountIdRoute
+  '/_auth/_shell/portfolio/$assetId': typeof AuthShellPortfolioAssetIdRoute
+  '/_auth/_shell/accounts/': typeof AuthShellAccountsIndexRoute
+  '/_auth/_shell/portfolio/': typeof AuthShellPortfolioIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/about'
     | '/login'
     | '/signup'
-    | '/ai-chat'
-    | '/component-testing'
-    | '/global-assets'
     | '/onboarding'
-    | '/portfolio'
-    | '/portfolio-overview'
+    | '/ai-chat'
     | '/settings'
     | '/transactions'
-    | '/user-assets'
     | '/accounts/$accountId'
-    | '/global-assets/$assetId'
-    | '/portfolio-overview/$assetId'
-    | '/settings/accounts'
-    | '/settings/ai-usage'
-    | '/settings/base-currency'
-    | '/settings/categories'
-    | '/transactions/individual'
-    | '/user-assets/$assetId'
-    | '/global-assets/'
-    | '/transactions/'
-    | '/user-assets/'
-    | '/settings/connectors/$providerKind'
-    | '/settings/connectors/'
-    | '/settings/connectors/connections/$connectionId'
-    | '/settings/connectors/truelayer/callback'
+    | '/portfolio/$assetId'
+    | '/accounts/'
+    | '/portfolio/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/about'
+    | '/'
     | '/login'
     | '/signup'
-    | '/ai-chat'
-    | '/component-testing'
     | '/onboarding'
-    | '/portfolio'
-    | '/portfolio-overview'
+    | '/ai-chat'
     | '/settings'
-    | '/'
-    | '/accounts/$accountId'
-    | '/global-assets/$assetId'
-    | '/portfolio-overview/$assetId'
-    | '/settings/accounts'
-    | '/settings/ai-usage'
-    | '/settings/base-currency'
-    | '/settings/categories'
-    | '/transactions/individual'
-    | '/user-assets/$assetId'
-    | '/global-assets'
     | '/transactions'
-    | '/user-assets'
-    | '/settings/connectors/$providerKind'
-    | '/settings/connectors'
-    | '/settings/connectors/connections/$connectionId'
-    | '/settings/connectors/truelayer/callback'
+    | '/accounts/$accountId'
+    | '/portfolio/$assetId'
+    | '/accounts'
+    | '/portfolio'
   id:
     | '__root__'
     | '/_auth'
-    | '/about'
     | '/login'
     | '/signup'
-    | '/_auth/ai-chat'
-    | '/_auth/component-testing'
-    | '/_auth/global-assets'
+    | '/_auth/_shell'
     | '/_auth/onboarding'
-    | '/_auth/portfolio'
-    | '/_auth/portfolio-overview'
-    | '/_auth/settings'
-    | '/_auth/transactions'
-    | '/_auth/user-assets'
-    | '/_auth/'
-    | '/_auth/accounts/$accountId'
-    | '/_auth/global-assets/$assetId'
-    | '/_auth/portfolio-overview/$assetId'
-    | '/_auth/settings/accounts'
-    | '/_auth/settings/ai-usage'
-    | '/_auth/settings/base-currency'
-    | '/_auth/settings/categories'
-    | '/_auth/transactions/individual'
-    | '/_auth/user-assets/$assetId'
-    | '/_auth/global-assets/'
-    | '/_auth/transactions/'
-    | '/_auth/user-assets/'
-    | '/_auth/settings/connectors/$providerKind'
-    | '/_auth/settings/connectors/'
-    | '/_auth/settings/connectors/connections/$connectionId'
-    | '/_auth/settings/connectors/truelayer/callback'
+    | '/_auth/_shell/ai-chat'
+    | '/_auth/_shell/settings'
+    | '/_auth/_shell/transactions'
+    | '/_auth/_shell/'
+    | '/_auth/_shell/accounts/$accountId'
+    | '/_auth/_shell/portfolio/$assetId'
+    | '/_auth/_shell/accounts/'
+    | '/_auth/_shell/portfolio/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthRoute: typeof AuthRouteWithChildren
-  AboutRoute: typeof AboutRoute
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
+    '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -406,60 +197,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_auth': {
-      id: '/_auth'
+    '/_auth/_shell': {
+      id: '/_auth/_shell'
       path: ''
       fullPath: '/'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_auth/': {
-      id: '/_auth/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof AuthIndexRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/_auth/user-assets': {
-      id: '/_auth/user-assets'
-      path: '/user-assets'
-      fullPath: '/user-assets'
-      preLoaderRoute: typeof AuthUserAssetsRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/_auth/transactions': {
-      id: '/_auth/transactions'
-      path: '/transactions'
-      fullPath: '/transactions'
-      preLoaderRoute: typeof AuthTransactionsRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/_auth/settings': {
-      id: '/_auth/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthSettingsRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/_auth/portfolio-overview': {
-      id: '/_auth/portfolio-overview'
-      path: '/portfolio-overview'
-      fullPath: '/portfolio-overview'
-      preLoaderRoute: typeof AuthPortfolioOverviewRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/_auth/portfolio': {
-      id: '/_auth/portfolio'
-      path: '/portfolio'
-      fullPath: '/portfolio'
-      preLoaderRoute: typeof AuthPortfolioRouteImport
+      preLoaderRoute: typeof AuthShellRouteImport
       parentRoute: typeof AuthRoute
     }
     '/_auth/onboarding': {
@@ -469,257 +218,105 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthOnboardingRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/_auth/global-assets': {
-      id: '/_auth/global-assets'
-      path: '/global-assets'
-      fullPath: '/global-assets'
-      preLoaderRoute: typeof AuthGlobalAssetsRouteImport
-      parentRoute: typeof AuthRoute
+    '/_auth/_shell/': {
+      id: '/_auth/_shell/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof AuthShellIndexRouteImport
+      parentRoute: typeof AuthShellRoute
     }
-    '/_auth/component-testing': {
-      id: '/_auth/component-testing'
-      path: '/component-testing'
-      fullPath: '/component-testing'
-      preLoaderRoute: typeof AuthComponentTestingRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/_auth/ai-chat': {
-      id: '/_auth/ai-chat'
+    '/_auth/_shell/ai-chat': {
+      id: '/_auth/_shell/ai-chat'
       path: '/ai-chat'
       fullPath: '/ai-chat'
-      preLoaderRoute: typeof AuthAiChatRouteImport
-      parentRoute: typeof AuthRoute
+      preLoaderRoute: typeof AuthShellAiChatRouteImport
+      parentRoute: typeof AuthShellRoute
     }
-    '/_auth/user-assets/': {
-      id: '/_auth/user-assets/'
-      path: '/'
-      fullPath: '/user-assets/'
-      preLoaderRoute: typeof AuthUserAssetsIndexRouteImport
-      parentRoute: typeof AuthUserAssetsRoute
+    '/_auth/_shell/settings': {
+      id: '/_auth/_shell/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthShellSettingsRouteImport
+      parentRoute: typeof AuthShellRoute
     }
-    '/_auth/transactions/': {
-      id: '/_auth/transactions/'
-      path: '/'
-      fullPath: '/transactions/'
-      preLoaderRoute: typeof AuthTransactionsIndexRouteImport
-      parentRoute: typeof AuthTransactionsRoute
+    '/_auth/_shell/transactions': {
+      id: '/_auth/_shell/transactions'
+      path: '/transactions'
+      fullPath: '/transactions'
+      preLoaderRoute: typeof AuthShellTransactionsRouteImport
+      parentRoute: typeof AuthShellRoute
     }
-    '/_auth/global-assets/': {
-      id: '/_auth/global-assets/'
-      path: '/'
-      fullPath: '/global-assets/'
-      preLoaderRoute: typeof AuthGlobalAssetsIndexRouteImport
-      parentRoute: typeof AuthGlobalAssetsRoute
-    }
-    '/_auth/user-assets/$assetId': {
-      id: '/_auth/user-assets/$assetId'
-      path: '/$assetId'
-      fullPath: '/user-assets/$assetId'
-      preLoaderRoute: typeof AuthUserAssetsAssetIdRouteImport
-      parentRoute: typeof AuthUserAssetsRoute
-    }
-    '/_auth/transactions/individual': {
-      id: '/_auth/transactions/individual'
-      path: '/individual'
-      fullPath: '/transactions/individual'
-      preLoaderRoute: typeof AuthTransactionsIndividualRouteImport
-      parentRoute: typeof AuthTransactionsRoute
-    }
-    '/_auth/settings/categories': {
-      id: '/_auth/settings/categories'
-      path: '/categories'
-      fullPath: '/settings/categories'
-      preLoaderRoute: typeof AuthSettingsCategoriesRouteImport
-      parentRoute: typeof AuthSettingsRoute
-    }
-    '/_auth/settings/base-currency': {
-      id: '/_auth/settings/base-currency'
-      path: '/base-currency'
-      fullPath: '/settings/base-currency'
-      preLoaderRoute: typeof AuthSettingsBaseCurrencyRouteImport
-      parentRoute: typeof AuthSettingsRoute
-    }
-    '/_auth/settings/ai-usage': {
-      id: '/_auth/settings/ai-usage'
-      path: '/ai-usage'
-      fullPath: '/settings/ai-usage'
-      preLoaderRoute: typeof AuthSettingsAiUsageRouteImport
-      parentRoute: typeof AuthSettingsRoute
-    }
-    '/_auth/settings/accounts': {
-      id: '/_auth/settings/accounts'
+    '/_auth/_shell/accounts/': {
+      id: '/_auth/_shell/accounts/'
       path: '/accounts'
-      fullPath: '/settings/accounts'
-      preLoaderRoute: typeof AuthSettingsAccountsRouteImport
-      parentRoute: typeof AuthSettingsRoute
+      fullPath: '/accounts/'
+      preLoaderRoute: typeof AuthShellAccountsIndexRouteImport
+      parentRoute: typeof AuthShellRoute
     }
-    '/_auth/portfolio-overview/$assetId': {
-      id: '/_auth/portfolio-overview/$assetId'
-      path: '/$assetId'
-      fullPath: '/portfolio-overview/$assetId'
-      preLoaderRoute: typeof AuthPortfolioOverviewAssetIdRouteImport
-      parentRoute: typeof AuthPortfolioOverviewRoute
-    }
-    '/_auth/global-assets/$assetId': {
-      id: '/_auth/global-assets/$assetId'
-      path: '/$assetId'
-      fullPath: '/global-assets/$assetId'
-      preLoaderRoute: typeof AuthGlobalAssetsAssetIdRouteImport
-      parentRoute: typeof AuthGlobalAssetsRoute
-    }
-    '/_auth/accounts/$accountId': {
-      id: '/_auth/accounts/$accountId'
+    '/_auth/_shell/accounts/$accountId': {
+      id: '/_auth/_shell/accounts/$accountId'
       path: '/accounts/$accountId'
       fullPath: '/accounts/$accountId'
-      preLoaderRoute: typeof AuthAccountsAccountIdRouteImport
-      parentRoute: typeof AuthRoute
+      preLoaderRoute: typeof AuthShellAccountsAccountIdRouteImport
+      parentRoute: typeof AuthShellRoute
     }
-    '/_auth/settings/connectors/': {
-      id: '/_auth/settings/connectors/'
-      path: '/connectors'
-      fullPath: '/settings/connectors/'
-      preLoaderRoute: typeof AuthSettingsConnectorsIndexRouteImport
-      parentRoute: typeof AuthSettingsRoute
+    '/_auth/_shell/portfolio/': {
+      id: '/_auth/_shell/portfolio/'
+      path: '/portfolio'
+      fullPath: '/portfolio/'
+      preLoaderRoute: typeof AuthShellPortfolioIndexRouteImport
+      parentRoute: typeof AuthShellRoute
     }
-    '/_auth/settings/connectors/$providerKind': {
-      id: '/_auth/settings/connectors/$providerKind'
-      path: '/connectors/$providerKind'
-      fullPath: '/settings/connectors/$providerKind'
-      preLoaderRoute: typeof AuthSettingsConnectorsProviderKindRouteImport
-      parentRoute: typeof AuthSettingsRoute
-    }
-    '/_auth/settings/connectors/truelayer/callback': {
-      id: '/_auth/settings/connectors/truelayer/callback'
-      path: '/connectors/truelayer/callback'
-      fullPath: '/settings/connectors/truelayer/callback'
-      preLoaderRoute: typeof AuthSettingsConnectorsTruelayerCallbackRouteImport
-      parentRoute: typeof AuthSettingsRoute
-    }
-    '/_auth/settings/connectors/connections/$connectionId': {
-      id: '/_auth/settings/connectors/connections/$connectionId'
-      path: '/connectors/connections/$connectionId'
-      fullPath: '/settings/connectors/connections/$connectionId'
-      preLoaderRoute: typeof AuthSettingsConnectorsConnectionsConnectionIdRouteImport
-      parentRoute: typeof AuthSettingsRoute
+    '/_auth/_shell/portfolio/$assetId': {
+      id: '/_auth/_shell/portfolio/$assetId'
+      path: '/portfolio/$assetId'
+      fullPath: '/portfolio/$assetId'
+      preLoaderRoute: typeof AuthShellPortfolioAssetIdRouteImport
+      parentRoute: typeof AuthShellRoute
     }
   }
 }
 
-interface AuthGlobalAssetsRouteChildren {
-  AuthGlobalAssetsAssetIdRoute: typeof AuthGlobalAssetsAssetIdRoute
-  AuthGlobalAssetsIndexRoute: typeof AuthGlobalAssetsIndexRoute
+interface AuthShellRouteChildren {
+  AuthShellAiChatRoute: typeof AuthShellAiChatRoute
+  AuthShellSettingsRoute: typeof AuthShellSettingsRoute
+  AuthShellTransactionsRoute: typeof AuthShellTransactionsRoute
+  AuthShellIndexRoute: typeof AuthShellIndexRoute
+  AuthShellAccountsAccountIdRoute: typeof AuthShellAccountsAccountIdRoute
+  AuthShellPortfolioAssetIdRoute: typeof AuthShellPortfolioAssetIdRoute
+  AuthShellAccountsIndexRoute: typeof AuthShellAccountsIndexRoute
+  AuthShellPortfolioIndexRoute: typeof AuthShellPortfolioIndexRoute
 }
 
-const AuthGlobalAssetsRouteChildren: AuthGlobalAssetsRouteChildren = {
-  AuthGlobalAssetsAssetIdRoute: AuthGlobalAssetsAssetIdRoute,
-  AuthGlobalAssetsIndexRoute: AuthGlobalAssetsIndexRoute,
+const AuthShellRouteChildren: AuthShellRouteChildren = {
+  AuthShellAiChatRoute: AuthShellAiChatRoute,
+  AuthShellSettingsRoute: AuthShellSettingsRoute,
+  AuthShellTransactionsRoute: AuthShellTransactionsRoute,
+  AuthShellIndexRoute: AuthShellIndexRoute,
+  AuthShellAccountsAccountIdRoute: AuthShellAccountsAccountIdRoute,
+  AuthShellPortfolioAssetIdRoute: AuthShellPortfolioAssetIdRoute,
+  AuthShellAccountsIndexRoute: AuthShellAccountsIndexRoute,
+  AuthShellPortfolioIndexRoute: AuthShellPortfolioIndexRoute,
 }
 
-const AuthGlobalAssetsRouteWithChildren =
-  AuthGlobalAssetsRoute._addFileChildren(AuthGlobalAssetsRouteChildren)
-
-interface AuthPortfolioOverviewRouteChildren {
-  AuthPortfolioOverviewAssetIdRoute: typeof AuthPortfolioOverviewAssetIdRoute
-}
-
-const AuthPortfolioOverviewRouteChildren: AuthPortfolioOverviewRouteChildren = {
-  AuthPortfolioOverviewAssetIdRoute: AuthPortfolioOverviewAssetIdRoute,
-}
-
-const AuthPortfolioOverviewRouteWithChildren =
-  AuthPortfolioOverviewRoute._addFileChildren(
-    AuthPortfolioOverviewRouteChildren,
-  )
-
-interface AuthSettingsRouteChildren {
-  AuthSettingsAccountsRoute: typeof AuthSettingsAccountsRoute
-  AuthSettingsAiUsageRoute: typeof AuthSettingsAiUsageRoute
-  AuthSettingsBaseCurrencyRoute: typeof AuthSettingsBaseCurrencyRoute
-  AuthSettingsCategoriesRoute: typeof AuthSettingsCategoriesRoute
-  AuthSettingsConnectorsProviderKindRoute: typeof AuthSettingsConnectorsProviderKindRoute
-  AuthSettingsConnectorsIndexRoute: typeof AuthSettingsConnectorsIndexRoute
-  AuthSettingsConnectorsConnectionsConnectionIdRoute: typeof AuthSettingsConnectorsConnectionsConnectionIdRoute
-  AuthSettingsConnectorsTruelayerCallbackRoute: typeof AuthSettingsConnectorsTruelayerCallbackRoute
-}
-
-const AuthSettingsRouteChildren: AuthSettingsRouteChildren = {
-  AuthSettingsAccountsRoute: AuthSettingsAccountsRoute,
-  AuthSettingsAiUsageRoute: AuthSettingsAiUsageRoute,
-  AuthSettingsBaseCurrencyRoute: AuthSettingsBaseCurrencyRoute,
-  AuthSettingsCategoriesRoute: AuthSettingsCategoriesRoute,
-  AuthSettingsConnectorsProviderKindRoute:
-    AuthSettingsConnectorsProviderKindRoute,
-  AuthSettingsConnectorsIndexRoute: AuthSettingsConnectorsIndexRoute,
-  AuthSettingsConnectorsConnectionsConnectionIdRoute:
-    AuthSettingsConnectorsConnectionsConnectionIdRoute,
-  AuthSettingsConnectorsTruelayerCallbackRoute:
-    AuthSettingsConnectorsTruelayerCallbackRoute,
-}
-
-const AuthSettingsRouteWithChildren = AuthSettingsRoute._addFileChildren(
-  AuthSettingsRouteChildren,
-)
-
-interface AuthTransactionsRouteChildren {
-  AuthTransactionsIndividualRoute: typeof AuthTransactionsIndividualRoute
-  AuthTransactionsIndexRoute: typeof AuthTransactionsIndexRoute
-}
-
-const AuthTransactionsRouteChildren: AuthTransactionsRouteChildren = {
-  AuthTransactionsIndividualRoute: AuthTransactionsIndividualRoute,
-  AuthTransactionsIndexRoute: AuthTransactionsIndexRoute,
-}
-
-const AuthTransactionsRouteWithChildren =
-  AuthTransactionsRoute._addFileChildren(AuthTransactionsRouteChildren)
-
-interface AuthUserAssetsRouteChildren {
-  AuthUserAssetsAssetIdRoute: typeof AuthUserAssetsAssetIdRoute
-  AuthUserAssetsIndexRoute: typeof AuthUserAssetsIndexRoute
-}
-
-const AuthUserAssetsRouteChildren: AuthUserAssetsRouteChildren = {
-  AuthUserAssetsAssetIdRoute: AuthUserAssetsAssetIdRoute,
-  AuthUserAssetsIndexRoute: AuthUserAssetsIndexRoute,
-}
-
-const AuthUserAssetsRouteWithChildren = AuthUserAssetsRoute._addFileChildren(
-  AuthUserAssetsRouteChildren,
+const AuthShellRouteWithChildren = AuthShellRoute._addFileChildren(
+  AuthShellRouteChildren,
 )
 
 interface AuthRouteChildren {
-  AuthAiChatRoute: typeof AuthAiChatRoute
-  AuthComponentTestingRoute: typeof AuthComponentTestingRoute
-  AuthGlobalAssetsRoute: typeof AuthGlobalAssetsRouteWithChildren
+  AuthShellRoute: typeof AuthShellRouteWithChildren
   AuthOnboardingRoute: typeof AuthOnboardingRoute
-  AuthPortfolioRoute: typeof AuthPortfolioRoute
-  AuthPortfolioOverviewRoute: typeof AuthPortfolioOverviewRouteWithChildren
-  AuthSettingsRoute: typeof AuthSettingsRouteWithChildren
-  AuthTransactionsRoute: typeof AuthTransactionsRouteWithChildren
-  AuthUserAssetsRoute: typeof AuthUserAssetsRouteWithChildren
-  AuthIndexRoute: typeof AuthIndexRoute
-  AuthAccountsAccountIdRoute: typeof AuthAccountsAccountIdRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
-  AuthAiChatRoute: AuthAiChatRoute,
-  AuthComponentTestingRoute: AuthComponentTestingRoute,
-  AuthGlobalAssetsRoute: AuthGlobalAssetsRouteWithChildren,
+  AuthShellRoute: AuthShellRouteWithChildren,
   AuthOnboardingRoute: AuthOnboardingRoute,
-  AuthPortfolioRoute: AuthPortfolioRoute,
-  AuthPortfolioOverviewRoute: AuthPortfolioOverviewRouteWithChildren,
-  AuthSettingsRoute: AuthSettingsRouteWithChildren,
-  AuthTransactionsRoute: AuthTransactionsRouteWithChildren,
-  AuthUserAssetsRoute: AuthUserAssetsRouteWithChildren,
-  AuthIndexRoute: AuthIndexRoute,
-  AuthAccountsAccountIdRoute: AuthAccountsAccountIdRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRouteWithChildren,
-  AboutRoute: AboutRoute,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
 }

@@ -28,6 +28,8 @@ help: ## Show this help message
 auth ?= noauth
 telemetry ?= local
 secrets ?= db
+LANDING_SITE_URL ?= https://sverto.com
+LANDING_APP_URL ?= https://app.sverto.com
 # Port scheme: 2<PREFIX><SS> -> 20000-29999. PREFIX = 2-digit worktree id (00 = main,
 # 01-99 = worktree hash); SS = 2-digit service slot (00-99, 100 slots). Add a service
 # by giving it the next free SS. Stays clear of macOS-reserved 5000/7000 and the
@@ -66,6 +68,7 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk 
 		"POSTGRES_PORT=2$${PREFIX}01" \
 		"SERVER_PORT=2$${PREFIX}02" \
 		"VITE_PORT=2$${PREFIX}03" \
+		"LANDING_PORT=2$${PREFIX}11" \
 		"OTLP_PORT=2$${PREFIX}04" \
 		"OTLP_TRACES_ENDPOINT=$${OTLP_TRACES_ENDPOINT_VALUE}" \
 		"OTLP_LOGS_ENDPOINT=$${OTLP_LOGS_ENDPOINT_VALUE}" \
@@ -104,7 +107,7 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk 
 			"TRUELAYER_CLIENT_ID=$${TRUELAYER_CLIENT_ID}" \
 			"TRUELAYER_CLIENT_SECRET=$${TRUELAYER_CLIENT_SECRET}" \
 			"TRUELAYER_ENV=$${TRUELAYER_ENV}" \
-			"TRUELAYER_REDIRECT_URI_ALLOWLIST=$${TRUELAYER_REDIRECT_URI_ALLOWLIST}" \
+			"TRUELAYER_REDIRECT_URI_ALLOWLIST=http://localhost:2$${PREFIX}03/settings/connectors/truelayer/callback,$${TRUELAYER_REDIRECT_URI_ALLOWLIST}" \
 			>> .env; \
 	fi; \
 	if [ "$(telemetry)" = "axiom" ]; then \
@@ -170,6 +173,8 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk 
 	@echo ""
 	@echo "$(GREEN)Installing UI dependencies...$(NC)"
 	cd web && bun install
+	@echo "$(GREEN)Installing landing dependencies...$(NC)"
+	cd landing && bun install
 	@echo "$(GREEN)Building Rust workspace...$(NC)"
 	cd server && cargo build
 	@echo "$(GREEN)Setup complete!$(NC)"
@@ -189,6 +194,7 @@ status: ## Show service ports, status, and useful links
 	@echo "$(GREEN)Links$(NC)"
 	@echo "=================================="
 	@echo "$(YELLOW)UI$(NC)              http://localhost:$(VITE_PORT)/"
+	@echo "$(YELLOW)Landing$(NC)         http://localhost:$(LANDING_PORT)/"
 	@echo "$(YELLOW)Redoc$(NC)           http://localhost:$(SERVER_PORT)/redoc"
 	@echo "$(YELLOW)APIs$(NC)            http://localhost:$(SERVER_PORT)/api"
 	@echo "$(YELLOW)Jaeger$(NC)          http://localhost:$(JAEGER_UI_PORT)/"
@@ -230,6 +236,7 @@ status: ## Show service ports, status, and useful links
 	check_worker; \
 	check_local "Market Data   " $(MARKET_DATA_PORT); \
 	check_local "Vite Dev      " $(VITE_PORT); \
+	check_local "Landing Dev   " $(LANDING_PORT); \
 	check_infra "OTLP Collector" $(OTLP_PORT) jaeger; \
 	check_infra "Jaeger UI     " $(JAEGER_UI_PORT) jaeger; \
 	check_infra "Seq Logs      " $(SEQ_PORT) seq; \
@@ -258,6 +265,21 @@ market-data-run: ## Start market data API (kills existing process on MARKET_DATA
 web-run: ## Start Vite dev server (kills existing process on VITE_PORT first)
 	-@lsof -ti :$(VITE_PORT) | xargs kill -9 2>/dev/null || true
 	cd web && bun run dev
+
+.PHONY: landing-run
+landing-run: ## Start Astro dev server for the marketing site (kills LANDING_PORT first; astro dev daemonises, stop it with "cd landing && bunx astro dev stop")
+	-@lsof -ti :$(LANDING_PORT) | xargs kill -9 2>/dev/null || true
+	cd landing && \
+		PUBLIC_SITE_URL=http://localhost:$(LANDING_PORT) \
+		PUBLIC_APP_URL=http://localhost:$(VITE_PORT) \
+		bun run dev --port $(LANDING_PORT)
+
+.PHONY: landing-build
+landing-build: ## Build the static marketing site into landing/dist
+	cd landing && \
+		PUBLIC_SITE_URL=$(LANDING_SITE_URL) \
+		PUBLIC_APP_URL=$(LANDING_APP_URL) \
+		bun run build
 
 .PHONY: ide
 ide: ## Open VS Code and auto-start infra, backend, worker, market-data, web in split terminals
@@ -306,6 +328,7 @@ _stop-processes:
 	-@lsof -ti :$(SERVER_PORT) | xargs kill -9 2>/dev/null || true
 	-@lsof -ti :$(MARKET_DATA_PORT) | xargs kill -9 2>/dev/null || true
 	-@lsof -ti :$(VITE_PORT) | xargs kill -9 2>/dev/null || true
+	-@lsof -ti :$(LANDING_PORT) | xargs kill -9 2>/dev/null || true
 	-@PIDS="$(WORKER_PIDS)"; [ -n "$$PIDS" ] && kill -9 $$PIDS 2>/dev/null || true
 
 .PHONY: stop
@@ -351,10 +374,10 @@ generate-api: ## Generate TypeScript API client from OpenAPI spec
 		sed -i '' 's/"anyOf"/"oneOf"/g' $$TEMP_FILE; \
 		echo "$(GREEN)Generating API client...$(NC)"; \
 		cd web; \
-		npx @openapitools/openapi-generator-cli generate -i $$TEMP_FILE -g typescript-axios --skip-validate-spec -o src/api --additional-properties=withInterfaces=true,legacyDiscriminatorBehavior=true,supportsES6=true; \
+		bunx @openapitools/openapi-generator-cli generate -i $$TEMP_FILE -g typescript-axios --skip-validate-spec -o src/api --additional-properties=withInterfaces=true,legacyDiscriminatorBehavior=true,supportsES6=true; \
 		echo "$(YELLOW)Cleaning up generated files...$(NC)"; \
-		rm -rf src/api/.openapi-generator src/api/.gitignore src/api/.npmignore src/api/.openapi-generator-ignore src/api/git_push.sh; \
-		sed -i '' '2d' src/api/index.ts; \
+		rm -rf src/api/docs src/api/.openapi-generator src/api/.gitignore src/api/.npmignore src/api/.openapi-generator-ignore src/api/git_push.sh; \
+		sed -i '' '/^\/\* eslint-disable \*\/$$/d' src/api/index.ts; \
 		sed -i '' '1s/^/\/\/ @ts-nocheck\n/' src/api/api.ts; \
 		echo "$(YELLOW)Removing temporary file...$(NC)"; \
 		rm -f $$TEMP_FILE; \

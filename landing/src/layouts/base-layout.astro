@@ -1,0 +1,145 @@
+---
+import "../styles/global.css"
+
+import interLatin from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url"
+import plexMono400 from "@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2?url"
+import plexMono500 from "@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff2?url"
+
+interface Props {
+  title: string
+  description: string
+  ogTitle?: string
+  ogDescription?: string
+  ogImage: string
+  ogImageAlt: string
+}
+
+const { title, description, ogImage, ogImageAlt } = Astro.props
+const ogTitle = Astro.props.ogTitle ?? title
+const ogDescription = Astro.props.ogDescription ?? description
+
+const canonical = new URL(Astro.url.pathname, Astro.site).href
+const ogImageUrl = new URL(ogImage, Astro.site).href
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta
+      name="theme-color"
+      media="(prefers-color-scheme: light)"
+      content="#f5f8f8"
+    />
+    <meta
+      name="theme-color"
+      media="(prefers-color-scheme: dark)"
+      content="#0a1010"
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="canonical" href={canonical} />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href={interLatin}
+      crossorigin
+    />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href={plexMono400}
+      crossorigin
+    />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href={plexMono500}
+      crossorigin
+    />
+    <link rel="preconnect" href="https://api.github.com" crossorigin />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Sverto" />
+    <meta property="og:locale" content="en_GB" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={ogTitle} />
+    <meta property="og:description" content={ogDescription} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={ogImageAlt} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={ogTitle} />
+    <meta name="twitter:description" content={ogDescription} />
+    <meta name="twitter:image" content={ogImageUrl} />
+    <meta name="twitter:image:alt" content={ogImageAlt} />
+
+    <slot name="head" />
+
+    <script is:inline>
+      ;(() => {
+        const stored = localStorage.getItem("theme")
+        const system = window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light"
+        const resolved =
+          stored === "dark" || stored === "light" ? stored : system
+        document.documentElement.classList.add(resolved)
+        document.documentElement.dataset.themeChoice = stored ?? "system"
+      })()
+    </script>
+  </head>
+  <body>
+    <slot />
+    <script is:inline>
+      ;(() => {
+        const root = document.documentElement
+        const query = window.matchMedia("(prefers-color-scheme: dark)")
+
+        const apply = (theme) => {
+          root.classList.remove("light", "dark")
+          root.classList.add(theme)
+          for (const button of document.querySelectorAll(
+            "[data-theme-toggle]"
+          )) {
+            button.setAttribute("aria-pressed", String(theme === "dark"))
+            button.setAttribute(
+              "aria-label",
+              theme === "dark"
+                ? "Switch to light theme"
+                : "Switch to dark theme"
+            )
+          }
+        }
+
+        query.addEventListener("change", (event) => {
+          if (root.dataset.themeChoice !== "system") return
+          apply(event.matches ? "dark" : "light")
+        })
+
+        document.addEventListener("click", (event) => {
+          const button = event.target.closest("[data-theme-toggle]")
+          if (button === null) return
+          const next = root.classList.contains("dark") ? "light" : "dark"
+          localStorage.setItem("theme", next)
+          root.dataset.themeChoice = next
+          apply(next)
+        })
+
+        apply(root.classList.contains("dark") ? "dark" : "light")
+      })()
+    </script>
+  </body>
+</html>

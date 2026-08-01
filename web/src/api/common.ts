@@ -2,7 +2,7 @@
 /* eslint-disable */
 /**
  * Sverto Personal Finance API
- * A comprehensive personal finance management API for tracking investments, expenses, and net worth over time. Features include transaction management, portfolio tracking, asset management, and detailed financial reporting.  # Sverto Personal Finance API  A comprehensive REST API for personal finance management, enabling users to track investments, expenses, transactions, and monitor net worth over time.  ## Key Features  - **Transaction Management**: Record and categorize financial transactions with support for various transaction types including purchases, sales, dividends, and transfers - **Portfolio Tracking**: Monitor investment holdings and performance across multiple accounts - **Asset Management**: Manage assets, asset pairs, and exchange rates for accurate portfolio valuation - **Account Management**: Organize finances across different account types with varying liquidity levels - **Net Worth Tracking**: Historical net worth calculations and trend analysis  ## Authentication  This API uses JWT (JSON Web Token) authentication. To access protected endpoints:  1. **Login**: POST `/api/auth` with username and password 2. **Authorization**: Include the JWT token in the `Authorization: Bearer <token>` header for all subsequent requests 3. **Token Format**: Bearer tokens are in JWT format with configurable expiration  ### Example Authentication Flow ```bash # Get JWT token curl -X POST /api/auth \\\\   -H \"Content-Type: application/json\" \\\\   -d \'{\"username\": \"your_username\", \"password\": \"your_password\"}\'  # Use token in requests curl -H \"Authorization: Bearer <your_jwt_token>\" \\\\   /api/users/{user_id}/accounts ```  # API Design Principles The API design _tries_ to follow the same design principles across all contracts.  ## Object relationships ### Identification Each entity has an identification, whether or not it is returned in response object is determined by the use case. - If we are querying a list of entities, the identification is always returned. - If we are querying a single entity, the is identification for the entity not returned in the response object, as it is used in query path. However, the identification for related entities is returned. - If we are creating a new entity using POST - the identification the entity and all its relationships is returned in response object. - If we are updating a single entity  the is identification for the entity not returned in the response object, as it is used in query path. However, the identification for related entities is returned.  ### Input data If we are querying an endpoint which has some object relationships, for input data (Request body, params or path), we provide only the `id` of the related object.   This is because in order to update or fetch something related, the assumption is that for the correct decision, the client mut have already up to date data about the related objects.  Example of this would be that if we want to update an asset to a different category, we would pass the category `id` and not the whole category object, as we would have known it before hand.  ### Response contracts For the relationships in response contracts, there are multiple approaches: - For responses which contain many objects with some kind of relationship, a lookup table is provided as part of the root response. For example, if we are querying a lot of arbitrary transactions, the response would contain a `metadata` object which would contain the `account` and `asset` lookup tables. This is to avoid duplication of the same object in the response. ```js GET /api/assets {     list: [         {             id: 1,             name: \"name\",             relationship: 5,         }     ],     lookup_tables: {         relationship: [                { id: 5, name: \"relationship_name\"}             ]         }     } } ``` - For queries, where only a single entity is returned without nested objects of array type, the relationship is expanded inplace. For example, if we query for a specific asset, the asset type would be returned as an object instead of the `id`. This is because the consumer could not know the necessary metadata beforehand and providing a lookup table for a single entity is not gud. ```js GET /api/assets/1 {     id: 1,     name: \"name\",     relationship: {         id: 5,         name: \"relationship_name\"     } } ``` - For queries where we are adding or updating data, we do not provide any lookup or expansion. The reason is the same as for input data - the client should have the necessary data to make the correct decision beforehand, so returning the same metadata is irrelevant. ```js POST /api/assets {     id: 1,     name: \"name\",     relationship: 5, } ``` - For queries that have recursion, lookup or expansion is not provided. This is to avoid ambiguity caused by recursion.  For example, if we query the asset entity, we get a list of related assets. If we were to expand the related assets, it would cause ambiguity for the client  as to how the rest of the objects are expanded. ```js GET /api/assets/1 {     id: 1,     name: \"name\",     related_asset: 2 } ```
+ * A comprehensive personal finance management API for tracking investments, expenses, and net worth over time. Features include transaction management, portfolio tracking, asset management, and detailed financial reporting.  # Sverto Personal Finance API  A comprehensive REST API for personal finance management, enabling users to track investments, expenses, transactions, and monitor net worth over time.  ## Key Features  - **Transaction Management**: Record and categorize financial transactions with support for various transaction types including purchases, sales, dividends, and transfers - **Portfolio Tracking**: Monitor investment holdings and performance across multiple accounts - **Asset Management**: Manage assets, asset pairs, and exchange rates for accurate portfolio valuation - **Account Management**: Organize finances across different account types with varying liquidity levels - **Net Worth Tracking**: Historical net worth calculations and trend analysis  ## Authentication  This API uses JWT (JSON Web Token) authentication. To access protected endpoints:  1. **Login**: POST `/api/auth` with username and password 2. **Authorization**: Include the JWT token in the `Authorization: Bearer <token>` header for all subsequent requests 3. **Token Format**: Bearer tokens are in JWT format with configurable expiration  ### Example Authentication Flow ```bash # Get JWT token curl -X POST /api/auth \\\\   -H \"Content-Type: application/json\" \\\\   -d \'{\"username\": \"your_username\", \"password\": \"your_password\"}\'  # Use token in requests curl -H \"Authorization: Bearer <your_jwt_token>\" \\\\   /api/users/{user_id}/accounts ```  # API Design Principles The API design _tries_ to follow the same design principles across all contracts.  ## Object relationships ### Identification Each entity has an identification, whether or not it is returned in response object is determined by the use case. - If we are querying a list of entities, the identification is always returned. - If we are querying a single entity, the is identification for the entity not returned in the response object, as it is used in query path. However, the identification for related entities is returned. - If we are creating a new entity using POST - the identification the entity and all its relationships is returned in response object. - If we are updating a single entity  the is identification for the entity not returned in the response object, as it is used in query path. However, the identification for related entities is returned.  ### Input data If we are querying an endpoint which has some object relationships, for input data (Request body, params or path), we provide only the `id` of the related object.   This is because in order to update or fetch something related, the assumption is that for the correct decision, the client mut have already up to date data about the related objects.  Example of this would be that if we want to update an asset to a different category, we would pass the category `id` and not the whole category object, as we would have known it before hand.  ### Response contracts For the relationships in response contracts, there are multiple approaches: - For responses which contain many objects with some kind of relationship, a lookup table is provided as part of the root response. For example, if we are querying a lot of arbitrary transactions, the response would contain a `metadata` object which would contain the `account` and `asset` lookup tables. This is to avoid duplication of the same object in the response. ```js GET /api/assets {     list: [         {             id: 1,             name: \"name\",             relationship: 5,         }     ],     lookup_tables: {         relationship: [                { id: 5, name: \"relationship_name\"}             ]         }     } } ``` - For queries, where only a single entity is returned without nested objects of array type, the relationship is expanded inplace. For example, if we query for a specific asset, the asset type would be returned as an object instead of the `id`. This is because the consumer could not know the necessary metadata beforehand and providing a lookup table for a single entity is not gud. ```js GET /api/assets/1 {     id: 1,     name: \"name\",     relationship: {         id: 5,         name: \"relationship_name\"     } } ``` - For queries where we are adding or updating data, we do not provide any lookup or expansion. The reason is the same as for input data - the client should have the necessary data to make the correct decision beforehand, so returning the same metadata is irrelevant. ```js POST /api/assets {     id: 1,     name: \"name\",     relationship: 5, } ``` - For queries that have recursion, lookup or expansion is not provided. This is to avoid ambiguity caused by recursion.  For example, if we query the asset entity, we get a list of related assets. If we were to expand the related assets, it would cause ambiguity for the client  as to how the rest of the objects are expanded. ```js GET /api/assets/1 {     id: 1,     name: \"name\",     related_asset: 2 } ```  
  *
  * The version of the OpenAPI document: 1.0.0
  * Contact: einaras.garbasauskas@gmail.com
@@ -12,16 +12,16 @@
  * Do not edit the class manually.
  */
 
-import type { Configuration } from "./configuration";
-import type { RequestArgs } from "./base";
-import type { AxiosInstance, AxiosResponse } from "axios";
-import { RequiredError } from "./base";
+import type { Configuration } from "./configuration"
+import type { RequestArgs } from "./base"
+import type { AxiosInstance, AxiosResponse } from "axios"
+import { RequiredError } from "./base"
 
 /**
  *
  * @export
  */
-export const DUMMY_BASE_URL = "https://example.com";
+export const DUMMY_BASE_URL = "https://example.com"
 
 /**
  *
@@ -31,15 +31,15 @@ export const DUMMY_BASE_URL = "https://example.com";
 export const assertParamExists = function (
   functionName: string,
   paramName: string,
-  paramValue: unknown,
+  paramValue: unknown
 ) {
   if (paramValue === null || paramValue === undefined) {
     throw new RequiredError(
       paramName,
-      `Required parameter ${paramName} was null or undefined when calling ${functionName}.`,
-    );
+      `Required parameter ${paramName} was null or undefined when calling ${functionName}.`
+    )
   }
-};
+}
 
 /**
  *
@@ -48,16 +48,16 @@ export const assertParamExists = function (
 export const setApiKeyToObject = async function (
   object: any,
   keyParamName: string,
-  configuration?: Configuration,
+  configuration?: Configuration
 ) {
   if (configuration && configuration.apiKey) {
     const localVarApiKeyValue =
       typeof configuration.apiKey === "function"
         ? await configuration.apiKey(keyParamName)
-        : await configuration.apiKey;
-    object[keyParamName] = localVarApiKeyValue;
+        : await configuration.apiKey
+    object[keyParamName] = localVarApiKeyValue
   }
-};
+}
 
 /**
  *
@@ -65,15 +65,15 @@ export const setApiKeyToObject = async function (
  */
 export const setBasicAuthToObject = function (
   object: any,
-  configuration?: Configuration,
+  configuration?: Configuration
 ) {
   if (configuration && (configuration.username || configuration.password)) {
     object["auth"] = {
       username: configuration.username,
       password: configuration.password,
-    };
+    }
   }
-};
+}
 
 /**
  *
@@ -81,16 +81,16 @@ export const setBasicAuthToObject = function (
  */
 export const setBearerAuthToObject = async function (
   object: any,
-  configuration?: Configuration,
+  configuration?: Configuration
 ) {
   if (configuration && configuration.accessToken) {
     const accessToken =
       typeof configuration.accessToken === "function"
         ? await configuration.accessToken()
-        : await configuration.accessToken;
-    object["Authorization"] = "Bearer " + accessToken;
+        : await configuration.accessToken
+    object["Authorization"] = "Bearer " + accessToken
   }
-};
+}
 
 /**
  *
@@ -100,42 +100,42 @@ export const setOAuthToObject = async function (
   object: any,
   name: string,
   scopes: string[],
-  configuration?: Configuration,
+  configuration?: Configuration
 ) {
   if (configuration && configuration.accessToken) {
     const localVarAccessTokenValue =
       typeof configuration.accessToken === "function"
         ? await configuration.accessToken(name, scopes)
-        : await configuration.accessToken;
-    object["Authorization"] = "Bearer " + localVarAccessTokenValue;
+        : await configuration.accessToken
+    object["Authorization"] = "Bearer " + localVarAccessTokenValue
   }
-};
+}
 
 function setFlattenedQueryParams(
   urlSearchParams: URLSearchParams,
   parameter: any,
-  key: string = "",
+  key: string = ""
 ): void {
-  if (parameter == null) return;
+  if (parameter == null) return
   if (typeof parameter === "object") {
     if (Array.isArray(parameter)) {
-      (parameter as any[]).forEach((item) =>
-        setFlattenedQueryParams(urlSearchParams, item, key),
-      );
+      ;(parameter as any[]).forEach((item) =>
+        setFlattenedQueryParams(urlSearchParams, item, key)
+      )
     } else {
       Object.keys(parameter).forEach((currentKey) =>
         setFlattenedQueryParams(
           urlSearchParams,
           parameter[currentKey],
-          `${key}${key !== "" ? "." : ""}${currentKey}`,
-        ),
-      );
+          `${key}${key !== "" ? "." : ""}${currentKey}`
+        )
+      )
     }
   } else {
     if (urlSearchParams.has(key)) {
-      urlSearchParams.append(key, parameter);
+      urlSearchParams.append(key, parameter)
     } else {
-      urlSearchParams.set(key, parameter);
+      urlSearchParams.set(key, parameter)
     }
   }
 }
@@ -145,10 +145,10 @@ function setFlattenedQueryParams(
  * @export
  */
 export const setSearchParams = function (url: URL, ...objects: any[]) {
-  const searchParams = new URLSearchParams(url.search);
-  setFlattenedQueryParams(searchParams, objects);
-  url.search = searchParams.toString();
-};
+  const searchParams = new URLSearchParams(url.search)
+  setFlattenedQueryParams(searchParams, objects)
+  url.search = searchParams.toString()
+}
 
 /**
  *
@@ -157,25 +157,25 @@ export const setSearchParams = function (url: URL, ...objects: any[]) {
 export const serializeDataIfNeeded = function (
   value: any,
   requestOptions: any,
-  configuration?: Configuration,
+  configuration?: Configuration
 ) {
-  const nonString = typeof value !== "string";
+  const nonString = typeof value !== "string"
   const needsSerialization =
     nonString && configuration && configuration.isJsonMime
       ? configuration.isJsonMime(requestOptions.headers["Content-Type"])
-      : nonString;
+      : nonString
   return needsSerialization
     ? JSON.stringify(value !== undefined ? value : {})
-    : value || "";
-};
+    : value || ""
+}
 
 /**
  *
  * @export
  */
 export const toPathString = function (url: URL) {
-  return url.pathname + url.search + url.hash;
-};
+  return url.pathname + url.search + url.hash
+}
 
 /**
  *
@@ -185,18 +185,18 @@ export const createRequestFunction = function (
   axiosArgs: RequestArgs,
   globalAxios: AxiosInstance,
   BASE_PATH: string,
-  configuration?: Configuration,
+  configuration?: Configuration
 ) {
   return <T = unknown, R = AxiosResponse<T>>(
     axios: AxiosInstance = globalAxios,
-    basePath: string = BASE_PATH,
+    basePath: string = BASE_PATH
   ) => {
     const axiosRequestArgs = {
       ...axiosArgs.options,
       url:
         (axios.defaults.baseURL ? "" : (configuration?.basePath ?? basePath)) +
         axiosArgs.url,
-    };
-    return axios.request<T, R>(axiosRequestArgs);
-  };
-};
+    }
+    return axios.request<T, R>(axiosRequestArgs)
+  }
+}

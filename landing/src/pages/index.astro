@@ -1,0 +1,102 @@
+---
+import BaseLayout from "../layouts/base-layout.astro"
+import { CommitFeed } from "../landing/commit-feed"
+import { LandingPage } from "../landing/landing-page"
+import { LANDING_LICENCE_URL, LANDING_SOURCE_URL } from "../landing/links"
+
+const title = "Sverto — spending, investing and net worth in one ledger"
+const description =
+  "Spending, investing and net worth in one double-entry ledger. Salary in GBP, spending in EUR, dividends in USD. Open source, EU-hosted, free during launch."
+const ogTitle = "Sverto — one ledger for your groceries and your portfolio"
+const ogDescription =
+  "Spending, investing and net worth in one double-entry ledger. Salary in GBP, spending in EUR, dividends in USD — so your net worth finally includes everything."
+const ogImageAlt =
+  "The Sverto dashboard: a net worth figure in euros, a one-month chart, accounts grouped by cash, and recent transactions."
+
+const siteUrl = Astro.site!.href
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${siteUrl}#organization`,
+      name: "Sverto",
+      url: siteUrl,
+      logo: {
+        "@type": "ImageObject",
+        url: new URL("/apple-touch-icon.png", Astro.site).href,
+      },
+      sameAs: [LANDING_SOURCE_URL],
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${siteUrl}#website`,
+      url: siteUrl,
+      name: "Sverto",
+      publisher: { "@id": `${siteUrl}#organization` },
+    },
+    {
+      "@type": "WebPage",
+      "@id": siteUrl,
+      url: siteUrl,
+      name: title,
+      description,
+      isPartOf: { "@id": `${siteUrl}#website` },
+      about: { "@id": `${siteUrl}#app` },
+      primaryImageOfPage: new URL("/og-dashboard.png", Astro.site).href,
+      inLanguage: "en",
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": `${siteUrl}#app`,
+      name: "Sverto",
+      url: siteUrl,
+      description:
+        "A personal finance app that records spending and investments as entries in one double-entry ledger, with multi-currency accounts, portfolio tracking and an AI assistant that drafts entries for the user to approve.",
+      applicationCategory: "FinanceApplication",
+      operatingSystem: "Web, Android",
+      image: new URL("/og-dashboard.png", Astro.site).href,
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "EUR",
+        description:
+          "The hosted version is free during launch; self-hosting is free under the AGPL-3.0 licence.",
+      },
+      isAccessibleForFree: true,
+      license: LANDING_LICENCE_URL,
+      featureList: [
+        "One double-entry ledger for spending and investing",
+        "Multi-currency accounts consolidated into one reference currency",
+        "Portfolio tracking with FIFO cost basis, dividends and fees",
+        "Open Banking bank connections and broker connectors",
+        "Statement imports read by AI, with manual entry as a first-class path",
+        "Myra, an AI assistant that drafts entries for the user to approve",
+        "Self-hostable under AGPL-3.0 with full data export",
+      ],
+      author: { "@id": `${siteUrl}#organization` },
+    },
+  ],
+}
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  ogTitle={ogTitle}
+  ogDescription={ogDescription}
+  ogImage="/og-dashboard.png"
+  ogImageAlt={ogImageAlt}
+>
+  <script
+    slot="head"
+    type="application/ld+json"
+    is:inline
+    set:html={JSON.stringify(structuredData)}
+  />
+  <LandingPage>
+    <div slot="commitFeed" class="hidden lg:block">
+      <CommitFeed client:media="(min-width: 1024px)" />
+    </div>
+  </LandingPage>
+</BaseLayout>

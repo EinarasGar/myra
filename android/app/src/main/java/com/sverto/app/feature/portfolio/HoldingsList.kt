@@ -10,8 +10,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ShowChart
 import androidx.compose.material.icons.outlined.AccountBalance
+import androidx.compose.material.icons.outlined.CurrencyBitcoin
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Savings
+import androidx.compose.material.icons.outlined.Payments
+import androidx.compose.material.icons.outlined.PieChart
+import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -133,20 +136,32 @@ private fun HoldingRow(
     )
 }
 
+private const val ASSET_TYPE_CURRENCIES = 1
+private const val ASSET_TYPE_STOCKS = 2
+private const val ASSET_TYPE_BONDS = 3
+private const val ASSET_TYPE_MUTUAL_FUNDS = 4
+private const val ASSET_TYPE_ETFS = 5
+private const val ASSET_TYPE_ETCS = 6
+private const val ASSET_TYPE_CRYPTO = 7
+private const val ASSET_TYPE_REAL_ESTATE = 8
+
 private fun holdingIcon(assetTypeId: Int): ImageVector =
     when (assetTypeId) {
-        1 -> Icons.Outlined.Home
-        2 -> Icons.Outlined.Savings
-        3 -> Icons.AutoMirrored.Outlined.ShowChart
-        else -> Icons.Outlined.AccountBalance
+        ASSET_TYPE_CURRENCIES -> Icons.Outlined.Payments
+        ASSET_TYPE_STOCKS -> Icons.AutoMirrored.Outlined.ShowChart
+        ASSET_TYPE_BONDS -> Icons.Outlined.AccountBalance
+        ASSET_TYPE_MUTUAL_FUNDS, ASSET_TYPE_ETFS, ASSET_TYPE_ETCS -> Icons.Outlined.PieChart
+        ASSET_TYPE_CRYPTO -> Icons.Outlined.CurrencyBitcoin
+        ASSET_TYPE_REAL_ESTATE -> Icons.Outlined.Home
+        else -> Icons.Outlined.Layers
     }
 
 @Composable
 private fun holdingIconTint(assetTypeId: Int) =
     when (assetTypeId) {
-        1 -> MaterialTheme.colorScheme.primary
-        2 -> MaterialTheme.colorScheme.tertiary
-        3 -> MaterialTheme.colorScheme.secondary
+        ASSET_TYPE_CURRENCIES -> MaterialTheme.colorScheme.primary
+        ASSET_TYPE_CRYPTO -> MaterialTheme.colorScheme.secondary
+        ASSET_TYPE_REAL_ESTATE -> MaterialTheme.colorScheme.secondary
         else -> MaterialTheme.colorScheme.tertiary
     }
 

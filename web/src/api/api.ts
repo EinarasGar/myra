@@ -3,7 +3,7 @@
 /* eslint-disable */
 /**
  * Sverto Personal Finance API
- * A comprehensive personal finance management API for tracking investments, expenses, and net worth over time. Features include transaction management, portfolio tracking, asset management, and detailed financial reporting.  # Sverto Personal Finance API  A comprehensive REST API for personal finance management, enabling users to track investments, expenses, transactions, and monitor net worth over time.  ## Key Features  - **Transaction Management**: Record and categorize financial transactions with support for various transaction types including purchases, sales, dividends, and transfers - **Portfolio Tracking**: Monitor investment holdings and performance across multiple accounts - **Asset Management**: Manage assets, asset pairs, and exchange rates for accurate portfolio valuation - **Account Management**: Organize finances across different account types with varying liquidity levels - **Net Worth Tracking**: Historical net worth calculations and trend analysis  ## Authentication  This API uses JWT (JSON Web Token) authentication. To access protected endpoints:  1. **Login**: POST `/api/auth` with username and password 2. **Authorization**: Include the JWT token in the `Authorization: Bearer <token>` header for all subsequent requests 3. **Token Format**: Bearer tokens are in JWT format with configurable expiration  ### Example Authentication Flow ```bash # Get JWT token curl -X POST /api/auth \\\\   -H \"Content-Type: application/json\" \\\\   -d \'{\"username\": \"your_username\", \"password\": \"your_password\"}\'  # Use token in requests curl -H \"Authorization: Bearer <your_jwt_token>\" \\\\   /api/users/{user_id}/accounts ```  # API Design Principles The API design _tries_ to follow the same design principles across all contracts.  ## Object relationships ### Identification Each entity has an identification, whether or not it is returned in response object is determined by the use case. - If we are querying a list of entities, the identification is always returned. - If we are querying a single entity, the is identification for the entity not returned in the response object, as it is used in query path. However, the identification for related entities is returned. - If we are creating a new entity using POST - the identification the entity and all its relationships is returned in response object. - If we are updating a single entity  the is identification for the entity not returned in the response object, as it is used in query path. However, the identification for related entities is returned.  ### Input data If we are querying an endpoint which has some object relationships, for input data (Request body, params or path), we provide only the `id` of the related object.   This is because in order to update or fetch something related, the assumption is that for the correct decision, the client mut have already up to date data about the related objects.  Example of this would be that if we want to update an asset to a different category, we would pass the category `id` and not the whole category object, as we would have known it before hand.  ### Response contracts For the relationships in response contracts, there are multiple approaches: - For responses which contain many objects with some kind of relationship, a lookup table is provided as part of the root response. For example, if we are querying a lot of arbitrary transactions, the response would contain a `metadata` object which would contain the `account` and `asset` lookup tables. This is to avoid duplication of the same object in the response. ```js GET /api/assets {     list: [         {             id: 1,             name: \"name\",             relationship: 5,         }     ],     lookup_tables: {         relationship: [                { id: 5, name: \"relationship_name\"}             ]         }     } } ``` - For queries, where only a single entity is returned without nested objects of array type, the relationship is expanded inplace. For example, if we query for a specific asset, the asset type would be returned as an object instead of the `id`. This is because the consumer could not know the necessary metadata beforehand and providing a lookup table for a single entity is not gud. ```js GET /api/assets/1 {     id: 1,     name: \"name\",     relationship: {         id: 5,         name: \"relationship_name\"     } } ``` - For queries where we are adding or updating data, we do not provide any lookup or expansion. The reason is the same as for input data - the client should have the necessary data to make the correct decision beforehand, so returning the same metadata is irrelevant. ```js POST /api/assets {     id: 1,     name: \"name\",     relationship: 5, } ``` - For queries that have recursion, lookup or expansion is not provided. This is to avoid ambiguity caused by recursion.  For example, if we query the asset entity, we get a list of related assets. If we were to expand the related assets, it would cause ambiguity for the client  as to how the rest of the objects are expanded. ```js GET /api/assets/1 {     id: 1,     name: \"name\",     related_asset: 2 } ```
+ * A comprehensive personal finance management API for tracking investments, expenses, and net worth over time. Features include transaction management, portfolio tracking, asset management, and detailed financial reporting.  # Sverto Personal Finance API  A comprehensive REST API for personal finance management, enabling users to track investments, expenses, transactions, and monitor net worth over time.  ## Key Features  - **Transaction Management**: Record and categorize financial transactions with support for various transaction types including purchases, sales, dividends, and transfers - **Portfolio Tracking**: Monitor investment holdings and performance across multiple accounts - **Asset Management**: Manage assets, asset pairs, and exchange rates for accurate portfolio valuation - **Account Management**: Organize finances across different account types with varying liquidity levels - **Net Worth Tracking**: Historical net worth calculations and trend analysis  ## Authentication  This API uses JWT (JSON Web Token) authentication. To access protected endpoints:  1. **Login**: POST `/api/auth` with username and password 2. **Authorization**: Include the JWT token in the `Authorization: Bearer <token>` header for all subsequent requests 3. **Token Format**: Bearer tokens are in JWT format with configurable expiration  ### Example Authentication Flow ```bash # Get JWT token curl -X POST /api/auth \\\\   -H \"Content-Type: application/json\" \\\\   -d \'{\"username\": \"your_username\", \"password\": \"your_password\"}\'  # Use token in requests curl -H \"Authorization: Bearer <your_jwt_token>\" \\\\   /api/users/{user_id}/accounts ```  # API Design Principles The API design _tries_ to follow the same design principles across all contracts.  ## Object relationships ### Identification Each entity has an identification, whether or not it is returned in response object is determined by the use case. - If we are querying a list of entities, the identification is always returned. - If we are querying a single entity, the is identification for the entity not returned in the response object, as it is used in query path. However, the identification for related entities is returned. - If we are creating a new entity using POST - the identification the entity and all its relationships is returned in response object. - If we are updating a single entity  the is identification for the entity not returned in the response object, as it is used in query path. However, the identification for related entities is returned.  ### Input data If we are querying an endpoint which has some object relationships, for input data (Request body, params or path), we provide only the `id` of the related object.   This is because in order to update or fetch something related, the assumption is that for the correct decision, the client mut have already up to date data about the related objects.  Example of this would be that if we want to update an asset to a different category, we would pass the category `id` and not the whole category object, as we would have known it before hand.  ### Response contracts For the relationships in response contracts, there are multiple approaches: - For responses which contain many objects with some kind of relationship, a lookup table is provided as part of the root response. For example, if we are querying a lot of arbitrary transactions, the response would contain a `metadata` object which would contain the `account` and `asset` lookup tables. This is to avoid duplication of the same object in the response. ```js GET /api/assets {     list: [         {             id: 1,             name: \"name\",             relationship: 5,         }     ],     lookup_tables: {         relationship: [                { id: 5, name: \"relationship_name\"}             ]         }     } } ``` - For queries, where only a single entity is returned without nested objects of array type, the relationship is expanded inplace. For example, if we query for a specific asset, the asset type would be returned as an object instead of the `id`. This is because the consumer could not know the necessary metadata beforehand and providing a lookup table for a single entity is not gud. ```js GET /api/assets/1 {     id: 1,     name: \"name\",     relationship: {         id: 5,         name: \"relationship_name\"     } } ``` - For queries where we are adding or updating data, we do not provide any lookup or expansion. The reason is the same as for input data - the client should have the necessary data to make the correct decision beforehand, so returning the same metadata is irrelevant. ```js POST /api/assets {     id: 1,     name: \"name\",     relationship: 5, } ``` - For queries that have recursion, lookup or expansion is not provided. This is to avoid ambiguity caused by recursion.  For example, if we query the asset entity, we get a list of related assets. If we were to expand the related assets, it would cause ambiguity for the client  as to how the rest of the objects are expanded. ```js GET /api/assets/1 {     id: 1,     name: \"name\",     related_asset: 2 } ```  
  *
  * The version of the OpenAPI document: 1.0.0
  * Contact: einaras.garbasauskas@gmail.com
@@ -13,9 +13,9 @@
  * Do not edit the class manually.
  */
 
-import type { Configuration } from "./configuration";
-import type { AxiosPromise, AxiosInstance, RawAxiosRequestConfig } from "axios";
-import globalAxios from "axios";
+import type { Configuration } from "./configuration"
+import type { AxiosPromise, AxiosInstance, RawAxiosRequestConfig } from "axios"
+import globalAxios from "axios"
 // Some imports not used depending on template conditions
 // @ts-ignore
 import {
@@ -29,8 +29,8 @@ import {
   serializeDataIfNeeded,
   toPathString,
   createRequestFunction,
-} from "./common";
-import type { RequestArgs } from "./base";
+} from "./common"
+import type { RequestArgs } from "./base"
 // @ts-ignore
 import {
   BASE_PATH,
@@ -38,7 +38,7 @@ import {
   BaseAPI,
   RequiredError,
   operationServerMap,
-} from "./base";
+} from "./base"
 
 /**
  *
@@ -51,19 +51,19 @@ export interface AccountAccountAccountTypeIdWithId {
    * @type {string}
    * @memberof AccountAccountAccountTypeIdWithId
    */
-  account_id: string;
+  account_id: string
   /**
    *
    * @type {number}
    * @memberof AccountAccountAccountTypeIdWithId
    */
-  account_type: number;
+  account_type: number
   /**
    * Account name
    * @type {string}
    * @memberof AccountAccountAccountTypeIdWithId
    */
-  name: string;
+  name: string
 }
 /**
  *
@@ -76,45 +76,45 @@ export interface AccountFeesIdentifiableTransaction {
    * @type {number}
    * @memberof AccountFeesIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof AccountFeesIdentifiableTransaction
    */
-  entry: TransactionEntryWithEntryId;
+  entry: TransactionEntryWithEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof AccountFeesIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {string}
    * @memberof AccountFeesIdentifiableTransaction
    */
-  transaction_id: string | null;
+  transaction_id: string | null
   /**
    *
    * @type {string}
    * @memberof AccountFeesIdentifiableTransaction
    */
-  type: AccountFeesIdentifiableTransactionTypeEnum;
+  type: AccountFeesIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof AccountFeesIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const AccountFeesIdentifiableTransactionTypeEnum = {
   AccountFees: "account_fees",
-} as const;
+} as const
 
 export type AccountFeesIdentifiableTransactionTypeEnum =
-  (typeof AccountFeesIdentifiableTransactionTypeEnum)[keyof typeof AccountFeesIdentifiableTransactionTypeEnum];
+  (typeof AccountFeesIdentifiableTransactionTypeEnum)[keyof typeof AccountFeesIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -127,45 +127,45 @@ export interface AccountFeesRequiredIdentifiableTransaction {
    * @type {number}
    * @memberof AccountFeesRequiredIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AccountFeesRequiredIdentifiableTransaction
    */
-  entry: TransactionEntryWithRequiredEntryId;
+  entry: TransactionEntryWithRequiredEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof AccountFeesRequiredIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {string}
    * @memberof AccountFeesRequiredIdentifiableTransaction
    */
-  transaction_id: string;
+  transaction_id: string
   /**
    *
    * @type {string}
    * @memberof AccountFeesRequiredIdentifiableTransaction
    */
-  type: AccountFeesRequiredIdentifiableTransactionTypeEnum;
+  type: AccountFeesRequiredIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof AccountFeesRequiredIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const AccountFeesRequiredIdentifiableTransactionTypeEnum = {
   AccountFees: "account_fees",
-} as const;
+} as const
 
 export type AccountFeesRequiredIdentifiableTransactionTypeEnum =
-  (typeof AccountFeesRequiredIdentifiableTransactionTypeEnum)[keyof typeof AccountFeesRequiredIdentifiableTransactionTypeEnum];
+  (typeof AccountFeesRequiredIdentifiableTransactionTypeEnum)[keyof typeof AccountFeesRequiredIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -178,33 +178,33 @@ export interface AccountFeesRequiredTransaction {
    * @type {number}
    * @memberof AccountFeesRequiredTransaction
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AccountFeesRequiredTransaction
    */
-  entry: TransactionEntryWithRequiredEntryId;
+  entry: TransactionEntryWithRequiredEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof AccountFeesRequiredTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {string}
    * @memberof AccountFeesRequiredTransaction
    */
-  type: AccountFeesRequiredTransactionTypeEnum;
+  type: AccountFeesRequiredTransactionTypeEnum
 }
 
 export const AccountFeesRequiredTransactionTypeEnum = {
   AccountFees: "account_fees",
-} as const;
+} as const
 
 export type AccountFeesRequiredTransactionTypeEnum =
-  (typeof AccountFeesRequiredTransactionTypeEnum)[keyof typeof AccountFeesRequiredTransactionTypeEnum];
+  (typeof AccountFeesRequiredTransactionTypeEnum)[keyof typeof AccountFeesRequiredTransactionTypeEnum]
 
 /**
  *
@@ -217,33 +217,33 @@ export interface AccountFeesTransactionInput {
    * @type {number}
    * @memberof AccountFeesTransactionInput
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntry}
    * @memberof AccountFeesTransactionInput
    */
-  entry: TransactionEntry;
+  entry: TransactionEntry
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItem>}
    * @memberof AccountFeesTransactionInput
    */
-  fees?: Array<TransactionFeeItem> | null;
+  fees?: Array<TransactionFeeItem> | null
   /**
    *
    * @type {string}
    * @memberof AccountFeesTransactionInput
    */
-  type: AccountFeesTransactionInputTypeEnum;
+  type: AccountFeesTransactionInputTypeEnum
 }
 
 export const AccountFeesTransactionInputTypeEnum = {
   AccountFees: "account_fees",
-} as const;
+} as const
 
 export type AccountFeesTransactionInputTypeEnum =
-  (typeof AccountFeesTransactionInputTypeEnum)[keyof typeof AccountFeesTransactionInputTypeEnum];
+  (typeof AccountFeesTransactionInputTypeEnum)[keyof typeof AccountFeesTransactionInputTypeEnum]
 
 /**
  *
@@ -256,33 +256,33 @@ export interface AccountFeesTransactionWithEntryIds {
    * @type {number}
    * @memberof AccountFeesTransactionWithEntryIds
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof AccountFeesTransactionWithEntryIds
    */
-  entry: TransactionEntryWithEntryId;
+  entry: TransactionEntryWithEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof AccountFeesTransactionWithEntryIds
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {string}
    * @memberof AccountFeesTransactionWithEntryIds
    */
-  type: AccountFeesTransactionWithEntryIdsTypeEnum;
+  type: AccountFeesTransactionWithEntryIdsTypeEnum
 }
 
 export const AccountFeesTransactionWithEntryIdsTypeEnum = {
   AccountFees: "account_fees",
-} as const;
+} as const
 
 export type AccountFeesTransactionWithEntryIdsTypeEnum =
-  (typeof AccountFeesTransactionWithEntryIdsTypeEnum)[keyof typeof AccountFeesTransactionWithEntryIdsTypeEnum];
+  (typeof AccountFeesTransactionWithEntryIdsTypeEnum)[keyof typeof AccountFeesTransactionWithEntryIdsTypeEnum]
 
 /**
  *
@@ -295,13 +295,13 @@ export interface AccountIdentifier {
    * @type {AccountIdentifierKind}
    * @memberof AccountIdentifier
    */
-  kind: AccountIdentifierKind;
+  kind: AccountIdentifierKind
   /**
    *
    * @type {string}
    * @memberof AccountIdentifier
    */
-  value: string;
+  value: string
 }
 
 /**
@@ -314,10 +314,10 @@ export const AccountIdentifierKind = {
   CardLast4: "card_last4",
   AccountNumber: "account_number",
   Iban: "iban",
-} as const;
+} as const
 
 export type AccountIdentifierKind =
-  (typeof AccountIdentifierKind)[keyof typeof AccountIdentifierKind];
+  (typeof AccountIdentifierKind)[keyof typeof AccountIdentifierKind]
 
 /**
  *
@@ -330,19 +330,19 @@ export interface AccountMetadataLookupTables {
    * @type {Array<AccountType>}
    * @memberof AccountMetadataLookupTables
    */
-  account_liquidity_types: Array<AccountType>;
+  account_liquidity_types: Array<AccountType>
   /**
    *
    * @type {Array<AccountType>}
    * @memberof AccountMetadataLookupTables
    */
-  account_types: Array<AccountType>;
+  account_types: Array<AccountType>
   /**
    *
    * @type {Array<AssetAssetRequiredAssetTypeIdWithId>}
    * @memberof AccountMetadataLookupTables
    */
-  assets: Array<AssetAssetRequiredAssetTypeIdWithId>;
+  assets: Array<AssetAssetRequiredAssetTypeIdWithId>
 }
 /**
  *
@@ -355,19 +355,19 @@ export interface AccountTransactionsPage {
    * @type {MetadataLookupTables}
    * @memberof AccountTransactionsPage
    */
-  lookup_tables: MetadataLookupTables;
+  lookup_tables: MetadataLookupTables
   /**
    * One page of results
    * @type {Array<RequiredIdentifiableTransaction>}
    * @memberof AccountTransactionsPage
    */
-  results: Array<RequiredIdentifiableTransaction>;
+  results: Array<RequiredIdentifiableTransaction>
   /**
    * The total number of results available
    * @type {number}
    * @memberof AccountTransactionsPage
    */
-  total_results: number;
+  total_results: number
 }
 /**
  *
@@ -380,13 +380,13 @@ export interface AccountType {
    * @type {number}
    * @memberof AccountType
    */
-  id: number;
+  id: number
   /**
    * The name of the Account type
    * @type {string}
    * @memberof AccountType
    */
-  name: string;
+  name: string
 }
 /**
  *
@@ -399,37 +399,37 @@ export interface AddAccountResponse {
    * @type {string}
    * @memberof AddAccountResponse
    */
-  account_id: string;
+  account_id: string
   /**
    *
    * @type {number}
    * @memberof AddAccountResponse
    */
-  account_type: number;
+  account_type: number
   /**
    *
    * @type {Array<AccountIdentifier>}
    * @memberof AddAccountResponse
    */
-  identifiers?: Array<AccountIdentifier>;
+  identifiers?: Array<AccountIdentifier>
   /**
    *
    * @type {number}
    * @memberof AddAccountResponse
    */
-  liquidity_type: number;
+  liquidity_type: number
   /**
    * Account name
    * @type {string}
    * @memberof AddAccountResponse
    */
-  name: string;
+  name: string
   /**
    * Ownership share. Must be > 0 and <= 1.
    * @type {number}
    * @memberof AddAccountResponse
    */
-  ownership_share: number;
+  ownership_share: number
 }
 /**
  *
@@ -442,7 +442,7 @@ export interface AddAssetPairRatesRequest {
    * @type {Array<AssetRate>}
    * @memberof AddAssetPairRatesRequest
    */
-  rates: Array<AssetRate>;
+  rates: Array<AssetRate>
 }
 /**
  *
@@ -455,7 +455,7 @@ export interface AddAssetPairRequest {
    * @type {number}
    * @memberof AddAssetPairRequest
    */
-  reference_id: number;
+  reference_id: number
 }
 /**
  *
@@ -468,25 +468,25 @@ export interface AddAssetPairResponse {
    * @type {number}
    * @memberof AddAssetPairResponse
    */
-  main_asset_id: number;
+  main_asset_id: number
   /**
    *
    * @type {AssetPairMetadata}
    * @memberof AddAssetPairResponse
    */
-  metadata?: AssetPairMetadata | null;
+  metadata?: AssetPairMetadata | null
   /**
    *
    * @type {number}
    * @memberof AddAssetPairResponse
    */
-  reference_asset_id: number;
+  reference_asset_id: number
   /**
    *
    * @type {UserAssetPairMetadata}
    * @memberof AddAssetPairResponse
    */
-  user_metadata?: UserAssetPairMetadata | null;
+  user_metadata?: UserAssetPairMetadata | null
 }
 /**
  *
@@ -499,25 +499,25 @@ export interface AddAssetRequest {
    * @type {number}
    * @memberof AddAssetRequest
    */
-  asset_type: number;
+  asset_type: number
   /**
    * The id of an asset to which this asset is usually exchanged to.
    * @type {number}
    * @memberof AddAssetRequest
    */
-  base_asset_id: number;
+  base_asset_id: number
   /**
    * Full name of the asset
    * @type {string}
    * @memberof AddAssetRequest
    */
-  name: string;
+  name: string
   /**
    * Short letter abbreviation of the asset
    * @type {string}
    * @memberof AddAssetRequest
    */
-  ticker: string;
+  ticker: string
 }
 /**
  *
@@ -530,31 +530,31 @@ export interface AddAssetResponse {
    * @type {number}
    * @memberof AddAssetResponse
    */
-  asset_id: number;
+  asset_id: number
   /**
    *
    * @type {number}
    * @memberof AddAssetResponse
    */
-  asset_type: number;
+  asset_type: number
   /**
    * The id of an asset to which this asset is usually exchanged to.
    * @type {number}
    * @memberof AddAssetResponse
    */
-  base_asset_id: number;
+  base_asset_id: number
   /**
    * Full name of the asset
    * @type {string}
    * @memberof AddAssetResponse
    */
-  name: string;
+  name: string
   /**
    * Short letter abbreviation of the asset
    * @type {string}
    * @memberof AddAssetResponse
    */
-  ticker: string;
+  ticker: string
 }
 /**
  *
@@ -567,7 +567,7 @@ export interface AddIndividualTransactionRequest {
    * @type {TransactionInput}
    * @memberof AddIndividualTransactionRequest
    */
-  transaction: TransactionInput;
+  transaction: TransactionInput
 }
 /**
  *
@@ -580,7 +580,7 @@ export interface AddIndividualTransactionResponse {
    * @type {RequiredIdentifiableTransaction}
    * @memberof AddIndividualTransactionResponse
    */
-  transaction: RequiredIdentifiableTransaction;
+  transaction: RequiredIdentifiableTransaction
 }
 /**
  *
@@ -593,25 +593,25 @@ export interface AddTransactionGroupResponse {
    * @type {Array<AccountAccountAccountTypeIdWithId>}
    * @memberof AddTransactionGroupResponse
    */
-  accounts: Array<AccountAccountAccountTypeIdWithId>;
+  accounts: Array<AccountAccountAccountTypeIdWithId>
   /**
    *
    * @type {Array<AssetAssetRequiredAssetTypeIdWithId>}
    * @memberof AddTransactionGroupResponse
    */
-  assets: Array<AssetAssetRequiredAssetTypeIdWithId>;
+  assets: Array<AssetAssetRequiredAssetTypeIdWithId>
   /**
    *
    * @type {Array<CategoryRequiredCategoryTypeIdWithId>}
    * @memberof AddTransactionGroupResponse
    */
-  categories?: Array<CategoryRequiredCategoryTypeIdWithId>;
+  categories?: Array<CategoryRequiredCategoryTypeIdWithId>
   /**
    *
    * @type {TransactionGroupTransactionGroupIdTransactionGroupRequiredIdentifiableTransactionWithIdentifiableEntriesAndId}
    * @memberof AddTransactionGroupResponse
    */
-  group: TransactionGroupTransactionGroupIdTransactionGroupRequiredIdentifiableTransactionWithIdentifiableEntriesAndId;
+  group: TransactionGroupTransactionGroupIdTransactionGroupRequiredIdentifiableTransactionWithIdentifiableEntriesAndId
 }
 /**
  *
@@ -624,13 +624,13 @@ export interface AddUser {
    * @type {string}
    * @memberof AddUser
    */
-  password: string;
+  password: string
   /**
    * Username
    * @type {string}
    * @memberof AddUser
    */
-  username: string;
+  username: string
 }
 /**
  *
@@ -643,31 +643,31 @@ export interface AiError {
    * @type {string}
    * @memberof AiError
    */
-  kind: string;
+  kind: string
   /**
    *
    * @type {number}
    * @memberof AiError
    */
-  max_turns?: number | null;
+  max_turns?: number | null
   /**
    *
    * @type {string}
    * @memberof AiError
    */
-  message: string;
+  message: string
   /**
    *
    * @type {string}
    * @memberof AiError
    */
-  reset_at?: string | null;
+  reset_at?: string | null
   /**
    *
    * @type {string}
    * @memberof AiError
    */
-  scope?: string | null;
+  scope?: string | null
 }
 /**
  *
@@ -680,13 +680,13 @@ export interface AiUsageMetric {
    * @type {number}
    * @memberof AiUsageMetric
    */
-  limit: number;
+  limit: number
   /**
    *
    * @type {number}
    * @memberof AiUsageMetric
    */
-  used: number;
+  used: number
 }
 /**
  *
@@ -699,13 +699,13 @@ export interface AiUsageResponse {
    * @type {AiUsageWindow}
    * @memberof AiUsageResponse
    */
-  hourly: AiUsageWindow;
+  hourly: AiUsageWindow
   /**
    *
    * @type {AiUsageWindow}
    * @memberof AiUsageResponse
    */
-  monthly: AiUsageWindow;
+  monthly: AiUsageWindow
 }
 /**
  *
@@ -718,19 +718,19 @@ export interface AiUsageWindow {
    * @type {AiUsageMetric}
    * @memberof AiUsageWindow
    */
-  input: AiUsageMetric;
+  input: AiUsageMetric
   /**
    *
    * @type {AiUsageMetric}
    * @memberof AiUsageWindow
    */
-  output: AiUsageMetric;
+  output: AiUsageMetric
   /**
    *
    * @type {string}
    * @memberof AiUsageWindow
    */
-  reset_at: string;
+  reset_at: string
 }
 /**
  *
@@ -743,31 +743,31 @@ export interface ApiErrorResponse {
    * @type {object}
    * @memberof ApiErrorResponse
    */
-  details?: object | null;
+  details?: object | null
   /**
    *
    * @type {ErrorType}
    * @memberof ApiErrorResponse
    */
-  error_type: ErrorType;
+  error_type: ErrorType
   /**
    *
    * @type {Array<FieldError>}
    * @memberof ApiErrorResponse
    */
-  errors: Array<FieldError>;
+  errors: Array<FieldError>
   /**
    *
    * @type {string}
    * @memberof ApiErrorResponse
    */
-  message: string;
+  message: string
   /**
    *
    * @type {string}
    * @memberof ApiErrorResponse
    */
-  stack_trace?: string | null;
+  stack_trace?: string | null
 }
 
 /**
@@ -781,25 +781,25 @@ export interface AssetAssetRequiredAssetTypeIdWithId {
    * @type {number}
    * @memberof AssetAssetRequiredAssetTypeIdWithId
    */
-  asset_id: number;
+  asset_id: number
   /**
    *
    * @type {number}
    * @memberof AssetAssetRequiredAssetTypeIdWithId
    */
-  asset_type: number;
+  asset_type: number
   /**
    * Full name of the asset
    * @type {string}
    * @memberof AssetAssetRequiredAssetTypeIdWithId
    */
-  name: string;
+  name: string
   /**
    * Short letter abbreviation of the asset
    * @type {string}
    * @memberof AssetAssetRequiredAssetTypeIdWithId
    */
-  ticker: string;
+  ticker: string
 }
 /**
  *
@@ -812,51 +812,51 @@ export interface AssetBalanceTransferIdentifiableTransaction {
    * @type {number}
    * @memberof AssetBalanceTransferIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof AssetBalanceTransferIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof AssetBalanceTransferIdentifiableTransaction
    */
-  incoming_change: TransactionEntryWithEntryId;
+  incoming_change: TransactionEntryWithEntryId
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof AssetBalanceTransferIdentifiableTransaction
    */
-  outgoing_change: TransactionEntryWithEntryId;
+  outgoing_change: TransactionEntryWithEntryId
   /**
    *
    * @type {string}
    * @memberof AssetBalanceTransferIdentifiableTransaction
    */
-  transaction_id: string | null;
+  transaction_id: string | null
   /**
    *
    * @type {string}
    * @memberof AssetBalanceTransferIdentifiableTransaction
    */
-  type: AssetBalanceTransferIdentifiableTransactionTypeEnum;
+  type: AssetBalanceTransferIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof AssetBalanceTransferIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const AssetBalanceTransferIdentifiableTransactionTypeEnum = {
   AssetBalanceTransfer: "asset_balance_transfer",
-} as const;
+} as const
 
 export type AssetBalanceTransferIdentifiableTransactionTypeEnum =
-  (typeof AssetBalanceTransferIdentifiableTransactionTypeEnum)[keyof typeof AssetBalanceTransferIdentifiableTransactionTypeEnum];
+  (typeof AssetBalanceTransferIdentifiableTransactionTypeEnum)[keyof typeof AssetBalanceTransferIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -869,51 +869,51 @@ export interface AssetBalanceTransferRequiredIdentifiableTransaction {
    * @type {number}
    * @memberof AssetBalanceTransferRequiredIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof AssetBalanceTransferRequiredIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AssetBalanceTransferRequiredIdentifiableTransaction
    */
-  incoming_change: TransactionEntryWithRequiredEntryId;
+  incoming_change: TransactionEntryWithRequiredEntryId
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AssetBalanceTransferRequiredIdentifiableTransaction
    */
-  outgoing_change: TransactionEntryWithRequiredEntryId;
+  outgoing_change: TransactionEntryWithRequiredEntryId
   /**
    *
    * @type {string}
    * @memberof AssetBalanceTransferRequiredIdentifiableTransaction
    */
-  transaction_id: string;
+  transaction_id: string
   /**
    *
    * @type {string}
    * @memberof AssetBalanceTransferRequiredIdentifiableTransaction
    */
-  type: AssetBalanceTransferRequiredIdentifiableTransactionTypeEnum;
+  type: AssetBalanceTransferRequiredIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof AssetBalanceTransferRequiredIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const AssetBalanceTransferRequiredIdentifiableTransactionTypeEnum = {
   AssetBalanceTransfer: "asset_balance_transfer",
-} as const;
+} as const
 
 export type AssetBalanceTransferRequiredIdentifiableTransactionTypeEnum =
-  (typeof AssetBalanceTransferRequiredIdentifiableTransactionTypeEnum)[keyof typeof AssetBalanceTransferRequiredIdentifiableTransactionTypeEnum];
+  (typeof AssetBalanceTransferRequiredIdentifiableTransactionTypeEnum)[keyof typeof AssetBalanceTransferRequiredIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -926,39 +926,39 @@ export interface AssetBalanceTransferRequiredTransaction {
    * @type {number}
    * @memberof AssetBalanceTransferRequiredTransaction
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof AssetBalanceTransferRequiredTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AssetBalanceTransferRequiredTransaction
    */
-  incoming_change: TransactionEntryWithRequiredEntryId;
+  incoming_change: TransactionEntryWithRequiredEntryId
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AssetBalanceTransferRequiredTransaction
    */
-  outgoing_change: TransactionEntryWithRequiredEntryId;
+  outgoing_change: TransactionEntryWithRequiredEntryId
   /**
    *
    * @type {string}
    * @memberof AssetBalanceTransferRequiredTransaction
    */
-  type: AssetBalanceTransferRequiredTransactionTypeEnum;
+  type: AssetBalanceTransferRequiredTransactionTypeEnum
 }
 
 export const AssetBalanceTransferRequiredTransactionTypeEnum = {
   AssetBalanceTransfer: "asset_balance_transfer",
-} as const;
+} as const
 
 export type AssetBalanceTransferRequiredTransactionTypeEnum =
-  (typeof AssetBalanceTransferRequiredTransactionTypeEnum)[keyof typeof AssetBalanceTransferRequiredTransactionTypeEnum];
+  (typeof AssetBalanceTransferRequiredTransactionTypeEnum)[keyof typeof AssetBalanceTransferRequiredTransactionTypeEnum]
 
 /**
  *
@@ -971,39 +971,39 @@ export interface AssetBalanceTransferTransactionInput {
    * @type {number}
    * @memberof AssetBalanceTransferTransactionInput
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItem>}
    * @memberof AssetBalanceTransferTransactionInput
    */
-  fees?: Array<TransactionFeeItem> | null;
+  fees?: Array<TransactionFeeItem> | null
   /**
    *
    * @type {TransactionEntry}
    * @memberof AssetBalanceTransferTransactionInput
    */
-  incoming_change: TransactionEntry;
+  incoming_change: TransactionEntry
   /**
    *
    * @type {TransactionEntry}
    * @memberof AssetBalanceTransferTransactionInput
    */
-  outgoing_change: TransactionEntry;
+  outgoing_change: TransactionEntry
   /**
    *
    * @type {string}
    * @memberof AssetBalanceTransferTransactionInput
    */
-  type: AssetBalanceTransferTransactionInputTypeEnum;
+  type: AssetBalanceTransferTransactionInputTypeEnum
 }
 
 export const AssetBalanceTransferTransactionInputTypeEnum = {
   AssetBalanceTransfer: "asset_balance_transfer",
-} as const;
+} as const
 
 export type AssetBalanceTransferTransactionInputTypeEnum =
-  (typeof AssetBalanceTransferTransactionInputTypeEnum)[keyof typeof AssetBalanceTransferTransactionInputTypeEnum];
+  (typeof AssetBalanceTransferTransactionInputTypeEnum)[keyof typeof AssetBalanceTransferTransactionInputTypeEnum]
 
 /**
  *
@@ -1016,39 +1016,39 @@ export interface AssetBalanceTransferTransactionWithEntryIds {
    * @type {number}
    * @memberof AssetBalanceTransferTransactionWithEntryIds
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof AssetBalanceTransferTransactionWithEntryIds
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof AssetBalanceTransferTransactionWithEntryIds
    */
-  incoming_change: TransactionEntryWithEntryId;
+  incoming_change: TransactionEntryWithEntryId
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof AssetBalanceTransferTransactionWithEntryIds
    */
-  outgoing_change: TransactionEntryWithEntryId;
+  outgoing_change: TransactionEntryWithEntryId
   /**
    *
    * @type {string}
    * @memberof AssetBalanceTransferTransactionWithEntryIds
    */
-  type: AssetBalanceTransferTransactionWithEntryIdsTypeEnum;
+  type: AssetBalanceTransferTransactionWithEntryIdsTypeEnum
 }
 
 export const AssetBalanceTransferTransactionWithEntryIdsTypeEnum = {
   AssetBalanceTransfer: "asset_balance_transfer",
-} as const;
+} as const
 
 export type AssetBalanceTransferTransactionWithEntryIdsTypeEnum =
-  (typeof AssetBalanceTransferTransactionWithEntryIdsTypeEnum)[keyof typeof AssetBalanceTransferTransactionWithEntryIdsTypeEnum];
+  (typeof AssetBalanceTransferTransactionWithEntryIdsTypeEnum)[keyof typeof AssetBalanceTransferTransactionWithEntryIdsTypeEnum]
 
 /**
  *
@@ -1061,45 +1061,45 @@ export interface AssetDividendIdentifiableTransaction {
    * @type {number}
    * @memberof AssetDividendIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof AssetDividendIdentifiableTransaction
    */
-  entry: TransactionEntryWithEntryId;
+  entry: TransactionEntryWithEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof AssetDividendIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {string}
    * @memberof AssetDividendIdentifiableTransaction
    */
-  transaction_id: string | null;
+  transaction_id: string | null
   /**
    *
    * @type {string}
    * @memberof AssetDividendIdentifiableTransaction
    */
-  type: AssetDividendIdentifiableTransactionTypeEnum;
+  type: AssetDividendIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof AssetDividendIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const AssetDividendIdentifiableTransactionTypeEnum = {
   AssetDividend: "asset_dividend",
-} as const;
+} as const
 
 export type AssetDividendIdentifiableTransactionTypeEnum =
-  (typeof AssetDividendIdentifiableTransactionTypeEnum)[keyof typeof AssetDividendIdentifiableTransactionTypeEnum];
+  (typeof AssetDividendIdentifiableTransactionTypeEnum)[keyof typeof AssetDividendIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -1112,45 +1112,45 @@ export interface AssetDividendRequiredIdentifiableTransaction {
    * @type {number}
    * @memberof AssetDividendRequiredIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AssetDividendRequiredIdentifiableTransaction
    */
-  entry: TransactionEntryWithRequiredEntryId;
+  entry: TransactionEntryWithRequiredEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof AssetDividendRequiredIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {string}
    * @memberof AssetDividendRequiredIdentifiableTransaction
    */
-  transaction_id: string;
+  transaction_id: string
   /**
    *
    * @type {string}
    * @memberof AssetDividendRequiredIdentifiableTransaction
    */
-  type: AssetDividendRequiredIdentifiableTransactionTypeEnum;
+  type: AssetDividendRequiredIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof AssetDividendRequiredIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const AssetDividendRequiredIdentifiableTransactionTypeEnum = {
   AssetDividend: "asset_dividend",
-} as const;
+} as const
 
 export type AssetDividendRequiredIdentifiableTransactionTypeEnum =
-  (typeof AssetDividendRequiredIdentifiableTransactionTypeEnum)[keyof typeof AssetDividendRequiredIdentifiableTransactionTypeEnum];
+  (typeof AssetDividendRequiredIdentifiableTransactionTypeEnum)[keyof typeof AssetDividendRequiredIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -1163,33 +1163,33 @@ export interface AssetDividendRequiredTransaction {
    * @type {number}
    * @memberof AssetDividendRequiredTransaction
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AssetDividendRequiredTransaction
    */
-  entry: TransactionEntryWithRequiredEntryId;
+  entry: TransactionEntryWithRequiredEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof AssetDividendRequiredTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {string}
    * @memberof AssetDividendRequiredTransaction
    */
-  type: AssetDividendRequiredTransactionTypeEnum;
+  type: AssetDividendRequiredTransactionTypeEnum
 }
 
 export const AssetDividendRequiredTransactionTypeEnum = {
   AssetDividend: "asset_dividend",
-} as const;
+} as const
 
 export type AssetDividendRequiredTransactionTypeEnum =
-  (typeof AssetDividendRequiredTransactionTypeEnum)[keyof typeof AssetDividendRequiredTransactionTypeEnum];
+  (typeof AssetDividendRequiredTransactionTypeEnum)[keyof typeof AssetDividendRequiredTransactionTypeEnum]
 
 /**
  *
@@ -1202,33 +1202,33 @@ export interface AssetDividendTransactionInput {
    * @type {number}
    * @memberof AssetDividendTransactionInput
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntry}
    * @memberof AssetDividendTransactionInput
    */
-  entry: TransactionEntry;
+  entry: TransactionEntry
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItem>}
    * @memberof AssetDividendTransactionInput
    */
-  fees?: Array<TransactionFeeItem> | null;
+  fees?: Array<TransactionFeeItem> | null
   /**
    *
    * @type {string}
    * @memberof AssetDividendTransactionInput
    */
-  type: AssetDividendTransactionInputTypeEnum;
+  type: AssetDividendTransactionInputTypeEnum
 }
 
 export const AssetDividendTransactionInputTypeEnum = {
   AssetDividend: "asset_dividend",
-} as const;
+} as const
 
 export type AssetDividendTransactionInputTypeEnum =
-  (typeof AssetDividendTransactionInputTypeEnum)[keyof typeof AssetDividendTransactionInputTypeEnum];
+  (typeof AssetDividendTransactionInputTypeEnum)[keyof typeof AssetDividendTransactionInputTypeEnum]
 
 /**
  *
@@ -1241,33 +1241,33 @@ export interface AssetDividendTransactionWithEntryIds {
    * @type {number}
    * @memberof AssetDividendTransactionWithEntryIds
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof AssetDividendTransactionWithEntryIds
    */
-  entry: TransactionEntryWithEntryId;
+  entry: TransactionEntryWithEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof AssetDividendTransactionWithEntryIds
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {string}
    * @memberof AssetDividendTransactionWithEntryIds
    */
-  type: AssetDividendTransactionWithEntryIdsTypeEnum;
+  type: AssetDividendTransactionWithEntryIdsTypeEnum
 }
 
 export const AssetDividendTransactionWithEntryIdsTypeEnum = {
   AssetDividend: "asset_dividend",
-} as const;
+} as const
 
 export type AssetDividendTransactionWithEntryIdsTypeEnum =
-  (typeof AssetDividendTransactionWithEntryIdsTypeEnum)[keyof typeof AssetDividendTransactionWithEntryIdsTypeEnum];
+  (typeof AssetDividendTransactionWithEntryIdsTypeEnum)[keyof typeof AssetDividendTransactionWithEntryIdsTypeEnum]
 
 /**
  *
@@ -1280,19 +1280,19 @@ export interface AssetIdentifiableAssetType {
    * @type {AssetType}
    * @memberof AssetIdentifiableAssetType
    */
-  asset_type: AssetType;
+  asset_type: AssetType
   /**
    * Full name of the asset
    * @type {string}
    * @memberof AssetIdentifiableAssetType
    */
-  name: string;
+  name: string
   /**
    * Short letter abbreviation of the asset
    * @type {string}
    * @memberof AssetIdentifiableAssetType
    */
-  ticker: string;
+  ticker: string
 }
 /**
  *
@@ -1305,7 +1305,7 @@ export interface AssetLookupTables {
    * @type {Array<AssetType>}
    * @memberof AssetLookupTables
    */
-  asset_types: Array<AssetType>;
+  asset_types: Array<AssetType>
 }
 /**
  *
@@ -1318,19 +1318,19 @@ export interface AssetPairInfo {
    * @type {number}
    * @memberof AssetPairInfo
    */
-  asset_id: number;
+  asset_id: number
   /**
    *
    * @type {string}
    * @memberof AssetPairInfo
    */
-  name: string;
+  name: string
   /**
    *
    * @type {string}
    * @memberof AssetPairInfo
    */
-  ticker: string;
+  ticker: string
 }
 /**
  *
@@ -1343,13 +1343,13 @@ export interface AssetPairMetadata {
    * @type {number}
    * @memberof AssetPairMetadata
    */
-  last_updated: number;
+  last_updated: number
   /**
    *
    * @type {number}
    * @memberof AssetPairMetadata
    */
-  latest_rate: number;
+  latest_rate: number
 }
 /**
  *
@@ -1362,79 +1362,79 @@ export interface AssetPortfolio {
    * @type {string}
    * @memberof AssetPortfolio
    */
-  account_id: string;
+  account_id: string
   /**
    *
    * @type {number}
    * @memberof AssetPortfolio
    */
-  asset_id: number;
+  asset_id: number
   /**
    *
    * @type {number}
    * @memberof AssetPortfolio
    */
-  cash_dividends: number;
+  cash_dividends: number
   /**
    *
    * @type {number}
    * @memberof AssetPortfolio
    */
-  market_value: number;
+  market_value: number
   /**
    *
    * @type {Array<AssetPortfolioPosition>}
    * @memberof AssetPortfolio
    */
-  positions: Array<AssetPortfolioPosition>;
+  positions: Array<AssetPortfolioPosition>
   /**
    *
    * @type {number}
    * @memberof AssetPortfolio
    */
-  realized_gains: number;
+  realized_gains: number
   /**
    *
    * @type {number}
    * @memberof AssetPortfolio
    */
-  remaining_units: number;
+  remaining_units: number
   /**
    *
    * @type {number}
    * @memberof AssetPortfolio
    */
-  total_cost_basis: number;
+  total_cost_basis: number
   /**
    *
    * @type {number}
    * @memberof AssetPortfolio
    */
-  total_fees: number;
+  total_fees: number
   /**
    *
    * @type {number}
    * @memberof AssetPortfolio
    */
-  total_gains: number;
+  total_gains: number
   /**
    *
    * @type {number}
    * @memberof AssetPortfolio
    */
-  total_units: number;
+  total_units: number
   /**
    *
    * @type {number}
    * @memberof AssetPortfolio
    */
-  unit_cost_basis: number;
+  unit_cost_basis: number
   /**
    *
    * @type {number}
    * @memberof AssetPortfolio
    */
-  unrealized_gains: number;
+  unrealized_gains: number
 }
 /**
  *
@@ -1447,79 +1447,79 @@ export interface AssetPortfolioPosition {
    * @type {string}
    * @memberof AssetPortfolioPosition
    */
-  add_date: string;
+  add_date: string
   /**
    *
    * @type {number}
    * @memberof AssetPortfolioPosition
    */
-  add_price: number;
+  add_price: number
   /**
    *
    * @type {number}
    * @memberof AssetPortfolioPosition
    */
-  amount_left: number;
+  amount_left: number
   /**
    *
    * @type {number}
    * @memberof AssetPortfolioPosition
    */
-  amount_sold: number;
+  amount_sold: number
   /**
    *
    * @type {number}
    * @memberof AssetPortfolioPosition
    */
-  fees: number;
+  fees: number
   /**
    *
    * @type {boolean}
    * @memberof AssetPortfolioPosition
    */
-  is_dividend: boolean;
+  is_dividend: boolean
   /**
    *
    * @type {number}
    * @memberof AssetPortfolioPosition
    */
-  quantity_added: number;
+  quantity_added: number
   /**
    *
    * @type {number}
    * @memberof AssetPortfolioPosition
    */
-  realized_gains: number;
+  realized_gains: number
   /**
    *
    * @type {number}
    * @memberof AssetPortfolioPosition
    */
-  sale_proceeds: number;
+  sale_proceeds: number
   /**
    *
    * @type {number}
    * @memberof AssetPortfolioPosition
    */
-  total_cost_basis: number;
+  total_cost_basis: number
   /**
    *
    * @type {number}
    * @memberof AssetPortfolioPosition
    */
-  total_gains: number;
+  total_gains: number
   /**
    *
    * @type {number}
    * @memberof AssetPortfolioPosition
    */
-  unit_cost_basis: number;
+  unit_cost_basis: number
   /**
    *
    * @type {number}
    * @memberof AssetPortfolioPosition
    */
-  unrealized_gains: number;
+  unrealized_gains: number
 }
 /**
  *
@@ -1532,51 +1532,51 @@ export interface AssetPurchaseIdentifiableTransaction {
    * @type {TransactionEntryWithEntryId}
    * @memberof AssetPurchaseIdentifiableTransaction
    */
-  cash_outgoings_change: TransactionEntryWithEntryId;
+  cash_outgoings_change: TransactionEntryWithEntryId
   /**
    * Date when the transaction occured.
    * @type {number}
    * @memberof AssetPurchaseIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof AssetPurchaseIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof AssetPurchaseIdentifiableTransaction
    */
-  purchase_change: TransactionEntryWithEntryId;
+  purchase_change: TransactionEntryWithEntryId
   /**
    *
    * @type {string}
    * @memberof AssetPurchaseIdentifiableTransaction
    */
-  transaction_id: string | null;
+  transaction_id: string | null
   /**
    *
    * @type {string}
    * @memberof AssetPurchaseIdentifiableTransaction
    */
-  type: AssetPurchaseIdentifiableTransactionTypeEnum;
+  type: AssetPurchaseIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof AssetPurchaseIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const AssetPurchaseIdentifiableTransactionTypeEnum = {
   AssetPurchase: "asset_purchase",
-} as const;
+} as const
 
 export type AssetPurchaseIdentifiableTransactionTypeEnum =
-  (typeof AssetPurchaseIdentifiableTransactionTypeEnum)[keyof typeof AssetPurchaseIdentifiableTransactionTypeEnum];
+  (typeof AssetPurchaseIdentifiableTransactionTypeEnum)[keyof typeof AssetPurchaseIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -1589,51 +1589,51 @@ export interface AssetPurchaseRequiredIdentifiableTransaction {
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AssetPurchaseRequiredIdentifiableTransaction
    */
-  cash_outgoings_change: TransactionEntryWithRequiredEntryId;
+  cash_outgoings_change: TransactionEntryWithRequiredEntryId
   /**
    * Date when the transaction occured.
    * @type {number}
    * @memberof AssetPurchaseRequiredIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof AssetPurchaseRequiredIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AssetPurchaseRequiredIdentifiableTransaction
    */
-  purchase_change: TransactionEntryWithRequiredEntryId;
+  purchase_change: TransactionEntryWithRequiredEntryId
   /**
    *
    * @type {string}
    * @memberof AssetPurchaseRequiredIdentifiableTransaction
    */
-  transaction_id: string;
+  transaction_id: string
   /**
    *
    * @type {string}
    * @memberof AssetPurchaseRequiredIdentifiableTransaction
    */
-  type: AssetPurchaseRequiredIdentifiableTransactionTypeEnum;
+  type: AssetPurchaseRequiredIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof AssetPurchaseRequiredIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const AssetPurchaseRequiredIdentifiableTransactionTypeEnum = {
   AssetPurchase: "asset_purchase",
-} as const;
+} as const
 
 export type AssetPurchaseRequiredIdentifiableTransactionTypeEnum =
-  (typeof AssetPurchaseRequiredIdentifiableTransactionTypeEnum)[keyof typeof AssetPurchaseRequiredIdentifiableTransactionTypeEnum];
+  (typeof AssetPurchaseRequiredIdentifiableTransactionTypeEnum)[keyof typeof AssetPurchaseRequiredIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -1646,39 +1646,39 @@ export interface AssetPurchaseRequiredTransaction {
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AssetPurchaseRequiredTransaction
    */
-  cash_outgoings_change: TransactionEntryWithRequiredEntryId;
+  cash_outgoings_change: TransactionEntryWithRequiredEntryId
   /**
    * Date when the transaction occured.
    * @type {number}
    * @memberof AssetPurchaseRequiredTransaction
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof AssetPurchaseRequiredTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AssetPurchaseRequiredTransaction
    */
-  purchase_change: TransactionEntryWithRequiredEntryId;
+  purchase_change: TransactionEntryWithRequiredEntryId
   /**
    *
    * @type {string}
    * @memberof AssetPurchaseRequiredTransaction
    */
-  type: AssetPurchaseRequiredTransactionTypeEnum;
+  type: AssetPurchaseRequiredTransactionTypeEnum
 }
 
 export const AssetPurchaseRequiredTransactionTypeEnum = {
   AssetPurchase: "asset_purchase",
-} as const;
+} as const
 
 export type AssetPurchaseRequiredTransactionTypeEnum =
-  (typeof AssetPurchaseRequiredTransactionTypeEnum)[keyof typeof AssetPurchaseRequiredTransactionTypeEnum];
+  (typeof AssetPurchaseRequiredTransactionTypeEnum)[keyof typeof AssetPurchaseRequiredTransactionTypeEnum]
 
 /**
  *
@@ -1691,39 +1691,39 @@ export interface AssetPurchaseTransactionInput {
    * @type {TransactionEntry}
    * @memberof AssetPurchaseTransactionInput
    */
-  cash_outgoings_change: TransactionEntry;
+  cash_outgoings_change: TransactionEntry
   /**
    * Date when the transaction occured.
    * @type {number}
    * @memberof AssetPurchaseTransactionInput
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItem>}
    * @memberof AssetPurchaseTransactionInput
    */
-  fees?: Array<TransactionFeeItem> | null;
+  fees?: Array<TransactionFeeItem> | null
   /**
    *
    * @type {TransactionEntry}
    * @memberof AssetPurchaseTransactionInput
    */
-  purchase_change: TransactionEntry;
+  purchase_change: TransactionEntry
   /**
    *
    * @type {string}
    * @memberof AssetPurchaseTransactionInput
    */
-  type: AssetPurchaseTransactionInputTypeEnum;
+  type: AssetPurchaseTransactionInputTypeEnum
 }
 
 export const AssetPurchaseTransactionInputTypeEnum = {
   AssetPurchase: "asset_purchase",
-} as const;
+} as const
 
 export type AssetPurchaseTransactionInputTypeEnum =
-  (typeof AssetPurchaseTransactionInputTypeEnum)[keyof typeof AssetPurchaseTransactionInputTypeEnum];
+  (typeof AssetPurchaseTransactionInputTypeEnum)[keyof typeof AssetPurchaseTransactionInputTypeEnum]
 
 /**
  *
@@ -1736,39 +1736,39 @@ export interface AssetPurchaseTransactionWithEntryIds {
    * @type {TransactionEntryWithEntryId}
    * @memberof AssetPurchaseTransactionWithEntryIds
    */
-  cash_outgoings_change: TransactionEntryWithEntryId;
+  cash_outgoings_change: TransactionEntryWithEntryId
   /**
    * Date when the transaction occured.
    * @type {number}
    * @memberof AssetPurchaseTransactionWithEntryIds
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof AssetPurchaseTransactionWithEntryIds
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof AssetPurchaseTransactionWithEntryIds
    */
-  purchase_change: TransactionEntryWithEntryId;
+  purchase_change: TransactionEntryWithEntryId
   /**
    *
    * @type {string}
    * @memberof AssetPurchaseTransactionWithEntryIds
    */
-  type: AssetPurchaseTransactionWithEntryIdsTypeEnum;
+  type: AssetPurchaseTransactionWithEntryIdsTypeEnum
 }
 
 export const AssetPurchaseTransactionWithEntryIdsTypeEnum = {
   AssetPurchase: "asset_purchase",
-} as const;
+} as const
 
 export type AssetPurchaseTransactionWithEntryIdsTypeEnum =
-  (typeof AssetPurchaseTransactionWithEntryIdsTypeEnum)[keyof typeof AssetPurchaseTransactionWithEntryIdsTypeEnum];
+  (typeof AssetPurchaseTransactionWithEntryIdsTypeEnum)[keyof typeof AssetPurchaseTransactionWithEntryIdsTypeEnum]
 
 /**
  *
@@ -1781,13 +1781,13 @@ export interface AssetRate {
    * @type {number}
    * @memberof AssetRate
    */
-  date: number;
+  date: number
   /**
    * Positive rate (e.g. exchange rate). Must be strictly greater than zero.
    * @type {number}
    * @memberof AssetRate
    */
-  rate: number;
+  rate: number
 }
 /**
  *
@@ -1800,51 +1800,51 @@ export interface AssetSaleIdentifiableTransaction {
    * @type {number}
    * @memberof AssetSaleIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof AssetSaleIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof AssetSaleIdentifiableTransaction
    */
-  proceeds_entry: TransactionEntryWithEntryId;
+  proceeds_entry: TransactionEntryWithEntryId
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof AssetSaleIdentifiableTransaction
    */
-  sale_entry: TransactionEntryWithEntryId;
+  sale_entry: TransactionEntryWithEntryId
   /**
    *
    * @type {string}
    * @memberof AssetSaleIdentifiableTransaction
    */
-  transaction_id: string | null;
+  transaction_id: string | null
   /**
    *
    * @type {string}
    * @memberof AssetSaleIdentifiableTransaction
    */
-  type: AssetSaleIdentifiableTransactionTypeEnum;
+  type: AssetSaleIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof AssetSaleIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const AssetSaleIdentifiableTransactionTypeEnum = {
   AssetSale: "asset_sale",
-} as const;
+} as const
 
 export type AssetSaleIdentifiableTransactionTypeEnum =
-  (typeof AssetSaleIdentifiableTransactionTypeEnum)[keyof typeof AssetSaleIdentifiableTransactionTypeEnum];
+  (typeof AssetSaleIdentifiableTransactionTypeEnum)[keyof typeof AssetSaleIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -1857,51 +1857,51 @@ export interface AssetSaleRequiredIdentifiableTransaction {
    * @type {number}
    * @memberof AssetSaleRequiredIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof AssetSaleRequiredIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AssetSaleRequiredIdentifiableTransaction
    */
-  proceeds_entry: TransactionEntryWithRequiredEntryId;
+  proceeds_entry: TransactionEntryWithRequiredEntryId
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AssetSaleRequiredIdentifiableTransaction
    */
-  sale_entry: TransactionEntryWithRequiredEntryId;
+  sale_entry: TransactionEntryWithRequiredEntryId
   /**
    *
    * @type {string}
    * @memberof AssetSaleRequiredIdentifiableTransaction
    */
-  transaction_id: string;
+  transaction_id: string
   /**
    *
    * @type {string}
    * @memberof AssetSaleRequiredIdentifiableTransaction
    */
-  type: AssetSaleRequiredIdentifiableTransactionTypeEnum;
+  type: AssetSaleRequiredIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof AssetSaleRequiredIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const AssetSaleRequiredIdentifiableTransactionTypeEnum = {
   AssetSale: "asset_sale",
-} as const;
+} as const
 
 export type AssetSaleRequiredIdentifiableTransactionTypeEnum =
-  (typeof AssetSaleRequiredIdentifiableTransactionTypeEnum)[keyof typeof AssetSaleRequiredIdentifiableTransactionTypeEnum];
+  (typeof AssetSaleRequiredIdentifiableTransactionTypeEnum)[keyof typeof AssetSaleRequiredIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -1914,39 +1914,39 @@ export interface AssetSaleRequiredTransaction {
    * @type {number}
    * @memberof AssetSaleRequiredTransaction
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof AssetSaleRequiredTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AssetSaleRequiredTransaction
    */
-  proceeds_entry: TransactionEntryWithRequiredEntryId;
+  proceeds_entry: TransactionEntryWithRequiredEntryId
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AssetSaleRequiredTransaction
    */
-  sale_entry: TransactionEntryWithRequiredEntryId;
+  sale_entry: TransactionEntryWithRequiredEntryId
   /**
    *
    * @type {string}
    * @memberof AssetSaleRequiredTransaction
    */
-  type: AssetSaleRequiredTransactionTypeEnum;
+  type: AssetSaleRequiredTransactionTypeEnum
 }
 
 export const AssetSaleRequiredTransactionTypeEnum = {
   AssetSale: "asset_sale",
-} as const;
+} as const
 
 export type AssetSaleRequiredTransactionTypeEnum =
-  (typeof AssetSaleRequiredTransactionTypeEnum)[keyof typeof AssetSaleRequiredTransactionTypeEnum];
+  (typeof AssetSaleRequiredTransactionTypeEnum)[keyof typeof AssetSaleRequiredTransactionTypeEnum]
 
 /**
  *
@@ -1959,39 +1959,39 @@ export interface AssetSaleTransactionInput {
    * @type {number}
    * @memberof AssetSaleTransactionInput
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItem>}
    * @memberof AssetSaleTransactionInput
    */
-  fees?: Array<TransactionFeeItem> | null;
+  fees?: Array<TransactionFeeItem> | null
   /**
    *
    * @type {TransactionEntry}
    * @memberof AssetSaleTransactionInput
    */
-  proceeds_entry: TransactionEntry;
+  proceeds_entry: TransactionEntry
   /**
    *
    * @type {TransactionEntry}
    * @memberof AssetSaleTransactionInput
    */
-  sale_entry: TransactionEntry;
+  sale_entry: TransactionEntry
   /**
    *
    * @type {string}
    * @memberof AssetSaleTransactionInput
    */
-  type: AssetSaleTransactionInputTypeEnum;
+  type: AssetSaleTransactionInputTypeEnum
 }
 
 export const AssetSaleTransactionInputTypeEnum = {
   AssetSale: "asset_sale",
-} as const;
+} as const
 
 export type AssetSaleTransactionInputTypeEnum =
-  (typeof AssetSaleTransactionInputTypeEnum)[keyof typeof AssetSaleTransactionInputTypeEnum];
+  (typeof AssetSaleTransactionInputTypeEnum)[keyof typeof AssetSaleTransactionInputTypeEnum]
 
 /**
  *
@@ -2004,39 +2004,39 @@ export interface AssetSaleTransactionWithEntryIds {
    * @type {number}
    * @memberof AssetSaleTransactionWithEntryIds
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof AssetSaleTransactionWithEntryIds
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof AssetSaleTransactionWithEntryIds
    */
-  proceeds_entry: TransactionEntryWithEntryId;
+  proceeds_entry: TransactionEntryWithEntryId
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof AssetSaleTransactionWithEntryIds
    */
-  sale_entry: TransactionEntryWithEntryId;
+  sale_entry: TransactionEntryWithEntryId
   /**
    *
    * @type {string}
    * @memberof AssetSaleTransactionWithEntryIds
    */
-  type: AssetSaleTransactionWithEntryIdsTypeEnum;
+  type: AssetSaleTransactionWithEntryIdsTypeEnum
 }
 
 export const AssetSaleTransactionWithEntryIdsTypeEnum = {
   AssetSale: "asset_sale",
-} as const;
+} as const
 
 export type AssetSaleTransactionWithEntryIdsTypeEnum =
-  (typeof AssetSaleTransactionWithEntryIdsTypeEnum)[keyof typeof AssetSaleTransactionWithEntryIdsTypeEnum];
+  (typeof AssetSaleTransactionWithEntryIdsTypeEnum)[keyof typeof AssetSaleTransactionWithEntryIdsTypeEnum]
 
 /**
  *
@@ -2049,51 +2049,51 @@ export interface AssetTradeIdentifiableTransaction {
    * @type {number}
    * @memberof AssetTradeIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof AssetTradeIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof AssetTradeIdentifiableTransaction
    */
-  incoming_entry: TransactionEntryWithEntryId;
+  incoming_entry: TransactionEntryWithEntryId
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof AssetTradeIdentifiableTransaction
    */
-  outgoing_entry: TransactionEntryWithEntryId;
+  outgoing_entry: TransactionEntryWithEntryId
   /**
    *
    * @type {string}
    * @memberof AssetTradeIdentifiableTransaction
    */
-  transaction_id: string | null;
+  transaction_id: string | null
   /**
    *
    * @type {string}
    * @memberof AssetTradeIdentifiableTransaction
    */
-  type: AssetTradeIdentifiableTransactionTypeEnum;
+  type: AssetTradeIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof AssetTradeIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const AssetTradeIdentifiableTransactionTypeEnum = {
   AssetTrade: "asset_trade",
-} as const;
+} as const
 
 export type AssetTradeIdentifiableTransactionTypeEnum =
-  (typeof AssetTradeIdentifiableTransactionTypeEnum)[keyof typeof AssetTradeIdentifiableTransactionTypeEnum];
+  (typeof AssetTradeIdentifiableTransactionTypeEnum)[keyof typeof AssetTradeIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -2106,51 +2106,51 @@ export interface AssetTradeRequiredIdentifiableTransaction {
    * @type {number}
    * @memberof AssetTradeRequiredIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof AssetTradeRequiredIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AssetTradeRequiredIdentifiableTransaction
    */
-  incoming_entry: TransactionEntryWithRequiredEntryId;
+  incoming_entry: TransactionEntryWithRequiredEntryId
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AssetTradeRequiredIdentifiableTransaction
    */
-  outgoing_entry: TransactionEntryWithRequiredEntryId;
+  outgoing_entry: TransactionEntryWithRequiredEntryId
   /**
    *
    * @type {string}
    * @memberof AssetTradeRequiredIdentifiableTransaction
    */
-  transaction_id: string;
+  transaction_id: string
   /**
    *
    * @type {string}
    * @memberof AssetTradeRequiredIdentifiableTransaction
    */
-  type: AssetTradeRequiredIdentifiableTransactionTypeEnum;
+  type: AssetTradeRequiredIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof AssetTradeRequiredIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const AssetTradeRequiredIdentifiableTransactionTypeEnum = {
   AssetTrade: "asset_trade",
-} as const;
+} as const
 
 export type AssetTradeRequiredIdentifiableTransactionTypeEnum =
-  (typeof AssetTradeRequiredIdentifiableTransactionTypeEnum)[keyof typeof AssetTradeRequiredIdentifiableTransactionTypeEnum];
+  (typeof AssetTradeRequiredIdentifiableTransactionTypeEnum)[keyof typeof AssetTradeRequiredIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -2163,39 +2163,39 @@ export interface AssetTradeRequiredTransaction {
    * @type {number}
    * @memberof AssetTradeRequiredTransaction
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof AssetTradeRequiredTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AssetTradeRequiredTransaction
    */
-  incoming_entry: TransactionEntryWithRequiredEntryId;
+  incoming_entry: TransactionEntryWithRequiredEntryId
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AssetTradeRequiredTransaction
    */
-  outgoing_entry: TransactionEntryWithRequiredEntryId;
+  outgoing_entry: TransactionEntryWithRequiredEntryId
   /**
    *
    * @type {string}
    * @memberof AssetTradeRequiredTransaction
    */
-  type: AssetTradeRequiredTransactionTypeEnum;
+  type: AssetTradeRequiredTransactionTypeEnum
 }
 
 export const AssetTradeRequiredTransactionTypeEnum = {
   AssetTrade: "asset_trade",
-} as const;
+} as const
 
 export type AssetTradeRequiredTransactionTypeEnum =
-  (typeof AssetTradeRequiredTransactionTypeEnum)[keyof typeof AssetTradeRequiredTransactionTypeEnum];
+  (typeof AssetTradeRequiredTransactionTypeEnum)[keyof typeof AssetTradeRequiredTransactionTypeEnum]
 
 /**
  *
@@ -2208,39 +2208,39 @@ export interface AssetTradeTransactionInput {
    * @type {number}
    * @memberof AssetTradeTransactionInput
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItem>}
    * @memberof AssetTradeTransactionInput
    */
-  fees?: Array<TransactionFeeItem> | null;
+  fees?: Array<TransactionFeeItem> | null
   /**
    *
    * @type {TransactionEntry}
    * @memberof AssetTradeTransactionInput
    */
-  incoming_entry: TransactionEntry;
+  incoming_entry: TransactionEntry
   /**
    *
    * @type {TransactionEntry}
    * @memberof AssetTradeTransactionInput
    */
-  outgoing_entry: TransactionEntry;
+  outgoing_entry: TransactionEntry
   /**
    *
    * @type {string}
    * @memberof AssetTradeTransactionInput
    */
-  type: AssetTradeTransactionInputTypeEnum;
+  type: AssetTradeTransactionInputTypeEnum
 }
 
 export const AssetTradeTransactionInputTypeEnum = {
   AssetTrade: "asset_trade",
-} as const;
+} as const
 
 export type AssetTradeTransactionInputTypeEnum =
-  (typeof AssetTradeTransactionInputTypeEnum)[keyof typeof AssetTradeTransactionInputTypeEnum];
+  (typeof AssetTradeTransactionInputTypeEnum)[keyof typeof AssetTradeTransactionInputTypeEnum]
 
 /**
  *
@@ -2253,39 +2253,39 @@ export interface AssetTradeTransactionWithEntryIds {
    * @type {number}
    * @memberof AssetTradeTransactionWithEntryIds
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof AssetTradeTransactionWithEntryIds
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof AssetTradeTransactionWithEntryIds
    */
-  incoming_entry: TransactionEntryWithEntryId;
+  incoming_entry: TransactionEntryWithEntryId
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof AssetTradeTransactionWithEntryIds
    */
-  outgoing_entry: TransactionEntryWithEntryId;
+  outgoing_entry: TransactionEntryWithEntryId
   /**
    *
    * @type {string}
    * @memberof AssetTradeTransactionWithEntryIds
    */
-  type: AssetTradeTransactionWithEntryIdsTypeEnum;
+  type: AssetTradeTransactionWithEntryIdsTypeEnum
 }
 
 export const AssetTradeTransactionWithEntryIdsTypeEnum = {
   AssetTrade: "asset_trade",
-} as const;
+} as const
 
 export type AssetTradeTransactionWithEntryIdsTypeEnum =
-  (typeof AssetTradeTransactionWithEntryIdsTypeEnum)[keyof typeof AssetTradeTransactionWithEntryIdsTypeEnum];
+  (typeof AssetTradeTransactionWithEntryIdsTypeEnum)[keyof typeof AssetTradeTransactionWithEntryIdsTypeEnum]
 
 /**
  *
@@ -2298,45 +2298,45 @@ export interface AssetTransferInIdentifiableTransaction {
    * @type {number}
    * @memberof AssetTransferInIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof AssetTransferInIdentifiableTransaction
    */
-  entry: TransactionEntryWithEntryId;
+  entry: TransactionEntryWithEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof AssetTransferInIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {string}
    * @memberof AssetTransferInIdentifiableTransaction
    */
-  transaction_id: string | null;
+  transaction_id: string | null
   /**
    *
    * @type {string}
    * @memberof AssetTransferInIdentifiableTransaction
    */
-  type: AssetTransferInIdentifiableTransactionTypeEnum;
+  type: AssetTransferInIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof AssetTransferInIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const AssetTransferInIdentifiableTransactionTypeEnum = {
   AssetTransferIn: "asset_transfer_in",
-} as const;
+} as const
 
 export type AssetTransferInIdentifiableTransactionTypeEnum =
-  (typeof AssetTransferInIdentifiableTransactionTypeEnum)[keyof typeof AssetTransferInIdentifiableTransactionTypeEnum];
+  (typeof AssetTransferInIdentifiableTransactionTypeEnum)[keyof typeof AssetTransferInIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -2349,45 +2349,45 @@ export interface AssetTransferInRequiredIdentifiableTransaction {
    * @type {number}
    * @memberof AssetTransferInRequiredIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AssetTransferInRequiredIdentifiableTransaction
    */
-  entry: TransactionEntryWithRequiredEntryId;
+  entry: TransactionEntryWithRequiredEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof AssetTransferInRequiredIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {string}
    * @memberof AssetTransferInRequiredIdentifiableTransaction
    */
-  transaction_id: string;
+  transaction_id: string
   /**
    *
    * @type {string}
    * @memberof AssetTransferInRequiredIdentifiableTransaction
    */
-  type: AssetTransferInRequiredIdentifiableTransactionTypeEnum;
+  type: AssetTransferInRequiredIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof AssetTransferInRequiredIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const AssetTransferInRequiredIdentifiableTransactionTypeEnum = {
   AssetTransferIn: "asset_transfer_in",
-} as const;
+} as const
 
 export type AssetTransferInRequiredIdentifiableTransactionTypeEnum =
-  (typeof AssetTransferInRequiredIdentifiableTransactionTypeEnum)[keyof typeof AssetTransferInRequiredIdentifiableTransactionTypeEnum];
+  (typeof AssetTransferInRequiredIdentifiableTransactionTypeEnum)[keyof typeof AssetTransferInRequiredIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -2400,33 +2400,33 @@ export interface AssetTransferInRequiredTransaction {
    * @type {number}
    * @memberof AssetTransferInRequiredTransaction
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AssetTransferInRequiredTransaction
    */
-  entry: TransactionEntryWithRequiredEntryId;
+  entry: TransactionEntryWithRequiredEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof AssetTransferInRequiredTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {string}
    * @memberof AssetTransferInRequiredTransaction
    */
-  type: AssetTransferInRequiredTransactionTypeEnum;
+  type: AssetTransferInRequiredTransactionTypeEnum
 }
 
 export const AssetTransferInRequiredTransactionTypeEnum = {
   AssetTransferIn: "asset_transfer_in",
-} as const;
+} as const
 
 export type AssetTransferInRequiredTransactionTypeEnum =
-  (typeof AssetTransferInRequiredTransactionTypeEnum)[keyof typeof AssetTransferInRequiredTransactionTypeEnum];
+  (typeof AssetTransferInRequiredTransactionTypeEnum)[keyof typeof AssetTransferInRequiredTransactionTypeEnum]
 
 /**
  *
@@ -2439,33 +2439,33 @@ export interface AssetTransferInTransactionInput {
    * @type {number}
    * @memberof AssetTransferInTransactionInput
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntry}
    * @memberof AssetTransferInTransactionInput
    */
-  entry: TransactionEntry;
+  entry: TransactionEntry
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItem>}
    * @memberof AssetTransferInTransactionInput
    */
-  fees?: Array<TransactionFeeItem> | null;
+  fees?: Array<TransactionFeeItem> | null
   /**
    *
    * @type {string}
    * @memberof AssetTransferInTransactionInput
    */
-  type: AssetTransferInTransactionInputTypeEnum;
+  type: AssetTransferInTransactionInputTypeEnum
 }
 
 export const AssetTransferInTransactionInputTypeEnum = {
   AssetTransferIn: "asset_transfer_in",
-} as const;
+} as const
 
 export type AssetTransferInTransactionInputTypeEnum =
-  (typeof AssetTransferInTransactionInputTypeEnum)[keyof typeof AssetTransferInTransactionInputTypeEnum];
+  (typeof AssetTransferInTransactionInputTypeEnum)[keyof typeof AssetTransferInTransactionInputTypeEnum]
 
 /**
  *
@@ -2478,33 +2478,33 @@ export interface AssetTransferInTransactionWithEntryIds {
    * @type {number}
    * @memberof AssetTransferInTransactionWithEntryIds
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof AssetTransferInTransactionWithEntryIds
    */
-  entry: TransactionEntryWithEntryId;
+  entry: TransactionEntryWithEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof AssetTransferInTransactionWithEntryIds
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {string}
    * @memberof AssetTransferInTransactionWithEntryIds
    */
-  type: AssetTransferInTransactionWithEntryIdsTypeEnum;
+  type: AssetTransferInTransactionWithEntryIdsTypeEnum
 }
 
 export const AssetTransferInTransactionWithEntryIdsTypeEnum = {
   AssetTransferIn: "asset_transfer_in",
-} as const;
+} as const
 
 export type AssetTransferInTransactionWithEntryIdsTypeEnum =
-  (typeof AssetTransferInTransactionWithEntryIdsTypeEnum)[keyof typeof AssetTransferInTransactionWithEntryIdsTypeEnum];
+  (typeof AssetTransferInTransactionWithEntryIdsTypeEnum)[keyof typeof AssetTransferInTransactionWithEntryIdsTypeEnum]
 
 /**
  *
@@ -2517,45 +2517,45 @@ export interface AssetTransferOutIdentifiableTransaction {
    * @type {number}
    * @memberof AssetTransferOutIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof AssetTransferOutIdentifiableTransaction
    */
-  entry: TransactionEntryWithEntryId;
+  entry: TransactionEntryWithEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof AssetTransferOutIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {string}
    * @memberof AssetTransferOutIdentifiableTransaction
    */
-  transaction_id: string | null;
+  transaction_id: string | null
   /**
    *
    * @type {string}
    * @memberof AssetTransferOutIdentifiableTransaction
    */
-  type: AssetTransferOutIdentifiableTransactionTypeEnum;
+  type: AssetTransferOutIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof AssetTransferOutIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const AssetTransferOutIdentifiableTransactionTypeEnum = {
   AssetTransferOut: "asset_transfer_out",
-} as const;
+} as const
 
 export type AssetTransferOutIdentifiableTransactionTypeEnum =
-  (typeof AssetTransferOutIdentifiableTransactionTypeEnum)[keyof typeof AssetTransferOutIdentifiableTransactionTypeEnum];
+  (typeof AssetTransferOutIdentifiableTransactionTypeEnum)[keyof typeof AssetTransferOutIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -2568,45 +2568,45 @@ export interface AssetTransferOutRequiredIdentifiableTransaction {
    * @type {number}
    * @memberof AssetTransferOutRequiredIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AssetTransferOutRequiredIdentifiableTransaction
    */
-  entry: TransactionEntryWithRequiredEntryId;
+  entry: TransactionEntryWithRequiredEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof AssetTransferOutRequiredIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {string}
    * @memberof AssetTransferOutRequiredIdentifiableTransaction
    */
-  transaction_id: string;
+  transaction_id: string
   /**
    *
    * @type {string}
    * @memberof AssetTransferOutRequiredIdentifiableTransaction
    */
-  type: AssetTransferOutRequiredIdentifiableTransactionTypeEnum;
+  type: AssetTransferOutRequiredIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof AssetTransferOutRequiredIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const AssetTransferOutRequiredIdentifiableTransactionTypeEnum = {
   AssetTransferOut: "asset_transfer_out",
-} as const;
+} as const
 
 export type AssetTransferOutRequiredIdentifiableTransactionTypeEnum =
-  (typeof AssetTransferOutRequiredIdentifiableTransactionTypeEnum)[keyof typeof AssetTransferOutRequiredIdentifiableTransactionTypeEnum];
+  (typeof AssetTransferOutRequiredIdentifiableTransactionTypeEnum)[keyof typeof AssetTransferOutRequiredIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -2619,33 +2619,33 @@ export interface AssetTransferOutRequiredTransaction {
    * @type {number}
    * @memberof AssetTransferOutRequiredTransaction
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof AssetTransferOutRequiredTransaction
    */
-  entry: TransactionEntryWithRequiredEntryId;
+  entry: TransactionEntryWithRequiredEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof AssetTransferOutRequiredTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {string}
    * @memberof AssetTransferOutRequiredTransaction
    */
-  type: AssetTransferOutRequiredTransactionTypeEnum;
+  type: AssetTransferOutRequiredTransactionTypeEnum
 }
 
 export const AssetTransferOutRequiredTransactionTypeEnum = {
   AssetTransferOut: "asset_transfer_out",
-} as const;
+} as const
 
 export type AssetTransferOutRequiredTransactionTypeEnum =
-  (typeof AssetTransferOutRequiredTransactionTypeEnum)[keyof typeof AssetTransferOutRequiredTransactionTypeEnum];
+  (typeof AssetTransferOutRequiredTransactionTypeEnum)[keyof typeof AssetTransferOutRequiredTransactionTypeEnum]
 
 /**
  *
@@ -2658,33 +2658,33 @@ export interface AssetTransferOutTransactionInput {
    * @type {number}
    * @memberof AssetTransferOutTransactionInput
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntry}
    * @memberof AssetTransferOutTransactionInput
    */
-  entry: TransactionEntry;
+  entry: TransactionEntry
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItem>}
    * @memberof AssetTransferOutTransactionInput
    */
-  fees?: Array<TransactionFeeItem> | null;
+  fees?: Array<TransactionFeeItem> | null
   /**
    *
    * @type {string}
    * @memberof AssetTransferOutTransactionInput
    */
-  type: AssetTransferOutTransactionInputTypeEnum;
+  type: AssetTransferOutTransactionInputTypeEnum
 }
 
 export const AssetTransferOutTransactionInputTypeEnum = {
   AssetTransferOut: "asset_transfer_out",
-} as const;
+} as const
 
 export type AssetTransferOutTransactionInputTypeEnum =
-  (typeof AssetTransferOutTransactionInputTypeEnum)[keyof typeof AssetTransferOutTransactionInputTypeEnum];
+  (typeof AssetTransferOutTransactionInputTypeEnum)[keyof typeof AssetTransferOutTransactionInputTypeEnum]
 
 /**
  *
@@ -2697,33 +2697,33 @@ export interface AssetTransferOutTransactionWithEntryIds {
    * @type {number}
    * @memberof AssetTransferOutTransactionWithEntryIds
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof AssetTransferOutTransactionWithEntryIds
    */
-  entry: TransactionEntryWithEntryId;
+  entry: TransactionEntryWithEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof AssetTransferOutTransactionWithEntryIds
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {string}
    * @memberof AssetTransferOutTransactionWithEntryIds
    */
-  type: AssetTransferOutTransactionWithEntryIdsTypeEnum;
+  type: AssetTransferOutTransactionWithEntryIdsTypeEnum
 }
 
 export const AssetTransferOutTransactionWithEntryIdsTypeEnum = {
   AssetTransferOut: "asset_transfer_out",
-} as const;
+} as const
 
 export type AssetTransferOutTransactionWithEntryIdsTypeEnum =
-  (typeof AssetTransferOutTransactionWithEntryIdsTypeEnum)[keyof typeof AssetTransferOutTransactionWithEntryIdsTypeEnum];
+  (typeof AssetTransferOutTransactionWithEntryIdsTypeEnum)[keyof typeof AssetTransferOutTransactionWithEntryIdsTypeEnum]
 
 /**
  *
@@ -2736,13 +2736,13 @@ export interface AssetType {
    * @type {number}
    * @memberof AssetType
    */
-  id: number;
+  id: number
   /**
    * The name of the asset type
    * @type {string}
    * @memberof AssetType
    */
-  name: string;
+  name: string
 }
 /**
  *
@@ -2755,19 +2755,19 @@ export interface AssetsPage {
    * @type {AssetLookupTables}
    * @memberof AssetsPage
    */
-  lookup_tables: AssetLookupTables;
+  lookup_tables: AssetLookupTables
   /**
    * One page of results
    * @type {Array<AssetAssetRequiredAssetTypeIdWithId>}
    * @memberof AssetsPage
    */
-  results: Array<AssetAssetRequiredAssetTypeIdWithId>;
+  results: Array<AssetAssetRequiredAssetTypeIdWithId>
   /**
    * The total number of results available
    * @type {number}
    * @memberof AssetsPage
    */
-  total_results: number;
+  total_results: number
 }
 /**
  *
@@ -2780,7 +2780,7 @@ export interface Auth {
    * @type {string}
    * @memberof Auth
    */
-  token: string;
+  token: string
 }
 /**
  *
@@ -2793,31 +2793,31 @@ export interface AuthMe {
    * @type {DefaultAsset}
    * @memberof AuthMe
    */
-  default_asset?: DefaultAsset | null;
+  default_asset?: DefaultAsset | null
   /**
    *
    * @type {number}
    * @memberof AuthMe
    */
-  onboarding_version: number;
+  onboarding_version: number
   /**
    *
    * @type {string}
    * @memberof AuthMe
    */
-  role: string;
+  role: string
   /**
    *
    * @type {string}
    * @memberof AuthMe
    */
-  user_id: string;
+  user_id: string
   /**
    *
    * @type {UserMetadata}
    * @memberof AuthMe
    */
-  user_metadata?: UserMetadata | null;
+  user_metadata?: UserMetadata | null
 }
 /**
  *
@@ -2828,10 +2828,10 @@ export interface AuthMe {
 export const BindingUpdateStatus = {
   Active: "active",
   Paused: "paused",
-} as const;
+} as const
 
 export type BindingUpdateStatus =
-  (typeof BindingUpdateStatus)[keyof typeof BindingUpdateStatus];
+  (typeof BindingUpdateStatus)[keyof typeof BindingUpdateStatus]
 
 /**
  *
@@ -2842,10 +2842,10 @@ export type BindingUpdateStatus =
 export const BindingWriteMode = {
   Ghost: "ghost",
   Trusted: "trusted",
-} as const;
+} as const
 
 export type BindingWriteMode =
-  (typeof BindingWriteMode)[keyof typeof BindingWriteMode];
+  (typeof BindingWriteMode)[keyof typeof BindingWriteMode]
 
 /**
  *
@@ -2858,51 +2858,51 @@ export interface CashBalanceTransferIdentifiableTransaction {
    * @type {number}
    * @memberof CashBalanceTransferIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof CashBalanceTransferIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof CashBalanceTransferIdentifiableTransaction
    */
-  incoming_change: TransactionEntryWithEntryId;
+  incoming_change: TransactionEntryWithEntryId
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof CashBalanceTransferIdentifiableTransaction
    */
-  outgoing_change: TransactionEntryWithEntryId;
+  outgoing_change: TransactionEntryWithEntryId
   /**
    *
    * @type {string}
    * @memberof CashBalanceTransferIdentifiableTransaction
    */
-  transaction_id: string | null;
+  transaction_id: string | null
   /**
    *
    * @type {string}
    * @memberof CashBalanceTransferIdentifiableTransaction
    */
-  type: CashBalanceTransferIdentifiableTransactionTypeEnum;
+  type: CashBalanceTransferIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof CashBalanceTransferIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const CashBalanceTransferIdentifiableTransactionTypeEnum = {
   CashBalanceTransfer: "cash_balance_transfer",
-} as const;
+} as const
 
 export type CashBalanceTransferIdentifiableTransactionTypeEnum =
-  (typeof CashBalanceTransferIdentifiableTransactionTypeEnum)[keyof typeof CashBalanceTransferIdentifiableTransactionTypeEnum];
+  (typeof CashBalanceTransferIdentifiableTransactionTypeEnum)[keyof typeof CashBalanceTransferIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -2915,51 +2915,51 @@ export interface CashBalanceTransferRequiredIdentifiableTransaction {
    * @type {number}
    * @memberof CashBalanceTransferRequiredIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof CashBalanceTransferRequiredIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof CashBalanceTransferRequiredIdentifiableTransaction
    */
-  incoming_change: TransactionEntryWithRequiredEntryId;
+  incoming_change: TransactionEntryWithRequiredEntryId
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof CashBalanceTransferRequiredIdentifiableTransaction
    */
-  outgoing_change: TransactionEntryWithRequiredEntryId;
+  outgoing_change: TransactionEntryWithRequiredEntryId
   /**
    *
    * @type {string}
    * @memberof CashBalanceTransferRequiredIdentifiableTransaction
    */
-  transaction_id: string;
+  transaction_id: string
   /**
    *
    * @type {string}
    * @memberof CashBalanceTransferRequiredIdentifiableTransaction
    */
-  type: CashBalanceTransferRequiredIdentifiableTransactionTypeEnum;
+  type: CashBalanceTransferRequiredIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof CashBalanceTransferRequiredIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const CashBalanceTransferRequiredIdentifiableTransactionTypeEnum = {
   CashBalanceTransfer: "cash_balance_transfer",
-} as const;
+} as const
 
 export type CashBalanceTransferRequiredIdentifiableTransactionTypeEnum =
-  (typeof CashBalanceTransferRequiredIdentifiableTransactionTypeEnum)[keyof typeof CashBalanceTransferRequiredIdentifiableTransactionTypeEnum];
+  (typeof CashBalanceTransferRequiredIdentifiableTransactionTypeEnum)[keyof typeof CashBalanceTransferRequiredIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -2972,39 +2972,39 @@ export interface CashBalanceTransferRequiredTransaction {
    * @type {number}
    * @memberof CashBalanceTransferRequiredTransaction
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof CashBalanceTransferRequiredTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof CashBalanceTransferRequiredTransaction
    */
-  incoming_change: TransactionEntryWithRequiredEntryId;
+  incoming_change: TransactionEntryWithRequiredEntryId
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof CashBalanceTransferRequiredTransaction
    */
-  outgoing_change: TransactionEntryWithRequiredEntryId;
+  outgoing_change: TransactionEntryWithRequiredEntryId
   /**
    *
    * @type {string}
    * @memberof CashBalanceTransferRequiredTransaction
    */
-  type: CashBalanceTransferRequiredTransactionTypeEnum;
+  type: CashBalanceTransferRequiredTransactionTypeEnum
 }
 
 export const CashBalanceTransferRequiredTransactionTypeEnum = {
   CashBalanceTransfer: "cash_balance_transfer",
-} as const;
+} as const
 
 export type CashBalanceTransferRequiredTransactionTypeEnum =
-  (typeof CashBalanceTransferRequiredTransactionTypeEnum)[keyof typeof CashBalanceTransferRequiredTransactionTypeEnum];
+  (typeof CashBalanceTransferRequiredTransactionTypeEnum)[keyof typeof CashBalanceTransferRequiredTransactionTypeEnum]
 
 /**
  *
@@ -3017,39 +3017,39 @@ export interface CashBalanceTransferTransactionInput {
    * @type {number}
    * @memberof CashBalanceTransferTransactionInput
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItem>}
    * @memberof CashBalanceTransferTransactionInput
    */
-  fees?: Array<TransactionFeeItem> | null;
+  fees?: Array<TransactionFeeItem> | null
   /**
    *
    * @type {TransactionEntry}
    * @memberof CashBalanceTransferTransactionInput
    */
-  incoming_change: TransactionEntry;
+  incoming_change: TransactionEntry
   /**
    *
    * @type {TransactionEntry}
    * @memberof CashBalanceTransferTransactionInput
    */
-  outgoing_change: TransactionEntry;
+  outgoing_change: TransactionEntry
   /**
    *
    * @type {string}
    * @memberof CashBalanceTransferTransactionInput
    */
-  type: CashBalanceTransferTransactionInputTypeEnum;
+  type: CashBalanceTransferTransactionInputTypeEnum
 }
 
 export const CashBalanceTransferTransactionInputTypeEnum = {
   CashBalanceTransfer: "cash_balance_transfer",
-} as const;
+} as const
 
 export type CashBalanceTransferTransactionInputTypeEnum =
-  (typeof CashBalanceTransferTransactionInputTypeEnum)[keyof typeof CashBalanceTransferTransactionInputTypeEnum];
+  (typeof CashBalanceTransferTransactionInputTypeEnum)[keyof typeof CashBalanceTransferTransactionInputTypeEnum]
 
 /**
  *
@@ -3062,39 +3062,39 @@ export interface CashBalanceTransferTransactionWithEntryIds {
    * @type {number}
    * @memberof CashBalanceTransferTransactionWithEntryIds
    */
-  date: number;
+  date: number
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof CashBalanceTransferTransactionWithEntryIds
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof CashBalanceTransferTransactionWithEntryIds
    */
-  incoming_change: TransactionEntryWithEntryId;
+  incoming_change: TransactionEntryWithEntryId
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof CashBalanceTransferTransactionWithEntryIds
    */
-  outgoing_change: TransactionEntryWithEntryId;
+  outgoing_change: TransactionEntryWithEntryId
   /**
    *
    * @type {string}
    * @memberof CashBalanceTransferTransactionWithEntryIds
    */
-  type: CashBalanceTransferTransactionWithEntryIdsTypeEnum;
+  type: CashBalanceTransferTransactionWithEntryIdsTypeEnum
 }
 
 export const CashBalanceTransferTransactionWithEntryIdsTypeEnum = {
   CashBalanceTransfer: "cash_balance_transfer",
-} as const;
+} as const
 
 export type CashBalanceTransferTransactionWithEntryIdsTypeEnum =
-  (typeof CashBalanceTransferTransactionWithEntryIdsTypeEnum)[keyof typeof CashBalanceTransferTransactionWithEntryIdsTypeEnum];
+  (typeof CashBalanceTransferTransactionWithEntryIdsTypeEnum)[keyof typeof CashBalanceTransferTransactionWithEntryIdsTypeEnum]
 
 /**
  *
@@ -3107,51 +3107,51 @@ export interface CashDividendIdentifiableTransaction {
    * @type {number}
    * @memberof CashDividendIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof CashDividendIdentifiableTransaction
    */
-  entry: TransactionEntryWithEntryId;
+  entry: TransactionEntryWithEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof CashDividendIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    * An id of a cash asset for which the dividends were paid for.
    * @type {number}
    * @memberof CashDividendIdentifiableTransaction
    */
-  origin_asset_id: number;
+  origin_asset_id: number
   /**
    *
    * @type {string}
    * @memberof CashDividendIdentifiableTransaction
    */
-  transaction_id: string | null;
+  transaction_id: string | null
   /**
    *
    * @type {string}
    * @memberof CashDividendIdentifiableTransaction
    */
-  type: CashDividendIdentifiableTransactionTypeEnum;
+  type: CashDividendIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof CashDividendIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const CashDividendIdentifiableTransactionTypeEnum = {
   CashDividend: "cash_dividend",
-} as const;
+} as const
 
 export type CashDividendIdentifiableTransactionTypeEnum =
-  (typeof CashDividendIdentifiableTransactionTypeEnum)[keyof typeof CashDividendIdentifiableTransactionTypeEnum];
+  (typeof CashDividendIdentifiableTransactionTypeEnum)[keyof typeof CashDividendIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -3164,51 +3164,51 @@ export interface CashDividendRequiredIdentifiableTransaction {
    * @type {number}
    * @memberof CashDividendRequiredIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof CashDividendRequiredIdentifiableTransaction
    */
-  entry: TransactionEntryWithRequiredEntryId;
+  entry: TransactionEntryWithRequiredEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof CashDividendRequiredIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    * An id of a cash asset for which the dividends were paid for.
    * @type {number}
    * @memberof CashDividendRequiredIdentifiableTransaction
    */
-  origin_asset_id: number;
+  origin_asset_id: number
   /**
    *
    * @type {string}
    * @memberof CashDividendRequiredIdentifiableTransaction
    */
-  transaction_id: string;
+  transaction_id: string
   /**
    *
    * @type {string}
    * @memberof CashDividendRequiredIdentifiableTransaction
    */
-  type: CashDividendRequiredIdentifiableTransactionTypeEnum;
+  type: CashDividendRequiredIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof CashDividendRequiredIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const CashDividendRequiredIdentifiableTransactionTypeEnum = {
   CashDividend: "cash_dividend",
-} as const;
+} as const
 
 export type CashDividendRequiredIdentifiableTransactionTypeEnum =
-  (typeof CashDividendRequiredIdentifiableTransactionTypeEnum)[keyof typeof CashDividendRequiredIdentifiableTransactionTypeEnum];
+  (typeof CashDividendRequiredIdentifiableTransactionTypeEnum)[keyof typeof CashDividendRequiredIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -3221,39 +3221,39 @@ export interface CashDividendRequiredTransaction {
    * @type {number}
    * @memberof CashDividendRequiredTransaction
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof CashDividendRequiredTransaction
    */
-  entry: TransactionEntryWithRequiredEntryId;
+  entry: TransactionEntryWithRequiredEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof CashDividendRequiredTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    * An id of a cash asset for which the dividends were paid for.
    * @type {number}
    * @memberof CashDividendRequiredTransaction
    */
-  origin_asset_id: number;
+  origin_asset_id: number
   /**
    *
    * @type {string}
    * @memberof CashDividendRequiredTransaction
    */
-  type: CashDividendRequiredTransactionTypeEnum;
+  type: CashDividendRequiredTransactionTypeEnum
 }
 
 export const CashDividendRequiredTransactionTypeEnum = {
   CashDividend: "cash_dividend",
-} as const;
+} as const
 
 export type CashDividendRequiredTransactionTypeEnum =
-  (typeof CashDividendRequiredTransactionTypeEnum)[keyof typeof CashDividendRequiredTransactionTypeEnum];
+  (typeof CashDividendRequiredTransactionTypeEnum)[keyof typeof CashDividendRequiredTransactionTypeEnum]
 
 /**
  *
@@ -3266,39 +3266,39 @@ export interface CashDividendTransactionInput {
    * @type {number}
    * @memberof CashDividendTransactionInput
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntry}
    * @memberof CashDividendTransactionInput
    */
-  entry: TransactionEntry;
+  entry: TransactionEntry
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItem>}
    * @memberof CashDividendTransactionInput
    */
-  fees?: Array<TransactionFeeItem> | null;
+  fees?: Array<TransactionFeeItem> | null
   /**
    * An id of a cash asset for which the dividends were paid for.
    * @type {number}
    * @memberof CashDividendTransactionInput
    */
-  origin_asset_id: number;
+  origin_asset_id: number
   /**
    *
    * @type {string}
    * @memberof CashDividendTransactionInput
    */
-  type: CashDividendTransactionInputTypeEnum;
+  type: CashDividendTransactionInputTypeEnum
 }
 
 export const CashDividendTransactionInputTypeEnum = {
   CashDividend: "cash_dividend",
-} as const;
+} as const
 
 export type CashDividendTransactionInputTypeEnum =
-  (typeof CashDividendTransactionInputTypeEnum)[keyof typeof CashDividendTransactionInputTypeEnum];
+  (typeof CashDividendTransactionInputTypeEnum)[keyof typeof CashDividendTransactionInputTypeEnum]
 
 /**
  *
@@ -3311,39 +3311,39 @@ export interface CashDividendTransactionWithEntryIds {
    * @type {number}
    * @memberof CashDividendTransactionWithEntryIds
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof CashDividendTransactionWithEntryIds
    */
-  entry: TransactionEntryWithEntryId;
+  entry: TransactionEntryWithEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof CashDividendTransactionWithEntryIds
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    * An id of a cash asset for which the dividends were paid for.
    * @type {number}
    * @memberof CashDividendTransactionWithEntryIds
    */
-  origin_asset_id: number;
+  origin_asset_id: number
   /**
    *
    * @type {string}
    * @memberof CashDividendTransactionWithEntryIds
    */
-  type: CashDividendTransactionWithEntryIdsTypeEnum;
+  type: CashDividendTransactionWithEntryIdsTypeEnum
 }
 
 export const CashDividendTransactionWithEntryIdsTypeEnum = {
   CashDividend: "cash_dividend",
-} as const;
+} as const
 
 export type CashDividendTransactionWithEntryIdsTypeEnum =
-  (typeof CashDividendTransactionWithEntryIdsTypeEnum)[keyof typeof CashDividendTransactionWithEntryIdsTypeEnum];
+  (typeof CashDividendTransactionWithEntryIdsTypeEnum)[keyof typeof CashDividendTransactionWithEntryIdsTypeEnum]
 
 /**
  *
@@ -3356,31 +3356,31 @@ export interface CashPortfolio {
    * @type {string}
    * @memberof CashPortfolio
    */
-  account_id: string;
+  account_id: string
   /**
    *
    * @type {number}
    * @memberof CashPortfolio
    */
-  asset_id: number;
+  asset_id: number
   /**
    *
    * @type {number}
    * @memberof CashPortfolio
    */
-  dividends: number;
+  dividends: number
   /**
    *
    * @type {number}
    * @memberof CashPortfolio
    */
-  fees: number;
+  fees: number
   /**
    *
    * @type {number}
    * @memberof CashPortfolio
    */
-  units: number;
+  units: number
 }
 /**
  *
@@ -3393,45 +3393,45 @@ export interface CashTransferInIdentifiableTransaction {
    * @type {number}
    * @memberof CashTransferInIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof CashTransferInIdentifiableTransaction
    */
-  entry: TransactionEntryWithEntryId;
+  entry: TransactionEntryWithEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof CashTransferInIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {string}
    * @memberof CashTransferInIdentifiableTransaction
    */
-  transaction_id: string | null;
+  transaction_id: string | null
   /**
    *
    * @type {string}
    * @memberof CashTransferInIdentifiableTransaction
    */
-  type: CashTransferInIdentifiableTransactionTypeEnum;
+  type: CashTransferInIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof CashTransferInIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const CashTransferInIdentifiableTransactionTypeEnum = {
   CashTransferIn: "cash_transfer_in",
-} as const;
+} as const
 
 export type CashTransferInIdentifiableTransactionTypeEnum =
-  (typeof CashTransferInIdentifiableTransactionTypeEnum)[keyof typeof CashTransferInIdentifiableTransactionTypeEnum];
+  (typeof CashTransferInIdentifiableTransactionTypeEnum)[keyof typeof CashTransferInIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -3444,45 +3444,45 @@ export interface CashTransferInRequiredIdentifiableTransaction {
    * @type {number}
    * @memberof CashTransferInRequiredIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof CashTransferInRequiredIdentifiableTransaction
    */
-  entry: TransactionEntryWithRequiredEntryId;
+  entry: TransactionEntryWithRequiredEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof CashTransferInRequiredIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {string}
    * @memberof CashTransferInRequiredIdentifiableTransaction
    */
-  transaction_id: string;
+  transaction_id: string
   /**
    *
    * @type {string}
    * @memberof CashTransferInRequiredIdentifiableTransaction
    */
-  type: CashTransferInRequiredIdentifiableTransactionTypeEnum;
+  type: CashTransferInRequiredIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof CashTransferInRequiredIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const CashTransferInRequiredIdentifiableTransactionTypeEnum = {
   CashTransferIn: "cash_transfer_in",
-} as const;
+} as const
 
 export type CashTransferInRequiredIdentifiableTransactionTypeEnum =
-  (typeof CashTransferInRequiredIdentifiableTransactionTypeEnum)[keyof typeof CashTransferInRequiredIdentifiableTransactionTypeEnum];
+  (typeof CashTransferInRequiredIdentifiableTransactionTypeEnum)[keyof typeof CashTransferInRequiredIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -3495,33 +3495,33 @@ export interface CashTransferInRequiredTransaction {
    * @type {number}
    * @memberof CashTransferInRequiredTransaction
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof CashTransferInRequiredTransaction
    */
-  entry: TransactionEntryWithRequiredEntryId;
+  entry: TransactionEntryWithRequiredEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof CashTransferInRequiredTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {string}
    * @memberof CashTransferInRequiredTransaction
    */
-  type: CashTransferInRequiredTransactionTypeEnum;
+  type: CashTransferInRequiredTransactionTypeEnum
 }
 
 export const CashTransferInRequiredTransactionTypeEnum = {
   CashTransferIn: "cash_transfer_in",
-} as const;
+} as const
 
 export type CashTransferInRequiredTransactionTypeEnum =
-  (typeof CashTransferInRequiredTransactionTypeEnum)[keyof typeof CashTransferInRequiredTransactionTypeEnum];
+  (typeof CashTransferInRequiredTransactionTypeEnum)[keyof typeof CashTransferInRequiredTransactionTypeEnum]
 
 /**
  *
@@ -3534,33 +3534,33 @@ export interface CashTransferInTransactionInput {
    * @type {number}
    * @memberof CashTransferInTransactionInput
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntry}
    * @memberof CashTransferInTransactionInput
    */
-  entry: TransactionEntry;
+  entry: TransactionEntry
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItem>}
    * @memberof CashTransferInTransactionInput
    */
-  fees?: Array<TransactionFeeItem> | null;
+  fees?: Array<TransactionFeeItem> | null
   /**
    *
    * @type {string}
    * @memberof CashTransferInTransactionInput
    */
-  type: CashTransferInTransactionInputTypeEnum;
+  type: CashTransferInTransactionInputTypeEnum
 }
 
 export const CashTransferInTransactionInputTypeEnum = {
   CashTransferIn: "cash_transfer_in",
-} as const;
+} as const
 
 export type CashTransferInTransactionInputTypeEnum =
-  (typeof CashTransferInTransactionInputTypeEnum)[keyof typeof CashTransferInTransactionInputTypeEnum];
+  (typeof CashTransferInTransactionInputTypeEnum)[keyof typeof CashTransferInTransactionInputTypeEnum]
 
 /**
  *
@@ -3573,33 +3573,33 @@ export interface CashTransferInTransactionWithEntryIds {
    * @type {number}
    * @memberof CashTransferInTransactionWithEntryIds
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof CashTransferInTransactionWithEntryIds
    */
-  entry: TransactionEntryWithEntryId;
+  entry: TransactionEntryWithEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof CashTransferInTransactionWithEntryIds
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {string}
    * @memberof CashTransferInTransactionWithEntryIds
    */
-  type: CashTransferInTransactionWithEntryIdsTypeEnum;
+  type: CashTransferInTransactionWithEntryIdsTypeEnum
 }
 
 export const CashTransferInTransactionWithEntryIdsTypeEnum = {
   CashTransferIn: "cash_transfer_in",
-} as const;
+} as const
 
 export type CashTransferInTransactionWithEntryIdsTypeEnum =
-  (typeof CashTransferInTransactionWithEntryIdsTypeEnum)[keyof typeof CashTransferInTransactionWithEntryIdsTypeEnum];
+  (typeof CashTransferInTransactionWithEntryIdsTypeEnum)[keyof typeof CashTransferInTransactionWithEntryIdsTypeEnum]
 
 /**
  *
@@ -3612,45 +3612,45 @@ export interface CashTransferOutIdentifiableTransaction {
    * @type {number}
    * @memberof CashTransferOutIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof CashTransferOutIdentifiableTransaction
    */
-  entry: TransactionEntryWithEntryId;
+  entry: TransactionEntryWithEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof CashTransferOutIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {string}
    * @memberof CashTransferOutIdentifiableTransaction
    */
-  transaction_id: string | null;
+  transaction_id: string | null
   /**
    *
    * @type {string}
    * @memberof CashTransferOutIdentifiableTransaction
    */
-  type: CashTransferOutIdentifiableTransactionTypeEnum;
+  type: CashTransferOutIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof CashTransferOutIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const CashTransferOutIdentifiableTransactionTypeEnum = {
   CashTransferOut: "cash_transfer_out",
-} as const;
+} as const
 
 export type CashTransferOutIdentifiableTransactionTypeEnum =
-  (typeof CashTransferOutIdentifiableTransactionTypeEnum)[keyof typeof CashTransferOutIdentifiableTransactionTypeEnum];
+  (typeof CashTransferOutIdentifiableTransactionTypeEnum)[keyof typeof CashTransferOutIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -3663,45 +3663,45 @@ export interface CashTransferOutRequiredIdentifiableTransaction {
    * @type {number}
    * @memberof CashTransferOutRequiredIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof CashTransferOutRequiredIdentifiableTransaction
    */
-  entry: TransactionEntryWithRequiredEntryId;
+  entry: TransactionEntryWithRequiredEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof CashTransferOutRequiredIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {string}
    * @memberof CashTransferOutRequiredIdentifiableTransaction
    */
-  transaction_id: string;
+  transaction_id: string
   /**
    *
    * @type {string}
    * @memberof CashTransferOutRequiredIdentifiableTransaction
    */
-  type: CashTransferOutRequiredIdentifiableTransactionTypeEnum;
+  type: CashTransferOutRequiredIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof CashTransferOutRequiredIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const CashTransferOutRequiredIdentifiableTransactionTypeEnum = {
   CashTransferOut: "cash_transfer_out",
-} as const;
+} as const
 
 export type CashTransferOutRequiredIdentifiableTransactionTypeEnum =
-  (typeof CashTransferOutRequiredIdentifiableTransactionTypeEnum)[keyof typeof CashTransferOutRequiredIdentifiableTransactionTypeEnum];
+  (typeof CashTransferOutRequiredIdentifiableTransactionTypeEnum)[keyof typeof CashTransferOutRequiredIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -3714,33 +3714,33 @@ export interface CashTransferOutRequiredTransaction {
    * @type {number}
    * @memberof CashTransferOutRequiredTransaction
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof CashTransferOutRequiredTransaction
    */
-  entry: TransactionEntryWithRequiredEntryId;
+  entry: TransactionEntryWithRequiredEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof CashTransferOutRequiredTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {string}
    * @memberof CashTransferOutRequiredTransaction
    */
-  type: CashTransferOutRequiredTransactionTypeEnum;
+  type: CashTransferOutRequiredTransactionTypeEnum
 }
 
 export const CashTransferOutRequiredTransactionTypeEnum = {
   CashTransferOut: "cash_transfer_out",
-} as const;
+} as const
 
 export type CashTransferOutRequiredTransactionTypeEnum =
-  (typeof CashTransferOutRequiredTransactionTypeEnum)[keyof typeof CashTransferOutRequiredTransactionTypeEnum];
+  (typeof CashTransferOutRequiredTransactionTypeEnum)[keyof typeof CashTransferOutRequiredTransactionTypeEnum]
 
 /**
  *
@@ -3753,33 +3753,33 @@ export interface CashTransferOutTransactionInput {
    * @type {number}
    * @memberof CashTransferOutTransactionInput
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntry}
    * @memberof CashTransferOutTransactionInput
    */
-  entry: TransactionEntry;
+  entry: TransactionEntry
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItem>}
    * @memberof CashTransferOutTransactionInput
    */
-  fees?: Array<TransactionFeeItem> | null;
+  fees?: Array<TransactionFeeItem> | null
   /**
    *
    * @type {string}
    * @memberof CashTransferOutTransactionInput
    */
-  type: CashTransferOutTransactionInputTypeEnum;
+  type: CashTransferOutTransactionInputTypeEnum
 }
 
 export const CashTransferOutTransactionInputTypeEnum = {
   CashTransferOut: "cash_transfer_out",
-} as const;
+} as const
 
 export type CashTransferOutTransactionInputTypeEnum =
-  (typeof CashTransferOutTransactionInputTypeEnum)[keyof typeof CashTransferOutTransactionInputTypeEnum];
+  (typeof CashTransferOutTransactionInputTypeEnum)[keyof typeof CashTransferOutTransactionInputTypeEnum]
 
 /**
  *
@@ -3792,33 +3792,33 @@ export interface CashTransferOutTransactionWithEntryIds {
    * @type {number}
    * @memberof CashTransferOutTransactionWithEntryIds
    */
-  date: number;
+  date: number
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof CashTransferOutTransactionWithEntryIds
    */
-  entry: TransactionEntryWithEntryId;
+  entry: TransactionEntryWithEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof CashTransferOutTransactionWithEntryIds
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {string}
    * @memberof CashTransferOutTransactionWithEntryIds
    */
-  type: CashTransferOutTransactionWithEntryIdsTypeEnum;
+  type: CashTransferOutTransactionWithEntryIdsTypeEnum
 }
 
 export const CashTransferOutTransactionWithEntryIdsTypeEnum = {
   CashTransferOut: "cash_transfer_out",
-} as const;
+} as const
 
 export type CashTransferOutTransactionWithEntryIdsTypeEnum =
-  (typeof CashTransferOutTransactionWithEntryIdsTypeEnum)[keyof typeof CashTransferOutTransactionWithEntryIdsTypeEnum];
+  (typeof CashTransferOutTransactionWithEntryIdsTypeEnum)[keyof typeof CashTransferOutTransactionWithEntryIdsTypeEnum]
 
 /**
  *
@@ -3831,31 +3831,31 @@ export interface CategoryIdentifiableCategoryType {
    * @type {string}
    * @memberof CategoryIdentifiableCategoryType
    */
-  category: string;
+  category: string
   /**
    *
    * @type {CategoryType}
    * @memberof CategoryIdentifiableCategoryType
    */
-  category_type: CategoryType;
+  category_type: CategoryType
   /**
    * Icon identifier for the category
    * @type {string}
    * @memberof CategoryIdentifiableCategoryType
    */
-  icon: string;
+  icon: string
   /**
    * Whether this is a global category available to all users
    * @type {boolean}
    * @memberof CategoryIdentifiableCategoryType
    */
-  is_global: boolean;
+  is_global: boolean
   /**
    * Whether this is a system category that cannot be modified
    * @type {boolean}
    * @memberof CategoryIdentifiableCategoryType
    */
-  is_system: boolean;
+  is_system: boolean
 }
 /**
  *
@@ -3868,7 +3868,7 @@ export interface CategoryMetadataLookupTables {
    * @type {Array<CategoryType>}
    * @memberof CategoryMetadataLookupTables
    */
-  category_types: Array<CategoryType>;
+  category_types: Array<CategoryType>
 }
 /**
  *
@@ -3881,37 +3881,37 @@ export interface CategoryRequiredCategoryTypeIdWithId {
    * @type {string}
    * @memberof CategoryRequiredCategoryTypeIdWithId
    */
-  category: string;
+  category: string
   /**
    *
    * @type {number}
    * @memberof CategoryRequiredCategoryTypeIdWithId
    */
-  category_type: number;
+  category_type: number
   /**
    * Icon identifier for the category
    * @type {string}
    * @memberof CategoryRequiredCategoryTypeIdWithId
    */
-  icon: string;
+  icon: string
   /**
    * Unique identifier for the category
    * @type {number}
    * @memberof CategoryRequiredCategoryTypeIdWithId
    */
-  id: number;
+  id: number
   /**
    * Whether this is a global category available to all users
    * @type {boolean}
    * @memberof CategoryRequiredCategoryTypeIdWithId
    */
-  is_global: boolean;
+  is_global: boolean
   /**
    * Whether this is a system category that cannot be modified
    * @type {boolean}
    * @memberof CategoryRequiredCategoryTypeIdWithId
    */
-  is_system: boolean;
+  is_system: boolean
 }
 /**
  *
@@ -3924,19 +3924,19 @@ export interface CategoryType {
    * @type {number}
    * @memberof CategoryType
    */
-  id: number;
+  id: number
   /**
    * Whether this is a global type
    * @type {boolean}
    * @memberof CategoryType
    */
-  is_global: boolean;
+  is_global: boolean
   /**
    * The name of the category type
    * @type {string}
    * @memberof CategoryType
    */
-  name: string;
+  name: string
 }
 /**
  *
@@ -3949,21 +3949,20 @@ export interface CategoryType2 {
    * @type {boolean}
    * @memberof CategoryType2
    */
-  is_global: boolean;
+  is_global: boolean
   /**
    * The name of the category type
    * @type {string}
    * @memberof CategoryType2
    */
-  name: string;
+  name: string
 }
 /**
  * @type CombinedTransactionItem
  * @export
  */
 export type CombinedTransactionItem =
-  | GroupTransactionItem
-  | IndividualTransactionItem;
+  GroupTransactionItem | IndividualTransactionItem
 
 /**
  *
@@ -3976,31 +3975,31 @@ export interface CombinedTransactionsPage {
    * @type {boolean}
    * @memberof CombinedTransactionsPage
    */
-  has_more: boolean;
+  has_more: boolean
   /**
    *
    * @type {MetadataLookupTables}
    * @memberof CombinedTransactionsPage
    */
-  lookup_tables: MetadataLookupTables;
+  lookup_tables: MetadataLookupTables
   /**
    *
    * @type {string}
    * @memberof CombinedTransactionsPage
    */
-  next_cursor?: string | null;
+  next_cursor?: string | null
   /**
    *
    * @type {Array<CombinedTransactionItem>}
    * @memberof CombinedTransactionsPage
    */
-  results: Array<CombinedTransactionItem>;
+  results: Array<CombinedTransactionItem>
   /**
    *
    * @type {number}
    * @memberof CombinedTransactionsPage
    */
-  total_results?: number | null;
+  total_results?: number | null
 }
 /**
  * Relays the provider\'s OAuth redirect back to the server. Per RFC 6749 the provider returns either `code` (consent granted) or `error` (e.g. access_denied) — never both.
@@ -4013,25 +4012,25 @@ export interface CompleteOAuthSessionRequest {
    * @type {string}
    * @memberof CompleteOAuthSessionRequest
    */
-  code?: string | null;
+  code?: string | null
   /**
    *
    * @type {string}
    * @memberof CompleteOAuthSessionRequest
    */
-  error?: string | null;
+  error?: string | null
   /**
    *
    * @type {string}
    * @memberof CompleteOAuthSessionRequest
    */
-  error_description?: string | null;
+  error_description?: string | null
   /**
    *
    * @type {string}
    * @memberof CompleteOAuthSessionRequest
    */
-  state: string;
+  state: string
 }
 /**
  *
@@ -4044,13 +4043,13 @@ export interface CompleteOAuthSessionResponse {
    * @type {ConnectorConnection}
    * @memberof CompleteOAuthSessionResponse
    */
-  connection: ConnectorConnection;
+  connection: ConnectorConnection
   /**
    *
    * @type {OAuthSessionStatus}
    * @memberof CompleteOAuthSessionResponse
    */
-  status: OAuthSessionStatus;
+  status: OAuthSessionStatus
 }
 
 /**
@@ -4064,7 +4063,7 @@ export interface CompleteQuickUploadRequest {
    * @type {boolean}
    * @memberof CompleteQuickUploadRequest
    */
-  accepted: boolean;
+  accepted: boolean
 }
 /**
  *
@@ -4077,19 +4076,19 @@ export interface ConfirmFileResponse {
    * @type {string}
    * @memberof ConfirmFileResponse
    */
-  id: string;
+  id: string
   /**
    *
    * @type {string}
    * @memberof ConfirmFileResponse
    */
-  status: string;
+  status: string
   /**
    *
    * @type {string}
    * @memberof ConfirmFileResponse
    */
-  updated_at: string;
+  updated_at: string
 }
 /**
  *
@@ -4102,73 +4101,73 @@ export interface ConnectorBinding {
    * @type {string}
    * @memberof ConnectorBinding
    */
-  connection_id: string;
+  connection_id: string
   /**
    *
    * @type {number}
    * @memberof ConnectorBinding
    */
-  created_at: number;
+  created_at: number
   /**
    *
    * @type {string}
    * @memberof ConnectorBinding
    */
-  id: string;
+  id: string
   /**
    *
    * @type {number}
    * @memberof ConnectorBinding
    */
-  last_sync_at?: number | null;
+  last_sync_at?: number | null
   /**
    *
    * @type {string}
    * @memberof ConnectorBinding
    */
-  last_sync_error?: string | null;
+  last_sync_error?: string | null
   /**
    *
    * @type {string}
    * @memberof ConnectorBinding
    */
-  last_sync_status?: string | null;
+  last_sync_status?: string | null
   /**
    *
    * @type {string}
    * @memberof ConnectorBinding
    */
-  provider_account_id: string;
+  provider_account_id: string
   /**
    *
    * @type {string}
    * @memberof ConnectorBinding
    */
-  status: string;
+  status: string
   /**
    *
    * @type {string}
    * @memberof ConnectorBinding
    */
-  sverto_account_id: string;
+  sverto_account_id: string
   /**
    *
    * @type {number}
    * @memberof ConnectorBinding
    */
-  synced_through?: number | null;
+  synced_through?: number | null
   /**
    *
    * @type {number}
    * @memberof ConnectorBinding
    */
-  updated_at: number;
+  updated_at: number
   /**
    *
    * @type {string}
    * @memberof ConnectorBinding
    */
-  write_mode: string;
+  write_mode: string
 }
 /**
  *
@@ -4181,49 +4180,49 @@ export interface ConnectorConnection {
    * @type {number}
    * @memberof ConnectorConnection
    */
-  consent_expires_at?: number | null;
+  consent_expires_at?: number | null
   /**
    *
    * @type {number}
    * @memberof ConnectorConnection
    */
-  created_at: number;
+  created_at: number
   /**
    *
    * @type {CredentialMode}
    * @memberof ConnectorConnection
    */
-  credential_mode: CredentialMode;
+  credential_mode: CredentialMode
   /**
    *
    * @type {string}
    * @memberof ConnectorConnection
    */
-  id: string;
+  id: string
   /**
    *
    * @type {string}
    * @memberof ConnectorConnection
    */
-  provider_key_id?: string | null;
+  provider_key_id?: string | null
   /**
    *
    * @type {string}
    * @memberof ConnectorConnection
    */
-  provider_kind: string;
+  provider_kind: string
   /**
    *
    * @type {string}
    * @memberof ConnectorConnection
    */
-  status: string;
+  status: string
   /**
    *
    * @type {number}
    * @memberof ConnectorConnection
    */
-  updated_at: number;
+  updated_at: number
 }
 
 /**
@@ -4237,25 +4236,25 @@ export interface ConversationResponse {
    * @type {string}
    * @memberof ConversationResponse
    */
-  created_at: string;
+  created_at: string
   /**
    *
    * @type {AiError}
    * @memberof ConversationResponse
    */
-  last_error?: AiError | null;
+  last_error?: AiError | null
   /**
    *
    * @type {string}
    * @memberof ConversationResponse
    */
-  title?: string | null;
+  title?: string | null
   /**
    *
    * @type {string}
    * @memberof ConversationResponse
    */
-  updated_at: string;
+  updated_at: string
 }
 /**
  *
@@ -4268,13 +4267,13 @@ export interface CreateBindingRequest {
    * @type {string}
    * @memberof CreateBindingRequest
    */
-  provider_account_id?: string | null;
+  provider_account_id?: string | null
   /**
    *
    * @type {string}
    * @memberof CreateBindingRequest
    */
-  sverto_account_id: string;
+  sverto_account_id: string
 }
 /**
  *
@@ -4287,7 +4286,7 @@ export interface CreateBindingResponse {
    * @type {string}
    * @memberof CreateBindingResponse
    */
-  binding_id: string;
+  binding_id: string
 }
 /**
  *
@@ -4300,19 +4299,19 @@ export interface CreateCategoryRequest {
    * @type {string}
    * @memberof CreateCategoryRequest
    */
-  category: string;
+  category: string
   /**
    * Category type ID
    * @type {number}
    * @memberof CreateCategoryRequest
    */
-  category_type_id: number;
+  category_type_id: number
   /**
    * Icon identifier
    * @type {string}
    * @memberof CreateCategoryRequest
    */
-  icon: string;
+  icon: string
 }
 /**
  *
@@ -4325,7 +4324,7 @@ export interface CreateCategoryTypeRequest {
    * @type {string}
    * @memberof CreateCategoryTypeRequest
    */
-  name: string;
+  name: string
 }
 /**
  *
@@ -4338,25 +4337,25 @@ export interface CreateConnectionRequest {
    * @type {string}
    * @memberof CreateConnectionRequest
    */
-  credential?: string | null;
+  credential?: string | null
   /**
    *
    * @type {CredentialMode}
    * @memberof CreateConnectionRequest
    */
-  credential_mode: CredentialMode;
+  credential_mode: CredentialMode
   /**
    * Non-secret credential identifier (e.g. Trading 212\'s API Key ID). Not routed through SecretProvider — only the actual secret half needs vault-grade storage.
    * @type {string}
    * @memberof CreateConnectionRequest
    */
-  provider_key_id?: string | null;
+  provider_key_id?: string | null
   /**
    *
    * @type {string}
    * @memberof CreateConnectionRequest
    */
-  provider_kind: string;
+  provider_kind: string
 }
 
 /**
@@ -4370,7 +4369,7 @@ export interface CreateConnectionResponse {
    * @type {string}
    * @memberof CreateConnectionResponse
    */
-  connection_id: string;
+  connection_id: string
 }
 /**
  *
@@ -4383,19 +4382,19 @@ export interface CreateFileRequest {
    * @type {string}
    * @memberof CreateFileRequest
    */
-  mime_type: string;
+  mime_type: string
   /**
    * Original file name. Must be 1-255 characters and must not contain path separators.
    * @type {string}
    * @memberof CreateFileRequest
    */
-  original_name: string;
+  original_name: string
   /**
    * File size in bytes. Must be between 1 and 20 MB (20,971,520 bytes).
    * @type {number}
    * @memberof CreateFileRequest
    */
-  size_bytes: number;
+  size_bytes: number
 }
 /**
  *
@@ -4408,55 +4407,55 @@ export interface CreateFileResponse {
    * @type {string}
    * @memberof CreateFileResponse
    */
-  created_at: string;
+  created_at: string
   /**
    *
    * @type {boolean}
    * @memberof CreateFileResponse
    */
-  has_thumbnail: boolean;
+  has_thumbnail: boolean
   /**
    *
    * @type {string}
    * @memberof CreateFileResponse
    */
-  id: string;
+  id: string
   /**
    *
    * @type {string}
    * @memberof CreateFileResponse
    */
-  mime_type: string;
+  mime_type: string
   /**
    *
    * @type {string}
    * @memberof CreateFileResponse
    */
-  original_name: string;
+  original_name: string
   /**
    *
    * @type {number}
    * @memberof CreateFileResponse
    */
-  size_bytes: number;
+  size_bytes: number
   /**
    *
    * @type {string}
    * @memberof CreateFileResponse
    */
-  status: string;
+  status: string
   /**
    *
    * @type {string}
    * @memberof CreateFileResponse
    */
-  updated_at: string;
+  updated_at: string
   /**
    *
    * @type {UploadMetadata}
    * @memberof CreateFileResponse
    */
-  upload_metadata: UploadMetadata;
+  upload_metadata: UploadMetadata
 }
 /**
  *
@@ -4469,7 +4468,7 @@ export interface CreateOAuthSessionRequest {
    * @type {string}
    * @memberof CreateOAuthSessionRequest
    */
-  redirect_uri?: string | null;
+  redirect_uri?: string | null
 }
 /**
  *
@@ -4482,13 +4481,13 @@ export interface CreateOAuthSessionResponse {
    * @type {string}
    * @memberof CreateOAuthSessionResponse
    */
-  auth_url: string;
+  auth_url: string
   /**
    *
    * @type {string}
    * @memberof CreateOAuthSessionResponse
    */
-  session_id: string;
+  session_id: string
 }
 /**
  *
@@ -4501,7 +4500,7 @@ export interface CreateQuickUploadRequest {
    * @type {string}
    * @memberof CreateQuickUploadRequest
    */
-  file_id: string;
+  file_id: string
 }
 /**
  *
@@ -4513,10 +4512,10 @@ export const CredentialMode = {
   Stored: "stored",
   Transient: "transient",
   ClientSupplied: "client_supplied",
-} as const;
+} as const
 
 export type CredentialMode =
-  (typeof CredentialMode)[keyof typeof CredentialMode];
+  (typeof CredentialMode)[keyof typeof CredentialMode]
 
 /**
  *
@@ -4529,13 +4528,13 @@ export interface DefaultAsset {
    * @type {number}
    * @memberof DefaultAsset
    */
-  id: number;
+  id: number
   /**
    *
    * @type {string}
    * @memberof DefaultAsset
    */
-  ticker: string;
+  ticker: string
 }
 /**
  *
@@ -4548,13 +4547,13 @@ export interface DeleteTransactionsRequest {
    * @type {Array<string>}
    * @memberof DeleteTransactionsRequest
    */
-  group_ids: Array<string>;
+  group_ids: Array<string>
   /**
    *
    * @type {Array<string>}
    * @memberof DeleteTransactionsRequest
    */
-  transaction_ids: Array<string>;
+  transaction_ids: Array<string>
 }
 /**
  *
@@ -4572,9 +4571,9 @@ export const ErrorType = {
   ServiceUnavailable: "ServiceUnavailable",
   RateLimited: "RateLimited",
   BadGateway: "BadGateway",
-} as const;
+} as const
 
-export type ErrorType = (typeof ErrorType)[keyof typeof ErrorType];
+export type ErrorType = (typeof ErrorType)[keyof typeof ErrorType]
 
 /**
  *
@@ -4587,13 +4586,13 @@ export interface FieldError {
    * @type {string}
    * @memberof FieldError
    */
-  field: string;
+  field: string
   /**
    *
    * @type {string}
    * @memberof FieldError
    */
-  message: string;
+  message: string
 }
 /**
  *
@@ -4606,19 +4605,19 @@ export interface FileUrlResponse {
    * @type {number}
    * @memberof FileUrlResponse
    */
-  expires_in_seconds: number;
+  expires_in_seconds: number
   /**
    *
    * @type {string}
    * @memberof FileUrlResponse
    */
-  media_type: string;
+  media_type: string
   /**
    *
    * @type {string}
    * @memberof FileUrlResponse
    */
-  url: string;
+  url: string
 }
 /**
  *
@@ -4631,7 +4630,7 @@ export interface GetAccountLiquidityTypesResponse {
    * @type {Array<AccountType>}
    * @memberof GetAccountLiquidityTypesResponse
    */
-  account_liquidity_types: Array<AccountType>;
+  account_liquidity_types: Array<AccountType>
 }
 /**
  *
@@ -4644,31 +4643,31 @@ export interface GetAccountResponse {
    * @type {AccountType}
    * @memberof GetAccountResponse
    */
-  account_type: AccountType;
+  account_type: AccountType
   /**
    *
    * @type {Array<AccountIdentifier>}
    * @memberof GetAccountResponse
    */
-  identifiers?: Array<AccountIdentifier>;
+  identifiers?: Array<AccountIdentifier>
   /**
    *
    * @type {AccountType}
    * @memberof GetAccountResponse
    */
-  liquidity_type: AccountType;
+  liquidity_type: AccountType
   /**
    * Account name
    * @type {string}
    * @memberof GetAccountResponse
    */
-  name: string;
+  name: string
   /**
    * Ownership share. Must be > 0 and <= 1.
    * @type {number}
    * @memberof GetAccountResponse
    */
-  ownership_share: number;
+  ownership_share: number
 }
 /**
  *
@@ -4681,7 +4680,7 @@ export interface GetAccountTypesResponse {
    * @type {Array<AccountType>}
    * @memberof GetAccountTypesResponse
    */
-  account_types: Array<AccountType>;
+  account_types: Array<AccountType>
 }
 /**
  *
@@ -4694,13 +4693,13 @@ export interface GetAccountsResponse {
    * @type {Array<GetAccountsResponseViewModelRow>}
    * @memberof GetAccountsResponse
    */
-  accounts: Array<GetAccountsResponseViewModelRow>;
+  accounts: Array<GetAccountsResponseViewModelRow>
   /**
    *
    * @type {AccountMetadataLookupTables}
    * @memberof GetAccountsResponse
    */
-  lookup_tables: AccountMetadataLookupTables;
+  lookup_tables: AccountMetadataLookupTables
 }
 /**
  *
@@ -4713,37 +4712,37 @@ export interface GetAccountsResponseViewModelRow {
    * @type {string}
    * @memberof GetAccountsResponseViewModelRow
    */
-  account_id: string;
+  account_id: string
   /**
    *
    * @type {number}
    * @memberof GetAccountsResponseViewModelRow
    */
-  account_type: number;
+  account_type: number
   /**
    *
    * @type {number}
    * @memberof GetAccountsResponseViewModelRow
    */
-  liquidity_type: number;
+  liquidity_type: number
   /**
    * Account name
    * @type {string}
    * @memberof GetAccountsResponseViewModelRow
    */
-  name: string;
+  name: string
   /**
    * Ownership share. Must be > 0 and <= 1.
    * @type {number}
    * @memberof GetAccountsResponseViewModelRow
    */
-  ownership_share: number;
+  ownership_share: number
   /**
    *
    * @type {number}
    * @memberof GetAccountsResponseViewModelRow
    */
-  suggested_currency: number | null;
+  suggested_currency: number | null
 }
 /**
  *
@@ -4756,13 +4755,13 @@ export interface GetAssetPairRatesResponse {
    * @type {string}
    * @memberof GetAssetPairRatesResponse
    */
-  range: string;
+  range: string
   /**
    *
    * @type {Array<AssetRate>}
    * @memberof GetAssetPairRatesResponse
    */
-  rates: Array<AssetRate>;
+  rates: Array<AssetRate>
 }
 /**
  *
@@ -4775,19 +4774,19 @@ export interface GetAssetPairResponse {
    * @type {AssetIdentifiableAssetType}
    * @memberof GetAssetPairResponse
    */
-  main_asset: AssetIdentifiableAssetType;
+  main_asset: AssetIdentifiableAssetType
   /**
    *
    * @type {SharedAssetPairMetadata}
    * @memberof GetAssetPairResponse
    */
-  metadata: SharedAssetPairMetadata;
+  metadata: SharedAssetPairMetadata
   /**
    *
    * @type {AssetIdentifiableAssetType}
    * @memberof GetAssetPairResponse
    */
-  reference_asset: AssetIdentifiableAssetType;
+  reference_asset: AssetIdentifiableAssetType
 }
 /**
  *
@@ -4800,31 +4799,31 @@ export interface GetAssetResponse {
    * @type {AssetType}
    * @memberof GetAssetResponse
    */
-  asset_type: AssetType;
+  asset_type: AssetType
   /**
    * The asset paired to this asset by default, with resolved ticker and name. Absent for assets that have no designated base pair (e.g. currencies).
    * @type {AssetPairInfo}
    * @memberof GetAssetResponse
    */
-  base_asset?: AssetPairInfo | null;
+  base_asset?: AssetPairInfo | null
   /**
    * Full name of the asset
    * @type {string}
    * @memberof GetAssetResponse
    */
-  name: string;
+  name: string
   /**
    * Available pairs with resolved ticker and name info.
    * @type {Array<AssetPairInfo>}
    * @memberof GetAssetResponse
    */
-  pairs: Array<AssetPairInfo>;
+  pairs: Array<AssetPairInfo>
   /**
    * Short letter abbreviation of the asset
    * @type {string}
    * @memberof GetAssetResponse
    */
-  ticker: string;
+  ticker: string
 }
 /**
  *
@@ -4837,7 +4836,7 @@ export interface GetBindingsResponse {
    * @type {Array<ConnectorBinding>}
    * @memberof GetBindingsResponse
    */
-  bindings: Array<ConnectorBinding>;
+  bindings: Array<ConnectorBinding>
 }
 /**
  *
@@ -4850,13 +4849,13 @@ export interface GetCategoriesResponse {
    * @type {Array<CategoryRequiredCategoryTypeIdWithId>}
    * @memberof GetCategoriesResponse
    */
-  categories: Array<CategoryRequiredCategoryTypeIdWithId>;
+  categories: Array<CategoryRequiredCategoryTypeIdWithId>
   /**
    *
    * @type {CategoryMetadataLookupTables}
    * @memberof GetCategoriesResponse
    */
-  lookup_tables: CategoryMetadataLookupTables;
+  lookup_tables: CategoryMetadataLookupTables
 }
 /**
  *
@@ -4869,7 +4868,7 @@ export interface GetConnectionsResponse {
    * @type {Array<ConnectorConnection>}
    * @memberof GetConnectionsResponse
    */
-  connections: Array<ConnectorConnection>;
+  connections: Array<ConnectorConnection>
 }
 /**
  *
@@ -4882,49 +4881,49 @@ export interface GetFileResponse {
    * @type {string}
    * @memberof GetFileResponse
    */
-  created_at: string;
+  created_at: string
   /**
    *
    * @type {boolean}
    * @memberof GetFileResponse
    */
-  has_thumbnail: boolean;
+  has_thumbnail: boolean
   /**
    *
    * @type {string}
    * @memberof GetFileResponse
    */
-  id: string;
+  id: string
   /**
    *
    * @type {string}
    * @memberof GetFileResponse
    */
-  mime_type: string;
+  mime_type: string
   /**
    *
    * @type {string}
    * @memberof GetFileResponse
    */
-  original_name: string;
+  original_name: string
   /**
    *
    * @type {number}
    * @memberof GetFileResponse
    */
-  size_bytes: number;
+  size_bytes: number
   /**
    *
    * @type {string}
    * @memberof GetFileResponse
    */
-  status: string;
+  status: string
   /**
    *
    * @type {string}
    * @memberof GetFileResponse
    */
-  updated_at: string;
+  updated_at: string
 }
 /**
  *
@@ -4937,13 +4936,13 @@ export interface GetHoldingsResponse {
    * @type {Array<GetHoldingsResponseViewModelRow>}
    * @memberof GetHoldingsResponse
    */
-  holdings: Array<GetHoldingsResponseViewModelRow>;
+  holdings: Array<GetHoldingsResponseViewModelRow>
   /**
    *
    * @type {HoldingsMetadataLookupTables}
    * @memberof GetHoldingsResponse
    */
-  lookup_tables: HoldingsMetadataLookupTables;
+  lookup_tables: HoldingsMetadataLookupTables
 }
 /**
  *
@@ -4956,25 +4955,25 @@ export interface GetHoldingsResponseViewModelRow {
    * @type {string}
    * @memberof GetHoldingsResponseViewModelRow
    */
-  account_id: string;
+  account_id: string
   /**
    *
    * @type {number}
    * @memberof GetHoldingsResponseViewModelRow
    */
-  asset_id: number;
+  asset_id: number
   /**
    *
    * @type {number}
    * @memberof GetHoldingsResponseViewModelRow
    */
-  units: number;
+  units: number
   /**
    *
    * @type {number}
    * @memberof GetHoldingsResponseViewModelRow
    */
-  value?: number | null;
+  value?: number | null
 }
 /**
  *
@@ -4987,13 +4986,13 @@ export interface GetIndividualTransaction {
    * @type {MetadataLookupTables}
    * @memberof GetIndividualTransaction
    */
-  lookup_tables: MetadataLookupTables;
+  lookup_tables: MetadataLookupTables
   /**
    *
    * @type {RequiredTransaction}
    * @memberof GetIndividualTransaction
    */
-  transaction: RequiredTransaction;
+  transaction: RequiredTransaction
 }
 /**
  *
@@ -5006,13 +5005,13 @@ export interface GetNetWorthHistoryResponse {
    * @type {string}
    * @memberof GetNetWorthHistoryResponse
    */
-  range: string;
+  range: string
   /**
    *
    * @type {Array<NetWorthPoint>}
    * @memberof GetNetWorthHistoryResponse
    */
-  sums: Array<NetWorthPoint>;
+  sums: Array<NetWorthPoint>
 }
 /**
  *
@@ -5025,13 +5024,13 @@ export interface GetPortfolioOverview {
    * @type {HoldingsMetadataLookupTables}
    * @memberof GetPortfolioOverview
    */
-  lookup_tables: HoldingsMetadataLookupTables;
+  lookup_tables: HoldingsMetadataLookupTables
   /**
    *
    * @type {PortfolioOverview}
    * @memberof GetPortfolioOverview
    */
-  portfolios: PortfolioOverview;
+  portfolios: PortfolioOverview
 }
 /**
  *
@@ -5044,13 +5043,13 @@ export interface GetSyncCheckpointResponse {
    * @type {any}
    * @memberof GetSyncCheckpointResponse
    */
-  cursor?: any;
+  cursor?: any
   /**
    *
    * @type {string}
    * @memberof GetSyncCheckpointResponse
    */
-  synced_through?: string | null;
+  synced_through?: string | null
 }
 /**
  *
@@ -5063,25 +5062,25 @@ export interface GetUserAssetPairResponse {
    * @type {AssetIdentifiableAssetType}
    * @memberof GetUserAssetPairResponse
    */
-  main_asset: AssetIdentifiableAssetType;
+  main_asset: AssetIdentifiableAssetType
   /**
    *
    * @type {AssetPairMetadata}
    * @memberof GetUserAssetPairResponse
    */
-  metadata?: AssetPairMetadata | null;
+  metadata?: AssetPairMetadata | null
   /**
    *
    * @type {AssetIdentifiableAssetType}
    * @memberof GetUserAssetPairResponse
    */
-  reference_asset: AssetIdentifiableAssetType;
+  reference_asset: AssetIdentifiableAssetType
   /**
    *
    * @type {UserAssetPairMetadata}
    * @memberof GetUserAssetPairResponse
    */
-  user_metadata?: UserAssetPairMetadata | null;
+  user_metadata?: UserAssetPairMetadata | null
 }
 /**
  *
@@ -5094,13 +5093,13 @@ export interface GetUserAssetsResponse {
    * @type {AssetLookupTables}
    * @memberof GetUserAssetsResponse
    */
-  lookup_tables: AssetLookupTables;
+  lookup_tables: AssetLookupTables
   /**
    *
    * @type {Array<AssetAssetRequiredAssetTypeIdWithId>}
    * @memberof GetUserAssetsResponse
    */
-  results: Array<AssetAssetRequiredAssetTypeIdWithId>;
+  results: Array<AssetAssetRequiredAssetTypeIdWithId>
 }
 /**
  *
@@ -5113,45 +5112,45 @@ export interface GroupTransactionItem {
    * @type {number}
    * @memberof GroupTransactionItem
    */
-  category_id: number;
+  category_id: number
   /**
    * Unrelated to individual transactions date which represent when the collection of transactions occurred
    * @type {number}
    * @memberof GroupTransactionItem
    */
-  date: number;
+  date: number
   /**
    * Overall description of whole group
    * @type {string}
    * @memberof GroupTransactionItem
    */
-  description: string;
+  description: string
   /**
    *
    * @type {string}
    * @memberof GroupTransactionItem
    */
-  group_id: string;
+  group_id: string
   /**
    *
    * @type {string}
    * @memberof GroupTransactionItem
    */
-  item_type: GroupTransactionItemItemTypeEnum;
+  item_type: GroupTransactionItemItemTypeEnum
   /**
    * All subtractions grouped into this group
    * @type {Array<RequiredIdentifiableTransaction>}
    * @memberof GroupTransactionItem
    */
-  transactions: Array<RequiredIdentifiableTransaction>;
+  transactions: Array<RequiredIdentifiableTransaction>
 }
 
 export const GroupTransactionItemItemTypeEnum = {
   Group: "group",
-} as const;
+} as const
 
 export type GroupTransactionItemItemTypeEnum =
-  (typeof GroupTransactionItemItemTypeEnum)[keyof typeof GroupTransactionItemItemTypeEnum];
+  (typeof GroupTransactionItemItemTypeEnum)[keyof typeof GroupTransactionItemItemTypeEnum]
 
 /**
  *
@@ -5164,13 +5163,13 @@ export interface HoldingsMetadataLookupTables {
    * @type {Array<AccountAccountAccountTypeIdWithId>}
    * @memberof HoldingsMetadataLookupTables
    */
-  accounts: Array<AccountAccountAccountTypeIdWithId>;
+  accounts: Array<AccountAccountAccountTypeIdWithId>
   /**
    *
    * @type {Array<AssetAssetRequiredAssetTypeIdWithId>}
    * @memberof HoldingsMetadataLookupTables
    */
-  assets: Array<AssetAssetRequiredAssetTypeIdWithId>;
+  assets: Array<AssetAssetRequiredAssetTypeIdWithId>
 }
 /**
  *
@@ -5183,37 +5182,37 @@ export interface IdentifiableCategoryIdentifiableCategoryType {
    * @type {string}
    * @memberof IdentifiableCategoryIdentifiableCategoryType
    */
-  category: string;
+  category: string
   /**
    *
    * @type {CategoryType}
    * @memberof IdentifiableCategoryIdentifiableCategoryType
    */
-  category_type: CategoryType;
+  category_type: CategoryType
   /**
    * Icon identifier for the category
    * @type {string}
    * @memberof IdentifiableCategoryIdentifiableCategoryType
    */
-  icon: string;
+  icon: string
   /**
    * Unique identifier for the category
    * @type {number}
    * @memberof IdentifiableCategoryIdentifiableCategoryType
    */
-  id: number;
+  id: number
   /**
    * Whether this is a global category available to all users
    * @type {boolean}
    * @memberof IdentifiableCategoryIdentifiableCategoryType
    */
-  is_global: boolean;
+  is_global: boolean
   /**
    * Whether this is a system category that cannot be modified
    * @type {boolean}
    * @memberof IdentifiableCategoryIdentifiableCategoryType
    */
-  is_system: boolean;
+  is_system: boolean
 }
 /**
  *
@@ -5226,25 +5225,25 @@ export interface IdentifiableConversationResponse {
    * @type {string}
    * @memberof IdentifiableConversationResponse
    */
-  created_at: string;
+  created_at: string
   /**
    *
    * @type {string}
    * @memberof IdentifiableConversationResponse
    */
-  id: string;
+  id: string
   /**
    *
    * @type {string}
    * @memberof IdentifiableConversationResponse
    */
-  title?: string | null;
+  title?: string | null
   /**
    *
    * @type {string}
    * @memberof IdentifiableConversationResponse
    */
-  updated_at: string;
+  updated_at: string
 }
 /**
  *
@@ -5257,31 +5256,31 @@ export interface IdentifiableMessageResponse {
    * @type {any}
    * @memberof IdentifiableMessageResponse
    */
-  content: any;
+  content: any
   /**
    *
    * @type {string}
    * @memberof IdentifiableMessageResponse
    */
-  created_at: string;
+  created_at: string
   /**
    *
    * @type {Array<string>}
    * @memberof IdentifiableMessageResponse
    */
-  file_ids: Array<string>;
+  file_ids: Array<string>
   /**
    *
    * @type {string}
    * @memberof IdentifiableMessageResponse
    */
-  id: string;
+  id: string
   /**
    *
    * @type {string}
    * @memberof IdentifiableMessageResponse
    */
-  role: string;
+  role: string
 }
 /**
  *
@@ -5294,43 +5293,43 @@ export interface IdentifiableQuickUploadResponse {
    * @type {string}
    * @memberof IdentifiableQuickUploadResponse
    */
-  created_at: string;
+  created_at: string
   /**
    *
    * @type {string}
    * @memberof IdentifiableQuickUploadResponse
    */
-  id: string;
+  id: string
   /**
    *
    * @type {any}
    * @memberof IdentifiableQuickUploadResponse
    */
-  proposal_data?: any;
+  proposal_data?: any
   /**
    *
    * @type {string}
    * @memberof IdentifiableQuickUploadResponse
    */
-  proposal_type?: string | null;
+  proposal_type?: string | null
   /**
    *
    * @type {string}
    * @memberof IdentifiableQuickUploadResponse
    */
-  source_file_id: string;
+  source_file_id: string
   /**
    *
    * @type {string}
    * @memberof IdentifiableQuickUploadResponse
    */
-  status: string;
+  status: string
   /**
    *
    * @type {string}
    * @memberof IdentifiableQuickUploadResponse
    */
-  updated_at: string;
+  updated_at: string
 }
 /**
  * @type IdentifiableTransaction
@@ -5339,7 +5338,7 @@ export interface IdentifiableQuickUploadResponse {
 export type IdentifiableTransaction =
   | ({ type: "account_fees" } & AccountFeesIdentifiableTransaction)
   | ({
-      type: "asset_balance_transfer";
+      type: "asset_balance_transfer"
     } & AssetBalanceTransferIdentifiableTransaction)
   | ({ type: "asset_dividend" } & AssetDividendIdentifiableTransaction)
   | ({ type: "asset_purchase" } & AssetPurchaseIdentifiableTransaction)
@@ -5348,12 +5347,12 @@ export type IdentifiableTransaction =
   | ({ type: "asset_transfer_in" } & AssetTransferInIdentifiableTransaction)
   | ({ type: "asset_transfer_out" } & AssetTransferOutIdentifiableTransaction)
   | ({
-      type: "cash_balance_transfer";
+      type: "cash_balance_transfer"
     } & CashBalanceTransferIdentifiableTransaction)
   | ({ type: "cash_dividend" } & CashDividendIdentifiableTransaction)
   | ({ type: "cash_transfer_in" } & CashTransferInIdentifiableTransaction)
   | ({ type: "cash_transfer_out" } & CashTransferOutIdentifiableTransaction)
-  | ({ type: "regular" } & RegularIdentifiableTransaction);
+  | ({ type: "regular" } & RegularIdentifiableTransaction)
 
 /**
  *
@@ -5366,15 +5365,15 @@ export interface IndividualTransactionItem extends RequiredIdentifiableTransacti
    * @type {string}
    * @memberof IndividualTransactionItem
    */
-  item_type: IndividualTransactionItemItemTypeEnum;
+  item_type: IndividualTransactionItemItemTypeEnum
 }
 
 export const IndividualTransactionItemItemTypeEnum = {
   Individual: "individual",
-} as const;
+} as const
 
 export type IndividualTransactionItemItemTypeEnum =
-  (typeof IndividualTransactionItemItemTypeEnum)[keyof typeof IndividualTransactionItemItemTypeEnum];
+  (typeof IndividualTransactionItemItemTypeEnum)[keyof typeof IndividualTransactionItemItemTypeEnum]
 
 /**
  *
@@ -5387,31 +5386,31 @@ export interface IndividualTransactionsPage {
    * @type {boolean}
    * @memberof IndividualTransactionsPage
    */
-  has_more: boolean;
+  has_more: boolean
   /**
    *
    * @type {MetadataLookupTables}
    * @memberof IndividualTransactionsPage
    */
-  lookup_tables: MetadataLookupTables;
+  lookup_tables: MetadataLookupTables
   /**
    *
    * @type {string}
    * @memberof IndividualTransactionsPage
    */
-  next_cursor?: string | null;
+  next_cursor?: string | null
   /**
    *
    * @type {Array<RequiredIdentifiableTransaction>}
    * @memberof IndividualTransactionsPage
    */
-  results: Array<RequiredIdentifiableTransaction>;
+  results: Array<RequiredIdentifiableTransaction>
   /**
    *
    * @type {number}
    * @memberof IndividualTransactionsPage
    */
-  total_results?: number | null;
+  total_results?: number | null
 }
 /**
  *
@@ -5424,13 +5423,13 @@ export interface IngestStream {
    * @type {Array<any>}
    * @memberof IngestStream
    */
-  items: Array<any>;
+  items: Array<any>
   /**
    *
    * @type {string}
    * @memberof IngestStream
    */
-  stream: string;
+  stream: string
 }
 /**
  *
@@ -5443,19 +5442,19 @@ export interface IngestTransactionsRequest {
    * @type {string}
    * @memberof IngestTransactionsRequest
    */
-  provider_kind: string;
+  provider_kind: string
   /**
    *
    * @type {any}
    * @memberof IngestTransactionsRequest
    */
-  raw_balance: any;
+  raw_balance: any
   /**
    *
    * @type {Array<IngestStream>}
    * @memberof IngestTransactionsRequest
    */
-  streams: Array<IngestStream>;
+  streams: Array<IngestStream>
 }
 /**
  *
@@ -5468,13 +5467,13 @@ export interface IngestTransactionsResponse {
    * @type {any}
    * @memberof IngestTransactionsResponse
    */
-  next_cursor?: any;
+  next_cursor?: any
   /**
    *
    * @type {SyncReport}
    * @memberof IngestTransactionsResponse
    */
-  report?: SyncReport | null;
+  report?: SyncReport | null
 }
 /**
  *
@@ -5487,7 +5486,7 @@ export interface ListProviderAccountTransactionsResponse {
    * @type {Array<ProviderAccountTransaction>}
    * @memberof ListProviderAccountTransactionsResponse
    */
-  transactions: Array<ProviderAccountTransaction>;
+  transactions: Array<ProviderAccountTransaction>
 }
 /**
  *
@@ -5500,7 +5499,7 @@ export interface ListProviderAccountsResponse {
    * @type {Array<ProviderAccount>}
    * @memberof ListProviderAccountsResponse
    */
-  accounts: Array<ProviderAccount>;
+  accounts: Array<ProviderAccount>
 }
 /**
  *
@@ -5513,13 +5512,13 @@ export interface LoginDetails {
    * @type {string}
    * @memberof LoginDetails
    */
-  password: string;
+  password: string
   /**
    * Username.
    * @type {string}
    * @memberof LoginDetails
    */
-  username: string;
+  username: string
 }
 /**
  *
@@ -5532,19 +5531,19 @@ export interface MetadataLookupTables {
    * @type {Array<AccountAccountAccountTypeIdWithId>}
    * @memberof MetadataLookupTables
    */
-  accounts: Array<AccountAccountAccountTypeIdWithId>;
+  accounts: Array<AccountAccountAccountTypeIdWithId>
   /**
    *
    * @type {Array<AssetAssetRequiredAssetTypeIdWithId>}
    * @memberof MetadataLookupTables
    */
-  assets: Array<AssetAssetRequiredAssetTypeIdWithId>;
+  assets: Array<AssetAssetRequiredAssetTypeIdWithId>
   /**
    *
    * @type {Array<CategoryRequiredCategoryTypeIdWithId>}
    * @memberof MetadataLookupTables
    */
-  categories?: Array<CategoryRequiredCategoryTypeIdWithId>;
+  categories?: Array<CategoryRequiredCategoryTypeIdWithId>
 }
 /**
  * A single net worth data point. Unlike AssetRateViewModel, the rate can be negative (liabilities exceeding assets).
@@ -5557,13 +5556,13 @@ export interface NetWorthPoint {
    * @type {number}
    * @memberof NetWorthPoint
    */
-  date: number;
+  date: number
   /**
    *
    * @type {number}
    * @memberof NetWorthPoint
    */
-  rate: number;
+  rate: number
 }
 /**
  *
@@ -5574,10 +5573,10 @@ export interface NetWorthPoint {
 export const OAuthSessionStatus = {
   Completed: "completed",
   Denied: "denied",
-} as const;
+} as const
 
 export type OAuthSessionStatus =
-  (typeof OAuthSessionStatus)[keyof typeof OAuthSessionStatus];
+  (typeof OAuthSessionStatus)[keyof typeof OAuthSessionStatus]
 
 /**
  *
@@ -5590,13 +5589,13 @@ export interface PortfolioOverview {
    * @type {Array<AssetPortfolio>}
    * @memberof PortfolioOverview
    */
-  asset_portfolios: Array<AssetPortfolio>;
+  asset_portfolios: Array<AssetPortfolio>
   /**
    *
    * @type {Array<CashPortfolio>}
    * @memberof PortfolioOverview
    */
-  cash_portfolios: Array<CashPortfolio>;
+  cash_portfolios: Array<CashPortfolio>
 }
 /**
  *
@@ -5609,25 +5608,25 @@ export interface ProviderAccount {
    * @type {string}
    * @memberof ProviderAccount
    */
-  account_type?: string | null;
+  account_type?: string | null
   /**
    *
    * @type {string}
    * @memberof ProviderAccount
    */
-  currency?: string | null;
+  currency?: string | null
   /**
    *
    * @type {string}
    * @memberof ProviderAccount
    */
-  display_name: string;
+  display_name: string
   /**
    *
    * @type {string}
    * @memberof ProviderAccount
    */
-  provider_account_id: string;
+  provider_account_id: string
 }
 /**
  *
@@ -5640,37 +5639,37 @@ export interface ProviderAccountTransaction {
    * @type {number}
    * @memberof ProviderAccountTransaction
    */
-  amount: number;
+  amount: number
   /**
    *
    * @type {string}
    * @memberof ProviderAccountTransaction
    */
-  asset_identifier?: string | null;
+  asset_identifier?: string | null
   /**
    *
    * @type {string}
    * @memberof ProviderAccountTransaction
    */
-  currency: string;
+  currency: string
   /**
    *
    * @type {number}
    * @memberof ProviderAccountTransaction
    */
-  date: number;
+  date: number
   /**
    *
    * @type {string}
    * @memberof ProviderAccountTransaction
    */
-  description: string;
+  description: string
   /**
    *
    * @type {number}
    * @memberof ProviderAccountTransaction
    */
-  quantity?: number | null;
+  quantity?: number | null
 }
 /**
  *
@@ -5683,19 +5682,19 @@ export interface QuickUploadLookupTables {
    * @type {Array<AccountAccountAccountTypeIdWithId>}
    * @memberof QuickUploadLookupTables
    */
-  accounts: Array<AccountAccountAccountTypeIdWithId>;
+  accounts: Array<AccountAccountAccountTypeIdWithId>
   /**
    *
    * @type {Array<AssetAssetRequiredAssetTypeIdWithId>}
    * @memberof QuickUploadLookupTables
    */
-  assets: Array<AssetAssetRequiredAssetTypeIdWithId>;
+  assets: Array<AssetAssetRequiredAssetTypeIdWithId>
   /**
    *
    * @type {Array<CategoryRequiredCategoryTypeIdWithId>}
    * @memberof QuickUploadLookupTables
    */
-  categories: Array<CategoryRequiredCategoryTypeIdWithId>;
+  categories: Array<CategoryRequiredCategoryTypeIdWithId>
 }
 /**
  *
@@ -5708,7 +5707,7 @@ export interface QuickUploadMessageRequest {
    * @type {string}
    * @memberof QuickUploadMessageRequest
    */
-  message: string;
+  message: string
 }
 /**
  *
@@ -5721,7 +5720,7 @@ export interface QuickUploadMessageResponse {
    * @type {string}
    * @memberof QuickUploadMessageResponse
    */
-  status: string;
+  status: string
 }
 /**
  *
@@ -5734,43 +5733,43 @@ export interface QuickUploadResponse {
    * @type {string}
    * @memberof QuickUploadResponse
    */
-  created_at: string;
+  created_at: string
   /**
    *
    * @type {QuickUploadLookupTables}
    * @memberof QuickUploadResponse
    */
-  lookup_tables: QuickUploadLookupTables;
+  lookup_tables: QuickUploadLookupTables
   /**
    *
    * @type {any}
    * @memberof QuickUploadResponse
    */
-  proposal_data?: any;
+  proposal_data?: any
   /**
    *
    * @type {string}
    * @memberof QuickUploadResponse
    */
-  proposal_type?: string | null;
+  proposal_type?: string | null
   /**
    *
    * @type {string}
    * @memberof QuickUploadResponse
    */
-  source_file_id: string;
+  source_file_id: string
   /**
    *
    * @type {string}
    * @memberof QuickUploadResponse
    */
-  status: string;
+  status: string
   /**
    *
    * @type {string}
    * @memberof QuickUploadResponse
    */
-  updated_at: string;
+  updated_at: string
 }
 /**
  *
@@ -5783,13 +5782,13 @@ export interface RegisteredUser {
    * @type {string}
    * @memberof RegisteredUser
    */
-  id: string;
+  id: string
   /**
    *
    * @type {string}
    * @memberof RegisteredUser
    */
-  username: string;
+  username: string
 }
 /**
  *
@@ -5802,57 +5801,57 @@ export interface RegularIdentifiableTransaction {
    * @type {number}
    * @memberof RegularIdentifiableTransaction
    */
-  category_id: number;
+  category_id: number
   /**
    * Date when the transaction occured.
    * @type {number}
    * @memberof RegularIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    * Description of the transaction.
    * @type {string}
    * @memberof RegularIdentifiableTransaction
    */
-  description?: string | null;
+  description?: string | null
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof RegularIdentifiableTransaction
    */
-  entry: TransactionEntryWithEntryId;
+  entry: TransactionEntryWithEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof RegularIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {string}
    * @memberof RegularIdentifiableTransaction
    */
-  transaction_id: string | null;
+  transaction_id: string | null
   /**
    *
    * @type {string}
    * @memberof RegularIdentifiableTransaction
    */
-  type: RegularIdentifiableTransactionTypeEnum;
+  type: RegularIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof RegularIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const RegularIdentifiableTransactionTypeEnum = {
   Regular: "regular",
-} as const;
+} as const
 
 export type RegularIdentifiableTransactionTypeEnum =
-  (typeof RegularIdentifiableTransactionTypeEnum)[keyof typeof RegularIdentifiableTransactionTypeEnum];
+  (typeof RegularIdentifiableTransactionTypeEnum)[keyof typeof RegularIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -5865,57 +5864,57 @@ export interface RegularRequiredIdentifiableTransaction {
    * @type {number}
    * @memberof RegularRequiredIdentifiableTransaction
    */
-  category_id: number;
+  category_id: number
   /**
    * Date when the transaction occured.
    * @type {number}
    * @memberof RegularRequiredIdentifiableTransaction
    */
-  date: number;
+  date: number
   /**
    * Description of the transaction.
    * @type {string}
    * @memberof RegularRequiredIdentifiableTransaction
    */
-  description?: string | null;
+  description?: string | null
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof RegularRequiredIdentifiableTransaction
    */
-  entry: TransactionEntryWithRequiredEntryId;
+  entry: TransactionEntryWithRequiredEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof RegularRequiredIdentifiableTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {string}
    * @memberof RegularRequiredIdentifiableTransaction
    */
-  transaction_id: string;
+  transaction_id: string
   /**
    *
    * @type {string}
    * @memberof RegularRequiredIdentifiableTransaction
    */
-  type: RegularRequiredIdentifiableTransactionTypeEnum;
+  type: RegularRequiredIdentifiableTransactionTypeEnum
   /**
    * Whether the transaction is shown normally, pending review (ghost), or hidden.
    * @type {TransactionVisibility}
    * @memberof RegularRequiredIdentifiableTransaction
    */
-  visibility?: TransactionVisibility;
+  visibility?: TransactionVisibility
 }
 
 export const RegularRequiredIdentifiableTransactionTypeEnum = {
   Regular: "regular",
-} as const;
+} as const
 
 export type RegularRequiredIdentifiableTransactionTypeEnum =
-  (typeof RegularRequiredIdentifiableTransactionTypeEnum)[keyof typeof RegularRequiredIdentifiableTransactionTypeEnum];
+  (typeof RegularRequiredIdentifiableTransactionTypeEnum)[keyof typeof RegularRequiredIdentifiableTransactionTypeEnum]
 
 /**
  *
@@ -5928,45 +5927,45 @@ export interface RegularRequiredTransaction {
    * @type {number}
    * @memberof RegularRequiredTransaction
    */
-  category_id: number;
+  category_id: number
   /**
    * Date when the transaction occured.
    * @type {number}
    * @memberof RegularRequiredTransaction
    */
-  date: number;
+  date: number
   /**
    * Description of the transaction.
    * @type {string}
    * @memberof RegularRequiredTransaction
    */
-  description?: string | null;
+  description?: string | null
   /**
    *
    * @type {TransactionEntryWithRequiredEntryId}
    * @memberof RegularRequiredTransaction
    */
-  entry: TransactionEntryWithRequiredEntryId;
+  entry: TransactionEntryWithRequiredEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithRequiredEntryId>}
    * @memberof RegularRequiredTransaction
    */
-  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null;
+  fees?: Array<TransactionFeeItemWithRequiredEntryId> | null
   /**
    *
    * @type {string}
    * @memberof RegularRequiredTransaction
    */
-  type: RegularRequiredTransactionTypeEnum;
+  type: RegularRequiredTransactionTypeEnum
 }
 
 export const RegularRequiredTransactionTypeEnum = {
   Regular: "regular",
-} as const;
+} as const
 
 export type RegularRequiredTransactionTypeEnum =
-  (typeof RegularRequiredTransactionTypeEnum)[keyof typeof RegularRequiredTransactionTypeEnum];
+  (typeof RegularRequiredTransactionTypeEnum)[keyof typeof RegularRequiredTransactionTypeEnum]
 
 /**
  *
@@ -5979,45 +5978,45 @@ export interface RegularTransactionInput {
    * @type {number}
    * @memberof RegularTransactionInput
    */
-  category_id: number;
+  category_id: number
   /**
    * Date when the transaction occured.
    * @type {number}
    * @memberof RegularTransactionInput
    */
-  date: number;
+  date: number
   /**
    * Description of the transaction.
    * @type {string}
    * @memberof RegularTransactionInput
    */
-  description?: string | null;
+  description?: string | null
   /**
    *
    * @type {TransactionEntry}
    * @memberof RegularTransactionInput
    */
-  entry: TransactionEntry;
+  entry: TransactionEntry
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItem>}
    * @memberof RegularTransactionInput
    */
-  fees?: Array<TransactionFeeItem> | null;
+  fees?: Array<TransactionFeeItem> | null
   /**
    *
    * @type {string}
    * @memberof RegularTransactionInput
    */
-  type: RegularTransactionInputTypeEnum;
+  type: RegularTransactionInputTypeEnum
 }
 
 export const RegularTransactionInputTypeEnum = {
   Regular: "regular",
-} as const;
+} as const
 
 export type RegularTransactionInputTypeEnum =
-  (typeof RegularTransactionInputTypeEnum)[keyof typeof RegularTransactionInputTypeEnum];
+  (typeof RegularTransactionInputTypeEnum)[keyof typeof RegularTransactionInputTypeEnum]
 
 /**
  *
@@ -6030,45 +6029,45 @@ export interface RegularTransactionWithEntryIds {
    * @type {number}
    * @memberof RegularTransactionWithEntryIds
    */
-  category_id: number;
+  category_id: number
   /**
    * Date when the transaction occured.
    * @type {number}
    * @memberof RegularTransactionWithEntryIds
    */
-  date: number;
+  date: number
   /**
    * Description of the transaction.
    * @type {string}
    * @memberof RegularTransactionWithEntryIds
    */
-  description?: string | null;
+  description?: string | null
   /**
    *
    * @type {TransactionEntryWithEntryId}
    * @memberof RegularTransactionWithEntryIds
    */
-  entry: TransactionEntryWithEntryId;
+  entry: TransactionEntryWithEntryId
   /**
    * Any other fees related to the transaction, such as transfer or conversion fees.
    * @type {Array<TransactionFeeItemWithEntryId>}
    * @memberof RegularTransactionWithEntryIds
    */
-  fees?: Array<TransactionFeeItemWithEntryId> | null;
+  fees?: Array<TransactionFeeItemWithEntryId> | null
   /**
    *
    * @type {string}
    * @memberof RegularTransactionWithEntryIds
    */
-  type: RegularTransactionWithEntryIdsTypeEnum;
+  type: RegularTransactionWithEntryIdsTypeEnum
 }
 
 export const RegularTransactionWithEntryIdsTypeEnum = {
   Regular: "regular",
-} as const;
+} as const
 
 export type RegularTransactionWithEntryIdsTypeEnum =
-  (typeof RegularTransactionWithEntryIdsTypeEnum)[keyof typeof RegularTransactionWithEntryIdsTypeEnum];
+  (typeof RegularTransactionWithEntryIdsTypeEnum)[keyof typeof RegularTransactionWithEntryIdsTypeEnum]
 
 /**
  * @type RequiredIdentifiableTransaction
@@ -6077,29 +6076,29 @@ export type RegularTransactionWithEntryIdsTypeEnum =
 export type RequiredIdentifiableTransaction =
   | ({ type: "account_fees" } & AccountFeesRequiredIdentifiableTransaction)
   | ({
-      type: "asset_balance_transfer";
+      type: "asset_balance_transfer"
     } & AssetBalanceTransferRequiredIdentifiableTransaction)
   | ({ type: "asset_dividend" } & AssetDividendRequiredIdentifiableTransaction)
   | ({ type: "asset_purchase" } & AssetPurchaseRequiredIdentifiableTransaction)
   | ({ type: "asset_sale" } & AssetSaleRequiredIdentifiableTransaction)
   | ({ type: "asset_trade" } & AssetTradeRequiredIdentifiableTransaction)
   | ({
-      type: "asset_transfer_in";
+      type: "asset_transfer_in"
     } & AssetTransferInRequiredIdentifiableTransaction)
   | ({
-      type: "asset_transfer_out";
+      type: "asset_transfer_out"
     } & AssetTransferOutRequiredIdentifiableTransaction)
   | ({
-      type: "cash_balance_transfer";
+      type: "cash_balance_transfer"
     } & CashBalanceTransferRequiredIdentifiableTransaction)
   | ({ type: "cash_dividend" } & CashDividendRequiredIdentifiableTransaction)
   | ({
-      type: "cash_transfer_in";
+      type: "cash_transfer_in"
     } & CashTransferInRequiredIdentifiableTransaction)
   | ({
-      type: "cash_transfer_out";
+      type: "cash_transfer_out"
     } & CashTransferOutRequiredIdentifiableTransaction)
-  | ({ type: "regular" } & RegularRequiredIdentifiableTransaction);
+  | ({ type: "regular" } & RegularRequiredIdentifiableTransaction)
 
 /**
  * @type RequiredTransaction
@@ -6108,7 +6107,7 @@ export type RequiredIdentifiableTransaction =
 export type RequiredTransaction =
   | ({ type: "account_fees" } & AccountFeesRequiredTransaction)
   | ({
-      type: "asset_balance_transfer";
+      type: "asset_balance_transfer"
     } & AssetBalanceTransferRequiredTransaction)
   | ({ type: "asset_dividend" } & AssetDividendRequiredTransaction)
   | ({ type: "asset_purchase" } & AssetPurchaseRequiredTransaction)
@@ -6120,7 +6119,7 @@ export type RequiredTransaction =
   | ({ type: "cash_dividend" } & CashDividendRequiredTransaction)
   | ({ type: "cash_transfer_in" } & CashTransferInRequiredTransaction)
   | ({ type: "cash_transfer_out" } & CashTransferOutRequiredTransaction)
-  | ({ type: "regular" } & RegularRequiredTransaction);
+  | ({ type: "regular" } & RegularRequiredTransaction)
 
 /**
  *
@@ -6133,19 +6132,19 @@ export interface SearchCategoriesResponse {
    * @type {CategoryMetadataLookupTables}
    * @memberof SearchCategoriesResponse
    */
-  lookup_tables: CategoryMetadataLookupTables;
+  lookup_tables: CategoryMetadataLookupTables
   /**
    * One page of results
    * @type {Array<CategoryRequiredCategoryTypeIdWithId>}
    * @memberof SearchCategoriesResponse
    */
-  results: Array<CategoryRequiredCategoryTypeIdWithId>;
+  results: Array<CategoryRequiredCategoryTypeIdWithId>
   /**
    * The total number of results available
    * @type {number}
    * @memberof SearchCategoriesResponse
    */
-  total_results: number;
+  total_results: number
 }
 /**
  *
@@ -6158,7 +6157,7 @@ export interface SetBaseAssetRequest {
    * @type {number}
    * @memberof SetBaseAssetRequest
    */
-  asset_id: number;
+  asset_id: number
 }
 /**
  *
@@ -6171,7 +6170,7 @@ export interface SetOnboardingVersionRequest {
    * @type {number}
    * @memberof SetOnboardingVersionRequest
    */
-  version: number;
+  version: number
 }
 /**
  *
@@ -6184,7 +6183,7 @@ export interface SetTransactionVisibilityRequest {
    * @type {TransactionVisibility}
    * @memberof SetTransactionVisibilityRequest
    */
-  visibility: TransactionVisibility;
+  visibility: TransactionVisibility
 }
 
 /**
@@ -6198,13 +6197,13 @@ export interface SetTransactionsVisibilityRequest {
    * @type {Array<string>}
    * @memberof SetTransactionsVisibilityRequest
    */
-  transaction_ids: Array<string>;
+  transaction_ids: Array<string>
   /**
    *
    * @type {TransactionVisibility}
    * @memberof SetTransactionsVisibilityRequest
    */
-  visibility: TransactionVisibility;
+  visibility: TransactionVisibility
 }
 
 /**
@@ -6218,19 +6217,19 @@ export interface SharedAssetPairMetadata {
    * @type {number}
    * @memberof SharedAssetPairMetadata
    */
-  last_updated: number;
+  last_updated: number
   /**
    *
    * @type {number}
    * @memberof SharedAssetPairMetadata
    */
-  latest_rate: number;
+  latest_rate: number
   /**
    *
    * @type {number}
    * @memberof SharedAssetPairMetadata
    */
-  volume?: number | null;
+  volume?: number | null
 }
 /**
  *
@@ -6243,7 +6242,7 @@ export interface SyncBindingRequest {
    * @type {string}
    * @memberof SyncBindingRequest
    */
-  credential?: string | null;
+  credential?: string | null
 }
 /**
  *
@@ -6256,25 +6255,25 @@ export interface SyncBindingResponse {
    * @type {string}
    * @memberof SyncBindingResponse
    */
-  binding_id: string;
+  binding_id: string
   /**
    *
    * @type {number}
    * @memberof SyncBindingResponse
    */
-  pages_fetched?: number | null;
+  pages_fetched?: number | null
   /**
    *
    * @type {SyncReport}
    * @memberof SyncBindingResponse
    */
-  report?: SyncReport | null;
+  report?: SyncReport | null
   /**
    *
    * @type {string}
    * @memberof SyncBindingResponse
    */
-  status: string;
+  status: string
 }
 /**
  * Outcome counts of one committed sync run — empty (all zeros bar `unchanged`) when the provider had nothing new.
@@ -6287,43 +6286,43 @@ export interface SyncReport {
    * @type {number}
    * @memberof SyncReport
    */
-  amended: number;
+  amended: number
   /**
    *
    * @type {number}
    * @memberof SyncReport
    */
-  conflicts: number;
+  conflicts: number
   /**
    *
    * @type {number}
    * @memberof SyncReport
    */
-  duplicates: number;
+  duplicates: number
   /**
    *
    * @type {number}
    * @memberof SyncReport
    */
-  new_transactions: number;
+  new_transactions: number
   /**
    *
    * @type {number}
    * @memberof SyncReport
    */
-  pages_projected: number;
+  pages_projected: number
   /**
    *
    * @type {number}
    * @memberof SyncReport
    */
-  unchanged: number;
+  unchanged: number
   /**
    *
    * @type {number}
    * @memberof SyncReport
    */
-  unresolved: number;
+  unresolved: number
 }
 /**
  * A single account-asset-entry in a transaction.  The generic parameter `A` determines the amount type: - `Amount` – unvalidated (default, used in response models & macro-generated enums) - `PositiveAmount` – must be > 0, validated at parse time - `NegativeAmount` – must be < 0, validated at parse time - `NonZeroAmount` – must not be 0, validated at parse time
@@ -6336,19 +6335,19 @@ export interface TransactionEntry {
    * @type {string}
    * @memberof TransactionEntry
    */
-  account_id: string;
+  account_id: string
   /**
    * The number of units of the asset that were added or removed from the account.
    * @type {number}
    * @memberof TransactionEntry
    */
-  amount: number;
+  amount: number
   /**
    * The id of an asset in the account for which the entry is related.
    * @type {number}
    * @memberof TransactionEntry
    */
-  asset_id: number;
+  asset_id: number
 }
 /**
  * A single account-asset-entry in a transaction.  The generic parameter `A` determines the amount type: - `Amount` – unvalidated (default, used in response models & macro-generated enums) - `PositiveAmount` – must be > 0, validated at parse time - `NegativeAmount` – must be < 0, validated at parse time - `NonZeroAmount` – must not be 0, validated at parse time
@@ -6361,25 +6360,25 @@ export interface TransactionEntryWithEntryId {
    * @type {string}
    * @memberof TransactionEntryWithEntryId
    */
-  account_id: string;
+  account_id: string
   /**
    * The number of units of the asset that were added or removed from the account.
    * @type {number}
    * @memberof TransactionEntryWithEntryId
    */
-  amount: number;
+  amount: number
   /**
    * The id of an asset in the account for which the entry is related.
    * @type {number}
    * @memberof TransactionEntryWithEntryId
    */
-  asset_id: number;
+  asset_id: number
   /**
    *
    * @type {number}
    * @memberof TransactionEntryWithEntryId
    */
-  entry_id: number | null;
+  entry_id: number | null
 }
 /**
  * A single account-asset-entry in a transaction.  The generic parameter `A` determines the amount type: - `Amount` – unvalidated (default, used in response models & macro-generated enums) - `PositiveAmount` – must be > 0, validated at parse time - `NegativeAmount` – must be < 0, validated at parse time - `NonZeroAmount` – must not be 0, validated at parse time
@@ -6392,25 +6391,25 @@ export interface TransactionEntryWithRequiredEntryId {
    * @type {string}
    * @memberof TransactionEntryWithRequiredEntryId
    */
-  account_id: string;
+  account_id: string
   /**
    * The number of units of the asset that were added or removed from the account.
    * @type {number}
    * @memberof TransactionEntryWithRequiredEntryId
    */
-  amount: number;
+  amount: number
   /**
    * The id of an asset in the account for which the entry is related.
    * @type {number}
    * @memberof TransactionEntryWithRequiredEntryId
    */
-  asset_id: number;
+  asset_id: number
   /**
    *
    * @type {number}
    * @memberof TransactionEntryWithRequiredEntryId
    */
-  entry_id: number;
+  entry_id: number
 }
 /**
  * A single account-asset-entry in a transaction.  The generic parameter `A` determines the amount type: - `Amount` – unvalidated (default, used in response models & macro-generated enums) - `PositiveAmount` – must be > 0, validated at parse time - `NegativeAmount` – must be < 0, validated at parse time - `NonZeroAmount` – must not be 0, validated at parse time
@@ -6423,25 +6422,25 @@ export interface TransactionFeeItem {
    * @type {string}
    * @memberof TransactionFeeItem
    */
-  account_id: string;
+  account_id: string
   /**
    * The number of units of the asset that were added or removed from the account.
    * @type {number}
    * @memberof TransactionFeeItem
    */
-  amount: number;
+  amount: number
   /**
    * The id of an asset in the account for which the entry is related.
    * @type {number}
    * @memberof TransactionFeeItem
    */
-  asset_id: number;
+  asset_id: number
   /**
    * The type of fee related to a transaction.
    * @type {TransactionFeeType}
    * @memberof TransactionFeeItem
    */
-  fee_type: TransactionFeeType;
+  fee_type: TransactionFeeType
 }
 
 /**
@@ -6455,31 +6454,31 @@ export interface TransactionFeeItemWithEntryId {
    * @type {string}
    * @memberof TransactionFeeItemWithEntryId
    */
-  account_id: string;
+  account_id: string
   /**
    * The number of units of the asset that were added or removed from the account.
    * @type {number}
    * @memberof TransactionFeeItemWithEntryId
    */
-  amount: number;
+  amount: number
   /**
    * The id of an asset in the account for which the entry is related.
    * @type {number}
    * @memberof TransactionFeeItemWithEntryId
    */
-  asset_id: number;
+  asset_id: number
   /**
    *
    * @type {number}
    * @memberof TransactionFeeItemWithEntryId
    */
-  entry_id: number | null;
+  entry_id: number | null
   /**
    * The type of fee related to a transaction.
    * @type {TransactionFeeType}
    * @memberof TransactionFeeItemWithEntryId
    */
-  fee_type: TransactionFeeType;
+  fee_type: TransactionFeeType
 }
 
 /**
@@ -6493,31 +6492,31 @@ export interface TransactionFeeItemWithRequiredEntryId {
    * @type {string}
    * @memberof TransactionFeeItemWithRequiredEntryId
    */
-  account_id: string;
+  account_id: string
   /**
    * The number of units of the asset that were added or removed from the account.
    * @type {number}
    * @memberof TransactionFeeItemWithRequiredEntryId
    */
-  amount: number;
+  amount: number
   /**
    * The id of an asset in the account for which the entry is related.
    * @type {number}
    * @memberof TransactionFeeItemWithRequiredEntryId
    */
-  asset_id: number;
+  asset_id: number
   /**
    *
    * @type {number}
    * @memberof TransactionFeeItemWithRequiredEntryId
    */
-  entry_id: number;
+  entry_id: number
   /**
    * The type of fee related to a transaction.
    * @type {TransactionFeeType}
    * @memberof TransactionFeeItemWithRequiredEntryId
    */
-  fee_type: TransactionFeeType;
+  fee_type: TransactionFeeType
 }
 
 /**
@@ -6530,10 +6529,10 @@ export const TransactionFeeType = {
   Transaction: "transaction",
   Exchange: "exchange",
   WithholdingTax: "withholding_tax",
-} as const;
+} as const
 
 export type TransactionFeeType =
-  (typeof TransactionFeeType)[keyof typeof TransactionFeeType];
+  (typeof TransactionFeeType)[keyof typeof TransactionFeeType]
 
 /**
  *
@@ -6546,25 +6545,25 @@ export interface TransactionGroupIdentifiableTransactionWithIdentifiableEntries 
    * @type {number}
    * @memberof TransactionGroupIdentifiableTransactionWithIdentifiableEntries
    */
-  category_id: number;
+  category_id: number
   /**
    * Unrelated to individual transactions date which represent when the collection of transactions occurred
    * @type {number}
    * @memberof TransactionGroupIdentifiableTransactionWithIdentifiableEntries
    */
-  date: number;
+  date: number
   /**
    * Overall description of whole group
    * @type {string}
    * @memberof TransactionGroupIdentifiableTransactionWithIdentifiableEntries
    */
-  description: string;
+  description: string
   /**
    * All subtractions grouped into this group
    * @type {Array<IdentifiableTransaction>}
    * @memberof TransactionGroupIdentifiableTransactionWithIdentifiableEntries
    */
-  transactions: Array<IdentifiableTransaction>;
+  transactions: Array<IdentifiableTransaction>
 }
 /**
  *
@@ -6577,25 +6576,25 @@ export interface TransactionGroupRequiredIdentifiableTransactionWithIdentifiable
    * @type {number}
    * @memberof TransactionGroupRequiredIdentifiableTransactionWithIdentifiableEntries
    */
-  category_id: number;
+  category_id: number
   /**
    * Unrelated to individual transactions date which represent when the collection of transactions occurred
    * @type {number}
    * @memberof TransactionGroupRequiredIdentifiableTransactionWithIdentifiableEntries
    */
-  date: number;
+  date: number
   /**
    * Overall description of whole group
    * @type {string}
    * @memberof TransactionGroupRequiredIdentifiableTransactionWithIdentifiableEntries
    */
-  description: string;
+  description: string
   /**
    * All subtractions grouped into this group
    * @type {Array<RequiredIdentifiableTransaction>}
    * @memberof TransactionGroupRequiredIdentifiableTransactionWithIdentifiableEntries
    */
-  transactions: Array<RequiredIdentifiableTransaction>;
+  transactions: Array<RequiredIdentifiableTransaction>
 }
 /**
  *
@@ -6608,31 +6607,31 @@ export interface TransactionGroupTransactionGroupIdTransactionGroupRequiredIdent
    * @type {number}
    * @memberof TransactionGroupTransactionGroupIdTransactionGroupRequiredIdentifiableTransactionWithIdentifiableEntriesAndId
    */
-  category_id: number;
+  category_id: number
   /**
    * Unrelated to individual transactions date which represent when the collection of transactions occurred
    * @type {number}
    * @memberof TransactionGroupTransactionGroupIdTransactionGroupRequiredIdentifiableTransactionWithIdentifiableEntriesAndId
    */
-  date: number;
+  date: number
   /**
    * Overall description of whole group
    * @type {string}
    * @memberof TransactionGroupTransactionGroupIdTransactionGroupRequiredIdentifiableTransactionWithIdentifiableEntriesAndId
    */
-  description: string;
+  description: string
   /**
    *
    * @type {string}
    * @memberof TransactionGroupTransactionGroupIdTransactionGroupRequiredIdentifiableTransactionWithIdentifiableEntriesAndId
    */
-  group_id: string;
+  group_id: string
   /**
    * All subtractions grouped into this group
    * @type {Array<RequiredIdentifiableTransaction>}
    * @memberof TransactionGroupTransactionGroupIdTransactionGroupRequiredIdentifiableTransactionWithIdentifiableEntriesAndId
    */
-  transactions: Array<RequiredIdentifiableTransaction>;
+  transactions: Array<RequiredIdentifiableTransaction>
 }
 /**
  *
@@ -6645,25 +6644,25 @@ export interface TransactionGroupTransactionWithEntries {
    * @type {number}
    * @memberof TransactionGroupTransactionWithEntries
    */
-  category_id: number;
+  category_id: number
   /**
    * Unrelated to individual transactions date which represent when the collection of transactions occurred
    * @type {number}
    * @memberof TransactionGroupTransactionWithEntries
    */
-  date: number;
+  date: number
   /**
    * Overall description of whole group
    * @type {string}
    * @memberof TransactionGroupTransactionWithEntries
    */
-  description: string;
+  description: string
   /**
    * All subtractions grouped into this group
    * @type {Array<TransactionInput>}
    * @memberof TransactionGroupTransactionWithEntries
    */
-  transactions: Array<TransactionInput>;
+  transactions: Array<TransactionInput>
 }
 /**
  *
@@ -6676,31 +6675,31 @@ export interface TransactionGroupsPage {
    * @type {boolean}
    * @memberof TransactionGroupsPage
    */
-  has_more: boolean;
+  has_more: boolean
   /**
    *
    * @type {MetadataLookupTables}
    * @memberof TransactionGroupsPage
    */
-  lookup_tables: MetadataLookupTables;
+  lookup_tables: MetadataLookupTables
   /**
    *
    * @type {string}
    * @memberof TransactionGroupsPage
    */
-  next_cursor?: string | null;
+  next_cursor?: string | null
   /**
    *
    * @type {Array<TransactionGroupTransactionGroupIdTransactionGroupRequiredIdentifiableTransactionWithIdentifiableEntriesAndId>}
    * @memberof TransactionGroupsPage
    */
-  results: Array<TransactionGroupTransactionGroupIdTransactionGroupRequiredIdentifiableTransactionWithIdentifiableEntriesAndId>;
+  results: Array<TransactionGroupTransactionGroupIdTransactionGroupRequiredIdentifiableTransactionWithIdentifiableEntriesAndId>
   /**
    *
    * @type {number}
    * @memberof TransactionGroupsPage
    */
-  total_results?: number | null;
+  total_results?: number | null
 }
 /**
  * @type TransactionInput
@@ -6719,7 +6718,7 @@ export type TransactionInput =
   | ({ type: "cash_dividend" } & CashDividendTransactionInput)
   | ({ type: "cash_transfer_in" } & CashTransferInTransactionInput)
   | ({ type: "cash_transfer_out" } & CashTransferOutTransactionInput)
-  | ({ type: "regular" } & RegularTransactionInput);
+  | ({ type: "regular" } & RegularTransactionInput)
 
 /**
  *
@@ -6731,10 +6730,10 @@ export const TransactionVisibility = {
   Default: "default",
   Ghost: "ghost",
   Hidden: "hidden",
-} as const;
+} as const
 
 export type TransactionVisibility =
-  (typeof TransactionVisibility)[keyof typeof TransactionVisibility];
+  (typeof TransactionVisibility)[keyof typeof TransactionVisibility]
 
 /**
  * @type TransactionWithEntryIds
@@ -6743,7 +6742,7 @@ export type TransactionVisibility =
 export type TransactionWithEntryIds =
   | ({ type: "account_fees" } & AccountFeesTransactionWithEntryIds)
   | ({
-      type: "asset_balance_transfer";
+      type: "asset_balance_transfer"
     } & AssetBalanceTransferTransactionWithEntryIds)
   | ({ type: "asset_dividend" } & AssetDividendTransactionWithEntryIds)
   | ({ type: "asset_purchase" } & AssetPurchaseTransactionWithEntryIds)
@@ -6752,12 +6751,12 @@ export type TransactionWithEntryIds =
   | ({ type: "asset_transfer_in" } & AssetTransferInTransactionWithEntryIds)
   | ({ type: "asset_transfer_out" } & AssetTransferOutTransactionWithEntryIds)
   | ({
-      type: "cash_balance_transfer";
+      type: "cash_balance_transfer"
     } & CashBalanceTransferTransactionWithEntryIds)
   | ({ type: "cash_dividend" } & CashDividendTransactionWithEntryIds)
   | ({ type: "cash_transfer_in" } & CashTransferInTransactionWithEntryIds)
   | ({ type: "cash_transfer_out" } & CashTransferOutTransactionWithEntryIds)
-  | ({ type: "regular" } & RegularTransactionWithEntryIds);
+  | ({ type: "regular" } & RegularTransactionWithEntryIds)
 
 /**
  *
@@ -6770,31 +6769,31 @@ export interface UpdateAccount {
    * @type {number}
    * @memberof UpdateAccount
    */
-  account_type: number;
+  account_type: number
   /**
    *
    * @type {Array<AccountIdentifier>}
    * @memberof UpdateAccount
    */
-  identifiers?: Array<AccountIdentifier>;
+  identifiers?: Array<AccountIdentifier>
   /**
    *
    * @type {number}
    * @memberof UpdateAccount
    */
-  liquidity_type: number;
+  liquidity_type: number
   /**
    * Account name
    * @type {string}
    * @memberof UpdateAccount
    */
-  name: string;
+  name: string
   /**
    * Ownership share. Must be > 0 and <= 1.
    * @type {number}
    * @memberof UpdateAccount
    */
-  ownership_share: number;
+  ownership_share: number
 }
 /**
  *
@@ -6807,13 +6806,13 @@ export interface UpdateBindingRequest {
    * @type {BindingUpdateStatus}
    * @memberof UpdateBindingRequest
    */
-  status: BindingUpdateStatus;
+  status: BindingUpdateStatus
   /**
    *
    * @type {BindingWriteMode}
    * @memberof UpdateBindingRequest
    */
-  write_mode: BindingWriteMode;
+  write_mode: BindingWriteMode
 }
 
 /**
@@ -6827,25 +6826,25 @@ export interface UpdateTransactionGroupResponse {
    * @type {Array<AccountAccountAccountTypeIdWithId>}
    * @memberof UpdateTransactionGroupResponse
    */
-  accounts: Array<AccountAccountAccountTypeIdWithId>;
+  accounts: Array<AccountAccountAccountTypeIdWithId>
   /**
    *
    * @type {Array<AssetAssetRequiredAssetTypeIdWithId>}
    * @memberof UpdateTransactionGroupResponse
    */
-  assets: Array<AssetAssetRequiredAssetTypeIdWithId>;
+  assets: Array<AssetAssetRequiredAssetTypeIdWithId>
   /**
    *
    * @type {Array<CategoryRequiredCategoryTypeIdWithId>}
    * @memberof UpdateTransactionGroupResponse
    */
-  categories?: Array<CategoryRequiredCategoryTypeIdWithId>;
+  categories?: Array<CategoryRequiredCategoryTypeIdWithId>
   /**
    *
    * @type {TransactionGroupRequiredIdentifiableTransactionWithIdentifiableEntries}
    * @memberof UpdateTransactionGroupResponse
    */
-  group: TransactionGroupRequiredIdentifiableTransactionWithIdentifiableEntries;
+  group: TransactionGroupRequiredIdentifiableTransactionWithIdentifiableEntries
 }
 /**
  *
@@ -6858,7 +6857,7 @@ export interface UpdateTransactionRequest {
    * @type {TransactionWithEntryIds}
    * @memberof UpdateTransactionRequest
    */
-  transaction: TransactionWithEntryIds;
+  transaction: TransactionWithEntryIds
 }
 /**
  *
@@ -6871,25 +6870,25 @@ export interface UpdateTransactionResponse {
    * @type {Array<AccountAccountAccountTypeIdWithId>}
    * @memberof UpdateTransactionResponse
    */
-  accounts: Array<AccountAccountAccountTypeIdWithId>;
+  accounts: Array<AccountAccountAccountTypeIdWithId>
   /**
    *
    * @type {Array<AssetAssetRequiredAssetTypeIdWithId>}
    * @memberof UpdateTransactionResponse
    */
-  assets: Array<AssetAssetRequiredAssetTypeIdWithId>;
+  assets: Array<AssetAssetRequiredAssetTypeIdWithId>
   /**
    *
    * @type {Array<CategoryRequiredCategoryTypeIdWithId>}
    * @memberof UpdateTransactionResponse
    */
-  categories?: Array<CategoryRequiredCategoryTypeIdWithId>;
+  categories?: Array<CategoryRequiredCategoryTypeIdWithId>
   /**
    *
    * @type {RequiredTransaction}
    * @memberof UpdateTransactionResponse
    */
-  transaction: RequiredTransaction;
+  transaction: RequiredTransaction
 }
 /**
  *
@@ -6902,25 +6901,25 @@ export interface UploadMetadata {
    * @type {number}
    * @memberof UploadMetadata
    */
-  upload_expires_in_seconds: number;
+  upload_expires_in_seconds: number
   /**
    *
    * @type {{ [key: string]: string; }}
    * @memberof UploadMetadata
    */
-  upload_headers: { [key: string]: string };
+  upload_headers: { [key: string]: string }
   /**
    *
    * @type {string}
    * @memberof UploadMetadata
    */
-  upload_method: string;
+  upload_method: string
   /**
    *
    * @type {string}
    * @memberof UploadMetadata
    */
-  upload_url: string;
+  upload_url: string
 }
 /**
  *
@@ -6933,7 +6932,7 @@ export interface UserAssetPairMetadata {
    * @type {string}
    * @memberof UserAssetPairMetadata
    */
-  exchange: string;
+  exchange: string
 }
 /**
  *
@@ -6946,13 +6945,13 @@ export interface UserMetadata {
    * @type {string}
    * @memberof UserMetadata
    */
-  image_url?: string | null;
+  image_url?: string | null
   /**
    *
    * @type {string}
    * @memberof UserMetadata
    */
-  username: string;
+  username: string
 }
 
 /**
@@ -6969,56 +6968,56 @@ export const AIApiAxiosParamCreator = function (configuration?: Configuration) {
      */
     getUsage: async (
       userId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getUsage", "userId", userId);
+      assertParamExists("getUsage", "userId", userId)
       const localVarPath = `/api/users/{user_id}/ai/usage`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
-  };
-};
+  }
+}
 
 /**
  * AIApi - functional programming interface
  * @export
  */
 export const AIApiFp = function (configuration?: Configuration) {
-  const localVarAxiosParamCreator = AIApiAxiosParamCreator(configuration);
+  const localVarAxiosParamCreator = AIApiAxiosParamCreator(configuration)
   return {
     /**
      *
@@ -7028,31 +7027,31 @@ export const AIApiFp = function (configuration?: Configuration) {
      */
     async getUsage(
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<AiUsageResponse>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getUsage(
         userId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AIApi.getUsage"]?.[localVarOperationServerIndex]
-          ?.url;
+          ?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
-  };
-};
+  }
+}
 
 /**
  * AIApi - factory interface
@@ -7061,9 +7060,9 @@ export const AIApiFp = function (configuration?: Configuration) {
 export const AIApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance,
+  axios?: AxiosInstance
 ) {
-  const localVarFp = AIApiFp(configuration);
+  const localVarFp = AIApiFp(configuration)
   return {
     /**
      *
@@ -7073,14 +7072,14 @@ export const AIApiFactory = function (
      */
     getUsage(
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<AiUsageResponse> {
       return localVarFp
         .getUsage(userId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
-  };
-};
+  }
+}
 
 /**
  * AIApi - interface
@@ -7097,8 +7096,8 @@ export interface AIApiInterface {
    */
   getUsage(
     userId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<AiUsageResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<AiUsageResponse>
 }
 
 /**
@@ -7118,7 +7117,7 @@ export class AIApi extends BaseAPI implements AIApiInterface {
   public getUsage(userId: string, options?: RawAxiosRequestConfig) {
     return AIApiFp(this.configuration)
       .getUsage(userId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 }
 
@@ -7127,7 +7126,7 @@ export class AIApi extends BaseAPI implements AIApiInterface {
  * @export
  */
 export const AIConversationsApiAxiosParamCreator = function (
-  configuration?: Configuration,
+  configuration?: Configuration
 ) {
   return {
     /**
@@ -7138,46 +7137,46 @@ export const AIConversationsApiAxiosParamCreator = function (
      */
     createConversation: async (
       userId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("createConversation", "userId", userId);
+      assertParamExists("createConversation", "userId", userId)
       const localVarPath = `/api/users/{user_id}/ai/conversations`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      *
@@ -7189,51 +7188,51 @@ export const AIConversationsApiAxiosParamCreator = function (
     deleteConversation: async (
       userId: string,
       conversationId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("deleteConversation", "userId", userId);
+      assertParamExists("deleteConversation", "userId", userId)
       // verify required parameter 'conversationId' is not null or undefined
-      assertParamExists("deleteConversation", "conversationId", conversationId);
+      assertParamExists("deleteConversation", "conversationId", conversationId)
       const localVarPath =
         `/api/users/{user_id}/ai/conversations/{conversation_id}`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
           .replace(
             `{${"conversation_id"}}`,
-            encodeURIComponent(String(conversationId)),
-          );
+            encodeURIComponent(String(conversationId))
+          )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "DELETE",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      *
@@ -7245,51 +7244,51 @@ export const AIConversationsApiAxiosParamCreator = function (
     getConversation: async (
       userId: string,
       conversationId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getConversation", "userId", userId);
+      assertParamExists("getConversation", "userId", userId)
       // verify required parameter 'conversationId' is not null or undefined
-      assertParamExists("getConversation", "conversationId", conversationId);
+      assertParamExists("getConversation", "conversationId", conversationId)
       const localVarPath =
         `/api/users/{user_id}/ai/conversations/{conversation_id}`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
           .replace(
             `{${"conversation_id"}}`,
-            encodeURIComponent(String(conversationId)),
-          );
+            encodeURIComponent(String(conversationId))
+          )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      *
@@ -7301,51 +7300,51 @@ export const AIConversationsApiAxiosParamCreator = function (
     getMessages: async (
       userId: string,
       conversationId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getMessages", "userId", userId);
+      assertParamExists("getMessages", "userId", userId)
       // verify required parameter 'conversationId' is not null or undefined
-      assertParamExists("getMessages", "conversationId", conversationId);
+      assertParamExists("getMessages", "conversationId", conversationId)
       const localVarPath =
         `/api/users/{user_id}/ai/conversations/{conversation_id}/messages`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
           .replace(
             `{${"conversation_id"}}`,
-            encodeURIComponent(String(conversationId)),
-          );
+            encodeURIComponent(String(conversationId))
+          )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      *
@@ -7355,49 +7354,49 @@ export const AIConversationsApiAxiosParamCreator = function (
      */
     listConversations: async (
       userId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("listConversations", "userId", userId);
+      assertParamExists("listConversations", "userId", userId)
       const localVarPath = `/api/users/{user_id}/ai/conversations`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
-  };
-};
+  }
+}
 
 /**
  * AIConversationsApi - functional programming interface
@@ -7405,7 +7404,7 @@ export const AIConversationsApiAxiosParamCreator = function (
  */
 export const AIConversationsApiFp = function (configuration?: Configuration) {
   const localVarAxiosParamCreator =
-    AIConversationsApiAxiosParamCreator(configuration);
+    AIConversationsApiAxiosParamCreator(configuration)
   return {
     /**
      *
@@ -7415,27 +7414,27 @@ export const AIConversationsApiFp = function (configuration?: Configuration) {
      */
     async createConversation(
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<IdentifiableConversationResponse>
     > {
       const localVarAxiosArgs =
-        await localVarAxiosParamCreator.createConversation(userId, options);
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        await localVarAxiosParamCreator.createConversation(userId, options)
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AIConversationsApi.createConversation"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      *
@@ -7447,7 +7446,7 @@ export const AIConversationsApiFp = function (configuration?: Configuration) {
     async deleteConversation(
       userId: string,
       conversationId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
@@ -7455,20 +7454,20 @@ export const AIConversationsApiFp = function (configuration?: Configuration) {
         await localVarAxiosParamCreator.deleteConversation(
           userId,
           conversationId,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AIConversationsApi.deleteConversation"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      *
@@ -7480,30 +7479,30 @@ export const AIConversationsApiFp = function (configuration?: Configuration) {
     async getConversation(
       userId: string,
       conversationId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<ConversationResponse>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getConversation(
         userId,
         conversationId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AIConversationsApi.getConversation"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      *
@@ -7515,30 +7514,30 @@ export const AIConversationsApiFp = function (configuration?: Configuration) {
     async getMessages(
       userId: string,
       conversationId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<Array<IdentifiableMessageResponse>>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getMessages(
         userId,
         conversationId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AIConversationsApi.getMessages"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      *
@@ -7548,30 +7547,30 @@ export const AIConversationsApiFp = function (configuration?: Configuration) {
      */
     async listConversations(
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<Array<IdentifiableConversationResponse>>
     > {
       const localVarAxiosArgs =
-        await localVarAxiosParamCreator.listConversations(userId, options);
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        await localVarAxiosParamCreator.listConversations(userId, options)
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AIConversationsApi.listConversations"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
-  };
-};
+  }
+}
 
 /**
  * AIConversationsApi - factory interface
@@ -7580,9 +7579,9 @@ export const AIConversationsApiFp = function (configuration?: Configuration) {
 export const AIConversationsApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance,
+  axios?: AxiosInstance
 ) {
-  const localVarFp = AIConversationsApiFp(configuration);
+  const localVarFp = AIConversationsApiFp(configuration)
   return {
     /**
      *
@@ -7592,11 +7591,11 @@ export const AIConversationsApiFactory = function (
      */
     createConversation(
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<IdentifiableConversationResponse> {
       return localVarFp
         .createConversation(userId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      *
@@ -7608,11 +7607,11 @@ export const AIConversationsApiFactory = function (
     deleteConversation(
       userId: string,
       conversationId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<void> {
       return localVarFp
         .deleteConversation(userId, conversationId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      *
@@ -7624,11 +7623,11 @@ export const AIConversationsApiFactory = function (
     getConversation(
       userId: string,
       conversationId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<ConversationResponse> {
       return localVarFp
         .getConversation(userId, conversationId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      *
@@ -7640,11 +7639,11 @@ export const AIConversationsApiFactory = function (
     getMessages(
       userId: string,
       conversationId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<Array<IdentifiableMessageResponse>> {
       return localVarFp
         .getMessages(userId, conversationId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      *
@@ -7654,14 +7653,14 @@ export const AIConversationsApiFactory = function (
      */
     listConversations(
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<Array<IdentifiableConversationResponse>> {
       return localVarFp
         .listConversations(userId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
-  };
-};
+  }
+}
 
 /**
  * AIConversationsApi - interface
@@ -7678,8 +7677,8 @@ export interface AIConversationsApiInterface {
    */
   createConversation(
     userId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<IdentifiableConversationResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<IdentifiableConversationResponse>
 
   /**
    *
@@ -7692,8 +7691,8 @@ export interface AIConversationsApiInterface {
   deleteConversation(
     userId: string,
     conversationId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<void>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<void>
 
   /**
    *
@@ -7706,8 +7705,8 @@ export interface AIConversationsApiInterface {
   getConversation(
     userId: string,
     conversationId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<ConversationResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<ConversationResponse>
 
   /**
    *
@@ -7720,8 +7719,8 @@ export interface AIConversationsApiInterface {
   getMessages(
     userId: string,
     conversationId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<Array<IdentifiableMessageResponse>>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<Array<IdentifiableMessageResponse>>
 
   /**
    *
@@ -7732,8 +7731,8 @@ export interface AIConversationsApiInterface {
    */
   listConversations(
     userId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<Array<IdentifiableConversationResponse>>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<Array<IdentifiableConversationResponse>>
 }
 
 /**
@@ -7756,7 +7755,7 @@ export class AIConversationsApi
   public createConversation(userId: string, options?: RawAxiosRequestConfig) {
     return AIConversationsApiFp(this.configuration)
       .createConversation(userId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -7770,11 +7769,11 @@ export class AIConversationsApi
   public deleteConversation(
     userId: string,
     conversationId: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return AIConversationsApiFp(this.configuration)
       .deleteConversation(userId, conversationId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -7788,11 +7787,11 @@ export class AIConversationsApi
   public getConversation(
     userId: string,
     conversationId: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return AIConversationsApiFp(this.configuration)
       .getConversation(userId, conversationId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -7806,11 +7805,11 @@ export class AIConversationsApi
   public getMessages(
     userId: string,
     conversationId: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return AIConversationsApiFp(this.configuration)
       .getMessages(userId, conversationId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -7823,7 +7822,7 @@ export class AIConversationsApi
   public listConversations(userId: string, options?: RawAxiosRequestConfig) {
     return AIConversationsApiFp(this.configuration)
       .listConversations(userId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 }
 
@@ -7832,7 +7831,7 @@ export class AIConversationsApi
  * @export
  */
 export const AIQuickUploadApiAxiosParamCreator = function (
-  configuration?: Configuration,
+  configuration?: Configuration
 ) {
   return {
     /**
@@ -7847,64 +7846,64 @@ export const AIQuickUploadApiAxiosParamCreator = function (
       userId: string,
       quickUploadId: string,
       completeQuickUploadRequest: CompleteQuickUploadRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("complete", "userId", userId);
+      assertParamExists("complete", "userId", userId)
       // verify required parameter 'quickUploadId' is not null or undefined
-      assertParamExists("complete", "quickUploadId", quickUploadId);
+      assertParamExists("complete", "quickUploadId", quickUploadId)
       // verify required parameter 'completeQuickUploadRequest' is not null or undefined
       assertParamExists(
         "complete",
         "completeQuickUploadRequest",
-        completeQuickUploadRequest,
-      );
+        completeQuickUploadRequest
+      )
       const localVarPath =
         `/api/users/{user_id}/ai/quick-upload/{quick_upload_id}/complete`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
           .replace(
             `{${"quick_upload_id"}}`,
-            encodeURIComponent(String(quickUploadId)),
-          );
+            encodeURIComponent(String(quickUploadId))
+          )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         completeQuickUploadRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      *
@@ -7916,59 +7915,59 @@ export const AIQuickUploadApiAxiosParamCreator = function (
     createQuickUpload: async (
       userId: string,
       createQuickUploadRequest: CreateQuickUploadRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("createQuickUpload", "userId", userId);
+      assertParamExists("createQuickUpload", "userId", userId)
       // verify required parameter 'createQuickUploadRequest' is not null or undefined
       assertParamExists(
         "createQuickUpload",
         "createQuickUploadRequest",
-        createQuickUploadRequest,
-      );
+        createQuickUploadRequest
+      )
       const localVarPath = `/api/users/{user_id}/ai/quick-upload`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         createQuickUploadRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      *
@@ -7980,51 +7979,51 @@ export const AIQuickUploadApiAxiosParamCreator = function (
     getQuickUpload: async (
       userId: string,
       quickUploadId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getQuickUpload", "userId", userId);
+      assertParamExists("getQuickUpload", "userId", userId)
       // verify required parameter 'quickUploadId' is not null or undefined
-      assertParamExists("getQuickUpload", "quickUploadId", quickUploadId);
+      assertParamExists("getQuickUpload", "quickUploadId", quickUploadId)
       const localVarPath =
         `/api/users/{user_id}/ai/quick-upload/{quick_upload_id}`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
           .replace(
             `{${"quick_upload_id"}}`,
-            encodeURIComponent(String(quickUploadId)),
-          );
+            encodeURIComponent(String(quickUploadId))
+          )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      *
@@ -8034,46 +8033,46 @@ export const AIQuickUploadApiAxiosParamCreator = function (
      */
     listQuickUploads: async (
       userId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("listQuickUploads", "userId", userId);
+      assertParamExists("listQuickUploads", "userId", userId)
       const localVarPath = `/api/users/{user_id}/ai/quick-upload`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      *
@@ -8085,51 +8084,51 @@ export const AIQuickUploadApiAxiosParamCreator = function (
     retryQuickUpload: async (
       userId: string,
       quickUploadId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("retryQuickUpload", "userId", userId);
+      assertParamExists("retryQuickUpload", "userId", userId)
       // verify required parameter 'quickUploadId' is not null or undefined
-      assertParamExists("retryQuickUpload", "quickUploadId", quickUploadId);
+      assertParamExists("retryQuickUpload", "quickUploadId", quickUploadId)
       const localVarPath =
         `/api/users/{user_id}/ai/quick-upload/{quick_upload_id}/retry`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
           .replace(
             `{${"quick_upload_id"}}`,
-            encodeURIComponent(String(quickUploadId)),
-          );
+            encodeURIComponent(String(quickUploadId))
+          )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      *
@@ -8143,67 +8142,67 @@ export const AIQuickUploadApiAxiosParamCreator = function (
       userId: string,
       quickUploadId: string,
       quickUploadMessageRequest: QuickUploadMessageRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("sendCorrection", "userId", userId);
+      assertParamExists("sendCorrection", "userId", userId)
       // verify required parameter 'quickUploadId' is not null or undefined
-      assertParamExists("sendCorrection", "quickUploadId", quickUploadId);
+      assertParamExists("sendCorrection", "quickUploadId", quickUploadId)
       // verify required parameter 'quickUploadMessageRequest' is not null or undefined
       assertParamExists(
         "sendCorrection",
         "quickUploadMessageRequest",
-        quickUploadMessageRequest,
-      );
+        quickUploadMessageRequest
+      )
       const localVarPath =
         `/api/users/{user_id}/ai/quick-upload/{quick_upload_id}/message`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
           .replace(
             `{${"quick_upload_id"}}`,
-            encodeURIComponent(String(quickUploadId)),
-          );
+            encodeURIComponent(String(quickUploadId))
+          )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         quickUploadMessageRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
-  };
-};
+  }
+}
 
 /**
  * AIQuickUploadApi - functional programming interface
@@ -8211,7 +8210,7 @@ export const AIQuickUploadApiAxiosParamCreator = function (
  */
 export const AIQuickUploadApiFp = function (configuration?: Configuration) {
   const localVarAxiosParamCreator =
-    AIQuickUploadApiAxiosParamCreator(configuration);
+    AIQuickUploadApiAxiosParamCreator(configuration)
   return {
     /**
      *
@@ -8225,7 +8224,7 @@ export const AIQuickUploadApiFp = function (configuration?: Configuration) {
       userId: string,
       quickUploadId: string,
       completeQuickUploadRequest: CompleteQuickUploadRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
@@ -8233,20 +8232,20 @@ export const AIQuickUploadApiFp = function (configuration?: Configuration) {
         userId,
         quickUploadId,
         completeQuickUploadRequest,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AIQuickUploadApi.complete"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      *
@@ -8258,31 +8257,31 @@ export const AIQuickUploadApiFp = function (configuration?: Configuration) {
     async createQuickUpload(
       userId: string,
       createQuickUploadRequest: CreateQuickUploadRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<IdentifiableQuickUploadResponse>
     > {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.createQuickUpload(
           userId,
           createQuickUploadRequest,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AIQuickUploadApi.createQuickUpload"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      *
@@ -8294,30 +8293,30 @@ export const AIQuickUploadApiFp = function (configuration?: Configuration) {
     async getQuickUpload(
       userId: string,
       quickUploadId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<QuickUploadResponse>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getQuickUpload(
         userId,
         quickUploadId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AIQuickUploadApi.getQuickUpload"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      *
@@ -8327,27 +8326,27 @@ export const AIQuickUploadApiFp = function (configuration?: Configuration) {
      */
     async listQuickUploads(
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<Array<IdentifiableQuickUploadResponse>>
     > {
       const localVarAxiosArgs =
-        await localVarAxiosParamCreator.listQuickUploads(userId, options);
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        await localVarAxiosParamCreator.listQuickUploads(userId, options)
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AIQuickUploadApi.listQuickUploads"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      *
@@ -8359,7 +8358,7 @@ export const AIQuickUploadApiFp = function (configuration?: Configuration) {
     async retryQuickUpload(
       userId: string,
       quickUploadId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
@@ -8367,20 +8366,20 @@ export const AIQuickUploadApiFp = function (configuration?: Configuration) {
         await localVarAxiosParamCreator.retryQuickUpload(
           userId,
           quickUploadId,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AIQuickUploadApi.retryQuickUpload"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      *
@@ -8394,34 +8393,34 @@ export const AIQuickUploadApiFp = function (configuration?: Configuration) {
       userId: string,
       quickUploadId: string,
       quickUploadMessageRequest: QuickUploadMessageRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<QuickUploadMessageResponse>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.sendCorrection(
         userId,
         quickUploadId,
         quickUploadMessageRequest,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AIQuickUploadApi.sendCorrection"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
-  };
-};
+  }
+}
 
 /**
  * AIQuickUploadApi - factory interface
@@ -8430,9 +8429,9 @@ export const AIQuickUploadApiFp = function (configuration?: Configuration) {
 export const AIQuickUploadApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance,
+  axios?: AxiosInstance
 ) {
-  const localVarFp = AIQuickUploadApiFp(configuration);
+  const localVarFp = AIQuickUploadApiFp(configuration)
   return {
     /**
      *
@@ -8446,11 +8445,11 @@ export const AIQuickUploadApiFactory = function (
       userId: string,
       quickUploadId: string,
       completeQuickUploadRequest: CompleteQuickUploadRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<void> {
       return localVarFp
         .complete(userId, quickUploadId, completeQuickUploadRequest, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      *
@@ -8462,11 +8461,11 @@ export const AIQuickUploadApiFactory = function (
     createQuickUpload(
       userId: string,
       createQuickUploadRequest: CreateQuickUploadRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<IdentifiableQuickUploadResponse> {
       return localVarFp
         .createQuickUpload(userId, createQuickUploadRequest, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      *
@@ -8478,11 +8477,11 @@ export const AIQuickUploadApiFactory = function (
     getQuickUpload(
       userId: string,
       quickUploadId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<QuickUploadResponse> {
       return localVarFp
         .getQuickUpload(userId, quickUploadId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      *
@@ -8492,11 +8491,11 @@ export const AIQuickUploadApiFactory = function (
      */
     listQuickUploads(
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<Array<IdentifiableQuickUploadResponse>> {
       return localVarFp
         .listQuickUploads(userId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      *
@@ -8508,11 +8507,11 @@ export const AIQuickUploadApiFactory = function (
     retryQuickUpload(
       userId: string,
       quickUploadId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<void> {
       return localVarFp
         .retryQuickUpload(userId, quickUploadId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      *
@@ -8526,19 +8525,19 @@ export const AIQuickUploadApiFactory = function (
       userId: string,
       quickUploadId: string,
       quickUploadMessageRequest: QuickUploadMessageRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<QuickUploadMessageResponse> {
       return localVarFp
         .sendCorrection(
           userId,
           quickUploadId,
           quickUploadMessageRequest,
-          options,
+          options
         )
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
-  };
-};
+  }
+}
 
 /**
  * AIQuickUploadApi - interface
@@ -8559,8 +8558,8 @@ export interface AIQuickUploadApiInterface {
     userId: string,
     quickUploadId: string,
     completeQuickUploadRequest: CompleteQuickUploadRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<void>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<void>
 
   /**
    *
@@ -8573,8 +8572,8 @@ export interface AIQuickUploadApiInterface {
   createQuickUpload(
     userId: string,
     createQuickUploadRequest: CreateQuickUploadRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<IdentifiableQuickUploadResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<IdentifiableQuickUploadResponse>
 
   /**
    *
@@ -8587,8 +8586,8 @@ export interface AIQuickUploadApiInterface {
   getQuickUpload(
     userId: string,
     quickUploadId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<QuickUploadResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<QuickUploadResponse>
 
   /**
    *
@@ -8599,8 +8598,8 @@ export interface AIQuickUploadApiInterface {
    */
   listQuickUploads(
     userId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<Array<IdentifiableQuickUploadResponse>>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<Array<IdentifiableQuickUploadResponse>>
 
   /**
    *
@@ -8613,8 +8612,8 @@ export interface AIQuickUploadApiInterface {
   retryQuickUpload(
     userId: string,
     quickUploadId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<void>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<void>
 
   /**
    *
@@ -8629,8 +8628,8 @@ export interface AIQuickUploadApiInterface {
     userId: string,
     quickUploadId: string,
     quickUploadMessageRequest: QuickUploadMessageRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<QuickUploadMessageResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<QuickUploadMessageResponse>
 }
 
 /**
@@ -8656,11 +8655,11 @@ export class AIQuickUploadApi
     userId: string,
     quickUploadId: string,
     completeQuickUploadRequest: CompleteQuickUploadRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return AIQuickUploadApiFp(this.configuration)
       .complete(userId, quickUploadId, completeQuickUploadRequest, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -8674,11 +8673,11 @@ export class AIQuickUploadApi
   public createQuickUpload(
     userId: string,
     createQuickUploadRequest: CreateQuickUploadRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return AIQuickUploadApiFp(this.configuration)
       .createQuickUpload(userId, createQuickUploadRequest, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -8692,11 +8691,11 @@ export class AIQuickUploadApi
   public getQuickUpload(
     userId: string,
     quickUploadId: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return AIQuickUploadApiFp(this.configuration)
       .getQuickUpload(userId, quickUploadId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -8709,7 +8708,7 @@ export class AIQuickUploadApi
   public listQuickUploads(userId: string, options?: RawAxiosRequestConfig) {
     return AIQuickUploadApiFp(this.configuration)
       .listQuickUploads(userId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -8723,11 +8722,11 @@ export class AIQuickUploadApi
   public retryQuickUpload(
     userId: string,
     quickUploadId: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return AIQuickUploadApiFp(this.configuration)
       .retryQuickUpload(userId, quickUploadId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -8743,11 +8742,11 @@ export class AIQuickUploadApi
     userId: string,
     quickUploadId: string,
     quickUploadMessageRequest: QuickUploadMessageRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return AIQuickUploadApiFp(this.configuration)
       .sendCorrection(userId, quickUploadId, quickUploadMessageRequest, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 }
 
@@ -8756,7 +8755,7 @@ export class AIQuickUploadApi
  * @export
  */
 export const AccountPortfolioApiAxiosParamCreator = function (
-  configuration?: Configuration,
+  configuration?: Configuration
 ) {
   return {
     /**
@@ -8774,56 +8773,56 @@ export const AccountPortfolioApiAxiosParamCreator = function (
       accountId: string,
       range?: string,
       defaultAssetId?: number,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getAccountNetworthHistory", "userId", userId);
+      assertParamExists("getAccountNetworthHistory", "userId", userId)
       // verify required parameter 'accountId' is not null or undefined
-      assertParamExists("getAccountNetworthHistory", "accountId", accountId);
+      assertParamExists("getAccountNetworthHistory", "accountId", accountId)
       const localVarPath =
         `/api/users/{user_id}/accounts/{account_id}/portfolio/history`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-          .replace(`{${"account_id"}}`, encodeURIComponent(String(accountId)));
+          .replace(`{${"account_id"}}`, encodeURIComponent(String(accountId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
       if (range !== undefined) {
-        localVarQueryParameter["range"] = range;
+        localVarQueryParameter["range"] = range
       }
 
       if (defaultAssetId !== undefined) {
-        localVarQueryParameter["default_asset_id"] = defaultAssetId;
+        localVarQueryParameter["default_asset_id"] = defaultAssetId
       }
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Returns portfolio overview scoped to a specific account.
@@ -8838,52 +8837,52 @@ export const AccountPortfolioApiAxiosParamCreator = function (
       userId: string,
       accountId: string,
       defaultAssetId?: number,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getAccountPortfolioOverview", "userId", userId);
+      assertParamExists("getAccountPortfolioOverview", "userId", userId)
       // verify required parameter 'accountId' is not null or undefined
-      assertParamExists("getAccountPortfolioOverview", "accountId", accountId);
+      assertParamExists("getAccountPortfolioOverview", "accountId", accountId)
       const localVarPath =
         `/api/users/{user_id}/accounts/{account_id}/portfolio/overview`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-          .replace(`{${"account_id"}}`, encodeURIComponent(String(accountId)));
+          .replace(`{${"account_id"}}`, encodeURIComponent(String(accountId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
       if (defaultAssetId !== undefined) {
-        localVarQueryParameter["default_asset_id"] = defaultAssetId;
+        localVarQueryParameter["default_asset_id"] = defaultAssetId
       }
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Returns paginated transactions scoped to a specific account.
@@ -8902,63 +8901,63 @@ export const AccountPortfolioApiAxiosParamCreator = function (
       count?: number,
       start?: number,
       query?: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getAccountTransactions", "userId", userId);
+      assertParamExists("getAccountTransactions", "userId", userId)
       // verify required parameter 'accountId' is not null or undefined
-      assertParamExists("getAccountTransactions", "accountId", accountId);
+      assertParamExists("getAccountTransactions", "accountId", accountId)
       const localVarPath =
         `/api/users/{user_id}/accounts/{account_id}/transactions`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-          .replace(`{${"account_id"}}`, encodeURIComponent(String(accountId)));
+          .replace(`{${"account_id"}}`, encodeURIComponent(String(accountId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
       if (count !== undefined) {
-        localVarQueryParameter["count"] = count;
+        localVarQueryParameter["count"] = count
       }
 
       if (start !== undefined) {
-        localVarQueryParameter["start"] = start;
+        localVarQueryParameter["start"] = start
       }
 
       if (query !== undefined) {
-        localVarQueryParameter["query"] = query;
+        localVarQueryParameter["query"] = query
       }
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
-  };
-};
+  }
+}
 
 /**
  * AccountPortfolioApi - functional programming interface
@@ -8966,7 +8965,7 @@ export const AccountPortfolioApiAxiosParamCreator = function (
  */
 export const AccountPortfolioApiFp = function (configuration?: Configuration) {
   const localVarAxiosParamCreator =
-    AccountPortfolioApiAxiosParamCreator(configuration);
+    AccountPortfolioApiAxiosParamCreator(configuration)
   return {
     /**
      * Returns net worth history scoped to a specific account.
@@ -8983,11 +8982,11 @@ export const AccountPortfolioApiFp = function (configuration?: Configuration) {
       accountId: string,
       range?: string,
       defaultAssetId?: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetNetWorthHistoryResponse>
     > {
       const localVarAxiosArgs =
@@ -8996,20 +8995,20 @@ export const AccountPortfolioApiFp = function (configuration?: Configuration) {
           accountId,
           range,
           defaultAssetId,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AccountPortfolioApi.getAccountNetworthHistory"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Returns portfolio overview scoped to a specific account.
@@ -9024,11 +9023,11 @@ export const AccountPortfolioApiFp = function (configuration?: Configuration) {
       userId: string,
       accountId: string,
       defaultAssetId?: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetPortfolioOverview>
     > {
       const localVarAxiosArgs =
@@ -9036,20 +9035,20 @@ export const AccountPortfolioApiFp = function (configuration?: Configuration) {
           userId,
           accountId,
           defaultAssetId,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AccountPortfolioApi.getAccountPortfolioOverview"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Returns paginated transactions scoped to a specific account.
@@ -9068,11 +9067,11 @@ export const AccountPortfolioApiFp = function (configuration?: Configuration) {
       count?: number,
       start?: number,
       query?: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<AccountTransactionsPage>
     > {
       const localVarAxiosArgs =
@@ -9082,23 +9081,23 @@ export const AccountPortfolioApiFp = function (configuration?: Configuration) {
           count,
           start,
           query,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AccountPortfolioApi.getAccountTransactions"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
-  };
-};
+  }
+}
 
 /**
  * AccountPortfolioApi - factory interface
@@ -9107,9 +9106,9 @@ export const AccountPortfolioApiFp = function (configuration?: Configuration) {
 export const AccountPortfolioApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance,
+  axios?: AxiosInstance
 ) {
-  const localVarFp = AccountPortfolioApiFp(configuration);
+  const localVarFp = AccountPortfolioApiFp(configuration)
   return {
     /**
      * Returns net worth history scoped to a specific account.
@@ -9126,7 +9125,7 @@ export const AccountPortfolioApiFactory = function (
       accountId: string,
       range?: string,
       defaultAssetId?: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetNetWorthHistoryResponse> {
       return localVarFp
         .getAccountNetworthHistory(
@@ -9134,9 +9133,9 @@ export const AccountPortfolioApiFactory = function (
           accountId,
           range,
           defaultAssetId,
-          options,
+          options
         )
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Returns portfolio overview scoped to a specific account.
@@ -9151,11 +9150,11 @@ export const AccountPortfolioApiFactory = function (
       userId: string,
       accountId: string,
       defaultAssetId?: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetPortfolioOverview> {
       return localVarFp
         .getAccountPortfolioOverview(userId, accountId, defaultAssetId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Returns paginated transactions scoped to a specific account.
@@ -9174,14 +9173,14 @@ export const AccountPortfolioApiFactory = function (
       count?: number,
       start?: number,
       query?: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<AccountTransactionsPage> {
       return localVarFp
         .getAccountTransactions(userId, accountId, count, start, query, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
-  };
-};
+  }
+}
 
 /**
  * AccountPortfolioApi - interface
@@ -9205,8 +9204,8 @@ export interface AccountPortfolioApiInterface {
     accountId: string,
     range?: string,
     defaultAssetId?: number,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetNetWorthHistoryResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetNetWorthHistoryResponse>
 
   /**
    * Returns portfolio overview scoped to a specific account.
@@ -9222,8 +9221,8 @@ export interface AccountPortfolioApiInterface {
     userId: string,
     accountId: string,
     defaultAssetId?: number,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetPortfolioOverview>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetPortfolioOverview>
 
   /**
    * Returns paginated transactions scoped to a specific account.
@@ -9243,8 +9242,8 @@ export interface AccountPortfolioApiInterface {
     count?: number,
     start?: number,
     query?: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<AccountTransactionsPage>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<AccountTransactionsPage>
 }
 
 /**
@@ -9273,7 +9272,7 @@ export class AccountPortfolioApi
     accountId: string,
     range?: string,
     defaultAssetId?: number,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return AccountPortfolioApiFp(this.configuration)
       .getAccountNetworthHistory(
@@ -9281,9 +9280,9 @@ export class AccountPortfolioApi
         accountId,
         range,
         defaultAssetId,
-        options,
+        options
       )
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -9300,11 +9299,11 @@ export class AccountPortfolioApi
     userId: string,
     accountId: string,
     defaultAssetId?: number,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return AccountPortfolioApiFp(this.configuration)
       .getAccountPortfolioOverview(userId, accountId, defaultAssetId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -9325,11 +9324,11 @@ export class AccountPortfolioApi
     count?: number,
     start?: number,
     query?: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return AccountPortfolioApiFp(this.configuration)
       .getAccountTransactions(userId, accountId, count, start, query, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 }
 
@@ -9338,7 +9337,7 @@ export class AccountPortfolioApi
  * @export
  */
 export const AccountsApiAxiosParamCreator = function (
-  configuration?: Configuration,
+  configuration?: Configuration
 ) {
   return {
     /**
@@ -9352,55 +9351,55 @@ export const AccountsApiAxiosParamCreator = function (
     addAccount: async (
       userId: string,
       updateAccount: UpdateAccount,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("addAccount", "userId", userId);
+      assertParamExists("addAccount", "userId", userId)
       // verify required parameter 'updateAccount' is not null or undefined
-      assertParamExists("addAccount", "updateAccount", updateAccount);
+      assertParamExists("addAccount", "updateAccount", updateAccount)
       const localVarPath = `/api/users/{user_id}/accounts`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         updateAccount,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Marks account as inactive so that its unavailable anymore.
@@ -9413,47 +9412,47 @@ export const AccountsApiAxiosParamCreator = function (
     deleteAccount: async (
       accountId: string,
       userId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'accountId' is not null or undefined
-      assertParamExists("deleteAccount", "accountId", accountId);
+      assertParamExists("deleteAccount", "accountId", accountId)
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("deleteAccount", "userId", userId);
+      assertParamExists("deleteAccount", "userId", userId)
       const localVarPath = `/api/users/{user_id}/accounts/{account_id}`
         .replace(`{${"account_id"}}`, encodeURIComponent(String(accountId)))
-        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "DELETE",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Gets a specific account of the user with metadata.
@@ -9466,47 +9465,47 @@ export const AccountsApiAxiosParamCreator = function (
     getAccount: async (
       accountId: string,
       userId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'accountId' is not null or undefined
-      assertParamExists("getAccount", "accountId", accountId);
+      assertParamExists("getAccount", "accountId", accountId)
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getAccount", "userId", userId);
+      assertParamExists("getAccount", "userId", userId)
       const localVarPath = `/api/users/{user_id}/accounts/{account_id}`
         .replace(`{${"account_id"}}`, encodeURIComponent(String(accountId)))
-        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Retrieves all available account liquidity types
@@ -9515,41 +9514,41 @@ export const AccountsApiAxiosParamCreator = function (
      * @throws {RequiredError}
      */
     getAccountLiquidityTypes: async (
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
-      const localVarPath = `/api/accounts/liquidity-types`;
+      const localVarPath = `/api/accounts/liquidity-types`
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Retrieves all available account types
@@ -9558,41 +9557,41 @@ export const AccountsApiAxiosParamCreator = function (
      * @throws {RequiredError}
      */
     getAccountTypes: async (
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
-      const localVarPath = `/api/accounts/types`;
+      const localVarPath = `/api/accounts/types`
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Gets all accounts and its metadata associated with user
@@ -9603,46 +9602,46 @@ export const AccountsApiAxiosParamCreator = function (
      */
     getAccounts: async (
       userId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getAccounts", "userId", userId);
+      assertParamExists("getAccounts", "userId", userId)
       const localVarPath = `/api/users/{user_id}/accounts`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Updates a specific account of the user with metadata.
@@ -9657,66 +9656,66 @@ export const AccountsApiAxiosParamCreator = function (
       accountId: string,
       userId: string,
       updateAccount: UpdateAccount,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'accountId' is not null or undefined
-      assertParamExists("updateAccount", "accountId", accountId);
+      assertParamExists("updateAccount", "accountId", accountId)
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("updateAccount", "userId", userId);
+      assertParamExists("updateAccount", "userId", userId)
       // verify required parameter 'updateAccount' is not null or undefined
-      assertParamExists("updateAccount", "updateAccount", updateAccount);
+      assertParamExists("updateAccount", "updateAccount", updateAccount)
       const localVarPath = `/api/users/{user_id}/accounts/{account_id}`
         .replace(`{${"account_id"}}`, encodeURIComponent(String(accountId)))
-        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "PUT",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         updateAccount,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
-  };
-};
+  }
+}
 
 /**
  * AccountsApi - functional programming interface
  * @export
  */
 export const AccountsApiFp = function (configuration?: Configuration) {
-  const localVarAxiosParamCreator = AccountsApiAxiosParamCreator(configuration);
+  const localVarAxiosParamCreator = AccountsApiAxiosParamCreator(configuration)
   return {
     /**
      * Adds a new account to the user.
@@ -9729,30 +9728,30 @@ export const AccountsApiFp = function (configuration?: Configuration) {
     async addAccount(
       userId: string,
       updateAccount: UpdateAccount,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<AddAccountResponse>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.addAccount(
         userId,
         updateAccount,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AccountsApi.addAccount"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Marks account as inactive so that its unavailable anymore.
@@ -9765,27 +9764,27 @@ export const AccountsApiFp = function (configuration?: Configuration) {
     async deleteAccount(
       accountId: string,
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.deleteAccount(
         accountId,
         userId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AccountsApi.deleteAccount"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Gets a specific account of the user with metadata.
@@ -9798,30 +9797,30 @@ export const AccountsApiFp = function (configuration?: Configuration) {
     async getAccount(
       accountId: string,
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetAccountResponse>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getAccount(
         accountId,
         userId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AccountsApi.getAccount"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Retrieves all available account liquidity types
@@ -9830,27 +9829,27 @@ export const AccountsApiFp = function (configuration?: Configuration) {
      * @throws {RequiredError}
      */
     async getAccountLiquidityTypes(
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetAccountLiquidityTypesResponse>
     > {
       const localVarAxiosArgs =
-        await localVarAxiosParamCreator.getAccountLiquidityTypes(options);
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        await localVarAxiosParamCreator.getAccountLiquidityTypes(options)
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AccountsApi.getAccountLiquidityTypes"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Retrieves all available account types
@@ -9859,27 +9858,27 @@ export const AccountsApiFp = function (configuration?: Configuration) {
      * @throws {RequiredError}
      */
     async getAccountTypes(
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetAccountTypesResponse>
     > {
       const localVarAxiosArgs =
-        await localVarAxiosParamCreator.getAccountTypes(options);
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        await localVarAxiosParamCreator.getAccountTypes(options)
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AccountsApi.getAccountTypes"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Gets all accounts and its metadata associated with user
@@ -9890,29 +9889,29 @@ export const AccountsApiFp = function (configuration?: Configuration) {
      */
     async getAccounts(
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetAccountsResponse>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getAccounts(
         userId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AccountsApi.getAccounts"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Updates a specific account of the user with metadata.
@@ -9927,7 +9926,7 @@ export const AccountsApiFp = function (configuration?: Configuration) {
       accountId: string,
       userId: string,
       updateAccount: UpdateAccount,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<UpdateAccount>
     > {
@@ -9935,23 +9934,23 @@ export const AccountsApiFp = function (configuration?: Configuration) {
         accountId,
         userId,
         updateAccount,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AccountsApi.updateAccount"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
-  };
-};
+  }
+}
 
 /**
  * AccountsApi - factory interface
@@ -9960,9 +9959,9 @@ export const AccountsApiFp = function (configuration?: Configuration) {
 export const AccountsApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance,
+  axios?: AxiosInstance
 ) {
-  const localVarFp = AccountsApiFp(configuration);
+  const localVarFp = AccountsApiFp(configuration)
   return {
     /**
      * Adds a new account to the user.
@@ -9975,11 +9974,11 @@ export const AccountsApiFactory = function (
     addAccount(
       userId: string,
       updateAccount: UpdateAccount,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<AddAccountResponse> {
       return localVarFp
         .addAccount(userId, updateAccount, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Marks account as inactive so that its unavailable anymore.
@@ -9992,11 +9991,11 @@ export const AccountsApiFactory = function (
     deleteAccount(
       accountId: string,
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<void> {
       return localVarFp
         .deleteAccount(accountId, userId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Gets a specific account of the user with metadata.
@@ -10009,11 +10008,11 @@ export const AccountsApiFactory = function (
     getAccount(
       accountId: string,
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetAccountResponse> {
       return localVarFp
         .getAccount(accountId, userId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Retrieves all available account liquidity types
@@ -10022,11 +10021,11 @@ export const AccountsApiFactory = function (
      * @throws {RequiredError}
      */
     getAccountLiquidityTypes(
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetAccountLiquidityTypesResponse> {
       return localVarFp
         .getAccountLiquidityTypes(options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Retrieves all available account types
@@ -10035,11 +10034,11 @@ export const AccountsApiFactory = function (
      * @throws {RequiredError}
      */
     getAccountTypes(
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetAccountTypesResponse> {
       return localVarFp
         .getAccountTypes(options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Gets all accounts and its metadata associated with user
@@ -10050,11 +10049,11 @@ export const AccountsApiFactory = function (
      */
     getAccounts(
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetAccountsResponse> {
       return localVarFp
         .getAccounts(userId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Updates a specific account of the user with metadata.
@@ -10069,14 +10068,14 @@ export const AccountsApiFactory = function (
       accountId: string,
       userId: string,
       updateAccount: UpdateAccount,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<UpdateAccount> {
       return localVarFp
         .updateAccount(accountId, userId, updateAccount, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
-  };
-};
+  }
+}
 
 /**
  * AccountsApi - interface
@@ -10096,8 +10095,8 @@ export interface AccountsApiInterface {
   addAccount(
     userId: string,
     updateAccount: UpdateAccount,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<AddAccountResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<AddAccountResponse>
 
   /**
    * Marks account as inactive so that its unavailable anymore.
@@ -10111,8 +10110,8 @@ export interface AccountsApiInterface {
   deleteAccount(
     accountId: string,
     userId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<void>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<void>
 
   /**
    * Gets a specific account of the user with metadata.
@@ -10126,8 +10125,8 @@ export interface AccountsApiInterface {
   getAccount(
     accountId: string,
     userId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetAccountResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetAccountResponse>
 
   /**
    * Retrieves all available account liquidity types
@@ -10137,8 +10136,8 @@ export interface AccountsApiInterface {
    * @memberof AccountsApiInterface
    */
   getAccountLiquidityTypes(
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetAccountLiquidityTypesResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetAccountLiquidityTypesResponse>
 
   /**
    * Retrieves all available account types
@@ -10148,8 +10147,8 @@ export interface AccountsApiInterface {
    * @memberof AccountsApiInterface
    */
   getAccountTypes(
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetAccountTypesResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetAccountTypesResponse>
 
   /**
    * Gets all accounts and its metadata associated with user
@@ -10161,8 +10160,8 @@ export interface AccountsApiInterface {
    */
   getAccounts(
     userId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetAccountsResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetAccountsResponse>
 
   /**
    * Updates a specific account of the user with metadata.
@@ -10178,8 +10177,8 @@ export interface AccountsApiInterface {
     accountId: string,
     userId: string,
     updateAccount: UpdateAccount,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<UpdateAccount>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<UpdateAccount>
 }
 
 /**
@@ -10201,11 +10200,11 @@ export class AccountsApi extends BaseAPI implements AccountsApiInterface {
   public addAccount(
     userId: string,
     updateAccount: UpdateAccount,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return AccountsApiFp(this.configuration)
       .addAccount(userId, updateAccount, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -10220,11 +10219,11 @@ export class AccountsApi extends BaseAPI implements AccountsApiInterface {
   public deleteAccount(
     accountId: string,
     userId: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return AccountsApiFp(this.configuration)
       .deleteAccount(accountId, userId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -10239,11 +10238,11 @@ export class AccountsApi extends BaseAPI implements AccountsApiInterface {
   public getAccount(
     accountId: string,
     userId: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return AccountsApiFp(this.configuration)
       .getAccount(accountId, userId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -10256,7 +10255,7 @@ export class AccountsApi extends BaseAPI implements AccountsApiInterface {
   public getAccountLiquidityTypes(options?: RawAxiosRequestConfig) {
     return AccountsApiFp(this.configuration)
       .getAccountLiquidityTypes(options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -10269,7 +10268,7 @@ export class AccountsApi extends BaseAPI implements AccountsApiInterface {
   public getAccountTypes(options?: RawAxiosRequestConfig) {
     return AccountsApiFp(this.configuration)
       .getAccountTypes(options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -10283,7 +10282,7 @@ export class AccountsApi extends BaseAPI implements AccountsApiInterface {
   public getAccounts(userId: string, options?: RawAxiosRequestConfig) {
     return AccountsApiFp(this.configuration)
       .getAccounts(userId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -10300,11 +10299,11 @@ export class AccountsApi extends BaseAPI implements AccountsApiInterface {
     accountId: string,
     userId: string,
     updateAccount: UpdateAccount,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return AccountsApiFp(this.configuration)
       .updateAccount(accountId, userId, updateAccount, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 }
 
@@ -10313,7 +10312,7 @@ export class AccountsApi extends BaseAPI implements AccountsApiInterface {
  * @export
  */
 export const AssetsApiAxiosParamCreator = function (
-  configuration?: Configuration,
+  configuration?: Configuration
 ) {
   return {
     /**
@@ -10325,46 +10324,46 @@ export const AssetsApiAxiosParamCreator = function (
      */
     getAsset: async (
       assetId: number,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'assetId' is not null or undefined
-      assertParamExists("getAsset", "assetId", assetId);
+      assertParamExists("getAsset", "assetId", assetId)
       const localVarPath = `/api/assets/{asset_id}`.replace(
         `{${"asset_id"}}`,
-        encodeURIComponent(String(assetId)),
-      );
+        encodeURIComponent(String(assetId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Gets asset pair and its metadata.
@@ -10377,50 +10376,47 @@ export const AssetsApiAxiosParamCreator = function (
     getAssetPair: async (
       assetId: number,
       referenceId: number,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'assetId' is not null or undefined
-      assertParamExists("getAssetPair", "assetId", assetId);
+      assertParamExists("getAssetPair", "assetId", assetId)
       // verify required parameter 'referenceId' is not null or undefined
-      assertParamExists("getAssetPair", "referenceId", referenceId);
+      assertParamExists("getAssetPair", "referenceId", referenceId)
       const localVarPath = `/api/assets/{asset_id}/{reference_id}`
         .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
-        .replace(
-          `{${"reference_id"}}`,
-          encodeURIComponent(String(referenceId)),
-        );
+        .replace(`{${"reference_id"}}`, encodeURIComponent(String(referenceId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Returns the asset\'s latest price in the reference currency, derived by hopping through the asset\'s base pair. Calling this endpoint means the result is a computed conversion, not an exact stored rate.
@@ -10433,50 +10429,47 @@ export const AssetsApiAxiosParamCreator = function (
     getAssetPairConverted: async (
       assetId: number,
       referenceId: number,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'assetId' is not null or undefined
-      assertParamExists("getAssetPairConverted", "assetId", assetId);
+      assertParamExists("getAssetPairConverted", "assetId", assetId)
       // verify required parameter 'referenceId' is not null or undefined
-      assertParamExists("getAssetPairConverted", "referenceId", referenceId);
+      assertParamExists("getAssetPairConverted", "referenceId", referenceId)
       const localVarPath = `/api/assets/{asset_id}/{reference_id}/converted`
         .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
-        .replace(
-          `{${"reference_id"}}`,
-          encodeURIComponent(String(referenceId)),
-        );
+        .replace(`{${"reference_id"}}`, encodeURIComponent(String(referenceId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Returns the asset\'s price series in the reference currency, derived by hopping through the asset\'s base pair. Each historical point is converted at the pair\'s own rate for that date.
@@ -10491,61 +10484,61 @@ export const AssetsApiAxiosParamCreator = function (
       range: string,
       assetId: number,
       referenceId: number,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'range' is not null or undefined
-      assertParamExists("getAssetPairConvertedRates", "range", range);
+      assertParamExists("getAssetPairConvertedRates", "range", range)
       // verify required parameter 'assetId' is not null or undefined
-      assertParamExists("getAssetPairConvertedRates", "assetId", assetId);
+      assertParamExists("getAssetPairConvertedRates", "assetId", assetId)
       // verify required parameter 'referenceId' is not null or undefined
       assertParamExists(
         "getAssetPairConvertedRates",
         "referenceId",
-        referenceId,
-      );
+        referenceId
+      )
       const localVarPath =
         `/api/assets/{asset_id}/{reference_id}/converted/rates`
           .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
           .replace(
             `{${"reference_id"}}`,
-            encodeURIComponent(String(referenceId)),
-          );
+            encodeURIComponent(String(referenceId))
+          )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
       if (range !== undefined) {
-        localVarQueryParameter["range"] = range;
+        localVarQueryParameter["range"] = range
       }
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Gets asset pair rates based on provided query params
@@ -10560,54 +10553,51 @@ export const AssetsApiAxiosParamCreator = function (
       assetId: number,
       referenceId: number,
       range?: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'assetId' is not null or undefined
-      assertParamExists("getAssetPairRates", "assetId", assetId);
+      assertParamExists("getAssetPairRates", "assetId", assetId)
       // verify required parameter 'referenceId' is not null or undefined
-      assertParamExists("getAssetPairRates", "referenceId", referenceId);
+      assertParamExists("getAssetPairRates", "referenceId", referenceId)
       const localVarPath = `/api/assets/{asset_id}/{reference_id}/rates`
         .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
-        .replace(
-          `{${"reference_id"}}`,
-          encodeURIComponent(String(referenceId)),
-        );
+        .replace(`{${"reference_id"}}`, encodeURIComponent(String(referenceId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
       if (range !== undefined) {
-        localVarQueryParameter["range"] = range;
+        localVarQueryParameter["range"] = range
       }
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Retrieves all available asset types
@@ -10616,41 +10606,41 @@ export const AssetsApiAxiosParamCreator = function (
      * @throws {RequiredError}
      */
     getAssetTypes: async (
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
-      const localVarPath = `/api/assets/types`;
+      const localVarPath = `/api/assets/types`
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Query to search shared assets. Returns a page of results. If no query parameters are provided, returns results sorted by most popular. The equivalent search endpoint for the user assets is not provided, as user assets can be retrieved in full due to it being a small subset.
@@ -10667,67 +10657,67 @@ export const AssetsApiAxiosParamCreator = function (
       start?: number,
       query?: string,
       assetType?: number,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
-      const localVarPath = `/api/assets`;
+      const localVarPath = `/api/assets`
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
       if (count !== undefined) {
-        localVarQueryParameter["count"] = count;
+        localVarQueryParameter["count"] = count
       }
 
       if (start !== undefined) {
-        localVarQueryParameter["start"] = start;
+        localVarQueryParameter["start"] = start
       }
 
       if (query !== undefined) {
-        localVarQueryParameter["query"] = query;
+        localVarQueryParameter["query"] = query
       }
 
       if (assetType !== undefined) {
-        localVarQueryParameter["asset_type"] = assetType;
+        localVarQueryParameter["asset_type"] = assetType
       }
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
-  };
-};
+  }
+}
 
 /**
  * AssetsApi - functional programming interface
  * @export
  */
 export const AssetsApiFp = function (configuration?: Configuration) {
-  const localVarAxiosParamCreator = AssetsApiAxiosParamCreator(configuration);
+  const localVarAxiosParamCreator = AssetsApiAxiosParamCreator(configuration)
   return {
     /**
      * Gets a shared asset.
@@ -10738,28 +10728,28 @@ export const AssetsApiFp = function (configuration?: Configuration) {
      */
     async getAsset(
       assetId: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetAssetResponse>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getAsset(
         assetId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AssetsApi.getAsset"]?.[localVarOperationServerIndex]
-          ?.url;
+          ?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Gets asset pair and its metadata.
@@ -10772,30 +10762,30 @@ export const AssetsApiFp = function (configuration?: Configuration) {
     async getAssetPair(
       assetId: number,
       referenceId: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetAssetPairResponse>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getAssetPair(
         assetId,
         referenceId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AssetsApi.getAssetPair"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Returns the asset\'s latest price in the reference currency, derived by hopping through the asset\'s base pair. Calling this endpoint means the result is a computed conversion, not an exact stored rate.
@@ -10808,31 +10798,31 @@ export const AssetsApiFp = function (configuration?: Configuration) {
     async getAssetPairConverted(
       assetId: number,
       referenceId: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<AssetPairMetadata>
     > {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getAssetPairConverted(
           assetId,
           referenceId,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AssetsApi.getAssetPairConverted"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Returns the asset\'s price series in the reference currency, derived by hopping through the asset\'s base pair. Each historical point is converted at the pair\'s own rate for that date.
@@ -10847,11 +10837,11 @@ export const AssetsApiFp = function (configuration?: Configuration) {
       range: string,
       assetId: number,
       referenceId: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetAssetPairRatesResponse>
     > {
       const localVarAxiosArgs =
@@ -10859,20 +10849,20 @@ export const AssetsApiFp = function (configuration?: Configuration) {
           range,
           assetId,
           referenceId,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AssetsApi.getAssetPairConvertedRates"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Gets asset pair rates based on provided query params
@@ -10887,11 +10877,11 @@ export const AssetsApiFp = function (configuration?: Configuration) {
       assetId: number,
       referenceId: number,
       range?: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetAssetPairRatesResponse>
     > {
       const localVarAxiosArgs =
@@ -10899,20 +10889,20 @@ export const AssetsApiFp = function (configuration?: Configuration) {
           assetId,
           referenceId,
           range,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AssetsApi.getAssetPairRates"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Retrieves all available asset types
@@ -10921,27 +10911,27 @@ export const AssetsApiFp = function (configuration?: Configuration) {
      * @throws {RequiredError}
      */
     async getAssetTypes(
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<AssetLookupTables>
     > {
       const localVarAxiosArgs =
-        await localVarAxiosParamCreator.getAssetTypes(options);
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        await localVarAxiosParamCreator.getAssetTypes(options)
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AssetsApi.getAssetTypes"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Query to search shared assets. Returns a page of results. If no query parameters are provided, returns results sorted by most popular. The equivalent search endpoint for the user assets is not provided, as user assets can be retrieved in full due to it being a small subset.
@@ -10958,7 +10948,7 @@ export const AssetsApiFp = function (configuration?: Configuration) {
       start?: number,
       query?: string,
       assetType?: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<AssetsPage>
     > {
@@ -10967,23 +10957,23 @@ export const AssetsApiFp = function (configuration?: Configuration) {
         start,
         query,
         assetType,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AssetsApi.searchAssets"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
-  };
-};
+  }
+}
 
 /**
  * AssetsApi - factory interface
@@ -10992,9 +10982,9 @@ export const AssetsApiFp = function (configuration?: Configuration) {
 export const AssetsApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance,
+  axios?: AxiosInstance
 ) {
-  const localVarFp = AssetsApiFp(configuration);
+  const localVarFp = AssetsApiFp(configuration)
   return {
     /**
      * Gets a shared asset.
@@ -11005,11 +10995,11 @@ export const AssetsApiFactory = function (
      */
     getAsset(
       assetId: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetAssetResponse> {
       return localVarFp
         .getAsset(assetId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Gets asset pair and its metadata.
@@ -11022,11 +11012,11 @@ export const AssetsApiFactory = function (
     getAssetPair(
       assetId: number,
       referenceId: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetAssetPairResponse> {
       return localVarFp
         .getAssetPair(assetId, referenceId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Returns the asset\'s latest price in the reference currency, derived by hopping through the asset\'s base pair. Calling this endpoint means the result is a computed conversion, not an exact stored rate.
@@ -11039,11 +11029,11 @@ export const AssetsApiFactory = function (
     getAssetPairConverted(
       assetId: number,
       referenceId: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<AssetPairMetadata> {
       return localVarFp
         .getAssetPairConverted(assetId, referenceId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Returns the asset\'s price series in the reference currency, derived by hopping through the asset\'s base pair. Each historical point is converted at the pair\'s own rate for that date.
@@ -11058,11 +11048,11 @@ export const AssetsApiFactory = function (
       range: string,
       assetId: number,
       referenceId: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetAssetPairRatesResponse> {
       return localVarFp
         .getAssetPairConvertedRates(range, assetId, referenceId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Gets asset pair rates based on provided query params
@@ -11077,11 +11067,11 @@ export const AssetsApiFactory = function (
       assetId: number,
       referenceId: number,
       range?: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetAssetPairRatesResponse> {
       return localVarFp
         .getAssetPairRates(assetId, referenceId, range, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Retrieves all available asset types
@@ -11090,11 +11080,11 @@ export const AssetsApiFactory = function (
      * @throws {RequiredError}
      */
     getAssetTypes(
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<AssetLookupTables> {
       return localVarFp
         .getAssetTypes(options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Query to search shared assets. Returns a page of results. If no query parameters are provided, returns results sorted by most popular. The equivalent search endpoint for the user assets is not provided, as user assets can be retrieved in full due to it being a small subset.
@@ -11111,14 +11101,14 @@ export const AssetsApiFactory = function (
       start?: number,
       query?: string,
       assetType?: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<AssetsPage> {
       return localVarFp
         .searchAssets(count, start, query, assetType, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
-  };
-};
+  }
+}
 
 /**
  * AssetsApi - interface
@@ -11136,8 +11126,8 @@ export interface AssetsApiInterface {
    */
   getAsset(
     assetId: number,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetAssetResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetAssetResponse>
 
   /**
    * Gets asset pair and its metadata.
@@ -11151,8 +11141,8 @@ export interface AssetsApiInterface {
   getAssetPair(
     assetId: number,
     referenceId: number,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetAssetPairResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetAssetPairResponse>
 
   /**
    * Returns the asset\'s latest price in the reference currency, derived by hopping through the asset\'s base pair. Calling this endpoint means the result is a computed conversion, not an exact stored rate.
@@ -11166,8 +11156,8 @@ export interface AssetsApiInterface {
   getAssetPairConverted(
     assetId: number,
     referenceId: number,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<AssetPairMetadata>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<AssetPairMetadata>
 
   /**
    * Returns the asset\'s price series in the reference currency, derived by hopping through the asset\'s base pair. Each historical point is converted at the pair\'s own rate for that date.
@@ -11183,8 +11173,8 @@ export interface AssetsApiInterface {
     range: string,
     assetId: number,
     referenceId: number,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetAssetPairRatesResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetAssetPairRatesResponse>
 
   /**
    * Gets asset pair rates based on provided query params
@@ -11200,8 +11190,8 @@ export interface AssetsApiInterface {
     assetId: number,
     referenceId: number,
     range?: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetAssetPairRatesResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetAssetPairRatesResponse>
 
   /**
    * Retrieves all available asset types
@@ -11211,8 +11201,8 @@ export interface AssetsApiInterface {
    * @memberof AssetsApiInterface
    */
   getAssetTypes(
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<AssetLookupTables>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<AssetLookupTables>
 
   /**
    * Query to search shared assets. Returns a page of results. If no query parameters are provided, returns results sorted by most popular. The equivalent search endpoint for the user assets is not provided, as user assets can be retrieved in full due to it being a small subset.
@@ -11230,8 +11220,8 @@ export interface AssetsApiInterface {
     start?: number,
     query?: string,
     assetType?: number,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<AssetsPage>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<AssetsPage>
 }
 
 /**
@@ -11252,7 +11242,7 @@ export class AssetsApi extends BaseAPI implements AssetsApiInterface {
   public getAsset(assetId: number, options?: RawAxiosRequestConfig) {
     return AssetsApiFp(this.configuration)
       .getAsset(assetId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -11267,11 +11257,11 @@ export class AssetsApi extends BaseAPI implements AssetsApiInterface {
   public getAssetPair(
     assetId: number,
     referenceId: number,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return AssetsApiFp(this.configuration)
       .getAssetPair(assetId, referenceId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -11286,11 +11276,11 @@ export class AssetsApi extends BaseAPI implements AssetsApiInterface {
   public getAssetPairConverted(
     assetId: number,
     referenceId: number,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return AssetsApiFp(this.configuration)
       .getAssetPairConverted(assetId, referenceId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -11307,11 +11297,11 @@ export class AssetsApi extends BaseAPI implements AssetsApiInterface {
     range: string,
     assetId: number,
     referenceId: number,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return AssetsApiFp(this.configuration)
       .getAssetPairConvertedRates(range, assetId, referenceId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -11328,11 +11318,11 @@ export class AssetsApi extends BaseAPI implements AssetsApiInterface {
     assetId: number,
     referenceId: number,
     range?: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return AssetsApiFp(this.configuration)
       .getAssetPairRates(assetId, referenceId, range, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -11345,7 +11335,7 @@ export class AssetsApi extends BaseAPI implements AssetsApiInterface {
   public getAssetTypes(options?: RawAxiosRequestConfig) {
     return AssetsApiFp(this.configuration)
       .getAssetTypes(options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -11364,11 +11354,11 @@ export class AssetsApi extends BaseAPI implements AssetsApiInterface {
     start?: number,
     query?: string,
     assetType?: number,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return AssetsApiFp(this.configuration)
       .searchAssets(count, start, query, assetType, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 }
 
@@ -11377,7 +11367,7 @@ export class AssetsApi extends BaseAPI implements AssetsApiInterface {
  * @export
  */
 export const AuthenticationApiAxiosParamCreator = function (
-  configuration?: Configuration,
+  configuration?: Configuration
 ) {
   return {
     /**
@@ -11387,37 +11377,37 @@ export const AuthenticationApiAxiosParamCreator = function (
      * @throws {RequiredError}
      */
     getMe: async (
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
-      const localVarPath = `/api/auth/me`;
+      const localVarPath = `/api/auth/me`
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Posting login details to this query will return an authentication token used in most of the requests.
@@ -11428,46 +11418,46 @@ export const AuthenticationApiAxiosParamCreator = function (
      */
     postLoginDetails: async (
       loginDetails: LoginDetails,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'loginDetails' is not null or undefined
-      assertParamExists("postLoginDetails", "loginDetails", loginDetails);
-      const localVarPath = `/api/auth`;
+      assertParamExists("postLoginDetails", "loginDetails", loginDetails)
+      const localVarPath = `/api/auth`
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         loginDetails,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Revokes all refresh tokens for the authenticated user and clears the refresh token cookie.
@@ -11476,37 +11466,37 @@ export const AuthenticationApiAxiosParamCreator = function (
      * @throws {RequiredError}
      */
     postLogout: async (
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
-      const localVarPath = `/api/auth/logout`;
+      const localVarPath = `/api/auth/logout`
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Uses the httpOnly refresh_token cookie to issue a new access token and rotate the refresh token.
@@ -11515,40 +11505,40 @@ export const AuthenticationApiAxiosParamCreator = function (
      * @throws {RequiredError}
      */
     postRefreshToken: async (
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
-      const localVarPath = `/api/auth/refresh`;
+      const localVarPath = `/api/auth/refresh`
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
-  };
-};
+  }
+}
 
 /**
  * AuthenticationApi - functional programming interface
@@ -11556,7 +11546,7 @@ export const AuthenticationApiAxiosParamCreator = function (
  */
 export const AuthenticationApiFp = function (configuration?: Configuration) {
   const localVarAxiosParamCreator =
-    AuthenticationApiAxiosParamCreator(configuration);
+    AuthenticationApiAxiosParamCreator(configuration)
   return {
     /**
      * Returns the authenticated user\'s identity, role, and metadata.
@@ -11565,23 +11555,23 @@ export const AuthenticationApiFp = function (configuration?: Configuration) {
      * @throws {RequiredError}
      */
     async getMe(
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<AuthMe>
     > {
-      const localVarAxiosArgs = await localVarAxiosParamCreator.getMe(options);
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarAxiosArgs = await localVarAxiosParamCreator.getMe(options)
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AuthenticationApi.getMe"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Posting login details to this query will return an authentication token used in most of the requests.
@@ -11592,24 +11582,24 @@ export const AuthenticationApiFp = function (configuration?: Configuration) {
      */
     async postLoginDetails(
       loginDetails: LoginDetails,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<Auth>
     > {
       const localVarAxiosArgs =
-        await localVarAxiosParamCreator.postLoginDetails(loginDetails, options);
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        await localVarAxiosParamCreator.postLoginDetails(loginDetails, options)
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AuthenticationApi.postLoginDetails"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Revokes all refresh tokens for the authenticated user and clears the refresh token cookie.
@@ -11618,24 +11608,24 @@ export const AuthenticationApiFp = function (configuration?: Configuration) {
      * @throws {RequiredError}
      */
     async postLogout(
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
       const localVarAxiosArgs =
-        await localVarAxiosParamCreator.postLogout(options);
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        await localVarAxiosParamCreator.postLogout(options)
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AuthenticationApi.postLogout"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Uses the httpOnly refresh_token cookie to issue a new access token and rotate the refresh token.
@@ -11644,27 +11634,27 @@ export const AuthenticationApiFp = function (configuration?: Configuration) {
      * @throws {RequiredError}
      */
     async postRefreshToken(
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<Auth>
     > {
       const localVarAxiosArgs =
-        await localVarAxiosParamCreator.postRefreshToken(options);
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        await localVarAxiosParamCreator.postRefreshToken(options)
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["AuthenticationApi.postRefreshToken"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
-  };
-};
+  }
+}
 
 /**
  * AuthenticationApi - factory interface
@@ -11673,9 +11663,9 @@ export const AuthenticationApiFp = function (configuration?: Configuration) {
 export const AuthenticationApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance,
+  axios?: AxiosInstance
 ) {
-  const localVarFp = AuthenticationApiFp(configuration);
+  const localVarFp = AuthenticationApiFp(configuration)
   return {
     /**
      * Returns the authenticated user\'s identity, role, and metadata.
@@ -11686,7 +11676,7 @@ export const AuthenticationApiFactory = function (
     getMe(options?: RawAxiosRequestConfig): AxiosPromise<AuthMe> {
       return localVarFp
         .getMe(options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Posting login details to this query will return an authentication token used in most of the requests.
@@ -11697,11 +11687,11 @@ export const AuthenticationApiFactory = function (
      */
     postLoginDetails(
       loginDetails: LoginDetails,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<Auth> {
       return localVarFp
         .postLoginDetails(loginDetails, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Revokes all refresh tokens for the authenticated user and clears the refresh token cookie.
@@ -11712,7 +11702,7 @@ export const AuthenticationApiFactory = function (
     postLogout(options?: RawAxiosRequestConfig): AxiosPromise<void> {
       return localVarFp
         .postLogout(options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Uses the httpOnly refresh_token cookie to issue a new access token and rotate the refresh token.
@@ -11723,10 +11713,10 @@ export const AuthenticationApiFactory = function (
     postRefreshToken(options?: RawAxiosRequestConfig): AxiosPromise<Auth> {
       return localVarFp
         .postRefreshToken(options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
-  };
-};
+  }
+}
 
 /**
  * AuthenticationApi - interface
@@ -11741,7 +11731,7 @@ export interface AuthenticationApiInterface {
    * @throws {RequiredError}
    * @memberof AuthenticationApiInterface
    */
-  getMe(options?: RawAxiosRequestConfig): AxiosPromise<AuthMe>;
+  getMe(options?: RawAxiosRequestConfig): AxiosPromise<AuthMe>
 
   /**
    * Posting login details to this query will return an authentication token used in most of the requests.
@@ -11753,8 +11743,8 @@ export interface AuthenticationApiInterface {
    */
   postLoginDetails(
     loginDetails: LoginDetails,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<Auth>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<Auth>
 
   /**
    * Revokes all refresh tokens for the authenticated user and clears the refresh token cookie.
@@ -11763,7 +11753,7 @@ export interface AuthenticationApiInterface {
    * @throws {RequiredError}
    * @memberof AuthenticationApiInterface
    */
-  postLogout(options?: RawAxiosRequestConfig): AxiosPromise<void>;
+  postLogout(options?: RawAxiosRequestConfig): AxiosPromise<void>
 
   /**
    * Uses the httpOnly refresh_token cookie to issue a new access token and rotate the refresh token.
@@ -11772,7 +11762,7 @@ export interface AuthenticationApiInterface {
    * @throws {RequiredError}
    * @memberof AuthenticationApiInterface
    */
-  postRefreshToken(options?: RawAxiosRequestConfig): AxiosPromise<Auth>;
+  postRefreshToken(options?: RawAxiosRequestConfig): AxiosPromise<Auth>
 }
 
 /**
@@ -11795,7 +11785,7 @@ export class AuthenticationApi
   public getMe(options?: RawAxiosRequestConfig) {
     return AuthenticationApiFp(this.configuration)
       .getMe(options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -11808,11 +11798,11 @@ export class AuthenticationApi
    */
   public postLoginDetails(
     loginDetails: LoginDetails,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return AuthenticationApiFp(this.configuration)
       .postLoginDetails(loginDetails, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -11825,7 +11815,7 @@ export class AuthenticationApi
   public postLogout(options?: RawAxiosRequestConfig) {
     return AuthenticationApiFp(this.configuration)
       .postLogout(options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -11838,7 +11828,7 @@ export class AuthenticationApi
   public postRefreshToken(options?: RawAxiosRequestConfig) {
     return AuthenticationApiFp(this.configuration)
       .postRefreshToken(options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 }
 
@@ -11847,7 +11837,7 @@ export class AuthenticationApi
  * @export
  */
 export const CategoriesApiAxiosParamCreator = function (
-  configuration?: Configuration,
+  configuration?: Configuration
 ) {
   return {
     /**
@@ -11857,41 +11847,41 @@ export const CategoriesApiAxiosParamCreator = function (
      * @throws {RequiredError}
      */
     getCategoryTypes: async (
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
-      const localVarPath = `/api/categories/types`;
+      const localVarPath = `/api/categories/types`
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Retrieves a paginated list of categories accessible to the user. Includes both global categories and user-specific categories. Supports searching by category name or type name, and filtering by type ID.
@@ -11908,60 +11898,60 @@ export const CategoriesApiAxiosParamCreator = function (
       start?: number,
       query?: string,
       typeId?: number,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
-      const localVarPath = `/api/categories`;
+      const localVarPath = `/api/categories`
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
       if (count !== undefined) {
-        localVarQueryParameter["count"] = count;
+        localVarQueryParameter["count"] = count
       }
 
       if (start !== undefined) {
-        localVarQueryParameter["start"] = start;
+        localVarQueryParameter["start"] = start
       }
 
       if (query !== undefined) {
-        localVarQueryParameter["query"] = query;
+        localVarQueryParameter["query"] = query
       }
 
       if (typeId !== undefined) {
-        localVarQueryParameter["type_id"] = typeId;
+        localVarQueryParameter["type_id"] = typeId
       }
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
-  };
-};
+  }
+}
 
 /**
  * CategoriesApi - functional programming interface
@@ -11969,7 +11959,7 @@ export const CategoriesApiAxiosParamCreator = function (
  */
 export const CategoriesApiFp = function (configuration?: Configuration) {
   const localVarAxiosParamCreator =
-    CategoriesApiAxiosParamCreator(configuration);
+    CategoriesApiAxiosParamCreator(configuration)
   return {
     /**
      * Retrieves all shared category types. Does not include user-specific category types.
@@ -11978,27 +11968,27 @@ export const CategoriesApiFp = function (configuration?: Configuration) {
      * @throws {RequiredError}
      */
     async getCategoryTypes(
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<CategoryMetadataLookupTables>
     > {
       const localVarAxiosArgs =
-        await localVarAxiosParamCreator.getCategoryTypes(options);
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        await localVarAxiosParamCreator.getCategoryTypes(options)
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["CategoriesApi.getCategoryTypes"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Retrieves a paginated list of categories accessible to the user. Includes both global categories and user-specific categories. Supports searching by category name or type name, and filtering by type ID.
@@ -12015,11 +12005,11 @@ export const CategoriesApiFp = function (configuration?: Configuration) {
       start?: number,
       query?: string,
       typeId?: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<SearchCategoriesResponse>
     > {
       const localVarAxiosArgs =
@@ -12028,23 +12018,23 @@ export const CategoriesApiFp = function (configuration?: Configuration) {
           start,
           query,
           typeId,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["CategoriesApi.searchCategories"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
-  };
-};
+  }
+}
 
 /**
  * CategoriesApi - factory interface
@@ -12053,9 +12043,9 @@ export const CategoriesApiFp = function (configuration?: Configuration) {
 export const CategoriesApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance,
+  axios?: AxiosInstance
 ) {
-  const localVarFp = CategoriesApiFp(configuration);
+  const localVarFp = CategoriesApiFp(configuration)
   return {
     /**
      * Retrieves all shared category types. Does not include user-specific category types.
@@ -12064,11 +12054,11 @@ export const CategoriesApiFactory = function (
      * @throws {RequiredError}
      */
     getCategoryTypes(
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<CategoryMetadataLookupTables> {
       return localVarFp
         .getCategoryTypes(options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Retrieves a paginated list of categories accessible to the user. Includes both global categories and user-specific categories. Supports searching by category name or type name, and filtering by type ID.
@@ -12085,14 +12075,14 @@ export const CategoriesApiFactory = function (
       start?: number,
       query?: string,
       typeId?: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<SearchCategoriesResponse> {
       return localVarFp
         .searchCategories(count, start, query, typeId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
-  };
-};
+  }
+}
 
 /**
  * CategoriesApi - interface
@@ -12108,8 +12098,8 @@ export interface CategoriesApiInterface {
    * @memberof CategoriesApiInterface
    */
   getCategoryTypes(
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<CategoryMetadataLookupTables>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<CategoryMetadataLookupTables>
 
   /**
    * Retrieves a paginated list of categories accessible to the user. Includes both global categories and user-specific categories. Supports searching by category name or type name, and filtering by type ID.
@@ -12127,8 +12117,8 @@ export interface CategoriesApiInterface {
     start?: number,
     query?: string,
     typeId?: number,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<SearchCategoriesResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<SearchCategoriesResponse>
 }
 
 /**
@@ -12148,7 +12138,7 @@ export class CategoriesApi extends BaseAPI implements CategoriesApiInterface {
   public getCategoryTypes(options?: RawAxiosRequestConfig) {
     return CategoriesApiFp(this.configuration)
       .getCategoryTypes(options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -12167,11 +12157,11 @@ export class CategoriesApi extends BaseAPI implements CategoriesApiInterface {
     start?: number,
     query?: string,
     typeId?: number,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return CategoriesApiFp(this.configuration)
       .searchCategories(count, start, query, typeId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 }
 
@@ -12180,7 +12170,7 @@ export class CategoriesApi extends BaseAPI implements CategoriesApiInterface {
  * @export
  */
 export const ConnectorsApiAxiosParamCreator = function (
-  configuration?: Configuration,
+  configuration?: Configuration
 ) {
   return {
     /**
@@ -12198,67 +12188,67 @@ export const ConnectorsApiAxiosParamCreator = function (
       connectionId: string,
       sessionId: string,
       completeOAuthSessionRequest: CompleteOAuthSessionRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("completeOauthSession", "userId", userId);
+      assertParamExists("completeOauthSession", "userId", userId)
       // verify required parameter 'connectionId' is not null or undefined
-      assertParamExists("completeOauthSession", "connectionId", connectionId);
+      assertParamExists("completeOauthSession", "connectionId", connectionId)
       // verify required parameter 'sessionId' is not null or undefined
-      assertParamExists("completeOauthSession", "sessionId", sessionId);
+      assertParamExists("completeOauthSession", "sessionId", sessionId)
       // verify required parameter 'completeOAuthSessionRequest' is not null or undefined
       assertParamExists(
         "completeOauthSession",
         "completeOAuthSessionRequest",
-        completeOAuthSessionRequest,
-      );
+        completeOAuthSessionRequest
+      )
       const localVarPath =
         `/api/users/{user_id}/connectors/connections/{connection_id}/oauth/sessions/{session_id}`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
           .replace(
             `{${"connection_id"}}`,
-            encodeURIComponent(String(connectionId)),
+            encodeURIComponent(String(connectionId))
           )
-          .replace(`{${"session_id"}}`, encodeURIComponent(String(sessionId)));
+          .replace(`{${"session_id"}}`, encodeURIComponent(String(sessionId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "PUT",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         completeOAuthSessionRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Creates a new binding between a connection and a provider account.
@@ -12273,64 +12263,64 @@ export const ConnectorsApiAxiosParamCreator = function (
       userId: string,
       connectionId: string,
       createBindingRequest: CreateBindingRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("createBinding", "userId", userId);
+      assertParamExists("createBinding", "userId", userId)
       // verify required parameter 'connectionId' is not null or undefined
-      assertParamExists("createBinding", "connectionId", connectionId);
+      assertParamExists("createBinding", "connectionId", connectionId)
       // verify required parameter 'createBindingRequest' is not null or undefined
       assertParamExists(
         "createBinding",
         "createBindingRequest",
-        createBindingRequest,
-      );
+        createBindingRequest
+      )
       const localVarPath =
         `/api/users/{user_id}/connectors/connections/{connection_id}/bindings`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
           .replace(
             `{${"connection_id"}}`,
-            encodeURIComponent(String(connectionId)),
-          );
+            encodeURIComponent(String(connectionId))
+          )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         createBindingRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Creates a new connector connection for the user.
@@ -12343,60 +12333,60 @@ export const ConnectorsApiAxiosParamCreator = function (
     createConnection: async (
       userId: string,
       createConnectionRequest: CreateConnectionRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("createConnection", "userId", userId);
+      assertParamExists("createConnection", "userId", userId)
       // verify required parameter 'createConnectionRequest' is not null or undefined
       assertParamExists(
         "createConnection",
         "createConnectionRequest",
-        createConnectionRequest,
-      );
+        createConnectionRequest
+      )
       const localVarPath =
         `/api/users/{user_id}/connectors/connections`.replace(
           `{${"user_id"}}`,
-          encodeURIComponent(String(userId)),
-        );
+          encodeURIComponent(String(userId))
+        )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         createConnectionRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Creates an OAuth authorization session for a connection and returns the provider consent URL.
@@ -12411,64 +12401,64 @@ export const ConnectorsApiAxiosParamCreator = function (
       userId: string,
       connectionId: string,
       createOAuthSessionRequest: CreateOAuthSessionRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("createOauthSession", "userId", userId);
+      assertParamExists("createOauthSession", "userId", userId)
       // verify required parameter 'connectionId' is not null or undefined
-      assertParamExists("createOauthSession", "connectionId", connectionId);
+      assertParamExists("createOauthSession", "connectionId", connectionId)
       // verify required parameter 'createOAuthSessionRequest' is not null or undefined
       assertParamExists(
         "createOauthSession",
         "createOAuthSessionRequest",
-        createOAuthSessionRequest,
-      );
+        createOAuthSessionRequest
+      )
       const localVarPath =
         `/api/users/{user_id}/connectors/connections/{connection_id}/oauth/sessions`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
           .replace(
             `{${"connection_id"}}`,
-            encodeURIComponent(String(connectionId)),
-          );
+            encodeURIComponent(String(connectionId))
+          )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         createOAuthSessionRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Deletes a binding.
@@ -12481,48 +12471,48 @@ export const ConnectorsApiAxiosParamCreator = function (
     deleteBinding: async (
       bindingId: string,
       userId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'bindingId' is not null or undefined
-      assertParamExists("deleteBinding", "bindingId", bindingId);
+      assertParamExists("deleteBinding", "bindingId", bindingId)
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("deleteBinding", "userId", userId);
+      assertParamExists("deleteBinding", "userId", userId)
       const localVarPath =
         `/api/users/{user_id}/connectors/bindings/{binding_id}`
           .replace(`{${"binding_id"}}`, encodeURIComponent(String(bindingId)))
-          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "DELETE",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Gets a specific binding by ID.
@@ -12535,48 +12525,48 @@ export const ConnectorsApiAxiosParamCreator = function (
     getBinding: async (
       bindingId: string,
       userId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'bindingId' is not null or undefined
-      assertParamExists("getBinding", "bindingId", bindingId);
+      assertParamExists("getBinding", "bindingId", bindingId)
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getBinding", "userId", userId);
+      assertParamExists("getBinding", "userId", userId)
       const localVarPath =
         `/api/users/{user_id}/connectors/bindings/{binding_id}`
           .replace(`{${"binding_id"}}`, encodeURIComponent(String(bindingId)))
-          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Reads the resumable sync checkpoint (cursor + last committed sync time) for a binding.
@@ -12589,48 +12579,48 @@ export const ConnectorsApiAxiosParamCreator = function (
     getSyncCheckpoint: async (
       userId: string,
       bindingId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getSyncCheckpoint", "userId", userId);
+      assertParamExists("getSyncCheckpoint", "userId", userId)
       // verify required parameter 'bindingId' is not null or undefined
-      assertParamExists("getSyncCheckpoint", "bindingId", bindingId);
+      assertParamExists("getSyncCheckpoint", "bindingId", bindingId)
       const localVarPath =
         `/api/users/{user_id}/connectors/bindings/{binding_id}/sync-checkpoint`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-          .replace(`{${"binding_id"}}`, encodeURIComponent(String(bindingId)));
+          .replace(`{${"binding_id"}}`, encodeURIComponent(String(bindingId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Ingests client-supplied raw provider data for a ClientSupplied-mode binding.
@@ -12645,61 +12635,61 @@ export const ConnectorsApiAxiosParamCreator = function (
       userId: string,
       bindingId: string,
       ingestTransactionsRequest: IngestTransactionsRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("ingestTransactions", "userId", userId);
+      assertParamExists("ingestTransactions", "userId", userId)
       // verify required parameter 'bindingId' is not null or undefined
-      assertParamExists("ingestTransactions", "bindingId", bindingId);
+      assertParamExists("ingestTransactions", "bindingId", bindingId)
       // verify required parameter 'ingestTransactionsRequest' is not null or undefined
       assertParamExists(
         "ingestTransactions",
         "ingestTransactionsRequest",
-        ingestTransactionsRequest,
-      );
+        ingestTransactionsRequest
+      )
       const localVarPath =
         `/api/users/{user_id}/connectors/bindings/{binding_id}/ingest`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-          .replace(`{${"binding_id"}}`, encodeURIComponent(String(bindingId)));
+          .replace(`{${"binding_id"}}`, encodeURIComponent(String(bindingId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         ingestTransactionsRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Gets all bindings associated with the user.
@@ -12710,46 +12700,46 @@ export const ConnectorsApiAxiosParamCreator = function (
      */
     listBindings: async (
       userId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("listBindings", "userId", userId);
+      assertParamExists("listBindings", "userId", userId)
       const localVarPath = `/api/users/{user_id}/connectors/bindings`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Gets all connector connections associated with the user.
@@ -12760,47 +12750,47 @@ export const ConnectorsApiAxiosParamCreator = function (
      */
     listConnections: async (
       userId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("listConnections", "userId", userId);
+      assertParamExists("listConnections", "userId", userId)
       const localVarPath =
         `/api/users/{user_id}/connectors/connections`.replace(
           `{${"user_id"}}`,
-          encodeURIComponent(String(userId)),
-        );
+          encodeURIComponent(String(userId))
+        )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Lists mapped transactions from the fetched archive for a provider account.
@@ -12815,65 +12805,65 @@ export const ConnectorsApiAxiosParamCreator = function (
       userId: string,
       connectionId: string,
       providerAccountId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("listProviderAccountTransactions", "userId", userId);
+      assertParamExists("listProviderAccountTransactions", "userId", userId)
       // verify required parameter 'connectionId' is not null or undefined
       assertParamExists(
         "listProviderAccountTransactions",
         "connectionId",
-        connectionId,
-      );
+        connectionId
+      )
       // verify required parameter 'providerAccountId' is not null or undefined
       assertParamExists(
         "listProviderAccountTransactions",
         "providerAccountId",
-        providerAccountId,
-      );
+        providerAccountId
+      )
       const localVarPath =
         `/api/users/{user_id}/connectors/connections/{connection_id}/accounts/{provider_account_id}/transactions`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
           .replace(
             `{${"connection_id"}}`,
-            encodeURIComponent(String(connectionId)),
+            encodeURIComponent(String(connectionId))
           )
           .replace(
             `{${"provider_account_id"}}`,
-            encodeURIComponent(String(providerAccountId)),
-          );
+            encodeURIComponent(String(providerAccountId))
+          )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Lists available provider accounts for a connection.
@@ -12886,51 +12876,51 @@ export const ConnectorsApiAxiosParamCreator = function (
     listProviderAccounts: async (
       userId: string,
       connectionId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("listProviderAccounts", "userId", userId);
+      assertParamExists("listProviderAccounts", "userId", userId)
       // verify required parameter 'connectionId' is not null or undefined
-      assertParamExists("listProviderAccounts", "connectionId", connectionId);
+      assertParamExists("listProviderAccounts", "connectionId", connectionId)
       const localVarPath =
         `/api/users/{user_id}/connectors/connections/{connection_id}/accounts`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
           .replace(
             `{${"connection_id"}}`,
-            encodeURIComponent(String(connectionId)),
-          );
+            encodeURIComponent(String(connectionId))
+          )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Revokes a specific connector connection.
@@ -12943,51 +12933,51 @@ export const ConnectorsApiAxiosParamCreator = function (
     revokeConnection: async (
       userId: string,
       connectionId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("revokeConnection", "userId", userId);
+      assertParamExists("revokeConnection", "userId", userId)
       // verify required parameter 'connectionId' is not null or undefined
-      assertParamExists("revokeConnection", "connectionId", connectionId);
+      assertParamExists("revokeConnection", "connectionId", connectionId)
       const localVarPath =
         `/api/users/{user_id}/connectors/connections/{connection_id}`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
           .replace(
             `{${"connection_id"}}`,
-            encodeURIComponent(String(connectionId)),
-          );
+            encodeURIComponent(String(connectionId))
+          )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "DELETE",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Triggers a sync for a binding. Stored mode enqueues a job, transient mode is synchronous.
@@ -13002,61 +12992,57 @@ export const ConnectorsApiAxiosParamCreator = function (
       userId: string,
       bindingId: string,
       syncBindingRequest: SyncBindingRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("syncBinding", "userId", userId);
+      assertParamExists("syncBinding", "userId", userId)
       // verify required parameter 'bindingId' is not null or undefined
-      assertParamExists("syncBinding", "bindingId", bindingId);
+      assertParamExists("syncBinding", "bindingId", bindingId)
       // verify required parameter 'syncBindingRequest' is not null or undefined
-      assertParamExists(
-        "syncBinding",
-        "syncBindingRequest",
-        syncBindingRequest,
-      );
+      assertParamExists("syncBinding", "syncBindingRequest", syncBindingRequest)
       const localVarPath =
         `/api/users/{user_id}/connectors/bindings/{binding_id}/sync`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-          .replace(`{${"binding_id"}}`, encodeURIComponent(String(bindingId)));
+          .replace(`{${"binding_id"}}`, encodeURIComponent(String(bindingId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         syncBindingRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Updates a binding\'s write mode and status.
@@ -13071,64 +13057,64 @@ export const ConnectorsApiAxiosParamCreator = function (
       bindingId: string,
       userId: string,
       updateBindingRequest: UpdateBindingRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'bindingId' is not null or undefined
-      assertParamExists("updateBinding", "bindingId", bindingId);
+      assertParamExists("updateBinding", "bindingId", bindingId)
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("updateBinding", "userId", userId);
+      assertParamExists("updateBinding", "userId", userId)
       // verify required parameter 'updateBindingRequest' is not null or undefined
       assertParamExists(
         "updateBinding",
         "updateBindingRequest",
-        updateBindingRequest,
-      );
+        updateBindingRequest
+      )
       const localVarPath =
         `/api/users/{user_id}/connectors/bindings/{binding_id}`
           .replace(`{${"binding_id"}}`, encodeURIComponent(String(bindingId)))
-          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+          .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "PUT",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         updateBindingRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
-  };
-};
+  }
+}
 
 /**
  * ConnectorsApi - functional programming interface
@@ -13136,7 +13122,7 @@ export const ConnectorsApiAxiosParamCreator = function (
  */
 export const ConnectorsApiFp = function (configuration?: Configuration) {
   const localVarAxiosParamCreator =
-    ConnectorsApiAxiosParamCreator(configuration);
+    ConnectorsApiAxiosParamCreator(configuration)
   return {
     /**
      * Completes an OAuth session with the provider redirect result. Consent denial is a valid outcome and returns 200 with status `denied` — not an error response.
@@ -13153,11 +13139,11 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
       connectionId: string,
       sessionId: string,
       completeOAuthSessionRequest: CompleteOAuthSessionRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<CompleteOAuthSessionResponse>
     > {
       const localVarAxiosArgs =
@@ -13166,20 +13152,20 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
           connectionId,
           sessionId,
           completeOAuthSessionRequest,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["ConnectorsApi.completeOauthSession"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Creates a new binding between a connection and a provider account.
@@ -13194,31 +13180,31 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
       userId: string,
       connectionId: string,
       createBindingRequest: CreateBindingRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<CreateBindingResponse>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.createBinding(
         userId,
         connectionId,
         createBindingRequest,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["ConnectorsApi.createBinding"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Creates a new connector connection for the user.
@@ -13231,31 +13217,31 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
     async createConnection(
       userId: string,
       createConnectionRequest: CreateConnectionRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<CreateConnectionResponse>
     > {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.createConnection(
           userId,
           createConnectionRequest,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["ConnectorsApi.createConnection"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Creates an OAuth authorization session for a connection and returns the provider consent URL.
@@ -13270,11 +13256,11 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
       userId: string,
       connectionId: string,
       createOAuthSessionRequest: CreateOAuthSessionRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<CreateOAuthSessionResponse>
     > {
       const localVarAxiosArgs =
@@ -13282,20 +13268,20 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
           userId,
           connectionId,
           createOAuthSessionRequest,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["ConnectorsApi.createOauthSession"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Deletes a binding.
@@ -13308,27 +13294,27 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
     async deleteBinding(
       bindingId: string,
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.deleteBinding(
         bindingId,
         userId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["ConnectorsApi.deleteBinding"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Gets a specific binding by ID.
@@ -13341,30 +13327,30 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
     async getBinding(
       bindingId: string,
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<ConnectorBinding>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getBinding(
         bindingId,
         userId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["ConnectorsApi.getBinding"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Reads the resumable sync checkpoint (cursor + last committed sync time) for a binding.
@@ -13377,31 +13363,31 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
     async getSyncCheckpoint(
       userId: string,
       bindingId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetSyncCheckpointResponse>
     > {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getSyncCheckpoint(
           userId,
           bindingId,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["ConnectorsApi.getSyncCheckpoint"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Ingests client-supplied raw provider data for a ClientSupplied-mode binding.
@@ -13416,11 +13402,11 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
       userId: string,
       bindingId: string,
       ingestTransactionsRequest: IngestTransactionsRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<IngestTransactionsResponse>
     > {
       const localVarAxiosArgs =
@@ -13428,20 +13414,20 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
           userId,
           bindingId,
           ingestTransactionsRequest,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["ConnectorsApi.ingestTransactions"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Gets all bindings associated with the user.
@@ -13452,29 +13438,29 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
      */
     async listBindings(
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetBindingsResponse>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.listBindings(
         userId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["ConnectorsApi.listBindings"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Gets all connector connections associated with the user.
@@ -13485,29 +13471,29 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
      */
     async listConnections(
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetConnectionsResponse>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.listConnections(
         userId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["ConnectorsApi.listConnections"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Lists mapped transactions from the fetched archive for a provider account.
@@ -13522,11 +13508,11 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
       userId: string,
       connectionId: string,
       providerAccountId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<ListProviderAccountTransactionsResponse>
     > {
       const localVarAxiosArgs =
@@ -13534,20 +13520,20 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
           userId,
           connectionId,
           providerAccountId,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["ConnectorsApi.listProviderAccountTransactions"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Lists available provider accounts for a connection.
@@ -13560,31 +13546,31 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
     async listProviderAccounts(
       userId: string,
       connectionId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<ListProviderAccountsResponse>
     > {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.listProviderAccounts(
           userId,
           connectionId,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["ConnectorsApi.listProviderAccounts"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Revokes a specific connector connection.
@@ -13597,7 +13583,7 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
     async revokeConnection(
       userId: string,
       connectionId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
@@ -13605,20 +13591,20 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
         await localVarAxiosParamCreator.revokeConnection(
           userId,
           connectionId,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["ConnectorsApi.revokeConnection"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Triggers a sync for a binding. Stored mode enqueues a job, transient mode is synchronous.
@@ -13633,31 +13619,31 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
       userId: string,
       bindingId: string,
       syncBindingRequest: SyncBindingRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<SyncBindingResponse>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.syncBinding(
         userId,
         bindingId,
         syncBindingRequest,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["ConnectorsApi.syncBinding"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Updates a binding\'s write mode and status.
@@ -13672,34 +13658,34 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
       bindingId: string,
       userId: string,
       updateBindingRequest: UpdateBindingRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<ConnectorBinding>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.updateBinding(
         bindingId,
         userId,
         updateBindingRequest,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["ConnectorsApi.updateBinding"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
-  };
-};
+  }
+}
 
 /**
  * ConnectorsApi - factory interface
@@ -13708,9 +13694,9 @@ export const ConnectorsApiFp = function (configuration?: Configuration) {
 export const ConnectorsApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance,
+  axios?: AxiosInstance
 ) {
-  const localVarFp = ConnectorsApiFp(configuration);
+  const localVarFp = ConnectorsApiFp(configuration)
   return {
     /**
      * Completes an OAuth session with the provider redirect result. Consent denial is a valid outcome and returns 200 with status `denied` — not an error response.
@@ -13727,7 +13713,7 @@ export const ConnectorsApiFactory = function (
       connectionId: string,
       sessionId: string,
       completeOAuthSessionRequest: CompleteOAuthSessionRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<CompleteOAuthSessionResponse> {
       return localVarFp
         .completeOauthSession(
@@ -13735,9 +13721,9 @@ export const ConnectorsApiFactory = function (
           connectionId,
           sessionId,
           completeOAuthSessionRequest,
-          options,
+          options
         )
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Creates a new binding between a connection and a provider account.
@@ -13752,11 +13738,11 @@ export const ConnectorsApiFactory = function (
       userId: string,
       connectionId: string,
       createBindingRequest: CreateBindingRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<CreateBindingResponse> {
       return localVarFp
         .createBinding(userId, connectionId, createBindingRequest, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Creates a new connector connection for the user.
@@ -13769,11 +13755,11 @@ export const ConnectorsApiFactory = function (
     createConnection(
       userId: string,
       createConnectionRequest: CreateConnectionRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<CreateConnectionResponse> {
       return localVarFp
         .createConnection(userId, createConnectionRequest, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Creates an OAuth authorization session for a connection and returns the provider consent URL.
@@ -13788,16 +13774,16 @@ export const ConnectorsApiFactory = function (
       userId: string,
       connectionId: string,
       createOAuthSessionRequest: CreateOAuthSessionRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<CreateOAuthSessionResponse> {
       return localVarFp
         .createOauthSession(
           userId,
           connectionId,
           createOAuthSessionRequest,
-          options,
+          options
         )
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Deletes a binding.
@@ -13810,11 +13796,11 @@ export const ConnectorsApiFactory = function (
     deleteBinding(
       bindingId: string,
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<void> {
       return localVarFp
         .deleteBinding(bindingId, userId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Gets a specific binding by ID.
@@ -13827,11 +13813,11 @@ export const ConnectorsApiFactory = function (
     getBinding(
       bindingId: string,
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<ConnectorBinding> {
       return localVarFp
         .getBinding(bindingId, userId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Reads the resumable sync checkpoint (cursor + last committed sync time) for a binding.
@@ -13844,11 +13830,11 @@ export const ConnectorsApiFactory = function (
     getSyncCheckpoint(
       userId: string,
       bindingId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetSyncCheckpointResponse> {
       return localVarFp
         .getSyncCheckpoint(userId, bindingId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Ingests client-supplied raw provider data for a ClientSupplied-mode binding.
@@ -13863,16 +13849,16 @@ export const ConnectorsApiFactory = function (
       userId: string,
       bindingId: string,
       ingestTransactionsRequest: IngestTransactionsRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<IngestTransactionsResponse> {
       return localVarFp
         .ingestTransactions(
           userId,
           bindingId,
           ingestTransactionsRequest,
-          options,
+          options
         )
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Gets all bindings associated with the user.
@@ -13883,11 +13869,11 @@ export const ConnectorsApiFactory = function (
      */
     listBindings(
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetBindingsResponse> {
       return localVarFp
         .listBindings(userId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Gets all connector connections associated with the user.
@@ -13898,11 +13884,11 @@ export const ConnectorsApiFactory = function (
      */
     listConnections(
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetConnectionsResponse> {
       return localVarFp
         .listConnections(userId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Lists mapped transactions from the fetched archive for a provider account.
@@ -13917,16 +13903,16 @@ export const ConnectorsApiFactory = function (
       userId: string,
       connectionId: string,
       providerAccountId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<ListProviderAccountTransactionsResponse> {
       return localVarFp
         .listProviderAccountTransactions(
           userId,
           connectionId,
           providerAccountId,
-          options,
+          options
         )
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Lists available provider accounts for a connection.
@@ -13939,11 +13925,11 @@ export const ConnectorsApiFactory = function (
     listProviderAccounts(
       userId: string,
       connectionId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<ListProviderAccountsResponse> {
       return localVarFp
         .listProviderAccounts(userId, connectionId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Revokes a specific connector connection.
@@ -13956,11 +13942,11 @@ export const ConnectorsApiFactory = function (
     revokeConnection(
       userId: string,
       connectionId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<void> {
       return localVarFp
         .revokeConnection(userId, connectionId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Triggers a sync for a binding. Stored mode enqueues a job, transient mode is synchronous.
@@ -13975,11 +13961,11 @@ export const ConnectorsApiFactory = function (
       userId: string,
       bindingId: string,
       syncBindingRequest: SyncBindingRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<SyncBindingResponse> {
       return localVarFp
         .syncBinding(userId, bindingId, syncBindingRequest, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Updates a binding\'s write mode and status.
@@ -13994,14 +13980,14 @@ export const ConnectorsApiFactory = function (
       bindingId: string,
       userId: string,
       updateBindingRequest: UpdateBindingRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<ConnectorBinding> {
       return localVarFp
         .updateBinding(bindingId, userId, updateBindingRequest, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
-  };
-};
+  }
+}
 
 /**
  * ConnectorsApi - interface
@@ -14025,8 +14011,8 @@ export interface ConnectorsApiInterface {
     connectionId: string,
     sessionId: string,
     completeOAuthSessionRequest: CompleteOAuthSessionRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<CompleteOAuthSessionResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<CompleteOAuthSessionResponse>
 
   /**
    * Creates a new binding between a connection and a provider account.
@@ -14042,8 +14028,8 @@ export interface ConnectorsApiInterface {
     userId: string,
     connectionId: string,
     createBindingRequest: CreateBindingRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<CreateBindingResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<CreateBindingResponse>
 
   /**
    * Creates a new connector connection for the user.
@@ -14057,8 +14043,8 @@ export interface ConnectorsApiInterface {
   createConnection(
     userId: string,
     createConnectionRequest: CreateConnectionRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<CreateConnectionResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<CreateConnectionResponse>
 
   /**
    * Creates an OAuth authorization session for a connection and returns the provider consent URL.
@@ -14074,8 +14060,8 @@ export interface ConnectorsApiInterface {
     userId: string,
     connectionId: string,
     createOAuthSessionRequest: CreateOAuthSessionRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<CreateOAuthSessionResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<CreateOAuthSessionResponse>
 
   /**
    * Deletes a binding.
@@ -14089,8 +14075,8 @@ export interface ConnectorsApiInterface {
   deleteBinding(
     bindingId: string,
     userId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<void>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<void>
 
   /**
    * Gets a specific binding by ID.
@@ -14104,8 +14090,8 @@ export interface ConnectorsApiInterface {
   getBinding(
     bindingId: string,
     userId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<ConnectorBinding>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<ConnectorBinding>
 
   /**
    * Reads the resumable sync checkpoint (cursor + last committed sync time) for a binding.
@@ -14119,8 +14105,8 @@ export interface ConnectorsApiInterface {
   getSyncCheckpoint(
     userId: string,
     bindingId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetSyncCheckpointResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetSyncCheckpointResponse>
 
   /**
    * Ingests client-supplied raw provider data for a ClientSupplied-mode binding.
@@ -14136,8 +14122,8 @@ export interface ConnectorsApiInterface {
     userId: string,
     bindingId: string,
     ingestTransactionsRequest: IngestTransactionsRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<IngestTransactionsResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<IngestTransactionsResponse>
 
   /**
    * Gets all bindings associated with the user.
@@ -14149,8 +14135,8 @@ export interface ConnectorsApiInterface {
    */
   listBindings(
     userId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetBindingsResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetBindingsResponse>
 
   /**
    * Gets all connector connections associated with the user.
@@ -14162,8 +14148,8 @@ export interface ConnectorsApiInterface {
    */
   listConnections(
     userId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetConnectionsResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetConnectionsResponse>
 
   /**
    * Lists mapped transactions from the fetched archive for a provider account.
@@ -14179,8 +14165,8 @@ export interface ConnectorsApiInterface {
     userId: string,
     connectionId: string,
     providerAccountId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<ListProviderAccountTransactionsResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<ListProviderAccountTransactionsResponse>
 
   /**
    * Lists available provider accounts for a connection.
@@ -14194,8 +14180,8 @@ export interface ConnectorsApiInterface {
   listProviderAccounts(
     userId: string,
     connectionId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<ListProviderAccountsResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<ListProviderAccountsResponse>
 
   /**
    * Revokes a specific connector connection.
@@ -14209,8 +14195,8 @@ export interface ConnectorsApiInterface {
   revokeConnection(
     userId: string,
     connectionId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<void>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<void>
 
   /**
    * Triggers a sync for a binding. Stored mode enqueues a job, transient mode is synchronous.
@@ -14226,8 +14212,8 @@ export interface ConnectorsApiInterface {
     userId: string,
     bindingId: string,
     syncBindingRequest: SyncBindingRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<SyncBindingResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<SyncBindingResponse>
 
   /**
    * Updates a binding\'s write mode and status.
@@ -14243,8 +14229,8 @@ export interface ConnectorsApiInterface {
     bindingId: string,
     userId: string,
     updateBindingRequest: UpdateBindingRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<ConnectorBinding>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<ConnectorBinding>
 }
 
 /**
@@ -14270,7 +14256,7 @@ export class ConnectorsApi extends BaseAPI implements ConnectorsApiInterface {
     connectionId: string,
     sessionId: string,
     completeOAuthSessionRequest: CompleteOAuthSessionRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return ConnectorsApiFp(this.configuration)
       .completeOauthSession(
@@ -14278,9 +14264,9 @@ export class ConnectorsApi extends BaseAPI implements ConnectorsApiInterface {
         connectionId,
         sessionId,
         completeOAuthSessionRequest,
-        options,
+        options
       )
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -14297,11 +14283,11 @@ export class ConnectorsApi extends BaseAPI implements ConnectorsApiInterface {
     userId: string,
     connectionId: string,
     createBindingRequest: CreateBindingRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return ConnectorsApiFp(this.configuration)
       .createBinding(userId, connectionId, createBindingRequest, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -14316,11 +14302,11 @@ export class ConnectorsApi extends BaseAPI implements ConnectorsApiInterface {
   public createConnection(
     userId: string,
     createConnectionRequest: CreateConnectionRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return ConnectorsApiFp(this.configuration)
       .createConnection(userId, createConnectionRequest, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -14337,16 +14323,16 @@ export class ConnectorsApi extends BaseAPI implements ConnectorsApiInterface {
     userId: string,
     connectionId: string,
     createOAuthSessionRequest: CreateOAuthSessionRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return ConnectorsApiFp(this.configuration)
       .createOauthSession(
         userId,
         connectionId,
         createOAuthSessionRequest,
-        options,
+        options
       )
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -14361,11 +14347,11 @@ export class ConnectorsApi extends BaseAPI implements ConnectorsApiInterface {
   public deleteBinding(
     bindingId: string,
     userId: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return ConnectorsApiFp(this.configuration)
       .deleteBinding(bindingId, userId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -14380,11 +14366,11 @@ export class ConnectorsApi extends BaseAPI implements ConnectorsApiInterface {
   public getBinding(
     bindingId: string,
     userId: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return ConnectorsApiFp(this.configuration)
       .getBinding(bindingId, userId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -14399,11 +14385,11 @@ export class ConnectorsApi extends BaseAPI implements ConnectorsApiInterface {
   public getSyncCheckpoint(
     userId: string,
     bindingId: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return ConnectorsApiFp(this.configuration)
       .getSyncCheckpoint(userId, bindingId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -14420,11 +14406,11 @@ export class ConnectorsApi extends BaseAPI implements ConnectorsApiInterface {
     userId: string,
     bindingId: string,
     ingestTransactionsRequest: IngestTransactionsRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return ConnectorsApiFp(this.configuration)
       .ingestTransactions(userId, bindingId, ingestTransactionsRequest, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -14438,7 +14424,7 @@ export class ConnectorsApi extends BaseAPI implements ConnectorsApiInterface {
   public listBindings(userId: string, options?: RawAxiosRequestConfig) {
     return ConnectorsApiFp(this.configuration)
       .listBindings(userId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -14452,7 +14438,7 @@ export class ConnectorsApi extends BaseAPI implements ConnectorsApiInterface {
   public listConnections(userId: string, options?: RawAxiosRequestConfig) {
     return ConnectorsApiFp(this.configuration)
       .listConnections(userId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -14469,16 +14455,16 @@ export class ConnectorsApi extends BaseAPI implements ConnectorsApiInterface {
     userId: string,
     connectionId: string,
     providerAccountId: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return ConnectorsApiFp(this.configuration)
       .listProviderAccountTransactions(
         userId,
         connectionId,
         providerAccountId,
-        options,
+        options
       )
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -14493,11 +14479,11 @@ export class ConnectorsApi extends BaseAPI implements ConnectorsApiInterface {
   public listProviderAccounts(
     userId: string,
     connectionId: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return ConnectorsApiFp(this.configuration)
       .listProviderAccounts(userId, connectionId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -14512,11 +14498,11 @@ export class ConnectorsApi extends BaseAPI implements ConnectorsApiInterface {
   public revokeConnection(
     userId: string,
     connectionId: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return ConnectorsApiFp(this.configuration)
       .revokeConnection(userId, connectionId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -14533,11 +14519,11 @@ export class ConnectorsApi extends BaseAPI implements ConnectorsApiInterface {
     userId: string,
     bindingId: string,
     syncBindingRequest: SyncBindingRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return ConnectorsApiFp(this.configuration)
       .syncBinding(userId, bindingId, syncBindingRequest, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -14554,11 +14540,11 @@ export class ConnectorsApi extends BaseAPI implements ConnectorsApiInterface {
     bindingId: string,
     userId: string,
     updateBindingRequest: UpdateBindingRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return ConnectorsApiFp(this.configuration)
       .updateBinding(bindingId, userId, updateBindingRequest, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 }
 
@@ -14567,7 +14553,7 @@ export class ConnectorsApi extends BaseAPI implements ConnectorsApiInterface {
  * @export
  */
 export const FilesApiAxiosParamCreator = function (
-  configuration?: Configuration,
+  configuration?: Configuration
 ) {
   return {
     /**
@@ -14581,47 +14567,47 @@ export const FilesApiAxiosParamCreator = function (
     confirmFile: async (
       userId: string,
       fileId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("confirmFile", "userId", userId);
+      assertParamExists("confirmFile", "userId", userId)
       // verify required parameter 'fileId' is not null or undefined
-      assertParamExists("confirmFile", "fileId", fileId);
+      assertParamExists("confirmFile", "fileId", fileId)
       const localVarPath = `/api/users/{user_id}/files/{file_id}/confirm`
         .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-        .replace(`{${"file_id"}}`, encodeURIComponent(String(fileId)));
+        .replace(`{${"file_id"}}`, encodeURIComponent(String(fileId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Creates a new file record and returns a presigned upload URL.
@@ -14634,55 +14620,55 @@ export const FilesApiAxiosParamCreator = function (
     createFile: async (
       userId: string,
       createFileRequest: CreateFileRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("createFile", "userId", userId);
+      assertParamExists("createFile", "userId", userId)
       // verify required parameter 'createFileRequest' is not null or undefined
-      assertParamExists("createFile", "createFileRequest", createFileRequest);
+      assertParamExists("createFile", "createFileRequest", createFileRequest)
       const localVarPath = `/api/users/{user_id}/files`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         createFileRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Deletes a file record and associated storage objects.
@@ -14695,47 +14681,47 @@ export const FilesApiAxiosParamCreator = function (
     deleteFile: async (
       userId: string,
       fileId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("deleteFile", "userId", userId);
+      assertParamExists("deleteFile", "userId", userId)
       // verify required parameter 'fileId' is not null or undefined
-      assertParamExists("deleteFile", "fileId", fileId);
+      assertParamExists("deleteFile", "fileId", fileId)
       const localVarPath = `/api/users/{user_id}/files/{file_id}`
         .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-        .replace(`{${"file_id"}}`, encodeURIComponent(String(fileId)));
+        .replace(`{${"file_id"}}`, encodeURIComponent(String(fileId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "DELETE",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Retrieves a single file record.
@@ -14748,47 +14734,47 @@ export const FilesApiAxiosParamCreator = function (
     getFile: async (
       userId: string,
       fileId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getFile", "userId", userId);
+      assertParamExists("getFile", "userId", userId)
       // verify required parameter 'fileId' is not null or undefined
-      assertParamExists("getFile", "fileId", fileId);
+      assertParamExists("getFile", "fileId", fileId)
       const localVarPath = `/api/users/{user_id}/files/{file_id}`
         .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-        .replace(`{${"file_id"}}`, encodeURIComponent(String(fileId)));
+        .replace(`{${"file_id"}}`, encodeURIComponent(String(fileId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Returns a signed URL for the file thumbnail.
@@ -14801,47 +14787,47 @@ export const FilesApiAxiosParamCreator = function (
     getFileThumbnail: async (
       userId: string,
       fileId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getFileThumbnail", "userId", userId);
+      assertParamExists("getFileThumbnail", "userId", userId)
       // verify required parameter 'fileId' is not null or undefined
-      assertParamExists("getFileThumbnail", "fileId", fileId);
+      assertParamExists("getFileThumbnail", "fileId", fileId)
       const localVarPath = `/api/users/{user_id}/files/{file_id}/thumbnail`
         .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-        .replace(`{${"file_id"}}`, encodeURIComponent(String(fileId)));
+        .replace(`{${"file_id"}}`, encodeURIComponent(String(fileId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Returns a signed download URL for the file.
@@ -14854,57 +14840,57 @@ export const FilesApiAxiosParamCreator = function (
     getFileUrl: async (
       userId: string,
       fileId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getFileUrl", "userId", userId);
+      assertParamExists("getFileUrl", "userId", userId)
       // verify required parameter 'fileId' is not null or undefined
-      assertParamExists("getFileUrl", "fileId", fileId);
+      assertParamExists("getFileUrl", "fileId", fileId)
       const localVarPath = `/api/users/{user_id}/files/{file_id}/url`
         .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-        .replace(`{${"file_id"}}`, encodeURIComponent(String(fileId)));
+        .replace(`{${"file_id"}}`, encodeURIComponent(String(fileId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
-  };
-};
+  }
+}
 
 /**
  * FilesApi - functional programming interface
  * @export
  */
 export const FilesApiFp = function (configuration?: Configuration) {
-  const localVarAxiosParamCreator = FilesApiAxiosParamCreator(configuration);
+  const localVarAxiosParamCreator = FilesApiAxiosParamCreator(configuration)
   return {
     /**
      * Transitions file to processing and triggers background verification.
@@ -14917,30 +14903,30 @@ export const FilesApiFp = function (configuration?: Configuration) {
     async confirmFile(
       userId: string,
       fileId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<ConfirmFileResponse>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.confirmFile(
         userId,
         fileId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["FilesApi.confirmFile"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Creates a new file record and returns a presigned upload URL.
@@ -14953,30 +14939,30 @@ export const FilesApiFp = function (configuration?: Configuration) {
     async createFile(
       userId: string,
       createFileRequest: CreateFileRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<CreateFileResponse>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.createFile(
         userId,
         createFileRequest,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["FilesApi.createFile"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Deletes a file record and associated storage objects.
@@ -14989,27 +14975,27 @@ export const FilesApiFp = function (configuration?: Configuration) {
     async deleteFile(
       userId: string,
       fileId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.deleteFile(
         userId,
         fileId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["FilesApi.deleteFile"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Retrieves a single file record.
@@ -15022,29 +15008,29 @@ export const FilesApiFp = function (configuration?: Configuration) {
     async getFile(
       userId: string,
       fileId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetFileResponse>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getFile(
         userId,
         fileId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["FilesApi.getFile"]?.[localVarOperationServerIndex]
-          ?.url;
+          ?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Returns a signed URL for the file thumbnail.
@@ -15057,31 +15043,31 @@ export const FilesApiFp = function (configuration?: Configuration) {
     async getFileThumbnail(
       userId: string,
       fileId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<FileUrlResponse>
     > {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getFileThumbnail(
           userId,
           fileId,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["FilesApi.getFileThumbnail"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Returns a signed download URL for the file.
@@ -15094,33 +15080,33 @@ export const FilesApiFp = function (configuration?: Configuration) {
     async getFileUrl(
       userId: string,
       fileId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<FileUrlResponse>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getFileUrl(
         userId,
         fileId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["FilesApi.getFileUrl"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
-  };
-};
+  }
+}
 
 /**
  * FilesApi - factory interface
@@ -15129,9 +15115,9 @@ export const FilesApiFp = function (configuration?: Configuration) {
 export const FilesApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance,
+  axios?: AxiosInstance
 ) {
-  const localVarFp = FilesApiFp(configuration);
+  const localVarFp = FilesApiFp(configuration)
   return {
     /**
      * Transitions file to processing and triggers background verification.
@@ -15144,11 +15130,11 @@ export const FilesApiFactory = function (
     confirmFile(
       userId: string,
       fileId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<ConfirmFileResponse> {
       return localVarFp
         .confirmFile(userId, fileId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Creates a new file record and returns a presigned upload URL.
@@ -15161,11 +15147,11 @@ export const FilesApiFactory = function (
     createFile(
       userId: string,
       createFileRequest: CreateFileRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<CreateFileResponse> {
       return localVarFp
         .createFile(userId, createFileRequest, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Deletes a file record and associated storage objects.
@@ -15178,11 +15164,11 @@ export const FilesApiFactory = function (
     deleteFile(
       userId: string,
       fileId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<void> {
       return localVarFp
         .deleteFile(userId, fileId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Retrieves a single file record.
@@ -15195,11 +15181,11 @@ export const FilesApiFactory = function (
     getFile(
       userId: string,
       fileId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetFileResponse> {
       return localVarFp
         .getFile(userId, fileId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Returns a signed URL for the file thumbnail.
@@ -15212,11 +15198,11 @@ export const FilesApiFactory = function (
     getFileThumbnail(
       userId: string,
       fileId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<FileUrlResponse> {
       return localVarFp
         .getFileThumbnail(userId, fileId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Returns a signed download URL for the file.
@@ -15229,14 +15215,14 @@ export const FilesApiFactory = function (
     getFileUrl(
       userId: string,
       fileId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<FileUrlResponse> {
       return localVarFp
         .getFileUrl(userId, fileId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
-  };
-};
+  }
+}
 
 /**
  * FilesApi - interface
@@ -15256,8 +15242,8 @@ export interface FilesApiInterface {
   confirmFile(
     userId: string,
     fileId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<ConfirmFileResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<ConfirmFileResponse>
 
   /**
    * Creates a new file record and returns a presigned upload URL.
@@ -15271,8 +15257,8 @@ export interface FilesApiInterface {
   createFile(
     userId: string,
     createFileRequest: CreateFileRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<CreateFileResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<CreateFileResponse>
 
   /**
    * Deletes a file record and associated storage objects.
@@ -15286,8 +15272,8 @@ export interface FilesApiInterface {
   deleteFile(
     userId: string,
     fileId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<void>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<void>
 
   /**
    * Retrieves a single file record.
@@ -15301,8 +15287,8 @@ export interface FilesApiInterface {
   getFile(
     userId: string,
     fileId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetFileResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetFileResponse>
 
   /**
    * Returns a signed URL for the file thumbnail.
@@ -15316,8 +15302,8 @@ export interface FilesApiInterface {
   getFileThumbnail(
     userId: string,
     fileId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<FileUrlResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<FileUrlResponse>
 
   /**
    * Returns a signed download URL for the file.
@@ -15331,8 +15317,8 @@ export interface FilesApiInterface {
   getFileUrl(
     userId: string,
     fileId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<FileUrlResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<FileUrlResponse>
 }
 
 /**
@@ -15354,11 +15340,11 @@ export class FilesApi extends BaseAPI implements FilesApiInterface {
   public confirmFile(
     userId: string,
     fileId: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return FilesApiFp(this.configuration)
       .confirmFile(userId, fileId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -15373,11 +15359,11 @@ export class FilesApi extends BaseAPI implements FilesApiInterface {
   public createFile(
     userId: string,
     createFileRequest: CreateFileRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return FilesApiFp(this.configuration)
       .createFile(userId, createFileRequest, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -15392,11 +15378,11 @@ export class FilesApi extends BaseAPI implements FilesApiInterface {
   public deleteFile(
     userId: string,
     fileId: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return FilesApiFp(this.configuration)
       .deleteFile(userId, fileId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -15411,11 +15397,11 @@ export class FilesApi extends BaseAPI implements FilesApiInterface {
   public getFile(
     userId: string,
     fileId: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return FilesApiFp(this.configuration)
       .getFile(userId, fileId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -15430,11 +15416,11 @@ export class FilesApi extends BaseAPI implements FilesApiInterface {
   public getFileThumbnail(
     userId: string,
     fileId: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return FilesApiFp(this.configuration)
       .getFileThumbnail(userId, fileId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -15449,11 +15435,11 @@ export class FilesApi extends BaseAPI implements FilesApiInterface {
   public getFileUrl(
     userId: string,
     fileId: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return FilesApiFp(this.configuration)
       .getFileUrl(userId, fileId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 }
 
@@ -15462,7 +15448,7 @@ export class FilesApi extends BaseAPI implements FilesApiInterface {
  * @export
  */
 export const IndividualTransactionsApiAxiosParamCreator = function (
-  configuration?: Configuration,
+  configuration?: Configuration
 ) {
   return {
     /**
@@ -15476,60 +15462,60 @@ export const IndividualTransactionsApiAxiosParamCreator = function (
     addIndividualTransaction: async (
       userId: string,
       addIndividualTransactionRequest: AddIndividualTransactionRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("addIndividualTransaction", "userId", userId);
+      assertParamExists("addIndividualTransaction", "userId", userId)
       // verify required parameter 'addIndividualTransactionRequest' is not null or undefined
       assertParamExists(
         "addIndividualTransaction",
         "addIndividualTransactionRequest",
-        addIndividualTransactionRequest,
-      );
+        addIndividualTransactionRequest
+      )
       const localVarPath =
         `/api/users/{user_id}/transactions/individual`.replace(
           `{${"user_id"}}`,
-          encodeURIComponent(String(userId)),
-        );
+          encodeURIComponent(String(userId))
+        )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         addIndividualTransactionRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Retrieves a list of all individual transactions
@@ -15550,67 +15536,67 @@ export const IndividualTransactionsApiAxiosParamCreator = function (
       start?: number,
       count?: number,
       query?: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getIndividualTransactions", "userId", userId);
+      assertParamExists("getIndividualTransactions", "userId", userId)
       const localVarPath =
         `/api/users/{user_id}/transactions/individual`.replace(
           `{${"user_id"}}`,
-          encodeURIComponent(String(userId)),
-        );
+          encodeURIComponent(String(userId))
+        )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
       if (limit !== undefined) {
-        localVarQueryParameter["limit"] = limit;
+        localVarQueryParameter["limit"] = limit
       }
 
       if (cursor !== undefined) {
-        localVarQueryParameter["cursor"] = cursor;
+        localVarQueryParameter["cursor"] = cursor
       }
 
       if (start !== undefined) {
-        localVarQueryParameter["start"] = start;
+        localVarQueryParameter["start"] = start
       }
 
       if (count !== undefined) {
-        localVarQueryParameter["count"] = count;
+        localVarQueryParameter["count"] = count
       }
 
       if (query !== undefined) {
-        localVarQueryParameter["query"] = query;
+        localVarQueryParameter["query"] = query
       }
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Retrieves a single transaction by specified id
@@ -15621,47 +15607,47 @@ export const IndividualTransactionsApiAxiosParamCreator = function (
      */
     getSingle: async (
       userId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getSingle", "userId", userId);
+      assertParamExists("getSingle", "userId", userId)
       const localVarPath =
         `/api/users/{user_id}/transactions/individual/{transaction_id}`.replace(
           `{${"user_id"}}`,
-          encodeURIComponent(String(userId)),
-        );
+          encodeURIComponent(String(userId))
+        )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Performs an update of an individual transaction. If the transaction provided is not individual, it will be moved to individual and removed from other group.
@@ -15676,85 +15662,85 @@ export const IndividualTransactionsApiAxiosParamCreator = function (
       userId: string,
       transactionId: string,
       updateTransactionRequest: UpdateTransactionRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists(
         "updateAnExistingIndividualTransaction",
         "userId",
-        userId,
-      );
+        userId
+      )
       // verify required parameter 'transactionId' is not null or undefined
       assertParamExists(
         "updateAnExistingIndividualTransaction",
         "transactionId",
-        transactionId,
-      );
+        transactionId
+      )
       // verify required parameter 'updateTransactionRequest' is not null or undefined
       assertParamExists(
         "updateAnExistingIndividualTransaction",
         "updateTransactionRequest",
-        updateTransactionRequest,
-      );
+        updateTransactionRequest
+      )
       const localVarPath =
         `/api/users/{user_id}/transactions/individual/{transaction_id}`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
           .replace(
             `{${"transaction_id"}}`,
-            encodeURIComponent(String(transactionId)),
-          );
+            encodeURIComponent(String(transactionId))
+          )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "PUT",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         updateTransactionRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
-  };
-};
+  }
+}
 
 /**
  * IndividualTransactionsApi - functional programming interface
  * @export
  */
 export const IndividualTransactionsApiFp = function (
-  configuration?: Configuration,
+  configuration?: Configuration
 ) {
   const localVarAxiosParamCreator =
-    IndividualTransactionsApiAxiosParamCreator(configuration);
+    IndividualTransactionsApiAxiosParamCreator(configuration)
   return {
     /**
      * Adds a new individual transaction.
@@ -15767,31 +15753,31 @@ export const IndividualTransactionsApiFp = function (
     async addIndividualTransaction(
       userId: string,
       addIndividualTransactionRequest: AddIndividualTransactionRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<AddIndividualTransactionResponse>
     > {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.addIndividualTransaction(
           userId,
           addIndividualTransactionRequest,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap[
           "IndividualTransactionsApi.addIndividualTransaction"
-        ]?.[localVarOperationServerIndex]?.url;
+        ]?.[localVarOperationServerIndex]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Retrieves a list of all individual transactions
@@ -15812,11 +15798,11 @@ export const IndividualTransactionsApiFp = function (
       start?: number,
       count?: number,
       query?: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<IndividualTransactionsPage>
     > {
       const localVarAxiosArgs =
@@ -15827,20 +15813,20 @@ export const IndividualTransactionsApiFp = function (
           start,
           count,
           query,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap[
           "IndividualTransactionsApi.getIndividualTransactions"
-        ]?.[localVarOperationServerIndex]?.url;
+        ]?.[localVarOperationServerIndex]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Retrieves a single transaction by specified id
@@ -15851,29 +15837,29 @@ export const IndividualTransactionsApiFp = function (
      */
     async getSingle(
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetIndividualTransaction>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getSingle(
         userId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["IndividualTransactionsApi.getSingle"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Performs an update of an individual transaction. If the transaction provided is not individual, it will be moved to individual and removed from other group.
@@ -15888,11 +15874,11 @@ export const IndividualTransactionsApiFp = function (
       userId: string,
       transactionId: string,
       updateTransactionRequest: UpdateTransactionRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<UpdateTransactionResponse>
     > {
       const localVarAxiosArgs =
@@ -15900,23 +15886,23 @@ export const IndividualTransactionsApiFp = function (
           userId,
           transactionId,
           updateTransactionRequest,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap[
           "IndividualTransactionsApi.updateAnExistingIndividualTransaction"
-        ]?.[localVarOperationServerIndex]?.url;
+        ]?.[localVarOperationServerIndex]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
-  };
-};
+  }
+}
 
 /**
  * IndividualTransactionsApi - factory interface
@@ -15925,9 +15911,9 @@ export const IndividualTransactionsApiFp = function (
 export const IndividualTransactionsApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance,
+  axios?: AxiosInstance
 ) {
-  const localVarFp = IndividualTransactionsApiFp(configuration);
+  const localVarFp = IndividualTransactionsApiFp(configuration)
   return {
     /**
      * Adds a new individual transaction.
@@ -15940,15 +15926,15 @@ export const IndividualTransactionsApiFactory = function (
     addIndividualTransaction(
       userId: string,
       addIndividualTransactionRequest: AddIndividualTransactionRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<AddIndividualTransactionResponse> {
       return localVarFp
         .addIndividualTransaction(
           userId,
           addIndividualTransactionRequest,
-          options,
+          options
         )
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Retrieves a list of all individual transactions
@@ -15969,7 +15955,7 @@ export const IndividualTransactionsApiFactory = function (
       start?: number,
       count?: number,
       query?: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<IndividualTransactionsPage> {
       return localVarFp
         .getIndividualTransactions(
@@ -15979,9 +15965,9 @@ export const IndividualTransactionsApiFactory = function (
           start,
           count,
           query,
-          options,
+          options
         )
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Retrieves a single transaction by specified id
@@ -15992,11 +15978,11 @@ export const IndividualTransactionsApiFactory = function (
      */
     getSingle(
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetIndividualTransaction> {
       return localVarFp
         .getSingle(userId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Performs an update of an individual transaction. If the transaction provided is not individual, it will be moved to individual and removed from other group.
@@ -16011,19 +15997,19 @@ export const IndividualTransactionsApiFactory = function (
       userId: string,
       transactionId: string,
       updateTransactionRequest: UpdateTransactionRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<UpdateTransactionResponse> {
       return localVarFp
         .updateAnExistingIndividualTransaction(
           userId,
           transactionId,
           updateTransactionRequest,
-          options,
+          options
         )
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
-  };
-};
+  }
+}
 
 /**
  * IndividualTransactionsApi - interface
@@ -16043,8 +16029,8 @@ export interface IndividualTransactionsApiInterface {
   addIndividualTransaction(
     userId: string,
     addIndividualTransactionRequest: AddIndividualTransactionRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<AddIndividualTransactionResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<AddIndividualTransactionResponse>
 
   /**
    * Retrieves a list of all individual transactions
@@ -16066,8 +16052,8 @@ export interface IndividualTransactionsApiInterface {
     start?: number,
     count?: number,
     query?: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<IndividualTransactionsPage>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<IndividualTransactionsPage>
 
   /**
    * Retrieves a single transaction by specified id
@@ -16079,8 +16065,8 @@ export interface IndividualTransactionsApiInterface {
    */
   getSingle(
     userId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetIndividualTransaction>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetIndividualTransaction>
 
   /**
    * Performs an update of an individual transaction. If the transaction provided is not individual, it will be moved to individual and removed from other group.
@@ -16096,8 +16082,8 @@ export interface IndividualTransactionsApiInterface {
     userId: string,
     transactionId: string,
     updateTransactionRequest: UpdateTransactionRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<UpdateTransactionResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<UpdateTransactionResponse>
 }
 
 /**
@@ -16122,15 +16108,15 @@ export class IndividualTransactionsApi
   public addIndividualTransaction(
     userId: string,
     addIndividualTransactionRequest: AddIndividualTransactionRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return IndividualTransactionsApiFp(this.configuration)
       .addIndividualTransaction(
         userId,
         addIndividualTransactionRequest,
-        options,
+        options
       )
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -16153,7 +16139,7 @@ export class IndividualTransactionsApi
     start?: number,
     count?: number,
     query?: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return IndividualTransactionsApiFp(this.configuration)
       .getIndividualTransactions(
@@ -16163,9 +16149,9 @@ export class IndividualTransactionsApi
         start,
         count,
         query,
-        options,
+        options
       )
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -16179,7 +16165,7 @@ export class IndividualTransactionsApi
   public getSingle(userId: string, options?: RawAxiosRequestConfig) {
     return IndividualTransactionsApiFp(this.configuration)
       .getSingle(userId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -16196,16 +16182,16 @@ export class IndividualTransactionsApi
     userId: string,
     transactionId: string,
     updateTransactionRequest: UpdateTransactionRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return IndividualTransactionsApiFp(this.configuration)
       .updateAnExistingIndividualTransaction(
         userId,
         transactionId,
         updateTransactionRequest,
-        options,
+        options
       )
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 }
 
@@ -16214,7 +16200,7 @@ export class IndividualTransactionsApi
  * @export
  */
 export const PortfolioApiAxiosParamCreator = function (
-  configuration?: Configuration,
+  configuration?: Configuration
 ) {
   return {
     /**
@@ -16228,50 +16214,50 @@ export const PortfolioApiAxiosParamCreator = function (
     getHoldings: async (
       userId: string,
       defaultAssetId?: number,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getHoldings", "userId", userId);
+      assertParamExists("getHoldings", "userId", userId)
       const localVarPath = `/api/users/{user_id}/portfolio/holdings`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
       if (defaultAssetId !== undefined) {
-        localVarQueryParameter["default_asset_id"] = defaultAssetId;
+        localVarQueryParameter["default_asset_id"] = defaultAssetId
       }
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Returns a list of net worth of an user at specific points in time, depending on the range provided.
@@ -16286,54 +16272,54 @@ export const PortfolioApiAxiosParamCreator = function (
       userId: string,
       range?: string,
       defaultAssetId?: number,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getNetworthHistory", "userId", userId);
+      assertParamExists("getNetworthHistory", "userId", userId)
       const localVarPath = `/api/users/{user_id}/portfolio/history`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
       if (range !== undefined) {
-        localVarQueryParameter["range"] = range;
+        localVarQueryParameter["range"] = range
       }
 
       if (defaultAssetId !== undefined) {
-        localVarQueryParameter["default_asset_id"] = defaultAssetId;
+        localVarQueryParameter["default_asset_id"] = defaultAssetId
       }
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Returns portfolio overview scoped to a specific asset across all accounts.
@@ -16348,52 +16334,52 @@ export const PortfolioApiAxiosParamCreator = function (
       userId: string,
       assetId: number,
       defaultAssetId?: number,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getPortfolioAssetOverview", "userId", userId);
+      assertParamExists("getPortfolioAssetOverview", "userId", userId)
       // verify required parameter 'assetId' is not null or undefined
-      assertParamExists("getPortfolioAssetOverview", "assetId", assetId);
+      assertParamExists("getPortfolioAssetOverview", "assetId", assetId)
       const localVarPath =
         `/api/users/{user_id}/portfolio/assets/{asset_id}/overview`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-          .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)));
+          .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
       if (defaultAssetId !== undefined) {
-        localVarQueryParameter["default_asset_id"] = defaultAssetId;
+        localVarQueryParameter["default_asset_id"] = defaultAssetId
       }
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Retunrs information about the entire portfolio and statistics such as gains/losses
@@ -16406,61 +16392,60 @@ export const PortfolioApiAxiosParamCreator = function (
     getPortfolioOverview: async (
       userId: string,
       defaultAssetId?: number,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getPortfolioOverview", "userId", userId);
+      assertParamExists("getPortfolioOverview", "userId", userId)
       const localVarPath = `/api/users/{user_id}/portfolio/overview`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
       if (defaultAssetId !== undefined) {
-        localVarQueryParameter["default_asset_id"] = defaultAssetId;
+        localVarQueryParameter["default_asset_id"] = defaultAssetId
       }
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
-  };
-};
+  }
+}
 
 /**
  * PortfolioApi - functional programming interface
  * @export
  */
 export const PortfolioApiFp = function (configuration?: Configuration) {
-  const localVarAxiosParamCreator =
-    PortfolioApiAxiosParamCreator(configuration);
+  const localVarAxiosParamCreator = PortfolioApiAxiosParamCreator(configuration)
   return {
     /**
      * Returns a list of assets that user holds and their current value.
@@ -16473,30 +16458,30 @@ export const PortfolioApiFp = function (configuration?: Configuration) {
     async getHoldings(
       userId: string,
       defaultAssetId?: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetHoldingsResponse>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getHoldings(
         userId,
         defaultAssetId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["PortfolioApi.getHoldings"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Returns a list of net worth of an user at specific points in time, depending on the range provided.
@@ -16511,11 +16496,11 @@ export const PortfolioApiFp = function (configuration?: Configuration) {
       userId: string,
       range?: string,
       defaultAssetId?: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetNetWorthHistoryResponse>
     > {
       const localVarAxiosArgs =
@@ -16523,20 +16508,20 @@ export const PortfolioApiFp = function (configuration?: Configuration) {
           userId,
           range,
           defaultAssetId,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["PortfolioApi.getNetworthHistory"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Returns portfolio overview scoped to a specific asset across all accounts.
@@ -16551,11 +16536,11 @@ export const PortfolioApiFp = function (configuration?: Configuration) {
       userId: string,
       assetId: number,
       defaultAssetId?: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetPortfolioOverview>
     > {
       const localVarAxiosArgs =
@@ -16563,20 +16548,20 @@ export const PortfolioApiFp = function (configuration?: Configuration) {
           userId,
           assetId,
           defaultAssetId,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["PortfolioApi.getPortfolioAssetOverview"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Retunrs information about the entire portfolio and statistics such as gains/losses
@@ -16589,34 +16574,34 @@ export const PortfolioApiFp = function (configuration?: Configuration) {
     async getPortfolioOverview(
       userId: string,
       defaultAssetId?: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetPortfolioOverview>
     > {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getPortfolioOverview(
           userId,
           defaultAssetId,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["PortfolioApi.getPortfolioOverview"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
-  };
-};
+  }
+}
 
 /**
  * PortfolioApi - factory interface
@@ -16625,9 +16610,9 @@ export const PortfolioApiFp = function (configuration?: Configuration) {
 export const PortfolioApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance,
+  axios?: AxiosInstance
 ) {
-  const localVarFp = PortfolioApiFp(configuration);
+  const localVarFp = PortfolioApiFp(configuration)
   return {
     /**
      * Returns a list of assets that user holds and their current value.
@@ -16640,11 +16625,11 @@ export const PortfolioApiFactory = function (
     getHoldings(
       userId: string,
       defaultAssetId?: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetHoldingsResponse> {
       return localVarFp
         .getHoldings(userId, defaultAssetId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Returns a list of net worth of an user at specific points in time, depending on the range provided.
@@ -16659,11 +16644,11 @@ export const PortfolioApiFactory = function (
       userId: string,
       range?: string,
       defaultAssetId?: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetNetWorthHistoryResponse> {
       return localVarFp
         .getNetworthHistory(userId, range, defaultAssetId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Returns portfolio overview scoped to a specific asset across all accounts.
@@ -16678,11 +16663,11 @@ export const PortfolioApiFactory = function (
       userId: string,
       assetId: number,
       defaultAssetId?: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetPortfolioOverview> {
       return localVarFp
         .getPortfolioAssetOverview(userId, assetId, defaultAssetId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Retunrs information about the entire portfolio and statistics such as gains/losses
@@ -16695,14 +16680,14 @@ export const PortfolioApiFactory = function (
     getPortfolioOverview(
       userId: string,
       defaultAssetId?: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetPortfolioOverview> {
       return localVarFp
         .getPortfolioOverview(userId, defaultAssetId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
-  };
-};
+  }
+}
 
 /**
  * PortfolioApi - interface
@@ -16722,8 +16707,8 @@ export interface PortfolioApiInterface {
   getHoldings(
     userId: string,
     defaultAssetId?: number,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetHoldingsResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetHoldingsResponse>
 
   /**
    * Returns a list of net worth of an user at specific points in time, depending on the range provided.
@@ -16739,8 +16724,8 @@ export interface PortfolioApiInterface {
     userId: string,
     range?: string,
     defaultAssetId?: number,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetNetWorthHistoryResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetNetWorthHistoryResponse>
 
   /**
    * Returns portfolio overview scoped to a specific asset across all accounts.
@@ -16756,8 +16741,8 @@ export interface PortfolioApiInterface {
     userId: string,
     assetId: number,
     defaultAssetId?: number,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetPortfolioOverview>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetPortfolioOverview>
 
   /**
    * Retunrs information about the entire portfolio and statistics such as gains/losses
@@ -16771,8 +16756,8 @@ export interface PortfolioApiInterface {
   getPortfolioOverview(
     userId: string,
     defaultAssetId?: number,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetPortfolioOverview>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetPortfolioOverview>
 }
 
 /**
@@ -16794,11 +16779,11 @@ export class PortfolioApi extends BaseAPI implements PortfolioApiInterface {
   public getHoldings(
     userId: string,
     defaultAssetId?: number,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return PortfolioApiFp(this.configuration)
       .getHoldings(userId, defaultAssetId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -16815,11 +16800,11 @@ export class PortfolioApi extends BaseAPI implements PortfolioApiInterface {
     userId: string,
     range?: string,
     defaultAssetId?: number,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return PortfolioApiFp(this.configuration)
       .getNetworthHistory(userId, range, defaultAssetId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -16836,11 +16821,11 @@ export class PortfolioApi extends BaseAPI implements PortfolioApiInterface {
     userId: string,
     assetId: number,
     defaultAssetId?: number,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return PortfolioApiFp(this.configuration)
       .getPortfolioAssetOverview(userId, assetId, defaultAssetId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -16855,11 +16840,11 @@ export class PortfolioApi extends BaseAPI implements PortfolioApiInterface {
   public getPortfolioOverview(
     userId: string,
     defaultAssetId?: number,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return PortfolioApiFp(this.configuration)
       .getPortfolioOverview(userId, defaultAssetId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 }
 
@@ -16868,7 +16853,7 @@ export class PortfolioApi extends BaseAPI implements PortfolioApiInterface {
  * @export
  */
 export const TransactionGroupsApiAxiosParamCreator = function (
-  configuration?: Configuration,
+  configuration?: Configuration
 ) {
   return {
     /**
@@ -16882,59 +16867,59 @@ export const TransactionGroupsApiAxiosParamCreator = function (
     addTransactionGroup: async (
       userId: string,
       transactionGroupTransactionWithEntries: TransactionGroupTransactionWithEntries,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("addTransactionGroup", "userId", userId);
+      assertParamExists("addTransactionGroup", "userId", userId)
       // verify required parameter 'transactionGroupTransactionWithEntries' is not null or undefined
       assertParamExists(
         "addTransactionGroup",
         "transactionGroupTransactionWithEntries",
-        transactionGroupTransactionWithEntries,
-      );
+        transactionGroupTransactionWithEntries
+      )
       const localVarPath = `/api/users/{user_id}/transactions/groups`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         transactionGroupTransactionWithEntries,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Deletes the entire transaction group and associated transactions within it.
@@ -16947,47 +16932,47 @@ export const TransactionGroupsApiAxiosParamCreator = function (
     deleteAnExistingTransactionGroup: async (
       groupId: string,
       userId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'groupId' is not null or undefined
-      assertParamExists("deleteAnExistingTransactionGroup", "groupId", groupId);
+      assertParamExists("deleteAnExistingTransactionGroup", "groupId", groupId)
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("deleteAnExistingTransactionGroup", "userId", userId);
+      assertParamExists("deleteAnExistingTransactionGroup", "userId", userId)
       const localVarPath = `/api/users/{user_id}/transactions/groups/{group_id}`
         .replace(`{${"group_id"}}`, encodeURIComponent(String(groupId)))
-        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "DELETE",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Retrieves a paginated list of transaction groups
@@ -17008,66 +16993,66 @@ export const TransactionGroupsApiAxiosParamCreator = function (
       start?: number,
       count?: number,
       query?: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getTransactionGroups", "userId", userId);
+      assertParamExists("getTransactionGroups", "userId", userId)
       const localVarPath = `/api/users/{user_id}/transactions/groups`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
       if (limit !== undefined) {
-        localVarQueryParameter["limit"] = limit;
+        localVarQueryParameter["limit"] = limit
       }
 
       if (cursor !== undefined) {
-        localVarQueryParameter["cursor"] = cursor;
+        localVarQueryParameter["cursor"] = cursor
       }
 
       if (start !== undefined) {
-        localVarQueryParameter["start"] = start;
+        localVarQueryParameter["start"] = start
       }
 
       if (count !== undefined) {
-        localVarQueryParameter["count"] = count;
+        localVarQueryParameter["count"] = count
       }
 
       if (query !== undefined) {
-        localVarQueryParameter["query"] = query;
+        localVarQueryParameter["query"] = query
       }
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Creates a new transaction group from existing individual transactions. The provided transaction IDs will be moved from individual to the new group.
@@ -17080,59 +17065,59 @@ export const TransactionGroupsApiAxiosParamCreator = function (
     groupIndividualTransactions: async (
       userId: string,
       transactionGroupIdentifiableTransactionWithIdentifiableEntries: TransactionGroupIdentifiableTransactionWithIdentifiableEntries,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("groupIndividualTransactions", "userId", userId);
+      assertParamExists("groupIndividualTransactions", "userId", userId)
       // verify required parameter 'transactionGroupIdentifiableTransactionWithIdentifiableEntries' is not null or undefined
       assertParamExists(
         "groupIndividualTransactions",
         "transactionGroupIdentifiableTransactionWithIdentifiableEntries",
-        transactionGroupIdentifiableTransactionWithIdentifiableEntries,
-      );
+        transactionGroupIdentifiableTransactionWithIdentifiableEntries
+      )
       const localVarPath = `/api/users/{user_id}/transactions/groups`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "PUT",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         transactionGroupIdentifiableTransactionWithIdentifiableEntries,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * If the transactions array is updated with an existing transaction id, that transaction will be moved from individual to a group.
@@ -17147,63 +17132,63 @@ export const TransactionGroupsApiAxiosParamCreator = function (
       groupId: string,
       userId: string,
       transactionGroupIdentifiableTransactionWithIdentifiableEntries: TransactionGroupIdentifiableTransactionWithIdentifiableEntries,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'groupId' is not null or undefined
-      assertParamExists("updateTransactionGroup", "groupId", groupId);
+      assertParamExists("updateTransactionGroup", "groupId", groupId)
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("updateTransactionGroup", "userId", userId);
+      assertParamExists("updateTransactionGroup", "userId", userId)
       // verify required parameter 'transactionGroupIdentifiableTransactionWithIdentifiableEntries' is not null or undefined
       assertParamExists(
         "updateTransactionGroup",
         "transactionGroupIdentifiableTransactionWithIdentifiableEntries",
-        transactionGroupIdentifiableTransactionWithIdentifiableEntries,
-      );
+        transactionGroupIdentifiableTransactionWithIdentifiableEntries
+      )
       const localVarPath = `/api/users/{user_id}/transactions/groups/{group_id}`
         .replace(`{${"group_id"}}`, encodeURIComponent(String(groupId)))
-        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "PUT",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         transactionGroupIdentifiableTransactionWithIdentifiableEntries,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
-  };
-};
+  }
+}
 
 /**
  * TransactionGroupsApi - functional programming interface
@@ -17211,7 +17196,7 @@ export const TransactionGroupsApiAxiosParamCreator = function (
  */
 export const TransactionGroupsApiFp = function (configuration?: Configuration) {
   const localVarAxiosParamCreator =
-    TransactionGroupsApiAxiosParamCreator(configuration);
+    TransactionGroupsApiAxiosParamCreator(configuration)
   return {
     /**
      * Adds a group of transactions with metadata related to all of them.
@@ -17224,31 +17209,31 @@ export const TransactionGroupsApiFp = function (configuration?: Configuration) {
     async addTransactionGroup(
       userId: string,
       transactionGroupTransactionWithEntries: TransactionGroupTransactionWithEntries,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<AddTransactionGroupResponse>
     > {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.addTransactionGroup(
           userId,
           transactionGroupTransactionWithEntries,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["TransactionGroupsApi.addTransactionGroup"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Deletes the entire transaction group and associated transactions within it.
@@ -17261,7 +17246,7 @@ export const TransactionGroupsApiFp = function (configuration?: Configuration) {
     async deleteAnExistingTransactionGroup(
       groupId: string,
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
@@ -17269,20 +17254,20 @@ export const TransactionGroupsApiFp = function (configuration?: Configuration) {
         await localVarAxiosParamCreator.deleteAnExistingTransactionGroup(
           groupId,
           userId,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap[
           "TransactionGroupsApi.deleteAnExistingTransactionGroup"
-        ]?.[localVarOperationServerIndex]?.url;
+        ]?.[localVarOperationServerIndex]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Retrieves a paginated list of transaction groups
@@ -17303,11 +17288,11 @@ export const TransactionGroupsApiFp = function (configuration?: Configuration) {
       start?: number,
       count?: number,
       query?: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<TransactionGroupsPage>
     > {
       const localVarAxiosArgs =
@@ -17318,20 +17303,20 @@ export const TransactionGroupsApiFp = function (configuration?: Configuration) {
           start,
           count,
           query,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["TransactionGroupsApi.getTransactionGroups"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Creates a new transaction group from existing individual transactions. The provided transaction IDs will be moved from individual to the new group.
@@ -17344,31 +17329,31 @@ export const TransactionGroupsApiFp = function (configuration?: Configuration) {
     async groupIndividualTransactions(
       userId: string,
       transactionGroupIdentifiableTransactionWithIdentifiableEntries: TransactionGroupIdentifiableTransactionWithIdentifiableEntries,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<AddTransactionGroupResponse>
     > {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.groupIndividualTransactions(
           userId,
           transactionGroupIdentifiableTransactionWithIdentifiableEntries,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap[
           "TransactionGroupsApi.groupIndividualTransactions"
-        ]?.[localVarOperationServerIndex]?.url;
+        ]?.[localVarOperationServerIndex]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * If the transactions array is updated with an existing transaction id, that transaction will be moved from individual to a group.
@@ -17383,11 +17368,11 @@ export const TransactionGroupsApiFp = function (configuration?: Configuration) {
       groupId: string,
       userId: string,
       transactionGroupIdentifiableTransactionWithIdentifiableEntries: TransactionGroupIdentifiableTransactionWithIdentifiableEntries,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<UpdateTransactionGroupResponse>
     > {
       const localVarAxiosArgs =
@@ -17395,23 +17380,23 @@ export const TransactionGroupsApiFp = function (configuration?: Configuration) {
           groupId,
           userId,
           transactionGroupIdentifiableTransactionWithIdentifiableEntries,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["TransactionGroupsApi.updateTransactionGroup"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
-  };
-};
+  }
+}
 
 /**
  * TransactionGroupsApi - factory interface
@@ -17420,9 +17405,9 @@ export const TransactionGroupsApiFp = function (configuration?: Configuration) {
 export const TransactionGroupsApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance,
+  axios?: AxiosInstance
 ) {
-  const localVarFp = TransactionGroupsApiFp(configuration);
+  const localVarFp = TransactionGroupsApiFp(configuration)
   return {
     /**
      * Adds a group of transactions with metadata related to all of them.
@@ -17435,15 +17420,15 @@ export const TransactionGroupsApiFactory = function (
     addTransactionGroup(
       userId: string,
       transactionGroupTransactionWithEntries: TransactionGroupTransactionWithEntries,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<AddTransactionGroupResponse> {
       return localVarFp
         .addTransactionGroup(
           userId,
           transactionGroupTransactionWithEntries,
-          options,
+          options
         )
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Deletes the entire transaction group and associated transactions within it.
@@ -17456,11 +17441,11 @@ export const TransactionGroupsApiFactory = function (
     deleteAnExistingTransactionGroup(
       groupId: string,
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<void> {
       return localVarFp
         .deleteAnExistingTransactionGroup(groupId, userId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Retrieves a paginated list of transaction groups
@@ -17481,7 +17466,7 @@ export const TransactionGroupsApiFactory = function (
       start?: number,
       count?: number,
       query?: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<TransactionGroupsPage> {
       return localVarFp
         .getTransactionGroups(
@@ -17491,9 +17476,9 @@ export const TransactionGroupsApiFactory = function (
           start,
           count,
           query,
-          options,
+          options
         )
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Creates a new transaction group from existing individual transactions. The provided transaction IDs will be moved from individual to the new group.
@@ -17506,15 +17491,15 @@ export const TransactionGroupsApiFactory = function (
     groupIndividualTransactions(
       userId: string,
       transactionGroupIdentifiableTransactionWithIdentifiableEntries: TransactionGroupIdentifiableTransactionWithIdentifiableEntries,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<AddTransactionGroupResponse> {
       return localVarFp
         .groupIndividualTransactions(
           userId,
           transactionGroupIdentifiableTransactionWithIdentifiableEntries,
-          options,
+          options
         )
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * If the transactions array is updated with an existing transaction id, that transaction will be moved from individual to a group.
@@ -17529,19 +17514,19 @@ export const TransactionGroupsApiFactory = function (
       groupId: string,
       userId: string,
       transactionGroupIdentifiableTransactionWithIdentifiableEntries: TransactionGroupIdentifiableTransactionWithIdentifiableEntries,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<UpdateTransactionGroupResponse> {
       return localVarFp
         .updateTransactionGroup(
           groupId,
           userId,
           transactionGroupIdentifiableTransactionWithIdentifiableEntries,
-          options,
+          options
         )
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
-  };
-};
+  }
+}
 
 /**
  * TransactionGroupsApi - interface
@@ -17561,8 +17546,8 @@ export interface TransactionGroupsApiInterface {
   addTransactionGroup(
     userId: string,
     transactionGroupTransactionWithEntries: TransactionGroupTransactionWithEntries,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<AddTransactionGroupResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<AddTransactionGroupResponse>
 
   /**
    * Deletes the entire transaction group and associated transactions within it.
@@ -17576,8 +17561,8 @@ export interface TransactionGroupsApiInterface {
   deleteAnExistingTransactionGroup(
     groupId: string,
     userId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<void>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<void>
 
   /**
    * Retrieves a paginated list of transaction groups
@@ -17599,8 +17584,8 @@ export interface TransactionGroupsApiInterface {
     start?: number,
     count?: number,
     query?: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<TransactionGroupsPage>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<TransactionGroupsPage>
 
   /**
    * Creates a new transaction group from existing individual transactions. The provided transaction IDs will be moved from individual to the new group.
@@ -17614,8 +17599,8 @@ export interface TransactionGroupsApiInterface {
   groupIndividualTransactions(
     userId: string,
     transactionGroupIdentifiableTransactionWithIdentifiableEntries: TransactionGroupIdentifiableTransactionWithIdentifiableEntries,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<AddTransactionGroupResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<AddTransactionGroupResponse>
 
   /**
    * If the transactions array is updated with an existing transaction id, that transaction will be moved from individual to a group.
@@ -17631,8 +17616,8 @@ export interface TransactionGroupsApiInterface {
     groupId: string,
     userId: string,
     transactionGroupIdentifiableTransactionWithIdentifiableEntries: TransactionGroupIdentifiableTransactionWithIdentifiableEntries,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<UpdateTransactionGroupResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<UpdateTransactionGroupResponse>
 }
 
 /**
@@ -17657,15 +17642,15 @@ export class TransactionGroupsApi
   public addTransactionGroup(
     userId: string,
     transactionGroupTransactionWithEntries: TransactionGroupTransactionWithEntries,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return TransactionGroupsApiFp(this.configuration)
       .addTransactionGroup(
         userId,
         transactionGroupTransactionWithEntries,
-        options,
+        options
       )
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -17680,11 +17665,11 @@ export class TransactionGroupsApi
   public deleteAnExistingTransactionGroup(
     groupId: string,
     userId: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return TransactionGroupsApiFp(this.configuration)
       .deleteAnExistingTransactionGroup(groupId, userId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -17707,11 +17692,11 @@ export class TransactionGroupsApi
     start?: number,
     count?: number,
     query?: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return TransactionGroupsApiFp(this.configuration)
       .getTransactionGroups(userId, limit, cursor, start, count, query, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -17726,15 +17711,15 @@ export class TransactionGroupsApi
   public groupIndividualTransactions(
     userId: string,
     transactionGroupIdentifiableTransactionWithIdentifiableEntries: TransactionGroupIdentifiableTransactionWithIdentifiableEntries,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return TransactionGroupsApiFp(this.configuration)
       .groupIndividualTransactions(
         userId,
         transactionGroupIdentifiableTransactionWithIdentifiableEntries,
-        options,
+        options
       )
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -17751,16 +17736,16 @@ export class TransactionGroupsApi
     groupId: string,
     userId: string,
     transactionGroupIdentifiableTransactionWithIdentifiableEntries: TransactionGroupIdentifiableTransactionWithIdentifiableEntries,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return TransactionGroupsApiFp(this.configuration)
       .updateTransactionGroup(
         groupId,
         userId,
         transactionGroupIdentifiableTransactionWithIdentifiableEntries,
-        options,
+        options
       )
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 }
 
@@ -17769,7 +17754,7 @@ export class TransactionGroupsApi
  * @export
  */
 export const TransactionsApiAxiosParamCreator = function (
-  configuration?: Configuration,
+  configuration?: Configuration
 ) {
   return {
     /**
@@ -17783,54 +17768,54 @@ export const TransactionsApiAxiosParamCreator = function (
     deleteAnExistingTransaction: async (
       transactionId: string,
       userId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'transactionId' is not null or undefined
       assertParamExists(
         "deleteAnExistingTransaction",
         "transactionId",
-        transactionId,
-      );
+        transactionId
+      )
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("deleteAnExistingTransaction", "userId", userId);
+      assertParamExists("deleteAnExistingTransaction", "userId", userId)
       const localVarPath = `/api/users/{user_id}/transactions/{transaction_id}`
         .replace(
           `{${"transaction_id"}}`,
-          encodeURIComponent(String(transactionId)),
+          encodeURIComponent(String(transactionId))
         )
-        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "DELETE",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Deletes any combination of individual transactions and whole transaction groups in one call. Deleting a group also deletes every transaction inside it.
@@ -17843,63 +17828,59 @@ export const TransactionsApiAxiosParamCreator = function (
     deleteMultipleTransactionsAndGroups: async (
       userId: string,
       deleteTransactionsRequest: DeleteTransactionsRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists(
-        "deleteMultipleTransactionsAndGroups",
-        "userId",
-        userId,
-      );
+      assertParamExists("deleteMultipleTransactionsAndGroups", "userId", userId)
       // verify required parameter 'deleteTransactionsRequest' is not null or undefined
       assertParamExists(
         "deleteMultipleTransactionsAndGroups",
         "deleteTransactionsRequest",
-        deleteTransactionsRequest,
-      );
+        deleteTransactionsRequest
+      )
       const localVarPath = `/api/users/{user_id}/transactions`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "DELETE",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         deleteTransactionsRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Retrieves a list of all individual and grouped transactions
@@ -17920,66 +17901,66 @@ export const TransactionsApiAxiosParamCreator = function (
       start?: number,
       count?: number,
       query?: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getTransactions", "userId", userId);
+      assertParamExists("getTransactions", "userId", userId)
       const localVarPath = `/api/users/{user_id}/transactions`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
       if (limit !== undefined) {
-        localVarQueryParameter["limit"] = limit;
+        localVarQueryParameter["limit"] = limit
       }
 
       if (cursor !== undefined) {
-        localVarQueryParameter["cursor"] = cursor;
+        localVarQueryParameter["cursor"] = cursor
       }
 
       if (start !== undefined) {
-        localVarQueryParameter["start"] = start;
+        localVarQueryParameter["start"] = start
       }
 
       if (count !== undefined) {
-        localVarQueryParameter["count"] = count;
+        localVarQueryParameter["count"] = count
       }
 
       if (query !== undefined) {
-        localVarQueryParameter["query"] = query;
+        localVarQueryParameter["query"] = query
       }
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Sets a transaction\'s visibility: default, ghost (pending review), or hidden.
@@ -17994,68 +17975,68 @@ export const TransactionsApiAxiosParamCreator = function (
       userId: string,
       transactionId: string,
       setTransactionVisibilityRequest: SetTransactionVisibilityRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("setTransactionVisibility", "userId", userId);
+      assertParamExists("setTransactionVisibility", "userId", userId)
       // verify required parameter 'transactionId' is not null or undefined
       assertParamExists(
         "setTransactionVisibility",
         "transactionId",
-        transactionId,
-      );
+        transactionId
+      )
       // verify required parameter 'setTransactionVisibilityRequest' is not null or undefined
       assertParamExists(
         "setTransactionVisibility",
         "setTransactionVisibilityRequest",
-        setTransactionVisibilityRequest,
-      );
+        setTransactionVisibilityRequest
+      )
       const localVarPath =
         `/api/users/{user_id}/transactions/{transaction_id}/visibility`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
           .replace(
             `{${"transaction_id"}}`,
-            encodeURIComponent(String(transactionId)),
-          );
+            encodeURIComponent(String(transactionId))
+          )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "PUT",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         setTransactionVisibilityRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Sets visibility for multiple transactions at once: default, ghost (pending review), or hidden.
@@ -18068,64 +18049,64 @@ export const TransactionsApiAxiosParamCreator = function (
     setVisibilityForMultipleTransactions: async (
       userId: string,
       setTransactionsVisibilityRequest: SetTransactionsVisibilityRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
       assertParamExists(
         "setVisibilityForMultipleTransactions",
         "userId",
-        userId,
-      );
+        userId
+      )
       // verify required parameter 'setTransactionsVisibilityRequest' is not null or undefined
       assertParamExists(
         "setVisibilityForMultipleTransactions",
         "setTransactionsVisibilityRequest",
-        setTransactionsVisibilityRequest,
-      );
+        setTransactionsVisibilityRequest
+      )
       const localVarPath =
         `/api/users/{user_id}/transactions/visibility`.replace(
           `{${"user_id"}}`,
-          encodeURIComponent(String(userId)),
-        );
+          encodeURIComponent(String(userId))
+        )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "PUT",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         setTransactionsVisibilityRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * This is a generic update endpoint which does not assume whether transaction is individual or group. It only updates the contents of the transaction without moving it.
@@ -18140,70 +18121,70 @@ export const TransactionsApiAxiosParamCreator = function (
       transactionId: string,
       userId: string,
       updateTransactionRequest: UpdateTransactionRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'transactionId' is not null or undefined
       assertParamExists(
         "updateAnExistingTransaction",
         "transactionId",
-        transactionId,
-      );
+        transactionId
+      )
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("updateAnExistingTransaction", "userId", userId);
+      assertParamExists("updateAnExistingTransaction", "userId", userId)
       // verify required parameter 'updateTransactionRequest' is not null or undefined
       assertParamExists(
         "updateAnExistingTransaction",
         "updateTransactionRequest",
-        updateTransactionRequest,
-      );
+        updateTransactionRequest
+      )
       const localVarPath = `/api/users/{user_id}/transactions/{transaction_id}`
         .replace(
           `{${"transaction_id"}}`,
-          encodeURIComponent(String(transactionId)),
+          encodeURIComponent(String(transactionId))
         )
-        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+        .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "PUT",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         updateTransactionRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
-  };
-};
+  }
+}
 
 /**
  * TransactionsApi - functional programming interface
@@ -18211,7 +18192,7 @@ export const TransactionsApiAxiosParamCreator = function (
  */
 export const TransactionsApiFp = function (configuration?: Configuration) {
   const localVarAxiosParamCreator =
-    TransactionsApiAxiosParamCreator(configuration);
+    TransactionsApiAxiosParamCreator(configuration)
   return {
     /**
      * Deleted any transaction, whether its individual or from a group.
@@ -18224,7 +18205,7 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
     async deleteAnExistingTransaction(
       transactionId: string,
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
@@ -18232,20 +18213,20 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
         await localVarAxiosParamCreator.deleteAnExistingTransaction(
           transactionId,
           userId,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["TransactionsApi.deleteAnExistingTransaction"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Deletes any combination of individual transactions and whole transaction groups in one call. Deleting a group also deletes every transaction inside it.
@@ -18258,7 +18239,7 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
     async deleteMultipleTransactionsAndGroups(
       userId: string,
       deleteTransactionsRequest: DeleteTransactionsRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
@@ -18266,20 +18247,20 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
         await localVarAxiosParamCreator.deleteMultipleTransactionsAndGroups(
           userId,
           deleteTransactionsRequest,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap[
           "TransactionsApi.deleteMultipleTransactionsAndGroups"
-        ]?.[localVarOperationServerIndex]?.url;
+        ]?.[localVarOperationServerIndex]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Retrieves a list of all individual and grouped transactions
@@ -18300,11 +18281,11 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
       start?: number,
       count?: number,
       query?: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<CombinedTransactionsPage>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getTransactions(
@@ -18314,20 +18295,20 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
         start,
         count,
         query,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["TransactionsApi.getTransactions"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Sets a transaction\'s visibility: default, ghost (pending review), or hidden.
@@ -18342,7 +18323,7 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
       userId: string,
       transactionId: string,
       setTransactionVisibilityRequest: SetTransactionVisibilityRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
@@ -18351,20 +18332,20 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
           userId,
           transactionId,
           setTransactionVisibilityRequest,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["TransactionsApi.setTransactionVisibility"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Sets visibility for multiple transactions at once: default, ghost (pending review), or hidden.
@@ -18377,7 +18358,7 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
     async setVisibilityForMultipleTransactions(
       userId: string,
       setTransactionsVisibilityRequest: SetTransactionsVisibilityRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
@@ -18385,20 +18366,20 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
         await localVarAxiosParamCreator.setVisibilityForMultipleTransactions(
           userId,
           setTransactionsVisibilityRequest,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap[
           "TransactionsApi.setVisibilityForMultipleTransactions"
-        ]?.[localVarOperationServerIndex]?.url;
+        ]?.[localVarOperationServerIndex]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * This is a generic update endpoint which does not assume whether transaction is individual or group. It only updates the contents of the transaction without moving it.
@@ -18413,11 +18394,11 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
       transactionId: string,
       userId: string,
       updateTransactionRequest: UpdateTransactionRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<UpdateTransactionResponse>
     > {
       const localVarAxiosArgs =
@@ -18425,23 +18406,23 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
           transactionId,
           userId,
           updateTransactionRequest,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["TransactionsApi.updateAnExistingTransaction"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
-  };
-};
+  }
+}
 
 /**
  * TransactionsApi - factory interface
@@ -18450,9 +18431,9 @@ export const TransactionsApiFp = function (configuration?: Configuration) {
 export const TransactionsApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance,
+  axios?: AxiosInstance
 ) {
-  const localVarFp = TransactionsApiFp(configuration);
+  const localVarFp = TransactionsApiFp(configuration)
   return {
     /**
      * Deleted any transaction, whether its individual or from a group.
@@ -18465,11 +18446,11 @@ export const TransactionsApiFactory = function (
     deleteAnExistingTransaction(
       transactionId: string,
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<void> {
       return localVarFp
         .deleteAnExistingTransaction(transactionId, userId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Deletes any combination of individual transactions and whole transaction groups in one call. Deleting a group also deletes every transaction inside it.
@@ -18482,15 +18463,15 @@ export const TransactionsApiFactory = function (
     deleteMultipleTransactionsAndGroups(
       userId: string,
       deleteTransactionsRequest: DeleteTransactionsRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<void> {
       return localVarFp
         .deleteMultipleTransactionsAndGroups(
           userId,
           deleteTransactionsRequest,
-          options,
+          options
         )
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Retrieves a list of all individual and grouped transactions
@@ -18511,11 +18492,11 @@ export const TransactionsApiFactory = function (
       start?: number,
       count?: number,
       query?: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<CombinedTransactionsPage> {
       return localVarFp
         .getTransactions(userId, limit, cursor, start, count, query, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Sets a transaction\'s visibility: default, ghost (pending review), or hidden.
@@ -18530,16 +18511,16 @@ export const TransactionsApiFactory = function (
       userId: string,
       transactionId: string,
       setTransactionVisibilityRequest: SetTransactionVisibilityRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<void> {
       return localVarFp
         .setTransactionVisibility(
           userId,
           transactionId,
           setTransactionVisibilityRequest,
-          options,
+          options
         )
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Sets visibility for multiple transactions at once: default, ghost (pending review), or hidden.
@@ -18552,15 +18533,15 @@ export const TransactionsApiFactory = function (
     setVisibilityForMultipleTransactions(
       userId: string,
       setTransactionsVisibilityRequest: SetTransactionsVisibilityRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<void> {
       return localVarFp
         .setVisibilityForMultipleTransactions(
           userId,
           setTransactionsVisibilityRequest,
-          options,
+          options
         )
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * This is a generic update endpoint which does not assume whether transaction is individual or group. It only updates the contents of the transaction without moving it.
@@ -18575,19 +18556,19 @@ export const TransactionsApiFactory = function (
       transactionId: string,
       userId: string,
       updateTransactionRequest: UpdateTransactionRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<UpdateTransactionResponse> {
       return localVarFp
         .updateAnExistingTransaction(
           transactionId,
           userId,
           updateTransactionRequest,
-          options,
+          options
         )
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
-  };
-};
+  }
+}
 
 /**
  * TransactionsApi - interface
@@ -18607,8 +18588,8 @@ export interface TransactionsApiInterface {
   deleteAnExistingTransaction(
     transactionId: string,
     userId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<void>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<void>
 
   /**
    * Deletes any combination of individual transactions and whole transaction groups in one call. Deleting a group also deletes every transaction inside it.
@@ -18622,8 +18603,8 @@ export interface TransactionsApiInterface {
   deleteMultipleTransactionsAndGroups(
     userId: string,
     deleteTransactionsRequest: DeleteTransactionsRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<void>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<void>
 
   /**
    * Retrieves a list of all individual and grouped transactions
@@ -18645,8 +18626,8 @@ export interface TransactionsApiInterface {
     start?: number,
     count?: number,
     query?: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<CombinedTransactionsPage>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<CombinedTransactionsPage>
 
   /**
    * Sets a transaction\'s visibility: default, ghost (pending review), or hidden.
@@ -18662,8 +18643,8 @@ export interface TransactionsApiInterface {
     userId: string,
     transactionId: string,
     setTransactionVisibilityRequest: SetTransactionVisibilityRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<void>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<void>
 
   /**
    * Sets visibility for multiple transactions at once: default, ghost (pending review), or hidden.
@@ -18677,8 +18658,8 @@ export interface TransactionsApiInterface {
   setVisibilityForMultipleTransactions(
     userId: string,
     setTransactionsVisibilityRequest: SetTransactionsVisibilityRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<void>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<void>
 
   /**
    * This is a generic update endpoint which does not assume whether transaction is individual or group. It only updates the contents of the transaction without moving it.
@@ -18694,8 +18675,8 @@ export interface TransactionsApiInterface {
     transactionId: string,
     userId: string,
     updateTransactionRequest: UpdateTransactionRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<UpdateTransactionResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<UpdateTransactionResponse>
 }
 
 /**
@@ -18720,11 +18701,11 @@ export class TransactionsApi
   public deleteAnExistingTransaction(
     transactionId: string,
     userId: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return TransactionsApiFp(this.configuration)
       .deleteAnExistingTransaction(transactionId, userId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -18739,15 +18720,15 @@ export class TransactionsApi
   public deleteMultipleTransactionsAndGroups(
     userId: string,
     deleteTransactionsRequest: DeleteTransactionsRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return TransactionsApiFp(this.configuration)
       .deleteMultipleTransactionsAndGroups(
         userId,
         deleteTransactionsRequest,
-        options,
+        options
       )
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -18770,11 +18751,11 @@ export class TransactionsApi
     start?: number,
     count?: number,
     query?: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return TransactionsApiFp(this.configuration)
       .getTransactions(userId, limit, cursor, start, count, query, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -18791,16 +18772,16 @@ export class TransactionsApi
     userId: string,
     transactionId: string,
     setTransactionVisibilityRequest: SetTransactionVisibilityRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return TransactionsApiFp(this.configuration)
       .setTransactionVisibility(
         userId,
         transactionId,
         setTransactionVisibilityRequest,
-        options,
+        options
       )
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -18815,15 +18796,15 @@ export class TransactionsApi
   public setVisibilityForMultipleTransactions(
     userId: string,
     setTransactionsVisibilityRequest: SetTransactionsVisibilityRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return TransactionsApiFp(this.configuration)
       .setVisibilityForMultipleTransactions(
         userId,
         setTransactionsVisibilityRequest,
-        options,
+        options
       )
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -18840,16 +18821,16 @@ export class TransactionsApi
     transactionId: string,
     userId: string,
     updateTransactionRequest: UpdateTransactionRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return TransactionsApiFp(this.configuration)
       .updateAnExistingTransaction(
         transactionId,
         userId,
         updateTransactionRequest,
-        options,
+        options
       )
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 }
 
@@ -18858,7 +18839,7 @@ export class TransactionsApi
  * @export
  */
 export const UserAssetsApiAxiosParamCreator = function (
-  configuration?: Configuration,
+  configuration?: Configuration
 ) {
   return {
     /**
@@ -18872,47 +18853,47 @@ export const UserAssetsApiAxiosParamCreator = function (
     deleteAsset: async (
       userId: string,
       assetId: number,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("deleteAsset", "userId", userId);
+      assertParamExists("deleteAsset", "userId", userId)
       // verify required parameter 'assetId' is not null or undefined
-      assertParamExists("deleteAsset", "assetId", assetId);
+      assertParamExists("deleteAsset", "assetId", assetId)
       const localVarPath = `/api/users/{user_id}/assets/{asset_id}`
         .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-        .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)));
+        .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "DELETE",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Deletes user asset pair and its associated metadata.
@@ -18927,54 +18908,54 @@ export const UserAssetsApiAxiosParamCreator = function (
       userId: string,
       assetId: number,
       referenceId: number,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("deleteAssetPair", "userId", userId);
+      assertParamExists("deleteAssetPair", "userId", userId)
       // verify required parameter 'assetId' is not null or undefined
-      assertParamExists("deleteAssetPair", "assetId", assetId);
+      assertParamExists("deleteAssetPair", "assetId", assetId)
       // verify required parameter 'referenceId' is not null or undefined
-      assertParamExists("deleteAssetPair", "referenceId", referenceId);
+      assertParamExists("deleteAssetPair", "referenceId", referenceId)
       const localVarPath =
         `/api/users/{user_id}/assets/{asset_id}/{reference_id}`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
           .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
           .replace(
             `{${"reference_id"}}`,
-            encodeURIComponent(String(referenceId)),
-          );
+            encodeURIComponent(String(referenceId))
+          )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "DELETE",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Request with no parameters deletes all rates related to a user asset and its pair. If the parameters are specified, it deletes only the subset of it.
@@ -18993,70 +18974,70 @@ export const UserAssetsApiAxiosParamCreator = function (
       referenceId: number,
       startTimestamp: number,
       endTimestamp: number,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("deleteAssetPairRates", "userId", userId);
+      assertParamExists("deleteAssetPairRates", "userId", userId)
       // verify required parameter 'assetId' is not null or undefined
-      assertParamExists("deleteAssetPairRates", "assetId", assetId);
+      assertParamExists("deleteAssetPairRates", "assetId", assetId)
       // verify required parameter 'referenceId' is not null or undefined
-      assertParamExists("deleteAssetPairRates", "referenceId", referenceId);
+      assertParamExists("deleteAssetPairRates", "referenceId", referenceId)
       // verify required parameter 'startTimestamp' is not null or undefined
       assertParamExists(
         "deleteAssetPairRates",
         "startTimestamp",
-        startTimestamp,
-      );
+        startTimestamp
+      )
       // verify required parameter 'endTimestamp' is not null or undefined
-      assertParamExists("deleteAssetPairRates", "endTimestamp", endTimestamp);
+      assertParamExists("deleteAssetPairRates", "endTimestamp", endTimestamp)
       const localVarPath =
         `/api/users/{user_id}/assets/{asset_id}/{reference_id}/rates`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
           .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
           .replace(
             `{${"reference_id"}}`,
-            encodeURIComponent(String(referenceId)),
-          );
+            encodeURIComponent(String(referenceId))
+          )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "DELETE",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
       if (startTimestamp !== undefined) {
-        localVarQueryParameter["start_timestamp"] = startTimestamp;
+        localVarQueryParameter["start_timestamp"] = startTimestamp
       }
 
       if (endTimestamp !== undefined) {
-        localVarQueryParameter["end_timestamp"] = endTimestamp;
+        localVarQueryParameter["end_timestamp"] = endTimestamp
       }
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Gets an custom asset added by user
@@ -19069,47 +19050,47 @@ export const UserAssetsApiAxiosParamCreator = function (
     getUserAsset: async (
       userId: string,
       assetId: number,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getUserAsset", "userId", userId);
+      assertParamExists("getUserAsset", "userId", userId)
       // verify required parameter 'assetId' is not null or undefined
-      assertParamExists("getUserAsset", "assetId", assetId);
+      assertParamExists("getUserAsset", "assetId", assetId)
       const localVarPath = `/api/users/{user_id}/assets/{asset_id}`
         .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-        .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)));
+        .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Gets metadata about user asset pair
@@ -19124,54 +19105,54 @@ export const UserAssetsApiAxiosParamCreator = function (
       userId: string,
       assetId: number,
       referenceId: number,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getUserAssetPair", "userId", userId);
+      assertParamExists("getUserAssetPair", "userId", userId)
       // verify required parameter 'assetId' is not null or undefined
-      assertParamExists("getUserAssetPair", "assetId", assetId);
+      assertParamExists("getUserAssetPair", "assetId", assetId)
       // verify required parameter 'referenceId' is not null or undefined
-      assertParamExists("getUserAssetPair", "referenceId", referenceId);
+      assertParamExists("getUserAssetPair", "referenceId", referenceId)
       const localVarPath =
         `/api/users/{user_id}/assets/{asset_id}/{reference_id}`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
           .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
           .replace(
             `{${"reference_id"}}`,
-            encodeURIComponent(String(referenceId)),
-          );
+            encodeURIComponent(String(referenceId))
+          )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Returns the asset\'s latest price in the reference currency, derived by hopping through the asset\'s base pair. Calling this endpoint means the result is a computed conversion, not an exact stored rate.
@@ -19180,41 +19161,41 @@ export const UserAssetsApiAxiosParamCreator = function (
      * @throws {RequiredError}
      */
     getUserAssetPairConverted: async (
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
-      const localVarPath = `/api/users/{user_id}/assets/{asset_id}/{reference_id}/converted`;
+      const localVarPath = `/api/users/{user_id}/assets/{asset_id}/{reference_id}/converted`
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Returns the asset\'s price series in the reference currency, derived by hopping through the asset\'s base pair. Each historical point is converted at the pair\'s own rate for that date.
@@ -19225,47 +19206,47 @@ export const UserAssetsApiAxiosParamCreator = function (
      */
     getUserAssetPairConvertedRates: async (
       range: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'range' is not null or undefined
-      assertParamExists("getUserAssetPairConvertedRates", "range", range);
-      const localVarPath = `/api/users/{user_id}/assets/{asset_id}/{reference_id}/converted/rates`;
+      assertParamExists("getUserAssetPairConvertedRates", "range", range)
+      const localVarPath = `/api/users/{user_id}/assets/{asset_id}/{reference_id}/converted/rates`
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
       if (range !== undefined) {
-        localVarQueryParameter["range"] = range;
+        localVarQueryParameter["range"] = range
       }
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Gets user asset pair rates based on provided query params
@@ -19282,58 +19263,58 @@ export const UserAssetsApiAxiosParamCreator = function (
       assetId: number,
       referenceId: number,
       range?: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getUserAssetPairRates", "userId", userId);
+      assertParamExists("getUserAssetPairRates", "userId", userId)
       // verify required parameter 'assetId' is not null or undefined
-      assertParamExists("getUserAssetPairRates", "assetId", assetId);
+      assertParamExists("getUserAssetPairRates", "assetId", assetId)
       // verify required parameter 'referenceId' is not null or undefined
-      assertParamExists("getUserAssetPairRates", "referenceId", referenceId);
+      assertParamExists("getUserAssetPairRates", "referenceId", referenceId)
       const localVarPath =
         `/api/users/{user_id}/assets/{asset_id}/{reference_id}/rates`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
           .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
           .replace(
             `{${"reference_id"}}`,
-            encodeURIComponent(String(referenceId)),
-          );
+            encodeURIComponent(String(referenceId))
+          )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
       if (range !== undefined) {
-        localVarQueryParameter["range"] = range;
+        localVarQueryParameter["range"] = range
       }
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Gets all custom assets created by the user. Returns unpaginated results with lookup tables.
@@ -19344,46 +19325,46 @@ export const UserAssetsApiAxiosParamCreator = function (
      */
     getUserAssets: async (
       userId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getUserAssets", "userId", userId);
+      assertParamExists("getUserAssets", "userId", userId)
       const localVarPath = `/api/users/{user_id}/assets`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Adds a new reference pair to an existing user asset.
@@ -19398,60 +19379,60 @@ export const UserAssetsApiAxiosParamCreator = function (
       userId: string,
       assetId: number,
       addAssetPairRequest: AddAssetPairRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("postAssetPair", "userId", userId);
+      assertParamExists("postAssetPair", "userId", userId)
       // verify required parameter 'assetId' is not null or undefined
-      assertParamExists("postAssetPair", "assetId", assetId);
+      assertParamExists("postAssetPair", "assetId", assetId)
       // verify required parameter 'addAssetPairRequest' is not null or undefined
       assertParamExists(
         "postAssetPair",
         "addAssetPairRequest",
-        addAssetPairRequest,
-      );
+        addAssetPairRequest
+      )
       const localVarPath = `/api/users/{user_id}/assets/{asset_id}/pairs`
         .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-        .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)));
+        .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         addAssetPairRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Adds a user defined asset.
@@ -19464,55 +19445,55 @@ export const UserAssetsApiAxiosParamCreator = function (
     postCustomAsset: async (
       userId: string,
       addAssetRequest: AddAssetRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("postCustomAsset", "userId", userId);
+      assertParamExists("postCustomAsset", "userId", userId)
       // verify required parameter 'addAssetRequest' is not null or undefined
-      assertParamExists("postCustomAsset", "addAssetRequest", addAssetRequest);
+      assertParamExists("postCustomAsset", "addAssetRequest", addAssetRequest)
       const localVarPath = `/api/users/{user_id}/assets`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         addAssetRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Adds a list of user asset pair rates. The list may contain one or many elements. If the rate already exists, error will be returned.
@@ -19529,67 +19510,67 @@ export const UserAssetsApiAxiosParamCreator = function (
       assetId: number,
       referenceId: number,
       addAssetPairRatesRequest: AddAssetPairRatesRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("postCustomAssetRates", "userId", userId);
+      assertParamExists("postCustomAssetRates", "userId", userId)
       // verify required parameter 'assetId' is not null or undefined
-      assertParamExists("postCustomAssetRates", "assetId", assetId);
+      assertParamExists("postCustomAssetRates", "assetId", assetId)
       // verify required parameter 'referenceId' is not null or undefined
-      assertParamExists("postCustomAssetRates", "referenceId", referenceId);
+      assertParamExists("postCustomAssetRates", "referenceId", referenceId)
       // verify required parameter 'addAssetPairRatesRequest' is not null or undefined
       assertParamExists(
         "postCustomAssetRates",
         "addAssetPairRatesRequest",
-        addAssetPairRatesRequest,
-      );
+        addAssetPairRatesRequest
+      )
       const localVarPath =
         `/api/users/{user_id}/assets/{asset_id}/{reference_id}/rates`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
           .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
           .replace(
             `{${"reference_id"}}`,
-            encodeURIComponent(String(referenceId)),
-          );
+            encodeURIComponent(String(referenceId))
+          )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         addAssetPairRatesRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Update already existing user defined asset.
@@ -19604,56 +19585,56 @@ export const UserAssetsApiAxiosParamCreator = function (
       userId: string,
       assetId: number,
       addAssetRequest: AddAssetRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("putCustomAsset", "userId", userId);
+      assertParamExists("putCustomAsset", "userId", userId)
       // verify required parameter 'assetId' is not null or undefined
-      assertParamExists("putCustomAsset", "assetId", assetId);
+      assertParamExists("putCustomAsset", "assetId", assetId)
       // verify required parameter 'addAssetRequest' is not null or undefined
-      assertParamExists("putCustomAsset", "addAssetRequest", addAssetRequest);
+      assertParamExists("putCustomAsset", "addAssetRequest", addAssetRequest)
       const localVarPath = `/api/users/{user_id}/assets/{asset_id}`
         .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-        .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)));
+        .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "PUT",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         addAssetRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Change the metadata related to user asset pair. As user asset pair is not uniquely identifiable we do not need a POST to create it. It is created by default as you add rates, and this endpoint serves as a way to add or update metadata.
@@ -19670,70 +19651,70 @@ export const UserAssetsApiAxiosParamCreator = function (
       assetId: number,
       referenceId: number,
       userAssetPairMetadata: UserAssetPairMetadata,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("putCustomAssetPair", "userId", userId);
+      assertParamExists("putCustomAssetPair", "userId", userId)
       // verify required parameter 'assetId' is not null or undefined
-      assertParamExists("putCustomAssetPair", "assetId", assetId);
+      assertParamExists("putCustomAssetPair", "assetId", assetId)
       // verify required parameter 'referenceId' is not null or undefined
-      assertParamExists("putCustomAssetPair", "referenceId", referenceId);
+      assertParamExists("putCustomAssetPair", "referenceId", referenceId)
       // verify required parameter 'userAssetPairMetadata' is not null or undefined
       assertParamExists(
         "putCustomAssetPair",
         "userAssetPairMetadata",
-        userAssetPairMetadata,
-      );
+        userAssetPairMetadata
+      )
       const localVarPath =
         `/api/users/{user_id}/assets/{asset_id}/{reference_id}/usermetadata`
           .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
           .replace(`{${"asset_id"}}`, encodeURIComponent(String(assetId)))
           .replace(
             `{${"reference_id"}}`,
-            encodeURIComponent(String(referenceId)),
-          );
+            encodeURIComponent(String(referenceId))
+          )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "PUT",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         userAssetPairMetadata,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
-  };
-};
+  }
+}
 
 /**
  * UserAssetsApi - functional programming interface
@@ -19741,7 +19722,7 @@ export const UserAssetsApiAxiosParamCreator = function (
  */
 export const UserAssetsApiFp = function (configuration?: Configuration) {
   const localVarAxiosParamCreator =
-    UserAssetsApiAxiosParamCreator(configuration);
+    UserAssetsApiAxiosParamCreator(configuration)
   return {
     /**
      * Deletes manually added user asset along with all the related information about it. Return an error if the asset is in use or other assets are dependent on it as base.
@@ -19754,27 +19735,27 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
     async deleteAsset(
       userId: string,
       assetId: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.deleteAsset(
         userId,
         assetId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UserAssetsApi.deleteAsset"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Deletes user asset pair and its associated metadata.
@@ -19789,7 +19770,7 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
       userId: string,
       assetId: number,
       referenceId: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
@@ -19797,20 +19778,20 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
         userId,
         assetId,
         referenceId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UserAssetsApi.deleteAssetPair"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Request with no parameters deletes all rates related to a user asset and its pair. If the parameters are specified, it deletes only the subset of it.
@@ -19829,7 +19810,7 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
       referenceId: number,
       startTimestamp: number,
       endTimestamp: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
@@ -19840,20 +19821,20 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
           referenceId,
           startTimestamp,
           endTimestamp,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UserAssetsApi.deleteAssetPairRates"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Gets an custom asset added by user
@@ -19866,30 +19847,30 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
     async getUserAsset(
       userId: string,
       assetId: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetAssetResponse>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getUserAsset(
         userId,
         assetId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UserAssetsApi.getUserAsset"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Gets metadata about user asset pair
@@ -19904,11 +19885,11 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
       userId: string,
       assetId: number,
       referenceId: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetUserAssetPairResponse>
     > {
       const localVarAxiosArgs =
@@ -19916,20 +19897,20 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
           userId,
           assetId,
           referenceId,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UserAssetsApi.getUserAssetPair"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Returns the asset\'s latest price in the reference currency, derived by hopping through the asset\'s base pair. Calling this endpoint means the result is a computed conversion, not an exact stored rate.
@@ -19938,27 +19919,27 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
      * @throws {RequiredError}
      */
     async getUserAssetPairConverted(
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<AssetPairMetadata>
     > {
       const localVarAxiosArgs =
-        await localVarAxiosParamCreator.getUserAssetPairConverted(options);
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        await localVarAxiosParamCreator.getUserAssetPairConverted(options)
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UserAssetsApi.getUserAssetPairConverted"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Returns the asset\'s price series in the reference currency, derived by hopping through the asset\'s base pair. Each historical point is converted at the pair\'s own rate for that date.
@@ -19969,30 +19950,30 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
      */
     async getUserAssetPairConvertedRates(
       range: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetAssetPairRatesResponse>
     > {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getUserAssetPairConvertedRates(
           range,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UserAssetsApi.getUserAssetPairConvertedRates"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Gets user asset pair rates based on provided query params
@@ -20009,11 +19990,11 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
       assetId: number,
       referenceId: number,
       range?: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetAssetPairRatesResponse>
     > {
       const localVarAxiosArgs =
@@ -20022,20 +20003,20 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
           assetId,
           referenceId,
           range,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UserAssetsApi.getUserAssetPairRates"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Gets all custom assets created by the user. Returns unpaginated results with lookup tables.
@@ -20046,29 +20027,29 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
      */
     async getUserAssets(
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetUserAssetsResponse>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getUserAssets(
         userId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UserAssetsApi.getUserAssets"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Adds a new reference pair to an existing user asset.
@@ -20083,31 +20064,31 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
       userId: string,
       assetId: number,
       addAssetPairRequest: AddAssetPairRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<AddAssetPairResponse>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.postAssetPair(
         userId,
         assetId,
         addAssetPairRequest,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UserAssetsApi.postAssetPair"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Adds a user defined asset.
@@ -20120,30 +20101,30 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
     async postCustomAsset(
       userId: string,
       addAssetRequest: AddAssetRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<AddAssetResponse>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.postCustomAsset(
         userId,
         addAssetRequest,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UserAssetsApi.postCustomAsset"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Adds a list of user asset pair rates. The list may contain one or many elements. If the rate already exists, error will be returned.
@@ -20160,11 +20141,11 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
       assetId: number,
       referenceId: number,
       addAssetPairRatesRequest: AddAssetPairRatesRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<AddAssetPairRatesRequest>
     > {
       const localVarAxiosArgs =
@@ -20173,20 +20154,20 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
           assetId,
           referenceId,
           addAssetPairRatesRequest,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UserAssetsApi.postCustomAssetRates"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Update already existing user defined asset.
@@ -20201,31 +20182,31 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
       userId: string,
       assetId: number,
       addAssetRequest: AddAssetRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<AddAssetRequest>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.putCustomAsset(
         userId,
         assetId,
         addAssetRequest,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UserAssetsApi.putCustomAsset"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Change the metadata related to user asset pair. As user asset pair is not uniquely identifiable we do not need a POST to create it. It is created by default as you add rates, and this endpoint serves as a way to add or update metadata.
@@ -20242,11 +20223,11 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
       assetId: number,
       referenceId: number,
       userAssetPairMetadata: UserAssetPairMetadata,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<UserAssetPairMetadata>
     > {
       const localVarAxiosArgs =
@@ -20255,23 +20236,23 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
           assetId,
           referenceId,
           userAssetPairMetadata,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UserAssetsApi.putCustomAssetPair"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
-  };
-};
+  }
+}
 
 /**
  * UserAssetsApi - factory interface
@@ -20280,9 +20261,9 @@ export const UserAssetsApiFp = function (configuration?: Configuration) {
 export const UserAssetsApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance,
+  axios?: AxiosInstance
 ) {
-  const localVarFp = UserAssetsApiFp(configuration);
+  const localVarFp = UserAssetsApiFp(configuration)
   return {
     /**
      * Deletes manually added user asset along with all the related information about it. Return an error if the asset is in use or other assets are dependent on it as base.
@@ -20295,11 +20276,11 @@ export const UserAssetsApiFactory = function (
     deleteAsset(
       userId: string,
       assetId: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<void> {
       return localVarFp
         .deleteAsset(userId, assetId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Deletes user asset pair and its associated metadata.
@@ -20314,11 +20295,11 @@ export const UserAssetsApiFactory = function (
       userId: string,
       assetId: number,
       referenceId: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<void> {
       return localVarFp
         .deleteAssetPair(userId, assetId, referenceId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Request with no parameters deletes all rates related to a user asset and its pair. If the parameters are specified, it deletes only the subset of it.
@@ -20337,7 +20318,7 @@ export const UserAssetsApiFactory = function (
       referenceId: number,
       startTimestamp: number,
       endTimestamp: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<void> {
       return localVarFp
         .deleteAssetPairRates(
@@ -20346,9 +20327,9 @@ export const UserAssetsApiFactory = function (
           referenceId,
           startTimestamp,
           endTimestamp,
-          options,
+          options
         )
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Gets an custom asset added by user
@@ -20361,11 +20342,11 @@ export const UserAssetsApiFactory = function (
     getUserAsset(
       userId: string,
       assetId: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetAssetResponse> {
       return localVarFp
         .getUserAsset(userId, assetId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Gets metadata about user asset pair
@@ -20380,11 +20361,11 @@ export const UserAssetsApiFactory = function (
       userId: string,
       assetId: number,
       referenceId: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetUserAssetPairResponse> {
       return localVarFp
         .getUserAssetPair(userId, assetId, referenceId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Returns the asset\'s latest price in the reference currency, derived by hopping through the asset\'s base pair. Calling this endpoint means the result is a computed conversion, not an exact stored rate.
@@ -20393,11 +20374,11 @@ export const UserAssetsApiFactory = function (
      * @throws {RequiredError}
      */
     getUserAssetPairConverted(
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<AssetPairMetadata> {
       return localVarFp
         .getUserAssetPairConverted(options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Returns the asset\'s price series in the reference currency, derived by hopping through the asset\'s base pair. Each historical point is converted at the pair\'s own rate for that date.
@@ -20408,11 +20389,11 @@ export const UserAssetsApiFactory = function (
      */
     getUserAssetPairConvertedRates(
       range: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetAssetPairRatesResponse> {
       return localVarFp
         .getUserAssetPairConvertedRates(range, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Gets user asset pair rates based on provided query params
@@ -20429,11 +20410,11 @@ export const UserAssetsApiFactory = function (
       assetId: number,
       referenceId: number,
       range?: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetAssetPairRatesResponse> {
       return localVarFp
         .getUserAssetPairRates(userId, assetId, referenceId, range, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Gets all custom assets created by the user. Returns unpaginated results with lookup tables.
@@ -20444,11 +20425,11 @@ export const UserAssetsApiFactory = function (
      */
     getUserAssets(
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetUserAssetsResponse> {
       return localVarFp
         .getUserAssets(userId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Adds a new reference pair to an existing user asset.
@@ -20463,11 +20444,11 @@ export const UserAssetsApiFactory = function (
       userId: string,
       assetId: number,
       addAssetPairRequest: AddAssetPairRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<AddAssetPairResponse> {
       return localVarFp
         .postAssetPair(userId, assetId, addAssetPairRequest, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Adds a user defined asset.
@@ -20480,11 +20461,11 @@ export const UserAssetsApiFactory = function (
     postCustomAsset(
       userId: string,
       addAssetRequest: AddAssetRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<AddAssetResponse> {
       return localVarFp
         .postCustomAsset(userId, addAssetRequest, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Adds a list of user asset pair rates. The list may contain one or many elements. If the rate already exists, error will be returned.
@@ -20501,7 +20482,7 @@ export const UserAssetsApiFactory = function (
       assetId: number,
       referenceId: number,
       addAssetPairRatesRequest: AddAssetPairRatesRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<AddAssetPairRatesRequest> {
       return localVarFp
         .postCustomAssetRates(
@@ -20509,9 +20490,9 @@ export const UserAssetsApiFactory = function (
           assetId,
           referenceId,
           addAssetPairRatesRequest,
-          options,
+          options
         )
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Update already existing user defined asset.
@@ -20526,11 +20507,11 @@ export const UserAssetsApiFactory = function (
       userId: string,
       assetId: number,
       addAssetRequest: AddAssetRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<AddAssetRequest> {
       return localVarFp
         .putCustomAsset(userId, assetId, addAssetRequest, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Change the metadata related to user asset pair. As user asset pair is not uniquely identifiable we do not need a POST to create it. It is created by default as you add rates, and this endpoint serves as a way to add or update metadata.
@@ -20547,7 +20528,7 @@ export const UserAssetsApiFactory = function (
       assetId: number,
       referenceId: number,
       userAssetPairMetadata: UserAssetPairMetadata,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<UserAssetPairMetadata> {
       return localVarFp
         .putCustomAssetPair(
@@ -20555,12 +20536,12 @@ export const UserAssetsApiFactory = function (
           assetId,
           referenceId,
           userAssetPairMetadata,
-          options,
+          options
         )
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
-  };
-};
+  }
+}
 
 /**
  * UserAssetsApi - interface
@@ -20580,8 +20561,8 @@ export interface UserAssetsApiInterface {
   deleteAsset(
     userId: string,
     assetId: number,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<void>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<void>
 
   /**
    * Deletes user asset pair and its associated metadata.
@@ -20597,8 +20578,8 @@ export interface UserAssetsApiInterface {
     userId: string,
     assetId: number,
     referenceId: number,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<void>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<void>
 
   /**
    * Request with no parameters deletes all rates related to a user asset and its pair. If the parameters are specified, it deletes only the subset of it.
@@ -20618,8 +20599,8 @@ export interface UserAssetsApiInterface {
     referenceId: number,
     startTimestamp: number,
     endTimestamp: number,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<void>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<void>
 
   /**
    * Gets an custom asset added by user
@@ -20633,8 +20614,8 @@ export interface UserAssetsApiInterface {
   getUserAsset(
     userId: string,
     assetId: number,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetAssetResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetAssetResponse>
 
   /**
    * Gets metadata about user asset pair
@@ -20650,8 +20631,8 @@ export interface UserAssetsApiInterface {
     userId: string,
     assetId: number,
     referenceId: number,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetUserAssetPairResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetUserAssetPairResponse>
 
   /**
    * Returns the asset\'s latest price in the reference currency, derived by hopping through the asset\'s base pair. Calling this endpoint means the result is a computed conversion, not an exact stored rate.
@@ -20661,8 +20642,8 @@ export interface UserAssetsApiInterface {
    * @memberof UserAssetsApiInterface
    */
   getUserAssetPairConverted(
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<AssetPairMetadata>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<AssetPairMetadata>
 
   /**
    * Returns the asset\'s price series in the reference currency, derived by hopping through the asset\'s base pair. Each historical point is converted at the pair\'s own rate for that date.
@@ -20674,8 +20655,8 @@ export interface UserAssetsApiInterface {
    */
   getUserAssetPairConvertedRates(
     range: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetAssetPairRatesResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetAssetPairRatesResponse>
 
   /**
    * Gets user asset pair rates based on provided query params
@@ -20693,8 +20674,8 @@ export interface UserAssetsApiInterface {
     assetId: number,
     referenceId: number,
     range?: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetAssetPairRatesResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetAssetPairRatesResponse>
 
   /**
    * Gets all custom assets created by the user. Returns unpaginated results with lookup tables.
@@ -20706,8 +20687,8 @@ export interface UserAssetsApiInterface {
    */
   getUserAssets(
     userId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetUserAssetsResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetUserAssetsResponse>
 
   /**
    * Adds a new reference pair to an existing user asset.
@@ -20723,8 +20704,8 @@ export interface UserAssetsApiInterface {
     userId: string,
     assetId: number,
     addAssetPairRequest: AddAssetPairRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<AddAssetPairResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<AddAssetPairResponse>
 
   /**
    * Adds a user defined asset.
@@ -20738,8 +20719,8 @@ export interface UserAssetsApiInterface {
   postCustomAsset(
     userId: string,
     addAssetRequest: AddAssetRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<AddAssetResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<AddAssetResponse>
 
   /**
    * Adds a list of user asset pair rates. The list may contain one or many elements. If the rate already exists, error will be returned.
@@ -20757,8 +20738,8 @@ export interface UserAssetsApiInterface {
     assetId: number,
     referenceId: number,
     addAssetPairRatesRequest: AddAssetPairRatesRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<AddAssetPairRatesRequest>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<AddAssetPairRatesRequest>
 
   /**
    * Update already existing user defined asset.
@@ -20774,8 +20755,8 @@ export interface UserAssetsApiInterface {
     userId: string,
     assetId: number,
     addAssetRequest: AddAssetRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<AddAssetRequest>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<AddAssetRequest>
 
   /**
    * Change the metadata related to user asset pair. As user asset pair is not uniquely identifiable we do not need a POST to create it. It is created by default as you add rates, and this endpoint serves as a way to add or update metadata.
@@ -20793,8 +20774,8 @@ export interface UserAssetsApiInterface {
     assetId: number,
     referenceId: number,
     userAssetPairMetadata: UserAssetPairMetadata,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<UserAssetPairMetadata>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<UserAssetPairMetadata>
 }
 
 /**
@@ -20816,11 +20797,11 @@ export class UserAssetsApi extends BaseAPI implements UserAssetsApiInterface {
   public deleteAsset(
     userId: string,
     assetId: number,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return UserAssetsApiFp(this.configuration)
       .deleteAsset(userId, assetId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -20837,11 +20818,11 @@ export class UserAssetsApi extends BaseAPI implements UserAssetsApiInterface {
     userId: string,
     assetId: number,
     referenceId: number,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return UserAssetsApiFp(this.configuration)
       .deleteAssetPair(userId, assetId, referenceId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -20862,7 +20843,7 @@ export class UserAssetsApi extends BaseAPI implements UserAssetsApiInterface {
     referenceId: number,
     startTimestamp: number,
     endTimestamp: number,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return UserAssetsApiFp(this.configuration)
       .deleteAssetPairRates(
@@ -20871,9 +20852,9 @@ export class UserAssetsApi extends BaseAPI implements UserAssetsApiInterface {
         referenceId,
         startTimestamp,
         endTimestamp,
-        options,
+        options
       )
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -20888,11 +20869,11 @@ export class UserAssetsApi extends BaseAPI implements UserAssetsApiInterface {
   public getUserAsset(
     userId: string,
     assetId: number,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return UserAssetsApiFp(this.configuration)
       .getUserAsset(userId, assetId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -20909,11 +20890,11 @@ export class UserAssetsApi extends BaseAPI implements UserAssetsApiInterface {
     userId: string,
     assetId: number,
     referenceId: number,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return UserAssetsApiFp(this.configuration)
       .getUserAssetPair(userId, assetId, referenceId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -20926,7 +20907,7 @@ export class UserAssetsApi extends BaseAPI implements UserAssetsApiInterface {
   public getUserAssetPairConverted(options?: RawAxiosRequestConfig) {
     return UserAssetsApiFp(this.configuration)
       .getUserAssetPairConverted(options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -20939,11 +20920,11 @@ export class UserAssetsApi extends BaseAPI implements UserAssetsApiInterface {
    */
   public getUserAssetPairConvertedRates(
     range: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return UserAssetsApiFp(this.configuration)
       .getUserAssetPairConvertedRates(range, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -20962,11 +20943,11 @@ export class UserAssetsApi extends BaseAPI implements UserAssetsApiInterface {
     assetId: number,
     referenceId: number,
     range?: string,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return UserAssetsApiFp(this.configuration)
       .getUserAssetPairRates(userId, assetId, referenceId, range, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -20980,7 +20961,7 @@ export class UserAssetsApi extends BaseAPI implements UserAssetsApiInterface {
   public getUserAssets(userId: string, options?: RawAxiosRequestConfig) {
     return UserAssetsApiFp(this.configuration)
       .getUserAssets(userId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -20997,11 +20978,11 @@ export class UserAssetsApi extends BaseAPI implements UserAssetsApiInterface {
     userId: string,
     assetId: number,
     addAssetPairRequest: AddAssetPairRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return UserAssetsApiFp(this.configuration)
       .postAssetPair(userId, assetId, addAssetPairRequest, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -21016,11 +20997,11 @@ export class UserAssetsApi extends BaseAPI implements UserAssetsApiInterface {
   public postCustomAsset(
     userId: string,
     addAssetRequest: AddAssetRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return UserAssetsApiFp(this.configuration)
       .postCustomAsset(userId, addAssetRequest, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -21039,7 +21020,7 @@ export class UserAssetsApi extends BaseAPI implements UserAssetsApiInterface {
     assetId: number,
     referenceId: number,
     addAssetPairRatesRequest: AddAssetPairRatesRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return UserAssetsApiFp(this.configuration)
       .postCustomAssetRates(
@@ -21047,9 +21028,9 @@ export class UserAssetsApi extends BaseAPI implements UserAssetsApiInterface {
         assetId,
         referenceId,
         addAssetPairRatesRequest,
-        options,
+        options
       )
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -21066,11 +21047,11 @@ export class UserAssetsApi extends BaseAPI implements UserAssetsApiInterface {
     userId: string,
     assetId: number,
     addAssetRequest: AddAssetRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return UserAssetsApiFp(this.configuration)
       .putCustomAsset(userId, assetId, addAssetRequest, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -21089,7 +21070,7 @@ export class UserAssetsApi extends BaseAPI implements UserAssetsApiInterface {
     assetId: number,
     referenceId: number,
     userAssetPairMetadata: UserAssetPairMetadata,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return UserAssetsApiFp(this.configuration)
       .putCustomAssetPair(
@@ -21097,9 +21078,9 @@ export class UserAssetsApi extends BaseAPI implements UserAssetsApiInterface {
         assetId,
         referenceId,
         userAssetPairMetadata,
-        options,
+        options
       )
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 }
 
@@ -21108,7 +21089,7 @@ export class UserAssetsApi extends BaseAPI implements UserAssetsApiInterface {
  * @export
  */
 export const UserCategoriesApiAxiosParamCreator = function (
-  configuration?: Configuration,
+  configuration?: Configuration
 ) {
   return {
     /**
@@ -21122,47 +21103,47 @@ export const UserCategoriesApiAxiosParamCreator = function (
     deleteUserCategory: async (
       userId: string,
       categoryId: number,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("deleteUserCategory", "userId", userId);
+      assertParamExists("deleteUserCategory", "userId", userId)
       // verify required parameter 'categoryId' is not null or undefined
-      assertParamExists("deleteUserCategory", "categoryId", categoryId);
+      assertParamExists("deleteUserCategory", "categoryId", categoryId)
       const localVarPath = `/api/users/{user_id}/categories/{category_id}`
         .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-        .replace(`{${"category_id"}}`, encodeURIComponent(String(categoryId)));
+        .replace(`{${"category_id"}}`, encodeURIComponent(String(categoryId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "DELETE",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Deletes a user-specific category type. Cannot delete global types or types with category dependencies.
@@ -21175,47 +21156,47 @@ export const UserCategoriesApiAxiosParamCreator = function (
     deleteUserCategoryType: async (
       userId: string,
       typeId: number,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("deleteUserCategoryType", "userId", userId);
+      assertParamExists("deleteUserCategoryType", "userId", userId)
       // verify required parameter 'typeId' is not null or undefined
-      assertParamExists("deleteUserCategoryType", "typeId", typeId);
+      assertParamExists("deleteUserCategoryType", "typeId", typeId)
       const localVarPath = `/api/users/{user_id}/categories/types/{type_id}`
         .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-        .replace(`{${"type_id"}}`, encodeURIComponent(String(typeId)));
+        .replace(`{${"type_id"}}`, encodeURIComponent(String(typeId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "DELETE",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Retrieves full list of custom user categories. Does not include global categories.
@@ -21226,46 +21207,46 @@ export const UserCategoriesApiAxiosParamCreator = function (
      */
     getCategories: async (
       userId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getCategories", "userId", userId);
+      assertParamExists("getCategories", "userId", userId)
       const localVarPath = `/api/users/{user_id}/categories`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Retrieves details of a specific category. User can only access global categories or their own categories.
@@ -21278,47 +21259,47 @@ export const UserCategoriesApiAxiosParamCreator = function (
     getUserCategory: async (
       userId: string,
       categoryId: number,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getUserCategory", "userId", userId);
+      assertParamExists("getUserCategory", "userId", userId)
       // verify required parameter 'categoryId' is not null or undefined
-      assertParamExists("getUserCategory", "categoryId", categoryId);
+      assertParamExists("getUserCategory", "categoryId", categoryId)
       const localVarPath = `/api/users/{user_id}/categories/{category_id}`
         .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-        .replace(`{${"category_id"}}`, encodeURIComponent(String(categoryId)));
+        .replace(`{${"category_id"}}`, encodeURIComponent(String(categoryId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Retrieves all category types accessible to the user. Includes both global types and user-specific types.
@@ -21329,46 +21310,46 @@ export const UserCategoriesApiAxiosParamCreator = function (
      */
     getUserCategoryTypes: async (
       userId: string,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("getUserCategoryTypes", "userId", userId);
+      assertParamExists("getUserCategoryTypes", "userId", userId)
       const localVarPath = `/api/users/{user_id}/categories/types`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "GET",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Creates a new user-specific category. Category name must be unique (case-insensitive) across global and user categories. Users are limited to 100 custom categories.
@@ -21381,59 +21362,59 @@ export const UserCategoriesApiAxiosParamCreator = function (
     postUserCategory: async (
       userId: string,
       createCategoryRequest: CreateCategoryRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("postUserCategory", "userId", userId);
+      assertParamExists("postUserCategory", "userId", userId)
       // verify required parameter 'createCategoryRequest' is not null or undefined
       assertParamExists(
         "postUserCategory",
         "createCategoryRequest",
-        createCategoryRequest,
-      );
+        createCategoryRequest
+      )
       const localVarPath = `/api/users/{user_id}/categories`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         createCategoryRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Creates a new user-specific category type. Type name must be unique across global and user types. Users are limited to 20 custom types.
@@ -21446,59 +21427,59 @@ export const UserCategoriesApiAxiosParamCreator = function (
     postUserCategoryType: async (
       userId: string,
       createCategoryTypeRequest: CreateCategoryTypeRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("postUserCategoryType", "userId", userId);
+      assertParamExists("postUserCategoryType", "userId", userId)
       // verify required parameter 'createCategoryTypeRequest' is not null or undefined
       assertParamExists(
         "postUserCategoryType",
         "createCategoryTypeRequest",
-        createCategoryTypeRequest,
-      );
+        createCategoryTypeRequest
+      )
       const localVarPath = `/api/users/{user_id}/categories/types`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         createCategoryTypeRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Updates an existing user-specific category. Cannot update global or system categories. Category name must remain unique if changed.
@@ -21513,60 +21494,60 @@ export const UserCategoriesApiAxiosParamCreator = function (
       userId: string,
       categoryId: number,
       createCategoryRequest: CreateCategoryRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("putUserCategory", "userId", userId);
+      assertParamExists("putUserCategory", "userId", userId)
       // verify required parameter 'categoryId' is not null or undefined
-      assertParamExists("putUserCategory", "categoryId", categoryId);
+      assertParamExists("putUserCategory", "categoryId", categoryId)
       // verify required parameter 'createCategoryRequest' is not null or undefined
       assertParamExists(
         "putUserCategory",
         "createCategoryRequest",
-        createCategoryRequest,
-      );
+        createCategoryRequest
+      )
       const localVarPath = `/api/users/{user_id}/categories/{category_id}`
         .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-        .replace(`{${"category_id"}}`, encodeURIComponent(String(categoryId)));
+        .replace(`{${"category_id"}}`, encodeURIComponent(String(categoryId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "PUT",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         createCategoryRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Updates an existing user-specific category type. Cannot update global types.
@@ -21581,63 +21562,63 @@ export const UserCategoriesApiAxiosParamCreator = function (
       userId: string,
       typeId: number,
       createCategoryTypeRequest: CreateCategoryTypeRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("putUserCategoryType", "userId", userId);
+      assertParamExists("putUserCategoryType", "userId", userId)
       // verify required parameter 'typeId' is not null or undefined
-      assertParamExists("putUserCategoryType", "typeId", typeId);
+      assertParamExists("putUserCategoryType", "typeId", typeId)
       // verify required parameter 'createCategoryTypeRequest' is not null or undefined
       assertParamExists(
         "putUserCategoryType",
         "createCategoryTypeRequest",
-        createCategoryTypeRequest,
-      );
+        createCategoryTypeRequest
+      )
       const localVarPath = `/api/users/{user_id}/categories/types/{type_id}`
         .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
-        .replace(`{${"type_id"}}`, encodeURIComponent(String(typeId)));
+        .replace(`{${"type_id"}}`, encodeURIComponent(String(typeId)))
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "PUT",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
       // authentication auth_token required
       // http bearer authentication required
-      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+      await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         createCategoryTypeRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
-  };
-};
+  }
+}
 
 /**
  * UserCategoriesApi - functional programming interface
@@ -21645,7 +21626,7 @@ export const UserCategoriesApiAxiosParamCreator = function (
  */
 export const UserCategoriesApiFp = function (configuration?: Configuration) {
   const localVarAxiosParamCreator =
-    UserCategoriesApiAxiosParamCreator(configuration);
+    UserCategoriesApiAxiosParamCreator(configuration)
   return {
     /**
      * Deletes a user-specific category. Cannot delete global, system categories, or categories with transaction dependencies.
@@ -21658,7 +21639,7 @@ export const UserCategoriesApiFp = function (configuration?: Configuration) {
     async deleteUserCategory(
       userId: string,
       categoryId: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
@@ -21666,20 +21647,20 @@ export const UserCategoriesApiFp = function (configuration?: Configuration) {
         await localVarAxiosParamCreator.deleteUserCategory(
           userId,
           categoryId,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UserCategoriesApi.deleteUserCategory"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Deletes a user-specific category type. Cannot delete global types or types with category dependencies.
@@ -21692,7 +21673,7 @@ export const UserCategoriesApiFp = function (configuration?: Configuration) {
     async deleteUserCategoryType(
       userId: string,
       typeId: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
@@ -21700,20 +21681,20 @@ export const UserCategoriesApiFp = function (configuration?: Configuration) {
         await localVarAxiosParamCreator.deleteUserCategoryType(
           userId,
           typeId,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UserCategoriesApi.deleteUserCategoryType"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Retrieves full list of custom user categories. Does not include global categories.
@@ -21724,29 +21705,29 @@ export const UserCategoriesApiFp = function (configuration?: Configuration) {
      */
     async getCategories(
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<GetCategoriesResponse>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getCategories(
         userId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UserCategoriesApi.getCategories"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Retrieves details of a specific category. User can only access global categories or their own categories.
@@ -21759,30 +21740,30 @@ export const UserCategoriesApiFp = function (configuration?: Configuration) {
     async getUserCategory(
       userId: string,
       categoryId: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<CategoryIdentifiableCategoryType>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getUserCategory(
         userId,
         categoryId,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UserCategoriesApi.getUserCategory"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Retrieves all category types accessible to the user. Includes both global types and user-specific types.
@@ -21793,27 +21774,27 @@ export const UserCategoriesApiFp = function (configuration?: Configuration) {
      */
     async getUserCategoryTypes(
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<CategoryMetadataLookupTables>
     > {
       const localVarAxiosArgs =
-        await localVarAxiosParamCreator.getUserCategoryTypes(userId, options);
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        await localVarAxiosParamCreator.getUserCategoryTypes(userId, options)
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UserCategoriesApi.getUserCategoryTypes"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Creates a new user-specific category. Category name must be unique (case-insensitive) across global and user categories. Users are limited to 100 custom categories.
@@ -21826,31 +21807,31 @@ export const UserCategoriesApiFp = function (configuration?: Configuration) {
     async postUserCategory(
       userId: string,
       createCategoryRequest: CreateCategoryRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<IdentifiableCategoryIdentifiableCategoryType>
     > {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.postUserCategory(
           userId,
           createCategoryRequest,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UserCategoriesApi.postUserCategory"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Creates a new user-specific category type. Type name must be unique across global and user types. Users are limited to 20 custom types.
@@ -21863,7 +21844,7 @@ export const UserCategoriesApiFp = function (configuration?: Configuration) {
     async postUserCategoryType(
       userId: string,
       createCategoryTypeRequest: CreateCategoryTypeRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<CategoryType>
     > {
@@ -21871,20 +21852,20 @@ export const UserCategoriesApiFp = function (configuration?: Configuration) {
         await localVarAxiosParamCreator.postUserCategoryType(
           userId,
           createCategoryTypeRequest,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UserCategoriesApi.postUserCategoryType"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Updates an existing user-specific category. Cannot update global or system categories. Category name must remain unique if changed.
@@ -21899,31 +21880,31 @@ export const UserCategoriesApiFp = function (configuration?: Configuration) {
       userId: string,
       categoryId: number,
       createCategoryRequest: CreateCategoryRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (
         axios?: AxiosInstance,
-        basePath?: string,
+        basePath?: string
       ) => AxiosPromise<CategoryIdentifiableCategoryType>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.putUserCategory(
         userId,
         categoryId,
         createCategoryRequest,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UserCategoriesApi.putUserCategory"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Updates an existing user-specific category type. Cannot update global types.
@@ -21938,7 +21919,7 @@ export const UserCategoriesApiFp = function (configuration?: Configuration) {
       userId: string,
       typeId: number,
       createCategoryTypeRequest: CreateCategoryTypeRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<CategoryType2>
     > {
@@ -21947,23 +21928,23 @@ export const UserCategoriesApiFp = function (configuration?: Configuration) {
           userId,
           typeId,
           createCategoryTypeRequest,
-          options,
-        );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+          options
+        )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UserCategoriesApi.putUserCategoryType"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
-  };
-};
+  }
+}
 
 /**
  * UserCategoriesApi - factory interface
@@ -21972,9 +21953,9 @@ export const UserCategoriesApiFp = function (configuration?: Configuration) {
 export const UserCategoriesApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance,
+  axios?: AxiosInstance
 ) {
-  const localVarFp = UserCategoriesApiFp(configuration);
+  const localVarFp = UserCategoriesApiFp(configuration)
   return {
     /**
      * Deletes a user-specific category. Cannot delete global, system categories, or categories with transaction dependencies.
@@ -21987,11 +21968,11 @@ export const UserCategoriesApiFactory = function (
     deleteUserCategory(
       userId: string,
       categoryId: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<void> {
       return localVarFp
         .deleteUserCategory(userId, categoryId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Deletes a user-specific category type. Cannot delete global types or types with category dependencies.
@@ -22004,11 +21985,11 @@ export const UserCategoriesApiFactory = function (
     deleteUserCategoryType(
       userId: string,
       typeId: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<void> {
       return localVarFp
         .deleteUserCategoryType(userId, typeId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Retrieves full list of custom user categories. Does not include global categories.
@@ -22019,11 +22000,11 @@ export const UserCategoriesApiFactory = function (
      */
     getCategories(
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<GetCategoriesResponse> {
       return localVarFp
         .getCategories(userId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Retrieves details of a specific category. User can only access global categories or their own categories.
@@ -22036,11 +22017,11 @@ export const UserCategoriesApiFactory = function (
     getUserCategory(
       userId: string,
       categoryId: number,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<CategoryIdentifiableCategoryType> {
       return localVarFp
         .getUserCategory(userId, categoryId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Retrieves all category types accessible to the user. Includes both global types and user-specific types.
@@ -22051,11 +22032,11 @@ export const UserCategoriesApiFactory = function (
      */
     getUserCategoryTypes(
       userId: string,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<CategoryMetadataLookupTables> {
       return localVarFp
         .getUserCategoryTypes(userId, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Creates a new user-specific category. Category name must be unique (case-insensitive) across global and user categories. Users are limited to 100 custom categories.
@@ -22068,11 +22049,11 @@ export const UserCategoriesApiFactory = function (
     postUserCategory(
       userId: string,
       createCategoryRequest: CreateCategoryRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<IdentifiableCategoryIdentifiableCategoryType> {
       return localVarFp
         .postUserCategory(userId, createCategoryRequest, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Creates a new user-specific category type. Type name must be unique across global and user types. Users are limited to 20 custom types.
@@ -22085,11 +22066,11 @@ export const UserCategoriesApiFactory = function (
     postUserCategoryType(
       userId: string,
       createCategoryTypeRequest: CreateCategoryTypeRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<CategoryType> {
       return localVarFp
         .postUserCategoryType(userId, createCategoryTypeRequest, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Updates an existing user-specific category. Cannot update global or system categories. Category name must remain unique if changed.
@@ -22104,11 +22085,11 @@ export const UserCategoriesApiFactory = function (
       userId: string,
       categoryId: number,
       createCategoryRequest: CreateCategoryRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<CategoryIdentifiableCategoryType> {
       return localVarFp
         .putUserCategory(userId, categoryId, createCategoryRequest, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Updates an existing user-specific category type. Cannot update global types.
@@ -22123,14 +22104,14 @@ export const UserCategoriesApiFactory = function (
       userId: string,
       typeId: number,
       createCategoryTypeRequest: CreateCategoryTypeRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<CategoryType2> {
       return localVarFp
         .putUserCategoryType(userId, typeId, createCategoryTypeRequest, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
-  };
-};
+  }
+}
 
 /**
  * UserCategoriesApi - interface
@@ -22150,8 +22131,8 @@ export interface UserCategoriesApiInterface {
   deleteUserCategory(
     userId: string,
     categoryId: number,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<void>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<void>
 
   /**
    * Deletes a user-specific category type. Cannot delete global types or types with category dependencies.
@@ -22165,8 +22146,8 @@ export interface UserCategoriesApiInterface {
   deleteUserCategoryType(
     userId: string,
     typeId: number,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<void>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<void>
 
   /**
    * Retrieves full list of custom user categories. Does not include global categories.
@@ -22178,8 +22159,8 @@ export interface UserCategoriesApiInterface {
    */
   getCategories(
     userId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<GetCategoriesResponse>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<GetCategoriesResponse>
 
   /**
    * Retrieves details of a specific category. User can only access global categories or their own categories.
@@ -22193,8 +22174,8 @@ export interface UserCategoriesApiInterface {
   getUserCategory(
     userId: string,
     categoryId: number,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<CategoryIdentifiableCategoryType>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<CategoryIdentifiableCategoryType>
 
   /**
    * Retrieves all category types accessible to the user. Includes both global types and user-specific types.
@@ -22206,8 +22187,8 @@ export interface UserCategoriesApiInterface {
    */
   getUserCategoryTypes(
     userId: string,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<CategoryMetadataLookupTables>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<CategoryMetadataLookupTables>
 
   /**
    * Creates a new user-specific category. Category name must be unique (case-insensitive) across global and user categories. Users are limited to 100 custom categories.
@@ -22221,8 +22202,8 @@ export interface UserCategoriesApiInterface {
   postUserCategory(
     userId: string,
     createCategoryRequest: CreateCategoryRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<IdentifiableCategoryIdentifiableCategoryType>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<IdentifiableCategoryIdentifiableCategoryType>
 
   /**
    * Creates a new user-specific category type. Type name must be unique across global and user types. Users are limited to 20 custom types.
@@ -22236,8 +22217,8 @@ export interface UserCategoriesApiInterface {
   postUserCategoryType(
     userId: string,
     createCategoryTypeRequest: CreateCategoryTypeRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<CategoryType>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<CategoryType>
 
   /**
    * Updates an existing user-specific category. Cannot update global or system categories. Category name must remain unique if changed.
@@ -22253,8 +22234,8 @@ export interface UserCategoriesApiInterface {
     userId: string,
     categoryId: number,
     createCategoryRequest: CreateCategoryRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<CategoryIdentifiableCategoryType>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<CategoryIdentifiableCategoryType>
 
   /**
    * Updates an existing user-specific category type. Cannot update global types.
@@ -22270,8 +22251,8 @@ export interface UserCategoriesApiInterface {
     userId: string,
     typeId: number,
     createCategoryTypeRequest: CreateCategoryTypeRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<CategoryType2>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<CategoryType2>
 }
 
 /**
@@ -22296,11 +22277,11 @@ export class UserCategoriesApi
   public deleteUserCategory(
     userId: string,
     categoryId: number,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return UserCategoriesApiFp(this.configuration)
       .deleteUserCategory(userId, categoryId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -22315,11 +22296,11 @@ export class UserCategoriesApi
   public deleteUserCategoryType(
     userId: string,
     typeId: number,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return UserCategoriesApiFp(this.configuration)
       .deleteUserCategoryType(userId, typeId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -22333,7 +22314,7 @@ export class UserCategoriesApi
   public getCategories(userId: string, options?: RawAxiosRequestConfig) {
     return UserCategoriesApiFp(this.configuration)
       .getCategories(userId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -22348,11 +22329,11 @@ export class UserCategoriesApi
   public getUserCategory(
     userId: string,
     categoryId: number,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return UserCategoriesApiFp(this.configuration)
       .getUserCategory(userId, categoryId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -22366,7 +22347,7 @@ export class UserCategoriesApi
   public getUserCategoryTypes(userId: string, options?: RawAxiosRequestConfig) {
     return UserCategoriesApiFp(this.configuration)
       .getUserCategoryTypes(userId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -22381,11 +22362,11 @@ export class UserCategoriesApi
   public postUserCategory(
     userId: string,
     createCategoryRequest: CreateCategoryRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return UserCategoriesApiFp(this.configuration)
       .postUserCategory(userId, createCategoryRequest, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -22400,11 +22381,11 @@ export class UserCategoriesApi
   public postUserCategoryType(
     userId: string,
     createCategoryTypeRequest: CreateCategoryTypeRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return UserCategoriesApiFp(this.configuration)
       .postUserCategoryType(userId, createCategoryTypeRequest, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -22421,11 +22402,11 @@ export class UserCategoriesApi
     userId: string,
     categoryId: number,
     createCategoryRequest: CreateCategoryRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return UserCategoriesApiFp(this.configuration)
       .putUserCategory(userId, categoryId, createCategoryRequest, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -22442,11 +22423,11 @@ export class UserCategoriesApi
     userId: string,
     typeId: number,
     createCategoryTypeRequest: CreateCategoryTypeRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return UserCategoriesApiFp(this.configuration)
       .putUserCategoryType(userId, typeId, createCategoryTypeRequest, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 }
 
@@ -22455,7 +22436,7 @@ export class UserCategoriesApi
  * @export
  */
 export const UsersApiAxiosParamCreator = function (
-  configuration?: Configuration,
+  configuration?: Configuration
 ) {
   return {
     /**
@@ -22468,55 +22449,55 @@ export const UsersApiAxiosParamCreator = function (
     postBaseAsset: async (
       userId: string,
       setBaseAssetRequest: SetBaseAssetRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("postBaseAsset", "userId", userId);
+      assertParamExists("postBaseAsset", "userId", userId)
       // verify required parameter 'setBaseAssetRequest' is not null or undefined
       assertParamExists(
         "postBaseAsset",
         "setBaseAssetRequest",
-        setBaseAssetRequest,
-      );
+        setBaseAssetRequest
+      )
       const localVarPath = `/api/users/{user_id}/base-asset`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         setBaseAssetRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      *
@@ -22528,55 +22509,55 @@ export const UsersApiAxiosParamCreator = function (
     postOnboarding: async (
       userId: string,
       setOnboardingVersionRequest: SetOnboardingVersionRequest,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'userId' is not null or undefined
-      assertParamExists("postOnboarding", "userId", userId);
+      assertParamExists("postOnboarding", "userId", userId)
       // verify required parameter 'setOnboardingVersionRequest' is not null or undefined
       assertParamExists(
         "postOnboarding",
         "setOnboardingVersionRequest",
-        setOnboardingVersionRequest,
-      );
+        setOnboardingVersionRequest
+      )
       const localVarPath = `/api/users/{user_id}/onboarding`.replace(
         `{${"user_id"}}`,
-        encodeURIComponent(String(userId)),
-      );
+        encodeURIComponent(String(userId))
+      )
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         setOnboardingVersionRequest,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
     /**
      * Creates a new user account with the provided username and password.
@@ -22587,56 +22568,56 @@ export const UsersApiAxiosParamCreator = function (
      */
     postUser: async (
       addUser: AddUser,
-      options: RawAxiosRequestConfig = {},
+      options: RawAxiosRequestConfig = {}
     ): Promise<RequestArgs> => {
       // verify required parameter 'addUser' is not null or undefined
-      assertParamExists("postUser", "addUser", addUser);
-      const localVarPath = `/api/users`;
+      assertParamExists("postUser", "addUser", addUser)
+      const localVarPath = `/api/users`
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
-      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-      let baseOptions;
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL)
+      let baseOptions
       if (configuration) {
-        baseOptions = configuration.baseOptions;
+        baseOptions = configuration.baseOptions
       }
 
       const localVarRequestOptions = {
         method: "POST",
         ...baseOptions,
         ...options,
-      };
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+      }
+      const localVarHeaderParameter = {} as any
+      const localVarQueryParameter = {} as any
 
-      localVarHeaderParameter["Content-Type"] = "application/json";
+      localVarHeaderParameter["Content-Type"] = "application/json"
 
-      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      setSearchParams(localVarUrlObj, localVarQueryParameter)
       let headersFromBaseOptions =
-        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+        baseOptions && baseOptions.headers ? baseOptions.headers : {}
       localVarRequestOptions.headers = {
         ...localVarHeaderParameter,
         ...headersFromBaseOptions,
         ...options.headers,
-      };
+      }
       localVarRequestOptions.data = serializeDataIfNeeded(
         addUser,
         localVarRequestOptions,
-        configuration,
-      );
+        configuration
+      )
 
       return {
         url: toPathString(localVarUrlObj),
         options: localVarRequestOptions,
-      };
+      }
     },
-  };
-};
+  }
+}
 
 /**
  * UsersApi - functional programming interface
  * @export
  */
 export const UsersApiFp = function (configuration?: Configuration) {
-  const localVarAxiosParamCreator = UsersApiAxiosParamCreator(configuration);
+  const localVarAxiosParamCreator = UsersApiAxiosParamCreator(configuration)
   return {
     /**
      *
@@ -22648,27 +22629,27 @@ export const UsersApiFp = function (configuration?: Configuration) {
     async postBaseAsset(
       userId: string,
       setBaseAssetRequest: SetBaseAssetRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.postBaseAsset(
         userId,
         setBaseAssetRequest,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UsersApi.postBaseAsset"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      *
@@ -22680,27 +22661,27 @@ export const UsersApiFp = function (configuration?: Configuration) {
     async postOnboarding(
       userId: string,
       setOnboardingVersionRequest: SetOnboardingVersionRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.postOnboarding(
         userId,
         setOnboardingVersionRequest,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UsersApi.postOnboarding"]?.[
           localVarOperationServerIndex
-        ]?.url;
+        ]?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
     /**
      * Creates a new user account with the provided username and password.
@@ -22711,28 +22692,28 @@ export const UsersApiFp = function (configuration?: Configuration) {
      */
     async postUser(
       addUser: AddUser,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): Promise<
       (axios?: AxiosInstance, basePath?: string) => AxiosPromise<RegisteredUser>
     > {
       const localVarAxiosArgs = await localVarAxiosParamCreator.postUser(
         addUser,
-        options,
-      );
-      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+        options
+      )
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0
       const localVarOperationServerBasePath =
         operationServerMap["UsersApi.postUser"]?.[localVarOperationServerIndex]
-          ?.url;
+          ?.url
       return (axios, basePath) =>
         createRequestFunction(
           localVarAxiosArgs,
           globalAxios,
           BASE_PATH,
-          configuration,
-        )(axios, localVarOperationServerBasePath || basePath);
+          configuration
+        )(axios, localVarOperationServerBasePath || basePath)
     },
-  };
-};
+  }
+}
 
 /**
  * UsersApi - factory interface
@@ -22741,9 +22722,9 @@ export const UsersApiFp = function (configuration?: Configuration) {
 export const UsersApiFactory = function (
   configuration?: Configuration,
   basePath?: string,
-  axios?: AxiosInstance,
+  axios?: AxiosInstance
 ) {
-  const localVarFp = UsersApiFp(configuration);
+  const localVarFp = UsersApiFp(configuration)
   return {
     /**
      *
@@ -22755,11 +22736,11 @@ export const UsersApiFactory = function (
     postBaseAsset(
       userId: string,
       setBaseAssetRequest: SetBaseAssetRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<void> {
       return localVarFp
         .postBaseAsset(userId, setBaseAssetRequest, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      *
@@ -22771,11 +22752,11 @@ export const UsersApiFactory = function (
     postOnboarding(
       userId: string,
       setOnboardingVersionRequest: SetOnboardingVersionRequest,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<void> {
       return localVarFp
         .postOnboarding(userId, setOnboardingVersionRequest, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
     /**
      * Creates a new user account with the provided username and password.
@@ -22786,14 +22767,14 @@ export const UsersApiFactory = function (
      */
     postUser(
       addUser: AddUser,
-      options?: RawAxiosRequestConfig,
+      options?: RawAxiosRequestConfig
     ): AxiosPromise<RegisteredUser> {
       return localVarFp
         .postUser(addUser, options)
-        .then((request) => request(axios, basePath));
+        .then((request) => request(axios, basePath))
     },
-  };
-};
+  }
+}
 
 /**
  * UsersApi - interface
@@ -22812,8 +22793,8 @@ export interface UsersApiInterface {
   postBaseAsset(
     userId: string,
     setBaseAssetRequest: SetBaseAssetRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<void>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<void>
 
   /**
    *
@@ -22826,8 +22807,8 @@ export interface UsersApiInterface {
   postOnboarding(
     userId: string,
     setOnboardingVersionRequest: SetOnboardingVersionRequest,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<void>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<void>
 
   /**
    * Creates a new user account with the provided username and password.
@@ -22839,8 +22820,8 @@ export interface UsersApiInterface {
    */
   postUser(
     addUser: AddUser,
-    options?: RawAxiosRequestConfig,
-  ): AxiosPromise<RegisteredUser>;
+    options?: RawAxiosRequestConfig
+  ): AxiosPromise<RegisteredUser>
 }
 
 /**
@@ -22861,11 +22842,11 @@ export class UsersApi extends BaseAPI implements UsersApiInterface {
   public postBaseAsset(
     userId: string,
     setBaseAssetRequest: SetBaseAssetRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return UsersApiFp(this.configuration)
       .postBaseAsset(userId, setBaseAssetRequest, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -22879,11 +22860,11 @@ export class UsersApi extends BaseAPI implements UsersApiInterface {
   public postOnboarding(
     userId: string,
     setOnboardingVersionRequest: SetOnboardingVersionRequest,
-    options?: RawAxiosRequestConfig,
+    options?: RawAxiosRequestConfig
   ) {
     return UsersApiFp(this.configuration)
       .postOnboarding(userId, setOnboardingVersionRequest, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 
   /**
@@ -22897,6 +22878,6 @@ export class UsersApi extends BaseAPI implements UsersApiInterface {
   public postUser(addUser: AddUser, options?: RawAxiosRequestConfig) {
     return UsersApiFp(this.configuration)
       .postUser(addUser, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then((request) => request(this.axios, this.basePath))
   }
 }

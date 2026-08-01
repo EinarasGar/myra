@@ -1,0 +1,11 @@
+@import "../../../web/src/index.css";
+
+@source "../";
+@source "../../../web/src/components/figure";
+@source "../../../web/src/components/layout/sverto-mark.tsx";
+@source "../../../web/src/components/primitives/focus-ring.ts";
+@source "../../../web/src/components/primitives/truncate.tsx";
+@source "../../../web/src/components/ui/button.tsx";
+@source "../../../web/src/components/ui/sheet.tsx";
+@source "../../../web/src/components/ui/table.tsx";
+@source "../../../web/src/components/ui/tooltip.tsx";

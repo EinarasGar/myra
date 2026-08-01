@@ -1,45 +1,72 @@
-import path from "path";
-import { defineConfig, loadEnv } from "vite";
-import react from "@vitejs/plugin-react-swc";
-import tanstackRouter from "@tanstack/router-plugin/vite";
-import tailwindcss from "@tailwindcss/vite";
+import { fileURLToPath } from "node:url"
 
-// https://vite.dev/config/
-export default defineConfig(({ mode }) => {
-  const env = {
-    ...loadEnv(mode, path.resolve(__dirname, ".."), ""),
-    ...process.env,
-  };
+import tailwindcss from "@tailwindcss/vite"
+import { tanstackRouter } from "@tanstack/router-plugin/vite"
+import react from "@vitejs/plugin-react"
+import { defineConfig, loadEnv } from "vite"
+
+const AUTH_PROVIDERS = ["noauth", "database", "clerk"] as const
+
+type AuthProvider = (typeof AUTH_PROVIDERS)[number]
+type RawEnv = Record<string, string | undefined>
+
+const srcDir = fileURLToPath(new URL("./src", import.meta.url))
+const repoRoot = fileURLToPath(new URL("..", import.meta.url))
+
+function required(env: RawEnv, key: string): string {
+  const value = env[key]
+  if (!value) {
+    throw new Error(
+      `${key} is missing from ${repoRoot}.env — run "make setup-env" first.`
+    )
+  }
+  return value
+}
+
+function readAuthProvider(env: RawEnv): AuthProvider {
+  const value = required(env, "AUTH_PROVIDER")
+  const provider = AUTH_PROVIDERS.find((candidate) => candidate === value)
+  if (!provider) {
+    throw new Error(
+      `AUTH_PROVIDER="${value}" is not one of ${AUTH_PROVIDERS.join(", ")}.`
+    )
+  }
+  return provider
+}
+
+export default defineConfig(({ command, mode }) => {
+  const env: RawEnv = loadEnv(mode, repoRoot, "")
+  const authProvider = readAuthProvider(env)
+  if (authProvider === "clerk") {
+    required(env, "CLERK_PUBLISHABLE_KEY")
+  }
+
   return {
     plugins: [
-      tailwindcss(),
       tanstackRouter({ target: "react", autoCodeSplitting: true }),
       react(),
+      tailwindcss(),
     ],
+    envDir: repoRoot,
+    envPrefix: ["VITE_", "AUTH_PROVIDER", "CLERK_PUBLISHABLE_KEY"],
     resolve: {
       alias: [
         {
-          find: "@/hooks/auth/provider",
-          replacement: path.resolve(
-            __dirname,
-            `./src/hooks/auth/${env.AUTH_PROVIDER || "noauth"}-auth-provider`,
-          ),
+          find: "@/auth/provider",
+          replacement: `${srcDir}/auth/impl/${authProvider}`,
         },
-        { find: "@", replacement: path.resolve(__dirname, "./src") },
+        { find: "@", replacement: srcDir },
       ],
     },
-    envDir: path.resolve(__dirname, ".."),
-    define: {
-      __AUTH_PROVIDER__: JSON.stringify(env.AUTH_PROVIDER || "noauth"),
-      __CLERK_PUBLISHABLE_KEY__: JSON.stringify(
-        env.CLERK_PUBLISHABLE_KEY || "",
-      ),
-    },
-    server: {
-      port: Number(env.VITE_PORT) || 5173,
-      proxy: {
-        "/api": `http://127.0.0.1:${env.SERVER_PORT || "5000"}`,
-      },
-    },
-  };
-});
+    server:
+      command === "serve"
+        ? {
+            port: Number(required(env, "VITE_PORT")),
+            strictPort: true,
+            proxy: {
+              "/api": `http://127.0.0.1:${required(env, "SERVER_PORT")}`,
+            },
+          }
+        : undefined,
+  }
+})

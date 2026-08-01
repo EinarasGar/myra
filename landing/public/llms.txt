@@ -1,0 +1,14 @@
+# Sverto
+
+> Sverto is a personal finance app that records everyday spending and investments as entries in one double-entry ledger, so net worth, spending and portfolio performance are all derived from the same register. It is multi-currency by design (accounts in GBP, EUR, USD and more, consolidated into one reference currency), open source under AGPL-3.0, and hosted in the EU. Myra, its AI assistant, drafts transactions and edits for the user to approve — it never writes to the ledger silently. The hosted version at sverto.com is free during launch; self-hosting is free permanently and feature-complete.
+
+Clients: a web app and a native Android app on the same backend (iOS planned). Data comes in via Open Banking bank connections, broker connectors, AI-read statement imports, or manual entry. Investment numbers use FIFO cost basis, count dividends as income and keep fees visible. Market prices are end-of-day. Sverto is not a bank, a broker or an investment adviser.
+
+## Product
+
+- [Sverto](https://sverto.com/): The product overview — the ledger model, multi-currency, investing, Myra, self-hosting, pricing
+- [App](https://app.sverto.com/): The hosted application (account required)
+
+## Source
+
+- [GitHub repository](https://github.com/EinarasGar/myra): Full source code, self-hosting guide and documentation (AGPL-3.0)

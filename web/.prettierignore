@@ -1,1 +1,9 @@
+node_modules/
+coverage/
+dist/
+playwright-report/
+test-results/
+e2e/.artifacts/
+bun.lock
 src/routeTree.gen.ts
+src/api/
