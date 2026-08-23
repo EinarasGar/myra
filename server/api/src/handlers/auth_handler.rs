@@ -14,6 +14,8 @@ use crate::view_models::authentication::auth::AuthViewModel;
 #[cfg(feature = "database")]
 use crate::view_models::authentication::login_details::LoginDetailsViewModel;
 #[cfg(feature = "database")]
+use crate::view_models::authentication::refresh_token_request::RefreshTokenRequestViewModel;
+#[cfg(feature = "database")]
 use axum::http::{header, HeaderMap};
 
 use crate::view_models::errors::AuthResponses;
@@ -95,6 +97,7 @@ pub async fn get_me(
 /// Authenticate
 ///
 /// Posting login details to this query will return an authentication token used in most of the requests.
+/// When the `X-Sverto-Client: native` header is present, the refresh token is returned in the response body instead of a cookie.
 #[cfg(feature = "database")]
 #[utoipa::path(
     post,
@@ -106,10 +109,14 @@ pub async fn get_me(
     responses(
         (status = 200, description = "Authentication successful.", body = AuthViewModel),
         AuthResponses
+    ),
+    params(
+        ("X-Sverto-Client" = Option<String>, Header, description = "Set to `native` to receive refresh token in response body instead of cookie")
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn post_login_details(
+    headers: HeaderMap,
     AuthServiceState(auth_service): AuthServiceState,
     ValidatedJson(params): ValidatedJson<LoginDetailsViewModel>,
 ) -> Result<(HeaderMap, Json<AuthViewModel>), ApiError> {
@@ -117,23 +124,36 @@ pub async fn post_login_details(
         .get_auth_token(params.username, params.password)
         .await?;
 
-    // Extract user_id from the JWT to create a refresh token
     let claims = auth_service.verify_auth_token(auth.clone())?;
     let (raw_refresh, expires_at) = auth_service
         .create_refresh_token(claims.sub)
         .await
         .map_err(ApiError::Internal)?;
 
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        header::SET_COOKIE,
-        build_refresh_cookie(&raw_refresh, expires_at)
-            .parse()
-            .unwrap(),
-    );
+    let is_native = headers
+        .get("x-sverto-client")
+        .map(|v| v == "native")
+        .unwrap_or(false);
 
-    let return_model = AuthViewModel { token: auth };
-    Ok((headers, Json(return_model)))
+    let mut headers_out = HeaderMap::new();
+    let return_model = if is_native {
+        AuthViewModel {
+            token: auth,
+            refresh_token: Some(raw_refresh),
+        }
+    } else {
+        headers_out.insert(
+            header::SET_COOKIE,
+            build_refresh_cookie(&raw_refresh, expires_at)
+                .parse()
+                .unwrap(),
+        );
+        AuthViewModel {
+            token: auth,
+            refresh_token: None,
+        }
+    };
+    Ok((headers_out, Json(return_model)))
 }
 
 #[cfg(feature = "database")]
@@ -181,22 +201,34 @@ fn extract_refresh_token_from_cookie(headers: &HeaderMap) -> Option<String> {
 /// Refresh access token
 ///
 /// Uses the httpOnly refresh_token cookie to issue a new access token and rotate the refresh token.
+/// Native clients may instead send the refresh token in the request body.
 #[cfg(feature = "database")]
 #[utoipa::path(
     post,
     path = "/api/auth/refresh",
     tag = "Authentication",
+    request_body(
+        content = Option<RefreshTokenRequestViewModel>,
+        description = "Optional body for native clients; cookie is used when body is absent"
+    ),
     responses(
         (status = 200, description = "Token refreshed successfully.", body = AuthViewModel),
         AuthResponses
+    ),
+    params(
+        ("X-Sverto-Client" = Option<String>, Header, description = "Set to `native` to receive refresh token in response body instead of cookie")
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn post_refresh_token(
     headers: HeaderMap,
     AuthServiceState(auth_service): AuthServiceState,
+    body: Option<Json<RefreshTokenRequestViewModel>>,
 ) -> Result<(HeaderMap, Json<AuthViewModel>), ApiError> {
-    let raw_token = extract_refresh_token_from_cookie(&headers).ok_or(ApiError::Unauthorized)?;
+    let from_body = extract_refresh_token_from_cookie(&headers).is_none();
+    let raw_token = extract_refresh_token_from_cookie(&headers)
+        .or_else(|| body.map(|b| b.0.refresh_token))
+        .ok_or(ApiError::Unauthorized)?;
 
     let (user_id, new_raw_token, new_expires_at) = auth_service
         .validate_and_rotate(&raw_token)
@@ -209,19 +241,25 @@ pub async fn post_refresh_token(
         .map_err(ApiError::Internal)?;
 
     let mut response_headers = HeaderMap::new();
-    response_headers.insert(
-        header::SET_COOKIE,
-        build_refresh_cookie(&new_raw_token, new_expires_at)
-            .parse()
-            .unwrap(),
-    );
-
-    Ok((
-        response_headers,
-        Json(AuthViewModel {
+    let return_model = if from_body {
+        AuthViewModel {
             token: access_token,
-        }),
-    ))
+            refresh_token: Some(new_raw_token),
+        }
+    } else {
+        response_headers.insert(
+            header::SET_COOKIE,
+            build_refresh_cookie(&new_raw_token, new_expires_at)
+                .parse()
+                .unwrap(),
+        );
+        AuthViewModel {
+            token: access_token,
+            refresh_token: None,
+        }
+    };
+
+    Ok((response_headers, Json(return_model)))
 }
 
 /// Refresh access token (Clerk)
@@ -265,30 +303,44 @@ pub async fn post_refresh_token() -> Result<Json<serde_json::Value>, ApiError> {
 /// Logout
 ///
 /// Revokes all refresh tokens for the authenticated user and clears the refresh token cookie.
+/// Native clients may send the refresh token in the request body for API symmetry.
 #[cfg(feature = "database")]
 #[utoipa::path(
     post,
     path = "/api/auth/logout",
     tag = "Authentication",
+    request_body(
+        content = Option<RefreshTokenRequestViewModel>,
+        description = "Optional body for native clients"
+    ),
     responses(
         (status = 200, description = "Logged out successfully."),
         AuthResponses
+    ),
+    params(
+        ("X-Sverto-Client" = Option<String>, Header, description = "Set to `native` to skip cookie clearing")
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn post_logout(
+    headers: HeaderMap,
     auth: AuthenticatedUser,
     AuthServiceState(auth_service): AuthServiceState,
+    body: Option<Json<RefreshTokenRequestViewModel>>,
 ) -> Result<(HeaderMap, Json<serde_json::Value>), ApiError> {
     auth_service
         .revoke_all_refresh_tokens(auth.user_id)
         .await
         .map_err(ApiError::Internal)?;
 
-    let mut headers = HeaderMap::new();
-    headers.insert(header::SET_COOKIE, clear_refresh_cookie().parse().unwrap());
+    let from_body = extract_refresh_token_from_cookie(&headers).is_none() && body.is_some();
 
-    Ok((headers, Json(serde_json::json!({"message": "Logged out"}))))
+    let mut headers_out = HeaderMap::new();
+    if !from_body {
+        headers_out.insert(header::SET_COOKIE, clear_refresh_cookie().parse().unwrap());
+    }
+
+    Ok((headers_out, Json(serde_json::json!({"message": "Logged out"}))))
 }
 
 /// Logout (Clerk)

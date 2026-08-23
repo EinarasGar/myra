@@ -2,3 +2,4 @@
 pub mod auth;
 #[cfg(feature = "database")]
 pub mod login_details;
+pub mod refresh_token_request;
