@@ -8,25 +8,28 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.clerk.api.Clerk
-import com.sverto.app.BuildConfig
 import com.sverto.app.core.icons.LucideIcon
+import com.sverto.app.feature.server.AppSessionViewModel
 
 @Composable
 fun ProfileAvatarButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    sessionViewModel: AppSessionViewModel? = null,
 ) {
+    val clerkUser = if (Clerk.isInitialized.value) Clerk.user else null
+
     val initials =
-        if (BuildConfig.CLERK_PUBLISHABLE_KEY.isNotBlank()) {
-            val user = Clerk.user
-            val firstName = user?.firstName
-            val lastName = user?.lastName
+        clerkUser?.let { user ->
+            val firstName = user.firstName
+            val lastName = user.lastName
             val first =
                 firstName
                     ?.firstOrNull()
@@ -39,10 +42,13 @@ fun ProfileAvatarButton(
                     ?.uppercaseChar()
                     ?.toString()
                     .orEmpty()
-            (first + last)
-        } else {
-            ""
+            first + last
         }
+            ?: if (sessionViewModel != null) {
+                ""
+            } else {
+                ""
+            }
 
     IconButton(
         onClick = onClick,

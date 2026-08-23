@@ -122,7 +122,8 @@ pub async fn post_login_details(
 ) -> Result<(HeaderMap, Json<AuthViewModel>), ApiError> {
     let auth = auth_service
         .get_auth_token(params.username, params.password)
-        .await?;
+        .await
+        .map_err(|_| ApiError::Unauthorized)?;
 
     let claims = auth_service.verify_auth_token(auth.clone())?;
     let (raw_refresh, expires_at) = auth_service
@@ -340,7 +341,10 @@ pub async fn post_logout(
         headers_out.insert(header::SET_COOKIE, clear_refresh_cookie().parse().unwrap());
     }
 
-    Ok((headers_out, Json(serde_json::json!({"message": "Logged out"}))))
+    Ok((
+        headers_out,
+        Json(serde_json::json!({"message": "Logged out"})),
+    ))
 }
 
 /// Logout (Clerk)

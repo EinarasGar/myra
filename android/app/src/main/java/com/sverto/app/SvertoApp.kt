@@ -5,6 +5,7 @@ import android.net.ConnectivityManager
 import android.net.Network
 import com.clerk.api.Clerk
 import com.clerk.api.network.serialization.ClerkResult
+import com.sverto.app.feature.server.KeystoreCredentialStore
 import kotlinx.coroutines.runBlocking
 import uniffi.sverto_core.AppStore
 import uniffi.sverto_core.AuthProvider
@@ -64,12 +65,15 @@ class SvertoApp : Application() {
                 60u,
                 dbPath,
                 SvertoAuthProvider(),
+                KeystoreCredentialStore(this),
             )
 
         registerConnectivityCallback()
+    }
 
+    fun ensureClerkInitialised() {
         val key = BuildConfig.CLERK_PUBLISHABLE_KEY
-        if (key.isNotBlank()) {
+        if (key.isNotBlank() && !Clerk.isInitialized.value) {
             Clerk.initialize(this, publishableKey = key)
         }
     }

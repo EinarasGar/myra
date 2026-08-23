@@ -102,6 +102,7 @@ import com.sverto.app.feature.connectors.ConnectorDetailScreen
 import com.sverto.app.feature.connectors.ConnectorsScreen
 import com.sverto.app.feature.connectors.ProviderAccountDetailScreen
 import com.sverto.app.feature.portfolio.PortfolioScreen
+import com.sverto.app.feature.server.AppSessionViewModel
 import com.sverto.app.feature.settings.SettingsScreen
 import com.sverto.app.feature.transactions.TransactionDetailScreen
 import com.sverto.app.feature.transactions.TransactionSearchAppBar
@@ -164,6 +165,7 @@ fun MainScreen(
     transactionsViewModel: TransactionsViewModel = viewModel(factory = SvertoViewModelFactory),
     quickUploadViewModel: QuickUploadViewModel = viewModel(factory = SvertoViewModelFactory),
     aiChatViewModel: AiChatViewModel = viewModel(factory = SvertoViewModelFactory),
+    sessionViewModel: AppSessionViewModel? = null,
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -435,6 +437,7 @@ fun MainScreen(
                     onNavigateToDetail = ::navigateToDetail,
                     aiChatViewModel = aiChatViewModel,
                     onEdit = { id -> navController.navigate("editAccount/$id") },
+                    sessionViewModel = sessionViewModel,
                 )
             }
         }
@@ -470,6 +473,7 @@ private fun MainNavGraph(
     onNavigateToDetail: (TransactionListItem, Boolean) -> Unit,
     aiChatViewModel: AiChatViewModel,
     onEdit: (String) -> Unit,
+    sessionViewModel: AppSessionViewModel?,
 ) {
     val fadeSpec = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
     val slideSpec = MaterialTheme.motionScheme.defaultSpatialSpec<IntOffset>()
@@ -955,6 +959,7 @@ private fun MainNavGraph(
                 onCustomCategories = { navController.navigate("customCategories") },
                 onCustomAssets = { navController.navigate("customAssets") },
                 onConnectors = { navController.navigate(CONNECTORS_ROUTE) },
+                sessionViewModel = sessionViewModel,
             )
         }
         composable(

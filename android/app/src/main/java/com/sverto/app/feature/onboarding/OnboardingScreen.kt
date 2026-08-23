@@ -46,17 +46,20 @@ import kotlinx.coroutines.launch
 fun OnboardingScreen(
     onComplete: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: OnboardingViewModel = viewModel(factory = SvertoViewModelFactory),
+    viewModelKey: String? = null,
+    viewModel: OnboardingViewModel = viewModel(key = viewModelKey, factory = SvertoViewModelFactory),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val currentOnComplete by rememberUpdatedState(onComplete)
+    val includesWelcome = OnboardingStepId.WELCOME in state.steps
+    val steps = state.steps.filterNot { it == OnboardingStepId.WELCOME }
 
-    if (state.steps.isEmpty()) {
+    if (steps.isEmpty()) {
         LaunchedEffect(Unit) { currentOnComplete() }
         return
     }
 
-    val pagerState = rememberPagerState(pageCount = { state.steps.size })
+    val pagerState = rememberPagerState(pageCount = { steps.size })
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(state.finished) {
@@ -77,9 +80,9 @@ fun OnboardingScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Spacer(Modifier.height(24.dp))
-                PageIndicator(
+                OnboardingPageIndicator(
                     pageCount = state.steps.size,
-                    currentPage = pagerState.currentPage,
+                    currentPage = pagerState.currentPage + if (includesWelcome) 1 else 0,
                 )
                 Spacer(Modifier.height(8.dp))
 
@@ -88,8 +91,8 @@ fun OnboardingScreen(
                     modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.Top,
                 ) { page ->
-                    when (state.steps[page]) {
-                        OnboardingStepId.WELCOME -> WelcomePage()
+                    when (steps[page]) {
+                        OnboardingStepId.WELCOME -> Unit
                         OnboardingStepId.BASE_CURRENCY ->
                             BaseCurrencyPage(
                                 query = state.query,
@@ -105,9 +108,9 @@ fun OnboardingScreen(
 
                 OnboardingNavBar(
                     isFirstPage = pagerState.currentPage == 0,
-                    isLastPage = pagerState.currentPage == state.steps.size - 1,
+                    isLastPage = pagerState.currentPage == steps.size - 1,
                     forwardEnabled =
-                        state.steps[pagerState.currentPage] != OnboardingStepId.BASE_CURRENCY ||
+                        steps[pagerState.currentPage] != OnboardingStepId.BASE_CURRENCY ||
                             state.selectedCurrency != null,
                     onBack = {
                         scope.launch {
@@ -150,7 +153,7 @@ fun OnboardingScreen(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun PageIndicator(
+internal fun OnboardingPageIndicator(
     pageCount: Int,
     currentPage: Int,
 ) {

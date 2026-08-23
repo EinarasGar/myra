@@ -257,6 +257,9 @@ dependencies {
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.core.ktx)
 
+    // DataStore for server preferences and credential storage
+    implementation(libs.datastore.preferences)
+
     // Pin material3 to alpha for M3 Expressive (MaterialExpressiveTheme, MotionScheme, new shapes)
     implementation(libs.composeMaterial3)
 

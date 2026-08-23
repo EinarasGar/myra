@@ -106,7 +106,7 @@ pub fn queue_quick_upload(
     } else {
         Some(thumbnail.as_slice())
     };
-    quick_upload::insert(&conn, &image_data, thumb, &mime_type);
+    quick_upload::insert(&conn, &image_data, thumb, &mime_type, &infra.base_url());
     refresh_local_state(infra, module);
 }
 
@@ -134,7 +134,7 @@ pub async fn flush_and_subscribe(
 
     let conn =
         rusqlite::Connection::open(&infra.db_path).expect("failed to open db for quick_upload");
-    let flushable = quick_upload::get_flushable(&conn);
+    let flushable = quick_upload::get_flushable(&conn, &infra.base_url());
 
     tracing::info!("QuickUploads: {} flushable items", flushable.len());
     for (local_id, image_data, mime_type) in flushable {
@@ -144,7 +144,7 @@ pub async fn flush_and_subscribe(
             image_data.len(),
             mime_type
         );
-        quick_upload::update_status(&conn, &local_id, "uploading");
+        quick_upload::update_status(&conn, &local_id, "uploading", &infra.base_url());
         refresh_local_state(infra, module);
 
         match upload_single(infra, &user_id, &image_data, &mime_type, auth_token).await {
@@ -154,7 +154,7 @@ pub async fn flush_and_subscribe(
                     local_id,
                     server_id
                 );
-                quick_upload::set_server_id_and_delete(&conn, &local_id, &server_id);
+                quick_upload::set_server_id_and_delete(&conn, &local_id, &server_id, &infra.base_url());
             }
             Err((error, permanent)) => {
                 tracing::error!(
@@ -163,7 +163,7 @@ pub async fn flush_and_subscribe(
                     error,
                     permanent
                 );
-                quick_upload::mark_failed(&conn, &local_id, &error, permanent);
+                quick_upload::mark_failed(&conn, &local_id, &error, permanent, &infra.base_url());
                 refresh_local_state(infra, module);
             }
         }
@@ -186,7 +186,7 @@ pub async fn fetch_and_update(
 
     let conn =
         rusqlite::Connection::open(&infra.db_path).expect("failed to open db for quick_upload");
-    let local_items = quick_upload::get_all_active(&conn);
+    let local_items = quick_upload::get_all_active(&conn, &infra.base_url());
 
     let path = format!("/api/users/{}/ai/quick-upload", user_id);
     infra.evict_memory_cache(&path);
@@ -296,9 +296,10 @@ pub async fn subscribe_processing_items(
         let cancelled = cancelled.clone();
 
         tokio::spawn(async move {
+            let base_url = infra_clone.base_url();
             let mut rx = sse::subscribe_sse(
                 &infra_clone.http_stream,
-                &infra_clone.base_url,
+                &base_url,
                 &uid,
                 &uid_for_sse,
                 token.as_deref(),
@@ -333,7 +334,7 @@ pub async fn dismiss_quick_upload(
 ) {
     let conn =
         rusqlite::Connection::open(&infra.db_path).expect("failed to open db for quick_upload");
-    let deleted = quick_upload::delete(&conn, id);
+    let deleted = quick_upload::delete(&conn, id, &infra.base_url());
 
     if deleted {
         refresh_local_state(infra, module);
@@ -442,9 +443,10 @@ pub async fn send_quick_upload_correction(
     }
 
     // Subscribe to SSE for the result
+    let base_url = infra.base_url();
     let mut rx = sse::subscribe_sse(
         &infra.http_stream,
-        &infra.base_url,
+        &base_url,
         &user_id,
         upload_id,
         auth_token,
@@ -596,7 +598,7 @@ fn parse_rfc3339_to_epoch(s: &str) -> Option<i64> {
 fn refresh_local_state(infra: &SharedInfra, module: &Mutex<QuickUploadsModule>) {
     let conn =
         rusqlite::Connection::open(&infra.db_path).expect("failed to open db for quick_upload");
-    let local_items = quick_upload::get_all_active(&conn);
+    let local_items = quick_upload::get_all_active(&conn, &infra.base_url());
 
     let mut lock = module.lock().unwrap();
 

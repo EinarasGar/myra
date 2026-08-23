@@ -1,13 +1,15 @@
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex, OnceLock};
-use std::time::{Duration, Instant};
+use std::sync::{Arc, Mutex, OnceLock, RwLock};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use crate::api::cache::PersistentCache;
 use crate::error::ApiError;
-use crate::models::ApiResponse;
+use crate::models::{ApiResponse, AuthMode};
+use crate::store::CredentialStore;
 
 pub type OnOfflineChangedCallback = Arc<dyn Fn() + Send + Sync>;
+pub type OnAuthExpiredCallback = Arc<dyn Fn() + Send + Sync>;
 
 fn tls_config() -> &'static rustls::ClientConfig {
     static CONFIG: OnceLock<rustls::ClientConfig> = OnceLock::new();
@@ -26,11 +28,15 @@ struct CacheEntry {
     inserted_at: Instant,
 }
 
+struct DatabaseSession {
+    refresh_token: String,
+    access_token: Option<String>,
+    expires_at: Option<SystemTime>,
+}
+
 pub struct SharedInfra {
-    pub base_url: String,
+    base_url: RwLock<String>,
     pub http: reqwest::Client,
-    /// Client for long-lived SSE streams — no overall request timeout (only a connect timeout),
-    /// so a long chat response isn't aborted mid-stream the way `http`'s 30s timeout would.
     pub http_stream: reqwest::Client,
     cache: Mutex<HashMap<String, CacheEntry>>,
     cache_ttl: Duration,
@@ -43,18 +49,29 @@ pub struct SharedInfra {
     pub onboarding_version: Mutex<Option<i32>>,
     pub db_path: String,
     on_offline_changed: Mutex<Option<OnOfflineChangedCallback>>,
+    pub auth_provider: Arc<dyn crate::store::AuthProvider>,
+    pub credential_store: Arc<dyn CredentialStore>,
+    pub auth_mode: Mutex<AuthMode>,
+    database_session: Mutex<Option<DatabaseSession>>,
+    auth_invalidated: AtomicBool,
+    on_auth_expired: Mutex<Option<OnAuthExpiredCallback>>,
+    refresh_lock: tokio::sync::Mutex<()>,
 }
 
 impl SharedInfra {
-    pub fn new(base_url: String, cache_ttl_secs: u64, db_path: String) -> Self {
+    pub fn new(
+        base_url: String,
+        cache_ttl_secs: u64,
+        db_path: String,
+        auth_provider: Arc<dyn crate::store::AuthProvider>,
+        credential_store: Arc<dyn CredentialStore>,
+    ) -> Self {
         let http = reqwest::Client::builder()
             .use_preconfigured_tls(tls_config().clone())
             .timeout(Duration::from_secs(30))
             .build()
             .expect("failed to build HTTP client");
 
-        // Streaming client: no overall timeout (SSE responses can run for minutes); only bound the
-        // connection phase so a dead host still fails fast.
         let http_stream = reqwest::Client::builder()
             .use_preconfigured_tls(tls_config().clone())
             .connect_timeout(Duration::from_secs(30))
@@ -64,7 +81,7 @@ impl SharedInfra {
         let persistent_cache = PersistentCache::open(&db_path);
 
         Self {
-            base_url,
+            base_url: RwLock::new(base_url),
             http,
             http_stream,
             cache: Mutex::new(HashMap::new()),
@@ -78,11 +95,157 @@ impl SharedInfra {
             onboarding_version: Mutex::new(None),
             db_path,
             on_offline_changed: Mutex::new(None),
+            auth_provider,
+            credential_store,
+            auth_mode: Mutex::new(AuthMode::Noauth),
+            database_session: Mutex::new(None),
+            auth_invalidated: AtomicBool::new(false),
+            on_auth_expired: Mutex::new(None),
+            refresh_lock: tokio::sync::Mutex::new(()),
         }
+    }
+
+    pub fn base_url(&self) -> String {
+        self.base_url.read().unwrap().clone()
+    }
+
+    pub fn set_base_url(&self, url: String) {
+        *self.base_url.write().unwrap() = url;
+    }
+
+    pub fn set_auth_mode(&self, mode: AuthMode) {
+        *self.auth_mode.lock().unwrap() = mode;
     }
 
     pub fn set_on_offline_changed(&self, callback: OnOfflineChangedCallback) {
         *self.on_offline_changed.lock().unwrap() = Some(callback);
+    }
+
+    pub fn set_on_auth_expired(&self, callback: OnAuthExpiredCallback) {
+        *self.on_auth_expired.lock().unwrap() = Some(callback);
+    }
+
+    pub fn database_session_is_some(&self) -> bool {
+        self.database_session.lock().unwrap().is_some()
+    }
+
+    pub fn set_database_session(&self, refresh_token: String, access_token: Option<String>) {
+        let expires_at = access_token.as_ref().and_then(|t| parse_jwt_exp(t));
+        *self.database_session.lock().unwrap() = Some(DatabaseSession {
+            refresh_token,
+            access_token,
+            expires_at,
+        });
+    }
+
+    pub fn clear_database_session(&self) {
+        *self.database_session.lock().unwrap() = None;
+    }
+
+    pub fn database_session_refresh_token(&self) -> Option<String> {
+        self.database_session
+            .lock()
+            .unwrap()
+            .as_ref()
+            .map(|s| s.refresh_token.clone())
+    }
+
+    pub async fn get_auth_token(&self) -> Option<String> {
+        let mode = self.auth_mode.lock().unwrap().clone();
+        match mode {
+            AuthMode::Clerk => self.auth_provider.get_token(),
+            AuthMode::Noauth => None,
+            AuthMode::Database => self.get_database_access_token().await,
+        }
+    }
+
+    async fn get_database_access_token(&self) -> Option<String> {
+        {
+            let session = self.database_session.lock().unwrap();
+            if let Some(ref s) = *session {
+                let valid = !self.auth_invalidated.load(Ordering::Relaxed)
+                    && s.access_token.as_ref().is_some_and(|t| {
+                        parse_jwt_exp(t)
+                            .is_some_and(|exp| exp.duration_since(SystemTime::now()).is_ok_and(|d| d > Duration::from_secs(60)))
+                    });
+                if valid {
+                    return s.access_token.clone();
+                }
+            }
+        }
+
+        let _guard = self.refresh_lock.lock().await;
+
+        {
+            let session = self.database_session.lock().unwrap();
+            if let Some(ref s) = *session {
+                let valid = !self.auth_invalidated.load(Ordering::Relaxed)
+                    && s.access_token.as_ref().is_some_and(|t| {
+                        parse_jwt_exp(t)
+                            .is_some_and(|exp| exp.duration_since(SystemTime::now()).is_ok_and(|d| d > Duration::from_secs(60)))
+                    });
+                if valid {
+                    return s.access_token.clone();
+                }
+            }
+        }
+
+        let refresh_token = {
+            let session = self.database_session.lock().unwrap();
+            session.as_ref().map(|s| s.refresh_token.clone())
+        };
+
+        let refresh_token = match refresh_token {
+            Some(t) => t,
+            None => return None,
+        };
+
+        let url = format!("{}/api/auth/refresh", self.base_url());
+        let body = serde_json::json!({ "refresh_token": refresh_token });
+
+        let result = self
+            .http
+            .post(&url)
+            .header("Content-Type", "application/json")
+            .header("X-Sverto-Client", "native")
+            .body(body.to_string())
+            .send()
+            .await;
+
+        match result {
+            Ok(resp) => {
+                let status = resp.status().as_u16();
+                let text = resp.text().await.unwrap_or_default();
+                if status >= 400 {
+                    *self.database_session.lock().unwrap() = None;
+                    self.auth_invalidated.store(true, Ordering::Relaxed);
+                    self.credential_store.clear_refresh_token();
+                    if let Some(cb) = self.on_auth_expired.lock().unwrap().as_ref() {
+                        cb();
+                    }
+                    return None;
+                }
+
+                let v: serde_json::Value = serde_json::from_str(&text).ok()?;
+                let access_token = v["token"].as_str()?.to_string();
+                let new_refresh = v["refresh_token"].as_str().map(|s| s.to_string());
+                let expires_at = parse_jwt_exp(&access_token);
+
+                let rt = new_refresh.unwrap_or(refresh_token);
+                self.credential_store.save_refresh_token(rt.clone());
+                *self.database_session.lock().unwrap() = Some(DatabaseSession {
+                    refresh_token: rt,
+                    access_token: Some(access_token.clone()),
+                    expires_at,
+                });
+                self.auth_invalidated.store(false, Ordering::Relaxed);
+                Some(access_token)
+            }
+            Err(_) => {
+                let session = self.database_session.lock().unwrap();
+                session.as_ref().and_then(|s| s.access_token.clone())
+            }
+        }
     }
 
     pub fn set_is_offline(&self, offline: bool) {
@@ -136,12 +299,12 @@ impl SharedInfra {
     }
 
     pub fn evict_memory_cache(&self, url_suffix: &str) {
-        let url = format!("{}{}", self.base_url, url_suffix);
+        let url = format!("{}{}", self.base_url(), url_suffix);
         self.cache.lock().unwrap().remove(&url);
     }
 
     pub fn evict_memory_cache_prefix(&self, url_prefix: &str) {
-        let prefix = format!("{}{}", self.base_url, url_prefix);
+        let prefix = format!("{}{}", self.base_url(), url_prefix);
         self.cache
             .lock()
             .unwrap()
@@ -149,7 +312,7 @@ impl SharedInfra {
     }
 
     pub async fn get(&self, path: &str, auth_token: Option<&str>) -> Result<ApiResponse, ApiError> {
-        let url = format!("{}{}", self.base_url, path);
+        let url = format!("{}{}", self.base_url(), path);
 
         // 1. Check memory cache (TTL-based)
         if self.cache_ttl.as_secs() > 0 {
@@ -225,7 +388,7 @@ impl SharedInfra {
         body: &str,
         auth_token: Option<&str>,
     ) -> Result<ApiResponse, ApiError> {
-        let url = format!("{}{}", self.base_url, path);
+        let url = format!("{}{}", self.base_url(), path);
         self.do_request(reqwest::Method::POST, &url, Some(body), auth_token, None)
             .await
     }
@@ -236,7 +399,7 @@ impl SharedInfra {
         body: &str,
         auth_token: Option<&str>,
     ) -> Result<ApiResponse, ApiError> {
-        let url = format!("{}{}", self.base_url, path);
+        let url = format!("{}{}", self.base_url(), path);
         self.do_request(reqwest::Method::PUT, &url, Some(body), auth_token, None)
             .await
     }
@@ -246,7 +409,7 @@ impl SharedInfra {
         path: &str,
         auth_token: Option<&str>,
     ) -> Result<ApiResponse, ApiError> {
-        let url = format!("{}{}", self.base_url, path);
+        let url = format!("{}{}", self.base_url(), path);
         self.do_request(reqwest::Method::DELETE, &url, None, auth_token, None)
             .await
     }
@@ -257,7 +420,7 @@ impl SharedInfra {
         body: &str,
         auth_token: Option<&str>,
     ) -> Result<ApiResponse, ApiError> {
-        let url = format!("{}{}", self.base_url, path);
+        let url = format!("{}{}", self.base_url(), path);
         self.do_request(reqwest::Method::DELETE, &url, Some(body), auth_token, None)
             .await
     }
@@ -309,4 +472,51 @@ impl SharedInfra {
 
         Ok(ApiResponse { status, body: text })
     }
+}
+
+fn parse_jwt_exp(token: &str) -> Option<SystemTime> {
+    let parts: Vec<&str> = token.split('.').collect();
+    if parts.len() != 3 {
+        return None;
+    }
+    let payload = base64_url_decode(parts[1])?;
+    let v: serde_json::Value = serde_json::from_slice(&payload).ok()?;
+    let exp = v["exp"].as_i64()?;
+    UNIX_EPOCH.checked_add(Duration::from_secs(exp as u64))
+}
+
+fn base64_url_decode(input: &str) -> Option<Vec<u8>> {
+    use base64::Engine;
+    base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(input).ok()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_jwt_exp_valid() {
+        let jwt = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjk5OTk5OTk5OTl9.signature";
+        let exp = parse_jwt_exp(jwt);
+        assert!(exp.is_some());
+    }
+
+    #[test]
+    fn test_parse_jwt_exp_invalid_format() {
+        assert!(parse_jwt_exp("notajwt").is_none());
+        assert!(parse_jwt_exp("a.b").is_none());
+    }
+
+    #[test]
+    fn test_url_normalisation() {
+        assert_eq!(normalise_url("  https://example.com/  "), "https://example.com");
+        assert_eq!(normalise_url("https://example.com"), "https://example.com");
+        assert_eq!(normalise_url("https://example.com/"), "https://example.com");
+        assert_eq!(normalise_url("https://example.com///"), "https://example.com");
+    }
+}
+
+pub fn normalise_url(url: &str) -> String {
+    let trimmed = url.trim();
+    trimmed.trim_end_matches('/').to_string()
 }

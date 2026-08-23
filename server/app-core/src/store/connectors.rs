@@ -125,7 +125,7 @@ pub async fn create_oauth_session(
     let uid = user_id(infra)?;
     let redirect_uri = format!(
         "{}/connectors/truelayer/callback",
-        infra.base_url.trim_end_matches('/')
+        infra.base_url().trim_end_matches('/')
     );
     let body = serde_json::to_string(&CreateOAuthSessionRequestViewModel {
         redirect_uri: Some(redirect_uri),

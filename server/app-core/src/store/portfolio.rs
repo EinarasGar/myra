@@ -78,7 +78,7 @@ pub async fn load_portfolio(
 
     // Try to load cached holdings and chart data, emit with is_loading=true
     let holdings_path = format!("/api/users/{user_id}/portfolio/holdings");
-    let holdings_url = format!("{}{}", infra.base_url, holdings_path);
+    let holdings_url = format!("{}{}", infra.base_url(), holdings_path);
     let cached_holdings: Option<Vec<HoldingItem>> = infra
         .persistent_cache
         .get(&holdings_url)
@@ -88,7 +88,7 @@ pub async fn load_portfolio(
     for (i, range) in RANGES.iter().enumerate() {
         let chart_url = format!(
             "{}/api/users/{user_id}/portfolio/history?range={range}",
-            infra.base_url
+            infra.base_url()
         );
         if let Some(body) = infra.persistent_cache.get(&chart_url) {
             if let Ok(resp) = serde_json::from_str::<GetNetWorthHistoryResponseViewModel>(&body) {

@@ -619,9 +619,10 @@ async fn drive_chat_stream(
         lock.mark_streaming();
     }
 
+    let base_url = infra.base_url();
     let mut rx = sse::subscribe_chat_sse(
         &infra.http_stream,
-        &infra.base_url,
+        &base_url,
         user_id,
         conversation_id,
         body,

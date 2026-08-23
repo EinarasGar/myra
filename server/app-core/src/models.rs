@@ -676,3 +676,16 @@ pub struct SyncOutcome {
     pub status: String,
     pub report: Option<SyncReport>,
 }
+
+#[derive(Debug, Clone, uniffi::Enum)]
+pub enum AuthMode {
+    Clerk,
+    Database,
+    Noauth,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct ServerInfo {
+    pub auth_mode: AuthMode,
+    pub version: String,
+}

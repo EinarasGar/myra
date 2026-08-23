@@ -29,9 +29,13 @@ futures-util = "0.3"
 urlencoding = "2"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["registry"] }
+base64 = "0.22"
 
 [target.'cfg(target_os = "android")'.dependencies]
 tracing-android = "0.2"
 
 [build-dependencies]
 uniffi = { version = "0.31", features = ["build"] }
+
+[dev-dependencies]
+wiremock = "0.6"

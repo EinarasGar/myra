@@ -93,7 +93,7 @@ pub async fn load_transactions(
     };
 
     let path = format!("/api/users/{user_id}/transactions?limit=25");
-    let url = format!("{}{}", infra.base_url, path);
+    let url = format!("{}{}", infra.base_url(), path);
 
     // Check persistent cache, emit cached state with is_loading=true
     let cached_body = infra.persistent_cache.get(&url);

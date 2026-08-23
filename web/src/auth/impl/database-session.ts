@@ -46,7 +46,7 @@ export function subscribeToAccessToken(listener: () => void): () => void {
 export async function signInWithPassword(
   credentials: LoginDetails
 ): Promise<void> {
-  const response = await authApi().postLoginDetails(credentials, {
+  const response = await authApi().postLoginDetails(credentials, undefined, {
     withCredentials: true,
   })
   setAccessToken(response.data.token)
@@ -54,14 +54,14 @@ export async function signInWithPassword(
 
 export async function signOutFromDatabase(): Promise<void> {
   await authApi()
-    .postLogout({ withCredentials: true })
+    .postLogout(undefined, undefined, { withCredentials: true })
     .catch(() => null)
   setAccessToken(null)
 }
 
 function refreshAccessToken(): Promise<string | null> {
   refreshInFlight ??= authApi()
-    .postRefreshToken({ withCredentials: true })
+    .postRefreshToken(undefined, undefined, { withCredentials: true })
     .then((response) => {
       setAccessToken(response.data.token)
       return response.data.token

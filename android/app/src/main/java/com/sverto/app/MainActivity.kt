@@ -6,6 +6,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -21,21 +22,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.core.content.IntentCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.clerk.api.Clerk
-import com.clerk.ui.auth.AuthView
-import com.sverto.app.core.theme.LocalClerkTheme
 import com.sverto.app.core.theme.SvertoTheme
 import com.sverto.app.feature.onboarding.CURRENT_ONBOARDING_VERSION
 import com.sverto.app.feature.onboarding.OnboardingScreen
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
+import com.sverto.app.feature.server.AppSessionViewModel
+import com.sverto.app.feature.server.ClerkLoginScreen
+import com.sverto.app.feature.server.ConnectErrorScreen
+import com.sverto.app.feature.server.PasswordSignInScreen
+import com.sverto.app.feature.server.PasswordSignUpScreen
+import com.sverto.app.feature.server.ServerUrlScreen
+import com.sverto.app.feature.server.SessionState
+import com.sverto.app.feature.server.WelcomeScreen
 import uniffi.sverto_core.AppStore
-
-private const val CLERK_INIT_TIMEOUT_MS = 3_000L
 
 class MainActivity : ComponentActivity() {
     private val sharedImageUris: MutableState<List<Uri>> = mutableStateOf(emptyList())
+    private val sessionViewModel: AppSessionViewModel by viewModels()
 
     @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,51 +51,57 @@ class MainActivity : ComponentActivity() {
                 val appStore = remember { (applicationContext as SvertoApp).appStore }
                 val sharedImages = sharedImageUris.value
                 val onSharedImagesHandled = { sharedImageUris.value = emptyList() }
-                if (BuildConfig.CLERK_PUBLISHABLE_KEY.isBlank()) {
-                    SignedInGate(
-                        appStore = appStore,
-                        signInKey = Unit,
-                        sharedImageUris = sharedImages,
-                        onSharedImagesHandled = onSharedImagesHandled,
-                    )
-                } else {
-                    val isInitialized by Clerk.isInitialized.collectAsStateWithLifecycle()
-                    val user by Clerk.userFlow.collectAsStateWithLifecycle()
-                    val clerkTheme = LocalClerkTheme.current
-                    val timedOut = remember { mutableStateOf(false) }
-                    val hasCachedSession = remember { mutableStateOf(false) }
+                val sessionState by sessionViewModel.state.collectAsStateWithLifecycle()
+                val currentSession = sessionState
 
-                    LaunchedEffect(Unit) {
-                        hasCachedSession.value = withContext(Dispatchers.IO) { appStore.getCachedMe() != null }
-                    }
-
-                    LaunchedEffect(isInitialized) {
-                        if (!isInitialized) {
-                            delay(CLERK_INIT_TIMEOUT_MS)
-                            if (!Clerk.isInitialized.value) {
-                                timedOut.value = true
-                            }
-                        }
-                    }
-
-                    when {
-                        isInitialized && user != null ->
-                            SignedInGate(
-                                appStore = appStore,
-                                signInKey = user,
-                                sharedImageUris = sharedImages,
-                                onSharedImagesHandled = onSharedImagesHandled,
-                            )
-                        isInitialized -> AuthView(clerkTheme = clerkTheme)
-                        timedOut.value && hasCachedSession.value ->
-                            SignedInGate(
-                                appStore = appStore,
-                                signInKey = Unit,
-                                sharedImageUris = sharedImages,
-                                onSharedImagesHandled = onSharedImagesHandled,
-                            )
-                        else -> LoadingScreen()
-                    }
+                when (currentSession) {
+                    SessionState.Loading -> LoadingScreen()
+                    SessionState.Welcome ->
+                        WelcomeScreen(
+                            onContinueWithHost = { sessionViewModel.continueWithHosted() },
+                            onConnectSelfHosted = { sessionViewModel.showServerUrlInput() },
+                        )
+                    is SessionState.ServerUrl ->
+                        ServerUrlScreen(
+                            lastUrl = currentSession.lastUrl,
+                            connectionStatus = currentSession.connectionStatus,
+                            onCheckServer = { url -> sessionViewModel.checkSelfHostedServer(url) },
+                            onContinue = { sessionViewModel.continueWithSelfHosted() },
+                            onBack = { sessionViewModel.showWelcome() },
+                        )
+                    SessionState.Connecting -> LoadingScreen()
+                    is SessionState.ConnectError ->
+                        ConnectErrorScreen(
+                            message = currentSession.message,
+                            onRetry = { sessionViewModel.retryHostedConnect() },
+                            onBack = { sessionViewModel.showWelcome() },
+                        )
+                    is SessionState.SignIn ->
+                        PasswordSignInScreen(
+                            onSignIn = { u, p -> sessionViewModel.signIn(u, p) },
+                            onCreateAccount = { sessionViewModel.showSignUp() },
+                            onBack = { sessionViewModel.showWelcome() },
+                            isSubmitting = currentSession.isSubmitting,
+                            errorMessage = currentSession.errorMessage,
+                        )
+                    SessionState.SignUp ->
+                        PasswordSignUpScreen(
+                            onCreateAccount = { u, p -> sessionViewModel.signUp(u, p) },
+                            onBack = { sessionViewModel.showSignIn() },
+                        )
+                    SessionState.ClerkLogin ->
+                        ClerkLoginScreen(
+                            onSignedIn = { sessionViewModel.onClerkSignedIn() },
+                            onBack = { sessionViewModel.showWelcome() },
+                        )
+                    SessionState.SignedIn ->
+                        SignedInGate(
+                            appStore = appStore,
+                            signInKey = Unit,
+                            sharedImageUris = sharedImages,
+                            onSharedImagesHandled = onSharedImagesHandled,
+                            sessionViewModel = sessionViewModel,
+                        )
                 }
             }
         }
@@ -138,10 +146,14 @@ private fun SignedInGate(
     signInKey: Any?,
     sharedImageUris: List<Uri>,
     onSharedImagesHandled: () -> Unit,
+    sessionViewModel: AppSessionViewModel,
 ) {
     var onboarded by remember(signInKey) { mutableStateOf<Boolean?>(null) }
+    var onboardingViewModelKey by remember(signInKey) { mutableStateOf<String?>(null) }
     LaunchedEffect(signInKey) {
         appStore.onSignIn()
+        val userId = appStore.getCachedMe()?.userId ?: "anonymous"
+        onboardingViewModelKey = "${sessionViewModel.activeServerUrl.value.orEmpty()}:$userId"
         onboarded = appStore.getOnboardingVersion() >= CURRENT_ONBOARDING_VERSION
     }
     when (onboarded) {
@@ -150,8 +162,13 @@ private fun SignedInGate(
             MainScreen(
                 sharedImageUris = sharedImageUris,
                 onSharedImagesHandled = onSharedImagesHandled,
+                sessionViewModel = sessionViewModel,
             )
-        false -> OnboardingScreen(onComplete = { onboarded = true })
+        false ->
+            OnboardingScreen(
+                onComplete = { onboarded = true },
+                viewModelKey = onboardingViewModelKey,
+            )
     }
 }
 

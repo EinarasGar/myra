@@ -53,10 +53,15 @@ import com.sverto.app.core.SvertoViewModelFactory
 import com.sverto.app.core.icons.LucideIcon
 import com.sverto.app.core.theme.LocalClerkTheme
 import com.sverto.app.feature.assets.components.CurrencyPickerSheet
+import com.sverto.app.feature.server.AppSessionViewModel
+import com.sverto.app.feature.server.ServerOrigin
+import com.sverto.app.feature.server.ServerSettingsSheet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uniffi.sverto_core.AiUsageWindow
+import uniffi.sverto_core.AuthMode
+import uniffi.sverto_core.ServerInfo
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -72,21 +77,41 @@ fun SettingsScreen(
     onConnectors: () -> Unit,
     modifier: Modifier = Modifier,
     aiUsageViewModel: AiUsageViewModel = viewModel(factory = SvertoViewModelFactory),
+    sessionViewModel: AppSessionViewModel? = null,
 ) {
-    val isClerk = BuildConfig.CLERK_PUBLISHABLE_KEY.isNotBlank()
-    val user = if (isClerk) Clerk.user else null
-    val displayName =
-        listOfNotNull(user?.firstName, user?.lastName)
-            .joinToString(" ")
-            .ifBlank { if (isClerk) "Your account" else "Local account" }
-    val email = user?.primaryEmailAddress?.emailAddress
     val context = LocalContext.current
     val appStore = remember { (context.applicationContext as SvertoApp).appStore }
     val scope = rememberCoroutineScope()
     var showCurrencyPicker by remember { mutableStateOf(false) }
+    var showServerSettings by remember { mutableStateOf(false) }
     var baseCurrencyId by remember { mutableStateOf(appStore.getCachedMe()?.defaultAsset?.id) }
     var baseCurrencyTicker by remember { mutableStateOf<String?>(null) }
+    val serverInfo by
+        sessionViewModel?.let { it.serverInfo.collectAsStateWithLifecycle() }
+            ?: remember { mutableStateOf<ServerInfo?>(null) }
+    val activeServerUrl by
+        sessionViewModel?.let { it.activeServerUrl.collectAsStateWithLifecycle() }
+            ?: remember { mutableStateOf<String?>(null) }
+    val serverOrigin by
+        sessionViewModel?.let { it.serverOrigin.collectAsStateWithLifecycle() }
+            ?: remember { mutableStateOf<ServerOrigin?>(null) }
+    val serverUrl = activeServerUrl ?: BuildConfig.API_BASE_URL
+    val serverVersion = serverInfo?.version ?: ""
+    val authMode = serverInfo?.authMode ?: AuthMode.NOAUTH
     val aiUsageState by aiUsageViewModel.state.collectAsStateWithLifecycle()
+
+    val isClerk = authMode == AuthMode.CLERK
+    val displayName =
+        when (authMode) {
+            AuthMode.CLERK -> {
+                listOfNotNull(Clerk.user?.firstName, Clerk.user?.lastName)
+                    .joinToString(" ")
+                    .ifBlank { "Your account" }
+            }
+            AuthMode.DATABASE -> appStore.getCachedMe()?.userMetadata?.username ?: "Your account"
+            AuthMode.NOAUTH -> "Local account"
+        }
+    val email = if (isClerk) Clerk.user?.primaryEmailAddress?.emailAddress else null
 
     LaunchedEffect(baseCurrencyId) {
         val id = baseCurrencyId ?: return@LaunchedEffect
@@ -160,8 +185,25 @@ fun SettingsScreen(
                     label = "Connected Services",
                     onClick = onConnectors,
                 )
+                if (serverOrigin == ServerOrigin.SELF_HOSTED) {
+                    SettingsRow(
+                        icon = "server",
+                        label = "Server",
+                        supporting = serverUrl,
+                        onClick = { showServerSettings = true },
+                    )
+                }
                 if (isClerk) {
                     ProfileSettingsRow()
+                } else if (authMode == AuthMode.DATABASE) {
+                    SettingsRow(
+                        icon = "log-out",
+                        label = "Sign out",
+                        onClick = {
+                            sessionViewModel?.signOut()
+                            onBack()
+                        },
+                    )
                 }
                 AiUsageSection(state = aiUsageState)
             }
@@ -178,6 +220,19 @@ fun SettingsScreen(
                         }
                     },
                     onDismiss = { showCurrencyPicker = false },
+                )
+            }
+            if (showServerSettings && serverOrigin == ServerOrigin.SELF_HOSTED) {
+                ServerSettingsSheet(
+                    serverUrl = serverUrl,
+                    serverVersion = serverVersion,
+                    authModeLabel = authMode.label(),
+                    onSwitchServer = {
+                        showServerSettings = false
+                        sessionViewModel?.useDifferentServer()
+                        onBack()
+                    },
+                    onDismiss = { showServerSettings = false },
                 )
             }
         }
@@ -389,3 +444,10 @@ private fun ProfileSettingsRow() {
         },
     )
 }
+
+private fun AuthMode.label(): String =
+    when (this) {
+        AuthMode.CLERK -> "Clerk"
+        AuthMode.DATABASE -> "Database"
+        AuthMode.NOAUTH -> "No auth"
+    }
