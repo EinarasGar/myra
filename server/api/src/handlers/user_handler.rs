@@ -1,8 +1,9 @@
 use axum::extract::Path;
+use axum::http::StatusCode;
 use axum::Json;
 use uuid::Uuid;
 
-use crate::auth::AuthenticatedUser;
+use crate::auth::{AuthenticatedUser, AuthenticatedUserId};
 use crate::errors::ApiError;
 
 use crate::extractors::ValidatedJson;
@@ -108,4 +109,23 @@ pub async fn post_onboarding(
         .set_onboarding_version(user_id, params.version)
         .await?;
     Ok(Json(serde_json::json!({})))
+}
+
+/// Delete User
+///
+/// Deletes the authenticated user's account.
+#[utoipa::path(
+    delete,
+    path = "/api/users/{user_id}",
+    tag = "Users",
+    params(("user_id" = String, Path, description = "Id of the user.")),
+    responses((status = 204, description = "User deleted successfully."))
+)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
+pub async fn delete_user(
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    UsersServiceState(users_service): UsersServiceState,
+) -> Result<StatusCode, ApiError> {
+    users_service.delete_user(user_id).await?;
+    Ok(StatusCode::NO_CONTENT)
 }

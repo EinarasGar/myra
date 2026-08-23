@@ -17,6 +17,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
@@ -30,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -83,6 +86,8 @@ fun SettingsScreen(
     val appStore = remember { (context.applicationContext as SvertoApp).appStore }
     val scope = rememberCoroutineScope()
     var showCurrencyPicker by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+    var deleting by remember { mutableStateOf(false) }
     var showServerSettings by remember { mutableStateOf(false) }
     var baseCurrencyId by remember { mutableStateOf(appStore.getCachedMe()?.defaultAsset?.id) }
     var baseCurrencyTicker by remember { mutableStateOf<String?>(null) }
@@ -206,6 +211,12 @@ fun SettingsScreen(
                     )
                 }
                 AiUsageSection(state = aiUsageState)
+                if (authMode != AuthMode.NOAUTH) {
+                    DeleteAccountRow(
+                        enabled = !deleting,
+                        onClick = { showDeleteConfirm = true },
+                    )
+                }
             }
             if (showCurrencyPicker) {
                 CurrencyPickerSheet(
@@ -220,6 +231,54 @@ fun SettingsScreen(
                         }
                     },
                     onDismiss = { showCurrencyPicker = false },
+                )
+            }
+            if (showDeleteConfirm) {
+                AlertDialog(
+                    onDismissRequest = { if (!deleting) showDeleteConfirm = false },
+                    title = { Text("Delete account") },
+                    text = {
+                        Text(
+                            "This permanently erases your account and all of your data — " +
+                                "accounts, transactions, custom assets and their history, your own " +
+                                "categories, AI chats, connections and uploaded files. Shared assets, " +
+                                "exchange rates and seeded categories are untouched. This cannot be undone.",
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(
+                            enabled = !deleting,
+                            onClick = {
+                                scope.launch {
+                                    deleting = true
+                                    runCatching {
+                                        withContext(Dispatchers.IO) { appStore.deleteUser() }
+                                    }
+                                    if (isClerk) {
+                                        Clerk.auth.signOut()
+                                    } else {
+                                        sessionViewModel?.signOut()
+                                    }
+                                    deleting = false
+                                    showDeleteConfirm = false
+                                    onBack()
+                                }
+                            },
+                        ) {
+                            Text(
+                                if (deleting) "Deleting…" else "Delete account",
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            enabled = !deleting,
+                            onClick = { showDeleteConfirm = false },
+                        ) {
+                            Text("Keep account")
+                        }
+                    },
                 )
             }
             if (showServerSettings && serverOrigin == ServerOrigin.SELF_HOSTED) {
@@ -237,6 +296,36 @@ fun SettingsScreen(
             }
         }
     }
+}
+
+@Composable
+private fun DeleteAccountRow(
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    HorizontalDivider(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        color = MaterialTheme.colorScheme.outlineVariant,
+    )
+    ListItem(
+        modifier = Modifier.clickable(enabled = enabled, onClick = onClick),
+        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        leadingContent = {
+            Icon(
+                imageVector = Icons.Outlined.Delete,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(24.dp),
+            )
+        },
+        headlineContent = {
+            Text(
+                "Delete account",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.error,
+            )
+        },
+    )
 }
 
 @Composable

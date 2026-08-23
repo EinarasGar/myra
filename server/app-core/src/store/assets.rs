@@ -214,6 +214,18 @@ pub async fn update_base_asset(
     Ok(())
 }
 
+pub async fn delete_user(infra: &SharedInfra, auth_token: Option<&str>) -> Result<(), ApiError> {
+    let user_id = infra.user_id().ok_or_else(|| ApiError::Parse {
+        reason: "no user_id".into(),
+    })?;
+    let path = format!("/api/users/{user_id}");
+    let resp = infra.delete(&path, auth_token).await?;
+    if resp.status >= 400 {
+        return Err(server_error(resp.status, &resp.body));
+    }
+    Ok(())
+}
+
 pub async fn add_user_asset_pair(
     infra: &SharedInfra,
     asset_id: i32,

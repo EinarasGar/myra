@@ -31,6 +31,7 @@ import {
 } from "./blocks"
 import {
   ACCOUNT_DANGER_BODY,
+  ACCOUNT_DANGER_SURVIVES,
   ACCOUNT_DANGER_TITLE,
   BASE_CURRENCY_CONSEQUENCE,
   BASE_CURRENCY_NO_RATE,
@@ -39,6 +40,7 @@ import {
   SIGN_OUT_CONSEQUENCE,
   THEME_CONSEQUENCE,
 } from "./copy"
+import { DeleteAccountDialog } from "./delete-account-dialog"
 import { PickerRowsSkeleton } from "./skeletons"
 
 const THEME_OPTIONS = [
@@ -223,6 +225,39 @@ function AccountBlock() {
   )
 }
 
+function DangerZoneBlock() {
+  const canDelete = env.authProvider !== "noauth"
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      <SettingsDanger
+        title={ACCOUNT_DANGER_TITLE}
+        lost={ACCOUNT_DANGER_BODY}
+        survives={ACCOUNT_DANGER_SURVIVES}
+        action={
+          <Button
+            variant="destructive"
+            disabled={!canDelete}
+            onClick={() => {
+              setOpen(true)
+            }}
+          >
+            Delete account
+          </Button>
+        }
+      />
+      <SettingsConsequence>
+        Revoking a provider&rsquo;s access is available today &mdash; it lives on
+        each connection under Connections.
+      </SettingsConsequence>
+      {canDelete ? (
+        <DeleteAccountDialog open={open} onOpenChange={setOpen} />
+      ) : null}
+    </>
+  )
+}
+
 export function GeneralSection() {
   return (
     <SettingsBlocks>
@@ -241,14 +276,7 @@ export function GeneralSection() {
       </SettingsBlock>
 
       <SettingsBlock title="Danger zone">
-        <SettingsDanger
-          title={ACCOUNT_DANGER_TITLE}
-          lost={ACCOUNT_DANGER_BODY}
-        />
-        <SettingsConsequence>
-          Revoking a provider&rsquo;s access is available today — it lives on
-          each connection under Connections.
-        </SettingsConsequence>
+        <DangerZoneBlock />
       </SettingsBlock>
     </SettingsBlocks>
   )

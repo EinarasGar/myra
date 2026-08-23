@@ -151,6 +151,17 @@ pub fn update_file_ready(
 }
 
 #[macros::named_query]
+pub fn get_files_by_user(user_id: Uuid) -> DbQueryWithValues {
+    Query::select()
+        .column(UserFilesIden::StorageKey)
+        .column(UserFilesIden::ThumbnailKey)
+        .from(UserFilesIden::Table)
+        .and_where(Expr::col(UserFilesIden::UserId).eq(user_id))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[macros::named_query]
 pub fn delete_file(file_id: Uuid, user_id: Uuid) -> DbQueryWithValues {
     Query::delete()
         .from_table(UserFilesIden::Table)

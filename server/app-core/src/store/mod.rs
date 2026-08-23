@@ -408,6 +408,11 @@ impl AppStore {
         onboarding::set_onboarding_version(&self.infra, version, token.as_deref()).await
     }
 
+    pub async fn delete_user(&self) -> Result<(), ApiError> {
+        let token = self.get_auth_token().await;
+        assets::delete_user(&self.infra, token.as_deref()).await
+    }
+
     pub async fn create_account(
         &self,
         input: CreateAccountInput,

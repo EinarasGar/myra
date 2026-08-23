@@ -90,6 +90,22 @@ pub fn insert_connector_connection(model: AddConnectorConnectionModel) -> DbQuer
 }
 
 #[macros::named_query]
+pub fn get_connector_connection_ids_by_user(user_id: Uuid) -> DbQueryWithValues {
+    Query::select()
+        .column((ConnectorConnectionIden::Table, ConnectorConnectionIden::Id))
+        .from(ConnectorConnectionIden::Table)
+        .and_where(
+            Expr::col((
+                ConnectorConnectionIden::Table,
+                ConnectorConnectionIden::UserId,
+            ))
+            .eq(user_id),
+        )
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[macros::named_query]
 pub fn get_connector_connections(params: GetConnectorConnectionsParams) -> DbQueryWithValues {
     let mut query = Query::select()
         .column((ConnectorConnectionIden::Table, ConnectorConnectionIden::Id))

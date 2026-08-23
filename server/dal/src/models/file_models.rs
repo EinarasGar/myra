@@ -77,3 +77,9 @@ impl FileModel {
 pub struct FileStatusModel {
     pub status: String,
 }
+
+#[derive(Debug, sqlx::FromRow)]
+pub struct UserFileStorageKeysModel {
+    pub storage_key: String,
+    pub thumbnail_key: Option<String>,
+}

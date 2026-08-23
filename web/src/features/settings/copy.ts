@@ -16,10 +16,15 @@ export const SIGN_OUT_CONSEQUENCE =
 export const NOAUTH_CONSEQUENCE =
   "This build runs with authentication disabled, so there is no session to end and no password to change."
 
-export const ACCOUNT_DANGER_TITLE = "Deleting your account is not built yet"
+export const ACCOUNT_DANGER_TITLE = "Delete your account"
 
 export const ACCOUNT_DANGER_BODY =
-  "Sverto cannot yet delete an account or export your data, so this page cannot offer either. Nothing here is hidden from you — the buttons are absent because the actions do not exist, not because they are disabled. Your ledger, accounts and connections are unaffected either way."
+  "Permanently erases your account and every piece of data tied to it — accounts, transactions and entries, custom assets and their history, your own categories, AI chats, connections and uploaded files. This cannot be undone and there is no export first."
+
+export const ACCOUNT_DANGER_SURVIVES =
+  "Shared data that every Sverto install relies on stays put — global assets, exchange-rate history and the seeded categories and types are never touched."
+
+export const DELETE_ACCOUNT_CONFIRM = "Delete my account"
 
 export const CATEGORY_COUNT_SCOPE =
   "Counts are how many categories sit in each type. Sverto cannot yet say how many transactions use a category."

@@ -1,13 +1,24 @@
 use dal::{
-    models::user_models::{
-        AddUserModel, UserBasicModel, UserFullModel, UserOnboardingModel, UserRoleModel,
+    file_provider::FileProvider,
+    models::{
+        connector_models::ConnectorConnectionRow,
+        file_models::UserFileStorageKeysModel,
+        user_models::{
+            AddUserModel, UserBasicModel, UserFullModel, UserOnboardingModel, UserRoleModel,
+        },
     },
-    queries::user_queries,
+    queries::{connector_queries, file_queries, user_queries},
+    query_params::connector_params::GetConnectorConnectionsParams,
+    secrets::SecretProvider,
 };
+
+#[cfg(feature = "clerk")]
+use dal::models::user_models::ExternalUserIdModel;
 
 #[mockall_double::double]
 use dal::database_context::MyraDb;
 
+use std::sync::Arc;
 use uuid::Uuid;
 
 use argon2::{
@@ -23,12 +34,16 @@ use crate::dtos::{
 
 pub struct UsersService {
     db: MyraDb,
+    file_provider: Arc<dyn FileProvider>,
+    secret_provider: Arc<dyn SecretProvider>,
 }
 
 impl UsersService {
     pub fn new(providers: &super::ServiceProviders) -> Self {
         Self {
             db: providers.db.clone(),
+            file_provider: providers.file_provider.clone(),
+            secret_provider: providers.secret_provider.clone(),
         }
     }
 
@@ -157,6 +172,79 @@ impl UsersService {
     ) -> anyhow::Result<()> {
         let parsed_hash = PasswordHash::new(&password_hash)?;
         Argon2::default().verify_password(password.as_bytes(), &parsed_hash)?;
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id))]
+    pub async fn delete_user(&self, user_id: Uuid) -> anyhow::Result<()> {
+        let files_query = file_queries::get_files_by_user(user_id);
+        let files: Vec<UserFileStorageKeysModel> = self.db.fetch_all(files_query).await?;
+        for file in &files {
+            if let Err(e) = self.file_provider.delete(&file.storage_key).await {
+                tracing::warn!(error = %e, "failed to delete user file from storage during account deletion");
+            }
+            if let Some(ref thumbnail_key) = file.thumbnail_key {
+                if let Err(e) = self.file_provider.delete(thumbnail_key).await {
+                    tracing::warn!(error = %e, "failed to delete user thumbnail from storage during account deletion");
+                }
+            }
+        }
+
+        let connections_query = connector_queries::get_connector_connections(
+            GetConnectorConnectionsParams::all(user_id),
+        );
+        let connections: Vec<ConnectorConnectionRow> = self.db.fetch_all(connections_query).await?;
+        for connection in &connections {
+            let secret_key = crate::providers::connector_store::credential_ref(connection.id);
+            if let Err(e) = self.secret_provider.delete_secret(&secret_key).await {
+                tracing::warn!(error = %e, "failed to delete connector secret during account deletion");
+            }
+        }
+
+        #[cfg(feature = "clerk")]
+        let external_user_id = {
+            let query = user_queries::get_external_identity_by_user(user_id, "clerk".to_string());
+            self.db
+                .fetch_optional::<ExternalUserIdModel>(query)
+                .await?
+                .map(|model| model.external_user_id)
+        };
+
+        self.db.start_transaction().await?;
+        let groups_query = user_queries::delete_transaction_groups_by_user(user_id);
+        self.db.execute(groups_query).await?;
+        let user_query = user_queries::delete_user(user_id);
+        self.db.execute(user_query).await?;
+        self.db.commit_transaction().await?;
+
+        #[cfg(feature = "clerk")]
+        if let Some(external_user_id) = external_user_id {
+            if let Err(e) = self.delete_clerk_user(&external_user_id).await {
+                tracing::warn!(error = %e, "failed to delete Clerk user after account deletion");
+            }
+        }
+
+        Ok(())
+    }
+
+    #[cfg(feature = "clerk")]
+    async fn delete_clerk_user(&self, external_user_id: &str) -> anyhow::Result<()> {
+        let clerk_secret_key = std::env::var("CLERK_SECRET_KEY").map_err(|_| {
+            anyhow::anyhow!("CLERK_SECRET_KEY must be set when using clerk auth feature")
+        })?;
+        let client = reqwest::Client::new();
+        let response = client
+            .delete(format!("https://api.clerk.com/v1/users/{external_user_id}"))
+            .header("Authorization", format!("Bearer {clerk_secret_key}"))
+            .send()
+            .await
+            .map_err(|e| anyhow::anyhow!("failed to send Clerk delete request: {e}"))?;
+        if !response.status().is_success() {
+            return Err(anyhow::anyhow!(
+                "Clerk user deletion returned status {}",
+                response.status()
+            ));
+        }
         Ok(())
     }
 }

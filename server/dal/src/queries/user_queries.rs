@@ -4,6 +4,7 @@ use sqlx::types::Uuid;
 
 use crate::{
     idens::asset_idens::AssetsIden,
+    idens::transaction_idens::{TransactionGroupIden, TransactionIden},
     idens::user_idens::{
         ExternalIdentityMappingsIden, RefreshTokensIden, UserCredentialsIden,
         UserRoleAssignmentsIden, UserRolesIden, UsersIden,
@@ -319,6 +320,44 @@ pub fn update_user_onboarding_version(user_id: Uuid, version: i32) -> DbQueryWit
     Query::update()
         .table(UsersIden::Table)
         .value(UsersIden::OnboardingVersion, version)
+        .and_where(Expr::col(UsersIden::Id).eq(user_id))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[macros::named_query]
+pub fn get_external_identity_by_user(user_id: Uuid, provider: String) -> DbQueryWithValues {
+    Query::select()
+        .column(ExternalIdentityMappingsIden::ExternalUserId)
+        .from(ExternalIdentityMappingsIden::Table)
+        .and_where(Expr::col(ExternalIdentityMappingsIden::UserId).eq(user_id))
+        .and_where(Expr::col(ExternalIdentityMappingsIden::Provider).eq(provider))
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[macros::named_query]
+pub fn delete_transaction_groups_by_user(user_id: Uuid) -> DbQueryWithValues {
+    let subquery = Query::select()
+        .column(TransactionIden::GroupId)
+        .from(TransactionIden::Table)
+        .and_where(Expr::col(TransactionIden::UserId).eq(user_id))
+        .and_where(Expr::col(TransactionIden::GroupId).is_not_null())
+        .to_owned();
+
+    Query::delete()
+        .from_table(TransactionGroupIden::Table)
+        .and_where(
+            Expr::col(TransactionGroupIden::TransactionGroupId).in_subquery(subquery),
+        )
+        .build_sqlx(PostgresQueryBuilder)
+        .into()
+}
+
+#[macros::named_query]
+pub fn delete_user(user_id: Uuid) -> DbQueryWithValues {
+    Query::delete()
+        .from_table(UsersIden::Table)
         .and_where(Expr::col(UsersIden::Id).eq(user_id))
         .build_sqlx(PostgresQueryBuilder)
         .into()

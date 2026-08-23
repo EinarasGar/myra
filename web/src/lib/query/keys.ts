@@ -361,5 +361,6 @@ export const mutationKeys = {
     connectors: () => ["mutate", "user", userId, "connectors"] as const,
     ai: () => ["mutate", "user", userId, "ai"] as const,
     files: () => ["mutate", "user", userId, "files"] as const,
+    account: () => ["mutate", "user", userId, "account"] as const,
   }),
 } as const

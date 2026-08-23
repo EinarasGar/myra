@@ -236,6 +236,22 @@ export function useSyncBinding(userId: UserId) {
   )
 }
 
+export function useDeleteUser(userId: UserId) {
+  const queryClient = useQueryClient()
+  return useMutation(
+    optimisticMutationOptions<void, void>({
+      queryClient,
+      mutationKey: mutationKeys.user(userId).account(),
+      mutationFn: async () => {
+        await api(UsersApiFactory).deleteUser(userId)
+      },
+      updates: [],
+      invalidate: [],
+      meta: { errorContext: "Your account could not be deleted" },
+    })
+  )
+}
+
 export interface SetBaseCurrencyVariables {
   assetId: AssetId
 }

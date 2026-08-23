@@ -53,3 +53,8 @@ pub struct RefreshTokenModel {
     pub token_hash: String,
     pub expires_at: sqlx::types::time::OffsetDateTime,
 }
+
+#[derive(Debug, sqlx::FromRow)]
+pub struct ExternalUserIdModel {
+    pub external_user_id: String,
+}
