@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.clerk.api.Clerk
 import com.clerk.api.auth.AuthEvent
 import com.sverto.app.BuildConfig
+import com.sverto.app.SvertoApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,7 +50,8 @@ sealed interface SessionState {
 class AppSessionViewModel(
     app: Application,
 ) : AndroidViewModel(app) {
-    private val appStore = (app as com.sverto.app.SvertoApp).appStore
+    private val svertoApp = app as SvertoApp
+    private val appStore = svertoApp.appStore
     private val serverPrefs = ServerPreferences(app)
 
     private val _state = MutableStateFlow<SessionState>(SessionState.Loading)
@@ -227,10 +229,7 @@ class AppSessionViewModel(
     }
 
     fun onClerkSignedIn() {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) { appStore.onSignIn() }
-            _state.value = SessionState.SignedIn
-        }
+        _state.value = SessionState.SignedIn
     }
 
     fun useDifferentServer() {
@@ -275,7 +274,7 @@ class AppSessionViewModel(
         gateByMode(authMode)
     }
 
-    private fun gateByMode(authMode: AuthMode) {
+    private suspend fun gateByMode(authMode: AuthMode) {
         when (authMode) {
             AuthMode.NOAUTH -> _state.value = SessionState.SignedIn
             AuthMode.DATABASE -> {
@@ -286,8 +285,14 @@ class AppSessionViewModel(
                 }
             }
             AuthMode.CLERK -> {
-                ensureClerkInitialised()
-                if (Clerk.user != null) {
+                svertoApp.ensureClerkInitialised()
+                val cachedMe = withContext(Dispatchers.IO) { appStore.restoreCachedMe() }
+                if (!svertoApp.hasConnectivity() && cachedMe != null) {
+                    _state.value = SessionState.SignedIn
+                    return
+                }
+                Clerk.isInitialized.first { it }
+                if (Clerk.userFlow.value != null) {
                     _state.value = SessionState.SignedIn
                 } else {
                     _state.value = SessionState.ClerkLogin
@@ -312,13 +317,6 @@ class AppSessionViewModel(
         } else {
             ServerOrigin.SELF_HOSTED
         }
-
-    private fun ensureClerkInitialised() {
-        val key = BuildConfig.CLERK_PUBLISHABLE_KEY
-        if (key.isNotBlank() && !Clerk.isInitialized.value) {
-            Clerk.initialize(getApplication(), publishableKey = key)
-        }
-    }
 
     private fun inferModeFromBuildConfig(): AuthMode =
         if (BuildConfig.CLERK_PUBLISHABLE_KEY

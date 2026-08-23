@@ -17,6 +17,19 @@ NC = \033[0m # No Color
 # contains the patterns — does not self-match pgrep (the classic `ps | grep [p]attern` trick).
 WORKER_PIDS = $$({ pgrep -f "[t]arget/debug/worker"; pgrep -f "[c]argo run -p worker"; } 2>/dev/null | sort -u | while read -r pid; do cwd=$$(lsof -a -d cwd -p $$pid -Fn 2>/dev/null | sed -n 's/^n//p'); case "$$cwd" in ("$(CURDIR)"|"$(CURDIR)"/*) echo $$pid ;; esac; done)
 
+ANDROID_SDK = $(HOME)/Library/Android/sdk
+ADB = $(ANDROID_SDK)/platform-tools/adb
+EMULATOR = $(ANDROID_SDK)/emulator/emulator
+AVDMANAGER = $(ANDROID_SDK)/cmdline-tools/latest/bin/avdmanager
+SDKMANAGER = $(ANDROID_SDK)/cmdline-tools/latest/bin/sdkmanager
+ANDROID_SYSTEM_IMAGE ?= system-images;android-37.0;google_apis_playstore_ps16k;arm64-v8a
+AVD_DIR = $(HOME)/.android/avd/$(ANDROID_AVD_NAME).avd
+# Serial of the running emulator that booted THIS worktree's AVD (empty if none). Resolved by AVD
+# name through the emulator console, not by port, so it also finds the AVD when Android Studio
+# launched it on whatever port was free.
+AVD_SERIAL = $$(for s in $$($(ADB) devices 2>/dev/null | awk '/^emulator-/ {print $$1}'); do if [ "$$($(ADB) -s $$s emu avd name 2>/dev/null | head -n1 | tr -d '\r')" = "$(ANDROID_AVD_NAME)" ]; then echo $$s; break; fi; done)
+PHYSICAL_SERIALS = $$($(ADB) devices 2>/dev/null | awk '$$2 == "device" && $$1 !~ /^emulator-/ {print $$1}')
+
 # Default target
 .PHONY: help
 help: ## Show this help message
@@ -40,9 +53,11 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk 
 		WORKTREE_NAME=$$(basename $$(pwd)); \
 		HASH=$$(printf '%s' "$$WORKTREE_NAME" | cksum | awk '{print $$1}'); \
 		PREFIX=$$(printf '%02d' $$((HASH % 99 + 1))); \
-		echo "$(GREEN)Worktree detected: $$WORKTREE_NAME (port prefix: $$PREFIX)$(NC)"; \
+		AVD_NAME="myra-$$(printf '%s' "$$WORKTREE_NAME" | tr -c 'A-Za-z0-9._-' '_')"; \
+		echo "$(GREEN)Worktree detected: $$WORKTREE_NAME (port prefix: $$PREFIX, AVD: $$AVD_NAME)$(NC)"; \
 	else \
 		PREFIX="00"; \
+		AVD_NAME="myra-main"; \
 	fi; \
 	case "$(telemetry)" in \
 		local) \
@@ -167,6 +182,10 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk 
 		"SVERTO_KEY_ALIAS=$${SVERTO_KEY_ALIAS}" \
 		"SVERTO_KEY_PASSWORD=$${SVERTO_KEY_PASSWORD}" \
 		>> .env; \
+	printf '\n%s\n%s\n' \
+		"# Android emulator" \
+		"ANDROID_AVD_NAME=$${AVD_NAME}" \
+		>> .env; \
 	printf '\n%s\n' "APP_ENV=dev" >> .env; \
 	echo "$(GREEN).env created (auth=$(auth), telemetry=$(telemetry), secrets=$(secrets)):$(NC)"; \
 	cat .env
@@ -231,6 +250,14 @@ status: ## Show service ports, status, and useful links
 			echo "$(YELLOW)Worker        $(NC)  (no port) - $(RED)Not Running$(NC)"; \
 		fi; \
 	}; \
+	check_emulator() { \
+		SERIAL="$(AVD_SERIAL)"; \
+		if [ -n "$$SERIAL" ]; then \
+			echo "$(YELLOW)Emulator      $(NC)  $(ANDROID_AVD_NAME) ($$SERIAL) - $(GREEN)Running$(NC)"; \
+		else \
+			echo "$(YELLOW)Emulator      $(NC)  $(ANDROID_AVD_NAME) - $(RED)Not Running$(NC)"; \
+		fi; \
+	}; \
 	check_infra "Postgres      " $(POSTGRES_PORT) database; \
 	check_local "API Server    " $(SERVER_PORT); \
 	check_worker; \
@@ -243,7 +270,8 @@ status: ## Show service ports, status, and useful links
 	check_infra "MinIO         " $(MINIO_PORT) minio; \
 	check_infra "MinIO Console " $(MINIO_CONSOLE_PORT) minio; \
 	check_infra "Redis         " $(REDIS_PORT) redis; \
-	check_infra "Vault         " $(VAULT_PORT) vault
+	check_infra "Vault         " $(VAULT_PORT) vault; \
+	check_emulator
 
 # Run
 .PHONY: backend-run
@@ -285,25 +313,72 @@ landing-build: ## Build the static marketing site into landing/dist
 ide: ## Open VS Code and auto-start infra, backend, worker, market-data, web in split terminals
 	@code .vscode/myra.code-workspace
 
+.PHONY: android-emulator
+android-emulator: ## Boot this worktree's Pixel 9 AVD, creating it on first use. reset=true recreates it from scratch (wipes its data)
+	@test -n "$(ANDROID_AVD_NAME)" || { echo "$(RED)Error: ANDROID_AVD_NAME is not set. Run make setup-env first.$(NC)"; exit 1; }
+	@SERIAL="$(AVD_SERIAL)"; \
+	if [ "$(reset)" = "true" ] && [ -n "$$SERIAL" ]; then \
+		echo "$(YELLOW)Stopping $(ANDROID_AVD_NAME) ($$SERIAL) for reset...$(NC)"; \
+		$(ADB) -s "$$SERIAL" emu kill >/dev/null; \
+		while $(ADB) devices | grep -qw "$$SERIAL"; do sleep 1; done; \
+		SERIAL=""; \
+	fi; \
+	if [ -z "$$SERIAL" ]; then \
+		if [ "$(reset)" = "true" ] || [ ! -d "$(AVD_DIR)" ]; then \
+			if [ ! -d "$(ANDROID_SDK)/$(subst ;,/,$(ANDROID_SYSTEM_IMAGE))" ]; then \
+				echo "$(GREEN)Installing $(ANDROID_SYSTEM_IMAGE)...$(NC)"; \
+				yes | $(SDKMANAGER) --install "$(ANDROID_SYSTEM_IMAGE)"; \
+			fi; \
+			{ echo no | $(AVDMANAGER) create avd --force -n "$(ANDROID_AVD_NAME)" -k "$(ANDROID_SYSTEM_IMAGE)" -d pixel_9 --skin pixel_9 && \
+			sed -i '' \
+				-e 's/^PlayStore.enabled=.*/PlayStore.enabled=true/' \
+				-e 's/^hw.keyboard=.*/hw.keyboard=yes/' \
+				-e 's/^hw.gpu.enabled=.*/hw.gpu.enabled=yes/' \
+				-e 's/^hw.camera.back=.*/hw.camera.back=virtualscene/' \
+				-e 's/^hw.camera.front=.*/hw.camera.front=emulated/' \
+				-e 's/^disk.dataPartition.size=.*/disk.dataPartition.size=20G/' \
+				-e 's/^sdcard.size=.*/sdcard.size=6G/' \
+				"$(AVD_DIR)/config.ini" && \
+			printf '%s\n%s\n' "avd.ini.displayname=$(ANDROID_AVD_NAME)" "AvdId=$(ANDROID_AVD_NAME)" >> "$(AVD_DIR)/config.ini"; } || exit 1; \
+			echo "$(GREEN)AVD $(ANDROID_AVD_NAME) created$(NC)"; \
+		fi; \
+		echo "$(GREEN)Booting $(ANDROID_AVD_NAME)...$(NC)"; \
+		nohup $(EMULATOR) -avd "$(ANDROID_AVD_NAME)" </dev/null >"$(AVD_DIR)/emulator.log" 2>&1 & \
+		i=0; \
+		until SERIAL="$(AVD_SERIAL)"; [ -n "$$SERIAL" ]; do \
+			i=$$((i + 1)); \
+			if [ $$i -gt 60 ]; then echo "$(RED)Error: $(ANDROID_AVD_NAME) did not show up in adb within 60s, see $(AVD_DIR)/emulator.log$(NC)"; exit 1; fi; \
+			sleep 1; \
+		done; \
+	fi; \
+	i=0; \
+	until [ "$$($(ADB) -s "$$SERIAL" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; do \
+		i=$$((i + 1)); \
+		if [ $$i -gt 150 ]; then echo "$(RED)Error: $$SERIAL did not finish booting within 300s$(NC)"; exit 1; fi; \
+		sleep 2; \
+	done; \
+	echo "$(GREEN)$(ANDROID_AVD_NAME) ready on $$SERIAL$(NC)"
+
 .PHONY: android-run
-android-run: ## Build, install, and launch the dev Android app on all connected devices
-	cd android && ./gradlew installDevDebug
-	@ADB="$$HOME/Library/Android/sdk/platform-tools/adb"; \
-	for serial in $$($$ADB devices | tail -n +2 | grep -w device | awk '{print $$1}'); do \
-		"$$ADB" -s "$$serial" reverse tcp:$(SERVER_PORT) tcp:$(SERVER_PORT) >/dev/null 2>&1; \
-		"$$ADB" -s "$$serial" reverse tcp:$(MINIO_PORT) tcp:$(MINIO_PORT) >/dev/null 2>&1; \
-		echo "$(GREEN)Launching on $$serial$(NC)"; \
-		"$$ADB" -s "$$serial" shell am start -n com.sverto.app.dev/com.sverto.app.MainActivity; \
-	done
+android-run: android-emulator ## Build, install, and launch the dev Android app on this worktree's emulator (boots it if needed)
+	@SERIAL="$(AVD_SERIAL)"; \
+	cd android && ANDROID_SERIAL="$$SERIAL" ./gradlew installDevDebug && \
+	$(ADB) -s "$$SERIAL" reverse tcp:$(SERVER_PORT) tcp:$(SERVER_PORT) >/dev/null && \
+	$(ADB) -s "$$SERIAL" reverse tcp:$(MINIO_PORT) tcp:$(MINIO_PORT) >/dev/null && \
+	echo "$(GREEN)Launching on $$SERIAL$(NC)" && \
+	$(ADB) -s "$$SERIAL" shell am start -n com.sverto.app.dev/com.sverto.app.MainActivity
 
 .PHONY: android-install-prod
-android-install-prod: ## Build and install the prod Android app pointing at api.sverto.com
+android-install-prod: android-emulator ## Build and install the prod Android app on this worktree's emulator and any connected physical devices (points at api.sverto.com)
 	@if [ ! -f ".secrets.prod" ]; then \
 		echo "$(RED)Error: .secrets.prod not found.$(NC)"; \
 		exit 1; \
 	fi; \
 	. ./.secrets.prod; \
-	cd android && ./gradlew installProdRelease \
+	SERIALS="$(AVD_SERIAL)"; \
+	for p in $(PHYSICAL_SERIALS); do SERIALS="$$SERIALS,$$p"; done; \
+	echo "$(GREEN)Installing on: $$SERIALS$(NC)"; \
+	cd android && ANDROID_SERIAL="$$SERIALS" ./gradlew installProdRelease \
 		-PAPP_ENV=prod \
 		-PAPP_API_BASE_URL=https://api.sverto.com \
 		-PCLERK_PUBLISHABLE_KEY="$$CLERK_PUBLISHABLE_KEY" \
@@ -311,6 +386,23 @@ android-install-prod: ## Build and install the prod Android app pointing at api.
 		-PSVERTO_STORE_PASSWORD="$$SVERTO_STORE_PASSWORD" \
 		-PSVERTO_KEY_ALIAS="$$SVERTO_KEY_ALIAS" \
 		-PSVERTO_KEY_PASSWORD="$$SVERTO_KEY_PASSWORD"
+
+.PHONY: android-bundle-prod
+android-bundle-prod: ## Build the prod release App Bundle (AAB) for Google Play upload
+	@if [ ! -f ".secrets.prod" ]; then \
+		echo "$(RED)Error: .secrets.prod not found.$(NC)"; \
+		exit 1; \
+	fi; \
+	. ./.secrets.prod; \
+	cd android && ./gradlew bundleProdRelease \
+		-PAPP_ENV=prod \
+		-PAPP_API_BASE_URL=https://api.sverto.com \
+		-PCLERK_PUBLISHABLE_KEY="$$CLERK_PUBLISHABLE_KEY" \
+		-PSVERTO_STORE_FILE="$$SVERTO_STORE_FILE" \
+		-PSVERTO_STORE_PASSWORD="$$SVERTO_STORE_PASSWORD" \
+		-PSVERTO_KEY_ALIAS="$$SVERTO_KEY_ALIAS" \
+		-PSVERTO_KEY_PASSWORD="$$SVERTO_KEY_PASSWORD"
+	@echo "$(GREEN)AAB: android/app/build/outputs/bundle/prodRelease/app-prod-release.aab$(NC)"
 
 # Infrastructure
 .PHONY: start-infra

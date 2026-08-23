@@ -6,16 +6,19 @@ import android.net.Network
 import com.clerk.api.Clerk
 import com.clerk.api.network.serialization.ClerkResult
 import com.sverto.app.feature.server.KeystoreCredentialStore
-import kotlinx.coroutines.runBlocking
 import uniffi.sverto_core.AppStore
 import uniffi.sverto_core.AuthProvider
+import java.util.concurrent.atomic.AtomicBoolean
 
-class SvertoAuthProvider : AuthProvider {
+class SvertoAuthProvider(
+    private val hasConnectivity: () -> Boolean,
+) : AuthProvider {
     private var cachedToken: String? = null
     private var tokenExpiryMs: Long = 0L
 
-    override fun getToken(): String? {
+    override suspend fun getToken(): String? {
         if (BuildConfig.CLERK_PUBLISHABLE_KEY.isBlank()) return null
+        if (!hasConnectivity()) return cachedToken
 
         val now = System.currentTimeMillis()
         if (cachedToken != null && now < tokenExpiryMs) {
@@ -23,17 +26,13 @@ class SvertoAuthProvider : AuthProvider {
         }
 
         val token =
-            runBlocking {
-                when (val result = Clerk.auth.getToken()) {
-                    is ClerkResult.Success -> result.value
-                    is ClerkResult.Failure -> null
-                }
+            when (val result = Clerk.auth.getToken()) {
+                is ClerkResult.Success -> result.value
+                is ClerkResult.Failure -> null
             }
 
         if (token != null) {
             cachedToken = token
-            // Clerk JWT tokens last 15 min; cache conservatively at 60s
-            // so the tokio worker thread is never blocked for long
             tokenExpiryMs = now + 60_000L
         } else {
             cachedToken = null
@@ -49,11 +48,14 @@ class SvertoAuthProvider : AuthProvider {
 }
 
 class SvertoApp : Application() {
+    private val clerkInitializationStarted = AtomicBoolean(false)
+
     lateinit var appStore: AppStore
         private set
 
     override fun onCreate() {
         super.onCreate()
+        ensureClerkInitialised()
         System.loadLibrary("jnidispatch")
         System.loadLibrary("sverto_core")
 
@@ -64,7 +66,7 @@ class SvertoApp : Application() {
                 BuildConfig.API_BASE_URL,
                 60u,
                 dbPath,
-                SvertoAuthProvider(),
+                SvertoAuthProvider(::hasConnectivity),
                 KeystoreCredentialStore(this),
             )
 
@@ -73,14 +75,16 @@ class SvertoApp : Application() {
 
     fun ensureClerkInitialised() {
         val key = BuildConfig.CLERK_PUBLISHABLE_KEY
-        if (key.isNotBlank() && !Clerk.isInitialized.value) {
+        if (key.isNotBlank() && clerkInitializationStarted.compareAndSet(false, true)) {
             Clerk.initialize(this, publishableKey = key)
         }
     }
 
+    fun hasConnectivity(): Boolean = getSystemService(ConnectivityManager::class.java).activeNetwork != null
+
     private fun registerConnectivityCallback() {
         val cm = getSystemService(ConnectivityManager::class.java)
-        val connected = cm.activeNetwork != null
+        val connected = hasConnectivity()
         appStore.setConnectivity(connected)
         cm.registerDefaultNetworkCallback(
             object : ConnectivityManager.NetworkCallback() {

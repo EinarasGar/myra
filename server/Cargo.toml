@@ -13,4 +13,10 @@ members = [
   "observability",
   "connectors",
   "worker",
+  "vendor/uniffi_core",
 ]
+
+# Temporary workaround for https://github.com/mozilla/uniffi-rs/issues/2953.
+# Remove when an official UniFFI release invokes continuations after releasing the scheduler lock.
+[patch.crates-io]
+uniffi_core = { path = "vendor/uniffi_core" }

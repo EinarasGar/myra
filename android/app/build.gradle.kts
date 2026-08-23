@@ -13,6 +13,8 @@ plugins {
 // release builds target all ABIs.
 
 val coreDir = rootProject.file("../server/app-core")
+val serverDir = rootProject.file("../server")
+val uniffiCoreDir = serverDir.resolve("vendor/uniffi_core")
 val workspaceTargetDir = rootProject.file("../server/target")
 val jniLibsDir = file("src/main/jniLibs")
 val bindingsDir = file("src/main/java")
@@ -39,7 +41,12 @@ tasks.register("buildRustCore") {
     description = "Cross-compile Rust core for Android and generate UniFFI bindings"
     inputs.dir(coreDir.resolve("src"))
     inputs.file(coreDir.resolve("Cargo.toml"))
-    inputs.dir(rootProject.file("../server/shared/src"))
+    inputs.file(serverDir.resolve("Cargo.toml"))
+    inputs.file(serverDir.resolve("Cargo.lock"))
+    inputs.dir(serverDir.resolve("shared/src"))
+    inputs.dir(uniffiCoreDir.resolve("src"))
+    inputs.file(uniffiCoreDir.resolve("Cargo.toml"))
+    inputs.property("targetAbis", targetAbis)
     outputs.dir(jniLibsDir)
 
     doLast {

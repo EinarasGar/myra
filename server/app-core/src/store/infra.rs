@@ -5,7 +5,7 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use crate::api::cache::PersistentCache;
 use crate::error::ApiError;
-use crate::models::{ApiResponse, AuthMode};
+use crate::models::{ApiResponse, AuthMe, AuthMode};
 use crate::store::CredentialStore;
 
 pub type OnOfflineChangedCallback = Arc<dyn Fn() + Send + Sync>;
@@ -153,7 +153,7 @@ impl SharedInfra {
     pub async fn get_auth_token(&self) -> Option<String> {
         let mode = self.auth_mode.lock().unwrap().clone();
         match mode {
-            AuthMode::Clerk => self.auth_provider.get_token(),
+            AuthMode::Clerk => self.auth_provider.get_token().await,
             AuthMode::Noauth => None,
             AuthMode::Database => self.get_database_access_token().await,
         }
@@ -165,8 +165,10 @@ impl SharedInfra {
             if let Some(ref s) = *session {
                 let valid = !self.auth_invalidated.load(Ordering::Relaxed)
                     && s.access_token.as_ref().is_some_and(|t| {
-                        parse_jwt_exp(t)
-                            .is_some_and(|exp| exp.duration_since(SystemTime::now()).is_ok_and(|d| d > Duration::from_secs(60)))
+                        parse_jwt_exp(t).is_some_and(|exp| {
+                            exp.duration_since(SystemTime::now())
+                                .is_ok_and(|d| d > Duration::from_secs(60))
+                        })
                     });
                 if valid {
                     return s.access_token.clone();
@@ -181,8 +183,10 @@ impl SharedInfra {
             if let Some(ref s) = *session {
                 let valid = !self.auth_invalidated.load(Ordering::Relaxed)
                     && s.access_token.as_ref().is_some_and(|t| {
-                        parse_jwt_exp(t)
-                            .is_some_and(|exp| exp.duration_since(SystemTime::now()).is_ok_and(|d| d > Duration::from_secs(60)))
+                        parse_jwt_exp(t).is_some_and(|exp| {
+                            exp.duration_since(SystemTime::now())
+                                .is_ok_and(|d| d > Duration::from_secs(60))
+                        })
                     });
                 if valid {
                     return s.access_token.clone();
@@ -283,6 +287,17 @@ impl SharedInfra {
 
     pub fn set_onboarding_version(&self, version: i32) {
         *self.onboarding_version.lock().unwrap() = Some(version);
+    }
+
+    pub fn apply_auth_me(&self, auth_me: &AuthMe) {
+        *self.user_id.lock().unwrap() = Some(auth_me.user_id.clone());
+        *self.default_asset_id.lock().unwrap() =
+            auth_me.default_asset.as_ref().map(|asset| asset.id);
+        *self.default_asset_ticker.lock().unwrap() = auth_me
+            .default_asset
+            .as_ref()
+            .map(|asset| asset.ticker.clone());
+        *self.onboarding_version.lock().unwrap() = Some(auth_me.onboarding_version);
     }
 
     pub fn has_connectivity(&self) -> bool {
@@ -487,12 +502,97 @@ fn parse_jwt_exp(token: &str) -> Option<SystemTime> {
 
 fn base64_url_decode(input: &str) -> Option<Vec<u8>> {
     use base64::Engine;
-    base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(input).ok()
+    base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(input)
+        .ok()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::store::AuthProvider;
+
+    struct AsyncAuthProvider;
+
+    #[async_trait::async_trait]
+    impl AuthProvider for AsyncAuthProvider {
+        async fn get_token(&self) -> Option<String> {
+            tokio::task::yield_now().await;
+            Some("clerk-token".to_string())
+        }
+
+        fn get_user_id(&self) -> Option<String> {
+            Some("user-id".to_string())
+        }
+    }
+
+    struct EmptyCredentialStore;
+
+    impl CredentialStore for EmptyCredentialStore {
+        fn load_refresh_token(&self) -> Option<String> {
+            None
+        }
+
+        fn save_refresh_token(&self, _token: String) {}
+
+        fn clear_refresh_token(&self) {}
+    }
+
+    #[tokio::test]
+    async fn clerk_auth_token_awaits_async_provider() {
+        let db_path = std::env::temp_dir()
+            .join(format!("sverto-auth-provider-{}.db", uuid::Uuid::new_v4()))
+            .to_string_lossy()
+            .into_owned();
+        let infra = SharedInfra::new(
+            "https://example.com".to_string(),
+            60,
+            db_path.clone(),
+            Arc::new(AsyncAuthProvider),
+            Arc::new(EmptyCredentialStore),
+        );
+        infra.set_auth_mode(AuthMode::Clerk);
+
+        assert_eq!(infra.get_auth_token().await.as_deref(), Some("clerk-token"));
+
+        drop(infra);
+        let _ = std::fs::remove_file(db_path);
+    }
+
+    #[test]
+    fn cached_auth_me_hydrates_session_identity() {
+        let db_path = std::env::temp_dir()
+            .join(format!("sverto-auth-me-{}.db", uuid::Uuid::new_v4()))
+            .to_string_lossy()
+            .into_owned();
+        let infra = SharedInfra::new(
+            "https://example.com".to_string(),
+            60,
+            db_path.clone(),
+            Arc::new(AsyncAuthProvider),
+            Arc::new(EmptyCredentialStore),
+        );
+        let auth_me = crate::models::AuthMe {
+            user_id: "cached-user".to_string(),
+            default_asset: Some(crate::models::DefaultAsset {
+                id: 10,
+                ticker: "GBP".to_string(),
+            }),
+            onboarding_version: 1,
+            role: "user".to_string(),
+            user_metadata: None,
+        };
+
+        infra.apply_auth_me(&auth_me);
+
+        assert_eq!(infra.user_id().as_deref(), Some("cached-user"));
+        assert_eq!(infra.default_asset_id(), Some(10));
+        assert_eq!(infra.default_asset_ticker().as_deref(), Some("GBP"));
+        assert_eq!(infra.onboarding_version(), Some(1));
+
+        drop(infra);
+        let _ = std::fs::remove_file(db_path);
+    }
 
     #[test]
     fn test_parse_jwt_exp_valid() {
@@ -509,10 +609,16 @@ mod tests {
 
     #[test]
     fn test_url_normalisation() {
-        assert_eq!(normalise_url("  https://example.com/  "), "https://example.com");
+        assert_eq!(
+            normalise_url("  https://example.com/  "),
+            "https://example.com"
+        );
         assert_eq!(normalise_url("https://example.com"), "https://example.com");
         assert_eq!(normalise_url("https://example.com/"), "https://example.com");
-        assert_eq!(normalise_url("https://example.com///"), "https://example.com");
+        assert_eq!(
+            normalise_url("https://example.com///"),
+            "https://example.com"
+        );
     }
 }
 

@@ -33,6 +33,8 @@ import com.sverto.app.feature.server.PasswordSignUpScreen
 import com.sverto.app.feature.server.ServerUrlScreen
 import com.sverto.app.feature.server.SessionState
 import com.sverto.app.feature.server.WelcomeScreen
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import uniffi.sverto_core.AppStore
 
 class MainActivity : ComponentActivity() {
@@ -151,10 +153,39 @@ private fun SignedInGate(
     var onboarded by remember(signInKey) { mutableStateOf<Boolean?>(null) }
     var onboardingViewModelKey by remember(signInKey) { mutableStateOf<String?>(null) }
     LaunchedEffect(signInKey) {
+        val serverUrl = sessionViewModel.activeServerUrl.value.orEmpty()
+        val cachedMe = withContext(Dispatchers.IO) { appStore.restoreCachedMe() }
+        if (cachedMe != null) {
+            val startupState =
+                signedInStartupState(
+                    userId = cachedMe.userId,
+                    onboardingVersion = cachedMe.onboardingVersion,
+                    currentOnboardingVersion = CURRENT_ONBOARDING_VERSION,
+                )
+            onboardingViewModelKey = "$serverUrl:${startupState.userId}"
+            onboarded = startupState.onboarded
+        }
+
         appStore.onSignIn()
-        val userId = appStore.getCachedMe()?.userId ?: "anonymous"
-        onboardingViewModelKey = "${sessionViewModel.activeServerUrl.value.orEmpty()}:$userId"
-        onboarded = appStore.getOnboardingVersion() >= CURRENT_ONBOARDING_VERSION
+        val refreshedMe = withContext(Dispatchers.IO) { appStore.getCachedMe() }
+        val startupState =
+            if (refreshedMe != null) {
+                signedInStartupState(
+                    userId = refreshedMe.userId,
+                    onboardingVersion = refreshedMe.onboardingVersion,
+                    currentOnboardingVersion = CURRENT_ONBOARDING_VERSION,
+                )
+            } else {
+                withContext(Dispatchers.IO) {
+                    signedInStartupState(
+                        userId = "anonymous",
+                        onboardingVersion = appStore.getOnboardingVersion(),
+                        currentOnboardingVersion = CURRENT_ONBOARDING_VERSION,
+                    )
+                }
+            }
+        onboardingViewModelKey = "$serverUrl:${startupState.userId}"
+        onboarded = startupState.onboarded
     }
     when (onboarded) {
         null -> LoadingScreen()

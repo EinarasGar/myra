@@ -162,9 +162,6 @@ private data class TransactionDetailState(
 fun MainScreen(
     sharedImageUris: List<Uri> = emptyList(),
     onSharedImagesHandled: () -> Unit = {},
-    transactionsViewModel: TransactionsViewModel = viewModel(factory = SvertoViewModelFactory),
-    quickUploadViewModel: QuickUploadViewModel = viewModel(factory = SvertoViewModelFactory),
-    aiChatViewModel: AiChatViewModel = viewModel(factory = SvertoViewModelFactory),
     sessionViewModel: AppSessionViewModel? = null,
 ) {
     val navController = rememberNavController()
@@ -174,7 +171,27 @@ fun MainScreen(
     val isAiChatTab = currentRoute == TopLevelRoute.AiChat.route
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    val aiChatState by aiChatViewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val activity = context as ComponentActivity
+    val modules = mainStartupModules(currentRoute, sharedImageUris.isNotEmpty())
+    val transactionsViewModel =
+        if (modules.transactions) {
+            viewModel<TransactionsViewModel>(viewModelStoreOwner = activity, factory = SvertoViewModelFactory)
+        } else {
+            null
+        }
+    val quickUploadViewModel =
+        if (modules.quickUploads) {
+            viewModel<QuickUploadViewModel>(viewModelStoreOwner = activity, factory = SvertoViewModelFactory)
+        } else {
+            null
+        }
+    val aiChatViewModel =
+        if (modules.aiChat) {
+            viewModel<AiChatViewModel>(viewModelStoreOwner = activity, factory = SvertoViewModelFactory)
+        } else {
+            null
+        }
 
     // Hoisted above the app bar's AnimatedVisibility so opening a transaction from search
     // doesn't tear down the query and results when the top bar leaves composition.
@@ -187,15 +204,23 @@ fun MainScreen(
     val editingGroupIndex = remember { mutableStateOf<Int?>(null) }
     val pendingGroupSelection = remember { mutableStateOf<List<String>>(emptyList()) }
 
-    val quickUploadItems by quickUploadViewModel.items.collectAsStateWithLifecycle()
-    val selectedTransactionIds by transactionsViewModel.selectedIds.collectAsStateWithLifecycle()
+    val quickUploadItems =
+        quickUploadViewModel
+            ?.items
+            ?.collectAsStateWithLifecycle()
+            ?.value
+            .orEmpty()
+    val selectedTransactionIds =
+        transactionsViewModel
+            ?.selectedIds
+            ?.collectAsStateWithLifecycle()
+            ?.value
+            .orEmpty()
     val transactionSelectionActive =
         currentRoute == TopLevelRoute.Transactions.route && selectedTransactionIds.isNotEmpty()
 
-    val context = LocalContext.current
     val appStore = remember { (context.applicationContext as SvertoApp).appStore }
 
-    val activity = context as ComponentActivity
     DisposableEffect(navController) {
         val listener =
             androidx.core.util.Consumer<Intent> { intent ->
@@ -208,7 +233,7 @@ fun MainScreen(
     suspend fun prepareAndQueue(uri: Uri) {
         val prepared = withContext(Dispatchers.IO) { prepareQuickUpload(context, uri) }
         if (prepared != null) {
-            quickUploadViewModel.queueUpload(prepared.imageBytes, prepared.thumbnailBytes, prepared.mimeType)
+            quickUploadViewModel?.queueUpload(prepared.imageBytes, prepared.thumbnailBytes, prepared.mimeType)
         } else {
             Toast.makeText(context, "Couldn't add that image", Toast.LENGTH_SHORT).show()
         }
@@ -274,21 +299,25 @@ fun MainScreen(
                 // content collapsed to zero width on non-chat tabs, ModalNavigationDrawer
                 // would recompute its anchors when the chat content appears and spring open.
                 // The drawer is only reachable from the AI Chat tab (see the hamburger below).
-                ConversationDrawer(
-                    conversations = aiChatState.conversations,
-                    activeConversationId = aiChatState.activeConversationId,
-                    onSelect = { id ->
-                        aiChatViewModel.selectConversation(id)
-                        scope.launch { drawerState.close() }
-                    },
-                    onCreate = {
-                        aiChatViewModel.startNewConversation()
-                        scope.launch { drawerState.close() }
-                    },
-                    onDelete = { id ->
-                        aiChatViewModel.deleteConversation(id)
-                    },
-                )
+                val chatViewModel = aiChatViewModel
+                if (chatViewModel == null) {
+                    ConversationDrawer(emptyList(), null, {}, {}, {})
+                } else {
+                    val aiChatState by chatViewModel.uiState.collectAsStateWithLifecycle()
+                    ConversationDrawer(
+                        conversations = aiChatState.conversations,
+                        activeConversationId = aiChatState.activeConversationId,
+                        onSelect = { id ->
+                            chatViewModel.selectConversation(id)
+                            scope.launch { drawerState.close() }
+                        },
+                        onCreate = {
+                            chatViewModel.startNewConversation()
+                            scope.launch { drawerState.close() }
+                        },
+                        onDelete = chatViewModel::deleteConversation,
+                    )
+                }
             },
         ) {
             Scaffold(
@@ -426,10 +455,10 @@ fun MainScreen(
                             }
                         navController.navigate(route)
                     },
-                    onQuickUploadRetry = { quickUploadViewModel.retry(it) },
-                    onQuickUploadDismiss = { quickUploadViewModel.dismiss(it) },
-                    onRefreshQuickUploads = { quickUploadViewModel.refresh() },
-                    onProposalCompleted = { quickUploadViewModel.onProposalCompleted(it) },
+                    onQuickUploadRetry = { quickUploadViewModel?.retry(it) },
+                    onQuickUploadDismiss = { quickUploadViewModel?.dismiss(it) },
+                    onRefreshQuickUploads = { quickUploadViewModel?.refresh() },
+                    onProposalCompleted = { quickUploadViewModel?.onProposalCompleted(it) },
                     transactionCache = transactionCache,
                     pendingGroupTransaction = pendingGroupTransaction,
                     editingGroupIndex = editingGroupIndex,
@@ -458,7 +487,7 @@ private fun MainNavGraph(
     navController: NavHostController,
     innerPadding: PaddingValues,
     sharedScope: SharedTransitionScope,
-    transactionsViewModel: TransactionsViewModel,
+    transactionsViewModel: TransactionsViewModel?,
     quickUploadItems: List<QuickUploadUiItem>,
     photoPickerLauncher: androidx.activity.result.ActivityResultLauncher<PickVisualMediaRequest>,
     onQuickUploadItemClick: (QuickUploadUiItem) -> Unit,
@@ -471,7 +500,7 @@ private fun MainNavGraph(
     editingGroupIndex: MutableState<Int?>,
     pendingGroupSelection: MutableState<List<String>>,
     onNavigateToDetail: (TransactionListItem, Boolean) -> Unit,
-    aiChatViewModel: AiChatViewModel,
+    aiChatViewModel: AiChatViewModel?,
     onEdit: (String) -> Unit,
     sessionViewModel: AppSessionViewModel?,
 ) {
@@ -495,6 +524,7 @@ private fun MainNavGraph(
             )
         }
         composable(TopLevelRoute.Transactions.route) {
+            val viewModel = transactionsViewModel ?: return@composable
             @Suppress("ViewModelForwarding")
             TransactionsScreen(
                 modifier =
@@ -523,7 +553,7 @@ private fun MainNavGraph(
                 onRefreshQuickUploads = onRefreshQuickUploads,
                 sharedTransitionScope = sharedScope,
                 animatedVisibilityScope = this@composable,
-                viewModel = transactionsViewModel,
+                viewModel = viewModel,
             )
         }
         composable(TopLevelRoute.Accounts.route) {
@@ -542,8 +572,9 @@ private fun MainNavGraph(
             )
         }
         composable(TopLevelRoute.AiChat.route) {
+            val viewModel = aiChatViewModel ?: return@composable
             AiChatScreen(
-                viewModel = aiChatViewModel,
+                viewModel = viewModel,
                 modifier =
                     Modifier
                         .fillMaxSize()
@@ -596,18 +627,18 @@ private fun MainNavGraph(
                     onDelete = {
                         val deletedId = detailState.transaction.id
                         if (detailState.transaction.isGroup) {
-                            transactionsViewModel.deleteTransactionGroup(deletedId) {
+                            transactionsViewModel?.deleteTransactionGroup(deletedId) {
                                 transactionCache.remove(deletedId)
                             }
                         } else {
-                            transactionsViewModel.deleteTransaction(deletedId) {
+                            transactionsViewModel?.deleteTransaction(deletedId) {
                                 transactionCache.remove(deletedId)
                             }
                         }
                         navController.popBackStack()
                     },
                     onMarkReviewed = {
-                        transactionsViewModel.markReviewed(detailState.transaction.id)
+                        transactionsViewModel?.markReviewed(detailState.transaction.id)
                     },
                     onChildClick = { child -> onNavigateToDetail(child, true) },
                     sharedTransitionScope = sharedScope,
@@ -634,7 +665,7 @@ private fun MainNavGraph(
                 quickUploadId = quickUploadId,
                 onDiscard = { navController.popBackStack() },
                 onSuccess = { _ ->
-                    transactionsViewModel.refresh()
+                    transactionsViewModel?.refresh()
                     if (quickUploadId != null) {
                         onProposalCompleted(quickUploadId)
                     }
@@ -675,7 +706,7 @@ private fun MainNavGraph(
                                 isInGroup = existingState?.isInGroup ?: false,
                             )
                     }
-                    transactionsViewModel.refresh()
+                    transactionsViewModel?.refresh()
                     navController.popBackStack()
                 },
             )
@@ -734,8 +765,8 @@ private fun MainNavGraph(
                 fromSelection = fromSelection,
                 onDiscard = { navController.popBackStack() },
                 onSuccess = {
-                    transactionsViewModel.clearSelection()
-                    transactionsViewModel.refresh()
+                    transactionsViewModel?.clearSelection()
+                    transactionsViewModel?.refresh()
                     if (quickUploadId != null) {
                         onProposalCompleted(quickUploadId)
                     }
@@ -789,7 +820,7 @@ private fun MainNavGraph(
                 onDiscard = { navController.popBackStack() },
                 onSuccess = {
                     transactionCache.remove(groupId)
-                    transactionsViewModel.refresh()
+                    transactionsViewModel?.refresh()
                     navController.popBackStack()
                 },
                 onAddTransaction = { typeKey ->

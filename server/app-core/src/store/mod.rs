@@ -42,9 +42,14 @@ fn compute_connection_status_from(infra: &SharedInfra) -> ConnectionStatus {
     }
 }
 
+fn should_resume_connectivity_work(was_connected: bool, connected: bool) -> bool {
+    !was_connected && connected
+}
+
 #[uniffi::export(callback_interface)]
+#[async_trait::async_trait]
 pub trait AuthProvider: Send + Sync {
-    fn get_token(&self) -> Option<String>;
+    async fn get_token(&self) -> Option<String>;
     fn get_user_id(&self) -> Option<String>;
 }
 
@@ -125,8 +130,7 @@ impl AppStore {
 
         let connection_observer: Arc<Mutex<Option<Box<dyn ConnectionObserver>>>> =
             Arc::new(Mutex::new(None));
-        let auth_observer: Arc<Mutex<Option<Box<dyn AuthObserver>>>> =
-            Arc::new(Mutex::new(None));
+        let auth_observer: Arc<Mutex<Option<Box<dyn AuthObserver>>>> = Arc::new(Mutex::new(None));
 
         {
             let obs = Arc::clone(&connection_observer);
@@ -168,14 +172,15 @@ impl AppStore {
     }
 
     pub fn set_connectivity(&self, connected: bool) {
-        self.infra
+        let was_connected = self
+            .infra
             .connectivity
-            .store(connected, std::sync::atomic::Ordering::Relaxed);
+            .swap(connected, std::sync::atomic::Ordering::Relaxed);
         if connected {
             self.infra.set_is_offline(false);
         }
         self.notify_connection_status();
-        if connected {
+        if should_resume_connectivity_work(was_connected, connected) {
             if let Ok(handle) = tokio::runtime::Handle::try_current() {
                 let infra = Arc::clone(&self.infra);
                 let module = Arc::clone(&self.quick_uploads);
@@ -209,54 +214,26 @@ impl AppStore {
 
     pub async fn on_sign_in(&self) {
         let token = self.get_auth_token().await;
+        let auth_me = self
+            .infra
+            .get("/api/auth/me", token.as_deref())
+            .await
+            .ok()
+            .and_then(|response| serde_json::from_str::<AuthMe>(&response.body).ok());
 
-        let (user_id, default_asset_id, default_asset_ticker, onboarding_version) =
-            match self.infra.get("/api/auth/me", token.as_deref()).await {
-                Ok(resp) => match serde_json::from_str::<serde_json::Value>(&resp.body) {
-                    Ok(v) => {
-                        let user_id = v["user_id"].as_str().map(|s| s.to_string());
-                        let default_asset_id =
-                            v["default_asset"]["id"].as_i64().map(|id| id as i32);
-                        let default_asset_ticker =
-                            v["default_asset"]["ticker"].as_str().map(|s| s.to_string());
-                        let onboarding_version = v["onboarding_version"].as_i64().map(|n| n as i32);
-                        (
-                            user_id,
-                            default_asset_id,
-                            default_asset_ticker,
-                            onboarding_version,
-                        )
-                    }
-                    Err(_) => (self.auth_provider.get_user_id(), None, None, None),
-                },
-                Err(_) => (self.auth_provider.get_user_id(), None, None, None),
-            };
+        if let Some(auth_me) = auth_me {
+            self.infra.apply_auth_me(&auth_me);
+        } else {
+            *self.infra.user_id.lock().unwrap() = self.auth_provider.get_user_id();
+        }
 
         tracing::info!(
             "AppStore::on_sign_in user_id={:?} default_asset_id={:?} default_asset_ticker={:?} onboarding_version={:?}",
-            user_id,
-            default_asset_id,
-            default_asset_ticker,
-            onboarding_version
+            self.infra.user_id(),
+            self.infra.default_asset_id(),
+            self.infra.default_asset_ticker(),
+            self.infra.onboarding_version()
         );
-        *self.infra.user_id.lock().unwrap() = user_id;
-        if let Some(id) = default_asset_id {
-            self.infra.set_default_asset_id(id);
-        }
-        if let Some(ticker) = default_asset_ticker {
-            self.infra.set_default_asset_ticker(ticker);
-        }
-        if let Some(v) = onboarding_version {
-            self.infra.set_onboarding_version(v);
-        }
-
-        // Trigger initial quick uploads fetch
-        let infra = Arc::clone(&self.infra);
-        let module = Arc::clone(&self.quick_uploads);
-        let token_clone = token.clone();
-        tokio::spawn(async move {
-            quick_uploads::fetch_and_update(&infra, &module, token_clone.as_deref()).await;
-        });
     }
 
     pub fn on_sign_out(&self) {
@@ -1014,6 +991,12 @@ impl AppStore {
         serde_json::from_str(&body).ok()
     }
 
+    pub fn restore_cached_me(&self) -> Option<AuthMe> {
+        let auth_me = self.get_cached_me()?;
+        self.infra.apply_auth_me(&auth_me);
+        Some(auth_me)
+    }
+
     // ── AI Usage ──────────────────────────────────────────────────────────
 
     pub async fn get_ai_usage(&self) -> Result<crate::models::AiUsage, crate::error::ApiError> {
@@ -1403,21 +1386,17 @@ impl AppStore {
             })?;
 
         let status = resp.status().as_u16();
-        let text = resp
-            .text()
-            .await
-            .map_err(|e| ApiError::Parse {
-                reason: e.to_string(),
-            })?;
+        let text = resp.text().await.map_err(|e| ApiError::Parse {
+            reason: e.to_string(),
+        })?;
 
         if status >= 400 {
             return Err(crate::error::server_error(status, &text));
         }
 
-        let v: serde_json::Value = serde_json::from_str(&text)
-            .map_err(|e| ApiError::Parse {
-                reason: e.to_string(),
-            })?;
+        let v: serde_json::Value = serde_json::from_str(&text).map_err(|e| ApiError::Parse {
+            reason: e.to_string(),
+        })?;
 
         let token = v["token"]
             .as_str()
@@ -1429,7 +1408,8 @@ impl AppStore {
         let refresh_token = v["refresh_token"].as_str().map(|s| s.to_string());
 
         if let Some(rt) = refresh_token {
-            self.infra.set_database_session(rt.clone(), Some(token.clone()));
+            self.infra
+                .set_database_session(rt.clone(), Some(token.clone()));
             self.credential_store.save_refresh_token(rt);
         }
 
@@ -1457,12 +1437,9 @@ impl AppStore {
             })?;
 
         let status = resp.status().as_u16();
-        let text = resp
-            .text()
-            .await
-            .map_err(|e| ApiError::Parse {
-                reason: e.to_string(),
-            })?;
+        let text = resp.text().await.map_err(|e| ApiError::Parse {
+            reason: e.to_string(),
+        })?;
 
         if status >= 400 {
             return Err(crate::error::server_error(status, &text));
@@ -1531,5 +1508,18 @@ impl AppStore {
 
     fn compute_connection_status(&self) -> ConnectionStatus {
         compute_connection_status_from(&self.infra)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::should_resume_connectivity_work;
+
+    #[test]
+    fn connectivity_work_only_resumes_after_reconnection() {
+        assert!(!should_resume_connectivity_work(true, true));
+        assert!(!should_resume_connectivity_work(true, false));
+        assert!(!should_resume_connectivity_work(false, false));
+        assert!(should_resume_connectivity_work(false, true));
     }
 }
