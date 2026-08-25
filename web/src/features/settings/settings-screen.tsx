@@ -7,6 +7,7 @@ import { AccountsSection } from "./accounts-section"
 import { CategoriesSection } from "./categories-section"
 import { ConnectionDetail } from "./connection-detail"
 import { ConnectionsSection } from "./connections-section"
+import { DataSection } from "./data-section"
 import { GeneralSection } from "./general-section"
 import { MyraSection } from "./myra-section"
 import type { SettingsSection } from "./nav"
@@ -31,6 +32,8 @@ function SectionBody({ section }: { section: SettingsSection }) {
       return <ConnectionsSection />
     case "myra":
       return <MyraSection />
+    case "data":
+      return <DataSection />
   }
 }
 

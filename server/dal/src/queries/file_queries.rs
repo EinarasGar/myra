@@ -4,6 +4,7 @@ use sqlx::types::Uuid;
 
 use crate::idens::file_idens::UserFilesIden;
 use crate::models::file_models::FileStatus;
+use crate::query_params::get_files_params::{GetFilesParams, GetFilesParamsSearchType};
 
 use super::DbQueryWithValues;
 
@@ -15,6 +16,7 @@ pub fn insert_file(
     mime_type: String,
     size_bytes: i64,
     storage_key: String,
+    status: FileStatus,
 ) -> DbQueryWithValues {
     Query::insert()
         .into_table(UserFilesIden::Table)
@@ -25,6 +27,7 @@ pub fn insert_file(
             UserFilesIden::MimeType,
             UserFilesIden::SizeBytes,
             UserFilesIden::StorageKey,
+            UserFilesIden::Status,
         ])
         .values_panic([
             id.into(),
@@ -33,6 +36,7 @@ pub fn insert_file(
             mime_type.into(),
             size_bytes.into(),
             storage_key.into(),
+            status.as_str().into(),
         ])
         .returning_all()
         .build_sqlx(PostgresQueryBuilder)
@@ -40,8 +44,9 @@ pub fn insert_file(
 }
 
 #[macros::named_query]
-pub fn get_file_by_id_and_user(file_id: Uuid, user_id: Uuid) -> DbQueryWithValues {
-    Query::select()
+pub fn get_files(params: GetFilesParams) -> DbQueryWithValues {
+    let mut query = Query::select();
+    query
         .column(UserFilesIden::Id)
         .column(UserFilesIden::UserId)
         .column(UserFilesIden::OriginalName)
@@ -52,38 +57,37 @@ pub fn get_file_by_id_and_user(file_id: Uuid, user_id: Uuid) -> DbQueryWithValue
         .column(UserFilesIden::ThumbnailKey)
         .column(UserFilesIden::CreatedAt)
         .column(UserFilesIden::UpdatedAt)
-        .from(UserFilesIden::Table)
-        .and_where(Expr::col(UserFilesIden::Id).eq(file_id))
-        .and_where(Expr::col(UserFilesIden::UserId).eq(user_id))
-        .build_sqlx(PostgresQueryBuilder)
-        .into()
-}
+        .from(UserFilesIden::Table);
 
-#[macros::named_query]
-pub fn get_files_by_ids_and_user(file_ids: Vec<Uuid>, user_id: Uuid) -> DbQueryWithValues {
-    Query::select()
-        .column(UserFilesIden::Id)
-        .column(UserFilesIden::UserId)
-        .column(UserFilesIden::OriginalName)
-        .column(UserFilesIden::MimeType)
-        .column(UserFilesIden::SizeBytes)
-        .column(UserFilesIden::Status)
-        .column(UserFilesIden::StorageKey)
-        .column(UserFilesIden::ThumbnailKey)
-        .column(UserFilesIden::CreatedAt)
-        .column(UserFilesIden::UpdatedAt)
-        .from(UserFilesIden::Table)
-        .and_where(
-            Expr::col(UserFilesIden::Id).is_in(
-                file_ids
-                    .into_iter()
-                    .map(|id| sea_query::Value::Uuid(Some(id)))
-                    .collect::<Vec<_>>(),
-            ),
-        )
-        .and_where(Expr::col(UserFilesIden::UserId).eq(user_id))
-        .build_sqlx(PostgresQueryBuilder)
-        .into()
+    query.and_where(Expr::col(UserFilesIden::UserId).eq(params.user_id));
+
+    match params.search_type {
+        GetFilesParamsSearchType::ById(id) => {
+            query.and_where(Expr::col(UserFilesIden::Id).eq(id));
+        }
+        GetFilesParamsSearchType::ByIds(ids) => {
+            query.and_where(
+                Expr::col(UserFilesIden::Id).is_in(
+                    ids.into_iter()
+                        .map(|id| sea_query::Value::Uuid(Some(id)))
+                        .collect::<Vec<_>>(),
+                ),
+            );
+        }
+        GetFilesParamsSearchType::ByKeyPrefix(prefix) => {
+            query.and_where(Expr::col(UserFilesIden::StorageKey).like(format!("{}%", prefix)));
+        }
+    }
+
+    if let Some(status) = params.status {
+        query.and_where(Expr::col(UserFilesIden::Status).eq(status.as_str()));
+    }
+
+    if params.order_by_created_at_desc {
+        query.order_by(UserFilesIden::CreatedAt, Order::Desc);
+    }
+
+    query.build_sqlx(PostgresQueryBuilder).into()
 }
 
 #[macros::named_query]

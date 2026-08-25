@@ -154,7 +154,12 @@ pub async fn flush_and_subscribe(
                     local_id,
                     server_id
                 );
-                quick_upload::set_server_id_and_delete(&conn, &local_id, &server_id, &infra.base_url());
+                quick_upload::set_server_id_and_delete(
+                    &conn,
+                    &local_id,
+                    &server_id,
+                    &infra.base_url(),
+                );
             }
             Err((error, permanent)) => {
                 tracing::error!(

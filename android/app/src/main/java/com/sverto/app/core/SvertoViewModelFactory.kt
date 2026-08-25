@@ -24,6 +24,7 @@ import com.sverto.app.feature.connectors.ProviderAccountDetailViewModel
 import com.sverto.app.feature.onboarding.OnboardingViewModel
 import com.sverto.app.feature.portfolio.HomeViewModel
 import com.sverto.app.feature.settings.AiUsageViewModel
+import com.sverto.app.feature.settings.ExportsViewModel
 import com.sverto.app.feature.transactions.TransactionSearchViewModel
 import com.sverto.app.feature.transactions.TransactionsViewModel
 import com.sverto.app.feature.transactions.create.CreateTransactionViewModel
@@ -76,6 +77,8 @@ object SvertoViewModelFactory : ViewModelProvider.Factory {
                 OnboardingViewModel(appStore) as T
             modelClass.isAssignableFrom(AiUsageViewModel::class.java) ->
                 AiUsageViewModel(appStore) as T
+            modelClass.isAssignableFrom(ExportsViewModel::class.java) ->
+                ExportsViewModel(appStore) as T
             modelClass.isAssignableFrom(AssetOverviewViewModel::class.java) ->
                 AssetOverviewViewModel(appStore) as T
             modelClass.isAssignableFrom(ConnectorsViewModel::class.java) ->

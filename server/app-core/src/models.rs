@@ -685,6 +685,20 @@ pub struct SyncOutcome {
     pub report: Option<SyncReport>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, uniffi::Enum)]
+pub enum ExportFormat {
+    Csv,
+    Beancount,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct LedgerExport {
+    pub id: String,
+    pub format: ExportFormat,
+    pub created_at: String,
+    pub size_bytes: i64,
+}
+
 #[derive(Debug, Clone, uniffi::Enum)]
 pub enum AuthMode {
     Clerk,

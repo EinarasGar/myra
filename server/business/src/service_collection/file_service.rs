@@ -6,6 +6,7 @@ use dal::file_provider::{FileProvider, FileProviderUnavailableError};
 use dal::job_queue::JobQueueHandle;
 use dal::models::file_models::{FileModel, FileStatus, FileStatusModel};
 use dal::queries::file_queries;
+use dal::query_params::get_files_params::GetFilesParams;
 use std::sync::Arc;
 use time::OffsetDateTime;
 use uuid::Uuid;
@@ -72,6 +73,7 @@ impl FileService {
             dto.mime_type.clone(),
             dto.size_bytes,
             storage_key.clone(),
+            FileStatus::Pending,
         );
         let file: FileModel = self.db.fetch_one(query).await?;
 
@@ -107,7 +109,7 @@ impl FileService {
 
     #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, file_id = %file_id))]
     pub async fn get_file(&self, user_id: Uuid, file_id: Uuid) -> Result<FileDto> {
-        let query = file_queries::get_file_by_id_and_user(file_id, user_id);
+        let query = file_queries::get_files(GetFilesParams::by_id(user_id, file_id));
         let file: Option<FileModel> = self.db.fetch_optional(query).await?;
         let file = file.ok_or_else(|| BusinessNotFoundError {
             message: "File not found".to_string(),
@@ -185,7 +187,7 @@ impl FileService {
 
     #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, file_id = %file_id))]
     pub async fn get_download_url(&self, user_id: Uuid, file_id: Uuid) -> Result<FileUrlDto> {
-        let query = file_queries::get_file_by_id_and_user(file_id, user_id);
+        let query = file_queries::get_files(GetFilesParams::by_id(user_id, file_id));
         let file: Option<FileModel> = self.db.fetch_optional(query).await?;
         let file = file.ok_or_else(|| BusinessNotFoundError {
             message: "File not found".to_string(),
@@ -200,7 +202,11 @@ impl FileService {
 
         let url = self
             .file_provider
-            .generate_presigned_download(&file.storage_key, DOWNLOAD_URL_EXPIRY_SECONDS)
+            .generate_presigned_download(
+                &file.storage_key,
+                DOWNLOAD_URL_EXPIRY_SECONDS,
+                Some(&file.original_name),
+            )
             .await
             .map_err(convert_provider_error)?;
 
@@ -213,7 +219,7 @@ impl FileService {
 
     #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, file_id = %file_id))]
     pub async fn get_thumbnail_url(&self, user_id: Uuid, file_id: Uuid) -> Result<FileUrlDto> {
-        let query = file_queries::get_file_by_id_and_user(file_id, user_id);
+        let query = file_queries::get_files(GetFilesParams::by_id(user_id, file_id));
         let file: Option<FileModel> = self.db.fetch_optional(query).await?;
         let file = file.ok_or_else(|| BusinessNotFoundError {
             message: "File not found".to_string(),
@@ -232,7 +238,7 @@ impl FileService {
 
         let url = self
             .file_provider
-            .generate_presigned_download(&thumbnail_key, DOWNLOAD_URL_EXPIRY_SECONDS)
+            .generate_presigned_download(&thumbnail_key, DOWNLOAD_URL_EXPIRY_SECONDS, None)
             .await
             .map_err(convert_provider_error)?;
 
@@ -253,7 +259,7 @@ impl FileService {
             return Ok(vec![]);
         }
 
-        let query = file_queries::get_files_by_ids_and_user(file_ids.to_vec(), user_id);
+        let query = file_queries::get_files(GetFilesParams::by_ids(user_id, file_ids.to_vec()));
         let files: Vec<FileModel> = self.db.fetch_all(query).await?;
 
         let mut results = Vec::with_capacity(files.len());
@@ -272,7 +278,7 @@ impl FileService {
 
     #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, file_id = %file_id))]
     pub async fn delete_file(&self, user_id: Uuid, file_id: Uuid) -> Result<()> {
-        let query = file_queries::get_file_by_id_and_user(file_id, user_id);
+        let query = file_queries::get_files(GetFilesParams::by_id(user_id, file_id));
         let file: Option<FileModel> = self.db.fetch_optional(query).await?;
         let file = file.ok_or_else(|| BusinessNotFoundError {
             message: "File not found".to_string(),

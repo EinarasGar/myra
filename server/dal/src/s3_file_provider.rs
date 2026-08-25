@@ -86,9 +86,18 @@ impl FileProvider for S3FileProvider {
         &self,
         key: &str,
         expires_in_seconds: u32,
+        download_filename: Option<&str>,
     ) -> Result<String> {
+        let custom_queries = download_filename.map(|filename| {
+            let mut queries = std::collections::HashMap::new();
+            queries.insert(
+                "response-content-disposition".to_string(),
+                format!("attachment; filename=\"{}\"", filename),
+            );
+            queries
+        });
         self.bucket
-            .presign_get(key, expires_in_seconds, None)
+            .presign_get(key, expires_in_seconds, custom_queries)
             .await
             .map_err(|e| anyhow!("Failed to generate presigned download URL: {}", e))
     }

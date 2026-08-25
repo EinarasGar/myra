@@ -9,6 +9,7 @@ pub mod assets;
 pub mod categories;
 pub mod connector_local;
 pub mod connectors;
+pub mod exports;
 pub mod infra;
 pub mod onboarding;
 pub mod portfolio;
@@ -1002,6 +1003,38 @@ impl AppStore {
     pub async fn get_ai_usage(&self) -> Result<crate::models::AiUsage, crate::error::ApiError> {
         let token = self.get_auth_token().await;
         ai_usage::load_ai_usage(&self.infra, token.as_deref()).await
+    }
+
+    // ── Ledger Exports ────────────────────────────────────────────────────
+
+    pub async fn create_export(
+        &self,
+        format: crate::models::ExportFormat,
+    ) -> Result<crate::models::LedgerExport, crate::error::ApiError> {
+        let token = self.get_auth_token().await;
+        let result = exports::create_export(&self.infra, format, token.as_deref()).await;
+        if result.is_ok() {
+            if let Some(user_id) = self.infra.user_id() {
+                self.infra
+                    .evict_memory_cache_prefix(&format!("/api/users/{user_id}/exports"));
+            }
+        }
+        result
+    }
+
+    pub async fn list_exports(
+        &self,
+    ) -> Result<Vec<crate::models::LedgerExport>, crate::error::ApiError> {
+        let token = self.get_auth_token().await;
+        exports::list_exports(&self.infra, token.as_deref()).await
+    }
+
+    pub async fn get_export_download_url(
+        &self,
+        file_id: String,
+    ) -> Result<String, crate::error::ApiError> {
+        let token = self.get_auth_token().await;
+        exports::export_download_url(&self.infra, &file_id, token.as_deref()).await
     }
 
     // ── AI Chat ───────────────────────────────────────────────────────────

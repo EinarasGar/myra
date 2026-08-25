@@ -8,6 +8,7 @@ pub mod auth_handler;
 pub mod category_handler;
 pub mod config_handler;
 pub mod connectors_handler;
+pub mod exports_handler;
 pub mod file_handler;
 pub mod individual_transactions;
 pub mod portfolio_handler;

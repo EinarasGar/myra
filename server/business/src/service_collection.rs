@@ -31,6 +31,7 @@ pub mod connector_service;
 pub mod connector_sync_service;
 pub mod entries_service;
 pub mod file_service;
+pub mod ledger_export_service;
 pub mod portfolio_overview_service;
 pub mod portfolio_service;
 pub mod transaction_group_service;

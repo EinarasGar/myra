@@ -72,6 +72,9 @@ service_state!(AiChatService);
 use business::service_collection::file_service::FileService;
 service_state!(FileService);
 
+use business::service_collection::ledger_export_service::LedgerExportService;
+service_state!(LedgerExportService);
+
 use business::service_collection::ai_conversation_service::AiConversationService;
 service_state!(AiConversationService);
 

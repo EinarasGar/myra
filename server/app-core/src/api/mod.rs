@@ -12,6 +12,7 @@ pub(crate) mod create_transaction;
 pub(crate) mod create_transaction_group;
 pub(crate) mod delete_transactions;
 mod entry_helpers;
+pub(crate) mod exports;
 pub(crate) mod get_transaction;
 pub(crate) mod holdings;
 pub(crate) mod quick_upload;

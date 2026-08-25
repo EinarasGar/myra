@@ -142,6 +142,7 @@ export const queryKeys = {
     const aiRoot = [...root, "ai"] as const
     const filesRoot = [...root, "files"] as const
     const connectorsRoot = [...root, "connectors"] as const
+    const exportsRoot = [...root, "exports"] as const
 
     return {
       all: () => root,
@@ -303,6 +304,11 @@ export const queryKeys = {
           [...filesRoot, "detail", fileId, "thumbnail"] as const,
       },
 
+      exports: {
+        all: () => exportsRoot,
+        list: () => [...exportsRoot, "list"] as const,
+      },
+
       connectors: {
         all: () => connectorsRoot,
         aspsps: {
@@ -372,6 +378,7 @@ export const mutationKeys = {
     connectors: () => ["mutate", "user", userId, "connectors"] as const,
     ai: () => ["mutate", "user", userId, "ai"] as const,
     files: () => ["mutate", "user", userId, "files"] as const,
+    exports: () => ["mutate", "user", userId, "exports"] as const,
     account: () => ["mutate", "user", userId, "account"] as const,
   }),
 } as const

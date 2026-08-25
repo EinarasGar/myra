@@ -53,7 +53,9 @@ fn is_text_based_mime(mime: &str) -> bool {
 
 #[tracing::instrument(level = "info", skip_all, fields(file_id = %file_id, user_id = %user_id))]
 async fn handle(providers: &ServiceProviders, file_id: Uuid, user_id: Uuid) -> Result<()> {
-    let query = file_queries::get_file_by_id_and_user(file_id, user_id);
+    let query = file_queries::get_files(
+        dal::query_params::get_files_params::GetFilesParams::by_id(user_id, file_id),
+    );
     let file = providers
         .db
         .fetch_optional::<dal::models::file_models::FileModel>(query)

@@ -347,9 +347,7 @@ pub fn delete_transaction_groups_by_user(user_id: Uuid) -> DbQueryWithValues {
 
     Query::delete()
         .from_table(TransactionGroupIden::Table)
-        .and_where(
-            Expr::col(TransactionGroupIden::TransactionGroupId).in_subquery(subquery),
-        )
+        .and_where(Expr::col(TransactionGroupIden::TransactionGroupId).in_subquery(subquery))
         .build_sqlx(PostgresQueryBuilder)
         .into()
 }

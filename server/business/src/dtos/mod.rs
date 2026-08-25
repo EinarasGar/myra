@@ -31,6 +31,7 @@ pub mod combined_transaction_dto;
 pub mod conflict_error_dto;
 pub mod connectors;
 pub mod entry_dto;
+pub mod exports;
 pub mod fee_entry_dto;
 pub mod fee_entry_types_dto;
 pub mod file_dto;

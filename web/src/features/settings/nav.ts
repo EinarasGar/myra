@@ -4,6 +4,7 @@ export const SETTINGS_SECTIONS = [
   "categories",
   "connections",
   "myra",
+  "data",
 ] as const
 
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number]
@@ -53,6 +54,13 @@ export const SETTINGS_SECTION_META: Record<
     title: "Myra",
     intro:
       "Myra reads your ledger to answer questions and draft transactions. It never writes anything without your explicit approval. Usage is metered in tokens across two windows.",
+  },
+  data: {
+    id: "data",
+    label: "Data",
+    title: "Data",
+    intro:
+      "Your ledger is yours. Export every transaction as CSV for spreadsheets, or as a Beancount file — a complete plain-text ledger you can keep in Git.",
   },
 }
 

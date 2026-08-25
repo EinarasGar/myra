@@ -1,16 +1,20 @@
 use sea_query::extension::postgres::PgExpr;
 use sea_query::{
-    Alias, Asterisk, CommonTableExpression, Expr, ExprTrait, Func, PostgresQueryBuilder, Query,
-    QueryStatementBuilder, SimpleExpr, WindowStatement, WithClause,
+    Alias, Asterisk, CommonTableExpression, Expr, ExprTrait, Func, Order, PostgresQueryBuilder,
+    Query, QueryStatementBuilder, SimpleExpr, WindowStatement, WithClause,
 };
 use sea_query_sqlx::SqlxBinder;
 
+use sqlx::types::Uuid;
+
 use crate::{
     idens::{
-        account_idens::AccountIden,
+        account_idens::{AccountIden, AccountTypesIden},
+        asset_idens::{AssetTypesIden, AssetsIden},
         entries_idens::EntryIden,
         transaction_idens::{
-            CombinedTransactionIden, TransactionDescriptionsIden, TransactionGroupIden,
+            CombinedTransactionIden, TransactionCategoriesIden, TransactionCategoryTypeIden,
+            TransactionDescriptionsIden, TransactionDividendsIden, TransactionGroupIden,
             TransactionIden,
         },
     },
@@ -457,4 +461,275 @@ pub fn get_combined_transaction_ids_for_user(
         .with(WithClause::new().cte(combined_cte).to_owned())
         .build_sqlx(PostgresQueryBuilder)
         .into()
+}
+
+#[macros::named_query]
+pub fn get_ledger_export_rows(user_id: Uuid) -> DbQueryWithValues {
+    let base_pair_alias = Alias::new("base_pair");
+    let group_category_alias = Alias::new("group_category");
+
+    let base_pair_sub = Query::select()
+        .column((AssetsIden::Table, AssetsIden::Id))
+        .column((AssetsIden::Table, AssetsIden::Ticker))
+        .from(AssetsIden::Table)
+        .to_owned();
+
+    let group_category_sub = Query::select()
+        .column((
+            TransactionCategoriesIden::Table,
+            TransactionCategoriesIden::Id,
+        ))
+        .column((
+            TransactionCategoriesIden::Table,
+            TransactionCategoriesIden::Category,
+        ))
+        .column((
+            TransactionCategoryTypeIden::Table,
+            TransactionCategoryTypeIden::CategoryTypeName,
+        ))
+        .from(TransactionCategoriesIden::Table)
+        .left_join(
+            TransactionCategoryTypeIden::Table,
+            Expr::col((
+                TransactionCategoriesIden::Table,
+                TransactionCategoriesIden::CategoryType,
+            ))
+            .equals((
+                TransactionCategoryTypeIden::Table,
+                TransactionCategoryTypeIden::Id,
+            )),
+        )
+        .to_owned();
+
+    let mut query = Query::select();
+    query
+        .expr_as(
+            Expr::col((EntryIden::Table, EntryIden::Id)),
+            Alias::new("entry_id"),
+        )
+        .expr_as(
+            Expr::col((TransactionIden::Table, TransactionIden::Id)),
+            Alias::new("transaction_id"),
+        )
+        .expr_as(
+            Expr::col((TransactionIden::Table, TransactionIden::UserId)),
+            Alias::new("user_id"),
+        )
+        .expr_as(
+            Expr::col((TransactionIden::Table, TransactionIden::TypeId)),
+            Alias::new("type_id"),
+        )
+        .expr_as(
+            Expr::col((TransactionIden::Table, TransactionIden::DateTransacted)),
+            Alias::new("date_transacted"),
+        )
+        .expr_as(
+            Expr::col((TransactionIden::Table, TransactionIden::Visibility)),
+            Alias::new("visibility"),
+        )
+        .expr_as(
+            Expr::col((TransactionIden::Table, TransactionIden::GroupId)),
+            Alias::new("group_id"),
+        )
+        .expr_as(
+            Expr::col((EntryIden::Table, EntryIden::Quantity)),
+            Alias::new("entry_quantity"),
+        )
+        .expr_as(
+            Expr::col((EntryIden::Table, EntryIden::AccountId)),
+            Alias::new("entry_account_id"),
+        )
+        .expr_as(
+            Expr::col((EntryIden::Table, EntryIden::AssetId)),
+            Alias::new("entry_asset_id"),
+        )
+        .expr_as(
+            Expr::col((EntryIden::Table, EntryIden::CategoryId)),
+            Alias::new("entry_category_id"),
+        )
+        .expr_as(
+            Expr::col((
+                TransactionCategoriesIden::Table,
+                TransactionCategoriesIden::Category,
+            )),
+            Alias::new("category_name"),
+        )
+        .expr_as(
+            Expr::col((
+                TransactionCategoryTypeIden::Table,
+                TransactionCategoryTypeIden::CategoryTypeName,
+            )),
+            Alias::new("category_type_name"),
+        )
+        .expr_as(
+            Expr::col((AssetsIden::Table, AssetsIden::Ticker)),
+            Alias::new("asset_ticker"),
+        )
+        .expr_as(
+            Expr::col((AssetsIden::Table, AssetsIden::AssetName)),
+            Alias::new("asset_name"),
+        )
+        .expr_as(
+            Expr::col((AssetTypesIden::Table, AssetTypesIden::AssetTypeName)),
+            Alias::new("asset_type_name"),
+        )
+        .expr_as(
+            Expr::col((AssetsIden::Table, AssetsIden::UserId)),
+            Alias::new("asset_user_id"),
+        )
+        .expr_as(
+            Expr::col((AssetsIden::Table, AssetsIden::BasePairId)),
+            Alias::new("asset_base_pair_id"),
+        )
+        .expr_as(
+            Expr::col((base_pair_alias.clone(), AssetsIden::Ticker)),
+            Alias::new("base_pair_ticker"),
+        )
+        .expr_as(
+            Expr::col((AccountIden::Table, AccountIden::AccountName)),
+            Alias::new("account_name"),
+        )
+        .expr_as(
+            Expr::col((AccountTypesIden::Table, AccountTypesIden::AccountTypeName)),
+            Alias::new("account_type_name"),
+        )
+        .expr_as(
+            Expr::col((
+                TransactionDescriptionsIden::Table,
+                TransactionDescriptionsIden::Description,
+            )),
+            Alias::new("description"),
+        )
+        .expr_as(
+            Expr::col((
+                TransactionDividendsIden::Table,
+                TransactionDividendsIden::SourceAssetId,
+            )),
+            Alias::new("dividend_source_asset_id"),
+        )
+        .expr_as(
+            Expr::col((
+                TransactionGroupIden::Table,
+                TransactionGroupIden::Description,
+            )),
+            Alias::new("group_description"),
+        )
+        .expr_as(
+            Expr::col((
+                TransactionGroupIden::Table,
+                TransactionGroupIden::CategoryId,
+            )),
+            Alias::new("group_category_id"),
+        )
+        .expr_as(
+            Expr::col((TransactionGroupIden::Table, TransactionGroupIden::DateAdded)),
+            Alias::new("group_date_added"),
+        )
+        .expr_as(
+            Expr::col((
+                group_category_alias.clone(),
+                TransactionCategoriesIden::Category,
+            )),
+            Alias::new("group_category_name"),
+        )
+        .expr_as(
+            Expr::col((
+                group_category_alias.clone(),
+                TransactionCategoryTypeIden::CategoryTypeName,
+            )),
+            Alias::new("group_category_type_name"),
+        )
+        .from(EntryIden::Table)
+        .inner_join(
+            TransactionIden::Table,
+            Expr::col((EntryIden::Table, EntryIden::TransactionId))
+                .equals((TransactionIden::Table, TransactionIden::Id)),
+        )
+        .left_join(
+            TransactionCategoriesIden::Table,
+            Expr::col((EntryIden::Table, EntryIden::CategoryId)).equals((
+                TransactionCategoriesIden::Table,
+                TransactionCategoriesIden::Id,
+            )),
+        )
+        .left_join(
+            TransactionCategoryTypeIden::Table,
+            Expr::col((
+                TransactionCategoriesIden::Table,
+                TransactionCategoriesIden::CategoryType,
+            ))
+            .equals((
+                TransactionCategoryTypeIden::Table,
+                TransactionCategoryTypeIden::Id,
+            )),
+        )
+        .left_join(
+            AssetsIden::Table,
+            Expr::col((EntryIden::Table, EntryIden::AssetId))
+                .equals((AssetsIden::Table, AssetsIden::Id)),
+        )
+        .left_join(
+            AssetTypesIden::Table,
+            Expr::col((AssetsIden::Table, AssetsIden::AssetType))
+                .equals((AssetTypesIden::Table, AssetTypesIden::Id)),
+        )
+        .left_join(
+            AccountIden::Table,
+            Expr::col((EntryIden::Table, EntryIden::AccountId))
+                .equals((AccountIden::Table, AccountIden::Id)),
+        )
+        .left_join(
+            AccountTypesIden::Table,
+            Expr::col((AccountIden::Table, AccountIden::AccountType))
+                .equals((AccountTypesIden::Table, AccountTypesIden::Id)),
+        )
+        .left_join(
+            TransactionDescriptionsIden::Table,
+            Expr::col((
+                TransactionDescriptionsIden::Table,
+                TransactionDescriptionsIden::TransactionId,
+            ))
+            .equals((TransactionIden::Table, TransactionIden::Id)),
+        )
+        .left_join(
+            TransactionDividendsIden::Table,
+            Expr::col((
+                TransactionDividendsIden::Table,
+                TransactionDividendsIden::TransactionId,
+            ))
+            .equals((TransactionIden::Table, TransactionIden::Id)),
+        )
+        .left_join(
+            TransactionGroupIden::Table,
+            Expr::col((TransactionIden::Table, TransactionIden::GroupId)).equals((
+                TransactionGroupIden::Table,
+                TransactionGroupIden::TransactionGroupId,
+            )),
+        )
+        .join_subquery(
+            sea_query::JoinType::LeftJoin,
+            base_pair_sub.clone(),
+            base_pair_alias.clone(),
+            Expr::col((AssetsIden::Table, AssetsIden::BasePairId))
+                .equals((base_pair_alias.clone(), AssetsIden::Id)),
+        )
+        .join_subquery(
+            sea_query::JoinType::LeftJoin,
+            group_category_sub.clone(),
+            group_category_alias.clone(),
+            Expr::col((
+                TransactionGroupIden::Table,
+                TransactionGroupIden::CategoryId,
+            ))
+            .equals((group_category_alias.clone(), TransactionCategoriesIden::Id)),
+        )
+        .and_where(Expr::col((TransactionIden::Table, TransactionIden::UserId)).eq(user_id))
+        .order_by(
+            (TransactionIden::Table, TransactionIden::DateTransacted),
+            Order::Asc,
+        )
+        .order_by((TransactionIden::Table, TransactionIden::Id), Order::Asc)
+        .order_by((EntryIden::Table, EntryIden::Id), Order::Asc);
+
+    query.build_sqlx(PostgresQueryBuilder).into()
 }

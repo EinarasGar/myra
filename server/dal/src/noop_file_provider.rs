@@ -30,6 +30,7 @@ impl FileProvider for NoOpFileProvider {
         &self,
         _key: &str,
         _expires_in_seconds: u32,
+        _download_filename: Option<&str>,
     ) -> Result<String> {
         Err(unavailable())
     }

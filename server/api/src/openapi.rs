@@ -17,6 +17,10 @@ use crate::view_models::{
         asset_type_id::{AssetTypeId, RequiredAssetTypeId},
     },
     categories::base_models::category_type_id::RequiredCategoryTypeId,
+    exports::create_export::{
+        CreateExportRequestViewModel, CreateExportResponseViewModel, ExportFormatViewModel,
+    },
+    exports::get_exports::GetExportsResponseViewModel,
     transactions::base_models::{
         category_id::{CategoryId, RequiredCategoryId},
         entry_id::{EntryId, RequiredEntryId},
@@ -148,6 +152,8 @@ mod modifiers;
         super::handlers::connectors_handler::ingest_transactions,
         super::handlers::transactions::set_transaction_visibility,
         super::handlers::transactions::set_transactions_visibility,
+        super::handlers::exports_handler::create_export,
+        super::handlers::exports_handler::list_exports,
     ),
     components(
         schemas(RequiredEntryId),

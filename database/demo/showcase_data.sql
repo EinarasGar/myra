@@ -354,7 +354,7 @@ DECLARE
     amt numeric; px numeric; units numeric; need numeric; fxr numeric;
     grp uuid; t uuid; ok boolean;
 
-    bal_cur numeric := 0; bal_sav numeric := 0; bal_joint numeric := 0;
+    bal_cur numeric := 0; bal_sav numeric := 0; bal_joint numeric := 0; bal_isa numeric := 0;
     bal_cashgbp numeric := 0; ib_usd numeric := 0; cb_usd numeric := 0;
     amex_owed numeric := 0; amex_stmt numeric := 0;
     aapl_sh numeric := 0; div_i int := 0;
@@ -582,6 +582,21 @@ BEGIN
 
         -- ── Scheduled engine ────────────────────────────────────────────────
         IF sd > 0 THEN
+            -- One-off events are keyed on sd (an offset from the load date) while income lands on a
+            -- day-of-month. The phase between the two shifts with the load date, so the trough this
+            -- sweep covers can fall anywhere in the month rather than only on the 20th.
+            IF bal_cur < 250 AND bal_sav > 1000 THEN
+                need := ceil((900 - bal_cur) / 50) * 50;
+                IF _cashxfer(v_user, acc_savings, acc_current, gbp, need, cat_cbt, day + interval '3 hours') THEN
+                    bal_sav := bal_sav - need; bal_cur := bal_cur + need;
+                END IF;
+            END IF;
+            IF bal_sav < 1500 AND bal_cur > 3500 THEN
+                need := ceil((2500 - bal_sav) / 50) * 50;
+                IF _cashxfer(v_user, acc_current, acc_savings, gbp, need, cat_cbt, day + interval '3 hours 30 minutes') THEN
+                    bal_cur := bal_cur - need; bal_sav := bal_sav + need;
+                END IF;
+            END IF;
             IF dom = 1 THEN
                 interest  := round(1284 - (595 + 1.5 * m), 2);
                 principal := round(595 + 1.5 * m, 2);
@@ -658,13 +673,17 @@ BEGIN
                     bal_cur := bal_cur - sav_amt; bal_sav := bal_sav + sav_amt;
                 END IF;
                 IF _cashxfer(v_user, acc_current, acc_isa, gbp, isa_amt, cat_cbt, day + interval '7 hours 5 minutes') THEN
-                    bal_cur := bal_cur - isa_amt;
+                    bal_cur := bal_cur - isa_amt; bal_isa := bal_isa + isa_amt;
                 END IF;
             END IF;
             IF dom = pay_dom + 2 THEN
                 px := _rate_on(pr_vwrp, day, 96 + 1.5 * m);
                 units := round(isa_amt / px, 4);
-                PERFORM _buy(v_user, acc_isa, vwrp, units, gbp, isa_amt, 0, day + interval '8 hours');
+                IF bal_isa >= isa_amt THEN
+                    IF _buy(v_user, acc_isa, vwrp, units, gbp, isa_amt, 0, day + interval '8 hours') THEN
+                        bal_isa := bal_isa - isa_amt;
+                    END IF;
+                END IF;
                 need := floor(GREATEST(bal_cur - 2600, 0) / 10) * 10;
                 IF need >= 50 THEN
                     IF _cashxfer(v_user, acc_current, acc_savings, gbp, need, cat_cbt, day + interval '10 hours') THEN
@@ -678,6 +697,12 @@ BEGIN
                 END IF;
             END IF;
             IF dom = 28 AND amex_stmt > 0 THEN
+                need := ceil((round(amex_stmt, 2) + 300 - bal_cur) / 50) * 50;
+                IF need > 0 AND bal_sav > need THEN
+                    IF _cashxfer(v_user, acc_savings, acc_current, gbp, need, cat_cbt, day + interval '6 hours') THEN
+                        bal_sav := bal_sav - need; bal_cur := bal_cur + need;
+                    END IF;
+                END IF;
                 IF _cashxfer(v_user, acc_current, acc_amex, gbp, round(amex_stmt, 2), cat_cbt, day + interval '7 hours') THEN
                     bal_cur := bal_cur - round(amex_stmt, 2); amex_owed := amex_owed - amex_stmt; amex_stmt := 0;
                 END IF;
@@ -716,12 +741,14 @@ BEGIN
                 px := _rate_on(pr_btc, day, 58000);
                 amt := round(0.05 * px, 2);
                 need := ceil((amt + amt * 0.005 + 25 - cb_usd) / 25) * 25;
-                IF need > 0 THEN
-                    fxr := _rate_on(pr_usdgbp, day, 0.78);
-                    IF _cashout(v_user, acc_savings, gbp, round(need * fxr, 2), day + interval '9 hours', 'Transfer to Coinbase') THEN bal_sav := bal_sav - round(need * fxr, 2); END IF;
+                fxr := _rate_on(pr_usdgbp, day, 0.78);
+                IF need > 0 AND bal_sav > round(need * fxr, 2) + 200 THEN
+                    IF _cashout(v_user, acc_savings, gbp, round(need * fxr, 2), day + interval '10 hours 30 minutes', 'Transfer to Coinbase') THEN bal_sav := bal_sav - round(need * fxr, 2); END IF;
                     IF _cashin(v_user, acc_coin, usd, need, day + interval '11 hours') THEN cb_usd := cb_usd + need; END IF;
                 END IF;
-                IF _buy(v_user, acc_coin, btc, 0.05, usd, amt, round(amt * 0.005, 2), day + interval '12 hours') THEN cb_usd := cb_usd - amt - round(amt * 0.005, 2); END IF;
+                IF cb_usd >= amt + round(amt * 0.005, 2) THEN
+                    IF _buy(v_user, acc_coin, btc, 0.05, usd, amt, round(amt * 0.005, 2), day + interval '12 hours') THEN cb_usd := cb_usd - amt - round(amt * 0.005, 2); END IF;
+                END IF;
             WHEN 64 THEN
                 IF _income(v_user, acc_current, gbp, 240.00, cat_sideinc, day + interval '11 hours', 'Deposit refund from old letting agent - finally') THEN bal_cur := bal_cur + 240; END IF;
             WHEN 66 THEN
@@ -730,24 +757,28 @@ BEGIN
                 px := _rate_on(pr_aapl, day, 220);
                 amt := round(14 * px, 2);
                 need := ceil((amt + 1 + 150 - ib_usd) / 50) * 50;
-                IF need > 0 THEN
-                    fxr := _rate_on(pr_usdgbp, day, 0.78);
-                    IF _cashout(v_user, acc_savings, gbp, round(need * fxr, 2), day + interval '9 hours', 'Wise transfer to Interactive Brokers') THEN bal_sav := bal_sav - round(need * fxr, 2); END IF;
+                fxr := _rate_on(pr_usdgbp, day, 0.78);
+                IF need > 0 AND bal_sav > round(need * fxr, 2) + 200 THEN
+                    IF _cashout(v_user, acc_savings, gbp, round(need * fxr, 2), day + interval '10 hours 30 minutes', 'Wise transfer to Interactive Brokers') THEN bal_sav := bal_sav - round(need * fxr, 2); END IF;
                     IF _cashin(v_user, acc_ib, usd, need, day + interval '11 hours') THEN ib_usd := ib_usd + need; END IF;
                 END IF;
-                IF _buy(v_user, acc_ib, aapl, 14, usd, amt, 1.00, day + interval '14 hours 30 minutes') THEN ib_usd := ib_usd - amt - 1.00; aapl_sh := aapl_sh + 14; END IF;
+                IF ib_usd >= amt + 1.00 THEN
+                    IF _buy(v_user, acc_ib, aapl, 14, usd, amt, 1.00, day + interval '14 hours 30 minutes') THEN ib_usd := ib_usd - amt - 1.00; aapl_sh := aapl_sh + 14; END IF;
+                END IF;
             WHEN 98 THEN
                 IF _income(v_user, acc_current, gbp, 340.00, cat_freelance, day + interval '18 hours', 'Invoice #0041 - freelance site build') THEN bal_cur := bal_cur + 340; END IF;
             WHEN 129 THEN
                 px := _rate_on(pr_eth, day, 3150);
                 amt := round(0.5 * px, 2);
                 need := ceil((amt + amt * 0.005 + 25 - cb_usd) / 25) * 25;
-                IF need > 0 THEN
-                    fxr := _rate_on(pr_usdgbp, day, 0.78);
-                    IF _cashout(v_user, acc_savings, gbp, round(need * fxr, 2), day + interval '9 hours', 'Transfer to Coinbase') THEN bal_sav := bal_sav - round(need * fxr, 2); END IF;
+                fxr := _rate_on(pr_usdgbp, day, 0.78);
+                IF need > 0 AND bal_sav > round(need * fxr, 2) + 200 THEN
+                    IF _cashout(v_user, acc_savings, gbp, round(need * fxr, 2), day + interval '10 hours 30 minutes', 'Transfer to Coinbase') THEN bal_sav := bal_sav - round(need * fxr, 2); END IF;
                     IF _cashin(v_user, acc_coin, usd, need, day + interval '11 hours') THEN cb_usd := cb_usd + need; END IF;
                 END IF;
-                IF _buy(v_user, acc_coin, eth, 0.5, usd, amt, round(amt * 0.005, 2), day + interval '13 hours') THEN cb_usd := cb_usd - amt - round(amt * 0.005, 2); END IF;
+                IF cb_usd >= amt + round(amt * 0.005, 2) THEN
+                    IF _buy(v_user, acc_coin, eth, 0.5, usd, amt, round(amt * 0.005, 2), day + interval '13 hours') THEN cb_usd := cb_usd - amt - round(amt * 0.005, 2); END IF;
+                END IF;
             WHEN 158 THEN
                 IF _income(v_user, acc_current, gbp, 420.00, cat_freelance, day + interval '19 hours', 'Invoice #0042 - freelance dashboard work') THEN bal_cur := bal_cur + 420; END IF;
             WHEN 186 THEN
@@ -756,12 +787,14 @@ BEGIN
                 px := _rate_on(pr_aapl, day, 228);
                 amt := round(9 * px, 2);
                 need := ceil((amt + 1 + 150 - ib_usd) / 50) * 50;
-                IF need > 0 THEN
-                    fxr := _rate_on(pr_usdgbp, day, 0.78);
-                    IF _cashout(v_user, acc_savings, gbp, round(need * fxr, 2), day + interval '9 hours', 'Wise transfer to Interactive Brokers') THEN bal_sav := bal_sav - round(need * fxr, 2); END IF;
+                fxr := _rate_on(pr_usdgbp, day, 0.78);
+                IF need > 0 AND bal_sav > round(need * fxr, 2) + 200 THEN
+                    IF _cashout(v_user, acc_savings, gbp, round(need * fxr, 2), day + interval '10 hours 30 minutes', 'Wise transfer to Interactive Brokers') THEN bal_sav := bal_sav - round(need * fxr, 2); END IF;
                     IF _cashin(v_user, acc_ib, usd, need, day + interval '11 hours') THEN ib_usd := ib_usd + need; END IF;
                 END IF;
-                IF _buy(v_user, acc_ib, aapl, 9, usd, amt, 1.00, day + interval '15 hours') THEN ib_usd := ib_usd - amt - 1.00; aapl_sh := aapl_sh + 9; END IF;
+                IF ib_usd >= amt + 1.00 THEN
+                    IF _buy(v_user, acc_ib, aapl, 9, usd, amt, 1.00, day + interval '15 hours') THEN ib_usd := ib_usd - amt - 1.00; aapl_sh := aapl_sh + 9; END IF;
+                END IF;
             WHEN 218 THEN
                 IF _spend(v_user, acc_amex, gbp, 95.00, cat_subs, day + interval '7 hours', 'Amazon Prime annual') THEN amex_owed := amex_owed + 95; END IF;
             WHEN 255 THEN
@@ -775,8 +808,14 @@ BEGIN
             WHEN 325 THEN
                 IF _spend(v_user, acc_amex, gbp, 85.00, cat_clothing, day + interval '13 hours', 'New suitcase for Lisbon') THEN amex_owed := amex_owed + 85; END IF;
             WHEN 328 THEN
-                IF _cashxfer(v_user, acc_current, acc_cash, gbp, 410, cat_cbt, day + interval '10 hours') THEN bal_cur := bal_cur - 410; bal_cashgbp := bal_cashgbp + 410; END IF;
-                IF _trade(v_user, acc_cash, gbp, 400, eur, 468, gbp, 3.50, day + interval '11 hours', 'Travel money - GBP to EUR') THEN bal_cashgbp := bal_cashgbp - 403.50; END IF;
+                need := ceil((410 + 200 - bal_cur) / 50) * 50;
+                IF need > 0 AND bal_sav > need THEN
+                    IF _cashxfer(v_user, acc_savings, acc_current, gbp, need, cat_cbt, day + interval '10 hours 30 minutes') THEN
+                        bal_sav := bal_sav - need; bal_cur := bal_cur + need;
+                    END IF;
+                END IF;
+                IF _cashxfer(v_user, acc_current, acc_cash, gbp, 410, cat_cbt, day + interval '11 hours') THEN bal_cur := bal_cur - 410; bal_cashgbp := bal_cashgbp + 410; END IF;
+                IF _trade(v_user, acc_cash, gbp, 400, eur, 468, gbp, 3.50, day + interval '12 hours', 'Travel money - GBP to EUR') THEN bal_cashgbp := bal_cashgbp - 403.50; END IF;
             WHEN 330 THEN
                 grp := uuidv7();
                 INSERT INTO transaction_group (id, category_id, description, date_added) VALUES (grp, cat_flights, 'Lisbon week away', day);
@@ -814,7 +853,13 @@ BEGIN
             WHEN 372 THEN
                 IF _spend(v_user, acc_amex, gbp, 389.00, cat_photo, day + interval '12 hours', 'Camera lens - WEX Photographic') THEN amex_owed := amex_owed + 389; END IF;
             WHEN 398 THEN
-                IF _spend(v_user, acc_joint, gbp, 1380.00, cat_homemaint, day + interval '9 hours', 'Emergency boiler replacement - BoilerCare') THEN bal_joint := bal_joint - 1380; END IF;
+                need := ceil((1380 + 2300 - bal_joint) / 50) * 50;
+                IF need > 0 AND bal_sav > need THEN
+                    IF _cashxfer(v_user, acc_savings, acc_joint, gbp, need, cat_cbt, day + interval '10 hours 30 minutes') THEN
+                        bal_sav := bal_sav - need; bal_joint := bal_joint + need;
+                    END IF;
+                END IF;
+                IF _spend(v_user, acc_joint, gbp, 1380.00, cat_homemaint, day + interval '11 hours', 'Emergency boiler replacement - BoilerCare') THEN bal_joint := bal_joint - 1380; END IF;
             WHEN 404 THEN
                 IF _spend(v_user, acc_current, gbp, 70.00, cat_education, day + interval '17 hours', 'Two refresher driving lessons before buying the car') THEN bal_cur := bal_cur - 70; END IF;
             WHEN 425 THEN
@@ -823,28 +868,38 @@ BEGIN
                 px := _rate_on(pr_aapl, day, 174);
                 amt := round(11 * px, 2);
                 need := ceil((amt + 1 + 150 - ib_usd) / 50) * 50;
-                IF need > 0 THEN
-                    fxr := _rate_on(pr_usdgbp, day, 0.78);
-                    IF _cashout(v_user, acc_savings, gbp, round(need * fxr, 2), day + interval '9 hours', 'Wise transfer to Interactive Brokers') THEN bal_sav := bal_sav - round(need * fxr, 2); END IF;
+                fxr := _rate_on(pr_usdgbp, day, 0.78);
+                IF need > 0 AND bal_sav > round(need * fxr, 2) + 200 THEN
+                    IF _cashout(v_user, acc_savings, gbp, round(need * fxr, 2), day + interval '10 hours 30 minutes', 'Wise transfer to Interactive Brokers') THEN bal_sav := bal_sav - round(need * fxr, 2); END IF;
                     IF _cashin(v_user, acc_ib, usd, need, day + interval '11 hours') THEN ib_usd := ib_usd + need; END IF;
                 END IF;
-                IF _buy(v_user, acc_ib, aapl, 11, usd, amt, 1.00, day + interval '15 hours', 'Bought the dip') THEN ib_usd := ib_usd - amt - 1.00; aapl_sh := aapl_sh + 11; END IF;
+                IF ib_usd >= amt + 1.00 THEN
+                    IF _buy(v_user, acc_ib, aapl, 11, usd, amt, 1.00, day + interval '15 hours', 'Bought the dip') THEN ib_usd := ib_usd - amt - 1.00; aapl_sh := aapl_sh + 11; END IF;
+                END IF;
                 IF _acctfee(v_user, acc_amex, gbp, 140.00, day + interval '6 hours', 'Amex annual fee') THEN amex_owed := amex_owed + 140; END IF;
             WHEN 428 THEN
                 px := _rate_on(pr_btc, day, 80000);
                 amt := round(0.025 * px, 2);
                 need := ceil((amt + amt * 0.005 + 25 - cb_usd) / 25) * 25;
-                IF need > 0 THEN
-                    fxr := _rate_on(pr_usdgbp, day, 0.78);
-                    IF _cashout(v_user, acc_savings, gbp, round(need * fxr, 2), day + interval '9 hours', 'Transfer to Coinbase') THEN bal_sav := bal_sav - round(need * fxr, 2); END IF;
+                fxr := _rate_on(pr_usdgbp, day, 0.78);
+                IF need > 0 AND bal_sav > round(need * fxr, 2) + 200 THEN
+                    IF _cashout(v_user, acc_savings, gbp, round(need * fxr, 2), day + interval '10 hours 30 minutes', 'Transfer to Coinbase') THEN bal_sav := bal_sav - round(need * fxr, 2); END IF;
                     IF _cashin(v_user, acc_coin, usd, need, day + interval '11 hours') THEN cb_usd := cb_usd + need; END IF;
                 END IF;
-                IF _buy(v_user, acc_coin, btc, 0.025, usd, amt, round(amt * 0.005, 2), day + interval '12 hours', 'Averaging down') THEN cb_usd := cb_usd - amt - round(amt * 0.005, 2); END IF;
+                IF cb_usd >= amt + round(amt * 0.005, 2) THEN
+                    IF _buy(v_user, acc_coin, btc, 0.025, usd, amt, round(amt * 0.005, 2), day + interval '12 hours', 'Averaging down') THEN cb_usd := cb_usd - amt - round(amt * 0.005, 2); END IF;
+                END IF;
             WHEN 429 THEN
                 IF _cashxfer(v_user, acc_savings, acc_current, gbp, 11500, cat_cbt, day + interval '9 hours') THEN
                     bal_sav := bal_sav - 11500; bal_cur := bal_cur + 11500;
                 END IF;
             WHEN 430 THEN
+                need := ceil((9800 + 195 + 614 + 800 - bal_cur) / 100) * 100;
+                IF need > 0 AND bal_sav > need THEN
+                    IF _cashxfer(v_user, acc_savings, acc_current, gbp, need, cat_cbt, day + interval '10 hours 30 minutes') THEN
+                        bal_sav := bal_sav - need; bal_cur := bal_cur + need;
+                    END IF;
+                END IF;
                 grp := uuidv7();
                 INSERT INTO transaction_group (id, category_id, description, date_added) VALUES (grp, cat_vehicle, 'Bought the Golf', day);
                 t := _tx(v_user, 1, day + interval '11 hours', grp);
@@ -875,12 +930,14 @@ BEGIN
                 px := _rate_on(pr_aapl, day, 226);
                 amt := round(12 * px, 2);
                 need := ceil((amt + 1 + 150 - ib_usd) / 50) * 50;
-                IF need > 0 THEN
-                    fxr := _rate_on(pr_usdgbp, day, 0.78);
-                    IF _cashout(v_user, acc_savings, gbp, round(need * fxr, 2), day + interval '9 hours', 'Wise transfer to Interactive Brokers') THEN bal_sav := bal_sav - round(need * fxr, 2); END IF;
+                fxr := _rate_on(pr_usdgbp, day, 0.78);
+                IF need > 0 AND bal_sav > round(need * fxr, 2) + 200 THEN
+                    IF _cashout(v_user, acc_savings, gbp, round(need * fxr, 2), day + interval '10 hours 30 minutes', 'Wise transfer to Interactive Brokers') THEN bal_sav := bal_sav - round(need * fxr, 2); END IF;
                     IF _cashin(v_user, acc_ib, usd, need, day + interval '11 hours') THEN ib_usd := ib_usd + need; END IF;
                 END IF;
-                IF _buy(v_user, acc_ib, aapl, 12, usd, amt, 1.00, day + interval '15 hours') THEN ib_usd := ib_usd - amt - 1.00; aapl_sh := aapl_sh + 12; END IF;
+                IF ib_usd >= amt + 1.00 THEN
+                    IF _buy(v_user, acc_ib, aapl, 12, usd, amt, 1.00, day + interval '15 hours') THEN ib_usd := ib_usd - amt - 1.00; aapl_sh := aapl_sh + 12; END IF;
+                END IF;
             WHEN 491 THEN
                 PERFORM _xferout(v_user, acc_coin, btc, 0.004, day + interval '18 hours', 'Paid Dan back in BTC for festival tickets');
             WHEN 495 THEN
@@ -901,12 +958,14 @@ BEGIN
                 px := _rate_on(pr_btc, day, 102000);
                 amt := round(0.038 * px, 2);
                 need := ceil((amt + amt * 0.005 + 25 - cb_usd) / 25) * 25;
-                IF need > 0 THEN
-                    fxr := _rate_on(pr_usdgbp, day, 0.78);
-                    IF _cashout(v_user, acc_savings, gbp, round(need * fxr, 2), day + interval '9 hours', 'Transfer to Coinbase') THEN bal_sav := bal_sav - round(need * fxr, 2); END IF;
+                fxr := _rate_on(pr_usdgbp, day, 0.78);
+                IF need > 0 AND bal_sav > round(need * fxr, 2) + 200 THEN
+                    IF _cashout(v_user, acc_savings, gbp, round(need * fxr, 2), day + interval '10 hours 30 minutes', 'Transfer to Coinbase') THEN bal_sav := bal_sav - round(need * fxr, 2); END IF;
                     IF _cashin(v_user, acc_coin, usd, need, day + interval '11 hours') THEN cb_usd := cb_usd + need; END IF;
                 END IF;
-                IF _buy(v_user, acc_coin, btc, 0.038, usd, amt, round(amt * 0.005, 2), day + interval '13 hours') THEN cb_usd := cb_usd - amt - round(amt * 0.005, 2); END IF;
+                IF cb_usd >= amt + round(amt * 0.005, 2) THEN
+                    IF _buy(v_user, acc_coin, btc, 0.038, usd, amt, round(amt * 0.005, 2), day + interval '13 hours') THEN cb_usd := cb_usd - amt - round(amt * 0.005, 2); END IF;
+                END IF;
             WHEN 578 THEN
                 IF _cashin(v_user, acc_current, gbp, 300.00, day + interval '12 hours', 'Tom paid me back') THEN bal_cur := bal_cur + 300; END IF;
             WHEN 582 THEN
@@ -944,8 +1003,12 @@ BEGIN
                 IF _income(v_user, acc_current, gbp, 3900.00, cat_bonus, day + interval '6 hours', 'Annual bonus - Novabank') THEN bal_cur := bal_cur + 3900; END IF;
             WHEN 622 THEN
                 px := _rate_on(pr_vwrp, day, 128);
-                IF _cashxfer(v_user, acc_current, acc_isa, gbp, 1000, cat_cbt, day + interval '9 hours') THEN bal_cur := bal_cur - 1000; END IF;
-                PERFORM _buy(v_user, acc_isa, vwrp, round(1000 / px, 4), gbp, 1000, 0, day + interval '10 hours', 'Putting the bonus to work');
+                IF _cashxfer(v_user, acc_current, acc_isa, gbp, 1000, cat_cbt, day + interval '9 hours') THEN bal_cur := bal_cur - 1000; bal_isa := bal_isa + 1000; END IF;
+                IF bal_isa >= 1000 THEN
+                    IF _buy(v_user, acc_isa, vwrp, round(1000 / px, 4), gbp, 1000, 0, day + interval '10 hours', 'Putting the bonus to work') THEN
+                        bal_isa := bal_isa - 1000;
+                    END IF;
+                END IF;
             WHEN 623 THEN
                 fxr := _rate_on(pr_usdgbp, day, 0.78);
                 IF _cashout(v_user, acc_ib, usd, 2500, day + interval '9 hours', 'Brought some profits home') THEN ib_usd := ib_usd - 2500; END IF;
@@ -956,12 +1019,14 @@ BEGIN
                 px := _rate_on(pr_aapl, day, 232);
                 amt := round(11 * px, 2);
                 need := ceil((amt + 1 + 150 - ib_usd) / 50) * 50;
-                IF need > 0 THEN
-                    fxr := _rate_on(pr_usdgbp, day, 0.78);
-                    IF _cashout(v_user, acc_savings, gbp, round(need * fxr, 2), day + interval '9 hours', 'Wise transfer to Interactive Brokers') THEN bal_sav := bal_sav - round(need * fxr, 2); END IF;
+                fxr := _rate_on(pr_usdgbp, day, 0.78);
+                IF need > 0 AND bal_sav > round(need * fxr, 2) + 200 THEN
+                    IF _cashout(v_user, acc_savings, gbp, round(need * fxr, 2), day + interval '10 hours 30 minutes', 'Wise transfer to Interactive Brokers') THEN bal_sav := bal_sav - round(need * fxr, 2); END IF;
                     IF _cashin(v_user, acc_ib, usd, need, day + interval '11 hours') THEN ib_usd := ib_usd + need; END IF;
                 END IF;
-                IF _buy(v_user, acc_ib, aapl, 11, usd, amt, 1.00, day + interval '15 hours') THEN ib_usd := ib_usd - amt - 1.00; aapl_sh := aapl_sh + 11; END IF;
+                IF ib_usd >= amt + 1.00 THEN
+                    IF _buy(v_user, acc_ib, aapl, 11, usd, amt, 1.00, day + interval '15 hours') THEN ib_usd := ib_usd - amt - 1.00; aapl_sh := aapl_sh + 11; END IF;
+                END IF;
             WHEN 663 THEN
                 IF _balxfer(v_user, acc_coin, acc_ledger, btc, 0.02, day + interval '18 hours', 'Topping up cold storage') THEN
                     PERFORM _acctfee(v_user, acc_coin, usd, 10.00, day + interval '18 hours 5 minutes', 'Withdrawal fee');

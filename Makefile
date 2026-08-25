@@ -125,10 +125,10 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk 
 			"TRUELAYER_REDIRECT_URI_ALLOWLIST=http://localhost:2$${PREFIX}03/settings/connectors/truelayer/callback,$${TRUELAYER_REDIRECT_URI_ALLOWLIST}" \
 			>> .env; \
 	fi; \
-	if [ -n "${ENABLEBANKING_APPLICATION_ID}" ]; then \
+	if [ -n "$${ENABLEBANKING_APPLICATION_ID}" ]; then \
 		printf '\n%s\n%s\n%s\n%s\n' \
 			"# Enable Banking" \
-			"ENABLEBANKING_APPLICATION_ID=${ENABLEBANKING_APPLICATION_ID}" \
+			"ENABLEBANKING_APPLICATION_ID=$${ENABLEBANKING_APPLICATION_ID}" \
 			"ENABLEBANKING_PRIVATE_KEY=\"$${ENABLEBANKING_PRIVATE_KEY}\"" \
 			"ENABLEBANKING_REDIRECT_URI_ALLOWLIST=http://localhost:2$${PREFIX}02/connectors/enablebanking/callback,http://localhost:2$${PREFIX}03/settings/connectors/enablebanking/callback,$${ENABLEBANKING_REDIRECT_URI_ALLOWLIST}" \
 			>> .env; \

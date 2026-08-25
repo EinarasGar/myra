@@ -97,6 +97,8 @@ pub(crate) fn create_router(state: AppState) -> Router {
         .route("/files/{file_id}/confirm",                      post(handlers::file_handler::confirm_file))
         .route("/files/{file_id}/url",                          get(handlers::file_handler::get_file_url))
         .route("/files/{file_id}/thumbnail",                    get(handlers::file_handler::get_file_thumbnail))
+        .route("/exports",                                       post(handlers::exports_handler::create_export)
+                                                                    .get(handlers::exports_handler::list_exports))
         .route("/connectors/connections",                        post(handlers::connectors_handler::create_connection)
                                                                     .get(handlers::connectors_handler::list_connections))
         .route("/connectors/connections/{connection_id}",        delete(handlers::connectors_handler::revoke_connection))

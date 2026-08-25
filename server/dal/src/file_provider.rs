@@ -29,6 +29,7 @@ pub trait FileProvider: Send + Sync {
         &self,
         key: &str,
         expires_in_seconds: u32,
+        download_filename: Option<&str>,
     ) -> Result<String>;
 
     async fn download(&self, key: &str) -> Result<Vec<u8>>;

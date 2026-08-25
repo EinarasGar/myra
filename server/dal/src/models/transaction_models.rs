@@ -109,3 +109,33 @@ pub struct UpdateTransactionFieldsModel {
     pub date: OffsetDateTime,
     pub transaction_type_id: i32,
 }
+
+#[derive(sqlx::FromRow, Debug)]
+pub struct LedgerExportRow {
+    pub entry_id: i32,
+    pub transaction_id: Uuid,
+    pub user_id: Uuid,
+    pub type_id: DatabaseTransactionTypes,
+    pub date_transacted: OffsetDateTime,
+    pub visibility: String,
+    pub group_id: Option<Uuid>,
+    pub entry_quantity: Decimal,
+    pub entry_account_id: Uuid,
+    pub entry_asset_id: i32,
+    pub entry_category_id: i32,
+    pub category_name: Option<String>,
+    pub category_type_name: Option<String>,
+    pub asset_ticker: Option<String>,
+    pub asset_name: Option<String>,
+    pub asset_type_name: Option<String>,
+    pub asset_user_id: Option<Uuid>,
+    pub asset_base_pair_id: Option<i32>,
+    pub base_pair_ticker: Option<String>,
+    pub account_name: Option<String>,
+    pub account_type_name: Option<String>,
+    pub description: Option<String>,
+    pub dividend_source_asset_id: Option<i32>,
+    pub group_description: Option<String>,
+    pub group_category_name: Option<String>,
+    pub group_category_type_name: Option<String>,
+}

@@ -4327,6 +4327,21 @@ export interface CreateConnectionResponse {
 /**
  * 
  * @export
+ * @interface CreateExportRequest
+ */
+export interface CreateExportRequest {
+    /**
+     * 
+     * @type {ExportFormat}
+     * @memberof CreateExportRequest
+     */
+    'format': ExportFormat;
+}
+
+
+/**
+ * 
+ * @export
  * @interface CreateFileRequest
  */
 export interface CreateFileRequest {
@@ -4545,6 +4560,20 @@ export const ErrorType = {
 } as const;
 
 export type ErrorType = typeof ErrorType[keyof typeof ErrorType];
+
+
+/**
+ * The format of an export. Serde representation is lowercase (e.g. \"csv\", \"beancount\").
+ * @export
+ * @enum {string}
+ */
+
+export const ExportFormat = {
+    Csv: 'csv',
+    Beancount: 'beancount'
+} as const;
+
+export type ExportFormat = typeof ExportFormat[keyof typeof ExportFormat];
 
 
 /**
@@ -4841,6 +4870,19 @@ export interface GetConnectionsResponse {
      * @memberof GetConnectionsResponse
      */
     'connections': Array<ConnectorConnection>;
+}
+/**
+ * 
+ * @export
+ * @interface GetExportsResponse
+ */
+export interface GetExportsResponse {
+    /**
+     * 
+     * @type {Array<IdentifiableExport>}
+     * @memberof GetExportsResponse
+     */
+    'exports': Array<IdentifiableExport>;
 }
 /**
  * 
@@ -5216,6 +5258,39 @@ export interface IdentifiableConversationResponse {
      */
     'updated_at': string;
 }
+/**
+ * 
+ * @export
+ * @interface IdentifiableExport
+ */
+export interface IdentifiableExport {
+    /**
+     * 
+     * @type {string}
+     * @memberof IdentifiableExport
+     */
+    'created_at': string;
+    /**
+     * 
+     * @type {ExportFormat}
+     * @memberof IdentifiableExport
+     */
+    'format': ExportFormat;
+    /**
+     * 
+     * @type {string}
+     * @memberof IdentifiableExport
+     */
+    'id': string;
+    /**
+     * 
+     * @type {number}
+     * @memberof IdentifiableExport
+     */
+    'size_bytes': number;
+}
+
+
 /**
  * 
  * @export
@@ -12096,6 +12171,229 @@ export class ConnectorsApi extends BaseAPI implements ConnectorsApiInterface {
      */
     public updateBinding(bindingId: string, userId: string, updateBindingRequest: UpdateBindingRequest, options?: RawAxiosRequestConfig) {
         return ConnectorsApiFp(this.configuration).updateBinding(bindingId, userId, updateBindingRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
+ * ExportsApi - axios parameter creator
+ * @export
+ */
+export const ExportsApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * Renders the user\'s entire ledger in the requested format, stores it, and returns the export record.
+         * @summary Create Export
+         * @param {string} userId 
+         * @param {CreateExportRequest} createExportRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createExport: async (userId: string, createExportRequest: CreateExportRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'userId' is not null or undefined
+            assertParamExists('createExport', 'userId', userId)
+            // verify required parameter 'createExportRequest' is not null or undefined
+            assertParamExists('createExport', 'createExportRequest', createExportRequest)
+            const localVarPath = `/api/users/{user_id}/exports`
+                .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication auth_token required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(createExportRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Lists the user\'s ledger exports, newest first.
+         * @summary Get Exports
+         * @param {string} userId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listExports: async (userId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'userId' is not null or undefined
+            assertParamExists('listExports', 'userId', userId)
+            const localVarPath = `/api/users/{user_id}/exports`
+                .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication auth_token required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * ExportsApi - functional programming interface
+ * @export
+ */
+export const ExportsApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = ExportsApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * Renders the user\'s entire ledger in the requested format, stores it, and returns the export record.
+         * @summary Create Export
+         * @param {string} userId 
+         * @param {CreateExportRequest} createExportRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createExport(userId: string, createExportRequest: CreateExportRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<IdentifiableExport>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createExport(userId, createExportRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ExportsApi.createExport']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Lists the user\'s ledger exports, newest first.
+         * @summary Get Exports
+         * @param {string} userId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listExports(userId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GetExportsResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listExports(userId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ExportsApi.listExports']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * ExportsApi - factory interface
+ * @export
+ */
+export const ExportsApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = ExportsApiFp(configuration)
+    return {
+        /**
+         * Renders the user\'s entire ledger in the requested format, stores it, and returns the export record.
+         * @summary Create Export
+         * @param {string} userId 
+         * @param {CreateExportRequest} createExportRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createExport(userId: string, createExportRequest: CreateExportRequest, options?: RawAxiosRequestConfig): AxiosPromise<IdentifiableExport> {
+            return localVarFp.createExport(userId, createExportRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Lists the user\'s ledger exports, newest first.
+         * @summary Get Exports
+         * @param {string} userId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listExports(userId: string, options?: RawAxiosRequestConfig): AxiosPromise<GetExportsResponse> {
+            return localVarFp.listExports(userId, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * ExportsApi - interface
+ * @export
+ * @interface ExportsApi
+ */
+export interface ExportsApiInterface {
+    /**
+     * Renders the user\'s entire ledger in the requested format, stores it, and returns the export record.
+     * @summary Create Export
+     * @param {string} userId 
+     * @param {CreateExportRequest} createExportRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExportsApiInterface
+     */
+    createExport(userId: string, createExportRequest: CreateExportRequest, options?: RawAxiosRequestConfig): AxiosPromise<IdentifiableExport>;
+
+    /**
+     * Lists the user\'s ledger exports, newest first.
+     * @summary Get Exports
+     * @param {string} userId 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExportsApiInterface
+     */
+    listExports(userId: string, options?: RawAxiosRequestConfig): AxiosPromise<GetExportsResponse>;
+
+}
+
+/**
+ * ExportsApi - object-oriented interface
+ * @export
+ * @class ExportsApi
+ * @extends {BaseAPI}
+ */
+export class ExportsApi extends BaseAPI implements ExportsApiInterface {
+    /**
+     * Renders the user\'s entire ledger in the requested format, stores it, and returns the export record.
+     * @summary Create Export
+     * @param {string} userId 
+     * @param {CreateExportRequest} createExportRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExportsApi
+     */
+    public createExport(userId: string, createExportRequest: CreateExportRequest, options?: RawAxiosRequestConfig) {
+        return ExportsApiFp(this.configuration).createExport(userId, createExportRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Lists the user\'s ledger exports, newest first.
+     * @summary Get Exports
+     * @param {string} userId 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExportsApi
+     */
+    public listExports(userId: string, options?: RawAxiosRequestConfig) {
+        return ExportsApiFp(this.configuration).listExports(userId, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
