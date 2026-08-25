@@ -1,7 +1,8 @@
 import { useMemo } from "react"
-import { useSuspenseQuery } from "@tanstack/react-query"
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
 
 import type {
+  Aspsp,
   ConnectorConnection,
   GetConnectionsResponse,
   ListProviderAccountsResponse,
@@ -21,6 +22,7 @@ import {
 } from "@/features/accounts/api"
 
 import { providerName } from "./providers"
+import type { ProviderKind } from "./providers"
 
 export const CONNECTION_STATUSES = [
   "pending_oauth",
@@ -205,6 +207,31 @@ export function providerAccountsQueryOptions(
       return buildProviderAccounts(response.data)
     },
     meta: { errorContext: "The provider's accounts could not be loaded" },
+  })
+}
+
+export function useAspsps(
+  userId: UserId,
+  providerKind: ProviderKind,
+  country: string | null
+) {
+  return useQuery({
+    ...apiQueryOptions({
+      queryKey:
+        queryKeys.user(userId).connectors.aspsps.list(providerKind, country),
+      staleTime: STALE_TIMES.short,
+      enabled: country !== null,
+      fetch: async ({ signal }): Promise<readonly Aspsp[]> => {
+        const response = await api(ConnectorsApiFactory).listAspsps(
+          userId,
+          providerKind,
+          country ?? "",
+          { signal }
+        )
+        return response.data.aspsps
+      },
+      meta: { errorContext: "The list of banks could not be loaded" },
+    }),
   })
 }
 

@@ -305,6 +305,17 @@ export const queryKeys = {
 
       connectors: {
         all: () => connectorsRoot,
+        aspsps: {
+          all: () => [...connectorsRoot, "aspsps"] as const,
+          list: (providerKind: string, country: string | null) =>
+            [
+              ...connectorsRoot,
+              "aspsps",
+              "list",
+              providerKind,
+              country ?? "none",
+            ] as const,
+        },
         connections: {
           all: () => [...connectorsRoot, "connections"] as const,
           list: () => [...connectorsRoot, "connections", "list"] as const,

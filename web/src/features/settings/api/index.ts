@@ -42,11 +42,13 @@ export {
   connectionsQueryOptions,
   providerAccountsQueryOptions,
   toConnectionStatus,
+  useAspsps,
   useConnectionsSuspense,
   useProviderAccountsSuspense,
 } from "./connections"
 
 export type {
+  CompleteOauthVariables,
   CreateBindingVariables,
   CreateConnectionVariables,
   DeleteBindingVariables,
@@ -59,6 +61,7 @@ export type {
   UpdateBindingVariables,
 } from "./mutations"
 export {
+  useCompleteOauthSession,
   useCreateBinding,
   useCreateConnection,
   useDeleteBinding,

@@ -75,6 +75,23 @@ impl BusinessConnectorStore {
         Self::new(db, secret_provider, redis, None, connection)
     }
 
+    pub fn for_provider_kind(
+        db: MyraDb,
+        secret_provider: Arc<dyn SecretProvider>,
+        redis: RedisConnection,
+        kind: ProviderKind,
+    ) -> Self {
+        Self {
+            db,
+            secret_provider,
+            redis,
+            provider_account_ref: None,
+            connection_id: Uuid::nil(),
+            provider_kind: kind,
+            provider_key_id: None,
+        }
+    }
+
     fn provider_account_ref(&self) -> anyhow::Result<Uuid> {
         self.provider_account_ref.ok_or_else(|| {
             anyhow::anyhow!("connector store has no provider-account scope for page access")

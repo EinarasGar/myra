@@ -512,6 +512,12 @@ mod tests {
     use super::*;
     use crate::store::AuthProvider;
 
+    // Workspace feature unification pulls both rustls crypto providers (ring via the
+    // rust-s3/sqlx stack, aws-lc-rs via reqwest), so rustls cannot auto-select one.
+    fn install_crypto_provider() {
+        let _ = rustls::crypto::ring::default_provider().install_default();
+    }
+
     struct AsyncAuthProvider;
 
     #[async_trait::async_trait]
@@ -540,6 +546,7 @@ mod tests {
 
     #[tokio::test]
     async fn clerk_auth_token_awaits_async_provider() {
+        install_crypto_provider();
         let db_path = std::env::temp_dir()
             .join(format!("sverto-auth-provider-{}.db", uuid::Uuid::new_v4()))
             .to_string_lossy()
@@ -561,6 +568,7 @@ mod tests {
 
     #[test]
     fn cached_auth_me_hydrates_session_identity() {
+        install_crypto_provider();
         let db_path = std::env::temp_dir()
             .join(format!("sverto-auth-me-{}.db", uuid::Uuid::new_v4()))
             .to_string_lossy()

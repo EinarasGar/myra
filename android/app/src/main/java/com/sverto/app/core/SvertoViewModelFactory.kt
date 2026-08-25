@@ -15,6 +15,7 @@ import com.sverto.app.feature.assets.CustomAssetsViewModel
 import com.sverto.app.feature.assets.MarketsListViewModel
 import com.sverto.app.feature.categories.CustomCategoriesViewModel
 import com.sverto.app.feature.connectors.BindingSetupViewModel
+import com.sverto.app.feature.connectors.ConnectEnableBankingViewModel
 import com.sverto.app.feature.connectors.ConnectTrading212ViewModel
 import com.sverto.app.feature.connectors.ConnectTrueLayerViewModel
 import com.sverto.app.feature.connectors.ConnectionDetailViewModel
@@ -87,6 +88,8 @@ object SvertoViewModelFactory : ViewModelProvider.Factory {
                 ProviderAccountDetailViewModel(appStore) as T
             modelClass.isAssignableFrom(ConnectTrueLayerViewModel::class.java) ->
                 ConnectTrueLayerViewModel(appStore) as T
+            modelClass.isAssignableFrom(ConnectEnableBankingViewModel::class.java) ->
+                ConnectEnableBankingViewModel(appStore) as T
             modelClass.isAssignableFrom(ConnectTrading212ViewModel::class.java) ->
                 ConnectTrading212ViewModel(appStore) as T
             else -> throw IllegalArgumentException("Unknown ViewModel: ${modelClass.name}")

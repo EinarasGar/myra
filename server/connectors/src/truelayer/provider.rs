@@ -2,7 +2,7 @@ use async_trait::async_trait;
 
 use crate::models::account::ProviderAccount;
 use crate::port::{Connector, ConnectorStore};
-use crate::provider::{CredentialSource, Provider, ProviderKind};
+use crate::provider::{BeginOauthOptions, CredentialSource, Provider, ProviderKind};
 use crate::truelayer::client::TrueLayerClient;
 use crate::truelayer::config::TrueLayerConfig;
 use crate::Result;
@@ -50,11 +50,12 @@ impl Provider for TrueLayerProvider {
         TrueLayerClient::list_accounts(&access_token).await
     }
 
-    fn begin_oauth(
+    async fn begin_oauth(
         &self,
         _store: &dyn ConnectorStore,
         state: &str,
         redirect_uri: Option<&str>,
+        _options: BeginOauthOptions,
     ) -> Result<String> {
         let uri =
             crate::truelayer::auth::resolve_redirect_uri(TrueLayerConfig::get(), redirect_uri)?;

@@ -125,6 +125,14 @@ setup-env: ## Create .env file (worktree-aware). Use auth=noauth|database|clerk 
 			"TRUELAYER_REDIRECT_URI_ALLOWLIST=http://localhost:2$${PREFIX}03/settings/connectors/truelayer/callback,$${TRUELAYER_REDIRECT_URI_ALLOWLIST}" \
 			>> .env; \
 	fi; \
+	if [ -n "${ENABLEBANKING_APPLICATION_ID}" ]; then \
+		printf '\n%s\n%s\n%s\n%s\n' \
+			"# Enable Banking" \
+			"ENABLEBANKING_APPLICATION_ID=${ENABLEBANKING_APPLICATION_ID}" \
+			"ENABLEBANKING_PRIVATE_KEY=\"$${ENABLEBANKING_PRIVATE_KEY}\"" \
+			"ENABLEBANKING_REDIRECT_URI_ALLOWLIST=http://localhost:2$${PREFIX}02/connectors/enablebanking/callback,http://localhost:2$${PREFIX}03/settings/connectors/enablebanking/callback,$${ENABLEBANKING_REDIRECT_URI_ALLOWLIST}" \
+			>> .env; \
+	fi; \
 	if [ "$(telemetry)" = "axiom" ]; then \
 		if [ -z "$${AXIOM_API_TOKEN}" ]; then \
 			echo "$(RED)Error: AXIOM_API_TOKEN not found in $$SECRETS_FILE$(NC)"; \

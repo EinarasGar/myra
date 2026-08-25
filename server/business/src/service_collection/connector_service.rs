@@ -14,14 +14,15 @@ use dal::secrets::SecretProvider;
 
 use connectors::models::sync::RawPage;
 use connectors::port::ConnectorStore;
-use connectors::provider::{map_pages, ProviderKind};
+use connectors::provider::{map_pages, BeginOauthOptions, ProviderKind};
 use itertools::Itertools;
 
 use crate::dtos::bad_request_error_dto::BusinessBadRequestError;
 use crate::dtos::connectors::{
-    BindingStatusDto, BindingUpdateStatusDto, BindingWriteModeDto, ConnectionStatusDto,
-    ConnectorBindingDto, ConnectorConnectionDto, CredentialModeDto, OAuthSessionStartDto,
-    OAuthSessionStateDto, ProviderAccountDto, ProviderAccountTransactionDto,
+    BeginOauthOptionsDto, BindingStatusDto, BindingUpdateStatusDto, BindingWriteModeDto,
+    ConnectionStatusDto, ConnectorBindingDto, ConnectorConnectionDto, CredentialModeDto,
+    OAuthSessionStartDto, OAuthSessionStateDto, ProviderAccountDto,
+    ProviderAccountTransactionDto,
 };
 use crate::dtos::not_found_error_dto::BusinessNotFoundError;
 use crate::providers::connector_store::BusinessConnectorStore;
@@ -328,12 +329,38 @@ impl ConnectorService {
         Ok(())
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id))]
+    pub async fn list_aspsps(
+        &self,
+        user_id: Uuid,
+        provider_kind: &str,
+        country: &str,
+    ) -> anyhow::Result<Vec<connectors::models::Aspsp>> {
+        let kind: ProviderKind = provider_kind.parse()?;
+        let store = BusinessConnectorStore::for_provider_kind(
+            self.db.clone(),
+            self.secret_provider.clone(),
+            self.redis.clone(),
+            kind,
+        );
+
+        kind.provider()
+            .list_aspsps(&store, country)
+            .await
+            .map_err(|e| {
+                anyhow::Error::new(BusinessBadRequestError {
+                    message: e.to_string(),
+                })
+            })
+    }
+
     #[tracing::instrument(level = "debug", skip_all, fields(user_id = %user_id, connection_id = %connection_id))]
     pub async fn begin_oauth_session(
         &self,
         user_id: Uuid,
         connection_id: Uuid,
         redirect_uri: Option<String>,
+        options: BeginOauthOptionsDto,
     ) -> anyhow::Result<OAuthSessionStartDto> {
         let connection = self.get_connection(user_id, connection_id).await?;
         let store = self.store_for_connection(&connection)?;
@@ -344,7 +371,16 @@ impl ConnectorService {
         let auth_url = store
             .provider_kind()
             .provider()
-            .begin_oauth(&store, &state, redirect_uri.as_deref())
+            .begin_oauth(
+                &store,
+                &state,
+                redirect_uri.as_deref(),
+                BeginOauthOptions {
+                    bank_name: options.bank_name,
+                    bank_country: options.bank_country,
+                },
+            )
+            .await
             .map_err(|e| {
                 anyhow::Error::new(BusinessBadRequestError {
                     message: e.to_string(),
@@ -353,7 +389,7 @@ impl ConnectorService {
 
         let key = format!("oauth:state:{}:{}", user_id, session_id);
         let session_state = serde_json::to_string(&OAuthSessionStateDto {
-            state,
+            state: state.clone(),
             redirect_uri,
         })?;
         self.redis.set_string_ex(&key, &session_state, 300).await;
@@ -361,6 +397,7 @@ impl ConnectorService {
         Ok(OAuthSessionStartDto {
             session_id,
             auth_url,
+            state,
         })
     }
 

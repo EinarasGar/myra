@@ -142,7 +142,9 @@ fun ConnectorDetailScreen(
                         Column {
                             connections.forEachIndexed { index, connection ->
                                 val label =
-                                    if (connection.providerKind == "truelayer") {
+                                    if (connection.providerKind == "truelayer" ||
+                                        connection.providerKind == "enablebanking"
+                                    ) {
                                         "Bank connection"
                                     } else {
                                         when (connection.credentialMode) {

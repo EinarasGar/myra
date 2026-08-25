@@ -30,4 +30,14 @@ val CONNECTORS =
                     "Trading 212 API key. You choose where the key is kept: on Sverto's servers, " +
                     "or only on this device.",
         ),
+        ConnectorInfo(
+            kind = "enablebanking",
+            name = "Enable Banking",
+            icon = "landmark",
+            tagline = "European banks via Open Banking",
+            description =
+                "Connect your European bank accounts through the Enable Banking open banking platform. " +
+                    "Sverto imports balances and transaction history, and keeps them up to date. " +
+                    "You authorise access at your bank; Sverto never sees your bank login.",
+        ),
     )

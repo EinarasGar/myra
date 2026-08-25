@@ -68,11 +68,14 @@ export function useCreateConnection(userId: UserId) {
 
 export interface StartOauthVariables {
   connectionId: ConnectionId
+  bankName?: string
+  bankCountry?: string
 }
 
 export interface OauthSession {
   authUrl: string
   sessionId: string
+  state: string
 }
 
 export function useStartOauthSession(userId: UserId) {
@@ -81,20 +84,69 @@ export function useStartOauthSession(userId: UserId) {
     optimisticMutationOptions<OauthSession, StartOauthVariables>({
       queryClient,
       mutationKey: mutationKeys.user(userId).connectors(),
-      mutationFn: async ({ connectionId }) => {
+      mutationFn: async ({ connectionId, bankName, bankCountry }) => {
         const response = await api(ConnectorsApiFactory).createOauthSession(
           userId,
           connectionId,
-          {}
+          {
+            ...(bankName === undefined ? {} : { bank_name: bankName }),
+            ...(bankCountry === undefined ? {} : { bank_country: bankCountry }),
+          }
         )
         return {
           authUrl: response.data.auth_url,
           sessionId: response.data.session_id,
+          state: response.data.state,
         }
       },
       updates: [],
       invalidate: connectorInvalidations(userId),
       meta: { errorContext: "The provider consent step could not be started" },
+    })
+  )
+}
+
+export interface CompleteOauthVariables {
+  connectionId: string
+  sessionId: string
+  state: string
+  code?: string
+  error?: string
+  errorDescription?: string
+}
+
+export function useCompleteOauthSession(userId: UserId) {
+  const queryClient = useQueryClient()
+  return useMutation(
+    optimisticMutationOptions<void, CompleteOauthVariables>({
+      queryClient,
+      mutationKey: mutationKeys.user(userId).connectors(),
+      mutationFn: async ({
+        connectionId,
+        sessionId,
+        state,
+        code,
+        error,
+        errorDescription,
+      }) => {
+        await api(ConnectorsApiFactory).completeOauthSession(
+          userId,
+          connectionId,
+          sessionId,
+          {
+            state,
+            ...(code === undefined ? {} : { code }),
+            ...(error === undefined ? {} : { error }),
+            ...(errorDescription === undefined
+              ? {}
+              : { error_description: errorDescription }),
+          }
+        )
+        return
+      },
+      updates: [],
+      invalidate: connectorInvalidations(userId),
+      meta: { errorContext: "The provider consent step could not be completed" },
     })
   )
 }

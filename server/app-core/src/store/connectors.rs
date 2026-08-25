@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use shared::view_models::connectors::base_models::CredentialMode as VmCredentialMode;
 use shared::view_models::connectors::create_binding::CreateBindingRequestViewModel;
 use shared::view_models::connectors::create_connection::CreateConnectionRequestViewModel;
+use shared::view_models::connectors::list_aspsps::ListAspspsResponseViewModel;
 use shared::view_models::connectors::oauth::{
     CompleteOAuthSessionRequestViewModel, CreateOAuthSessionRequestViewModel,
 };
@@ -16,8 +17,8 @@ use super::infra::SharedInfra;
 use crate::api::connectors::*;
 use crate::error::{server_error, ApiError};
 use crate::models::{
-    BindingStatus, BindingWriteMode, CompleteOAuthResult, ConnectorBinding, ConnectorConnection,
-    CreateConnectionInput, CredentialMode, OAuthSessionStart, ProviderAccount,
+    Aspsp, BindingStatus, BindingWriteMode, CompleteOAuthResult, ConnectorBinding,
+    ConnectorConnection, CreateConnectionInput, CredentialMode, OAuthSessionStart, ProviderAccount,
     ProviderAccountTransaction, SyncOutcome,
 };
 
@@ -65,6 +66,31 @@ pub async fn list_connections(
         .await?;
     ok_or_err(resp.status, &resp.body)?;
     extract_connections(&resp.body).map_err(|e| ApiError::Parse { reason: e })
+}
+
+pub async fn list_aspsps(
+    infra: &SharedInfra,
+    provider_kind: &str,
+    country: &str,
+    auth_token: Option<&str>,
+) -> Result<Vec<Aspsp>, ApiError> {
+    let uid = user_id(infra)?;
+    let resp = infra
+        .get(
+            &format!(
+                "/api/users/{uid}/connectors/providers/{provider_kind}/aspsps?country={country}"
+            ),
+            auth_token,
+        )
+        .await?;
+    ok_or_err(resp.status, &resp.body)?;
+    let parsed: ListAspspsResponseViewModel =
+        serde_json::from_str(&resp.body).map_err(|e| ApiError::Parse { reason: e.to_string() })?;
+    Ok(parsed
+        .aspsps
+        .into_iter()
+        .map(|a| Aspsp { name: a.name, country: a.country })
+        .collect())
 }
 
 pub async fn create_connection(
@@ -120,15 +146,30 @@ pub async fn revoke_connection(
 pub async fn create_oauth_session(
     infra: &SharedInfra,
     connection_id: &str,
+    bank_name: Option<String>,
+    bank_country: Option<String>,
     auth_token: Option<&str>,
 ) -> Result<OAuthSessionStart, ApiError> {
     let uid = user_id(infra)?;
-    let redirect_uri = format!(
-        "{}/connectors/truelayer/callback",
-        infra.base_url().trim_end_matches('/')
-    );
+    // Resolve the provider kind so the OAuth redirect targets the provider's own callback
+    // route (e.g. /connectors/enablebanking/callback), not a hardcoded truelayer one.
+    let provider_kind = connection_provider_kind(infra, connection_id, auth_token).await?;
+    // For enablebanking the app builds the callback from its own base URL, which on a device
+    // is localhost/emulator and not reachable by the provider. Omit redirect_uri so the server
+    // injects its allowlisted public callback instead (same as the web flow).
+    let redirect_uri = if provider_kind == "enablebanking" {
+        None
+    } else {
+        Some(format!(
+            "{}/connectors/{}/callback",
+            infra.base_url().trim_end_matches('/'),
+            provider_kind
+        ))
+    };
     let body = serde_json::to_string(&CreateOAuthSessionRequestViewModel {
-        redirect_uri: Some(redirect_uri),
+        redirect_uri,
+        bank_name,
+        bank_country,
     })
     .map_err(|e| ApiError::Parse {
         reason: e.to_string(),
@@ -144,6 +185,19 @@ pub async fn create_oauth_session(
     let session = extract_oauth_session(&resp.body).map_err(|e| ApiError::Parse { reason: e })?;
     connector_local::save_pending_oauth(infra, connection_id, &session.session_id);
     Ok(session)
+}
+
+async fn connection_provider_kind(
+    infra: &SharedInfra,
+    connection_id: &str,
+    auth_token: Option<&str>,
+) -> Result<String, ApiError> {
+    let connections = list_connections(infra, auth_token).await?;
+    connections
+        .into_iter()
+        .find(|c| c.id == connection_id)
+        .map(|c| c.provider_kind)
+        .ok_or_else(|| server_error(404, "connection not found"))
 }
 
 pub async fn complete_oauth_session(

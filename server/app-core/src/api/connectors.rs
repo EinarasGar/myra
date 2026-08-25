@@ -121,6 +121,7 @@ pub fn extract_oauth_session(body: &str) -> Result<OAuthSessionStart, String> {
     Ok(OAuthSessionStart {
         session_id: resp.session_id,
         auth_url: resp.auth_url,
+        state: resp.state,
     })
 }
 

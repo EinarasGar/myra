@@ -1098,6 +1098,15 @@ impl AppStore {
         connectors::list_connections(&self.infra, token.as_deref()).await
     }
 
+    pub async fn list_connector_aspsps(
+        &self,
+        provider_kind: String,
+        country: String,
+    ) -> Result<Vec<crate::models::Aspsp>, crate::error::ApiError> {
+        let token = self.get_auth_token().await;
+        connectors::list_aspsps(&self.infra, &provider_kind, &country, token.as_deref()).await
+    }
+
     pub async fn create_connector_connection(
         &self,
         input: crate::models::CreateConnectionInput,
@@ -1117,9 +1126,18 @@ impl AppStore {
     pub async fn create_connector_oauth_session(
         &self,
         connection_id: String,
+        bank_name: Option<String>,
+        bank_country: Option<String>,
     ) -> Result<crate::models::OAuthSessionStart, crate::error::ApiError> {
         let token = self.get_auth_token().await;
-        connectors::create_oauth_session(&self.infra, &connection_id, token.as_deref()).await
+        connectors::create_oauth_session(
+            &self.infra,
+            &connection_id,
+            bank_name,
+            bank_country,
+            token.as_deref(),
+        )
+        .await
     }
 
     pub async fn complete_connector_oauth_session(

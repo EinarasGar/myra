@@ -96,6 +96,7 @@ import com.sverto.app.feature.assets.CustomAssetsScreen
 import com.sverto.app.feature.categories.CustomCategoriesScreen
 import com.sverto.app.feature.connectors.BindingSetupScreen
 import com.sverto.app.feature.connectors.ConnectTrading212Screen
+import com.sverto.app.feature.connectors.ConnectEnableBankingScreen
 import com.sverto.app.feature.connectors.ConnectTrueLayerScreen
 import com.sverto.app.feature.connectors.ConnectionDetailScreen
 import com.sverto.app.feature.connectors.ConnectorDetailScreen
@@ -143,6 +144,8 @@ private const val CONNECTOR_DETAIL_ROUTE = "connectorDetail/{providerKind}"
 private const val CONNECTION_DETAIL_ROUTE = "connectionDetail/{connectionId}"
 private const val CONNECT_TRUELAYER_ROUTE = "connectTrueLayer?code={code}&state={state}&error={error}"
 private const val CONNECT_TRADING212_ROUTE = "connectTrading212"
+private const val CONNECT_ENABLEBANKING_ROUTE =
+    "connectEnableBanking?code={code}&state={state}&error={error}"
 private const val BINDING_SETUP_ROUTE = "bindingSetup/{connectionId}"
 private const val PROVIDER_ACCOUNT_DETAIL_ROUTE =
     "providerAccountDetail/{connectionId}/{providerAccountId}?name={name}&currency={currency}"
@@ -1039,10 +1042,10 @@ private fun MainNavGraph(
                 onBack = { navController.popBackStack() },
                 onConnectionClick = { id -> navController.navigate("connectionDetail/$id") },
                 onConnect = {
-                    if (kind == "truelayer") {
-                        navController.navigate("connectTrueLayer")
-                    } else {
-                        navController.navigate("connectTrading212")
+                    when (kind) {
+                        "truelayer" -> navController.navigate("connectTrueLayer")
+                        "enablebanking" -> navController.navigate("connectEnableBanking")
+                        else -> navController.navigate("connectTrading212")
                     }
                 },
             )
@@ -1169,6 +1172,47 @@ private fun MainNavGraph(
                         popUpTo(CONNECT_TRADING212_ROUTE) { inclusive = true }
                     }
                     navController.navigate("bindingSetup/$id")
+                },
+            )
+        }
+        slideComposable(
+            CONNECT_ENABLEBANKING_ROUTE,
+            slideSpec,
+            arguments =
+                listOf(
+                    navArgument("code") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument("state") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument("error") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
+            deepLinks =
+                listOf(
+                    navDeepLink {
+                        uriPattern = "sverto://connectors/enablebanking?code={code}&state={state}&error={error}"
+                    },
+                ),
+        ) { entry ->
+            ConnectEnableBankingScreen(
+                oauthState = entry.arguments?.getString("state"),
+                oauthCode = entry.arguments?.getString("code"),
+                oauthError = entry.arguments?.getString("error"),
+                onBack = { navController.popBackStack() },
+                onCompleted = { connectionId ->
+                    navController.navigate("connectionDetail/$connectionId") {
+                        popUpTo(CONNECT_ENABLEBANKING_ROUTE) { inclusive = true }
+                    }
+                    navController.navigate("bindingSetup/$connectionId")
                 },
             )
         }

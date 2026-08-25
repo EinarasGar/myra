@@ -105,6 +105,7 @@ pub(crate) fn create_router(state: AppState) -> Router {
         .route("/connectors/connections/{connection_id}/accounts", get(handlers::connectors_handler::list_provider_accounts))
         .route("/connectors/connections/{connection_id}/accounts/{provider_account_id}/transactions", get(handlers::connectors_handler::list_provider_account_transactions))
         .route("/connectors/connections/{connection_id}/bindings", post(handlers::connectors_handler::create_binding))
+        .route("/connectors/providers/{provider_kind}/aspsps", get(handlers::connectors_handler::list_aspsps))
         .route("/connectors/bindings",                           get(handlers::connectors_handler::list_bindings))
         .route("/connectors/bindings/{binding_id}",              get(handlers::connectors_handler::get_binding)
                                                                     .put(handlers::connectors_handler::update_binding)

@@ -3,8 +3,8 @@ use std::str::FromStr;
 use async_trait::async_trait;
 use serde_json::Value;
 
-use crate::models::account::ProviderAccount;
-use crate::models::transaction::MappedTransaction;
+use crate::enablebanking::provider::EnableBankingProvider;
+use crate::models::{account::ProviderAccount, aspsp::Aspsp, transaction::MappedTransaction};
 use crate::port::{Connector, ConnectorStore};
 use crate::trading212::provider::Trading212Provider;
 use crate::truelayer::provider::TrueLayerProvider;
@@ -14,6 +14,7 @@ use crate::Result;
 pub enum ProviderKind {
     Trading212,
     TrueLayer,
+    EnableBanking,
 }
 
 impl ProviderKind {
@@ -21,7 +22,13 @@ impl ProviderKind {
         match self {
             ProviderKind::Trading212 => "trading212",
             ProviderKind::TrueLayer => "truelayer",
+            ProviderKind::EnableBanking => "enablebanking",
         }
+    }
+
+    /// Whether this provider exposes bank (ASPSP) discovery used to pick a bank before OAuth.
+    pub fn supports_aspsps(self) -> bool {
+        matches!(self, ProviderKind::EnableBanking)
     }
 
     pub fn map_item(self, stream: &str, item: &Value) -> Option<MappedTransaction> {
@@ -36,6 +43,10 @@ impl ProviderKind {
                 "transactions" => Some(crate::truelayer::mapper::map_transaction(item)),
                 _ => None,
             },
+            ProviderKind::EnableBanking => match stream {
+                "transactions" => Some(crate::enablebanking::mapper::map_transaction(item)),
+                _ => None,
+            },
         }
     }
 }
@@ -47,6 +58,7 @@ impl FromStr for ProviderKind {
         match value {
             "trading212" => Ok(ProviderKind::Trading212),
             "truelayer" => Ok(ProviderKind::TrueLayer),
+            "enablebanking" => Ok(ProviderKind::EnableBanking),
             other => anyhow::bail!("unknown provider kind: {other}"),
         }
     }
@@ -55,6 +67,12 @@ impl FromStr for ProviderKind {
 pub enum CredentialSource {
     Stored,
     Transient(String),
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct BeginOauthOptions {
+    pub bank_name: Option<String>,
+    pub bank_country: Option<String>,
 }
 
 #[async_trait]
@@ -80,13 +98,21 @@ pub trait Provider: Send + Sync {
         false
     }
 
-    fn begin_oauth(
+    async fn begin_oauth(
         &self,
         _store: &dyn ConnectorStore,
         _state: &str,
         _redirect_uri: Option<&str>,
+        _options: BeginOauthOptions,
     ) -> Result<String> {
         anyhow::bail!("provider does not support OAuth: {}", self.kind().as_str())
+    }
+
+    async fn list_aspsps(&self, _store: &dyn ConnectorStore, _country: &str) -> Result<Vec<Aspsp>> {
+        anyhow::bail!(
+            "provider does not support ASPSP discovery: {}",
+            self.kind().as_str()
+        )
     }
 
     async fn complete_oauth(
@@ -125,9 +151,11 @@ impl ProviderKind {
     pub fn provider(self) -> &'static dyn Provider {
         static TRADING212: Trading212Provider = Trading212Provider;
         static TRUELAYER: TrueLayerProvider = TrueLayerProvider;
+        static ENABLEBANKING: EnableBankingProvider = EnableBankingProvider;
         match self {
             ProviderKind::Trading212 => &TRADING212,
             ProviderKind::TrueLayer => &TRUELAYER,
+            ProviderKind::EnableBanking => &ENABLEBANKING,
         }
     }
 }

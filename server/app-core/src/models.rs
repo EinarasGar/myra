@@ -629,6 +629,13 @@ pub struct ProviderAccountTransaction {
     pub quantity: Option<f64>,
 }
 
+/// A bank (ASPSP) discoverable through a provider for a given country.
+#[derive(Debug, Clone, serde::Deserialize, uniffi::Record)]
+pub struct Aspsp {
+    pub name: String,
+    pub country: String,
+}
+
 #[derive(Debug, Clone, uniffi::Record)]
 pub struct CreateConnectionInput {
     pub provider_kind: String,
@@ -641,6 +648,7 @@ pub struct CreateConnectionInput {
 pub struct OAuthSessionStart {
     pub session_id: String,
     pub auth_url: String,
+    pub state: String,
 }
 
 #[derive(Debug, Clone, uniffi::Record)]

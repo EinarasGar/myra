@@ -752,6 +752,25 @@ export interface ApiErrorResponse {
 
 
 /**
+ * A bank (ASPSP) available through a provider for a given country.
+ * @export
+ * @interface Aspsp
+ */
+export interface Aspsp {
+    /**
+     * 
+     * @type {string}
+     * @memberof Aspsp
+     */
+    'country': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof Aspsp
+     */
+    'name': string;
+}
+/**
  * 
  * @export
  * @interface AssetAssetRequiredAssetTypeIdWithId
@@ -4402,6 +4421,18 @@ export interface CreateOAuthSessionRequest {
      * @type {string}
      * @memberof CreateOAuthSessionRequest
      */
+    'bank_country'?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateOAuthSessionRequest
+     */
+    'bank_name'?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateOAuthSessionRequest
+     */
     'redirect_uri'?: string | null;
 }
 /**
@@ -4422,6 +4453,12 @@ export interface CreateOAuthSessionResponse {
      * @memberof CreateOAuthSessionResponse
      */
     'session_id': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateOAuthSessionResponse
+     */
+    'state': string;
 }
 /**
  * 
@@ -5390,6 +5427,19 @@ export interface IngestTransactionsResponse {
      * @memberof IngestTransactionsResponse
      */
     'report'?: SyncReport | null;
+}
+/**
+ * 
+ * @export
+ * @interface ListAspspsResponse
+ */
+export interface ListAspspsResponse {
+    /**
+     * 
+     * @type {Array<Aspsp>}
+     * @memberof ListAspspsResponse
+     */
+    'aspsps': Array<Aspsp>;
 }
 /**
  * 
@@ -10848,6 +10898,55 @@ export const ConnectorsApiAxiosParamCreator = function (configuration?: Configur
             };
         },
         /**
+         * Lists banks (ASPSPs) available through a provider for a country. Only the `enablebanking` provider supports bank discovery.
+         * @summary List ASPSPs
+         * @param {string} userId 
+         * @param {string} providerKind Kind of the provider to discover banks for.
+         * @param {string} country Two-letter ISO 3166-1 alpha-2 country code (e.g. \&quot;LT\&quot;).
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listAspsps: async (userId: string, providerKind: string, country: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'userId' is not null or undefined
+            assertParamExists('listAspsps', 'userId', userId)
+            // verify required parameter 'providerKind' is not null or undefined
+            assertParamExists('listAspsps', 'providerKind', providerKind)
+            // verify required parameter 'country' is not null or undefined
+            assertParamExists('listAspsps', 'country', country)
+            const localVarPath = `/api/users/{user_id}/connectors/providers/{provider_kind}/aspsps`
+                .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+                .replace(`{${"provider_kind"}}`, encodeURIComponent(String(providerKind)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication auth_token required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (country !== undefined) {
+                localVarQueryParameter['country'] = country;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Gets all bindings associated with the user.
          * @summary List Bindings
          * @param {string} userId 
@@ -11277,6 +11376,21 @@ export const ConnectorsApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * Lists banks (ASPSPs) available through a provider for a country. Only the `enablebanking` provider supports bank discovery.
+         * @summary List ASPSPs
+         * @param {string} userId 
+         * @param {string} providerKind Kind of the provider to discover banks for.
+         * @param {string} country Two-letter ISO 3166-1 alpha-2 country code (e.g. \&quot;LT\&quot;).
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listAspsps(userId: string, providerKind: string, country: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListAspspsResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listAspsps(userId, providerKind, country, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ConnectorsApi.listAspsps']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Gets all bindings associated with the user.
          * @summary List Bindings
          * @param {string} userId 
@@ -11479,6 +11593,18 @@ export const ConnectorsApiFactory = function (configuration?: Configuration, bas
             return localVarFp.ingestTransactions(userId, bindingId, ingestTransactionsRequest, options).then((request) => request(axios, basePath));
         },
         /**
+         * Lists banks (ASPSPs) available through a provider for a country. Only the `enablebanking` provider supports bank discovery.
+         * @summary List ASPSPs
+         * @param {string} userId 
+         * @param {string} providerKind Kind of the provider to discover banks for.
+         * @param {string} country Two-letter ISO 3166-1 alpha-2 country code (e.g. \&quot;LT\&quot;).
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listAspsps(userId: string, providerKind: string, country: string, options?: RawAxiosRequestConfig): AxiosPromise<ListAspspsResponse> {
+            return localVarFp.listAspsps(userId, providerKind, country, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Gets all bindings associated with the user.
          * @summary List Bindings
          * @param {string} userId 
@@ -11657,6 +11783,18 @@ export interface ConnectorsApiInterface {
      * @memberof ConnectorsApiInterface
      */
     ingestTransactions(userId: string, bindingId: string, ingestTransactionsRequest: IngestTransactionsRequest, options?: RawAxiosRequestConfig): AxiosPromise<IngestTransactionsResponse>;
+
+    /**
+     * Lists banks (ASPSPs) available through a provider for a country. Only the `enablebanking` provider supports bank discovery.
+     * @summary List ASPSPs
+     * @param {string} userId 
+     * @param {string} providerKind Kind of the provider to discover banks for.
+     * @param {string} country Two-letter ISO 3166-1 alpha-2 country code (e.g. \&quot;LT\&quot;).
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ConnectorsApiInterface
+     */
+    listAspsps(userId: string, providerKind: string, country: string, options?: RawAxiosRequestConfig): AxiosPromise<ListAspspsResponse>;
 
     /**
      * Gets all bindings associated with the user.
@@ -11852,6 +11990,20 @@ export class ConnectorsApi extends BaseAPI implements ConnectorsApiInterface {
      */
     public ingestTransactions(userId: string, bindingId: string, ingestTransactionsRequest: IngestTransactionsRequest, options?: RawAxiosRequestConfig) {
         return ConnectorsApiFp(this.configuration).ingestTransactions(userId, bindingId, ingestTransactionsRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Lists banks (ASPSPs) available through a provider for a country. Only the `enablebanking` provider supports bank discovery.
+     * @summary List ASPSPs
+     * @param {string} userId 
+     * @param {string} providerKind Kind of the provider to discover banks for.
+     * @param {string} country Two-letter ISO 3166-1 alpha-2 country code (e.g. \&quot;LT\&quot;).
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ConnectorsApi
+     */
+    public listAspsps(userId: string, providerKind: string, country: string, options?: RawAxiosRequestConfig) {
+        return ConnectorsApiFp(this.configuration).listAspsps(userId, providerKind, country, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { Link } from "@tanstack/react-router"
+import { useEffect, useState } from "react"
+import { Link, useNavigate, useSearch } from "@tanstack/react-router"
 
 import { useUserId } from "@/auth"
 import { countOf } from "@/lib/format"
@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input"
 import type { ConnectionSummary, ProviderCatalogueEntry } from "./api"
 import {
   PROVIDER_CATALOGUE,
+  useCompleteOauthSession,
   useConnectionsSuspense,
   useCreateConnection,
   useStartOauthSession,
@@ -39,10 +40,84 @@ import {
   CONNECTIONS_READ_ONLY,
 } from "./copy"
 import { boundCountLabel, syncedLabel } from "./presentation"
+import { EnableBankingDialog } from "./enable-banking-dialog"
 import { SettingsCardsSkeleton, SettingsListSkeleton } from "./skeletons"
 
 function connectionCountLabel(count: number): string {
   return countOf(count, "connection")
+}
+
+const PENDING_OAUTH_KEY = "sverto.pendingOauth"
+
+interface PendingOauth {
+  connectionId: string
+  sessionId: string
+  state: string
+}
+
+export function stashPendingOauth(pending: PendingOauth): void {
+  localStorage.setItem(PENDING_OAUTH_KEY, JSON.stringify(pending))
+}
+
+function takePendingOauth(state: string): PendingOauth | null {
+  const raw = localStorage.getItem(PENDING_OAUTH_KEY)
+  if (raw === null) return null
+  localStorage.removeItem(PENDING_OAUTH_KEY)
+  try {
+    const parsed = JSON.parse(raw) as PendingOauth
+    return parsed.state === state ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+function OauthCompletion() {
+  const userId = useUserId()
+  const navigate = useNavigate()
+  const search = useSearch({ strict: false }) as {
+    oauthState?: string
+    oauthCode?: string
+    oauthError?: string
+  }
+  const complete = useCompleteOauthSession(userId)
+  const [done, setDone] = useState(false)
+
+  useEffect(() => {
+    if (
+      done ||
+      complete.isPending ||
+      search.oauthState === undefined ||
+      search.oauthCode === undefined
+    ) {
+      return
+    }
+    const pending = takePendingOauth(search.oauthState)
+    if (pending === null) return
+    setDone(true)
+    complete.mutate(
+      {
+        connectionId: pending.connectionId,
+        sessionId: pending.sessionId,
+        state: search.oauthState,
+        code: search.oauthCode,
+        error: search.oauthError,
+      },
+      {
+        onSettled: () => {
+          void navigate({ to: "/settings", search: { section: "connections" } })
+        },
+      }
+    )
+  }, [
+    complete,
+    done,
+    navigate,
+    search.oauthCode,
+    search.oauthError,
+    search.oauthState,
+  ])
+
+  return null
 }
 
 function ApiKeyDialog({
@@ -122,11 +197,16 @@ function ProviderCard({
   const create = useCreateConnection(userId)
   const startOauth = useStartOauthSession(userId)
   const [keyDialogOpen, setKeyDialogOpen] = useState(false)
+  const [bankingDialogOpen, setBankingDialogOpen] = useState(false)
   const pending = create.isPending || startOauth.isPending
 
   function connect() {
     if (provider.credential === "apiKey") {
       setKeyDialogOpen(true)
+      return
+    }
+    if (provider.kind === "enablebanking") {
+      setBankingDialogOpen(true)
       return
     }
     create.mutate(
@@ -173,6 +253,13 @@ function ProviderCard({
           provider={provider}
           open={keyDialogOpen}
           onOpenChange={setKeyDialogOpen}
+        />
+      ) : null}
+      {provider.kind === "enablebanking" ? (
+        <EnableBankingDialog
+          provider={provider}
+          open={bankingDialogOpen}
+          onOpenChange={setBankingDialogOpen}
         />
       ) : null}
     </>
@@ -247,6 +334,7 @@ function ConnectionsBlock() {
 export function ConnectionsSection() {
   return (
     <SettingsBlocks>
+      <OauthCompletion />
       <SettingsBlock title="Providers">
         <PanelBoundary pending={<SettingsCardsSkeleton />}>
           <ProvidersBlock />

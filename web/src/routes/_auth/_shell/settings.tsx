@@ -12,6 +12,9 @@ import { optionalText } from "../../-search"
 const settingsSearchSchema = z.object({
   section: z.enum(SETTINGS_SECTIONS).default("general").catch("general"),
   connection: optionalText,
+  oauthCode: optionalText,
+  oauthState: optionalText,
+  oauthError: optionalText,
 })
 
 function SettingsRoute() {

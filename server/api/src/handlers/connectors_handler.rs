@@ -6,6 +6,9 @@ use business::dtos::connectors::{
 use serde::Deserialize;
 use uuid::Uuid;
 
+use shared::errors::FieldError;
+use shared::view_models::transactions::validation::Validatable;
+
 #[derive(Deserialize)]
 pub(crate) struct ConnectionIdPath {
     connection_id: Uuid,
@@ -31,7 +34,7 @@ pub(crate) struct ConnectionAccountPath {
 use crate::{
     auth::AuthenticatedUserId,
     errors::ApiError,
-    extractors::ValidatedJson,
+    extractors::{ValidatedJson, ValidatedQuery},
     states::{ConnectorServiceState, ConnectorSyncServiceState},
     view_models::connectors::{
         base_models::ConnectorBindingViewModel,
@@ -40,6 +43,7 @@ use crate::{
         get_bindings::GetBindingsResponseViewModel,
         get_connections::GetConnectionsResponseViewModel,
         ingest::{IngestTransactionsRequestViewModel, IngestTransactionsResponseViewModel},
+        list_aspsps::{ListAspspsQuery, ListAspspsResponseViewModel},
         list_provider_account_transactions::ListProviderAccountTransactionsResponseViewModel,
         list_provider_accounts::ListProviderAccountsResponseViewModel,
         oauth::{
@@ -155,6 +159,61 @@ pub async fn revoke_connection(
     Ok(())
 }
 
+/// List ASPSPs
+///
+/// Lists banks (ASPSPs) available through a provider for a country. Only the
+/// `enablebanking` provider supports bank discovery.
+#[utoipa::path(
+    get,
+    path = "/api/users/{user_id}/connectors/providers/{provider_kind}/aspsps",
+    tag = "Connectors",
+    responses(
+        (status = 200, description = "ASPSPs retrieved successfully.", body = ListAspspsResponseViewModel),
+        (status = 404, description = "Unknown or unsupported provider kind."),
+        GetResponses
+    ),
+    params(
+        ("user_id" = Uuid, Path, description = "Unique Identifier of the user."),
+        ("provider_kind" = String, Path, description = "Kind of the provider to discover banks for."),
+        ListAspspsQuery
+    ),
+    security(
+        ("auth_token" = [])
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(user_id = %user_id, provider_kind = %provider_kind))]
+pub async fn list_aspsps(
+    AuthenticatedUserId(user_id): AuthenticatedUserId,
+    Path(ProviderKindPath { provider_kind }): Path<ProviderKindPath>,
+    ConnectorServiceState(connector_service): ConnectorServiceState,
+    ValidatedQuery(query): ValidatedQuery<ListAspspsQuery>,
+) -> Result<Json<ListAspspsResponseViewModel>, ApiError> {
+    let kind: connectors::provider::ProviderKind = provider_kind
+        .parse()
+        .map_err(|_| ApiError::NotFound("unknown provider".to_string()))?;
+    if !kind.supports_aspsps() {
+        return Err(ApiError::NotFound(
+            "provider does not support ASPSP discovery".to_string(),
+        ));
+    }
+    let country = query.country.to_uppercase();
+    query.validate()?;
+
+    let aspsps = connector_service
+        .list_aspsps(user_id, &provider_kind, &country)
+        .await?;
+
+    Ok(Json(ListAspspsResponseViewModel {
+        aspsps: aspsps
+            .into_iter()
+            .map(|a| shared::view_models::connectors::list_aspsps::AspspViewModel {
+                name: a.name,
+                country: a.country,
+            })
+            .collect(),
+    }))
+}
+
 /// Create OAuth Session
 ///
 /// Creates an OAuth authorization session for a connection and returns the provider consent URL.
@@ -184,8 +243,32 @@ pub async fn create_oauth_session(
     ConnectorServiceState(connector_service): ConnectorServiceState,
     ValidatedJson(body): ValidatedJson<CreateOAuthSessionRequestViewModel>,
 ) -> Result<(StatusCode, Json<CreateOAuthSessionResponseViewModel>), ApiError> {
+    let connection = connector_service
+        .get_connection(user_id, connection_id)
+        .await?;
+    let kind: connectors::provider::ProviderKind = connection
+        .provider_kind
+        .parse()
+        .map_err(|_| ApiError::NotFound("unknown provider".to_string()))?;
+    body.validate()?;
+    if !kind.supports_aspsps() && (body.bank_name.is_some() || body.bank_country.is_some()) {
+        return Err(ApiError::Validation(vec![FieldError {
+            field: "bank_name".to_string(),
+            message: "bank selection is only supported for providers with bank discovery"
+                .to_string(),
+        }]));
+    }
+
     let session = connector_service
-        .begin_oauth_session(user_id, connection_id, body.redirect_uri)
+        .begin_oauth_session(
+            user_id,
+            connection_id,
+            body.redirect_uri,
+            business::dtos::connectors::BeginOauthOptionsDto {
+                bank_name: body.bank_name,
+                bank_country: body.bank_country,
+            },
+        )
         .await?;
 
     Ok((
@@ -193,6 +276,7 @@ pub async fn create_oauth_session(
         Json(CreateOAuthSessionResponseViewModel {
             session_id: session.session_id,
             auth_url: session.auth_url,
+            state: session.state,
         }),
     ))
 }
@@ -710,10 +794,12 @@ pub(crate) struct ProviderKindPath {
 
 // Providers only permit https redirect URIs, so the app registers this public endpoint and we
 // forward the consent result into the app via its sverto:// deep link. The provider kind is
-// validated before being embedded in the redirect target.
+// validated before being embedded in the redirect target. When WEB_UI_URL is set, a meta refresh
+// fallback sends desktop browsers (which cannot open sverto:// links) to the web settings page.
 pub async fn oauth_callback(
     Path(ProviderKindPath { provider_kind }): Path<ProviderKindPath>,
     axum::extract::Query(query): axum::extract::Query<OAuthCallbackQuery>,
+    headers: axum::http::HeaderMap,
 ) -> Result<axum::response::Html<String>, ApiError> {
     if !business::dtos::connectors::is_supported_provider(&provider_kind) {
         return Err(ApiError::NotFound("unknown provider".to_string()));
@@ -734,12 +820,48 @@ pub async fn oauth_callback(
     let encoded = serde_urlencoded::to_string(&params).unwrap_or_default();
     let target = format!("sverto://connectors/{provider_kind}?{encoded}");
     let href = target.replace('&', "&amp;");
+    let user_agent = headers
+        .get(axum::http::header::USER_AGENT)
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+    let is_mobile = user_agent.contains("Android")
+        || user_agent.contains("iPhone")
+        || user_agent.contains("iPad");
+    let fallback = std::env::var("WEB_UI_URL").ok().filter(|v| !v.is_empty());
+    let web_fallback = fallback
+        .map(|base| {
+            let mut web_params: Vec<(&str, String)> = vec![("section", "connections".to_string())];
+            for (key, value) in &params {
+                let name = match *key {
+                    "code" => "oauthCode",
+                    "state" => "oauthState",
+                    "error" => "oauthError",
+                    _ => continue,
+                };
+                web_params.push((name, value.clone()));
+            }
+            let web_query = serde_urlencoded::to_string(&web_params).unwrap_or_default();
+            // Desktop browsers cannot open sverto:// links, so they are sent straight to the
+            // web completion flow instead of getting a blocked custom-protocol prompt.
+            let delay = if is_mobile { "2" } else { "0" };
+            format!(
+                "<meta http-equiv=\"refresh\" content=\"{delay};url={}/settings?{}\">",
+                base.trim_end_matches('/'),
+                web_query
+            )
+        })
+        .unwrap_or_default();
+    let deep_link_script = if is_mobile {
+        format!("<script>window.location.replace(\"{target}\");</script>")
+    } else {
+        String::new()
+    };
     Ok(axum::response::Html(format!(
         "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">\
-<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\
+<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">{web_fallback}\
 <title>Returning to Sverto</title></head>\
 <body style=\"font-family:system-ui,sans-serif;text-align:center;padding:3rem 1.5rem\">\
-<script>window.location.replace(\"{target}\");</script>\
+{deep_link_script}\
 <h2>Returning to Sverto…</h2>\
 <p>If the app didn't reopen, <a href=\"{href}\">tap here to return</a>.</p>\
 </body></html>"

@@ -42,7 +42,7 @@ class ConnectTrueLayerViewModel(
                         ),
                     )
                 val session =
-                    store.createConnectorOauthSession(connectionId)
+                    store.createConnectorOauthSession(connectionId, null, null)
                 _state.value =
                     _state.value.copy(
                         phase = TrueLayerPhase.IDLE,

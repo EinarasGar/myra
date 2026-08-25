@@ -1,4 +1,8 @@
-export const PROVIDER_KINDS = ["truelayer", "trading212"] as const
+export const PROVIDER_KINDS = [
+  "truelayer",
+  "trading212",
+  "enablebanking",
+] as const
 
 export type ProviderKind = (typeof PROVIDER_KINDS)[number]
 
@@ -15,7 +19,7 @@ export interface ProviderCatalogueEntry {
 }
 
 /**
- * No endpoint lists available providers with display metadata — the two kinds are
+ * No endpoint lists available providers with display metadata — the kinds are
  * seeded strings on the server — so the catalogue is owned here.
  */
 export const PROVIDER_CATALOGUE: readonly ProviderCatalogueEntry[] = [
@@ -26,6 +30,16 @@ export const PROVIDER_CATALOGUE: readonly ProviderCatalogueEntry[] = [
     tagline: "Bank accounts via Open Banking",
     description:
       "Connect your banks through Open Banking. Sverto imports balances and transaction history and keeps them up to date. Read-only — no payment access is ever requested.",
+    connectLabel: "Connect a bank",
+    credential: "oauth",
+  },
+  {
+    kind: "enablebanking",
+    mark: "EB",
+    name: "Enable Banking",
+    tagline: "European banks via Open Banking",
+    description:
+      "Connect banks across Europe through one Open Banking gateway. Sverto imports balances and transaction history and keeps them up to date. Read-only — no payment access is ever requested.",
     connectLabel: "Connect a bank",
     credential: "oauth",
   },

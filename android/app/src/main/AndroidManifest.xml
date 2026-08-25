@@ -42,6 +42,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="sverto" android:host="connectors" android:path="/truelayer" />
+                <data android:scheme="sverto" android:host="connectors" android:path="/enablebanking" />
             </intent-filter>
         </activity>
 
